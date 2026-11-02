@@ -3,7 +3,7 @@
 // Prometheus Certified Associate, Terraform Associate (OpenTofu has no exam), AWS Cloud Practitioner
 // and AWS Solutions Architect – Associate. Facts checked on 2026-11-01 on the official pages linked below
 // (training.linuxfoundation.org, developer.hashicorp.com, aws.amazon.com, learn.microsoft.com).
-// FahamLah is not affiliated with any exam. No logos. Prices change: the page says so.
+// Belajar Sendiri is not affiliated with any exam. No logos. Prices change: the page says so.
 // Shown at /<lang>/ship-it/certifications/. UI words live in i18n (`certs.*`).
 import type { Bilingual } from '~/i18n';
 

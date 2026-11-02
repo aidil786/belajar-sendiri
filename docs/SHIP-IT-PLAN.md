@@ -1,10 +1,10 @@
-# FahamLah Ship It — Course Plan: Docker, CI/CD & Kubernetes
+# Belajar Sendiri Ship It — Course Plan: Docker, CI/CD & Kubernetes
 
 Oct 31, 2026
 
 ## 1. The big picture
 
-Make **Ship It** FahamLah's second course: one path from your first container to a self-healing app on Kubernetes, shipped by a pipeline. About 200 bite-size lessons in 18 worlds, in English and Malay, built on the same engine and rules as the Git course.
+Make **Ship It** Belajar Sendiri's second course: one path from your first container to a self-healing app on Kubernetes, shipped by a pipeline. About 200 bite-size lessons in 18 worlds, in English and Malay, built on the same engine and rules as the Git course.
 
 The course follows your app's journey, so each part answers one question. **Docker:** how do I pack my app so it runs anywhere? **CI/CD:** how does every change get tested and shipped by itself? **Kubernetes:** how do I keep many copies running, healthy and up to date?
 
@@ -236,7 +236,7 @@ Every lesson starts in the browser simulator, then hands you a short "do it for 
 
 | Rung | Where | Cost | Best for | Watch out for |
 | --- | --- | --- | --- | --- |
-| 1 | FahamLah simulators | Free | Every lesson; mistakes cost nothing | Simplified on purpose; Go deeper links to the real thing |
+| 1 | Belajar Sendiri simulators | Free | Every lesson; mistakes cost nothing | Simplified on purpose; Go deeper links to the real thing |
 | 2 | [Killercoda](https://killercoda.com) | Free tier | Real terminals and ready Kubernetes clusters in the browser; exam-style tasks | Free sessions last about an hour, one at a time, and reset ([DevOpsCube](https://devopscube.com/websites-to-practice-devops/)) |
 | 3 | GitHub Codespaces | 120 core hours + 15 GB a month on a free personal account, about 60 hours on a 2-core machine ([GitHub Docs](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces)) | Docker and a kind cluster without installing anything; good on a weak laptop | Stop and delete idle codespaces so the quota lasts |
 | 4 | Your own computer | Free: Docker Desktop (personal and small business) or Docker Engine on Linux/WSL 2, plus kind, minikube or k3d | The capstone and anything you want to keep | Memory; Docker Desktop needs a paid plan at large companies |
@@ -275,7 +275,7 @@ CKAD's domain list maps cleanly onto Part 3: application design and build, deplo
 
 ## 13. What the site needs, and how lessons stay correct
 
-The FahamLah stack stays exactly as planned (Astro, React islands, MDX, Cloudflare Workers static assets). This course adds three simulator engines, a YAML toolkit and version-aware truth checks; nothing needs a server.
+The Belajar Sendiri stack stays exactly as planned (Astro, React islands, MDX, Cloudflare Workers static assets). This course adds three simulator engines, a YAML toolkit and version-aware truth checks; nothing needs a server.
 
 | Addition | What it is | Why |
 | --- | --- | --- |
@@ -329,7 +329,7 @@ If your weekly hours differ, the order stays the same and only the weeks stretch
 
 ### Claude Code prompts
 
-First export this doc as Markdown and save it in the FahamLah repo as `docs/SHIP-IT-PLAN.md`. Start every prompt with *"Read `CLAUDE.md`, `docs/PLAN.md` and `docs/SHIP-IT-PLAN.md`."* End every prompt with *"Same rules and definition of done as the Git course. Never push or deploy. Show me the lesson list first and wait for my go."*
+First export this doc as Markdown and save it in the Belajar Sendiri repo as `docs/SHIP-IT-PLAN.md`. Start every prompt with *"Read `CLAUDE.md`, `docs/PLAN.md` and `docs/SHIP-IT-PLAN.md`."* End every prompt with *"Same rules and definition of done as the Git course. Never push or deploy. Show me the lesson list first and wait for my go."*
 
 1. **Phase 0 — Foundations:** Build the `kitchen-sim` engine with Vitest tests, a truth-check workflow that replays its commands on real Docker in CI, the three-part world map, the glossary files and World D0 in EN and BM.
 2. **Phase 1 — Docker basics:** Build Worlds D1–D3 in EN and BM with the Kek lapis builder, Order hatch and Locker test.
@@ -389,7 +389,7 @@ The biggest risk is scope again: about 200 lessons and three engines on top of t
 
 ## Sources
 
-Builds on FahamLah Git — Deep Plan for an ADHD-Friendly Git & GitHub Learning Site (ADHD rules, writing and bilingual rules, lesson frame, tech stack).
+Builds on Belajar Sendiri Git — Deep Plan for an ADHD-Friendly Git & GitHub Learning Site (ADHD rules, writing and bilingual rules, lesson frame, tech stack).
 
 - [Kubernetes releases](https://kubernetes.io/releases/) and [Kubernetes v1.37 release blog](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)
 - [InfoQ: Kubernetes 1.37](https://infoq.com/news/2026/09/kubernetes-1-37)

@@ -1,4 +1,4 @@
-// FahamLah food-court simulator (Kubernetes 1.37): public API.
+// Belajar Sendiri food-court simulator (Kubernetes 1.37): public API.
 //
 //   const s = buildScenario(scenario);
 //   const r = run(s, 'kubectl delete pod shop-7d9c8b6f5d-x2b4k');

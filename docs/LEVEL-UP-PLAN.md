@@ -1,4 +1,4 @@
-# FahamLah Level Up — plan (2026-11-01)
+# Belajar Sendiri Level Up — plan (2026-11-01)
 
 The user asked (2026-11-01) to push learners from "solid working level" towards "advanced" in what we teach, with four additions, all of them:
 

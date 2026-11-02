@@ -1,4 +1,4 @@
-// FahamLah kitchen simulator (Docker Engine 29.x + Compose v5): public API.
+// Belajar Sendiri kitchen simulator (Docker Engine 29.x + Compose v5): public API.
 //
 //   const r = run(state, 'docker run -d --name web -p 8080:80 nginx:1.30-alpine');
 //   r.state   → the new state (the old one is never changed)

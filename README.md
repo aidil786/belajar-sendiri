@@ -1,6 +1,6 @@
-# FahamLah: belajar sendiri
+# Belajar Sendiri
 
-An ADHD-friendly, bilingual (English + Bahasa Melayu) learning site. Course 1 is **Git & GitHub**; course 2 is **Ship It** (Docker → CI/CD → Kubernetes); course 3 is **Level Up** (Linux, Terraform & OpenTofu, Monitoring, AWS). Short lessons, safe practice simulators, and real missions. *Faham* = understand.
+An ADHD-friendly, bilingual (English + Bahasa Melayu) learning site. Course 1 is **Git & GitHub**; course 2 is **Ship It** (Docker → CI/CD → Kubernetes); course 3 is **Level Up** (Linux, Terraform & OpenTofu, Monitoring, AWS). Short lessons, safe practice simulators, and real missions. *Belajar sendiri* = learn on your own.
 
 - Built with [Astro](https://astro.build) (static), React islands, MDX lessons, and pure TypeScript simulators.
 - **Live, free, no sign-up:** https://belajarsendiri.pages.dev (Cloudflare Pages). See [DEPLOY.md](DEPLOY.md).

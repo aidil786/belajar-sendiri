@@ -1,4 +1,4 @@
-// FahamLah conveyor simulator (CI/CD pipelines): public API.
+// Belajar Sendiri conveyor simulator (CI/CD pipelines): public API.
 //
 //   const { workflow, issues } = parseWorkflow(yaml);       // kind validation, with lines
 //   const r = simulate(yaml, { trigger: presetTrigger('pr'), world });

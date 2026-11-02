@@ -1,4 +1,4 @@
-// FahamLah Linux simulator: a small Debian 13 server ("kedai") in pure TypeScript.
+// Belajar Sendiri Linux simulator: a small Debian 13 server ("kedai") in pure TypeScript.
 //
 //   const r = run(state, 'ls -l');
 //   r.state   → the new state (the old one is never changed)

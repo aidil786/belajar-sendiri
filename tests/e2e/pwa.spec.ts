@@ -28,7 +28,7 @@ test('manifest and icons are served', { tag: '@desktop-only' }, async ({ request
   const res = await request.get('/manifest.webmanifest');
   expect(res.status()).toBe(200);
   const manifest = await res.json();
-  expect(manifest).toMatchObject({ name: 'FahamLah', start_url: '/', display: 'standalone' });
+  expect(manifest).toMatchObject({ name: 'Belajar Sendiri', start_url: '/', display: 'standalone' });
   expect(manifest.icons.map((i: { purpose: string }) => i.purpose)).toContain('maskable');
   for (const icon of manifest.icons as { src: string; type: string }[]) {
     const r = await request.get(icon.src);

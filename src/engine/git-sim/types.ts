@@ -1,4 +1,4 @@
-// Core types for the FahamLah Git simulator.
+// Core types for the Belajar Sendiri Git simulator.
 // The engine is pure TypeScript: no DOM, no React, no i18n strings.
 
 /** Path → file content. Paths are absolute (filesystem) or repo-relative (snapshots). */

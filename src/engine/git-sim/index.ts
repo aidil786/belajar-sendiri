@@ -1,4 +1,4 @@
-// FahamLah Git simulator: public API.
+// Belajar Sendiri Git simulator: public API.
 //
 //   const r = run(state, 'git add index.html');
 //   r.state   → the new state (the old one is never changed)

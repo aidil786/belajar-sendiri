@@ -1,4 +1,4 @@
-// FahamLah PromQL engine (Prometheus 3 subset): public API. Pure TypeScript, no DOM.
+// Belajar Sendiri PromQL engine (Prometheus 3 subset): public API. Pure TypeScript, no DOM.
 //
 //   const b = buildScenario(scenario);                 // series from promtool notation (+ rules)
 //   instantQuery(b.store, 'sum by (code) (rate(http_requests_total[5m]))', b.evalTime)

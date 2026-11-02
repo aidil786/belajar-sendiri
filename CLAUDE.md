@@ -1,8 +1,8 @@
-# FahamLah — notes for Claude
+# Belajar Sendiri — notes for Claude
 
 The full brief is in **`docs/PLAN.md`**. Read it before any work. This file is the short list of rules that never bend.
 
-FahamLah is an ADHD-friendly, bilingual (English + Bahasa Melayu) "learn anything" engine. Course #1 is Git & GitHub (13 worlds, ~140 lessons). Static Astro site on Cloudflare Pages (project `belajarsendiri`, https://belajarsendiri.pages.dev). The repo is public.
+Belajar Sendiri is an ADHD-friendly, bilingual (English + Bahasa Melayu) "learn anything" engine. Course #1 is Git & GitHub (13 worlds, ~140 lessons). Static Astro site on Cloudflare Pages (project `belajarsendiri`, https://belajarsendiri.pages.dev). The repo is public.
 
 ## How we work
 - Explain every git command in one short, plain sentence. The user is learning Git.

@@ -1,9 +1,9 @@
-// FahamLah service worker: lets the site work offline. Small and hand-written.
+// Belajar Sendiri service worker: lets the site work offline. Small and hand-written.
 // The build (src/integrations/pwa.ts) writes BUILD and PRECACHE into dist/sw.js.
 //  - Pages (HTML): network first, then the saved copy, then the bilingual offline page.
 //  - /_astro/* files have a hash in their name, so they never change: cache first.
 //  - Every page you open is saved, with the files it needs, so it works offline later.
-//  - A new build gets new caches. It takes over when no FahamLah tab still uses the old one
+//  - A new build gets new caches. It takes over when no Belajar Sendiri tab still uses the old one
 //    (no skipWaiting), then deletes the old caches, so an open page never loses its files.
 const BUILD = '__FAHAMLAH_BUILD__';
 const PRECACHE = ['__FAHAMLAH_PRECACHE__'];

@@ -1,4 +1,4 @@
-# Build FahamLah: an ADHD-friendly, bilingual (English + Malay) Git & GitHub learning website
+# Build Belajar Sendiri: an ADHD-friendly, bilingual (English + Malay) Git & GitHub learning website
 
 You are building a real website with me, starting from an empty folder. Read this whole brief before you do anything.
 
@@ -18,7 +18,7 @@ You are building a real website with me, starting from an empty folder. Read thi
 
 ## 1. What we are building
 
-**FahamLah** (working name; *faham* = understand) is a reusable "learn anything" engine. Course #1 is **Git & GitHub**: about 140 bite-size lessons in 13 worlds, in English and Bahasa Melayu, taking a learner from basics to job-ready.
+**Belajar Sendiri** (*learn on your own*) is a reusable "learn anything" engine. Course #1 is **Git & GitHub**: about 140 bite-size lessons in 13 worlds, in English and Bahasa Melayu, taking a learner from basics to job-ready.
 
 Every lesson follows one loop: **see it move → try it → check it → win.** Words stay short. Animations explain; they never decorate. Learners practise in a safe in-browser Git simulator first, then do real missions on their own computer and GitHub account.
 
@@ -94,7 +94,7 @@ Write like you're explaining to a smart 12-year-old friend. Then write the Malay
 
 **Same idea, two styles**
 
-| | Textbook style (avoid) | FahamLah style (use) |
+| | Textbook style (avoid) | Belajar Sendiri style (use) |
 |---|---|---|
 | English | The staging area is an intermediate area where commits can be formatted and reviewed before completing the commit. | Git has a box. You put ready changes in the box. Then you save the box. |
 | Malay | Kawasan staging ialah kawasan perantaraan di mana komit boleh diformat dan disemak sebelum komit diselesaikan. | Git ada satu kotak. Masukkan perubahan yang dah siap. Lepas tu, simpan kotak tu. |

@@ -15,8 +15,10 @@ interface Props {
   idPrefix?: string;
   /** Position in a .pop-in list (1, 2, …): staggers the entrance in older browsers. */
   index?: number | undefined;
+  /** Show the lesson list open (the map opens one world: the first, yours, or the one in the link). */
+  open?: boolean;
 }
-const { lang, courseId, world, compact = false, hidden = false, idPrefix = '', index } = Astro.props;
+const { lang, courseId, world, compact = false, hidden = false, idPrefix = '', index, open = false } = Astro.props;
 const ready = readyCount(world);
 const firstReady = world.lessons.findIndex((l) => l.status === 'ready');
 // Capstone missions are extra: "10 lessons" plus an M1 tag.
@@ -61,13 +63,30 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
   </header>
   <p class="island-summary">{world.summary[lang]}</p>
   <p class="island-meta">
-    {t(lang, 'map.lessons', { n: total })}
-    {ready === 0 ? ` · ${t(lang, 'map.soon')}` : <span data-island-progress> · {t(lang, 'map.progress', { done: 0, total: ready })}</span>}
+    {
+      ready === 0 ? (
+        `${t(lang, 'map.lessons', { n: total })} · ${t(lang, 'map.soon')}`
+      ) : (
+        // The lesson count is on the "Show 12 lessons" button; here only the progress.
+        <span data-island-progress data-bare>
+          {t(lang, 'map.progress', { done: 0, total: ready })}
+        </span>
+      )
+    }
   </p>
   {
     !compact && (
-      <details class="island-lessons" open={ready > 0 && world.id <= 2}>
-        <summary>{ready === 0 ? t(lang, 'map.lessonPlan', { n: total }) : t(lang, 'map.lessons', { n: total })}</summary>
+      <details class="island-lessons" open={open && ready > 0}>
+        <summary>
+          {ready === 0 ? (
+            t(lang, 'map.lessonPlan', { n: total })
+          ) : (
+            <>
+              <span class="when-closed">{t(lang, 'map.showLessons', { n: total })}</span>
+              <span class="when-open">{t(lang, 'map.hideLessons')}</span>
+            </>
+          )}
+        </summary>
         <ol class:list={['path', { 'all-soon': ready === 0 }]} role="list">
           {world.lessons.map((l, i) => (
             <li class:list={['lesson-row', { 'lesson-mission': l.mission }]} data-lesson-row={l.id}>
@@ -246,6 +265,7 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
   }
   .island-summary {
     margin-bottom: var(--space-1);
+    font-size: var(--text-s);
   }
   .island-meta {
     font-size: var(--text-s);
@@ -256,12 +276,46 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     font-size: var(--text-s);
     color: var(--color-text-muted);
   }
+  /* "Show 12 lessons": a clear pill button with a little arrow that turns when open. */
   .island-lessons summary {
-    cursor: pointer;
-    font-weight: var(--weight-bold);
-    min-height: var(--tap);
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap);
+    padding: 0 var(--space-4);
+    border: 2px solid var(--outline);
+    border-radius: var(--radius-pill);
+    background: var(--isl-soft);
+    color: var(--isl-ink);
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+    cursor: pointer;
+    list-style: none;
+  }
+  .island-lessons summary::-webkit-details-marker {
+    display: none;
+  }
+  .island-lessons summary::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 2.5px solid currentColor;
+    border-bottom: 2.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .island-lessons[open] summary::after {
+    transform: translateY(2px) rotate(-135deg);
+  }
+  .island-lessons[open] summary {
+    margin-bottom: var(--space-3);
+  }
+  .when-open,
+  .island-lessons[open] .when-closed {
+    display: none;
+  }
+  .island-lessons[open] .when-open {
+    display: inline;
   }
   /* The quest path: round stops on a dotted trail, in order. */
   .path {
@@ -326,11 +380,7 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     color: var(--color-text-muted);
     margin-right: auto;
   }
-  .lesson-boss {
-    font-style: italic;
-  }
   .lesson-boss .stop {
-    font-style: normal;
     font-size: var(--text-s);
   }
   .all-soon .lesson-row {

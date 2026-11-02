@@ -85,7 +85,7 @@ test('certification map: ten exams, world links, prices note and progress from t
   await expect(page.locator('[data-cert-group="ship-it"] .cert-code')).toHaveText(['KCNA', 'CKAD', 'GH-200', 'CKA', 'CKS']);
   await expect(page.locator('[data-cert-group="level-up"] .cert-code')).toHaveText(['LFCS', 'PCA', 'Terraform', 'CLF-C02', 'SAA-C03']);
   await expect(page.getByText('Prices change. Check the official page, and look for a discount first.')).toBeVisible();
-  await expect(page.getByText('FahamLah is not linked to these exams')).toBeVisible();
+  await expect(page.getByText('Belajar Sendiri is not linked to these exams')).toBeVisible();
   const kcna = page.locator('[data-cert="kcna"]');
   await expect(kcna).toContainText('USD 250');
   await expect(kcna.locator('[data-cert-text]')).toHaveText(/^2 of \d+ lessons done$/);

@@ -1,4 +1,4 @@
-// Core types for the FahamLah conveyor simulator (CI/CD pipelines).
+// Core types for the Belajar Sendiri conveyor simulator (CI/CD pipelines).
 // The engine is pure TypeScript: no DOM, no React, no i18n strings.
 // Messages are i18n keys (`conveyor.*`) plus params; components translate them.
 

@@ -7,7 +7,7 @@ import Base from '~/layouts/Base.astro';
 import WorldIsland from '~/components/ui/WorldIsland.astro';
 import Mascot from '~/components/ui/Mascot.astro';
 import { LANGS, t, type Lang } from '~/i18n';
-import { familyTitle, getCourse, getCourses, partLabel, requiresHints } from '~/lib/course';
+import { familyTitle, getCourse, getCourses, partLabel, readyCount, requiresHints } from '~/lib/course';
 import { mapOrder, ROOT_COURSE } from '~/lib/catalog';
 
 export async function getStaticPaths() {
@@ -24,6 +24,9 @@ const intro = course.intro ? course.intro[lang] : `${t(lang, 'map.intro')} ${t(l
 const part = partLabel(lang, course);
 const hints = requiresHints(lang, course, all);
 const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status !== 'ready') && w.boss?.status !== 'ready');
+const worlds = mapOrder(course.worlds);
+// One world starts open: the first one with lessons. The script below opens yours instead, or the one in the link.
+const firstOpen = worlds.find((w) => readyCount(w) > 0)?.id;
 ---
 
 <Base lang={lang} title={isRoot ? `${t(lang, 'map.title')}: ${course.title[lang]}` : heading} altPath={`/${other}/${courseId}/`} stage>
@@ -45,9 +48,13 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
       </div>
       {course.hat && <div class="map-mascot" aria-hidden="true"><Mascot lang={lang} hat={course.hat} size={96} /></div>}
     </header>
-    <div class="map-grid pop-in">
-      {mapOrder(course.worlds).map((w, i) => <WorldIsland lang={lang} courseId={courseId} world={w} index={i + 1} />)}
-    </div>
+    <ol class="map-path pop-in" role="list">
+      {worlds.map((w, i) => (
+        <li style={`--sibling-index: ${i + 1}`}>
+          <WorldIsland lang={lang} courseId={courseId} world={w} open={w.id === firstOpen} />
+        </li>
+      ))}
+    </ol>
   </div>
 </Base>
 
@@ -63,7 +70,7 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
     const target = /^#world-(\d+)$/.exec(location.hash)?.[0]?.slice(1);
     const resume = $progress.get().resume?.lessonId;
     const current = resume ? document.querySelector(`[data-lesson-row="${CSS.escape(resume)}"]`)?.closest('[data-island]')?.id : undefined;
-    if (!target && !current) return; // first visit: keep the default (first worlds open)
+    if (!target && !current) return; // first visit: keep the default (the first world open)
     for (const isl of document.querySelectorAll<HTMLElement>('[data-island]')) {
       const list = isl.querySelector<HTMLDetailsElement>('details.island-lessons');
       if (list) list.open = isl.id === target || isl.id === current;
@@ -75,7 +82,9 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
 </script>
 
 <style>
+  /* One tidy column: the worlds in order, joined by a dotted trail. */
   .map {
+    max-width: 52rem;
     padding-block: var(--space-5);
   }
   .map-head {
@@ -122,10 +131,24 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
       display: none;
     }
   }
-  .map-grid {
+  .map-path {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
     gap: var(--space-5);
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-    align-items: start;
+  }
+  /* The trail runs behind the cards and shows in the gaps between them. */
+  .map-path::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--space-4) + 26px);
+    top: var(--space-5);
+    bottom: var(--space-5);
+    border-left: 5px dotted var(--on-stage-muted);
+  }
+  .map-path > li {
+    position: relative;
   }
 </style>

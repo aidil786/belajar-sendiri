@@ -1,4 +1,4 @@
-# Writing FahamLah lessons
+# Writing Belajar Sendiri lessons
 
 This is the practical guide for lesson files. The rules come from `docs/PLAN.md` (§3 ADHD rules, §4 writing rules, §6 lesson anatomy). The gold-standard example is `src/content/courses/git/w01-save-points/03-the-box/`. Copy its shape.
 

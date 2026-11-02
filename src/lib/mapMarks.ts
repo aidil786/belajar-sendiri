@@ -29,7 +29,9 @@ export function applyMapMarks(doneTemplate: string): void {
       const ids = (isl.dataset.lessons ?? '').split(',').filter(Boolean);
       const n = ids.filter((id) => done.has(id)).length;
       const prog = isl.querySelector<HTMLElement>('[data-island-progress]');
-      if (prog && ids.length) prog.textContent = ` · ${doneTemplate.replace('{done}', String(n)).replace('{total}', String(ids.length))}`;
+      // A bare progress (world map cards) has no " · " in front: it stands on its own line.
+      const text = doneTemplate.replace('{done}', String(n)).replace('{total}', String(ids.length));
+      if (prog && ids.length) prog.textContent = prog.hasAttribute('data-bare') ? text : ` · ${text}`;
       const star = isl.querySelector<HTMLElement>('[data-island-done]');
       if (star) star.hidden = !(ids.length > 0 && n === ids.length);
     }

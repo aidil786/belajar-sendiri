@@ -144,7 +144,7 @@ function writeNodeApp(dir: string) {
     ].join('\n'),
   );
   writeFileSync(join(dir, 'test/menu.test.js'), "import { test } from 'node:test';\ntest('menu has items', () => {});\n");
-  writeFileSync(join(dir, 'README.md'), '# Kedai API\n\nA tiny shop API for the FahamLah size measurements.\n');
+  writeFileSync(join(dir, 'README.md'), '# Kedai API\n\nA tiny shop API for the Belajar Sendiri size measurements.\n');
   return { prod, all };
 }
 

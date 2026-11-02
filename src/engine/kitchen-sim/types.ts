@@ -1,4 +1,4 @@
-// Core types for the FahamLah kitchen simulator (Docker Engine 29.x + Compose v5).
+// Core types for the Belajar Sendiri kitchen simulator (Docker Engine 29.x + Compose v5).
 // Pure TypeScript: no DOM, no React, no i18n strings. The state is plain data, so
 // structuredClone copies it and lessons can save it.
 import type { Line } from '../git-sim/types';

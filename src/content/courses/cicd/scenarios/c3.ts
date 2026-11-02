@@ -496,7 +496,7 @@ export const c3: ConveyorScenario[] = [
     // l06: this site's pipeline. Pull requests check; only a push to main deploys.
     id: 'c3-this-site',
     workflow: thisSite,
-    repo: { owner: 'you', name: 'fahamlah' },
+    repo: { owner: 'you', name: 'belajar-sendiri' },
     secrets: ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID'],
     events: ['push-main', 'pr', 'push-branch'],
     expect: { 'push-main': 'success', pr: 'success', 'push-branch': 'success' },

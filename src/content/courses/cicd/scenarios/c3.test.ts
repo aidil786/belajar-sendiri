@@ -57,7 +57,7 @@ describe('C3 scenarios', () => {
     const s = byId('c3-this-site');
     const main = runScenario(s, 'push-main');
     expect(job(main, 'deploy').result).toBe('success');
-    expect(logOf(main, 'deploy')).toContain('Uploaded fahamlah');
+    expect(logOf(main, 'deploy')).toContain('Uploaded belajar-sendiri');
     for (const e of ['pr', 'push-branch'] as EventPreset[]) expect(job(runScenario(s, e), 'deploy').result).toBe('skipped');
     expect(checkConveyorProps({ task: { type: 'event', job: 'deploy', result: 'skipped' } }, s)).toEqual([]);
   });

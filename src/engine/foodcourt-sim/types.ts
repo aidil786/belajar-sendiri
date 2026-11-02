@@ -1,4 +1,4 @@
-// Core types for the FahamLah food-court simulator (Kubernetes 1.37).
+// Core types for the Belajar Sendiri food-court simulator (Kubernetes 1.37).
 // Pure TypeScript: no DOM, no React, no UI strings (explanations are i18n keys).
 //
 // Story words: a cluster is the food court, a node is a stall, a pod is a tray,

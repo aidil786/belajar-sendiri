@@ -1,4 +1,4 @@
-// Core types for the FahamLah Linux simulator: a small Debian 13 server ("kedai").
+// Core types for the Belajar Sendiri Linux simulator: a small Debian 13 server ("kedai").
 // Pure TypeScript: no DOM, no React, no i18n strings. The state is plain data, so
 // structuredClone copies it and lessons can save it.
 import type { Line } from '../git-sim/types';

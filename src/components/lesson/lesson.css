@@ -2,7 +2,7 @@
 .lesson-shell {
   max-width: var(--card-max);
   margin: 0 auto;
-  padding: 0 var(--gutter) 140px;
+  padding: 0 var(--gutter) var(--space-5);
   /* The card slides in from 32px to the side; clip it so a phone never scrolls sideways.
      The gutter keeps the card's shadow inside. Tooltips use the top layer, so they are not cut. */
   overflow-x: clip;
@@ -236,10 +236,11 @@
   --focus-ring: var(--color-focus);
 }
 
-/* The card itself sits on the stage: its focus ring is sun yellow. */
+/* The card gets focus only so screen readers start reading it (tabindex="-1", never a Tab stop):
+   no ring around the whole card. Buttons and fields inside keep their rings. */
+.lesson-card:focus,
 .lesson-card:focus-visible {
-  outline: 4px solid var(--candy-sun);
-  outline-offset: 4px;
+  outline: none;
 }
 
 @media (min-width: 560px) {
@@ -401,6 +402,11 @@
   color: var(--color-text-muted);
 }
 
+/* Room under the lesson (and the focus-sprint pill after it) for the fixed controls bar. */
+main:has(> .lesson-shell) {
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+}
+
 /* Win card extras: a second sticker under the card. */
 .win-extras {
   margin-top: var(--space-5);
@@ -418,8 +424,8 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   color: var(--deco-staging);
 }
 
@@ -485,7 +491,11 @@
   font-family: var(--font-head);
   font-size: var(--text-xxl);
   font-weight: var(--weight-head);
-  margin: var(--space-2) auto;
+  margin: 0 auto var(--space-3);
+}
+
+.win-xp:empty {
+  display: none;
 }
 
 .win-badges {
@@ -505,17 +515,20 @@
   font-weight: var(--weight-bold);
 }
 
+/* "How was this lesson?": one quiet row under the buttons. Optional. */
 .vote {
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-m);
-  padding: var(--space-3) var(--space-4);
-  margin: 0 auto var(--space-5);
+  border: 0;
+  border-top: 2px dashed var(--color-border);
+  padding: var(--space-2) 0 0;
+  margin: var(--space-5) auto 0;
   max-width: 30rem;
 }
 
 .vote legend {
-  font-weight: var(--weight-bold);
+  margin-inline: auto;
   padding-inline: var(--space-2);
+  font-size: var(--text-s);
+  color: var(--color-text-muted);
 }
 
 .vote-options {
@@ -526,8 +539,10 @@
 }
 
 .vote-btn {
-  min-height: var(--tap);
+  min-height: 40px;
+  padding-inline: var(--space-4);
   font-size: var(--text-s);
+  box-shadow: var(--lift-s);
 }
 
 .vote-btn[aria-pressed='true'] {
@@ -544,7 +559,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .win-docs {

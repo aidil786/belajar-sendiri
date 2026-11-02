@@ -28,7 +28,7 @@ const sorted = [...terms].sort((a, b) => a[lang].term.localeCompare(b[lang].term
       <span>{t(lang, 'glossary.filter')}</span>
       <input type="search" data-filter autocomplete="off" />
     </label>
-    <dl class="glossary">
+    <dl class="glossary card-list">
       {
         sorted.map((term) => (
           <div class="g-item" id={term.id} data-g-item data-text={`${term.en.term} ${term.ms.term} ${term[lang].meaning}`.toLowerCase()}>
@@ -39,7 +39,9 @@ const sorted = [...terms].sort((a, b) => a[lang].term.localeCompare(b[lang].term
             <dd>{term[lang].meaning}</dd>
             {lang === 'en' && (
               <dd class="g-other" lang="ms">
-                <span>{t(lang, 'glossary.inBm')}:</span> {term.ms.term}: {term.ms.meaning}
+                <span class="g-label">{t(lang, 'glossary.inBm')}:</span>{' '}
+                {term.ms.term !== term.en.term && <strong class="g-term">{term.ms.term}: </strong>}
+                {term.ms.meaning}
               </dd>
             )}
           </div>
@@ -73,30 +75,41 @@ const sorted = [...terms].sort((a, b) => a[lang].term.localeCompare(b[lang].term
   }
   .filter input {
     min-height: var(--tap);
-    border-radius: var(--radius-s);
-    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--outline);
     background: var(--color-surface);
-    padding: 0 var(--space-3);
+    padding: 0 var(--space-4);
   }
+  /* One white card; each word is a row with a thin line above it. */
   .glossary {
     margin: 0;
-    display: grid;
-    gap: var(--space-3);
+    padding: var(--space-1) var(--space-4);
+    background: var(--color-surface);
+    border: 2px solid var(--outline);
+    border-radius: var(--radius-l);
+    box-shadow: var(--lift-s);
   }
   .g-item {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-m);
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-3) 0;
+    border-top: 1.5px solid var(--color-border);
+    scroll-margin-top: calc(var(--topbar-h) + var(--space-4));
+  }
+  .g-item:first-child {
+    border-top: 0;
+  }
+  .g-item[hidden] {
+    display: none;
   }
   dt {
-    font-weight: var(--weight-bold);
+    font-family: var(--font-head);
+    font-weight: var(--weight-head);
     font-size: var(--text-l);
   }
   dd {
     margin: 0;
   }
   .g-en {
+    font-family: var(--font-body);
     font-weight: var(--weight-normal);
     color: var(--color-text-muted);
     font-size: var(--text-s);
@@ -105,5 +118,11 @@ const sorted = [...terms].sort((a, b) => a[lang].term.localeCompare(b[lang].term
     margin-top: var(--space-1);
     font-size: var(--text-s);
     color: var(--color-text-muted);
+  }
+  .g-label {
+    font-weight: var(--weight-bold);
+  }
+  .g-term {
+    color: var(--color-text);
   }
 </style>

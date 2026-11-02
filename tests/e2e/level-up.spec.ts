@@ -158,20 +158,18 @@ test('top bar: the course switcher lists Level Up and its parts; tools follow th
   await expect(page.locator('[data-tool-link="map"]')).toHaveAttribute('aria-current', 'page');
 });
 
-test('home: a Level Up card with its four parts, a first-step tip and the overview link', async ({ page }) => {
+test('home: a Level Up card with its four parts, Start at Linux and the overview link', async ({ page }) => {
   await page.goto('/en/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Linux and the cloud');
   const card = page.locator('.catalog [data-course-card="level-up"]');
   await expect(card.getByRole('heading', { level: 3, name: 'Level Up' })).toBeVisible();
   await expect(card.locator('.part-row')).toHaveCount(4);
-  await expect(card).toContainText('New here? Linux needs no other course first.');
-  await expect(card).toContainText('Part 4 · Pusat Beli-belah: Tip: best after Linux & Networking, World L3.');
   for (const c of COURSES) {
     const row = card.locator(`.part-row[data-course-card="${c.id}"]`);
     await expect(row.getByRole('link', { name: c.title, exact: true })).toHaveAttribute('href', `/en/${c.id}/`);
-    await expect(row).not.toContainText('Coming soon');
-    await expect(row.locator(`[data-mascot][data-hat="${c.hat}"]`)).toHaveCount(1);
   }
+  // Linux needs no other course first, so Start begins there.
+  await expect(card.locator('[data-course-go="level-up"]')).toHaveAttribute('href', /^\/en\/linux\//);
   await card.getByRole('link', { name: /See the map/ }).click();
   await expect(page).toHaveURL(/\/en\/level-up\/$/);
   // Ship It's card is still there, before Level Up.

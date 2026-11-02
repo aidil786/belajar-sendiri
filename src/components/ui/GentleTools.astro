@@ -4,11 +4,13 @@
 import { t, type Lang } from '~/i18n';
 interface Props {
   lang: Lang;
+  /** Pages with the top bar: line up with the page content (lessons line up with the card). */
+  wide?: boolean;
 }
-const { lang } = Astro.props;
+const { lang, wide = false } = Astro.props;
 ---
 
-<div class="gentle" data-gentle>
+<div class:list={['gentle', { 'gentle-wide': wide }]} data-gentle>
   <div class="gentle-nudge" data-nudge hidden role="status">
     <span aria-hidden="true">🌿</span>
     <p>{t(lang, 'nudge.text')}</p>
@@ -106,6 +108,13 @@ const { lang } = Astro.props;
     display: grid;
     gap: var(--space-2);
   }
+  .gentle-wide {
+    max-width: 64rem;
+  }
+  /* Nothing to show (sprint off, no nudge): no empty gap. */
+  .gentle:not(:has(> :not([hidden]):not(template))) {
+    display: none;
+  }
   .gentle-nudge {
     display: flex;
     flex-wrap: wrap;
@@ -125,10 +134,12 @@ const { lang } = Astro.props;
     justify-content: flex-end;
   }
   .sprint-btn {
-    min-height: 40px;
-    font-size: var(--text-s);
-    font-weight: var(--weight-normal);
-    padding: var(--space-1) var(--space-4);
+    min-height: 36px;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    padding: 0 var(--space-3);
+    box-shadow: var(--lift-s);
   }
   .sprint-done {
     margin: 0;

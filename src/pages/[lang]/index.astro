@@ -1,16 +1,15 @@
 ---
 import { safeJson } from '~/lib/safe-json';
-// Home: the biggest button is "Continue" (it resumes the exact card, in any course).
-// Below it: today, badges, the course catalog (Git & GitHub; Ship It with its three parts; Level Up
-// with its four) and a preview of the worlds of the course the learner is working on.
+// Home, kept short: a headline, three big buttons ("Continue" is the biggest; it resumes the exact
+// card, in any course), one small "today" row, badges once there are some, and three equal course
+// cards (Git & GitHub, Ship It, Level Up). Tips and per-part details live on each course's own page.
 import Base from '~/layouts/Base.astro';
 import Mascot from '~/components/ui/Mascot.astro';
-import WorldIsland from '~/components/ui/WorldIsland.astro';
 import Icon from '~/components/ui/Icon.astro';
 import { LANGS, t, type Lang } from '~/i18n';
-import { badgeNames, flatten, getCourses, itemUrl, partLabel, placementItem, requiresHints, type Course } from '~/lib/course';
+import { badgeNames, flatten, getCourses, itemUrl, placementItem, type Course } from '~/lib/course';
 import { getReviewIndex } from '~/lib/content';
-import { FAMILIES, familyKeys, LEVEL_UP, mapOrder, ROOT_COURSE } from '~/lib/catalog';
+import { FAMILIES, familyKeys, mapOrder, ROOT_COURSE } from '~/lib/catalog';
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -40,10 +39,15 @@ const strings = {
   courseProgress: t(lang, 'catalog.progress'),
   courseContinue: t(lang, 'catalog.continue'),
 };
-// lesson id → [course id, world id], so the world preview shows the learner's course and world.
+// lesson id → [course id, world id]: which course the learner is in.
 const worldOf = Object.fromEntries(courses.flatMap((c) => flatten(c).map((x) => [x.id, [c.id, x.world.id]])));
-// Per course: its ready lessons (for "3 of 40 lessons done").
-const courseLessons = Object.fromEntries(courses.map((c) => [c.id, ready(c).map((x) => x.id)]));
+// Per course and per family: its ready lessons (for "3 of 40 lessons done").
+const courseLessons = Object.fromEntries([
+  ...courses.map((c) => [c.id, ready(c).map((x) => x.id)]),
+  ...families.map((f) => [f.id, f.parts.flatMap((c) => ready(c).map((x) => x.id))]),
+]);
+// course id → family id, so a family card says "Continue" when you are in one of its parts.
+const familyOf = Object.fromEntries(courses.filter((c) => c.family).map((c) => [c.id, c.family]));
 // "Pick for me": per course, its worlds in map order, each with its ready lessons (no tests, no missions).
 const picks = Object.fromEntries(
   courses.map((c) => [
@@ -55,8 +59,6 @@ const picks = Object.fromEntries(
     ),
   ]),
 );
-const PREVIEW = 5;
-const previewCourses = courses.filter((c) => ready(c).length > 0);
 const data = {
   titles,
   badgeNames: badgeNames(lang, courses),
@@ -65,11 +67,17 @@ const data = {
   review: await getReviewIndex(),
   worldOf,
   courseLessons,
-  preview: PREVIEW,
+  familyOf,
   picks,
   root: ROOT_COURSE,
 };
-const startOf = (c: Course) => ready(c)[0];
+// The Git card lists its first worlds, like the family cards list their parts.
+const gitWorlds = mapOrder(root.worlds).slice(0, 4);
+// A family starts at the first lesson of its first part that has one.
+const familyStart = (parts: Course[]) => {
+  const c = parts.find((x) => ready(x).length > 0);
+  return c ? itemUrl(lang, c.id, ready(c)[0]!) : undefined;
+};
 ---
 
 <Base lang={lang} title={t(lang, 'site.name')} altPath={`/${other}/`} stage>
@@ -112,13 +120,6 @@ const startOf = (c: Course) => ready(c)[0];
       <template data-continue-label>{t(lang, 'home.continue')}</template>
     </div>
     <p class="cta-more">
-      {
-        placement && (
-          <a class="cta-placement" href={itemUrl(lang, ROOT_COURSE, placement)} data-placement>
-            {t(lang, 'home.placement')}
-          </a>
-        )
-      }
       <a class="cta-review" href={`/${lang}/review/`} data-review-link hidden>
         <Icon name="review" size={20} />
         <span data-review-label></span>
@@ -134,114 +135,87 @@ const startOf = (c: Course) => ready(c)[0];
       </div>
     </form>
 
-    <section class="today" aria-labelledby="today-h">
-      <h2 id="today-h">{t(lang, 'home.today')}</h2>
-      <ul class="stats pop-in">
+    <section class="today" aria-labelledby="today-h" data-today hidden>
+      <h2 id="today-h" class="today-h">{t(lang, 'home.today')}</h2>
+      <ul class="stats">
         <li data-stat-minutes>{t(lang, 'home.minutesToday', { n: 0 })}</li>
         <li data-stat-lessons>{t(lang, 'home.lessonsDone', { n: 0 })}</li>
         <li class="calm-hide" data-stat-xp>{t(lang, 'home.xp', { n: 0 })}</li>
         <li data-stat-streak>{t(lang, 'streak.none')}</li>
       </ul>
       <p class="rest" data-stat-rest></p>
-      <h3 class="badges-h">{t(lang, 'badges.title')}</h3>
-      <ul class="badges" data-badges><li class="badges-none">{t(lang, 'badges.none')}</li></ul>
+    </section>
+
+    <section class="badges-box" aria-labelledby="badges-h" data-badges-box hidden>
+      <h2 id="badges-h" class="badges-h">{t(lang, 'badges.title')}</h2>
+      <ul class="badges" data-badges></ul>
     </section>
 
     <section class="catalog" aria-labelledby="catalog-h">
       <h2 id="catalog-h">{t(lang, 'catalog.title')}</h2>
       <div class="catalog-grid pop-in">
-        <article class="course-card sticker" data-course-card={root.id}>
+        <article class="course-card sticker" data-course-card={root.id} style="--sibling-index: 1">
           <h3 class="course-title">{root.title[lang]}</h3>
-          <p>{root.summary[lang]}</p>
+          <p class="course-text">{root.summary[lang]}</p>
+          <ol class="parts">
+            {gitWorlds.map((w) => (
+              <li class="part-row" style={`--part: var(--deco-${w.color}, var(--brand-a))`}>
+                <a href={`/${lang}/${root.id}/#world-${w.id}`}>{w.title[lang]}</a>
+              </li>
+            ))}
+          </ol>
+          {
+            placement && (
+              <a class="course-placement" href={itemUrl(lang, ROOT_COURSE, placement)} data-placement>
+                {t(lang, 'home.placement')}
+              </a>
+            )
+          }
           <p class="course-progress" data-course-progress={root.id}>
             {t(lang, 'catalog.progress', { done: 0, total: courseLessons[root.id]!.length })}
           </p>
           <div class="course-actions">
             <a class="btn" href={itemUrl(lang, root.id, first)} data-course-go={root.id}>{t(lang, 'catalog.start')}</a>
-            <a class="course-map" href={`/${lang}/${root.id}/`}>{t(lang, 'catalog.seeMap')}</a>
+            <a class="course-map" href={`/${lang}/${root.id}/`}>
+              {t(lang, 'catalog.seeMap')}
+              <span class="visually-hidden">: {root.title[lang]}</span>
+            </a>
           </div>
         </article>
 
         {
-          families.map((fam) => (
-            <article class="course-card family-card sticker" data-course-card={fam.id}>
-              <p class="course-sub">{t(lang, fam.keys.subtitle)}</p>
-              <h3 class="course-title">{t(lang, fam.keys.title)}</h3>
-              <p>{t(lang, fam.keys.summary)}</p>
-              <ul class="hints">
-                {fam.id === LEVEL_UP && <li>{t(lang, 'levelup.startHere')}</li>}
-                {fam.parts.flatMap((c) => requiresHints(lang, c, courses).map((h) => <li>{partLabel(lang, c)}: {h}</li>))}
-              </ul>
-              <ol class="parts">
-                {fam.parts.map((c) => {
-                  const start = startOf(c);
-                  const test = placementItem(c);
-                  return (
+          families.map((fam, i) => {
+            const start = familyStart(fam.parts);
+            return (
+              <article class="course-card family-card sticker" data-course-card={fam.id} style={`--sibling-index: ${i + 2}`}>
+                <h3 class="course-title">{t(lang, fam.keys.title)}</h3>
+                <p class="course-text">{t(lang, fam.keys.summary)}</p>
+                <ol class="parts">
+                  {fam.parts.map((c) => (
                     <li class="part-row" data-course-card={c.id} style={`--part: var(--course-${c.id}, var(--brand-a))`}>
-                      {c.hat && (
-                        <span class="part-mascot" aria-hidden="true">
-                          <Mascot lang={lang} hat={c.hat} size={48} />
-                        </span>
-                      )}
-                      <div class="part-body">
-                        <p class="part-label">{partLabel(lang, c)}</p>
-                        <h4 class="part-title">
-                          <a href={`/${lang}/${c.id}/`}>{c.title[lang]}</a>
-                        </h4>
-                        {start ? (
-                          <>
-                            <p class="course-progress" data-course-progress={c.id}>
-                              {t(lang, 'catalog.progress', { done: 0, total: courseLessons[c.id]!.length })}
-                            </p>
-                            <div class="course-actions">
-                              <a class="btn btn-ghost" href={itemUrl(lang, c.id, start)} data-course-go={c.id}>
-                                {t(lang, 'catalog.start')}
-                              </a>
-                              {test && (
-                                <a class="course-map" href={itemUrl(lang, c.id, test)}>
-                                  {t(lang, 'catalog.placement', { topic: c.title[lang] })}
-                                </a>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <p class="part-soon">{t(lang, 'map.soon')}</p>
-                        )}
-                      </div>
+                      <a href={`/${lang}/${c.id}/`}>{c.title[lang]}</a>
                     </li>
-                  );
-                })}
-              </ol>
-              <a class="course-map" href={`/${lang}/${fam.id}/`}>
-                {t(lang, 'catalog.seeMap')}
-                <span class="visually-hidden">: {t(lang, fam.keys.title)}</span> →
-              </a>
-            </article>
-          ))
+                  ))}
+                </ol>
+                <p class="course-progress" data-course-progress={fam.id}>
+                  {t(lang, 'catalog.progress', { done: 0, total: courseLessons[fam.id]!.length })}
+                </p>
+                <div class="course-actions">
+                  {start && (
+                    <a class="btn" href={start} data-course-go={fam.id}>
+                      {t(lang, 'catalog.start')}
+                    </a>
+                  )}
+                  <a class="course-map" href={`/${lang}/${fam.id}/`}>
+                    {t(lang, 'catalog.seeMap')}
+                    <span class="visually-hidden">: {t(lang, fam.keys.title)}</span>
+                  </a>
+                </div>
+              </article>
+            );
+          })
         }
       </div>
-    </section>
-
-    <section class="worlds" aria-labelledby="worlds-h">
-      <div class="worlds-head">
-        <h2 id="worlds-h">{t(lang, 'home.worlds')}</h2>
-        {
-          previewCourses.map((c, i) => (
-            <a href={`/${lang}/${c.id}/`} data-preview-link={c.id} hidden={i > 0}>
-              {t(lang, 'home.seeMap')} →
-            </a>
-          ))
-        }
-      </div>
-      {
-        previewCourses.map((c, i) => (
-          <div class="worlds-grid" data-preview={c.id} hidden={i > 0}>
-            {mapOrder(c.worlds).map((w, j) => (
-              <WorldIsland lang={lang} courseId={c.id} world={w} compact hidden={j >= PREVIEW} idPrefix={c.id === ROOT_COURSE ? '' : `${c.id}-`} />
-            ))}
-          </div>
-        ))
-      }
     </section>
   </div>
   <script type="application/json" data-home-data set:html={safeJson(data)} />
@@ -249,7 +223,6 @@ const startOf = (c: Course) => ready(c)[0];
 
 <script>
   import { format } from '~/i18n';
-  import { applyMapMarks } from '~/lib/mapMarks';
   import { decodeSlots, dueToday } from '~/lib/review';
   import { $progress, dayKey, learnedLessons, setName, streakInfo, update } from '~/stores/progress';
 
@@ -258,20 +231,6 @@ const startOf = (c: Course) => ready(c)[0];
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel);
   const reviewSlots = decodeSlots(data.review);
   const where = (lessonId: string | undefined) => (lessonId ? (data.worldOf[lessonId] as [string, number] | undefined) : undefined);
-
-  // World preview: the learner's course, 5 islands, starting at their current world.
-  const showWorlds = (lessonId: string | undefined) => {
-    const [course, worldId] = where(lessonId) ?? [];
-    const grids = [...document.querySelectorAll<HTMLElement>('[data-preview]')];
-    const grid = grids.find((g) => g.dataset.preview === course) ?? grids[0];
-    if (!grid) return;
-    for (const g of grids) g.hidden = g !== grid;
-    for (const a of document.querySelectorAll<HTMLElement>('[data-preview-link]')) a.hidden = a.dataset.previewLink !== grid.dataset.preview;
-    const islands = [...grid.querySelectorAll<HTMLElement>('[data-island]')];
-    const at = Math.max(0, islands.findIndex((el) => el.id.endsWith(`world-${worldId}`)));
-    const start = Math.max(0, Math.min(at, islands.length - data.preview));
-    islands.forEach((el, i) => (el.hidden = i < start || i >= start + data.preview));
-  };
 
   // "Pick for me": a random lesson you have not done, from the first world with one left,
   // in the course you are working on (else the first course, else any course).
@@ -301,6 +260,8 @@ const startOf = (c: Course) => ready(c)[0];
       $('[data-cta-sub]')!.textContent = format(s.continueWhere!, { lesson: data.titles[p.resume.lessonId], card: p.resume.cardIndex + 1 });
     }
     const today = dayKey();
+    // A brand-new visitor sees no row of zeros: "Today" shows up once they have started.
+    $('[data-today]')!.hidden = !(p.days.length || p.completed.length || p.xp || (p.minutes[today] ?? 0) > 0);
     $('[data-stat-minutes]')!.textContent = format(s.minutes!, { n: Math.round(p.minutes[today] ?? 0) });
     $('[data-stat-lessons]')!.textContent = format(s.lessons!, { n: p.completed.length });
     $('[data-stat-xp]')!.textContent = format(s.xp!, { n: p.xp });
@@ -308,7 +269,9 @@ const startOf = (c: Course) => ready(c)[0];
     $('[data-stat-streak]')!.textContent = st.learningDays === 0 ? s.none! : st.learningDays === 1 ? s.oneDay! : format(s.days!, { n: st.learningDays });
     $('[data-stat-rest]')!.textContent = p.days.length ? format(s.rest!, { n: st.restLeft }) : '';
     $('[data-welcome]')!.hidden = !st.welcomeBack;
+    // Badges: the box shows up with the first badge. Before that, nothing (no empty shelf).
     const badges = $('[data-badges]')!;
+    $('[data-badges-box]')!.hidden = p.badges.length === 0;
     if (p.badges.length) {
       badges.replaceChildren(
         ...p.badges.map((b) => {
@@ -322,11 +285,12 @@ const startOf = (c: Course) => ready(c)[0];
     // Each course card: progress, and "Continue" where the learner stopped in that course.
     const done = new Set(p.completed);
     const resumeCourse = where(p.resume?.lessonId)?.[0];
+    const resumeFamily = resumeCourse ? (data.familyOf as Record<string, string>)[resumeCourse] : undefined;
     for (const [course, ids] of Object.entries(data.courseLessons as Record<string, string[]>)) {
       const prog = document.querySelector<HTMLElement>(`[data-course-progress="${course}"]`);
       if (prog) prog.textContent = format(s.courseProgress!, { done: ids.filter((id) => done.has(id)).length, total: ids.length });
       const go = document.querySelector<HTMLAnchorElement>(`[data-course-go="${course}"]`);
-      if (go && p.resume && resumeCourse === course && data.titles[p.resume.lessonId]) {
+      if (go && p.resume && (resumeCourse === course || resumeFamily === course) && data.titles[p.resume.lessonId]) {
         go.href = `${p.resume.path}#c=${p.resume.cardId}`;
         go.textContent = s.courseContinue!;
       }
@@ -336,7 +300,6 @@ const startOf = (c: Course) => ready(c)[0];
     const due = dueToday(reviewSlots, p.review.cards, learnedLessons(p), today).length;
     $('[data-review-link]')!.hidden = due === 0;
     $('[data-review-label]')!.textContent = due === 1 ? s.reviewOne! : format(s.reviewMany!, { n: due });
-    showWorlds(p.resume?.lessonId);
   };
 
   const form = $<HTMLFormElement>('[data-name-form]')!;
@@ -353,7 +316,6 @@ const startOf = (c: Course) => ready(c)[0];
   );
   render();
   $progress.listen(render);
-  applyMapMarks('{done}/{total}');
 </script>
 
 <style>
@@ -382,10 +344,10 @@ const startOf = (c: Course) => ready(c)[0];
     transform: rotate(-2deg);
   }
   .hero-title {
-    font-size: clamp(2.3rem, 1.4rem + 4vw, 4.2rem);
-    line-height: 1.02;
-    letter-spacing: -0.025em;
-    max-width: 18ch;
+    font-size: clamp(2rem, 1.3rem + 2.4vw, 3rem);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    max-width: 26ch;
     margin: 0 0 var(--space-3);
     text-wrap: balance;
   }
@@ -483,7 +445,7 @@ const startOf = (c: Course) => ready(c)[0];
   }
   /* Three big sticker buttons. "Continue" is the biggest (ADHD rule 10). */
   .cta {
-    margin: var(--space-4) 0 var(--space-2);
+    margin: var(--space-4) 0 var(--space-5);
     display: grid;
     gap: var(--space-4);
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
@@ -566,10 +528,13 @@ const startOf = (c: Course) => ready(c)[0];
     flex-wrap: wrap;
     gap: var(--space-1) var(--space-4);
     max-width: none;
-    margin: var(--space-3) 0 var(--space-5);
+    margin: calc(var(--space-2) * -1) 0 var(--space-5);
     font-size: var(--text-s);
   }
-  .cta-placement,
+  /* Only the "cards waiting for review" link lives here; nothing to show → no gap. */
+  .cta-more:not(:has(> :not([hidden]))) {
+    display: none;
+  }
   .cta-review {
     display: inline-flex;
     align-items: center;
@@ -580,59 +545,75 @@ const startOf = (c: Course) => ready(c)[0];
   .cta-review[hidden] {
     display: none;
   }
+  /* The name question: one slim sticker row, asked once. */
   .name-ask {
-    padding: var(--space-4);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
     margin-bottom: var(--space-5);
   }
   .name-ask label {
     font-weight: var(--weight-bold);
   }
   .name-row {
+    flex: 1 1 18rem;
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-    margin-top: var(--space-2);
   }
   .name-row input {
-    flex: 1 1 12rem;
+    flex: 1 1 10rem;
     min-height: var(--tap);
-    border-radius: var(--radius-s);
+    border-radius: var(--radius-pill);
     border: 2px solid var(--outline);
     background: var(--color-bg);
-    padding: 0 var(--space-3);
+    padding: 0 var(--space-4);
   }
   .today,
-  .catalog,
-  .worlds {
+  .badges-box,
+  .catalog {
     margin-top: var(--space-6);
   }
-  /* Today: small stickers, each with its own colour dot. */
+  /* Today: one row of small pills. */
+  .today {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+  .today-h,
+  .badges-h {
+    margin: 0;
+    font-size: var(--text-m);
+  }
   .stats {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-    gap: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
   .stats li {
     --stat: var(--candy-mint);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     background: var(--color-surface);
     color: var(--color-text);
-    border: var(--line);
-    border-radius: var(--radius-m);
-    box-shadow: var(--lift-s);
-    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--outline);
+    border-radius: var(--radius-pill);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-s);
     font-weight: var(--weight-bold);
   }
   .stats li::before {
     content: '';
     flex: none;
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--stat);
     border: 2px solid var(--outline);
@@ -647,13 +628,23 @@ const startOf = (c: Course) => ready(c)[0];
     --stat: var(--candy-coral);
   }
   .rest {
+    flex-basis: 100%;
+    margin: 0;
     font-size: var(--text-s);
     color: var(--on-stage-muted);
-    margin-top: var(--space-2);
   }
-  .badges-h {
-    margin-top: var(--space-4);
-    font-size: var(--text-m);
+  .rest:empty {
+    display: none;
+  }
+  .today[hidden],
+  .badges-box[hidden] {
+    display: none;
+  }
+  .badges-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
   }
   .badges {
     list-style: none;
@@ -668,23 +659,22 @@ const startOf = (c: Course) => ready(c)[0];
     color: var(--ink);
     border: 2px solid var(--outline);
     border-radius: var(--radius-pill);
-    box-shadow: var(--lift-s);
-    padding: var(--space-1) var(--space-4);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-s);
     font-weight: var(--weight-bold);
   }
-  .badges-none {
-    color: var(--on-stage-muted);
-    font-size: var(--text-s);
-  }
+  /* Three equal course cards, side by side; one column on phones. */
   .catalog-grid {
     display: grid;
-    gap: var(--space-5);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-    align-items: start;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    align-items: stretch;
   }
-  /* Each course is a sticker with a thick band in its colour. */
   .course-card {
     --band: var(--deco-repo);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
     border-top: 14px solid var(--band);
     padding: var(--space-4);
   }
@@ -696,18 +686,17 @@ const startOf = (c: Course) => ready(c)[0];
   }
   .course-title {
     font-size: var(--text-xl);
-    margin: 0 0 var(--space-1);
+    margin: 0;
   }
-  .course-sub {
+  .course-text {
     margin: 0;
     font-size: var(--text-s);
-    font-weight: var(--weight-bold);
-    color: var(--color-text-muted);
   }
   .course-progress {
+    margin: auto 0 0;
+    padding-top: var(--space-2);
     font-size: var(--text-s);
     color: var(--color-text-muted);
-    margin-bottom: var(--space-2);
   }
   .course-actions {
     display: flex;
@@ -722,71 +711,37 @@ const startOf = (c: Course) => ready(c)[0];
     font-size: var(--text-s);
     font-weight: var(--weight-bold);
   }
-  .hints {
-    list-style: none;
-    margin: 0 0 var(--space-3);
-    padding: 0;
+  .course-placement {
     font-size: var(--text-s);
-    color: var(--color-text-muted);
-    display: grid;
-    gap: var(--space-1);
+    font-weight: var(--weight-bold);
   }
+  /* The parts of a family (or Git's first worlds): a short list, each with its colour. */
   .parts {
     list-style: none;
-    margin: 0 0 var(--space-2);
+    margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--space-2);
+    gap: 2px;
   }
   .part-row {
     display: flex;
-    gap: var(--space-3);
-    align-items: flex-start;
-    background: var(--color-bg);
-    border: 2px solid var(--outline);
-    border-left: 8px solid var(--part, var(--color-border));
-    border-radius: var(--radius-m);
-    padding: var(--space-2) var(--space-3);
-  }
-  .part-mascot {
-    flex: none;
-  }
-  .part-body {
-    min-width: 0;
-  }
-  .part-label {
-    margin: 0;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
-    color: var(--color-text-muted);
-  }
-  .part-title {
-    margin: 0;
-    font-size: var(--text-l);
-  }
-  .part-title a {
-    display: inline-flex;
     align-items: center;
-    min-height: var(--tap);
-  }
-  .part-soon {
-    margin: 0;
-    font-size: var(--text-s);
-    color: var(--color-text-muted);
-  }
-  .worlds-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    flex-wrap: wrap;
     gap: var(--space-2);
   }
-  .worlds-head a {
-    font-weight: var(--weight-bold);
+  .part-row::before {
+    content: '';
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--part);
+    border: 2px solid var(--outline);
   }
-  .worlds-grid {
-    display: grid;
-    gap: var(--space-4);
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  .part-row a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
   }
 </style>

@@ -11,19 +11,29 @@ test('home: the catalog lists Git & GitHub and the three Ship It parts', async (
   const catalog = page.locator('.catalog');
   await expect(catalog.getByRole('heading', { name: 'Git & GitHub' })).toBeVisible();
   await expect(catalog.getByRole('heading', { name: 'Ship It' })).toBeVisible();
-  for (const [part, name] of [
-    ['Part 1 · Dapur', 'Docker'],
-    ['Part 2 · Kilang', 'CI/CD'],
-    ['Part 3 · Medan Selera', 'Kubernetes'],
-  ]) {
-    const row = catalog.locator('.part-row', { hasText: part });
-    // exact: a part with a ready placement test also links "Know some CI/CD already? …".
-    await expect(row.getByRole('link', { name, exact: true })).toBeVisible();
+  const card = catalog.locator('[data-course-card="ship-it"]');
+  for (const [id, name] of [
+    ['docker', 'Docker'],
+    ['cicd', 'CI/CD'],
+    ['kubernetes', 'Kubernetes'],
+  ] as const) {
+    await expect(card.locator(`.part-row[data-course-card="${id}"]`).getByRole('link', { name, exact: true })).toHaveAttribute('href', `/en/${id}/`);
   }
-  // A gentle tip, never a lock.
-  await expect(catalog).toContainText('best after Git & GitHub, Worlds 0–4. Not a lock.');
-  await expect(catalog).toContainText('World 7');
-  await expect(catalog.locator('[data-mascot][data-hat="chef"]')).toHaveAttribute('aria-label', "Kancil the mouse deer in a chef's hat");
+  // Home stays short: the gentle tips (never a lock) live on the Ship It page.
+  await expect(catalog).not.toContainText('Not a lock.');
+  await page.goto('/en/ship-it/');
+  await expect(page.locator('main')).toContainText('best after Git & GitHub, Worlds 0–4. Not a lock.');
+  await expect(page.locator('main')).toContainText('World 7');
+  await expect(page.locator('[data-mascot][data-hat="chef"]').first()).toHaveAttribute('aria-label', "Kancil the mouse deer in a chef's hat");
+});
+
+test('home: a family card says Continue when you are in one of its parts', async ({ page }) => {
+  await seed(page, { v: 2, resume: { lessonId: 'docker-d1-l07', cardId: 'hook', cardIndex: 0, path: '/en/docker/first-containers/port-mapping/' } });
+  await page.goto('/en/');
+  const go = page.locator('[data-course-go="ship-it"]');
+  await expect(go).toHaveText('Continue');
+  await expect(go).toHaveAttribute('href', '/en/docker/first-containers/port-mapping/#c=hook');
+  await expect(page.locator('[data-course-go="level-up"]')).toHaveText('Start');
 });
 
 test('home: Continue resumes in any course; each course card shows its own progress', async ({ page }) => {

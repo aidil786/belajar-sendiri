@@ -61,15 +61,12 @@ test('map: the link from a lesson opens that world; a returning learner sees the
   await expect(page.locator('#world-11')).toContainText('Open any time');
 });
 
-test('home: the world preview starts at the learner’s world', async ({ page }) => {
+test('home stays short: no world preview, and badges show up only once you have one', async ({ page }) => {
   await page.goto('/en/');
-  const shown = page.locator('.worlds-grid [data-island]:visible');
-  await expect(shown).toHaveCount(5);
-  await expect(shown.first()).toHaveAttribute('id', 'world-0');
-
-  await seed(page, { v: 2, resume: { lessonId: 'git-w02-l03', cardId: 'hook', cardIndex: 0, path: '/en/git/undo-magic/fix-the-last-commit/' } });
+  await expect(page.locator('[data-island]')).toHaveCount(0);
+  await expect(page.locator('[data-badges-box]')).toBeHidden();
+  await seed(page, { v: 2, badges: ['first-commit'] });
   await page.goto('/en/');
-  await expect(shown).toHaveCount(5);
-  await expect(shown.first()).toHaveAttribute('id', 'world-2');
-  await expect(shown.last()).toHaveAttribute('id', 'world-6');
+  await expect(page.locator('[data-badges-box]')).toBeVisible();
+  await expect(page.locator('[data-badges] .badge')).toHaveCount(1);
 });

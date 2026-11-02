@@ -1,0 +1,69 @@
+---
+id: docker-d4-l05
+world: 4
+title: ".env and variables"
+summary: "You will learn: to fill blanks in compose.yaml from a .env file."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SwipeJudge, Mission]
+needs: [docker-d4-l04]
+scenario: d4-env
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Interpolation", url: "https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/" }
+  - { label: "Environment variables precedence", url: "https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/" }
+  - { label: "docker compose config", url: "https://docs.docker.com/reference/cli/docker/compose/config/" }
+---
+
+<Card id="hook" type="hook">
+Your `compose.yaml` says `POSTGRES_PASSWORD: example`. You push it to a public repo. Who can read the password now?
+
+<Interactive name="Choice" options={[{ label: 'Anyone on the internet', correct: true, why: 'A public repo is open to all. So is every line in it.' }, { label: 'Only you', why: 'Public means everyone can open the file.' }, { label: 'Only your teammates', why: 'Teammates, strangers and bots can all read a public repo.' }]} />
+</Card>
+
+<Card id="see-blank" type="see">
+```yaml
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?add DB_PASSWORD to .env}
+```
+
+<Interactive name="KitchenReplay" scenario="d4-env" commands={['docker compose up -d']} fails={['docker compose up -d']} label="Compose stops before anything starts: DB_PASSWORD has no value." />
+
+An order slip with a blank. `${DB_PASSWORD}` is a blank that Compose fills in. That is **<Term id="compose-interpolation">interpolation</Term>**. `:?` means: stop if it stays empty.
+</Card>
+
+<Card id="try-env" type="try">
+Fill the blank. Put the password in a <Term id="compose-dotenv">`.env` file</Term> next to `compose.yaml`. Then start the shop.
+
+<Interactive name="KitchenSim" scenario="d4-env" keys="compose" goal={{ fileContains: { '/home/you/kedai-kancil/.env': 'DB_PASSWORD=' }, composeUp: 'kedai-kancil' }} hints={['Type echo "DB_PASSWORD=devpass" > .env', 'Then type docker compose up -d']} success="Compose read .env and filled the blank. The shop is open." />
+
+<Hint>One line makes the file: `echo "DB_PASSWORD=devpass" > .env`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The web hatch is a blank with a default: `"${WEB_PORT:-8080}:80"`. Your `.env` has no WEB_PORT line. Which hatch opens?
+
+<Interactive name="Choice" options={[{ label: '8080', correct: true, why: ':-8080 is the default. It is used when WEB_PORT is empty or missing.' }, { label: 'None: Compose stops', why: 'Only :? stops. :- quietly uses the default.' }, { label: '80', why: '80 is the port inside the box. The default fills the laptop side.' }]} />
+</Card>
+
+<Card id="check-git" type="check">
+Swipe right if it is safe to commit to Git. Swipe left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'compose.yaml with ${DB_PASSWORD} in it', good: true, why: 'It holds a blank, not the secret.' }, { text: '.env with DB_PASSWORD=devpass', good: false, why: 'Put .env in .gitignore. It holds the real value.' }, { text: '.env.example with an empty DB_PASSWORD=', good: true, why: 'It shows teammates which blanks to fill.' }, { text: 'compose.yaml with POSTGRES_PASSWORD: hunter2', good: false, why: 'A secret in Git history stays there, even after you delete it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fill blanks in compose.yaml from a .env file.
+</Card>
+
+<Card id="deeper" type="deeper">
+Shell variables beat `.env`: `WEB_PORT=9090 docker compose up -d` opens hatch 9090. `--env-file prod.env` reads another file. `env_file:` on a service is different: it hands variables to the box itself. `docker compose config` shows every blank filled in. More on real secrets: World C3.
+
+<Interactive name="Mission" id="d4-l05-rep" steps={[{ id: 'env', text: 'In your project, make a .env file.', command: 'echo "DB_PASSWORD=devpass" > .env' }, { id: 'ignore', text: 'Keep it out of Git.', command: 'echo ".env" >> .gitignore' }, { id: 'config', text: 'Dry run: see the blanks filled in.', command: 'docker compose config' }]} success="Blanks filled, secret kept at home." />
+</Card>

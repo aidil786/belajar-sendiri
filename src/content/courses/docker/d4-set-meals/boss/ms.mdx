@@ -1,0 +1,70 @@
+---
+id: docker-d4-boss
+world: 4
+title: Satu arahan, seluruh kedai
+summary: "Anda akan belajar: reka, buka dan tutup web, API, pangkalan data dan cache dengan satu arahan."
+minutes: 6
+xp: 50
+interactives: [ComposeCanvas, OrderList, KitchenSim, Choice, SwipeJudge]
+needs: [docker-d4-m1]
+scenario: d4-boss
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker Compose overview", url: "https://docs.docker.com/compose/" }
+  - { label: "Control startup order", url: "https://docs.docker.com/compose/how-tos/startup-order/" }
+  - { label: "Networking in Compose", url: "https://docs.docker.com/compose/how-tos/networking/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Kedai Kancil dibuka esok. Web, API, pangkalan data dan cache mesti hidup dengan satu arahan. Bilik 1: reka set hidangan.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Tunjuk laman kedai.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Terima pesanan.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: '${DB_PASSWORD:?add DB_PASSWORD to .env}' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '2s', retries: 10 }, means: 'Simpan pesanan.' }, { id: 'cache', image: 'redis:8-alpine', healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: '2s', retries: 10 }, means: 'Ingat menu yang laris.' }]} goal={{ services: ['web', 'api', 'db', 'cache'], volumes: { db: 'db-data' }, networks: { web: ['front'], api: ['front', 'back'], db: ['back'], cache: ['back'] }, dependsOn: { api: { db: 'service_healthy', cache: 'service_healthy' } } }} prompt="Keempat-empat hidangan. db simpan db-data. web di front, db dan cache di back, api di kedua-duanya. api tunggu db dan cache sihat." success="Bilik 1 selesai! Talian front tak pernah sampai ke pangkalan data." />
+
+<Hint>api satu-satunya hidangan di kedua-dua talian telefon.</Hint>
+</Card>
+
+<Card id="predict-order" type="predict">
+Bilik 2: ikut urutan apa Compose akan hidupkan mereka?
+
+<Interactive name="OrderList" items={['db dan cache', 'api', 'web']} label="Yang hidup dulu di atas" success="Bilik 2 selesai! Yang menunggu hidup selepas hidangan yang ditunggunya." />
+</Card>
+
+<Card id="try-up" type="try">
+Bilik 3: buka kedai dengan satu arahan. Ada baris merah? Baca dengan tenang, baiki, cuba lagi.
+
+<Interactive name="KitchenSim" scenario="d4-boss" keys="compose" goal={{ composeUp: { project: 'kedai-kancil', services: ['web', 'api', 'db', 'cache'] }, reachable: 'localhost:8080' }} hints={['Baca baris merah: tempat kosong mana yang tiada nilai?', 'Taip echo "DB_PASSWORD=devpass" > .env', 'Kemudian docker compose up -d sekali lagi.']} success="Bilik 3 selesai! Empat hidangan hidup, dan laman menjawab." />
+
+<Hint>Mula dengan `docker compose up -d`.</Hint>
+</Card>
+
+<Card id="check-logs" type="check">
+Bilik 4: laman keluar, tapi pesanan gagal. Arahan mana tunjuk apa kata API?
+
+<Interactive name="Choice" options={[{ label: 'docker compose logs api', correct: true, why: 'Log ialah kata-kata API sendiri. Mula di situ.' }, { label: 'docker compose ps', why: 'ps tunjuk keadaan, bukan apa kata API.' }, { label: 'docker compose config', why: 'config tunjuk fail, bukan apa yang berlaku.' }]} />
+</Card>
+
+<Card id="check-close" type="check">
+Bilik 5: masa tutup kedai. Leret ke kanan untuk cara tutup yang selamat. Leret ke kiri untuk yang berisiko.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'docker compose down', good: true, why: 'Bekas dan talian telefon hilang. Loker pesanan kekal.' }, { text: 'docker compose stop', good: true, why: 'Semua berhenti seketika. Tiada yang dipadam.' }, { text: 'docker compose down -v', good: false, why: 'Ia padam loker db-data. Semua pesanan hilang.' }, { text: 'docker rm -f pada setiap bekas satu per satu', good: false, why: 'Lambat, senang tertinggal satu, dan talian telefon kekal.' }]} />
+</Card>
+
+<Card id="try-close" type="try">
+Bilik terakhir: tutup untuk malam ini. Simpan pesanan.
+
+<Interactive name="KitchenSim" scenario="d4-boss" keys="compose" intro={['echo "DB_PASSWORD=devpass" > .env', 'docker compose up -d']} goal={{ composeDown: 'kedai-kancil', volumeExists: ['kedai-kancil_db-data'] }} hints={['Satu arahan, tanpa -v.', 'Taip docker compose down']} success="Boss selesai! Kedai dah tutup dan pesanan selamat." />
+
+<Hint>`docker compose down`, tanpa `-v`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka dan tutup seluruh kedai dengan satu arahan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Health check cache jalankan `redis-cli ping`. Redis jawab `PONG` bila ia sedia. Talian telefon `back` jauhkan pangkalan data dari web: hanya api boleh panggilnya. Mahu buat di mesin anda sendiri? Itulah Misi 1, dengan repo `kedai-kancil` anda sendiri.
+</Card>

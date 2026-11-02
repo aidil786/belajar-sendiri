@@ -1,0 +1,70 @@
+---
+id: k8s-k1-l09
+world: 1
+title: "Anda di sini: context"
+summary: "Anda akan belajar: cara tengok, dan tukar, kluster yang kubectl sedang bercakap."
+minutes: 4
+xp: 20
+interactives: [YouAreHere, KubeReplay, FoodCourtSim, Choice, SwipeJudge]
+needs: [k8s-k1-l08]
+scenario: k1-two-sites
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Organizing cluster access using kubeconfig files", url: "https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" }
+  - { label: "Configure access to multiple clusters", url: "https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/" }
+  - { label: "kubectl config", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="YouAreHere" context="prod-like" namespace="shop" prodLike />
+
+Ben nak padam dulang ujian. Tapi terminalnya menghala ke kedai yang sedang live. Pesanan makan tengah hari terhenti. Macam mana dia boleh tahu?
+</Card>
+
+<Card id="see-kubeconfig" type="see">
+<Interactive name="KubeReplay" scenario="k1-two-sites" commands={['kubectl config get-contexts']} label="kubectl config get-contexts senaraikan dua context: kind-dev bertanda bintang, dan prod-like dengan namespace shop." />
+
+kubectl simpan senarai medan selera dalam satu fail: **<Term id="kubeconfig">kubeconfig</Term>** anda. Ia tinggal di `~/.kube/config`. Setiap baris ialah satu tempat yang anda boleh hubungi.
+</Card>
+
+<Card id="try-where" type="try">
+Setiap baris ialah satu **<Term id="context">context (papan “anda di sini”)</Term>**: kluster, pengguna dan namespace. Bintang tanda ke mana arahan pergi. Taip `kubectl config current-context`.
+
+<Interactive name="FoodCourtSim" scenario="k1-two-sites" goal={{ typed: 'config current-context' }} hints={['Taip kubectl config current-context dan tekan Enter.']} success="kind-dev: kluster latihan anda. Sama dengan bar merah jambu." />
+
+<Hint>Bar merah jambu di atas tunjuk jawapan yang sama.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda taip `kubectl delete pod tray` sekarang. Kluster mana yang hilang dulang?
+
+<Interactive name="Choice" options={[{ label: 'kind-dev, yang bertanda bintang', correct: true, why: 'Betul. Arahan pergi ke context semasa. Di sini, itu selamat.' }, { label: 'prod-like', why: 'Hanya jika anda tukar ke situ dahulu. Bintang tunjuk kind-dev.' }, { label: 'Kedua-duanya', why: 'Satu arahan pergi ke satu context.' }]} />
+</Card>
+
+<Card id="try-switch" type="try">
+Intai prod-like, kemudian balik. Perhatikan bar merah jambu berubah setiap kali.
+
+<Interactive name="FoodCourtSim" scenario="k1-two-sites" goal={{ typed: 'use-context prod-like', contextIs: 'kind-dev' }} hints={['Taip kubectl config use-context prod-like', 'Kemudian kubectl get pods untuk tinjau.', 'Kemudian kubectl config use-context kind-dev untuk balik.']} success="Balik ke kind-dev. Anda tukar dengan sengaja, dan semak bar." />
+
+<Hint>`kubectl config use-context prod-like`, kemudian `kubectl get pods`, kemudian `kubectl config use-context kind-dev`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu diperbaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jalankan current-context sebelum apa-apa yang berisiko', good: true, why: 'Dua saat yang boleh selamatkan waktu puncak.' }, { text: 'Biar terminal menghala ke production sepanjang hari', good: false, why: 'Tukar ke situ dengan sengaja, kemudian tukar balik.' }, { text: 'Baca bar merah jambu sebelum padam', good: true, why: 'Ia namakan kluster dan namespace.' }, { text: 'Salin arahan padam dari chat dan terus jalankan', good: false, why: 'Semak dulu ke mana ia akan pergi.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak ke mana kubectl menghala sebelum bertindak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jalankan satu arahan di tempat lain, tanpa tukar: `kubectl --context prod-like get pods`. Prompt shell yang tunjuk context anda pun membantu.
+
+Latihan sebenar (pilihan): di laptop anda, `kubectl config get-contexts` senaraikan setiap kluster yang anda boleh capai. Ada yang anda terlupa?
+</Card>

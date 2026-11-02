@@ -1,0 +1,49 @@
+---
+// Ship It overview: the three parts side by side (Dapur, Kilang, Medan Selera), every world as a
+// tile with its code (K9 is the CKA extra pack), the capstone missions (M1–M6), the Rescue Center,
+// the night shift, the Career Quest finish line and the certification map.
+// The layout is shared with Level Up (FamilyOverview); Ship It adds the night shift and the certificates.
+import FamilyOverview from '~/components/pages/FamilyOverview.astro';
+import FamilyExtra from '~/components/pages/FamilyExtra.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { SHIP_IT } from '~/lib/catalog';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+---
+
+<FamilyOverview lang={lang} family={SHIP_IT}>
+  <FamilyExtra
+    slot="early"
+    id="night-h"
+    tone="night"
+    icon="timer"
+    title={t(lang, 'nightshift.title')}
+    text={t(lang, 'nightshift.linkText')}
+    href={`/${lang}/ship-it/night-shift/`}
+    linkText={t(lang, 'nightshift.open')}
+    data-night-link
+  />
+  <FamilyExtra
+    id="certs-h"
+    tone="certs"
+    icon="star"
+    title={t(lang, 'certs.title')}
+    text={t(lang, 'certs.linkText')}
+    href={`/${lang}/ship-it/certifications/`}
+    linkText={t(lang, 'certs.open')}
+    data-certs-link
+  />
+  <FamilyExtra
+    id="exam-h"
+    tone="certs"
+    icon="check"
+    title={t(lang, 'mock.hubTitle')}
+    text={t(lang, 'mock.hubSummary')}
+    href={`/${lang}/ship-it/exam/`}
+    linkText={t(lang, 'mock.link')}
+    data-exam-link
+  />
+</FamilyOverview>

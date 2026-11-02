@@ -1,0 +1,67 @@
+---
+id: git-w11-l02
+world: 11
+title: I pushed a password
+summary: "You will learn: what to do first when a secret reaches GitHub."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Choice, AreasScene, Sim, SwipeJudge]
+needs: [git-w08-l04]
+scenario: w11-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l02" commands={['git show --stat']} label="git show --stat: the newest commit, Add weather widget, is on origin/main. It added two files: .env and app.js." />
+
+You pushed. Then you spot it: `.env` holds your secret key. And it's on GitHub now. Breathe. This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Cancel the old key and make a new one', correct: true, why: 'This is called rotating. Now the leaked copy is useless.' }, { label: 'Delete .env and push again', why: 'Older commits still hold it. Someone may have copied it already.' }, { label: 'Make the repo private', why: 'It was public. Someone may have a copy already. Rotate first.' }]} />
+
+<Hint>A leaked key must stop working before anything else.</Hint>
+</Card>
+
+<Card id="see-untrack" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git rm --cached .env" label="The command git rm --cached .env types itself. .env stays on your desk. A deleted card for .env goes into the box." frames={[{ working: ['.env', 'app.js'] }, { working: ['.env', 'app.js'], staging: [{ name: '.env', tag: 'deleted' }] }]} />
+
+The key is rotated. Now clean up. `git rm --cached .env` tells Git to stop tracking the file. It stays on your computer.
+</Card>
+
+<Card id="try-fix" type="try">
+Stop tracking `.env`. Add it to `.gitignore`. Commit and push.
+
+<Interactive name="Sim" scenario="w11-l02" panels={['areas']} goal={{ lastCommitLacks: ['.env'], filesExist: ['.env'], fileContains: { '.gitignore': '.env' }, pushed: ['main'], clean: true }} hints={['Type git rm --cached .env', 'Then: echo ".env" >> .gitignore and git add .gitignore', 'Then: git commit -m "Stop tracking .env" and git push']} success="Clean! .env is ignored, and the fix is on GitHub." />
+
+<Hint>Type `git rm --cached .env`, then `echo ".env" >> .gitignore`, then `git add .gitignore`. Then commit and push.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your newest commit has no `.env`. Is the key gone from GitHub?
+
+<Interactive name="Choice" options={[{ label: 'No. Older commits still show it', correct: true, why: 'History keeps every snapshot. That is why you rotate first.' }, { label: 'Yes, the newest commit has no .env', why: 'Anyone can open the older commit and read it.' }, { label: 'Yes, after a page refresh', why: 'A refresh changes nothing. The old commit is still there.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good move, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rotate the key before anything else', good: true, why: 'This makes the leaked copy useless.' }, { text: 'Just delete .env in a new commit', good: false, why: 'The key still lives in an older commit.' }, { text: 'Add .env to .gitignore', good: true, why: 'Git will not offer it again.' }, { text: 'Keep the old key, it is probably fine', good: false, why: 'Someone may have a copy. Rotate it now.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now handle a pushed secret: rotate first, then clean up.
+</Card>
+
+<Card id="deeper" type="deeper">
+Not pushed yet? Nobody saw it. Untrack and ignore `.env`, then run `git commit --amend --no-edit`. Pushed? Wiping the key from every old commit takes git filter-repo. World 8's lesson "Leaked a key? Rotate first" shows how. GitHub's push protection can block some secrets before they leave.
+</Card>

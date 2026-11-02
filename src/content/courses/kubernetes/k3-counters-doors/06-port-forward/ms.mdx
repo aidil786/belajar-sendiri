@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l06
+world: 3
+title: Nyahpepijat dengan port-forward
+summary: "Anda akan belajar: buka terowong peribadi dari laptop anda ke satu pod."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k3-l05]
+scenario: k3-forward
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: guna port forwarding", url: "https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/" }
+  - { label: "kubectl port-forward", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_port-forward/" }
+---
+
+<Card id="hook" type="hook">
+Halaman kedai nampak pelik. Anda mahu lihat dalam pelayar sendiri. Tapi anda tak mahu buka pintu kepada seluruh jalan. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Buka terowong peribadi dari laptop saya ke kedai', correct: true, why: 'Ya! Hanya anda boleh guna, dan ia tutup bila anda berhenti.' }, { label: 'Jadikan ia LoadBalancer sekejap', why: 'Itu buka ia kepada internet. Terlalu besar untuk tengok sekejap.' }, { label: 'Taip IP pod dalam pelayar saya', why: 'IP pod hanya berfungsi di dalam kluster.' }]} />
+</Card>
+
+<Card id="see-forward" type="see">
+<Interactive name="KubeReplay" scenario="k3-forward" commands={['kubectl port-forward svc/shop 8080:80', 'curl -s localhost:8080']} label="port-forward kata Forwarding from 127.0.0.1:8080 ke 80. curl localhost:8080 dapat halaman kedai." />
+
+**<Term id="port-forward">port-forward</Term>** ialah tingkap staf peribadi. `localhost:8080` di laptop anda bawa ke port 80 satu dulang kedai.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahannya: port laptop 8080 ke port 80 kedai.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'bercakap dengan kluster' }, { text: 'port-forward', means: 'buka tingkap peribadi' }, { text: 'svc/shop', means: 'ke dulang di belakang Service shop' }, { text: '8080:80', means: 'port laptop dulu, kemudian port dulang' }]} decoys={[{ text: '80:8080', means: 'terbalik: laptop 80, dulang 8080' }, { text: '--address 0.0.0.0', means: 'buka kepada seluruh rangkaian anda' }]} success="Itulah tingkapnya: laptop dulu, dulang kemudian." />
+</Card>
+
+<Card id="try-forward" type="try">
+Sekarang buka tingkap itu, kemudian lawatinya dengan `curl`.
+
+<Interactive name="FoodCourtSim" scenario="k3-forward" goal={{ portForward: 8080, reachable: { url: 'http://localhost:8080' }, lastTyped: '^curl' }} hints={['Taip kubectl port-forward svc/shop 8080:80', 'Kemudian taip curl localhost:8080']} success="Kedai Kancil, di laptop anda sendiri. Orang lain tak nampak." />
+
+<Hint>Di laptop sebenar, port-forward terus berjalan. Guna terminal kedua untuk `curl`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda tekan Ctrl+C dalam terminal port-forward. Kemudian anda buka `localhost:8080` semula. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Gagal sambung: tingkap dah tutup', correct: true, why: 'Terowong hanya hidup selagi arahan berjalan.' }, { label: 'Halaman kedai masih keluar', why: 'Ctrl+C hentikan terowong. Tiada apa mendengar di 8080 sekarang.' }, { label: 'Pod kedai pun berhenti', why: 'Pod terus berjalan. Hanya tingkap anda yang tutup.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Tingkap atau pintu sebenar? Susun setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'pf', label: 'port-forward' }, { id: 'door', label: 'Pintu sebenar (Service, Gateway)' }]} items={[{ label: 'Intai satu pod dari laptop anda', bucket: 'pf', why: 'Peribadi dan cepat.' }, { label: 'Semak pangkalan data tanpa membukanya', bucket: 'pf', why: 'Hanya anda masuk, dan hanya buat masa ini.' }, { label: 'Uji aplikasi sebelum tulis Gateway', bucket: 'pf', why: 'Tingkap sesuai untuk tengok kali pertama.' }, { label: 'Biar pelanggan masuk sepanjang hari', bucket: 'door', why: 'Tingkap tutup bersama terminal anda. Pelanggan perlukan pintu sebenar.' }, { label: 'Kongsi kedai dengan pasukan anda secara online', bucket: 'door', why: 'Tingkap hanya hidup di laptop anda.' }]} success="Tingkap untuk anda, pintu untuk pelanggan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka tingkap peribadi ke mana-mana pod untuk nyahpepijat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`svc/shop` pilih satu dulang bila tingkap dibuka, dan kekal padanya. Kalau dulang itu hilang, tingkap pun putus: jalankan semula. `--address 0.0.0.0` biar sesiapa di Wi-Fi anda masuk. Guna hanya dengan sengaja.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l06-rep" steps={[{ id: 'open', text: 'Buka tingkap. Biar terminal ini terus berjalan.', command: 'kubectl port-forward svc/shop 8080:80' }, { id: 'visit', text: 'Buka http://localhost:8080 dalam pelayar anda.' }, { id: 'close', text: 'Tekan Ctrl+C. Muat semula halaman: tingkap dah tutup.' }]} success="Anda dah buka dan tutup tingkap sebenar!" />
+</Card>

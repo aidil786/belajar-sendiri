@@ -1,0 +1,65 @@
+---
+id: git-w03-l04
+world: 3
+title: Merge fast-forward
+summary: "Anda akan belajar: macam mana branch yang siap masuk ke main bila main tiada apa yang baru."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, Choice, GraphPick]
+needs: [git-w03-l03]
+scenario: w03-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git log --oneline --graph --all']} label="Log: about ada dua commit baru, Add about page dan Say what I like. main ketinggalan dua commit, di Add style." />
+
+Halaman about anda dah siap di branch sendiri. Tapi main belum ada lagi. Macam mana nak gabungkan?
+</Card>
+
+<Card id="see-ff" type="see">
+<Interactive name="GraphScene" scenario="w03-l04" commands={['git merge about']} label="Label main meluncur ke depan dua commit dan berhenti di Say what I like, sebelah about. Tiada commit baru." />
+
+Di main, `git merge about` bawa masuk kerja about. main tiada apa yang baru, jadi Git cuma luncurkan nota ke depan. Itulah **<Term id="fast-forward">fast-forward</Term>**.
+</Card>
+
+<Card id="see-term" type="see">
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git merge about']} pulse label="git merge about papar Updating, kemudian Fast-forward, kemudian about.html dengan 2 baris baru." />
+
+Cari perkataan Fast-forward. Git tak buat commit baru. Cuma satu nota yang bergerak.
+</Card>
+
+<Card id="try-merge" type="try">
+Anda di main. <Term id="merge">Merge</Term> (cantum) `about` ke dalamnya.
+
+<Interactive name="Sim" scenario="w03-l04" panels={['graph']} goal={{ currentBranch: 'main', branchAt: { main: '^Say what I like$' }, mergeCommit: false }} hints={['Taip git merge about dan tekan Enter.', 'Pastikan anda di main dulu: git branch.']} success="Fast-forward! main kini ada halaman about." />
+
+<Hint>Taip `git merge about`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Selepas fast-forward, berapa commit baru yang Git buat?
+
+<Interactive name="Choice" compact options={[{ label: '0', correct: true, why: 'Git cuma gerakkan nota main. Commit itu memang dah ada.' }, { label: '1', why: 'Itu merge commit. Fast-forward tak perlukannya.' }, { label: '2', why: 'Dua commit about memang dah wujud. Git cuma halakan main ke situ.' }]} />
+</Card>
+
+<Card id="check-pick" type="check">
+Di mana main sekarang?
+
+<Interactive name="GraphPick" scenario="w03-l04-done" answer="^Say what I like$" prompt="Ketik commit yang main tunjuk sekarang." why="main meluncur ke commit about yang paling baru." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh merge dengan fast-forward.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git merge --ff-only about` hanya merge kalau boleh fast-forward. Kalau tak boleh, ia berhenti dengan selamat. `git merge --no-ff about` sentiasa buat merge commit. Ada pasukan suka cara itu, supaya branch nampak dalam sejarah.
+
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git merge --no-ff about', 'git log --oneline --graph']} label="Dengan --no-ff, Git buat merge commit, Merge branch 'about', walaupun boleh fast-forward." />
+</Card>

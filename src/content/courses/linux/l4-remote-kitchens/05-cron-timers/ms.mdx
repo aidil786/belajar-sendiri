@@ -1,0 +1,70 @@
+---
+id: linux-l4-l05
+world: 4
+title: "Kerja berjadual: cron dan timer"
+summary: "Anda akan belajar: menjalankan kerja ikut jadual dengan cron, dan dengan timer systemd."
+minutes: 5
+xp: 25
+interactives: [Transcript, OrderList, LinuxSim, Choice, SortCards, Mission]
+needs: [linux-l4-l04]
+scenario: linux-l4-cron
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian: crontab(5)", url: "https://manpages.debian.org/trixie/cron/crontab.5.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+  - { label: "systemd.time: calendar events", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="kedai (makmal)" label="crontab -l tunjuk satu baris: 0 2 * * * /home/you/backup.sh"
+  lines={[{ cmd: 'crontab -l' }, { out: '0 2 * * * /home/you/backup.sh' }]} />
+
+Seseorang mesti buat sandaran menu pukul 2 pagi, setiap malam. Tiada siapa mahu syif itu. Satu baris ini melakukannya. Bagaimana?
+</Card>
+
+<Card id="try-fields" type="try">
+<Term id="cron">cron</Term> ialah jadual tugas di dinding. Ia semak setiap minit. Satu baris jadual ada lima medan masa, kemudian kerjanya. Susun medan itu.
+
+<Interactive name="OrderList" items={['minit (0-59)', 'jam (0-23)', 'hari dalam bulan (1-31)', 'bulan (1-12)', 'hari dalam minggu (0-7, Ahad ialah 0 atau 7)', 'arahan, dengan path penuh']} label="Medan pertama di atas" success="0 2 * * * bermaksud minit 0, jam 2, setiap hari." />
+</Card>
+
+<Card id="try-cron" type="try">
+`jobs.txt` ada satu baris jadual untuk setiap minit. Pasang dengan `crontab jobs.txt`. Kemudian `sleep 15` sampai seminit berlalu, dan baca `cron.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-cron" goal={{ crontabHas: { you: 'hello\\.sh' }, fileContains: { '~/cron.log': 'Kedai is open' } }} hints={['crontab jobs.txt', 'crontab -l menunjukkannya.', 'sleep 15, kemudian cat cron.log']} solution={['crontab jobs.txt', 'crontab -l', 'sleep 15']} success="cron jalankan hello.sh tepat pada minitnya, sendiri." />
+
+<Hint>Jam di sini bermula pada 09:00:40. Seminit datang dengan cepat.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Apa maksud `*/15 * * * *`?
+
+<Interactive name="Choice" options={[{ label: 'Setiap 15 minit', correct: true, why: '*/15 dalam medan minit: 0, 15, 30 dan 45.' }, { label: 'Pukul 15:00 setiap hari', why: 'Itu ialah 0 15 * * *.' }, { label: 'Pada 15 haribulan setiap bulan', why: 'Itu ialah 0 0 15 * *.' }]} />
+</Card>
+
+<Card id="see-timer" type="see">
+<Interactive name="Transcript" title="kedai (makmal)" label="Fail timer dengan OnCalendar 02:00 dan Persistent=true. enable --now cipta symlink. list-timers tunjuk larian seterusnya, Mon 2026-11-02 02:00 UTC, yang mulakan kedai-backup.service."
+  lines={[{ cmd: 'cat /etc/systemd/system/kedai-backup.timer' }, { out: '[Unit]\nDescription=Back up the Kedai menu every night\n\n[Timer]\nOnCalendar=*-*-* 02:00:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target' }, { cmd: 'sudo systemctl enable --now kedai-backup.timer' }, { out: "Created symlink '/etc/systemd/system/timers.target.wants/kedai-backup.timer' → '/etc/systemd/system/kedai-backup.timer'." }, { cmd: 'systemctl list-timers kedai-backup.timer' }, { out: 'NEXT                        LEFT LAST PASSED UNIT               ACTIVATES\nMon 2026-11-02 02:00:00 UTC  13h -         - kedai-backup.timer kedai-backup.service', color: 'green' }]} />
+
+systemd ada jam locengnya sendiri: <Term id="systemd-timer">timer</Term>. Ia mulakan servis tepat pada masanya. `Persistent=true` kejar larian yang terlepas semasa mesin dimatikan.
+</Card>
+
+<Card id="check" type="check">
+cron atau timer systemd?
+
+<Interactive name="SortCards" buckets={[{ id: 'cron', label: 'cron' }, { id: 'timer', label: 'timer systemd' }]} items={[{ label: 'Satu baris, cepat ditambah', bucket: 'cron', why: 'crontab dan siap.' }, { label: 'Outputnya masuk ke journalctl', bucket: 'timer', why: 'Ia berjalan sebagai servis, jadi journal menyimpannya.' }, { label: 'Kejar semula selepas mesin dimatikan', bucket: 'timer', why: 'Persistent=true.' }, { label: 'crontab -l menyenaraikannya', bucket: 'cron', why: 'Setiap pengguna ada crontab.' }]} success="Cepat: cron. Dicatat dan boleh kejar: timer." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jadualkan kerja dengan cron atau timer systemd.
+</Card>
+
+<Card id="deeper" type="deeper">
+cron berjalan dengan PATH yang kecil dan tanpa terminal. Guna path penuh, dan simpan output: `>> /home/you/backup.log 2>&1`. `crontab -r` padam seluruh jadual anda tanpa bertanya. `systemd-analyze calendar '*-*-* 02:00:00'` beritahu bila timer berbunyi seterusnya. Output timer di sini datang dari makmal Debian 13 sebenar.
+
+<Interactive name="Mission" id="linux-l4-l05-rep" steps={[{ id: 'cron', text: 'Di VM: tambah baris jadual yang tulis tarikh setiap minit.', command: "echo '* * * * * date >> /tmp/tick.log' | crontab -" }, { id: 'wait', text: 'Tunggu dua minit, kemudian tengok.', command: 'cat /tmp/tick.log' }, { id: 'clean', text: 'Kemas: ini buang seluruh jadual anda.', command: 'crontab -r' }, { id: 'timers', text: 'Lihat timer yang sistem anda sudah ada.', command: 'systemctl list-timers' }]} success="Kerja berjadual pertama anda berjalan sendiri." />
+</Card>

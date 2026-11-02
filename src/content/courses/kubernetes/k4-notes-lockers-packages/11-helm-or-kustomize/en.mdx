@@ -1,0 +1,63 @@
+---
+id: k8s-k4-l11
+world: 4
+title: "Helm or Kustomize?"
+summary: "You will learn: when to reach for Helm, when for Kustomize, and when for both."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SortCards, FoodCourtSim, Choice, Mission]
+needs: [k8s-k4-l10]
+scenario: k4-kz
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "Helm: Charts", url: "https://helm.sh/docs/topics/charts/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kz" commands={['kubectl kustomize overlays/prod']} picture={false} label="kubectl kustomize overlays/prod prints the prod YAML: a Namespace, the settings ConfigMap and a Deployment with 3 replicas." />
+
+Kustomize made prod's YAML by patching plain files. Last lesson, Helm made YAML by filling holes. Two tools, one job? Your team is arguing.
+</Card>
+
+<Card id="see-compare" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'helm', label: 'Helm' }, { id: 'kz', label: 'Kustomize' }, { id: 'both', label: 'Both' }]} items={[{ label: 'Built into kubectl', bucket: 'kz', why: 'kubectl kustomize and apply -k need nothing extra.' }, { label: 'Templates with holes', bucket: 'helm', why: 'Kustomize never uses a template language.' }, { label: 'Keeps release history and rolls back', bucket: 'helm', why: 'helm rollback uses that history.' }, { label: 'Patches plain YAML', bucket: 'kz', why: 'Overlays change a base without holes.' }, { label: 'Ends as YAML in the cluster', bucket: 'both', why: 'Either way, the API server gets plain objects.' }]} success="Helm: kits and history. Kustomize: patches on plain YAML." />
+
+**Helm** fills templates and remembers releases. Kustomize patches plain YAML, kitchen by kitchen. Many teams use both.
+</Card>
+
+<Card id="try-both" type="try">
+Make YAML both ways. First Kustomize's dev kitchen, then Helm's kit.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" goal={{ typed: '^kubectl kustomize overlays/', lastTyped: '^helm template ' }} hints={['Type kubectl kustomize overlays/dev', 'Then: helm template shop ./kedai']} success="Same goal, two roads: plain YAML at the end." />
+
+<Hint>Neither command changes the cluster. Both only print.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You need a database that experts packaged, with 40 settings. Which do you reach for?
+
+<Interactive name="Choice" options={[{ label: 'Its Helm chart', correct: true, why: 'Someone already packed it. You fill in values.' }, { label: 'Write the YAML, then a Kustomize base', why: 'Almost! Possible, but you would rebuild their work.' }, { label: 'Neither works for databases', why: 'Both can deploy databases. A chart saves the most work here.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Which tool fits each job best?
+
+<Interactive name="SortCards" buckets={[{ id: 'helm', label: 'Helm' }, { id: 'kz', label: 'Kustomize' }]} items={[{ label: 'Only kubectl is allowed on the build machine', bucket: 'kz', why: 'Kustomize is already inside kubectl.' }, { label: 'Undo a whole app upgrade in one command', bucket: 'helm', why: 'helm rollback brings back a revision.' }, { label: 'Change one line of YAML you did not write', bucket: 'kz', why: 'A patch changes it without editing the file.' }, { label: 'Share your app with other teams as a versioned package', bucket: 'helm', why: 'A chart has a version and installs anywhere.' }]} success="Pick by the job, not by the hype." />
+</Card>
+
+<Card id="win" type="win">
+You can now choose between Helm and Kustomize for a job.
+</Card>
+
+<Card id="deeper" type="deeper">
+Using both is common. Render a chart with `helm template`, then patch it with an overlay. Kustomize can also render charts itself (`helmCharts`, with `--enable-helm`). The GitOps tools in World K7 understand both.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="k8s-k4-l11-rep" steps={[{ id: 'helm', text: 'Render a Helm chart into a file.', command: 'helm template shop ./kedai > from-helm.yaml' }, { id: 'kz', text: 'Render a Kustomize overlay into a file.', command: 'kubectl kustomize overlays/prod > from-kustomize.yaml' }, { id: 'compare', text: 'Open both files. Both are plain Kubernetes YAML.' }]} success="Two roads, same destination." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: obs-o2-l07
+world: 2
+title: "Add them up: sum by"
+summary: "You will learn: how to add many series into a few, keep the labels you want, and why rate comes first."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, OrderList, SwipeJudge, Transcript, Mission]
+needs: [obs-o2-l06]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL: aggregation operators", url: "https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+`rate()` gives five lines: each stall at each outlet. The boss wants one line per stall. What now?
+
+<Interactive name="Choice" options={[{ label: 'Add the outlets together for each stall', correct: true, why: 'Yes. Keep the stall label, add up the rest.' }, { label: 'Read all five and add them in your head', why: 'Fine for five lines. Not for five hundred.' }, { label: 'Delete the outlet label from the app', why: 'You would lose the outlet view forever. Add up in the query instead.' }]} />
+</Card>
+
+<Card id="try-sum" type="try">
+**<Term id="aggregation">sum</Term>** adds series together. Start with one total for the whole shop.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="rate(kedai_orders_total[5m])" prompt="Wrap it all in sum( ), then Run." goal={{ usesFunction: ['sum'], labelNames: [], resultEquals: [{ labels: {}, value: 2 }] }} hints={['Type sum( at the start and ) at the end.']} solution="sum(rate(kedai_orders_total[5m]))" success="2 orders per second, the whole shop." />
+</Card>
+
+<Card id="predict" type="predict">
+Now `sum by (stall) (…)`. It keeps only the stall label. How many lines come back?
+
+<Interactive name="Choice" options={[{ label: '3: nasi lemak, roti canai, cendol', correct: true, why: 'Yes. One line per stall.' }, { label: '5', why: 'by (stall) adds the outlets of each stall together.' }, { label: '1', why: 'That is plain sum(). by (stall) keeps one line per stall.' }]} />
+</Card>
+
+<Card id="try-by" type="try">
+One line per stall, please.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="sum(rate(kedai_orders_total[5m]))" prompt="Add by (stall) right after sum, then Run." goal={{ usesFunction: ['sum'], labelNames: ['stall'], resultCount: 3, resultIncludes: [{ labels: { stall: 'roti-canai' }, value: 1 }] }} hints={['Type sum by (stall) (rate(kedai_orders_total[5m]))']} solution="sum by (stall) (rate(kedai_orders_total[5m]))" success="Roti canai wins: 1 order per second." />
+</Card>
+
+<Card id="try-order" type="try">
+Build “errors per second, per status code” step by step. Put the steps in order.
+
+<Interactive name="OrderList" items={['Pick the counter: http_requests_total', 'Add a window: [5m]', 'Wrap it in rate( )', 'Add up with sum by (code)']} label="First step at the top" success="sum by (code) (rate(http_requests_total[5m])). Rate first, then sum." />
+</Card>
+
+<Card id="check" type="check">
+Good query? Swipe right for good.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'sum(rate(kedai_orders_total[5m]))', good: true, why: 'rate first, then sum.' }, { text: 'sum by (outlet) (rate(kedai_orders_total[5m]))', good: true, why: 'One line per outlet.' }, { text: 'sum without (outlet) (rate(kedai_orders_total[5m]))', good: true, why: 'Drops outlet, keeps the rest. Here that means by stall.' }, { text: 'sum by stall (rate(kedai_orders_total[5m]))', good: false, why: 'by needs brackets: by (stall).' }, { text: 'sum by (stall) (kedai_orders_total[5m])', good: false, why: 'sum cannot add windows. Put rate() inside first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now add series up with `sum by` and keep the labels you need.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other aggregations work the same way: `avg`, `max`, `min`, `count`, and `topk(3, …)` for the top three. promtool can run a query from the terminal too. This output is real:
+
+<Interactive name="Transcript" title="bash" label="promtool query instant prints up for three targets, each with 1 and a timestamp." lines={[{ cmd: "docker compose exec prometheus promtool query instant http://localhost:9090 'up'" }, { out: 'up{instance="localhost:9090", job="prometheus"} => 1 @[1793538329.647]\nup{instance="node-exporter:9100", job="node"} => 1 @[1793538329.647]\nup{instance="http://prometheus:9090/-/ready", job="blackbox"} => 1 @[1793538329.647]' }]} />
+
+<Interactive name="Mission" id="obs-o2-l07-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack.', command: 'docker compose up -d' }, { id: 'cpu', text: 'How busy is each CPU mode? Ask from the terminal.', command: "docker compose exec prometheus promtool query instant http://localhost:9090 'sum by (mode) (rate(node_cpu_seconds_total[1m]))'" }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="sum by, on a real machine." />
+</Card>

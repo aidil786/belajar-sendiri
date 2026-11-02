@@ -1,0 +1,72 @@
+---
+id: docker-d6-l02
+world: 6
+title: "Namespace: apa yang ia nampak"
+summary: "Anda akan belajar: cara namespace Linux beri satu proses senarai proses, rangkaian dan hostname sendiri."
+minutes: 4
+xp: 20
+interactives: [NamespaceXray, KitchenReplay, Choice, KitchenSim, SortCards, Mission]
+needs: [docker-d6-l01]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "namespaces(7)", url: "https://man7.org/linux/man-pages/man7/namespaces.7.html" }
+  - { label: "Docker security: kernel namespaces", url: "https://docs.docker.com/engine/security/" }
+  - { label: "unshare(1)", url: "https://man7.org/linux/man-pages/man1/unshare.1.html" }
+---
+
+<Card id="hook" type="hook">
+Proses biasa ini, `node server.js`, nampak semua program dalam laptop. Dalam container, `ps` tunjuk satu sahaja. Hidupkan dua suis ini dan tengok.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt']} task={{ type: 'turnOn', switches: ['pid', 'mnt'] }} prompt="Hidupkan PID, kemudian Mount. Tengok senarai proses." success="Sekarang ia nampak satu proses sahaja: dirinya, sebagai PID 1." />
+</Card>
+
+<Card id="see-uts" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['hostname', 'docker exec web hostname']} label="hostname pada laptop cetak laptop. Di dalam web, hostname cetak id pendek container itu." />
+
+Dua nama berbeza! Setiap suis ialah satu <Term id="linux-namespace">namespace</Term>. **Namespace** (ruang nama) ialah penutup mata. Ia sorok satu benda, contohnya hostname laptop.
+</Card>
+
+<Card id="try-net" type="try">
+Cari penutup mata yang beri proses itu kad rangkaian sendiri.
+
+<Interactive name="NamespaceXray" switches={['uts', 'net', 'ipc']} task={{ type: 'find', what: 'ownNetwork' }} />
+
+<Hint>Cari suis di sebelah panel Network.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dua container nginx sama-sama dengar port 80 di dalam. Adakah ia berlanggar?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Setiap satu ada rangkaian sendiri, jadi port 80 sendiri.', correct: true, why: 'Namespace rangkaian beri setiap bekas port sendiri.' }, { label: 'Ya. Hanya satu program boleh guna port 80.', why: 'Itu betul dalam satu rangkaian. Setiap container ada rangkaian sendiri.' }, { label: 'Hanya jika guna image yang sama', why: 'Image tak penting. Namespace rangkaian yang penting.' }]} />
+</Card>
+
+<Card id="try-two" type="try">
+Buktikan. Mulakan nginx kedua bernama `web2`, tanpa `-p`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ running: ['web', 'web2'] }} hints={['Taip docker run -d --name web2 nginx:1.30-alpine', 'Kemudian docker ps tunjuk kedua-dua bekas berjalan.']} success="Kedua-duanya guna port 80 di dalam. Tak berlanggar: setiap satu ada rangkaian sendiri." />
+
+<Hint>`docker run -d --name web2 nginx:1.30-alpine` mulakannya di latar belakang.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Namespace mana yang sorok setiap benda?
+
+<Interactive name="SortCards" buckets={[{ id: 'pid', label: 'PID' }, { id: 'net', label: 'Rangkaian (network)' }, { id: 'uts', label: 'UTS' }]} items={[{ label: 'nginx ialah PID 1', bucket: 'pid', why: 'Namespace PID mulakan kiraan semula dari 1.' }, { label: 'Port 80 sendiri', bucket: 'net', why: 'Port milik namespace rangkaian.' }, { label: 'Hostname sendiri', bucket: 'uts', why: 'UTS simpan hostname.' }, { label: 'Kad eth0 sendiri', bucket: 'net', why: 'Kad rangkaian duduk dalam namespace rangkaian.' }, { label: 'Tak nampak Firefox berjalan', bucket: 'pid', why: 'Proses lain disorok oleh namespace PID.' }]} success="Siap! Setiap namespace sorok satu benda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara namespace ubah apa yang container nampak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Linux ada 8 jenis: cgroup, IPC, network, mount, PID, time, user dan UTS. Docker hidupkan PID, mount, network, UTS dan IPC (dan cgroup pada cgroup v2). Yang user kekal mati secara lalai (pelajaran 6). Namespace Kubernetes ialah idea lain: satu zon medan selera.
+
+Latihan sebenar (pilihan, Linux): buat namespace sendiri.
+
+<Interactive name="Mission" id="d6-l02-unshare" steps={[{ id: 'in', text: 'Buka shell dengan hostname dan senarai proses sendiri.', command: 'sudo unshare --uts --pid --fork --mount-proc sh' }, { id: 'name', text: 'Namakan semula dunia kecil ini. Laptop kekal dengan namanya.', command: 'hostname kancil' }, { id: 'ps', text: 'Senaraikan proses. Shell itu ialah PID 1.', command: 'ps' }, { id: 'out', text: 'Keluar. Semua di dalam hilang.', command: 'exit' }]} success="Anda bina container kecil dengan tangan sendiri!" />
+</Card>

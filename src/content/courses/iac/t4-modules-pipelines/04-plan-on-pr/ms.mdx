@@ -1,0 +1,77 @@
+---
+id: iac-t4-l04
+world: 4
+title: Plan pada setiap pull request
+summary: "Anda akan belajar: cara workflow kecil jalankan plan untuk setiap perubahan dalam pull request, supaya pasukan semak dahulu."
+minutes: 5
+xp: 25
+interactives: [Choice, PracticeRepo, YamlBuilder, SortCards, SwipeJudge]
+needs: [iac-t4-l03]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "opentofu/setup-opentofu (GitHub Action)", url: "https://github.com/opentofu/setup-opentofu" }
+  - { label: "OpenTofu: aliran kerja teras", url: "https://opentofu.org/docs/intro/core-workflow/" }
+  - { label: "Terraform: berjalan secara automatik", url: "https://developer.hashicorp.com/terraform/tutorials/automation/automate-terraform" }
+  - { label: "GitHub: branch yang dilindungi", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+---
+
+<Card id="hook" type="hook">
+Ben jalankan `tofu apply` dari laptopnya. Tiada siapa nampak plan. Ia musnahkan papan menu lama. Bagaimana pasukan boleh tangkap lebih awal?
+
+<Interactive name="Choice" options={[{ label: 'Plan dalam pull request yang semua orang baca', correct: true, why: 'Robot plan setiap perubahan. Manusia baca sebelum merge.' }, { label: 'Minta Ben lebih berhati-hati', why: 'Semua orang pernah tersilap. Semakan yang sentiasa berjalan lebih baik hati.' }, { label: 'Jangan sekali-kali guna apply', why: 'Apply tak salah. Apply selepas plan disemak.' }]} />
+</Card>
+
+<Card id="see-pr" type="see">
+<Interactive name="PracticeRepo" screen="pull" at={8} repo={{ owner: 'kedai-kancil', name: 'blueprint', readme: '# Blueprint\n\nKedai Kancil, ditulis sebagai OpenTofu.\n' }} pulls={[{ number: 8, title: 'Tambah kiosk roti', body: 'Satu lagi kiosk dari modul kiosk.', author: 'ben', from: 'roti-kiosk', to: 'main', state: 'open', checks: [{ name: 'tofu fmt', status: 'pass' }, { name: 'tofu validate', status: 'pass' }, { name: 'tofu plan', status: 'pass' }], files: [{ path: 'main.tf', diff: ['@@ -9,0 +10,4 @@', '+module "roti" {', '+  source = "./modules/kiosk"', '+  name   = "roti-canai"', '+}'] }], comments: [{ author: 'plan-bot', body: 'Plan untuk pull request ini:\n\n```\n# module.roti.local_file.sign will be created\nPlan: 1 to add, 0 to change, 0 to destroy.\n```' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlukan satu kelulusan penyemak', on: true }, { id: 'requireChecks', label: 'Perlukan semua check lulus', on: true }] }} task={{ type: 'approve', pr: 8 }} success="Diluluskan: 1 to add, 0 to destroy. Anda baca plan sebelum apa-apa dibina." />
+
+Baca plan dalam komen. Tiada apa untuk dimusnahkan? Kalau begitu, luluskan.
+</Card>
+
+<Card id="try-build" type="try">
+Bina workflow yang hasilkan semakan itu. Plan sahaja: tiada apply di sini.
+
+<Interactive name="YamlBuilder" workflow="Plan" goal={{ order: ['pr', 'read', 'job', 'checkout', 'setup', 'fmt', 'init', 'validate', 'plan'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'Pada pull request ke main', yaml: 'pull_request:\n  branches: [main]', means: 'Jalan pada setiap pull request ke main.' },
+  { id: 'read', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Plan cuma baca kod.' },
+  { id: 'write', kind: 'permissions', label: 'Tulis semua', yaml: 'contents: write', means: 'Biar job ubah repo.', why: 'Job plan cuma membaca. Beri yang paling sedikit.' },
+  { id: 'job', kind: 'job', label: 'Job: plan', yaml: 'plan:\n  runs-on: ubuntu-latest', means: 'Komputer Linux yang baharu.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n  with:\n    persist-credentials: false', means: 'Salin pelan, di-pin pada satu commit.' },
+  { id: 'setup', kind: 'step', label: 'Pasang OpenTofu', yaml: '- uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2\n  with:\n    tofu_version: 1.13.5\n    tofu_wrapper: false', means: 'Versi OpenTofu sama seperti laptop anda.' },
+  { id: 'fmt', kind: 'step', label: 'Semak susun atur', yaml: '- run: tofu fmt -check', means: 'Gagal jika ada fail perlukan tofu fmt.' },
+  { id: 'init', kind: 'step', label: 'Init', yaml: '- run: tofu init -input=false', means: 'Provider dari fail lock, dan modul.' },
+  { id: 'validate', kind: 'step', label: 'Validate', yaml: '- run: tofu validate', means: 'Tangkap salah taip sebelum plan.' },
+  { id: 'plan', kind: 'step', label: 'Plan', yaml: '- run: tofu plan -input=false', means: 'Tunjuk apa perubahan ini akan buat.' },
+  { id: 'apply', kind: 'step', label: 'Apply', yaml: '- run: tofu apply -auto-approve', means: 'Bina sekarang.', why: 'Apply datang selepas semakan dan merge, bukan dalam pull request.' }]} />
+
+<Hint>Pencetus, kebenaran, job, kemudian langkah-langkah ikut urutan anda menaip.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ben terlupa jalankan `tofu fmt`. Pull request-nya jalankan workflow ini. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Langkah fmt gagal, semakan jadi merah, dan merge kena tunggu', correct: true, why: 'Dengan "perlukan semakan lulus", merah sekat merge sehingga dia jalankan tofu fmt.' }, { label: 'Workflow baiki fail untuknya', why: 'fmt -check cuma menyemak. Ia tak ubah fail.' }, { label: 'Tiada apa: susun atur tak penting', why: 'Fail yang kemas mudahkan semakan. Semakan ini jaga kekemasannya.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Di mana setiap langkah patut berlaku?
+
+<Interactive name="SortCards" buckets={[{ id: 'pr', label: 'Dalam pull request' }, { id: 'main', label: 'Selepas merge, di main' }]} items={[{ label: 'tofu fmt -check', bucket: 'pr', why: 'Murah dan laju. Tangkap awal.' }, { label: 'tofu plan', bucket: 'pr', why: 'Penyemak baca sebelum merge.' }, { label: 'Manusia baca plan', bucket: 'pr', why: 'Itulah tujuan pull request.' }, { label: 'tofu apply', bucket: 'main', why: 'Hanya perubahan yang disemak dan di-merge dibina.' }]} success="Plan dalam pull request. Apply selepas merge." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Leret: tabiat pipeline yang bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Plan pada setiap pull request, apply selepas merge dengan kelulusan', good: true, why: 'Setiap perubahan dilihat sebelum dibina.' }, { text: 'Apply pada setiap pull request, supaya penyemak nampak hasilnya', good: false, why: 'Nanti kod yang belum disemak bina benda sebenar.' }, { text: 'Pin action pada SHA commit penuh', good: true, why: 'Tag boleh beralih. Commit tidak.' }, { text: 'Langkau plan bila perubahan nampak kecil', good: false, why: 'Perubahan kecil pun boleh musnahkan sesuatu. Sentiasa plan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh plan setiap perubahan dalam pull request, supaya pasukan semak dahulu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam CI, plan perlukan backend bersama (T3·1), kalau tidak ia nampak daftar kosong. Untuk letak plan sebagai komen, perlukan `pull-requests: write` dan skrip kecil. Untuk apply selepas merge, simpan plan dengan `-out` dan apply fail itu tepat-tepat. Alat seperti Atlantis atau HCP Terraform jalankan kitaran ini untuk anda. Latihan sebenar: Misi 8 letak workflow ini dalam repo anda sendiri.
+</Card>

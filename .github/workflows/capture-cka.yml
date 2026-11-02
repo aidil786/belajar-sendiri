@@ -1,0 +1,74 @@
+# Manual only: record real node-side outputs for the K9 node shell (systemctl, journalctl, crictl,
+# static pod manifests, kubeadm, etcdctl/etcdutl, a stopped kubelet → NotReady, an etcd restore)
+# from the same 3-node kind cluster the k8s-truth job uses. The outputs land in one JSON artifact,
+# "cka-capture". Then, on a computer:
+#   npx tsx scripts/capture-cka/import.ts cka-capture.json
+# which updates src/engine/foodcourt-sim/fixtures/cka.json (entries become source "kind-capture").
+# No secrets, no deploy; it only changes its own throwaway cluster.
+name: Capture CKA outputs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capture-cka
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      KIND_VERSION: v0.33.0
+      KUBECTL_VERSION: v1.37.2
+      # kind v0.33.0's default node image (Kubernetes v1.37.0), pinned by digest (same as the k8s-truth job).
+      KIND_NODE_IMAGE: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install kind and kubectl (official binaries, checksums verified)
+        run: |
+          set -euo pipefail
+          curl -fsSLo kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          curl -fsSLo kind.sha256sum "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d ' ' -f 1 kind.sha256sum)  kind" | sha256sum --check
+          curl -fsSLo kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          curl -fsSLo kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install -m 0755 kind kubectl /usr/local/bin/
+          rm kind kind.sha256sum kubectl kubectl.sha256
+          kind version
+          kubectl version --client
+          jq --version
+
+      - name: Create the kind cluster (dev-control-plane, dev-worker, dev-worker2)
+        run: kind create cluster --name dev --image "$KIND_NODE_IMAGE" --config scripts/verify-k8s/kind-dev.yaml --wait 180s
+
+      - name: Pre-load the images the capture uses
+        run: |
+          for image in nginx:1.29-alpine busybox:1.37; do
+            docker pull "$image"
+            kind load docker-image "$image" --name dev
+          done
+
+      - name: Record the node outputs
+        run: scripts/capture-cka.sh cka-capture.json
+
+      - name: Upload the outputs (also after a failure, since a partial capture still helps)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cka-capture
+          path: cka-capture.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Delete the cluster
+        if: always()
+        run: kind delete cluster --name dev

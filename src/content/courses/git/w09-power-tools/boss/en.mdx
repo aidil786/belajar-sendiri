@@ -1,0 +1,79 @@
+---
+id: git-w09-boss
+world: 9
+title: "Ship with gh and a Codespace"
+summary: "You will learn: to ship a real fix from a Codespace, using gh."
+minutes: 8
+xp: 50
+interactives: [TimelineTap, Transcript, OrderList, CommandBuilder, Choice, Mission, MissionCheck]
+needs: [git-w09-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Creating a codespace for a repository", url: "https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository" }
+  - { label: "gh codespace create", url: "https://cli.github.com/manual/gh_codespace_create" }
+  - { label: "gh pr create", url: "https://cli.github.com/manual/gh_pr_create" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Stop 1', title: 'Codespace', text: 'Open a cloud computer for your repo.' }, { when: 'Stop 2', title: 'Branch', text: 'Make a branch for the fix.' }, { when: 'Stop 3', title: 'Fix', text: 'Change one small thing.' }, { when: 'Stop 4', title: 'Commit and push', text: 'Save it, then send it up.' }, { when: 'Stop 5', title: 'Pull request', text: 'Open it with gh pr create.' }]} />
+
+Boss time! Ship one tiny fix to your real repo. Your only tools: a Codespace and `gh`. Here is the route. Tap each stop.
+</Card>
+
+<Card id="see-codespace" type="see">
+<Interactive name="Transcript" title="bash" label="On your own computer: gh codespace create makes a Codespace for your diary repo. Then gh codespace code --web opens it in the browser." lines={[{ cmd: 'gh codespace create --repo YOUR-NAME/diary' }, { cmd: 'gh codespace code --web' }]} />
+
+Stop 1: open a Codespace on your diary repo. Run these two commands, or use the Code button on GitHub. Codespaces need a GitHub account and have usage limits.
+</Card>
+
+<Card id="try-order" type="try">
+Inside the Codespace, what comes next? Put the stops in order.
+
+<Interactive name="OrderList" items={['Make a branch: git switch -c fix-typo', 'Fix the typo in README.md', 'Commit the fix', 'Push the branch', 'Run gh pr create']} label="First step at the top" success="Right route! Now build the last command." />
+
+<Hint>A pull request needs a pushed branch first.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that opens the pull request. Let it reuse your commit message.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'Use GitHub CLI' }, { text: 'pr', means: 'work with pull requests' }, { text: 'create', means: 'make a new one' }, { text: '--fill', means: 'use your commit message' }]} decoys={[{ text: 'issue', means: 'issues, not pull requests' }, { text: 'git', means: 'Git cannot open pull requests' }]} success="That's the command! It opens your pull request." />
+</Card>
+
+<Card id="see-pr" type="see">
+<Interactive name="Transcript" title="bash" label="git push sends the fix-typo branch to GitHub. Then gh pr create --fill opens the pull request and prints its link." lines={[{ cmd: 'git push -u origin fix-typo' }, { cmd: 'gh pr create --fill' }, { out: 'https://github.com/YOUR-NAME/diary/pull/1', color: 'cyan' }]} />
+
+Stops 4 and 5: push, then `gh pr create`. It prints a link to your new pull request. The default Codespace already has `gh`, signed in for this repo.
+</Card>
+
+<Card id="predict" type="predict">
+You used `--fill`. Where do the pull request's title and body come from?
+
+<Interactive name="Choice" options={[{ label: 'Your commit message', correct: true, why: 'gh copies your commit info. Use --title and --body to write your own.' }, { label: 'GitHub makes them up', why: 'gh uses what you wrote in your commit.' }, { label: 'They stay empty', why: '--fill fills them in from your commit.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Now do it for real. Tick each step as you go.
+
+<Interactive name="Mission" id="w09-boss-ship" title="Mission: ship it" steps={[{ id: 'repo', text: 'Have a public diary repo. No repo yet? Make one.', command: 'gh repo create diary --public --add-readme' }, { id: 'codespace', text: 'Open a Codespace on your diary repo.', command: 'gh codespace create --repo YOUR-NAME/diary' }, { id: 'branch', text: 'In its terminal, make a branch.', command: 'git switch -c fix-typo' }, { id: 'fix', text: 'Fix one small thing in README.md. Save the file.' }, { id: 'commit', text: 'Commit the fix.', command: 'git commit -am "docs: fix typo in README"' }, { id: 'push', text: 'Push the branch.', command: 'git push -u origin fix-typo' }, { id: 'pr', text: 'Open the pull request.', command: 'gh pr create --fill' }, { id: 'stop', text: 'Done? Stop the Codespace to save your allowance.', command: 'gh codespace stop' }]} success="Shipped! A real fix, from the cloud." />
+
+<Hint>One step at a time. Tick each one when it is done.</Hint>
+</Card>
+
+<Card id="check-pr" type="check">
+Can GitHub see your work? Type your username and check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'diary', label: 'Your diary repo is public' }, { type: 'pullRequest', repo: '{user}/diary', label: 'GitHub sees your pull request in diary' }]} success="Boss beaten! Your pull request is live on GitHub." />
+</Card>
+
+<Card id="win" type="win">
+You can now ship a fix from a Codespace, using gh.
+</Card>
+
+<Card id="deeper" type="deeper">
+Happy with it? Merge from the terminal with `gh pr merge`. Once your work is pushed, `gh codespace delete` removes the Codespace. No Codespace? Press `.` on your repo for github.dev. Commit to a new branch there. Then open the pull request in the browser.
+</Card>

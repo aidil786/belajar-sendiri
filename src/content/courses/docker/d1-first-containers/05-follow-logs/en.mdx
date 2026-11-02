@@ -1,0 +1,69 @@
+---
+id: docker-d1-l05
+world: 1
+title: Follow the logs
+summary: "You will learn: to read what a container printed, and to watch new lines live."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, KitchenSim, Choice, Mission]
+needs: [docker-d1-l04]
+scenario: d1-logs
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker logs", url: "https://docs.docker.com/reference/cli/docker/container/logs/" }
+  - { label: "View container logs", url: "https://docs.docker.com/engine/logging/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-logs" commands={['docker ps -a']} label="docker ps -a lists two boxes. web is Up. timer shows Exited (127)." />
+
+Your timer box should tick for an hour. It stopped at once: `Exited (127)`. No error on your screen. How do you find out why?
+</Card>
+
+<Card id="try-logs" type="try">
+A box keeps notes of everything it prints: its **<Term id="container-logs">logs</Term>**. Read timer's notes.
+
+<Interactive name="KitchenSim" scenario="d1-logs" goal={{ lastTyped: '^docker (container )?logs (.* )?timer$' }} hints={['Type docker logs timer']} success="There it is: sh: sleeep: not found." />
+
+<Hint>Type `docker logs timer`.</Hint>
+</Card>
+
+<Card id="check-read" type="check">
+The logs end with the real error `sh: sleeep: not found`. What does it mean?
+
+<Interactive name="Choice" options={[{ label: 'A typo: sleeep instead of sleep', correct: true, why: 'Plain words: the shell found no program called sleeep. Code 127 means command not found.' }, { label: 'Docker ran out of space', why: 'The logs would say so. They name sleeep instead.' }, { label: 'The timer finished its hour', why: 'It stopped after one line, not after an hour.' }]} />
+</Card>
+
+<Card id="see-follow" type="see">
+<Interactive name="KitchenReplay" scenario="d1-logs" commands={['curl -s localhost:8080 | grep title', 'docker logs --tail 1 web']} label="curl visits web. Then docker logs --tail 1 web shows one new line: a GET request with status 200." />
+
+Every visit to web adds a line. `--tail 1` shows only the last one. Add **-f** (follow) to watch new lines live. Ctrl+C stops watching.
+</Card>
+
+<Card id="try-follow" type="try">
+Visit web with `curl localhost:8080`. Then read web's logs and find your visit.
+
+<Interactive name="KitchenSim" scenario="d1-logs" goal={{ logsContain: { web: 'HTTP/1.1" 200' }, lastTyped: '^docker (container )?logs (.* )?web$' }} hints={['Type curl localhost:8080', 'Then type docker logs web']} success="Your visit is the last line: GET / with status 200." />
+</Card>
+
+<Card id="predict" type="predict">
+`docker logs -f web` is running. You press Ctrl+C. What happens to web?
+
+<Interactive name="Choice" options={[{ label: 'Nothing. web keeps running.', correct: true, why: 'Ctrl+C stops the logs command only. You stopped watching, not cooking.' }, { label: 'web stops too', why: 'The logs command only watches. docker ps still says Up.' }, { label: 'web restarts', why: 'Watching logs never touches the box itself.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a container's logs to find the problem.
+</Card>
+
+<Card id="deeper" type="deeper">
+Logs are what the app prints to the screen (stdout and stderr). The nginx image sends its log files there too. Handy flags: `--tail 20`, `--since 10m`, and `-t` for times. Logs vanish when you remove the box.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l05-rep" steps={[{ id: 'web', text: 'Start web with a hatch on 8080.', command: 'docker run -d --name web -p 8080:80 nginx:1.30-alpine' }, { id: 'follow', text: 'Watch its logs live.', command: 'docker logs -f web' }, { id: 'visit', text: 'Open localhost:8080 in your browser. A new line appears!' }, { id: 'stop', text: 'Press Ctrl+C. Then tidy up.', command: 'docker rm -f web' }]} success="You watched a real box at work." />
+</Card>

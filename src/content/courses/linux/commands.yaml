@@ -1,0 +1,658 @@
+# Command pages for the Linux & Networking course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/linux/commands/<id>/ and in the cheat sheet /<lang>/linux/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Mark risky commands (rm -r, sudo, chmod -R, kill -9 …) with danger: careful or lose.
+# Facts: Debian 13 man pages (manpages.debian.org) and the GNU coreutils / util-linux / systemd docs.
+groups:
+  - { id: files, title: { en: "Move around and read files", ms: "Bergerak dan baca fail" } }
+  - { id: search, title: { en: "Find and search", ms: "Cari dan carian" } }
+  - { id: permissions, title: { en: "Users and permissions", ms: "Pengguna dan kebenaran" } }
+  - { id: processes, title: { en: "Processes, services and logs", ms: "Proses, servis dan log" } }
+  - { id: packages, title: { en: "Packages", ms: "Pakej" } }
+  - { id: network, title: { en: "Network checks", ms: "Semakan rangkaian" } }
+  - { id: remote, title: { en: "Remote servers and disks", ms: "Server jauh dan cakera" } }
+  - { id: scripts, title: { en: "Scripts and schedules", ms: "Skrip dan jadual" } }
+
+commands:
+  # --- World L1 commands (groups: files, search) ---
+  - id: pwd
+    group: files
+    syntax: "pwd"
+    danger: safe
+    lesson: linux-l1-l02
+    docs: "https://manpages.debian.org/trixie/coreutils/pwd.1.en.html"
+    what: { en: "Prints the path of the room (folder) you stand in.", ms: "Cetak path bilik (folder) tempat anda berdiri." }
+    when: { en: "When you are not sure where you are.", ms: "Bila anda tak pasti di mana anda berada." }
+    example: { command: "pwd", en: "Shows something like /home/you/kedai.", ms: "Tunjuk sesuatu seperti /home/you/kedai." }
+
+  - id: cd
+    group: files
+    syntax: "cd [folder]"
+    danger: safe
+    lesson: linux-l1-l02
+    docs: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
+    what: { en: "Walks you into another folder.", ms: "Bawa anda masuk ke folder lain." }
+    when: { en: "To move around the server's rooms.", ms: "Untuk bergerak antara bilik di server." }
+    example: { command: "cd kedai/kitchen", en: "Walk into the kitchen inside kedai.", ms: "Masuk ke dapur di dalam kedai." }
+    variants:
+      - { command: "cd ..", en: "Go up one room.", ms: "Naik satu bilik." }
+      - { command: "cd ~", en: "Go home (a plain cd does the same).", ms: "Pulang ke rumah (cd sahaja pun sama)." }
+      - { command: "cd -", en: "Jump back to the room you were in before.", ms: "Lompat balik ke bilik sebelum ini." }
+
+  - id: ls
+    group: files
+    syntax: "ls [-a] [-l] [folder]"
+    danger: safe
+    lesson: linux-l1-l02
+    docs: "https://manpages.debian.org/trixie/coreutils/ls.1.en.html"
+    what: { en: "Lists what is in a folder.", ms: "Senaraikan isi sesuatu folder." }
+    when: { en: "To see what a room holds before you act.", ms: "Untuk tengok isi bilik sebelum bertindak." }
+    example: { command: "ls", en: "List this room.", ms: "Senaraikan bilik ini." }
+    variants:
+      - { command: "ls -a", en: "Hidden names (starting with a dot) too.", ms: "Termasuk nama tersembunyi (bermula dengan titik)." }
+      - { command: "ls -l", en: "One line each: keys, owner, size, date.", ms: "Satu baris setiap satu: kunci, pemilik, saiz, tarikh." }
+
+  - id: cat
+    group: files
+    syntax: "cat <file>"
+    danger: safe
+    lesson: linux-l1-l03
+    docs: "https://manpages.debian.org/trixie/coreutils/cat.1.en.html"
+    what: { en: "Prints a whole file at once.", ms: "Cetak seluruh fail sekali gus." }
+    when: { en: "For short files you want to read in full.", ms: "Untuk fail pendek yang anda mahu baca semuanya." }
+    example: { command: "cat menu/today.txt", en: "Show today's menu.", ms: "Tunjuk menu hari ini." }
+    variants:
+      - { command: "cat -n today.txt", en: "Number the lines.", ms: "Nomborkan setiap baris." }
+
+  - id: less
+    group: files
+    syntax: "less <file>"
+    danger: safe
+    lesson: linux-l1-l03
+    docs: "https://manpages.debian.org/trixie/less/less.1.en.html"
+    what: { en: "Shows a long file one screen at a time. q quits.", ms: "Tunjuk fail panjang satu skrin pada satu masa. q untuk keluar." }
+    when: { en: "For long files and logs.", ms: "Untuk fail dan log yang panjang." }
+    example: { command: "less orders.log", en: "Read the order book page by page.", ms: "Baca buku pesanan muka demi muka." }
+
+  - id: head
+    group: files
+    syntax: "head [-n N] <file>"
+    danger: safe
+    lesson: linux-l1-l03
+    docs: "https://manpages.debian.org/trixie/coreutils/head.1.en.html"
+    what: { en: "Shows the first lines of a file (10 unless you say -n).", ms: "Tunjuk baris pertama fail (10 kecuali anda beri -n)." }
+    when: { en: "To peek at the top of a file.", ms: "Untuk intai bahagian atas fail." }
+    example: { command: "head -n 3 orders.log", en: "The first 3 orders.", ms: "3 pesanan pertama." }
+
+  - id: tail
+    group: files
+    syntax: "tail [-n N] [-f] <file>"
+    danger: safe
+    lesson: linux-l1-l03
+    docs: "https://manpages.debian.org/trixie/coreutils/tail.1.en.html"
+    what: { en: "Shows the last lines of a file: the newest ones in a log.", ms: "Tunjuk baris terakhir fail: yang terbaru dalam log." }
+    when: { en: "To read what just happened.", ms: "Untuk baca apa yang baru berlaku." }
+    example: { command: "tail -n 3 orders.log", en: "The 3 newest orders.", ms: "3 pesanan terbaru." }
+    variants:
+      - { command: "tail -f orders.log", en: "Keep watching for new lines. Ctrl+C stops.", ms: "Terus perhati baris baru. Ctrl+C untuk berhenti." }
+
+  - id: mkdir
+    group: files
+    syntax: "mkdir [-p] <folder>"
+    danger: safe
+    lesson: linux-l1-l04
+    docs: "https://manpages.debian.org/trixie/coreutils/mkdir.1.en.html"
+    what: { en: "Makes a new folder.", ms: "Buat folder baru." }
+    when: { en: "To give things their own room.", ms: "Untuk beri barang bilik sendiri." }
+    example: { command: "mkdir recipes", en: "Build a room called recipes.", ms: "Bina bilik bernama recipes." }
+    variants:
+      - { command: "mkdir -p store/2026/nov", en: "Also make any missing parent folders.", ms: "Buat juga folder induk yang belum ada." }
+
+  - id: cp
+    group: files
+    syntax: "cp [-r] <from> <to>"
+    danger: careful
+    lesson: linux-l1-l04
+    docs: "https://manpages.debian.org/trixie/coreutils/cp.1.en.html"
+    what: { en: "Copies a file. The first one stays. It replaces a file with the same name without asking.", ms: "Salin fail. Fail asal kekal. Ia ganti fail sama nama tanpa bertanya." }
+    when: { en: "To make a backup before you change something.", ms: "Untuk buat sandaran sebelum ubah sesuatu." }
+    example: { command: "cp menu/today.txt menu/today.bak", en: "Back up today's menu.", ms: "Sandar menu hari ini." }
+    variants:
+      - { command: "cp -r kitchen kitchen-copy", en: "Copy a folder and everything inside.", ms: "Salin folder dan semua isinya." }
+
+  - id: mv
+    group: files
+    syntax: "mv <from> <to>"
+    danger: careful
+    lesson: linux-l1-l04
+    docs: "https://manpages.debian.org/trixie/coreutils/mv.1.en.html"
+    what: { en: "Moves or renames a file or folder. It replaces a file with the same name without asking.", ms: "Alih atau tukar nama fail atau folder. Ia ganti fail sama nama tanpa bertanya." }
+    when: { en: "To rename things or put them in the right room.", ms: "Untuk tukar nama atau letak barang di bilik yang betul." }
+    example: { command: "mv draft.txt promo.txt", en: "Rename the draft.", ms: "Tukar nama draf itu." }
+    variants:
+      - { command: "mv *.jpg photos/", en: "Move every photo into photos.", ms: "Alih setiap gambar ke photos." }
+
+  - id: rm
+    group: files
+    syntax: "rm [-r] <name>"
+    danger: lose
+    lesson: linux-l1-l05
+    docs: "https://manpages.debian.org/trixie/coreutils/rm.1.en.html"
+    what: { en: "Deletes files for good. There is no bin and no undo.", ms: "Padam fail terus. Tiada tong sampah dan tiada undo." }
+    when: { en: "Only after ls shows exactly what you will delete.", ms: "Hanya selepas ls tunjuk tepat apa yang akan dipadam." }
+    example: { command: "rm a.tmp b.tmp", en: "Delete two temp files.", ms: "Padam dua fail sementara." }
+    variants:
+      - { command: "rm -r old", en: "Delete a folder and everything inside it.", ms: "Padam folder dan semua isinya." }
+      - { command: "rmdir old", en: "Delete a folder only if it is empty.", ms: "Padam folder hanya jika ia kosong." }
+
+  - id: touch
+    group: files
+    syntax: "touch <file>"
+    danger: safe
+    lesson: linux-l1-l04
+    docs: "https://manpages.debian.org/trixie/coreutils/touch.1.en.html"
+    what: { en: "Makes an empty file (or updates a file's time).", ms: "Buat fail kosong (atau kemas kini masa fail)." }
+    when: { en: "When you need a file to exist before you fill it.", ms: "Bila anda perlu fail wujud sebelum mengisinya." }
+    example: { command: "touch notes.txt", en: "Make an empty notes file.", ms: "Buat fail nota kosong." }
+
+  - id: find
+    group: search
+    syntax: "find <where> -name <pattern>"
+    danger: safe
+    lesson: linux-l1-l06
+    docs: "https://manpages.debian.org/trixie/findutils/find.1.en.html"
+    what: { en: "Searches a folder and every folder inside it for matching names.", ms: "Cari nama yang padan dalam folder dan setiap folder di dalamnya." }
+    when: { en: "When you know a file's name but not its room.", ms: "Bila anda tahu nama fail tapi bukan biliknya." }
+    example: { command: "find kedai -name \"*.log\"", en: "Every log file in the shop.", ms: "Setiap fail log dalam kedai." }
+    variants:
+      - { command: "find kedai -iname \"sambal*\"", en: "Big or small letters, both match.", ms: "Huruf besar atau kecil, kedua-duanya padan." }
+      - { command: "find kedai -type d -empty", en: "Empty folders only.", ms: "Folder kosong sahaja." }
+
+  - id: grep
+    group: search
+    syntax: "grep [-i] [-c] [-n] [-v] [-r] <word> <file>"
+    danger: safe
+    lesson: linux-l1-l07
+    docs: "https://manpages.debian.org/trixie/grep/grep.1.en.html"
+    what: { en: "Prints only the lines that contain a word.", ms: "Cetak baris yang ada sesuatu perkataan sahaja." }
+    when: { en: "To pull answers out of logs and long files.", ms: "Untuk tarik jawapan daripada log dan fail panjang." }
+    example: { command: "grep -i unpaid orders.log", en: "Every unpaid order, any spelling.", ms: "Setiap pesanan belum bayar, apa jua ejaan." }
+    variants:
+      - { command: "grep -c nasi-lemak orders.log", en: "Count the matching lines.", ms: "Kira baris yang padan." }
+      - { command: "grep -r belacan ~/kedai", en: "Search every file in every folder.", ms: "Cari dalam setiap fail di setiap folder." }
+
+  - id: wc
+    group: search
+    syntax: "wc -l [file]"
+    danger: safe
+    lesson: linux-l1-l08
+    docs: "https://manpages.debian.org/trixie/coreutils/wc.1.en.html"
+    what: { en: "Counts lines (-l), words or bytes.", ms: "Kira baris (-l), perkataan atau bait." }
+    when: { en: "At the end of a pipe, to count results.", ms: "Di hujung pipe, untuk kira hasil." }
+    example: { command: "grep -i unpaid orders.log | wc -l", en: "How many unpaid orders?", ms: "Berapa pesanan belum bayar?" }
+
+  - id: sort
+    group: search
+    syntax: "sort [-n] [-r] [file]"
+    danger: safe
+    lesson: linux-l1-l08
+    docs: "https://manpages.debian.org/trixie/coreutils/sort.1.en.html"
+    what: { en: "Puts lines in order: A to Z, or by number with -n.", ms: "Susun baris: A ke Z, atau ikut nombor dengan -n." }
+    when: { en: "Before uniq, or to rank results.", ms: "Sebelum uniq, atau untuk susun kedudukan hasil." }
+    example: { command: "sort -rn counts.txt", en: "Biggest number first.", ms: "Nombor paling besar dulu." }
+
+  - id: uniq
+    group: search
+    syntax: "uniq [-c]"
+    danger: safe
+    lesson: linux-l1-l08
+    docs: "https://manpages.debian.org/trixie/coreutils/uniq.1.en.html"
+    what: { en: "Joins repeated lines that sit together. -c counts them.", ms: "Gabung baris berulang yang bersebelahan. -c mengiranya." }
+    when: { en: "After sort, to count how often each line appears.", ms: "Selepas sort, untuk kira kekerapan setiap baris." }
+    example: { command: "cut -d\" \" -f3 orders.log | sort | uniq -c", en: "Orders per dish.", ms: "Pesanan bagi setiap hidangan." }
+
+  - id: cut
+    group: search
+    syntax: "cut -d<sep> -f<N> [file]"
+    danger: safe
+    lesson: linux-l1-l08
+    docs: "https://manpages.debian.org/trixie/coreutils/cut.1.en.html"
+    what: { en: "Keeps only some columns of each line.", ms: "Simpan sebahagian lajur setiap baris sahaja." }
+    when: { en: "To pick one field out of a log line.", ms: "Untuk pilih satu medan daripada baris log." }
+    example: { command: "cut -d\" \" -f3 orders.log", en: "Just the dish name from each order.", ms: "Nama hidangan sahaja daripada setiap pesanan." }
+  # --- World L2 commands (groups: permissions, processes, packages) ---
+  - id: id
+    group: permissions
+    syntax: "id [user]"
+    danger: safe
+    lesson: linux-l2-l01
+    docs: "https://manpages.debian.org/trixie/coreutils/id.1.en.html"
+    what: { en: "Shows a user's number and every group (team) they belong to.", ms: "Tunjuk nombor pengguna dan setiap kumpulan (pasukan) yang dia sertai." }
+    when: { en: "To check who you are and which keys your teams give you.", ms: "Untuk semak siapa anda dan kunci apa yang pasukan anda beri." }
+    example: { command: "id", en: "You: uid 1000, groups you and sudo.", ms: "Anda: uid 1000, kumpulan you dan sudo." }
+    variants:
+      - { command: "id aina", en: "Another user's numbers and groups.", ms: "Nombor dan kumpulan pengguna lain." }
+      - { command: "groups aina", en: "Just the group names.", ms: "Nama kumpulan sahaja." }
+
+  - id: sudo
+    group: permissions
+    syntax: "sudo <command>"
+    danger: careful
+    lesson: linux-l2-l01
+    docs: "https://manpages.debian.org/trixie/sudo/sudo.8.en.html"
+    what: { en: "Runs one command as root, the user with every key. The server writes it down.", ms: "Jalankan satu arahan sebagai root, pengguna yang pegang semua kunci. Server mencatatnya." }
+    when: { en: "Only when the job truly needs root: services, packages, system files.", ms: "Hanya bila kerja itu betul-betul perlukan root: servis, pakej, fail sistem." }
+    example: { command: "sudo systemctl restart nginx", en: "Restart the web server as root.", ms: "Mula semula web server sebagai root." }
+    variants:
+      - { command: "sudo -u www-data touch uploads/a.jpg", en: "Run as another user, here the web staff.", ms: "Jalankan sebagai pengguna lain, di sini pekerja web." }
+      - { command: "sudo -i", en: "Open a root shell (# prompt). Type exit to leave.", ms: "Buka shell root (prompt #). Taip exit untuk keluar." }
+
+  - id: useradd
+    group: permissions
+    syntax: "sudo useradd -m -s /bin/bash <name>"
+    danger: careful
+    lesson: linux-l2-l01
+    docs: "https://manpages.debian.org/trixie/passwd/useradd.8.en.html"
+    what: { en: "Adds a new user to the server.", ms: "Tambah pengguna baru ke server." }
+    when: { en: "When a new person or program needs its own key.", ms: "Bila orang atau program baru perlukan kunci sendiri." }
+    example: { command: "sudo useradd -m -s /bin/bash aina", en: "Aina, with a home folder and the bash shell.", ms: "Aina, dengan folder rumah dan shell bash." }
+
+  - id: usermod
+    group: permissions
+    syntax: "sudo usermod -aG <group> <user>"
+    danger: careful
+    lesson: linux-l2-l01
+    docs: "https://manpages.debian.org/trixie/passwd/usermod.8.en.html"
+    what: { en: "Changes a user, for example adds them to a group.", ms: "Ubah sesuatu pengguna, contohnya tambah dia ke kumpulan." }
+    when: { en: "To put someone on a team. Never forget the -a.", ms: "Untuk masukkan seseorang ke pasukan. Jangan lupa -a." }
+    example: { command: "sudo usermod -aG kitchen aina", en: "Add Aina to the kitchen team, keeping her other teams.", ms: "Tambah Aina ke pasukan dapur, kekalkan pasukan lain dia." }
+
+  - id: chmod
+    group: permissions
+    syntax: "chmod <who><+|-><rwx> <file> | chmod <755> <file>"
+    danger: careful
+    lesson: linux-l2-l03
+    docs: "https://manpages.debian.org/trixie/coreutils/chmod.1.en.html"
+    what: { en: "Changes the keys on a file: who may read, write or run it.", ms: "Tukar kunci pada fail: siapa boleh baca, tulis atau jalankannya." }
+    when: { en: "A script says Permission denied, or a secret is open to everyone.", ms: "Skrip kata Permission denied, atau rahsia terbuka kepada semua." }
+    example: { command: "chmod +x open.sh", en: "Give the script its run key.", ms: "Beri skrip itu kunci jalan." }
+    variants:
+      - { command: "chmod 600 secret.txt", en: "Only you may read and write it.", ms: "Hanya anda boleh baca dan tulis." }
+      - { command: "chmod go-r secret.txt", en: "Take read away from group and others.", ms: "Buang baca daripada kumpulan dan orang lain." }
+
+  - id: chown
+    group: permissions
+    syntax: "sudo chown <owner>[:<group>] <path>"
+    danger: careful
+    lesson: linux-l2-l04
+    docs: "https://manpages.debian.org/trixie/coreutils/chown.1.en.html"
+    what: { en: "Hands a file or folder to another owner (and group). Needs root.", ms: "Serahkan fail atau folder kepada pemilik (dan kumpulan) lain. Perlukan root." }
+    when: { en: "When a service user, like www-data, must write somewhere.", ms: "Bila pengguna servis, seperti www-data, perlu menulis di sesuatu tempat." }
+    example: { command: "sudo chown www-data:www-data uploads", en: "Give the uploads folder to the web staff.", ms: "Serahkan folder uploads kepada pekerja web." }
+    variants:
+      - { command: "sudo chown -R www-data:www-data uploads", en: "The folder and everything inside. Check the path twice.", ms: "Folder dan semua isinya. Semak path dua kali." }
+
+  - id: ps
+    group: processes
+    syntax: "ps [aux]"
+    danger: safe
+    lesson: linux-l2-l05
+    docs: "https://manpages.debian.org/trixie/procps/ps.1.en.html"
+    what: { en: "Lists processes: programs at work, with their PID.", ms: "Senaraikan proses: program yang sedang bekerja, dengan PID." }
+    when: { en: "To see what runs and who started it.", ms: "Untuk tengok apa yang berjalan dan siapa memulakannya." }
+    example: { command: "ps aux", en: "Every process of every user.", ms: "Setiap proses setiap pengguna." }
+    variants:
+      - { command: "ps aux | grep nginx", en: "Only the nginx lines.", ms: "Baris nginx sahaja." }
+
+  - id: top
+    group: processes
+    syntax: "top"
+    danger: safe
+    lesson: linux-l2-l05
+    docs: "https://manpages.debian.org/trixie/procps/top.1.en.html"
+    what: { en: "A live list of processes, busiest first. q quits.", ms: "Senarai proses secara langsung, yang paling sibuk di atas. q untuk keluar." }
+    when: { en: "When the server feels slow.", ms: "Bila server terasa perlahan." }
+    example: { command: "top", en: "Watch the CPU and memory users live.", ms: "Perhati pengguna CPU dan memori secara langsung." }
+
+  - id: pgrep
+    group: processes
+    syntax: "pgrep [-f] <name>"
+    danger: safe
+    lesson: linux-l2-l05
+    docs: "https://manpages.debian.org/trixie/procps/pgrep.1.en.html"
+    what: { en: "Prints the PIDs of processes that match a name.", ms: "Cetak PID proses yang padan dengan sesuatu nama." }
+    when: { en: "To find the number kill needs.", ms: "Untuk cari nombor yang kill perlukan." }
+    example: { command: "pgrep -f stock-check", en: "The PID of the stuck stock script.", ms: "PID skrip stok yang tersangkut." }
+
+  - id: kill
+    group: processes
+    syntax: "kill [-9] <PID>"
+    danger: careful
+    lesson: linux-l2-l06
+    docs: "https://manpages.debian.org/trixie/procps/kill.1.en.html"
+    what: { en: "Sends a signal to a process: TERM (please stop) by default, KILL with -9.", ms: "Hantar isyarat kepada proses: TERM (tolong berhenti) secara asal, KILL dengan -9." }
+    when: { en: "A program is stuck. Try the polite way first.", ms: "Program tersangkut. Cuba cara sopan dulu." }
+    example: { command: "kill 1241", en: "Ask process 1241 to stop.", ms: "Minta proses 1241 berhenti." }
+    variants:
+      - { command: "kill -9 1241", en: "Last resort: stop it at once, no tidying up.", ms: "Jalan terakhir: hentikan serta-merta, tanpa mengemas." }
+      - { command: "pkill -f oven-timer", en: "Stop by name instead of number.", ms: "Hentikan ikut nama, bukan nombor." }
+
+  - id: jobs
+    group: processes
+    syntax: "jobs | fg [%N] | bg [%N] | <command> &"
+    danger: safe
+    lesson: linux-l2-l06
+    docs: "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html"
+    what: { en: "Lists the programs this terminal started in the background.", ms: "Senaraikan program yang terminal ini mulakan di belakang." }
+    when: { en: "To juggle long tasks while you keep typing.", ms: "Untuk urus kerja panjang sambil terus menaip." }
+    example: { command: "sleep 300 &", en: "Start a long job in the background.", ms: "Mulakan kerja panjang di belakang." }
+    variants:
+      - { command: "jobs", en: "List them.", ms: "Senaraikan." }
+      - { command: "fg %1", en: "Bring job 1 to the front.", ms: "Bawa job 1 ke depan." }
+      - { command: "bg", en: "Let a paused job (Ctrl+Z) run on in the back.", ms: "Biar job yang dijeda (Ctrl+Z) sambung di belakang." }
+
+  - id: export
+    group: processes
+    syntax: "export NAME=value"
+    danger: safe
+    lesson: linux-l2-l07
+    docs: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
+    what: { en: "Pins a variable on the wall, so programs you start can read it.", ms: "Lekat pemboleh ubah di dinding, supaya program yang anda mulakan boleh baca." }
+    when: { en: "To give a program a setting, or to extend your PATH.", ms: "Untuk beri program satu tetapan, atau panjangkan PATH anda." }
+    example: { command: "export SHOP=Kancil", en: "Every program you start can read SHOP.", ms: "Setiap program yang anda mulakan boleh baca SHOP." }
+    variants:
+      - { command: "export PATH=\"$HOME/tools:$PATH\"", en: "Search ~/tools first for commands.", ms: "Cari dalam ~/tools dulu untuk arahan." }
+      - { command: "env", en: "List every exported variable.", ms: "Senaraikan setiap pemboleh ubah yang di-export." }
+
+  - id: which
+    group: processes
+    syntax: "which <command>"
+    danger: safe
+    lesson: linux-l2-l07
+    docs: "https://manpages.debian.org/trixie/debianutils/which.debianutils.1.en.html"
+    what: { en: "Shows which file runs when you type a command name.", ms: "Tunjuk fail mana yang berjalan bila anda taip nama arahan." }
+    when: { en: "To check your PATH found the right program.", ms: "Untuk semak PATH anda jumpa program yang betul." }
+    example: { command: "which menu", en: "Where the menu command lives.", ms: "Di mana arahan menu tinggal." }
+
+  - id: systemctl
+    group: processes
+    syntax: "sudo systemctl <start|stop|restart|enable|disable|status> <service>"
+    danger: careful
+    lesson: linux-l2-l08
+    docs: "https://manpages.debian.org/trixie/systemd/systemctl.1.en.html"
+    what: { en: "Talks to systemd, the shift manager: start, stop and check services.", ms: "Bercakap dengan systemd, pengurus syif: mula, henti dan semak servis." }
+    when: { en: "A service is down, needs new settings, or must start at boot.", ms: "Servis mati, perlukan tetapan baru, atau mesti hidup semasa but." }
+    example: { command: "sudo systemctl restart nginx", en: "Restart the web server with its new settings.", ms: "Mula semula web server dengan tetapan barunya." }
+    variants:
+      - { command: "systemctl status nginx", en: "Running, stopped or failed, plus the last log lines.", ms: "Berjalan, berhenti atau gagal, dan baris log terakhir." }
+      - { command: "sudo systemctl enable --now nginx", en: "Start now and at every boot.", ms: "Mula sekarang dan setiap kali but." }
+
+  - id: journalctl
+    group: processes
+    syntax: "sudo journalctl -u <service> [-n N] [-f] [-g word]"
+    danger: safe
+    lesson: linux-l2-l09
+    docs: "https://manpages.debian.org/trixie/systemd/journalctl.1.en.html"
+    what: { en: "Reads the journal, systemd's diary of what services said.", ms: "Baca journal, diari systemd tentang apa yang servis kata." }
+    when: { en: "A service failed and you need to know why.", ms: "Servis gagal dan anda perlu tahu sebabnya." }
+    example: { command: "sudo journalctl -u nginx -n 20", en: "The last 20 lines from nginx.", ms: "20 baris terakhir daripada nginx." }
+    variants:
+      - { command: "sudo journalctl -u nginx -f", en: "Watch new lines live. Ctrl+C stops.", ms: "Perhati baris baru secara langsung. Ctrl+C untuk berhenti." }
+      - { command: "sudo journalctl -u nginx -g emerg", en: "Only lines with emerg.", ms: "Baris yang ada emerg sahaja." }
+
+  - id: sed
+    group: search
+    syntax: "sed [-i] 's/old/new/' <file>"
+    danger: careful
+    lesson: linux-l2-boss
+    docs: "https://manpages.debian.org/trixie/sed/sed.1.en.html"
+    what: { en: "Changes text on its way through. With -i it edits the file itself.", ms: "Ubah teks semasa ia lalu. Dengan -i ia edit fail itu sendiri." }
+    when: { en: "To fix one word in a settings file. Test before you restart.", ms: "Untuk baiki satu perkataan dalam fail tetapan. Uji sebelum mula semula." }
+    example: { command: "sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", en: "Fix a typo in nginx's site file.", ms: "Baiki salah taip dalam fail laman nginx." }
+
+  - id: apt
+    group: packages
+    syntax: "sudo apt <update|install|remove|upgrade> [package]"
+    danger: careful
+    lesson: linux-l2-l10
+    docs: "https://manpages.debian.org/trixie/apt/apt.8.en.html"
+    what: { en: "Finds, installs and removes programs from Debian's own store.", ms: "Cari, pasang dan buang program dari stor Debian sendiri." }
+    when: { en: "You need a tool the server does not have, or updates.", ms: "Anda perlukan alat yang server tiada, atau kemas kini." }
+    example: { command: "sudo apt install tree", en: "Install the tree program.", ms: "Pasang program tree." }
+    variants:
+      - { command: "sudo apt update", en: "Refresh the shelf list first.", ms: "Segarkan senarai rak dulu." }
+      - { command: "apt show tree", en: "Read a package's label.", ms: "Baca label sesuatu pakej." }
+      - { command: "sudo apt remove tree", en: "Take it off again.", ms: "Buang semula." }
+  # --- World L3 commands (group: network) ---
+  - id: ip
+    group: network
+    syntax: "ip [-br] addr | ip route"
+    danger: safe
+    lesson: linux-l3-l01
+    docs: "https://man7.org/linux/man-pages/man8/ip.8.html"
+    what: { en: "Shows this machine's addresses and the way out (its routes).", ms: "Tunjuk alamat mesin ini dan jalan keluarnya (laluan)." }
+    when: { en: "To find a server's number, or its gateway.", ms: "Untuk cari nombor server, atau gateway-nya." }
+    example: { command: "ip -br addr", en: "One short line per network card, with its address.", ms: "Satu baris pendek untuk setiap kad rangkaian, dengan alamatnya." }
+    variants:
+      - { command: "ip route", en: "The routes. default via … is the gateway.", ms: "Laluan. default via … ialah gateway." }
+      - { command: "hostname -I", en: "Just the addresses, nothing else.", ms: "Alamat sahaja, tiada yang lain." }
+
+  - id: ss
+    group: network
+    syntax: "ss -tln[p]"
+    danger: safe
+    lesson: linux-l3-l03
+    docs: "https://man7.org/linux/man-pages/man8/ss.8.html"
+    what: { en: "Lists the ports that programs listen on.", ms: "Senaraikan port yang program sedang dengar." }
+    when: { en: "When a call is refused, or a port is already in use.", ms: "Bila panggilan ditolak, atau port sudah dipakai." }
+    example: { command: "ss -tln", en: "TCP ports that listen, as numbers.", ms: "Port TCP yang mendengar, dalam nombor." }
+    variants:
+      - { command: "sudo ss -tlnp", en: "Add the program behind each port. Needs root.", ms: "Tambah program di sebalik setiap port. Perlu root." }
+      - { command: "sudo ss -tlnp 'sport = :80'", en: "Only port 80.", ms: "Port 80 sahaja." }
+
+  - id: getent
+    group: network
+    syntax: "getent hosts <name>"
+    danger: safe
+    lesson: linux-l3-l05
+    docs: "https://man7.org/linux/man-pages/man1/getent.1.html"
+    what: { en: "Turns a name into a number the way programs do: /etc/hosts first, then DNS.", ms: "Tukar nama kepada nombor seperti program buat: /etc/hosts dahulu, kemudian DNS." }
+    when: { en: "To check what curl or a browser will really dial.", ms: "Untuk semak apa yang curl atau pelayar benar-benar akan dail." }
+    example: { command: "getent hosts kedai.example", en: "Print its number, or nothing (exit 2).", ms: "Cetak nombornya, atau tiada apa-apa (keluar 2)." }
+
+  - id: dig
+    group: network
+    syntax: "dig [+short] <name>"
+    danger: safe
+    lesson: linux-l3-l05
+    docs: "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility"
+    what: { en: "Asks DNS, the phone book, for a name. It skips /etc/hosts.", ms: "Tanya DNS, buku telefon, tentang satu nama. Ia langkau /etc/hosts." }
+    when: { en: "To see what the world's phone book says.", ms: "Untuk lihat apa kata buku telefon dunia." }
+    example: { command: "dig +short kedai.example", en: "Only the answer: its number.", ms: "Jawapan sahaja: nombornya." }
+    variants:
+      - { command: "dig kedai.example", en: "The whole reply, with the time to live (TTL).", ms: "Seluruh jawapan, dengan masa hidup (TTL)." }
+
+  - id: curl
+    group: network
+    syntax: "curl [-sSIv] [--connect-timeout N] <url>"
+    danger: safe
+    lesson: linux-l3-l06
+    docs: "https://curl.se/docs/manpage.html"
+    what: { en: "Speaks HTTP with a web counter and prints its reply.", ms: "Bercakap HTTP dengan kaunter web dan cetak jawapannya." }
+    when: { en: "To test a page, its status code and headers, with no browser.", ms: "Untuk uji halaman, kod status dan headernya, tanpa pelayar." }
+    example: { command: "curl -sI localhost", en: "Only the top of the reply: status and headers.", ms: "Bahagian atas jawapan sahaja: status dan header." }
+    variants:
+      - { command: "curl -v localhost/menu.html", en: "The whole talk: > is what curl said, < the reply.", ms: "Seluruh perbualan: > kata curl, < jawapannya." }
+      - { command: "curl -sS --connect-timeout 5 kedai.example", en: "Give up after 5 seconds, not about 2 minutes.", ms: "Berputus asa selepas 5 saat, bukan kira-kira 2 minit." }
+
+  - id: openssl-s-client
+    group: network
+    syntax: "openssl s_client -connect <host>:443"
+    danger: safe
+    lesson: linux-l3-l07
+    docs: "https://docs.openssl.org/3.5/man1/openssl-s_client/"
+    what: { en: "Opens a sealed line like a browser and shows the server's certificate.", ms: "Buka talian bermeterai seperti pelayar dan tunjuk sijil server." }
+    when: { en: "To read a certificate's names and dates.", ms: "Untuk baca nama dan tarikh sesuatu sijil." }
+    example: { command: "openssl s_client -connect kedai.example:443 < /dev/null 2>/dev/null | openssl x509 -noout -dates", en: "When the ID card starts and ends.", ms: "Bila kad pengenalan itu bermula dan tamat." }
+    variants:
+      - { command: "openssl x509 -noout -checkend 2592000 -in kedai.crt", en: "Still good in 30 days? Exit 0 means yes.", ms: "Masih sah dalam 30 hari? Keluar 0 bermaksud ya." }
+
+  - id: ufw
+    group: network
+    syntax: "sudo ufw allow|deny|status|enable"
+    danger: careful
+    lesson: linux-l3-l08
+    docs: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html"
+    what: { en: "Debian's easy firewall: the guard's list of who may come in.", ms: "Firewall mudah Debian: senarai pengawal tentang siapa boleh masuk." }
+    when: { en: "To open one port, and keep every other door shut.", ms: "Untuk buka satu port, dan tutup pintu lain." }
+    example: { command: "sudo ufw allow OpenSSH", en: "Let SSH in. Always before you enable the guard.", ms: "Benarkan SSH masuk. Sentiasa sebelum hidupkan pengawal." }
+    variants:
+      - { command: "sudo ufw allow 80/tcp", en: "Let web callers in.", ms: "Benarkan pemanggil web masuk." }
+      - { command: "sudo ufw enable", en: "Switch the guard on. Over SSH, allow SSH first!", ms: "Hidupkan pengawal. Melalui SSH, benarkan SSH dahulu!" }
+      - { command: "sudo ufw status verbose", en: "The list, with the default rules.", ms: "Senarai itu, dengan peraturan lalai." }
+
+  - id: ping
+    group: network
+    syntax: "ping -c <count> <host>"
+    danger: safe
+    lesson: linux-l3-l09
+    docs: "https://man7.org/linux/man-pages/man8/ping.8.html"
+    what: { en: "Says hello to a machine and times the echo.", ms: "Beri salam kepada mesin dan ukur masa gemanya." }
+    when: { en: "To check the road to a machine. Some servers block it.", ms: "Untuk semak jalan ke mesin. Sesetengah server menyekatnya." }
+    example: { command: "ping -c 3 kedai.example", en: "Three hellos, then a summary.", ms: "Tiga salam, kemudian ringkasan." }
+
+  - id: traceroute
+    group: network
+    syntax: "traceroute <host>"
+    danger: safe
+    lesson: linux-l3-l09
+    docs: "https://manpages.debian.org/trixie/traceroute/traceroute.1.en.html"
+    what: { en: "Lists every exchange (hop) on the road to a machine.", ms: "Senaraikan setiap ibu sawat (hop) di jalan ke sesebuah mesin." }
+    when: { en: "To see where on the road a call gets stuck.", ms: "Untuk lihat di mana panggilan tersekat dalam perjalanan." }
+    example: { command: "traceroute kedai.example", en: "One line per hop. * * * is a quiet hop.", ms: "Satu baris untuk setiap hop. * * * ialah hop yang diam." }
+    variants:
+      - { command: "sudo apt install traceroute", en: "Not installed by default on Debian.", ms: "Tak dipasang secara lalai di Debian." }
+
+  # --- World L4 commands (groups: remote, scripts) ---
+  - id: ssh
+    group: remote
+    syntax: "ssh [user@]<host> [command]"
+    danger: safe
+    lesson: linux-l4-l01
+    docs: "https://man.openbsd.org/ssh"
+    what: { en: "Opens a sealed line to another machine, so you can type there.", ms: "Buka talian bermeterai ke mesin lain, supaya anda boleh menaip di sana." }
+    when: { en: "To work on a server far away.", ms: "Untuk bekerja di server yang jauh." }
+    example: { command: "ssh you@10.0.0.5", en: "Log in to 10.0.0.5 as you.", ms: "Log masuk ke 10.0.0.5 sebagai you." }
+    variants:
+      - { command: "ssh kedai hostname", en: "Run one command there, using a short name from ~/.ssh/config.", ms: "Jalankan satu arahan di sana, guna nama pendek dari ~/.ssh/config." }
+      - { command: "ssh -G kedai", en: "Show the settings ssh will use, without calling.", ms: "Tunjuk tetapan yang ssh akan guna, tanpa memanggil." }
+
+  - id: ssh-keygen
+    group: remote
+    syntax: "ssh-keygen -t ed25519 -C <comment>"
+    danger: safe
+    lesson: linux-l4-l01
+    docs: "https://man.openbsd.org/ssh-keygen"
+    what: { en: "Makes a key pair: a padlock (.pub) and its one key.", ms: "Buat pasangan kunci: mangga (.pub) dan satu-satunya kunci." }
+    when: { en: "Once per laptop, before your first key login.", ms: "Sekali untuk setiap laptop, sebelum log masuk kunci pertama." }
+    example: { command: "ssh-keygen -t ed25519 -C \"you@laptop\"", en: "Make ~/.ssh/id_ed25519 and id_ed25519.pub.", ms: "Buat ~/.ssh/id_ed25519 dan id_ed25519.pub." }
+    variants:
+      - { command: "ssh-keygen -l -f ~/.ssh/id_ed25519.pub", en: "Show a key's fingerprint.", ms: "Tunjuk fingerprint sesuatu kunci." }
+      - { command: "ssh-keygen -R 10.0.0.5", en: "Forget a server's old ID card in known_hosts.", ms: "Lupakan kad pengenalan lama server dalam known_hosts." }
+
+  - id: ssh-copy-id
+    group: remote
+    syntax: "ssh-copy-id [user@]<host>"
+    danger: safe
+    lesson: linux-l4-l01
+    docs: "https://manpages.debian.org/trixie/openssh-client/ssh-copy-id.1.en.html"
+    what: { en: "Hangs your padlock on a server: adds your public key to its authorized_keys.", ms: "Gantung mangga anda di server: tambah kunci awam anda ke authorized_keys-nya." }
+    when: { en: "Once per server, while a password login still works.", ms: "Sekali untuk setiap server, semasa log masuk kata laluan masih berfungsi." }
+    example: { command: "ssh-copy-id you@10.0.0.5", en: "One last password, then key logins.", ms: "Satu kata laluan terakhir, kemudian log masuk dengan kunci." }
+
+  - id: scp
+    group: remote
+    syntax: "scp [-r] <from> <to>"
+    danger: careful
+    lesson: linux-l4-l03
+    docs: "https://man.openbsd.org/scp"
+    what: { en: "Copies files over SSH. It overwrites a file with the same name there.", ms: "Salin fail melalui SSH. Ia tulis ganti fail yang sama nama di sana." }
+    when: { en: "To send or fetch a file, once.", ms: "Untuk hantar atau ambil satu fail, sekali." }
+    example: { command: "scp menu.txt kedai:", en: "Send menu.txt to your home folder on kedai. Mind the colon.", ms: "Hantar menu.txt ke folder rumah anda di kedai. Jangan lupa titik bertindih." }
+    variants:
+      - { command: "scp kedai:menu.txt .", en: "Fetch it back here.", ms: "Ambil semula ke sini." }
+
+  - id: rsync
+    group: remote
+    syntax: "rsync -av [--delete] [--dry-run] <from>/ <to>/"
+    danger: careful
+    lesson: linux-l4-l03
+    docs: "https://manpages.debian.org/trixie/rsync/rsync.1.en.html"
+    what: { en: "Makes a folder there match a folder here, sending only the changes.", ms: "Jadikan folder di sana sama dengan folder di sini, hantar perubahan sahaja." }
+    when: { en: "To update a website or a backup again and again.", ms: "Untuk kemas kini laman web atau sandaran berulang kali." }
+    example: { command: "rsync -av site/ kedai:shop/", en: "Send what changed. The slash after site means its contents.", ms: "Hantar apa yang berubah. Garis condong selepas site bermaksud isinya." }
+    variants:
+      - { command: "rsync -av --delete --dry-run site/ kedai:shop/", en: "Show what --delete would remove, and change nothing.", ms: "Tunjuk apa yang --delete akan buang, tanpa ubah apa-apa." }
+
+  - id: df
+    group: remote
+    syntax: "df -h [path]"
+    danger: safe
+    lesson: linux-l4-l04
+    docs: "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html"
+    what: { en: "Shows how full each disk is.", ms: "Tunjuk berapa penuh setiap cakera." }
+    when: { en: "When saving fails, or a server feels stuck.", ms: "Bila simpan gagal, atau server terasa tersangkut." }
+    example: { command: "df -h /", en: "Size, used, free and Use% of the main disk.", ms: "Saiz, terpakai, kosong dan Use% cakera utama." }
+    variants:
+      - { command: "df -i /", en: "File slots (inodes) instead of bytes.", ms: "Slot fail (inode) dan bukan bait." }
+
+  - id: du
+    group: remote
+    syntax: "du -sh <paths>"
+    danger: safe
+    lesson: linux-l4-l04
+    docs: "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html"
+    what: { en: "Shows how much space folders and files take.", ms: "Tunjuk berapa banyak ruang yang folder dan fail ambil." }
+    when: { en: "To find the fat shelf before you delete anything.", ms: "Untuk cari rak yang gemuk sebelum anda padam apa-apa." }
+    example: { command: "sudo du -sh /var/log/*", en: "One total per log folder.", ms: "Satu jumlah untuk setiap folder log." }
+    variants:
+      - { command: "du -sh ~/* | sort -h | tail -n 5", en: "Your five fattest folders.", ms: "Lima folder anda yang paling gemuk." }
+
+  - id: crontab
+    group: scripts
+    syntax: "crontab <file> | crontab -l | crontab -r"
+    danger: careful
+    lesson: linux-l4-l05
+    docs: "https://manpages.debian.org/trixie/cron/crontab.1.en.html"
+    what: { en: "Installs or shows your roster of scheduled jobs.", ms: "Pasang atau tunjuk jadual kerja berjadual anda." }
+    when: { en: "To run a script at set times, like 2 a.m. every night.", ms: "Untuk jalankan skrip pada masa tetap, seperti 2 pagi setiap malam." }
+    example: { command: "crontab jobs.txt", en: "Install the roster from a file. It replaces the old one.", ms: "Pasang jadual dari fail. Ia ganti yang lama." }
+    variants:
+      - { command: "crontab -l", en: "Show your roster.", ms: "Tunjuk jadual anda." }
+      - { command: "echo '0 2 * * * /home/you/backup.sh' | crontab -", en: "Install one line from the pipe.", ms: "Pasang satu baris dari paip." }
+      - { command: "crontab -r", en: "Delete your whole roster, without asking.", ms: "Padam seluruh jadual anda, tanpa bertanya." }
+
+  - id: list-timers
+    group: scripts
+    syntax: "systemctl list-timers [name]"
+    danger: safe
+    lesson: linux-l4-l05
+    docs: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+    what: { en: "Shows systemd timers: when each runs next and what it starts.", ms: "Tunjuk timer systemd: bila setiap satu berjalan seterusnya dan apa yang dimulakan." }
+    when: { en: "To check a timer is switched on and its next run.", ms: "Untuk semak timer dihidupkan dan larian seterusnya." }
+    example: { command: "systemctl list-timers kedai-backup.timer", en: "NEXT, LEFT and the service it ACTIVATES.", ms: "NEXT, LEFT dan servis yang ia ACTIVATES." }
+    variants:
+      - { command: "sudo systemctl enable --now kedai-backup.timer", en: "Switch a timer on, now and at every boot.", ms: "Hidupkan timer, sekarang dan setiap kali boot." }
+      - { command: "systemd-analyze calendar '*-*-* 02:00:00'", en: "When does this time rule fire next?", ms: "Bila peraturan masa ini berbunyi seterusnya?" }
+
+  - id: set-euo-pipefail
+    group: scripts
+    syntax: "set -euo pipefail"
+    danger: safe
+    lesson: linux-l4-l08
+    docs: "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html"
+    what: { en: "Strict mode: a script stops at the first failure, unknown jar or broken pipe.", ms: "Mod ketat: skrip berhenti pada kegagalan pertama, balang tak dikenali atau paip rosak." }
+    when: { en: "As line 2 of almost every script.", ms: "Sebagai baris 2 hampir setiap skrip." }
+    example: { command: "set -euo pipefail", en: "Put it right under #!/bin/bash.", ms: "Letak terus di bawah #!/bin/bash." }
+    variants:
+      - { command: "cmd || true", en: "Allow one failure on purpose.", ms: "Benarkan satu kegagalan dengan sengaja." }

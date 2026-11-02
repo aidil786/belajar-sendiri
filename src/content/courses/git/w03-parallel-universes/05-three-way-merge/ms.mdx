@@ -1,0 +1,72 @@
+---
+id: git-w03-l05
+world: 3
+title: Merge tiga hala
+summary: "Anda akan belajar: macam mana Git gabungkan dua branch yang sama-sama bergerak ke depan."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, GraphPick, Sim, Choice, SortCards]
+needs: [git-w03-l04]
+scenario: w03-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git merge-base", url: "https://git-scm.com/docs/git-merge-base" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git log --oneline --graph --all']} label="Log bercabang. main ada Make heading teal. about ada Add about page dan Say what I like. Kedua-duanya tumbuh dari Add style." />
+
+Kali ini main pun dah bergerak. Nota tak boleh sekadar meluncur ke depan. Apa Git akan buat?
+</Card>
+
+<Card id="see-merge" type="see">
+<Interactive name="GraphScene" scenario="w03-l05" commands={['git merge about']} label="Satu commit baru muncul di main. Dua garisan masuk ke dalamnya: satu dari main, satu dari about." />
+
+Git buat **<Term id="merge-commit">merge commit</Term>** baru. Ia ada dua induk, satu dari setiap branch. Dua cerita bertemu di sini.
+</Card>
+
+<Card id="try-base" type="try">
+Git banding tiga commit: hujung anda, hujung mereka, dan tempat ia berpecah. Tempat itu ialah <Term id="merge-base">merge base</Term>. Cari ia.
+
+<Interactive name="GraphPick" scenario="w03-l05" answer="^Add style$" prompt="Ketik commit terakhir yang dikongsi kedua-dua branch." why="Add style ialah tempat dua branch itu berpecah." />
+</Card>
+
+<Card id="see-three" type="see">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git merge about']} label="git merge about papar: Merge made by the 'ort' strategy. Kemudian about.html dengan 2 baris baru." />
+
+Asal, anda dan mereka: tiga commit masuk. Itulah **<Term id="three-way-merge">merge tiga hala</Term>**. Perkataan ort ialah nama enjin merge Git.
+</Card>
+
+<Card id="try-merge" type="try">
+Giliran anda. Anda di main. Merge `about`.
+
+<Interactive name="Sim" scenario="w03-l05" panels={['graph']} goal={{ currentBranch: 'main', mergeCommit: true }} hints={['Taip git merge about dan tekan Enter.']} success="Dah merge! Tengok graf: dua garisan bertemu jadi satu." />
+
+<Hint>Taip `git merge about`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Berapa induk yang merge commit ada?
+
+<Interactive name="Choice" compact options={[{ label: '2', correct: true, why: 'Satu dari setiap branch yang digabungkan.' }, { label: '1', why: 'Commit biasa ada satu. Merge gabungkan dua.' }, { label: '0', why: 'Hanya commit paling pertama yang tiada induk.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Fast-forward, atau merge commit baru?
+
+<Interactive name="SortCards" buckets={[{ id: 'ff', label: 'Fast-forward' }, { id: 'merge', label: 'Merge commit' }]} items={[{ label: 'main tak berubah sejak branch bermula', bucket: 'ff', why: 'Tiada apa baru di main, jadi nota boleh meluncur.' }, { label: 'Kedua-dua branch dapat commit baru', bucket: 'merge', why: 'Dua cerita perlu disambung.' }, { label: 'Anda tambah `--no-ff`', bucket: 'merge', why: '--no-ff sentiasa buat merge commit.' }, { label: 'Branch itu cuma beberapa commit di depan main', bucket: 'ff', why: 'main betul-betul di belakangnya. Luncur!' }]} success="Dah susun! Luncur kalau boleh, sambung kalau perlu." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh merge branch yang sama-sama dah bergerak.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show` pada merge commit papar baris Merge: dengan kedua-dua induk. `git log --merges` senaraikan merge commit sahaja. Git cadangkan mesej Merge branch 'about'. Dalam terminal sebenar, editor anda dibuka dengan mesej itu siap.
+
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git merge about', 'git show HEAD']} label="git show HEAD pada merge: baris Merge dengan dua hash pendek, kemudian mesej Merge branch 'about'." />
+</Card>

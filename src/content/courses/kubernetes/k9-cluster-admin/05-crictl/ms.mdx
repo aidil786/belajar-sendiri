@@ -1,0 +1,80 @@
+---
+id: k8s-k9-l05
+world: 9
+title: "crictl: container di bawah kubelet"
+summary: "Anda akan belajar: cara lihat pod, container dan log sesebuah node terus dari dapur."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, SpotLines, Choice, SortCards, OrderList, Mission]
+needs: [k8s-k9-l04]
+scenario: k9-crictl
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Nyahpepijat node Kubernetes dengan crictl", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/" }
+  - { label: "Container Runtime Interface (CRI)", url: "https://kubernetes.io/docs/concepts/architecture/cri/" }
+  - { label: "Nyahpepijat pod yang berjalan", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-crictl" commands={['kubectl get pods -o wide']} label="Pod oven di dev-worker2 dalam CrashLoopBackOff, dengan 2 kali mula semula." />
+
+Dulang oven asyik ranap di `dev-worker2`. Pada malam yang malang, pejabat pun mati. Jadi kubectl tak nampak apa-apa. Macam mana nak tengok juga?
+</Card>
+
+<Card id="try-pods" type="try">
+Pergi terus ke dapur dengan **<Term id="crictl">crictl</Term>**. Taip `docker exec -it dev-worker2 bash`, kemudian `crictl pods`.
+
+<Interactive name="FoodCourtSim" scenario="k9-crictl" goal={{ typed: '^(ssh dev-worker2|docker exec -it dev-worker2 bash)$', lastTyped: '^crictl pods\\b' }} hints={['Taip docker exec -it dev-worker2 bash', 'Kemudian crictl pods']} success="Dapur senaraikan pod oven, tanpa tanya pejabat." />
+
+<Hint>crictl bercakap dengan containerd pada mesin ini sahaja. Ia tak perlukan API server.</Hint>
+</Card>
+
+<Card id="try-spot" type="try">
+`crictl ps -a` senaraikan container, termasuk yang sudah berhenti. Tekan container yang sudah keluar.
+
+<Interactive name="SpotLines" prompt="Tekan container yang sudah keluar." lines={[{ text: 'CONTAINER           IMAGE               CREATED             STATE               NAME                ATTEMPT             POD ID              POD                       NAMESPACE' }, { text: 'eb52f4a9e27f3       30ecbe1509090       13 seconds ago      Exited              oven                2                   020bde3f05ec8       oven                      default', target: true }, { text: '2ff284c134601       520212b8b0fcd       5 minutes ago       Running             coredns             0                   4a9377c73c32b       coredns-59d675bd9-vbfdl   kube-system' }, { text: 'dc68581d915b3       4626fe10df5b9       5 minutes ago       Running             kindnet             0                   a7e96aecef294       kindnet-ws2pk             kube-system' }, { text: '0c989cfb67d19       d6a28daf3e6b0       5 minutes ago       Running             kube-proxy          0                   89a1643df1616       kube-proxy-hv5tc          kube-system' }]} success="Exited, ATTEMPT 2: dapur sudah hidupkan oven tiga kali." />
+
+<Hint>Baca lajur STATE.</Hint>
+</Card>
+
+<Card id="try-logs" type="try">
+Baca kata-kata terakhir oven. Taip `crictl ps -a --name oven`. Salin id CONTAINER. Kemudian taip `crictl logs` dan tampal id itu.
+
+<Interactive name="FoodCourtSim" scenario="k9-crictl" intro={['docker exec -it dev-worker2 bash']} goal={{ typed: '^crictl ps -a\\b', lastTyped: '^crictl logs (--tail[= ]?\\d+ )?[0-9a-f]{4,}' }} hints={['Taip crictl ps -a --name oven', 'Salin id dari lajur pertama. Kemudian crictl logs <id itu>']} success="“oven: no gas, cannot heat”: perkataan sama yang kubectl logs tunjuk, dibaca dari dapur." />
+
+<Hint>Beberapa huruf pertama id sudah cukup.</Hint>
+</Card>
+
+<Card id="predict-down" type="predict">
+API server mati. Arahan mana masih tunjuk kata-kata terakhir oven?
+
+<Interactive name="Choice" options={[{ label: 'crictl logs, di dalam dev-worker2', correct: true, why: 'Ya. Ia tanya containerd pada node itu. Tak perlu pejabat.' }, { label: 'kubectl logs oven', why: 'kubectl tanya pejabat dahulu. Bila pejabat mati, tiada jawapan.' }, { label: 'kubectl describe pod oven', why: 'Itu pun melalui API server.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Alat mana yang sesuai? Susun setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'kubectl', label: 'kubectl: tanya pejabat' }, { id: 'crictl', label: 'crictl: tanya satu dapur' }]} items={[{ label: 'Lihat dulang di semua gerai sekali gus', bucket: 'kubectl', why: 'Hanya pejabat tahu seluruh medan selera.' }, { label: 'Cipta Deployment', bucket: 'kubectl', why: 'Pesanan sentiasa pergi ke pejabat.' }, { label: 'Lihat semasa API server mati', bucket: 'crictl', why: 'Ia langkau pejabat dan tanya containerd.' }, { label: 'Senaraikan image yang ditarik ke mesin ini', bucket: 'crictl', why: 'crictl images tunjuk stor dapur.' }, { label: 'Lihat semasa kubelet node ini berhenti', bucket: 'crictl', why: 'Dapur terus bekerja tanpa penyelia.' }]} success="Pejabat nampak semuanya. Dapur nampak mesinnya sendiri, walaupun pada malam yang malang." />
+
+<Hint>Kerja ini perlukan seluruh medan selera, atau mesin ini sahaja?</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkahnya: kenapa dulang ranap?
+
+<Interactive name="OrderList" items={['Cari gerainya: kubectl get pods -o wide', 'Masuk ke dalam: ssh dev-worker2', 'Cari container: crictl ps -a --name oven', 'Baca kata-kata terakhirnya: crictl logs <id>', 'Keluar dari gerai: exit']} label="Langkah pertama di atas" success="Gerai, bilik belakang, container, log, keluar." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lihat container dan log sesebuah node dengan crictl.
+</Card>
+
+<Card id="deeper" type="deeper">
+Guna crictl untuk melihat. kubelet yang jalankan container, jadi biar kubelet buat perubahan. `crictl images` senaraikan apa yang dapur sudah tarik. `crictl inspect <id>` tunjuk satu container dengan lengkap.
+
+<Interactive name="Mission" id="k8s-k9-l05-real" steps={[{ id: 'where', text: 'Guna kluster kind pakai buang anda sahaja.', command: 'kubectl config current-context' }, { id: 'pods', text: 'Senaraikan pod yang dapur tahu di satu gerai.', command: 'docker exec dev-worker crictl pods' }, { id: 'ps', text: 'Senaraikan container-nya, termasuk yang berhenti.', command: 'docker exec dev-worker crictl ps -a' }, { id: 'images', text: 'Lihat stor dapur.', command: 'docker exec dev-worker crictl images' }]} success="Anda dah tengok dapur node sebenar!" />
+</Card>

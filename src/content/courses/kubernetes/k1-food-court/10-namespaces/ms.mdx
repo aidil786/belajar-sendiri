@@ -1,0 +1,67 @@
+---
+id: k8s-k1-l10
+world: 1
+title: "Zon: namespace"
+summary: "Anda akan belajar: cara namespace bahagikan satu kluster kepada beberapa zon."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, SortCards]
+needs: [k8s-k1-l09]
+scenario: k1-zones
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Namespaces", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" }
+  - { label: "kubectl create namespace", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_namespace/" }
+---
+
+<Card id="hook" type="hook">
+Dua pasukan mahu pod bernama web, dalam satu kluster. Adakah nama itu akan bertembung?
+
+<Interactive name="Choice" options={[{ label: 'Tidak, jika setiap pasukan ada zon sendiri', correct: true, why: 'Betul. Nama cuma perlu unik dalam satu zon.' }, { label: 'Ya, sentiasa: tukar nama satu', why: 'Tukar nama boleh, tapi zon cara yang lebih kemas.' }, { label: 'Kubernetes tukar nama yang kedua', why: 'Ia tak buat begitu. Zon sama dan nama sama bermaksud pod yang sama.' }]} />
+</Card>
+
+<Card id="see-zones" type="see">
+<Interactive name="KubeReplay" scenario="k1-zones" commands={['kubectl get namespaces', 'kubectl get pods', 'kubectl get pods -n food']} label="Namespace termasuk default dan food. Setiap satu ada pod bernama web." />
+
+**<Term id="namespace">Namespace (zon)</Term>** ialah satu zon dalam medan selera. Di sini, default dan food masing-masing ada pod bernama web. Tiada pertembungan.
+</Card>
+
+<Card id="try-create" type="try">
+Buka zon baharu untuk pasukan minuman. Taip `kubectl create namespace drinks`.
+
+<Interactive name="FoodCourtSim" scenario="k1-zones" goal={{ objectExists: ['namespace/drinks'] }} hints={['Taip kubectl create namespace drinks dan tekan Enter.']} success="Zon drinks dah dibuka. Ia kosong buat masa ini." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda taip `kubectl get pods`. Pod zon mana yang anda nampak?
+
+<Interactive name="Choice" options={[{ label: 'Default sahaja: zon dalam context anda', correct: true, why: 'Ya. kubectl guna namespace dalam context anda. Di sini, default.' }, { label: 'Semua zon', why: 'Untuk itu perlukan -A, singkatan semua namespace.' }, { label: 'Drinks sahaja, yang paling baharu', why: 'Zon baharu tak ubah tempat anda berdiri.' }]} />
+</Card>
+
+<Card id="try-n" type="try">
+Tengok dalam zon food: `kubectl get pods -n food`. Kemudian cuba `-A` untuk lihat semua zon sekali gus.
+
+<Interactive name="FoodCourtSim" scenario="k1-zones" namespace="all" goal={{ typed: '(-n|--namespace)[ =]?food\\b' }} hints={['Taip kubectl get pods -n food dan tekan Enter.']} success="-n pilih satu zon. -A tunjuk semuanya." />
+
+<Hint>`-n` bermaksud namespace. `-A` bermaksud semuanya.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Ia tinggal dalam satu zon, atau merentasi seluruh medan selera?
+
+<Interactive name="SortCards" buckets={[{ id: 'zone', label: 'Dalam satu zon' }, { id: 'court', label: 'Seluruh medan selera' }]} items={[{ label: 'Pod', bucket: 'zone', why: 'Setiap dulang duduk dalam satu zon.' }, { label: 'Deployment', bucket: 'zone', why: 'Satu pesanan milik satu zon.' }, { label: 'Service', bucket: 'zone', why: 'Satu nombor pesanan milik satu zon.' }, { label: 'Node', bucket: 'court', why: 'Satu gerai layan semua zon.' }, { label: 'Namespace', bucket: 'court', why: 'Zon tak boleh duduk dalam zon lain.' }]} success="Dulang dan pesanan tinggal dalam zon. Gerai dan zon milik seluruh medan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bahagikan kluster kepada zon dan tengok dalam setiap satu.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl config set-context --current --namespace=food` jadikan food zon lalai anda. Bar merah jambu tunjuk perubahan itu. Hati-hati: `kubectl delete namespace food` padam semua isinya. Zon asingkan nama, bukan trafik. NetworkPolicy, dalam Dunia K3, buat kerja itu.
+
+Latihan sebenar (pilihan): di kluster kind anda, `kubectl get namespaces` tunjuk zon yang kind buat untuk anda.
+</Card>

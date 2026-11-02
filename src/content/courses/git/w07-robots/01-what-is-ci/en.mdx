@@ -1,0 +1,67 @@
+---
+id: git-w07-l01
+world: 7
+title: What CI/CD means
+summary: "You will learn: how a robot can test and ship your code on every push."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, PracticeRepo, SortCards, Transcript, SwipeJudge]
+needs: [git-w04-l12]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+---
+
+<Card id="hook" type="hook">
+Friday night. Mei merges a change. The diary site breaks. Nobody ran the tests. Who should run them, every single time?
+
+<Interactive name="Choice" options={[{ label: 'You, by hand, before every merge', why: 'People forget. Especially on a Friday night.' }, { label: 'A robot, on every push', correct: true, why: 'Robots never forget and never get tired.' }, { label: 'Nobody. Fix bugs when readers complain.', why: 'Then your readers find the bugs first. Ouch.' }]} />
+</Card>
+
+<Card id="see-ci" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'You push', text: 'Your new commits reach GitHub.' }, { when: '2', title: 'A fresh computer', text: 'A robot gets a clean computer, just for this run.' }, { when: '3', title: 'Tests run', text: 'It installs your project and runs every test.' }, { when: '4', title: '✓ or ✗', text: 'Your commit gets a green ✓ (passed) or a red ✗ (failed).' }]} />
+
+Tap each step. This robot habit is **<Term id="ci">continuous integration</Term>**, or CI. Every push gets checked, so bugs show up early.
+</Card>
+
+<Card id="see-cd" type="see">
+<Interactive name="PracticeRepo" screen="run" at={41} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 41, workflow: 'CI and deploy', event: 'push', branch: 'main', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Check out code', status: 'pass', log: ['Copied the repo onto the runner.'] }, { name: 'Install packages', status: 'pass', log: ['npm ci', 'All packages installed.'] }, { name: 'Run tests', status: 'pass', log: ['npm test', 'All 12 tests passed.'] }] }, { name: 'deploy', steps: [{ name: 'Build site', status: 'pass', log: ['npm run build', 'Site built into dist/.'] }, { name: 'Publish site', status: 'pass', log: ['Uploaded dist/.', 'The new diary is live.'] }] }] }]} />
+
+Tests passed? Then a robot can ship it too. That is **<Term id="cd">CD</Term>**, continuous delivery or deployment. Tap a step to peek at its log.
+</Card>
+
+<Card id="try-sort" type="try">
+Is it checking, or shipping? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'ci', label: 'CI: check it' }, { id: 'cd', label: 'CD: ship it' }]} items={[{ label: 'Run the tests', bucket: 'ci', why: 'Testing every push is the heart of CI.' }, { label: 'Check the code style (lint)', bucket: 'ci', why: 'Lint is a check, so it is CI.' }, { label: 'Put a ✓ or ✗ on the commit', bucket: 'ci', why: 'CI reports what it found.' }, { label: 'Publish the site to the web', bucket: 'cd', why: 'Sending it to readers is CD.' }, { label: 'Send the new app version to users', bucket: 'cd', why: 'Shipping to users is CD.' }]} success="Sorted! CI checks. CD ships." />
+</Card>
+
+<Card id="see-actions" type="see">
+<Interactive name="Transcript" title="bash" label="ls .github/workflows lists two workflow files: ci.yml and deploy.yml." lines={[{ cmd: 'ls .github/workflows' }, { out: 'ci.yml  deploy.yml' }]} />
+
+GitHub's robot is called **<Term id="github-actions">GitHub Actions</Term>**. You write its instructions in files. They live in `.github/workflows/` inside your repo.
+</Card>
+
+<Card id="predict" type="predict">
+Mei's next push breaks a test. What does CI do?
+
+<Interactive name="Choice" options={[{ label: 'Marks the commit ✗ and shows the failing test', correct: true, why: 'You find out in minutes, not days.' }, { label: 'Fixes the test by itself', why: 'CI only checks. You still fix the code.' }, { label: "Deletes Mei's commit", why: 'CI never changes your history. It only reports.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Push small changes often, so CI checks each one', good: true, why: 'Small changes are easy to check and easy to fix.' }, { text: 'Turn off a failing check to merge faster', good: false, why: 'The bug is still there. Fix it instead.' }, { text: 'Deploy only after the tests pass', good: true, why: 'Broken code never reaches your readers.' }, { text: 'Skip the tests, because it works on your computer', good: false, why: 'A fresh robot computer catches what yours hides.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain CI and CD.
+</Card>
+
+<Card id="deeper" type="deeper">
+CD comes in two flavours. Continuous delivery: every change is ready, and a person presses ship. Continuous deployment: it ships by itself when the checks pass. Many tools do CI. This world uses GitHub Actions.
+</Card>

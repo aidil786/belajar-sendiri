@@ -1,0 +1,66 @@
+---
+id: git-w08-l08
+world: 8
+title: Signed commits
+summary: "You will learn: how to prove a commit is really yours, with a Verified badge."
+minutes: 4
+xp: 20
+interactives: [TermReplay, CommandBuilder, Sim, Choice, SortCards]
+needs: [git-w08-l07]
+scenario: w08-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git config (gpg.format, user.signingKey, commit.gpgSign)", url: "https://git-scm.com/docs/git-config" }
+  - { label: "About commit signature verification", url: "https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification" }
+  - { label: "Telling Git about your signing key", url: "https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l08" commands={['git config --global user.name "Siti"', 'git commit -m "Add footer"', 'git log -n 1']} label="One config command sets the name to Siti. The new commit says Author: Siti, even though anyone could have typed it." />
+
+Git trusts any name you type. Anyone can make commits that say "Siti". So how can people trust a commit is really yours?
+</Card>
+
+<Card id="see-signed" type="see">
+A **<Term id="signed-commit">signed commit</Term>** carries your digital signature. Only your private key can make it. GitHub checks it with your public key, like a key in its lock.
+</Card>
+
+<Card id="see-verified" type="see">
+Signature checks out? GitHub shows a **<Term id="verified-badge">Verified</Term>** badge next to the commit. Signed, but GitHub can't check it? It says Unverified. Not signed? No badge at all.
+</Card>
+
+<Card id="try-build" type="try">
+Git can sign with an SSH key, like your key from World 4. Build the setting that picks SSH.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'config', means: 'change a setting' }, { text: '--global', means: 'for all your projects' }, { text: 'gpg.format', means: 'which kind of key signs' }, { text: 'ssh', means: 'use an SSH key' }]} decoys={[{ text: 'openpgp', means: 'use a GPG key (the default)' }, { text: 'user.name', means: 'your name' }]} success="Yes! Git will now sign with SSH." />
+</Card>
+
+<Card id="try-sim" type="try">
+Now set up signing here. You need three settings: the format, your key, and "sign every commit".
+
+<Interactive name="Sim" scenario="w08-l08" panels={[]} prefill="git config --global gpg.format ssh" goal={{ config: { 'gpg.format': 'ssh', 'commit.gpgsign': 'true' }, configSet: ['user.signingkey'] }} hints={['Press Enter to run the first setting.', 'Your key: git config --global user.signingkey ~/.ssh/id_ed25519.pub', 'Sign every commit: git config --global commit.gpgsign true']} success="Done! Every new commit will carry your signature." />
+
+<Hint>Point `user.signingkey` at your public key, the file that ends in `.pub`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You push a signed commit. But your public key is not on GitHub as a signing key. What does GitHub show?
+
+<Interactive name="Choice" options={[{ label: 'Unverified', correct: true, why: 'It is signed, but GitHub has no key to check it with.' }, { label: 'Verified', why: 'GitHub needs your public key to check the signature.' }, { label: 'No badge', why: 'No badge means not signed. This one is signed.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which badge does each commit get? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'verified', label: 'Verified' }, { id: 'unverified', label: 'Unverified' }, { id: 'none', label: 'No badge' }]} items={[{ label: 'Signed, and your signing key is on GitHub', bucket: 'verified', why: 'The signature matches your key.' }, { label: 'Signed, but the key is not on GitHub', bucket: 'unverified', why: 'GitHub cannot check it.' }, { label: 'Not signed at all', bucket: 'none', why: 'No signature, no badge.' }, { label: 'Made in the GitHub web editor', bucket: 'verified', why: 'GitHub signs those for you.' }]} success="Sorted! Now you can read the badges." />
+</Card>
+
+<Card id="win" type="win">
+You can now sign your commits and read the Verified badge.
+</Card>
+
+<Card id="deeper" type="deeper">
+GPG keys work too. That's the default format, `openpgp`. SSH signing needs Git 2.34 or newer. Turn on vigilant mode, and your unsigned commits show as Unverified. `git log --show-signature` shows signatures on your computer. For SSH, Git first needs `gpg.ssh.allowedSignersFile`.
+</Card>

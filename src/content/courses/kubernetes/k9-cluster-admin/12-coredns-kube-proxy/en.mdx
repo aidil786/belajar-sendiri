@@ -1,0 +1,75 @@
+---
+id: k8s-k9-l12
+world: 9
+title: Fix CoreDNS and kube-proxy
+summary: "You will learn: to tell a phone book problem (CoreDNS) from a runner problem (kube-proxy), and fix the first."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SortCards, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l11]
+scenario: k9-dns
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: debugging DNS resolution", url: "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/" }
+  - { label: "Kubernetes: DNS for Services and Pods", url: "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" }
+  - { label: "Kubernetes: debug Services", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/" }
+  - { label: "kube-proxy", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/" }
+---
+
+<Card id="hook" type="hook">
+From the client tray, calling the shop by its Service IP works. Calling it by the name `shop` fails. What is broken?
+
+<Interactive name="Choice" options={[{ label: 'Turning names into addresses (DNS)', correct: true, why: 'The address works, so the road is fine. Only the name lookup fails.' }, { label: 'The shop trays', why: 'The same trays answered when you used the address.' }, { label: 'kube-proxy', why: 'kube-proxy carried the call by address. That part works.' }]} />
+</Card>
+
+<Card id="see-phonebook" type="see">
+<Interactive name="KubeReplay" scenario="k9-dns" picture={false} commands={['kubectl exec client -- nslookup shop', 'kubectl get svc -n kube-system']} label="nslookup asks the server 10.96.0.10 and gets the shop Service's address. kubectl get svc -n kube-system shows the kube-dns Service at 10.96.0.10." />
+
+Every tray asks the phone book at 10.96.0.10. That number is the kube-dns Service. Behind it run the **<Term id="coredns">CoreDNS</Term>** trays.
+</Card>
+
+<Card id="try-sort" type="try">
+Which part do you suspect? Sort each clue.
+
+<Interactive name="SortCards" buckets={[{ id: 'dns', label: 'CoreDNS (names)' }, { id: 'proxy', label: 'kube-proxy (Service IPs)' }]} items={[{ label: 'The name fails, the Service IP works', bucket: 'dns', why: 'Only the lookup is broken.' }, { label: 'No CoreDNS trays in kube-system', bucket: 'dns', why: 'Nobody answers the phone book number.' }, { label: 'The Service IP fails, a tray’s own IP works', bucket: 'proxy', why: 'kube-proxy turns Service IPs into tray IPs.' }, { label: 'Only trays on one stall can’t reach Services', bucket: 'proxy', why: 'kube-proxy runs per stall. Check the one on that stall.' }]} success="Sorted! Names point at CoreDNS. Service IPs point at kube-proxy." />
+</Card>
+
+<Card id="try-fix" type="try">
+Someone scaled CoreDNS to 0 “to save money”. Bring the phone book back: 2 ready trays. Note: this practice cluster still answers names meanwhile. A real one would not.
+
+<Interactive name="FoodCourtSim" scenario="k9-coredns-down" goal={{ podsReady: { selector: 'k8s-app=kube-dns', count: 2, namespace: 'kube-system' }, serviceEndpoints: { name: 'kube-dns', namespace: 'kube-system', min: 1 } }} hints={['Look: kubectl get pods -n kube-system -l k8s-app=kube-dns', 'Then kubectl get deployment coredns -n kube-system', 'Fix: kubectl scale deployment coredns -n kube-system --replicas=2']} success="Two CoreDNS trays answer the phone book number again." />
+
+<Hint>CoreDNS is a Deployment in `kube-system`. Scale it back to 2.</Hint>
+</Card>
+
+<Card id="see-proxy" type="see">
+<Interactive name="KubeReplay" scenario="k9-dns" picture={false} commands={['kubectl get pods -n kube-system -l k8s-app=kube-proxy -o wide']} label="Three kube-proxy pods, one on each node: dev-control-plane, dev-worker and dev-worker2." />
+
+**<Term id="kube-proxy">kube-proxy</Term>** is the runner on every stall. It turns a Service IP into a real tray’s address. A DaemonSet keeps one per stall.
+</Card>
+
+<Card id="predict" type="predict">
+You delete the kube-proxy tray on dev-worker2. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'The DaemonSet makes a new one on dev-worker2', correct: true, why: 'Yes. A DaemonSet wants exactly one on every stall.' }, { label: 'dev-worker2 runs without it from now on', why: 'The DaemonSet notices the gap and fills it.' }, { label: 'Another stall runs two', why: 'Each stall gets exactly one. The new one lands on dev-worker2.' }]} />
+</Card>
+
+<Card id="check-ladder" type="check">
+Names fail. Put the DNS ladder in order, like the official guide.
+
+<Interactive name="OrderList" items={['kubectl exec client -- nslookup shop', 'kubectl exec client -- cat /etc/resolv.conf', 'kubectl get pods -n kube-system -l k8s-app=kube-dns', 'kubectl logs -n kube-system -l k8s-app=kube-dns', 'kubectl get endpointslice -l kubernetes.io/service-name=kube-dns -n kube-system']} label="First rung at the top" success="Ask, read the settings, check the trays, read their logs, check the order number." />
+</Card>
+
+<Card id="win" type="win">
+You can now tell a CoreDNS problem from a kube-proxy one.
+</Card>
+
+<Card id="deeper" type="deeper">
+CoreDNS reads its rules (the Corefile) from the ConfigMap `coredns`. Where the story breaks: a real food court is one building. Cluster stalls can sit in different rooms, or clouds. And this practice cluster answers names even with CoreDNS down.
+
+<Interactive name="Mission" id="k8s-k9-l12-real" steps={[{ id: 'off', text: 'On a throwaway kind cluster, switch the phone book off.', command: 'kubectl -n kube-system scale deployment coredns --replicas=0' }, { id: 'ask', text: 'Ask for a name. Read how it fails.', command: 'kubectl run dnstest --image=busybox:1.37 --rm -it --restart=Never -- nslookup kubernetes.default' }, { id: 'on', text: 'Switch it back on.', command: 'kubectl -n kube-system scale deployment coredns --replicas=2' }]} success="You broke and fixed a real cluster's phone book!" />
+</Card>

@@ -1,0 +1,42 @@
+---
+// "/" → saved language, else the browser language, else English.
+import '~/styles/global.css';
+import { t } from '~/i18n';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FahamLah</title>
+    <meta name="description" content={t('en', 'site.description')} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <script is:inline>
+      (function () {
+        let lang = null;
+        try {
+          const p = JSON.parse(localStorage.getItem('fahamlah:v1') || '{}');
+          if (p.settings && (p.settings.lang === 'en' || p.settings.lang === 'ms')) lang = p.settings.lang;
+        } catch {}
+        if (!lang) {
+          const langs = navigator.languages || [navigator.language || ''];
+          for (let i = 0; i < langs.length; i++) {
+            const l = String(langs[i]).toLowerCase();
+            if (l.indexOf('ms') === 0) { lang = 'ms'; break; }
+            if (l.indexOf('en') === 0) { lang = 'en'; break; }
+          }
+        }
+        location.replace('/' + (lang || 'en') + '/');
+      })();
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=/en/" /></noscript>
+  </head>
+  <body>
+    <main class="container" style="padding-block: var(--space-7)">
+      <p>{t('en', 'redirect.text')}</p>
+      <p><a href="/en/">{t('en', 'redirect.en')}</a> · <a href="/ms/" lang="ms">{t('ms', 'redirect.ms')}</a></p>
+    </main>
+  </body>
+</html>

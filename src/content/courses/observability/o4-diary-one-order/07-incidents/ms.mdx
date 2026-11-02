@@ -1,0 +1,58 @@
+---
+id: obs-o4-l07
+world: 4
+title: "Insiden: siapa buat apa"
+summary: "Anda akan belajar: cara pasukan yang tenang bahagikan kerja bila sesuatu yang besar rosak."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, OrderList, SwipeJudge, TimelineTap]
+needs: [obs-o4-l06]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing incidents (Google SRE book)", url: "https://sre.google/sre-book/managing-incidents/" }
+  - { label: "Incident response (Google SRE workbook)", url: "https://sre.google/workbook/incident-response/" }
+---
+
+<Card id="hook" type="hook">
+Bayaran gagal. Lima orang terus masuk. Dua orang restart benda serentak. Tiada siapa beritahu pelanggan. Apa yang kurang?
+
+<Interactive name="Choice" options={[{ label: 'Seorang yang mengetuai, dan tugas yang jelas', correct: true, why: 'Betul. Tangan yang sibuk tanpa pelan jadikan masalah besar lebih besar.' }, { label: 'Lebih ramai orang', why: 'Lima pun dah terlalu ramai tanpa pelan.' }, { label: 'Server yang lebih laju', why: 'Masalahnya pasukan, bukan mesin.' }]} />
+</Card>
+
+<Card id="see-roles" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'ic', label: 'Incident commander' }, { id: 'ops', label: 'Pembaiki (ops)' }, { id: 'comms', label: 'Penyampai' }]} items={[{ label: 'Tentukan pelan dan beri tugas', bucket: 'ic', why: 'Commander pegang gambaran besar.' }, { label: 'Kemas kini nota insiden bersama', bucket: 'comms', why: 'Nota dan kemas kini: tugas penyampai.' }, { label: 'Rollback perubahan pangkalan data', bucket: 'ops', why: 'Hanya pembaiki ubah sistem.' }, { label: 'Hantar kemas kini kepada pelanggan setiap 30 minit', bucket: 'comms', why: 'Berita berkala buat semua orang tenang.' }, { label: 'Baca trace dan jumpa query yang lambat', bucket: 'ops', why: 'Menggali sendiri ialah kerja ops.' }]} success="Tiga tugas, tak pernah bercampur." />
+
+**<Term id="incident-commander">Incident commander</Term>** mengetuai tapi tidak membaiki sendiri. Susun tugas-tugas ini.
+</Card>
+
+<Card id="see-flow" type="see">
+<Interactive name="OrderList" items={['Kesan: amaran atau pelanggan', 'Isytihar: "Ini insiden. Saya commander."', 'Redakan: hentikan kesakitan', 'Selesaikan: baiki apa yang rosak', 'Belajar: tulis postmortem']} label="Langkah pertama di atas" success="Kesan, isytihar, redakan, selesaikan, belajar." />
+
+Setiap insiden lalu jalan yang sama. Susun mengikut urutan.
+</Card>
+
+<Card id="predict" type="predict">
+Bayaran gagal sejak perubahan pangkalan data pukul 17:30. Anda belum tahu kenapa. Apa dulu?
+
+<Interactive name="Choice" options={[{ label: 'Rollback perubahan itu, kemudian cari sebabnya', correct: true, why: 'Betul. Hentikan kesakitan dulu. Kaji punca bila pelanggan dah selamat.' }, { label: 'Cari punca sebenar, kemudian baiki', why: 'Pelanggan terus gagal semasa anda mengkaji. Redakan dulu.' }, { label: 'Tunggu dan lihat jika ia pulih', why: 'Harapan bukan pelan. Bajet sedang terbakar.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Leret ke kanan untuk tabiat insiden yang tenang. Leret ke kiri untuk yang memburukkan.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Isytihar insiden awal, walaupun mungkin kecil.', good: true, why: 'Tutup insiden kecil itu mudah. Mula lewat itu susah.' }, { text: 'Commander terjun ke pangkalan data untuk baiki sendiri.', good: false, why: 'Nanti tiada siapa pegang gambaran besar.' }, { text: 'Dua orang restart servis tanpa beritahu sesiapa.', good: false, why: 'Hanya pembaiki ubah sesuatu, dan mereka beritahu apa yang dibuat.' }, { text: 'Serah tugas commander dengan jelas, dan tunggu "faham".', good: true, why: 'Semua orang mesti tahu siapa ketua sekarang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kendalikan insiden dengan peranan jelas: ketua, baiki, maklum.
+</Card>
+
+<Card id="deeper" type="deeper">
+Insiden yang tenang untuk pesanan A1041, seperti yang dicatat:
+
+<Interactive name="TimelineTap" events={[{ when: '17:46', title: 'FastBurn panggil Aina', text: 'Pesanan gagal. Bajet ralat terbakar laju.' }, { when: '17:48', title: 'Aina isytihar insiden', text: 'Dia commander. Ben membaiki. Mei bercakap dengan pelanggan.' }, { when: '17:52', title: 'Ben jejak satu pesanan', text: 'Trace dan log: SELECT payments ambil 2.8 s.' }, { when: '17:58', title: 'Ben rollback perubahan 17:30', text: 'Bayaran laju semula. Ralat menurun.' }, { when: '18:20', title: 'Aina tutup insiden', text: 'Postmortem dijadualkan esok.' }]} />
+</Card>

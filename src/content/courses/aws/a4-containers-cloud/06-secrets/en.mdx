@@ -1,0 +1,69 @@
+---
+id: aws-a4-l06
+world: 4
+title: "Secrets Manager and Parameter Store"
+summary: "You will learn: to keep passwords in a safe, hand them to tasks at start, and give only the right key."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, IamJudge, SwipeJudge, Transcript]
+needs: [aws-a4-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Secrets Manager: What is it?", url: "https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html" }
+  - { label: "AWS Systems Manager: Parameter Store", url: "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html" }
+  - { label: "Amazon ECS: Pass sensitive data to a container", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html" }
+  - { label: "AWS CLI: aws secretsmanager delete-secret", url: "https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/delete-secret.html" }
+  - { label: "AWS Secrets Manager pricing", url: "https://aws.amazon.com/secrets-manager/pricing/" }
+---
+
+<Card id="hook" type="hook">
+The database password sits in plain text in the task definition. Everyone who can read the recipe card can read the password. What now?
+
+<Interactive name="Choice" options={[{ label: 'Lock it in a safe. The card only says where it is.', correct: true, why: 'Yes. The card names the safe. Only the task gets the value.' }, { label: 'Hide it in the Dockerfile instead', why: 'Remember D5: docker history shows it to anyone with the image.' }, { label: 'Leave it, the card is private', why: 'Many people and tools can read cards. Keep secrets out.' }]} />
+</Card>
+
+<Card id="see-safe" type="see">
+**<Term id="secrets-manager">Secrets Manager</Term>** is the safe. <Term id="parameter-store">Parameter Store</Term> is a noticeboard with locked notes. Which fits each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'sm', label: 'Secrets Manager (the safe)' }, { id: 'ps', label: 'Parameter Store (the noticeboard)' }]} items={[{ label: 'Change the database password on a schedule', bucket: 'sm', why: 'Rotation is its special skill.' }, { label: 'A plain setting, like the menu page address', bucket: 'ps', why: 'Not secret. A plain parameter is enough.' }, { label: 'A monthly charge for each one you keep', bucket: 'sm', why: 'Every secret costs a little each month.' }, { label: 'Standard notes with no extra charge', bucket: 'ps', why: 'Check the pricing page for today’s rules.' }]} success="Rotating secrets: the safe. Settings and simple notes: the noticeboard." />
+</Card>
+
+<Card id="see-inject" type="see">
+The recipe card points at the safe. ECS opens it when the task starts. Tap the line that says where the password comes from.
+
+<Interactive name="SpotLines" prompt="Tap the line that names the safe." success="The card holds an address, never the password itself." lines={[{ text: '"containerDefinitions": [{' }, { text: '  "name": "web",' }, { text: '  "secrets": [{' }, { text: '    "name": "DB_PASSWORD",' }, { text: '    "valueFrom": "arn:aws:secretsmanager:ap-southeast-5:111122223333:secret:kedai-db-a1b2c3"', target: true }, { text: '  }]' }, { text: '}]' }]} />
+</Card>
+
+<Card id="try-key" type="try">
+The task's execution role must open the database safe. Its key points at the wrong one. Change the pink line, and keep it narrow.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-task-exec/web-1', who: 'kedai-task-exec', action: 'secretsmanager:GetSecretValue', resource: 'arn:aws:secretsmanager:ap-southeast-5:111122223333:secret:kedai-db-a1b2c3' }} policies={[{ name: 'read-one-secret', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'secretsmanager:GetSecretValue', Resource: 'arn:aws:secretsmanager:ap-southeast-5:111122223333:secret:kedai-menu-*' }] } }]} task={{ type: 'edit', policy: 0, line: 7, want: 'Allow', forbid: ['"\\*"', 'secret:\\*'] }} solution={'"Resource": "arn:aws:secretsmanager:ap-southeast-5:111122223333:secret:kedai-db-*"'} success="One key for one safe. Nothing more." />
+
+<Hint>Swap `kedai-menu-*` for `kedai-db-*`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The safe changes the password tonight. A task started yesterday is still running. Which password does it have?
+
+<Interactive name="Choice" options={[{ label: 'The old one, until the task restarts', correct: true, why: 'ECS reads the safe when a task starts. Restart tasks after a change.' }, { label: 'The new one, at once', why: 'Almost! The value was handed over at start. New tasks get the new one.' }, { label: 'None, the task crashes', why: 'It keeps the value it got at start.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Safe secret habits, or risky? Swipe right for safe.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Put the secret’s address on the recipe card', good: true, why: 'An address leaks nothing. Only the right role can open it.' }, { text: 'Paste the password into the GitHub repo', good: false, why: 'Old commits keep it forever. Use the safe.' }, { text: 'One narrow key per task, for one safe', good: true, why: 'A leaked key opens one safe, not all of them.' }, { text: 'Keep test secrets you no longer use', good: false, why: 'Each one costs money every month. Delete them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep secrets in a safe, for the right task only.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deleting a secret waits a recovery window first, so you can undo a mistake. Here is the official example's answer.
+
+<Interactive name="Transcript" title="bash" label="aws secretsmanager delete-secret with a 7-day recovery window. It prints the ARN, the name and the deletion date." lines={[{ cmd: 'aws secretsmanager delete-secret --secret-id MyTestSecret --recovery-window-in-days 7' }, { out: '{\n    "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestSecret-a1b2c3",\n    "Name": "MyTestSecret",\n    "DeletionDate": 1524085349.095\n}' }]} />
+</Card>

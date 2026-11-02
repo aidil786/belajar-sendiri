@@ -1,0 +1,81 @@
+---
+id: k8s-k9-l11
+world: 9
+title: "Users: CSR, certificates and kubeconfig"
+summary: "You will learn: how a new person gets a signed ID card, and why they still need RBAC rights."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, CommandBuilder, YamlPlayground, FoodCourtSim, SortCards, OrderList, Mission]
+needs: [k8s-k9-l10]
+scenario: k9-users
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: issue a certificate for an API client (CSR)", url: "https://kubernetes.io/docs/tasks/tls/certificate-issue-client-csr/" }
+  - { label: "Kubernetes: certificates and certificate signing requests", url: "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/" }
+  - { label: "Kubernetes: authenticating (X509 client certificates)", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/" }
+  - { label: "kubectl certificate approve", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_certificate/kubectl_certificate_approve/" }
+---
+
+<Card id="hook" type="hook">
+Aina joins the kitchen team. Where do you add her as a Kubernetes user?
+
+<Interactive name="Choice" options={[{ label: 'Nowhere: she shows a signed ID card with her name', correct: true, why: 'Kubernetes keeps no User objects. A signed certificate names her.' }, { label: 'kubectl create user aina', why: 'There is no such command. Users are not objects.' }, { label: 'In a Secret', why: 'Secrets hold data for apps, not people.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Secret key', text: 'Aina makes a key on her laptop. It never leaves it.' }, { when: '2', title: 'Request', text: 'From the key she makes a request: CN=aina, O=kitchen.' }, { when: '3', title: 'CSR object', text: 'You put the request into a CertificateSigningRequest.' }, { when: '4', title: 'Approve', text: 'An admin runs kubectl certificate approve aina.' }, { when: '5', title: 'Card', text: 'The office signs it. Aina gets aina.crt.' }, { when: '6', title: 'Rights', text: 'RBAC decides what she may do.' }]} />
+
+Tap each step of a new staff badge. A **<Term id="csr">CSR</Term>** is the form that asks the office to sign one.
+</Card>
+
+<Card id="try-build" type="try">
+Build Aina’s request. CN is her name. O is her team.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'openssl', means: 'the certificate toolkit' }, { text: 'req', means: 'make a request' }, { text: '-new', means: 'a new one' }, { text: '-key aina.key', means: 'from her secret key' }, { text: '-out aina.csr', means: 'save the request here' }, { text: '-subj "/CN=aina/O=kitchen"', means: 'name aina, team kitchen' }]} decoys={[{ text: '-x509', means: 'sign it yourself: not a request' }, { text: '-subj "/CN=kitchen/O=aina"', means: 'name and team swapped' }]} success="That is her request. The key stays on her laptop." />
+</Card>
+
+<Card id="try-yaml" type="try">
+This CSR asks for a server’s card. Aina signs in as a client. Fix the usage.
+
+<Interactive name="YamlPlayground" file="aina-csr.yaml" initial={'apiVersion: certificates.k8s.io/v1\nkind: CertificateSigningRequest\nmetadata:\n  name: aina\nspec:\n  # base64 of aina.csr (shortened here)\n  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K\n  signerName: kubernetes.io/kube-apiserver-client\n  expirationSeconds: 86400\n  usages:\n    - server auth\n'} expect={[{ path: 'spec.usages', type: 'list', count: 1, includes: 'client auth', hint: 'Change server auth to client auth.' }, { path: 'spec.signerName', type: 'text', equals: 'kubernetes.io/kube-apiserver-client', hint: 'Keep the signerName as it was.' }]} solution={'apiVersion: certificates.k8s.io/v1\nkind: CertificateSigningRequest\nmetadata:\n  name: aina\nspec:\n  # base64 of aina.csr (shortened here)\n  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K\n  signerName: kubernetes.io/kube-apiserver-client\n  expirationSeconds: 86400\n  usages:\n    - client auth\n'} hint="A person who signs in is a client." success="Right. For a user, usages is client auth." />
+</Card>
+
+<Card id="predict" type="predict">
+You run `kubectl certificate approve aina`. She signs in with her new card. Can she list the trays?
+
+<Interactive name="Choice" options={[{ label: 'Not yet: nobody gave her rights', correct: true, why: 'The card proves who she is. RBAC says what she may do.' }, { label: 'Yes, approval gives full access', why: 'Approval only signs her badge. Rights come from RBAC.' }, { label: 'Only in kube-system', why: 'She has no rights anywhere yet.' }]} />
+</Card>
+
+<Card id="try-rbac" type="try">
+The Role cook (read trays) exists. Bind it to user aina. Then ask as her.
+
+<Interactive name="FoodCourtSim" scenario="k9-users" intro={['kubectl create role cook --verb=get --verb=list --resource=pods']} goal={{ canI: [{ verb: 'list', resource: 'pods', as: 'aina', allowed: true }, { verb: 'delete', resource: 'pods', as: 'aina', allowed: false }], typed: 'auth can-i .*--as=aina' }} hints={['Type kubectl create rolebinding cook-aina --role=cook --user=aina', 'Ask as her: kubectl auth can-i list pods --as=aina']} success="Aina may read trays. She may not delete them." />
+
+<Hint>`--user=aina` must match the CN in her card exactly.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Who are you, or what may you do? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'who', label: 'Who are you? (the card)' }, { id: 'may', label: 'What may you do? (RBAC)' }]} items={[{ label: 'CN=aina in her certificate', bucket: 'who', why: 'CN becomes her user name.' }, { label: 'O=kitchen in her certificate', bucket: 'who', why: 'O becomes a group she is in.' }, { label: 'A Role that may get and list pods', bucket: 'may', why: 'A list of allowed actions.' }, { label: 'A RoleBinding for group kitchen', bucket: 'may', why: 'It gives the Role to every cook at once.' }]} success="Sorted! The card names her. RBAC sets her rights." />
+</Card>
+
+<Card id="check-kubeconfig" type="check">
+Aina’s card is signed. Put her kubeconfig steps in order.
+
+<Interactive name="OrderList" items={['kubectl get csr aina -o jsonpath=\'{.status.certificate}\' | base64 -d > aina.crt', 'kubectl config set-credentials aina --client-key=aina.key --client-certificate=aina.crt --embed-certs=true', 'kubectl config set-context aina --cluster=kind-dev --user=aina', 'kubectl --context aina auth whoami']} label="First step at the top" success="Card out, card in, context made, then check who you are." />
+</Card>
+
+<Card id="win" type="win">
+You can now sign a new user’s card and grant their rights.
+</Card>
+
+<Card id="deeper" type="deeper">
+`expirationSeconds: 86400` asks for a one-day card. The minimum is 10 minutes. Our practice terminal has no CSR objects. Do this part on kind. Never share or commit the `.key` file.
+
+<Interactive name="Mission" id="k8s-k9-l11-real" steps={[{ id: 'key', text: 'On your laptop, make a key.', command: 'openssl genrsa -out aina.key 3072' }, { id: 'req', text: 'Make the request.', command: 'openssl req -new -key aina.key -out aina.csr -subj "/CN=aina/O=kitchen"' }, { id: 'b64', text: 'Turn it into one base64 line for request: in your YAML.', command: 'cat aina.csr | base64 | tr -d "\\n"' }, { id: 'apply', text: 'Apply the CSR on a throwaway kind cluster, then approve it.', command: 'kubectl apply -f aina-csr.yaml && kubectl certificate approve aina' }, { id: 'look', text: 'Read the CONDITION column.', command: 'kubectl get csr aina' }]} success="A real cluster signed a real user card!" />
+</Card>

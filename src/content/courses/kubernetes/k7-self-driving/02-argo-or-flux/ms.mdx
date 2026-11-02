@@ -1,0 +1,74 @@
+---
+id: k8s-k7-l02
+world: 7
+title: Argo CD atau Flux?
+summary: "Anda akan belajar: cara Argo CD dan Flux halakan kluster ke Git, dan cara memilih salah satu."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, SortCards, SwipeJudge]
+needs: [k8s-k7-l01]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: declarative setup (Application)", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/" }
+  - { label: "Flux: Kustomization", url: "https://fluxcd.io/flux/components/kustomize/kustomizations/" }
+  - { label: "Flux: GitRepository", url: "https://fluxcd.io/flux/components/source/gitrepositories/" }
+---
+
+<Card id="hook" type="hook">
+Dua pembantu GitOps yang popular sama-sama tarik dari Git. Pasukan anda mesti pilih satu. Apa yang patut menentukannya?
+
+<Interactive name="Choice" options={[{ label: 'Keperluan pasukan, contohnya papan pemuka atau aliran Git sahaja', correct: true, why: 'Kedua-duanya bagus. Pilih yang sesuai dengan cara pasukan anda bekerja.' }, { label: 'Yang paling banyak bintang di internet', why: 'Bintang tunjuk populariti, bukan kesesuaian. Kedua-duanya projek CNCF yang matang.' }, { label: 'Guna kedua-duanya pada aplikasi yang sama', why: 'Dua pembantu berebut satu aplikasi akan bertukar-tukar tanpa henti.' }]} />
+</Card>
+
+<Card id="see-argo" type="see">
+**<Term id="argo-cd">Argo CD</Term>** datang dengan papan pemuka web. Anda terangkan setiap aplikasi dalam satu `Application`. Tekan dua baris yang beritahu di mana dalam Git perlu dilihat.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: argoproj.io/v1alpha1' }, { text: 'kind: Application' }, { text: 'metadata:' }, { text: '  name: kedai-kancil' }, { text: '  namespace: argocd' }, { text: 'spec:' }, { text: '  project: default' }, { text: '  source:' }, { text: '    repoURL: https://github.com/you/gitops.git', target: true }, { text: '    path: apps/kedai-kancil', target: true }, { text: '  destination:' }, { text: '    server: https://kubernetes.default.svc' }, { text: '    namespace: shop' }]} prompt="Tekan baris tentang Git." success="Ya! Repo itu, dan folder di dalamnya." />
+</Card>
+
+<Card id="see-flux" type="see">
+**<Term id="flux">Flux</Term>** ialah set controller kecil, dipandu dari Git dan baris arahannya. `GitRepository` namakan repo. `Kustomization` beritahu folder mana perlu di-apply.
+
+Baris mana di bawah beritahu berapa kerap ia perlu menyemak?
+
+<Interactive name="Choice" options={[{ label: 'interval: 10m', correct: true, why: 'Setiap 10 minit, Flux apply folder ini semula dan baiki sebarang beza.' }, { label: 'prune: true', why: 'prune padam objek yang anda buang dari Git.' }, { label: 'sourceRef', why: 'sourceRef menunjuk ke objek GitRepository.' }]} />
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kedai-kancil
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./apps/kedai-kancil
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: gitops
+```
+</Card>
+
+<Card id="try-sort" type="try">
+Susun setiap fakta: Argo CD, Flux, atau kedua-duanya?
+
+<Interactive name="SortCards" buckets={[{ id: 'argo', label: 'Argo CD' }, { id: 'flux', label: 'Flux' }, { id: 'both', label: 'Kedua-duanya' }]} items={[{ label: 'Ada papan pemuka web terbina dalam', bucket: 'argo', why: 'Argo CD datang dengan UI web sendiri.' }, { label: 'Guna objek Application', bucket: 'argo', why: 'Application ialah jenis milik Argo CD.' }, { label: 'Guna objek GitRepository dan Kustomization', bucket: 'flux', why: 'Itu jenis milik Flux.' }, { label: 'Tarik dari Git dan terus baiki beza', bucket: 'both', why: 'Itulah GitOps. Kedua-duanya buat.' }, { label: 'Projek CNCF yang sudah graduate', bucket: 'both', why: 'Kedua-duanya graduate pada 2022.' }]} success="Semua tersusun! Idea sama, gaya berbeza." />
+</Card>
+
+<Card id="check" type="check">
+Leret: betul atau belum tepat?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Kedua-duanya simpan kehendak anda sebagai fail dalam Git.', good: true, why: 'Git ialah papan pesanan bagi kedua-duanya.' }, { text: 'Flux perlukan papan pemuka web untuk berfungsi.', good: false, why: 'Flux berfungsi dari Git dan baris arahannya.' }, { text: 'Argo CD dan Flux ialah controller Kubernetes.', good: true, why: 'Kedua-duanya berjalan dalam kluster, dalam namespace sendiri.' }, { text: 'Bila dah pilih satu, YAML anda terkunci padanya.', good: false, why: 'Manifest aplikasi anda kekal YAML Kubernetes biasa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan Argo CD dan Flux, dan pilih satu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kursus ini guna Argo CD, sebab papan pemukanya. Flux hebat bila anda mahu semua dalam Git, termasuk persediaannya sendiri (`flux bootstrap`). Kedua-duanya baca YAML biasa, Kustomize dan chart Helm. Latihan sebenar (pilihan): baca panduan permulaan Argo CD dan Flux. Banding cara setiap satu dipasang.
+</Card>

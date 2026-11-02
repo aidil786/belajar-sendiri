@@ -1,0 +1,78 @@
+---
+id: k8s-k3-l03
+world: 3
+title: NodePort, LoadBalancer and headless
+summary: "You will learn: the four kinds of Service, and when to use each."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, YamlDoctor, Choice, SortCards, Mission]
+needs: [k8s-k3-l02]
+scenario: k3-types
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Service types", url: "https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types" }
+  - { label: "Kubernetes: headless Services", url: "https://kubernetes.io/docs/concepts/services-networking/service/#headless-services" }
+  - { label: "kind: LoadBalancer", url: "https://kind.sigs.k8s.io/docs/user/loadbalancer/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-types" commands={['kubectl get services']} label="Two Services: kubernetes and shop. Both are ClusterIP, with no EXTERNAL-IP." />
+
+The shop's order number is a ClusterIP. It only works inside the food court. Customers on the street can't use it. How do they get in?
+</Card>
+
+<Card id="see-types" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'ClusterIP', title: 'Inside only', text: 'The default. One order number, for pods in the cluster.' }, { when: 'NodePort', title: 'A side window on every stall', text: 'Every node opens the same port, from 30000 to 32767.' }, { when: 'LoadBalancer', title: 'A street sign', text: 'The cloud gives one outside address. It builds on NodePort.' }, { when: 'Headless', title: 'No single number', text: 'clusterIP: None. The name lists each tray’s own IP.' }]} />
+
+A Service has a **type**. Each type opens one more door than the last. Tap all four.
+</Card>
+
+<Card id="try-nodeport" type="try">
+A **<Term id="nodeport">NodePort</Term>** opens the same port on every stall. Apply `nodeport.yaml`. Then call one stall's address from your laptop.
+
+<Interactive name="FoodCourtSim" scenario="k3-nodeport-curl" goal={{ reachable: { url: 'http://172.18.0.3:30080' }, lastTyped: '^curl' }} hints={['Type kubectl apply -f nodeport.yaml', 'Find a stall address: kubectl get nodes -o wide (INTERNAL-IP).', 'Type curl http://172.18.0.3:30080']} success="The side window works. Any stall's address plus 30080 reaches the shop." />
+
+<Hint>Stall addresses are in `kubectl get nodes -o wide`. Try `curl http://172.18.0.3:30080`.</Hint>
+</Card>
+
+<Card id="see-lb" type="see">
+<Interactive name="KubeReplay" scenario="k3-types" commands={['kubectl expose deployment shop --type=LoadBalancer --port=80 --name=shop-lb', 'kubectl get service shop-lb']} label="A LoadBalancer Service called shop-lb. Its EXTERNAL-IP says pending." />
+
+A **<Term id="loadbalancer">LoadBalancer</Term>** asks the cloud for a street address. A plain kind cluster has no cloud, so it waits: `<pending>`.
+</Card>
+
+<Card id="check-doctor" type="check">
+One letter is off. Read kubectl's answer, then fix the file.
+
+<Interactive name="YamlDoctor" file="lb.yaml" manifest={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop-lb\nspec:\n  type: Loadbalancer\n  selector:\n    app: shop\n  ports:\n    - port: 80\n'} solution={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop-lb\nspec:\n  type: LoadBalancer\n  selector:\n    app: shop\n  ports:\n    - port: 80\n'} keep={['name: shop-lb', 'app: shop']} hint="kubectl lists the four types it knows. Copy the spelling." success="Fixed! Types are spelled exactly, capitals too." />
+
+Plain words: Kubernetes knows four types, and `Loadbalancer` is not one of them.
+</Card>
+
+<Card id="predict-headless" type="predict">
+A database runs as a StatefulSet. Each tray must be called by its own name. Which Service fits?
+
+<Interactive name="Choice" options={[{ label: 'Headless: clusterIP: None', correct: true, why: 'No single number. DNS gives each tray’s own address.' }, { label: 'LoadBalancer', why: 'That opens the database to the street. Not what you want!' }, { label: 'NodePort', why: 'A side window is for outside callers, not for naming each tray.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which type fits each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'cluster', label: 'ClusterIP' }, { id: 'node', label: 'NodePort' }, { id: 'lb', label: 'LoadBalancer' }]} items={[{ label: 'The api calls the menu inside the cluster', bucket: 'cluster', why: 'Inside only: the default is enough.' }, { label: 'Only other pods ever call it', bucket: 'cluster', why: 'Keep doors shut that nobody needs.' }, { label: 'A quick test from your laptop on kind', bucket: 'node', why: 'Every node opens the port. Fine for a test.' }, { label: 'The same port on every node', bucket: 'node', why: 'That is exactly what NodePort does.' }, { label: 'Customers reach the shop on a cloud cluster', bucket: 'lb', why: 'The cloud gives one outside address.' }, { label: 'One outside IP from the cloud', bucket: 'lb', why: 'That is the LoadBalancer’s job.' }]} success="Sorted! And next lessons show the best street door: a Gateway." />
+</Card>
+
+<Card id="win" type="win">
+You can now pick ClusterIP, NodePort, LoadBalancer or headless.
+</Card>
+
+<Card id="deeper" type="deeper">
+On kind, LoadBalancer addresses come from the extra tool cloud-provider-kind. NodePort calls from your laptop work on Linux. On Mac and Windows, kind's nodes hide inside Docker's small VM. There is a fifth type, ExternalName: an alias for an outside DNS name.
+
+Real rep (optional), on a throwaway kind cluster:
+
+<Interactive name="Mission" id="k3-l03-rep" steps={[{ id: 'np', text: 'Make a NodePort Service for the shop.', command: 'kubectl expose deployment shop --type=NodePort --port=80 --name=shop-np' }, { id: 'port', text: 'Read its port after the colon in PORT(S).', command: 'kubectl get service shop-np' }, { id: 'lb', text: 'Make a LoadBalancer and watch EXTERNAL-IP stay pending.', command: 'kubectl expose deployment shop --type=LoadBalancer --port=80 --name=shop-lb' }]} success="You opened two kinds of doors!" />
+</Card>

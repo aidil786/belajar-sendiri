@@ -1,0 +1,65 @@
+---
+id: git-w05-l08
+world: 5
+title: Kind, useful code review
+summary: "You will learn: how to comment, suggest, approve or ask for changes, kindly."
+minutes: 5
+xp: 25
+interactives: [SwipeJudge, SortCards, PracticeRepo, Choice, OrderList]
+needs: [git-w05-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+  - { label: "Commenting on a pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/commenting-on-a-pull-request" }
+  - { label: "Incorporating feedback in your pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request" }
+---
+
+<Card id="hook" type="hook">
+Mei asks you to review her code. You spot a problem. How do you say it without hurting her? Kind and useful, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'This is wrong. Redo it.', good: false, why: 'It stings, and it does not say what to fix.' }, { text: 'Nice page! One idea: the button could say "Join us".', good: true, why: 'Kind, and it gives one clear idea.' }, { text: 'Why would anyone write this?', good: false, why: 'Talk about the code, never the person.' }, { text: 'This line breaks on small phones. Maybe use max-width?', good: true, why: 'It names the problem and offers a fix.' }]} />
+</Card>
+
+<Card id="see-kinds" type="see">
+A **<Term id="code-review">code review</Term>** ends with one of three choices: comment, approve or request changes. Sort each review.
+
+<Interactive name="SortCards" buckets={[{ id: 'comment', label: 'Comment' }, { id: 'approve', label: 'Approve' }, { id: 'changes', label: 'Request changes' }]} items={[{ label: 'Looks great, ship it!', bucket: 'approve', why: 'Ready to merge: approve.' }, { label: 'Quick question: why 600 px?', bucket: 'comment', why: 'Just asking. Nothing blocks the merge.' }, { label: 'The sign-up link is broken. Please fix it first.', bucket: 'changes', why: 'It must be fixed before merging.' }, { label: 'Tests pass and it works on my phone. Nice!', bucket: 'approve', why: 'Checked and happy: approve.' }, { label: 'Just thinking: maybe blue?', bucket: 'comment', why: 'An idea, not a must.' }, { label: 'This deletes the home page. Please put it back.', bucket: 'changes', why: 'A must-fix problem: request changes.' }]} success="Three kinds of review, sorted!" />
+</Card>
+
+<Card id="try-suggest" type="try">
+Mei typed "Wellcome". A **<Term id="suggested-change">suggested change</Term>** shows the exact fix. Mei can apply it with one click. Suggest the fix on that line.
+
+<Interactive name="PracticeRepo" screen="pull-files" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 31, title: 'Add a welcome banner', body: 'Adds a big welcome line to the home page.', author: 'mei', from: 'banner', to: 'main', state: 'open', checks: [{ name: 'test', status: 'running' }], files: [{ path: 'index.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Wellcome to Code Club</h1>', '+<p>New members are always welcome.</p>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }} task={{ type: 'suggest', pr: 31 }} success="Suggestion sent! Mei can accept it in one go." />
+
+<Hint>Tap the "Wellcome" line. Press "Suggest a change". Fix the word inside the box, then add the comment.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You request changes. The branch rule needs one approval. Can Mei merge now?
+
+<Interactive name="Choice" options={[{ label: 'No. She fixes it, then a reviewer approves', correct: true, why: 'A request for changes blocks the merge until it is sorted out.' }, { label: 'Yes. Reviews never block anything', why: 'With a review rule on, open change requests block the merge.' }, { label: 'Yes, if she approves her own PR', why: 'Authors cannot approve their own pull requests. A teammate must.' }]} />
+</Card>
+
+<Card id="try-approve" type="try">
+Mei applied your suggestion. Check Files changed. Happy? Then **approve** it.
+
+<Interactive name="PracticeRepo" screen="pull" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 31, title: 'Add a welcome banner', body: 'Adds a big welcome line to the home page.', author: 'mei', from: 'banner', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Welcome to Code Club</h1>', '+<p>New members are always welcome.</p>'] }], reviews: [{ author: 'you', state: 'changes', body: 'Small typo in the title. See my suggestion.' }], comments: [{ author: 'mei', body: 'Fixed with your suggestion. Thanks!' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'approve', pr: 31 }} success="Approved! Now the merge button unlocks." />
+
+<Hint>In "Your review", pick Approve, then press Submit review.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put a good review in order. First step at the top.
+
+<Interactive name="OrderList" items={['Read the PR description', 'Look through Files changed', 'Leave comments on lines', 'Submit: comment, approve or request changes']} label="First step at the top" success="Read, look, comment, decide. That is a review!" />
+</Card>
+
+<Card id="win" type="win">
+You can now give code reviews that are kind and useful.
+</Card>
+
+<Card id="deeper" type="deeper">
+On the real site, you can start a review and add many line comments. They all go out together when you submit. After fixing things, the author can ask you to review again. Some repos drop old approvals when new commits arrive. Golden rule: review the code, never the coder.
+</Card>

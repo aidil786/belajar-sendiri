@@ -1,0 +1,347 @@
+---
+// Certification map (docs/SHIP-IT-PLAN.md §12, docs/LEVEL-UP-PLAN.md §4): one section per family.
+// Ship It: KCNA, CKAD, GH-200, CKA (with K9) and CKS. Level Up: LFCS, PCA, Terraform Associate,
+// AWS Cloud Practitioner and Solutions Architect – Associate. For each: the worlds that help, and the
+// learner's lessons done in those worlds (read from the progress store, like the world map).
+// All optional. Facts as of CERTS_CHECKED; prices change.
+import Base from '~/layouts/Base.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { familyTitle, getCourses, mapUrl } from '~/lib/course';
+import { FAMILIES, worldCode } from '~/lib/catalog';
+import { certifications, CERTS_CHECKED } from '~/content/courses/certifications';
+import { certLessonIds, findWorld } from '~/lib/certMap';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const courses = await getCourses();
+const checked = new Date(`${CERTS_CHECKED}T00:00:00Z`).toLocaleDateString(
+  lang === 'ms' ? 'ms-MY' : 'en-GB',
+  { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' },
+);
+const certs = certifications.map((c) => ({
+  cert: c,
+  ids: certLessonIds(courses, c.covers),
+  worlds: c.covers.flatMap((ref) => {
+    const hit = findWorld(courses, ref);
+    if (!hit) return [];
+    const code = worldCode(hit.world);
+    return [
+      {
+        href: mapUrl(lang, hit.course.id, hit.world),
+        text: hit.course.family ? code : t(lang, 'certs.gitWorld', { n: code }),
+        full: `${hit.course.title[lang]}, ${t(lang, 'map.world', { n: code })}, ${hit.world.title[lang]}`,
+      },
+    ];
+  }),
+}));
+const groups = FAMILIES.map((family) => ({
+  family,
+  certs: certs.filter((c) => c.cert.family === family),
+})).filter((g) => g.certs.length > 0);
+// "USD 445", "USD 70.50"
+const usd = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+---
+
+<Base
+  lang={lang}
+  title={t(lang, 'certs.title')}
+  description={t(lang, 'certs.summary')}
+  altPath={`/${other}/ship-it/certifications/`}
+>
+  <div class="container certs" data-certs data-progress-template={t(lang, 'certs.progress')}>
+    <p class="crumb">
+      {FAMILIES.map((f, i) => (
+        <>
+          {i > 0 && <span aria-hidden="true"> · </span>}
+          <a href={`/${lang}/${f}/`}>{familyTitle(lang, f)}</a>
+        </>
+      ))}
+    </p>
+    <header class="certs-head">
+      <h1>{t(lang, 'certs.title')}</h1>
+      <p class="certs-summary">{t(lang, 'certs.intro')}</p>
+      <ul class="certs-notes">
+        <li>{t(lang, 'certs.prices')}</li>
+        <li>{t(lang, 'certs.notAffiliated')}</li>
+        <li>{t(lang, 'certs.checked', { date: checked })}</li>
+      </ul>
+    </header>
+
+    {groups.map((g) => (
+      <section class="cert-group" aria-labelledby={`certs-${g.family}`} data-cert-group={g.family}>
+        <h2 class="cert-group-title" id={`certs-${g.family}`}>
+          <a href={`/${lang}/${g.family}/`}>{familyTitle(lang, g.family)}</a>
+        </h2>
+        <ol class="cert-list">
+          {g.certs.map(({ cert, ids, worlds }) => (
+            <li>
+              <article
+                class="cert"
+                aria-labelledby={`cert-${cert.id}`}
+                data-cert={cert.id}
+                data-lessons={ids.join(',')}
+              >
+                <header class="cert-head">
+                  <span class="cert-code" aria-hidden="true">
+                    {cert.code}
+                  </span>
+                  <div>
+                    <h3 id={`cert-${cert.id}`}>
+                      <span class="visually-hidden">{cert.code}: </span>
+                      {cert.name}
+                    </h3>
+                    <p class="cert-org">{t(lang, 'certs.runBy', { org: cert.org })}</p>
+                  </div>
+                </header>
+                <dl class="cert-facts">
+                  <div>
+                    <dt>{t(lang, 'certs.format')}</dt>
+                    <dd>{cert.format[lang]}</dd>
+                  </div>
+                  <div>
+                    <dt>{t(lang, 'certs.price')}</dt>
+                    <dd>
+                      {cert.price === 'varies'
+                        ? t(lang, 'certs.priceVaries')
+                        : t(lang, 'certs.priceUsd', { n: usd(cert.price) })}
+                    </dd>
+                  </div>
+                  {cert.needs && (
+                    <div>
+                      <dt>{t(lang, 'certs.needs')}</dt>
+                      <dd>{cert.needs[lang]}</dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt>{t(lang, 'certs.covers')}</dt>
+                    <dd>
+                      <ul class="cert-worlds">
+                        {worlds.map((w) => (
+                          <li>
+                            <a href={w.href}>
+                              {w.text}
+                              <span class="visually-hidden">: {w.full}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                      {cert.extra && <p class="cert-extra">{cert.extra[lang]}</p>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t(lang, 'certs.takeWhen')}</dt>
+                    <dd>{cert.takeWhen[lang]}</dd>
+                  </div>
+                </dl>
+                <div class="cert-progress" data-cert-progress>
+                  {ids.length > 0 ? (
+                    <>
+                      <label class="cert-progress-label" for={`prog-${cert.id}`}>
+                        {t(lang, 'certs.progressLabel', { code: cert.code })}
+                      </label>
+                      <progress id={`prog-${cert.id}`} max={ids.length} value="0" data-cert-bar />
+                      <span class="cert-progress-text" data-cert-text>
+                        {t(lang, 'certs.progress', { done: 0, total: ids.length })}
+                      </span>
+                    </>
+                  ) : (
+                    <p class="cert-soon">{t(lang, 'certs.progressSoon')}</p>
+                  )}
+                </div>
+                <p class="cert-link">
+                  <a href={cert.url} rel="noopener">
+                    {t(lang, 'certs.official', { code: cert.code })} →
+                  </a>
+                </p>
+                {cert.practice && (
+                  <p class="cert-link">
+                    <a href={`/${lang}/ship-it/${cert.practice}`} data-cert-practice>
+                      {t(lang, 'mock.practise', { code: cert.code })} →
+                    </a>
+                  </p>
+                )}
+              </article>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
+  </div>
+</Base>
+
+<script>
+  import { $progress } from '~/stores/progress';
+  import { certProgress } from '~/lib/certMap';
+  const root = document.querySelector<HTMLElement>('[data-certs]');
+  const template = root?.dataset.progressTemplate ?? '{done}/{total}';
+  const render = () => {
+    const completed = $progress.get().completed;
+    for (const card of document.querySelectorAll<HTMLElement>('[data-cert]')) {
+      const ids = (card.dataset.lessons ?? '').split(',').filter(Boolean);
+      if (!ids.length) continue;
+      const { done, total } = certProgress(ids, completed);
+      const bar = card.querySelector<HTMLProgressElement>('[data-cert-bar]');
+      const text = card.querySelector<HTMLElement>('[data-cert-text]');
+      if (bar) bar.value = done;
+      if (text)
+        text.textContent = template
+          .replace('{done}', String(done))
+          .replace('{total}', String(total));
+    }
+  };
+  render();
+  $progress.listen(render);
+</script>
+
+<style>
+  .certs {
+    padding-block: var(--space-5);
+    max-width: 52rem;
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .certs-summary {
+    font-size: var(--text-l);
+  }
+  .certs-notes {
+    margin: 0 0 var(--space-5);
+    padding-left: var(--space-5);
+    color: var(--color-text-muted);
+  }
+  .cert-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+  .cert {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+    box-shadow: var(--color-shadow);
+  }
+  .cert-head {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+  .cert-code {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 4.5rem;
+    min-height: 2.75rem;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-s);
+    background: var(--c-remote-soft);
+    color: var(--c-remote-ink);
+    font-family: var(--font-mono);
+    font-weight: var(--weight-bold);
+  }
+  .cert h3 {
+    font-size: var(--text-l);
+    margin: 0;
+  }
+  .cert-group + .cert-group {
+    margin-top: var(--space-6);
+  }
+  .cert-group-title {
+    font-size: var(--text-xl);
+    margin: 0 0 var(--space-3);
+  }
+  .cert-org {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .cert-facts {
+    margin: 0 0 var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+  }
+  .cert-facts > div {
+    display: grid;
+    gap: 0 var(--space-3);
+  }
+  @media (min-width: 40rem) {
+    .cert-facts > div {
+      grid-template-columns: 10rem 1fr;
+    }
+  }
+  .cert-facts dt {
+    font-weight: var(--weight-bold);
+  }
+  .cert-facts dd {
+    margin: 0;
+    min-width: 0;
+  }
+  .cert-worlds {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .cert-worlds a {
+    display: inline-grid;
+    place-items: center;
+    min-width: var(--tap);
+    min-height: var(--tap);
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-s);
+    font-family: var(--font-mono);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    background: var(--color-bg);
+  }
+  .cert-worlds a:hover {
+    background: var(--color-surface-2);
+  }
+  .cert-extra {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-s);
+  }
+  .cert-progress {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .cert-progress-label {
+    flex-basis: 100%;
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+  }
+  .cert-progress progress {
+    flex: 1 1 10rem;
+    max-width: 18rem;
+    height: 0.75rem;
+    accent-color: var(--c-repo);
+  }
+  .cert-progress-text,
+  .cert-soon {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .cert-link {
+    margin: 0;
+  }
+  .cert-link a {
+    font-weight: var(--weight-bold);
+    display: inline-flex;
+    min-height: var(--tap);
+    align-items: center;
+  }
+</style>

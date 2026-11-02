@@ -1,0 +1,76 @@
+---
+id: git-w07-boss
+world: 7
+title: "Auto-deploy the diary site"
+summary: "You will learn: to build, debug and trust a robot that deploys on every merge."
+minutes: 6
+xp: 50
+interactives: [PracticeRepo, TimelineTap, YamlBuilder, Choice]
+needs: [git-w07-l11]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Using custom workflows with GitHub Pages", url: "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 12, title: 'Add day 5 entry', body: 'Day 5: I learned GitHub Actions.', author: 'mei', from: 'day-5', to: 'main', state: 'merged', mergedWith: 'squash', checks: [{ name: 'CI / test', status: 'pass' }] }]} />
+
+Day 5 is merged. But the live diary still shows day 4. You deploy by hand, and you forgot. Boss mission: every merge deploys by itself.
+</Card>
+
+<Card id="see-plan" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Merge', text: 'A merge into main is a push to main. That wakes the robot.' }, { when: '2', title: 'Test', text: 'Fresh runner, your code, Node, packages. Then every test runs.' }, { when: '3', title: 'Build', text: 'Only if the tests pass: build the site.' }, { when: '4', title: 'Deploy', text: 'Upload with keys from secrets. Readers see day 5.' }]} />
+
+Here is the plan. Tap each stop. Then build it, debug it, and explain it. Kind hints help if you get stuck.
+</Card>
+
+<Card id="try-build" type="try">
+Room 1: build the robot. Deploy on every push to main, but only after the tests pass.
+
+<Interactive name="YamlBuilder" workflow="Deploy diary" goal={{ order: ['push', 'perms', 'job', 'checkout', 'node', 'install', 'test', 'build', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'A merge into main is a push to main.' },
+  { id: 'pr', kind: 'trigger', label: 'On pull request', yaml: 'pull_request:', means: 'Run on every pull request.', why: "A PR isn't merged yet. Deploy only what lands on main." },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The token can only read your code.' },
+  { id: 'write', kind: 'permissions', label: 'Write token', yaml: 'contents: write', means: 'The token can change your code.', why: 'This job never changes your code. Read is enough.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy', yaml: 'deploy:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7\n  with:\n    persist-credentials: false', means: 'Copy your code. Keep the token out of Git config.' },
+  { id: 'node', kind: 'step', label: 'Set up Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24\n    cache: npm', means: 'Install Node 24, with an npm cache.' },
+  { id: 'install', kind: 'step', label: 'Install packages', yaml: '- run: npm ci', means: 'Install the exact packages from the lock file.' },
+  { id: 'test', kind: 'step', label: 'Run tests', yaml: '- run: npm test', means: 'Every test must pass.' },
+  { id: 'build', kind: 'step', label: 'Build site', yaml: '- run: npm run build', means: 'Build the site into dist/.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy (keys from secrets)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Upload the site. The keys come from secrets.' },
+  { id: 'typed', kind: 'step', label: 'Deploy (key typed in)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: abc123-paste-here', means: 'Upload, with the key typed into the file.', why: 'Never type a key into the file. Read it from secrets.' }]}
+  success="Room 1 cleared! Your robot tests, builds, then deploys." />
+
+<Hint>When, token power, where, then steps. Test, then build, then deploy.</Hint>
+</Card>
+
+<Card id="try-run" type="try">
+Room 2: the first real run is red! Find the step that failed.
+
+<Interactive name="PracticeRepo" screen="run" at={31} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 31, workflow: 'Deploy diary', event: 'push', branch: 'main', status: 'fail', jobs: [{ name: 'deploy', steps: [{ name: 'Check out code', status: 'pass', log: ['Copied the repo onto the runner.'] }, { name: 'Set up Node', status: 'pass', log: ['Node 24 is ready.', 'npm cache restored.'] }, { name: 'Install packages', status: 'pass', log: ['npm ci', 'All packages installed.'] }, { name: 'Run tests', status: 'fail', log: ['npm test', 'FAIL entries.test.js', 'Expected the newest entry "Day 5"', 'Received "Day 4"', 'Error: Process completed with exit code 1.'] }, { name: 'Build site', status: 'skipped' }, { name: 'Deploy (keys from secrets)', status: 'skipped' }] }] }]} task={{ type: 'findFailingStep', run: 31 }} success="Found it! The tests caught a bug, so build and deploy were skipped." />
+
+<Hint>Look for the ✗. Tap it to read its log.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+Room 3: the tests failed, and the live site stayed safe. Why must deploy come after the tests?
+
+<Interactive name="Choice" options={[{ label: 'So broken code never reaches your readers', correct: true, why: 'Tests are the gate. Only a ✓ opens it.' }, { label: 'YAML must list steps in that order', why: 'YAML runs whatever order you write. You choose the safe order.' }, { label: 'Deploys run faster that way', why: 'Speed is not the point. Safety is: no ✓, no deploy.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now auto-deploy a site, safely, on every merge.
+</Card>
+
+<Card id="deeper" type="deeper">
+This course deploys the same way. Its `deploy` job has `needs: check` and only runs on pushes to `main`. Make it real (optional). Turn on GitHub Pages for your diary repo. Set its source to GitHub Actions. Pick the static HTML starter workflow. Then check here.
+
+<Interactive name="MissionCheck" checks={[{ type: 'workflowRuns', repo: 'diary', min: 1, label: 'A workflow ran in your diary repo' }, { type: 'pages', repo: 'diary', label: 'GitHub Pages is on' }]} success="Your diary is live, and a robot keeps it fresh!" />
+</Card>

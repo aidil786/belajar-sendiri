@@ -1,0 +1,74 @@
+---
+id: git-w01-l05
+world: 1
+title: Titik simpan pertama anda
+summary: "Anda akan belajar: cara buat commit, dan apa yang ada di dalamnya."
+minutes: 5
+xp: 25
+interactives: [AreasScene, Sim, TermReplay, GraphScene, Choice, Mission]
+needs: [git-w01-l04]
+scenario: w01-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git show", url: "https://git-scm.com/docs/git-show" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="index.html ada tanda hijau dalam folder kerja. Repository hanya ada satu commit: Add README." frames={[{ working: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }]} />
+
+Malam ini laman utama anda berfungsi. Esok mungkin anda rosakkannya. Boleh dapat balik versi malam ini? Hanya dengan titik simpan.
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="AreasScene" command='git commit -m "Add home page"' effect="flash" label="Kilat kamera. index.html keluar dari kotak dan commit baru, Add home page, masuk ke repository." frames={[{ staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }] }]} />
+
+`git commit` ambil satu **snapshot** (gambar penuh isi kotak pada masa itu). Perkataan selepas `-m` ialah nota pendek tentangnya.
+</Card>
+
+<Card id="try-commit" type="try">
+Simpan `index.html` sebagai commit (titik simpan) baru.
+
+<Interactive name="Sim" scenario="w01-l05" panels={['areas', 'graph']} goal={{ commits: 2, lastCommitHas: ['index.html'] }} hints={['Mula-mula masukkan ke dalam kotak: git add index.html', 'Kemudian simpan kotak: git commit -m "Add home page"']} success="Dah simpan! Nampak titik baru pada garis masa?" />
+
+<Hint>Dua langkah: `git add index.html`, kemudian `git commit -m "Add home page"`.</Hint>
+</Card>
+
+<Card id="see-log" type="see">
+<Interactive name="TermReplay" scenario="w01-l05-saved" commands={['git log']} label="git log tunjuk dua commit, yang terbaru dulu. Setiap satu ada kod panjang, pengarang, tarikh dan mesej." />
+
+`git log` senaraikan commit anda, yang terbaru dulu. Kod panjang selepas "commit" ialah **hash** (id commit). Itu nama unik commit tersebut.
+</Card>
+
+<Card id="see-parent" type="see">
+<Interactive name="GraphScene" scenario="w01-l05" commands={['git add index.html', 'git commit -m "Add home page"']} label="Titik commit baru muncul pada garis masa. Satu garis menyambungnya kembali ke titik Add README yang lebih lama." />
+
+Setiap commit baru tunjuk balik ke commit sebelumnya. Commit lama itu ialah **parent** (induk). Bersama, ia jadi garis masa anda.
+</Card>
+
+<Card id="check" type="check">
+Yang mana TIDAK disimpan dalam commit?
+
+<Interactive name="Choice" options={[{ label: 'Snapshot isi kotak', why: 'Itulah nadi setiap commit.' }, { label: 'Nama dan e-mel anda', why: 'Git simpan pengarang (author) dalam setiap commit.' }, { label: 'Pautan ke parent', why: 'Setiap commit tunjuk balik ke commit sebelumnya.' }, { label: 'Fail yang anda tak pernah add', correct: true, why: 'Hanya isi kotak yang disimpan.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang buat betul-betul, dalam komputer anda sendiri. Taip setiap arahan sendiri. Salin hanya kalau tersekat.
+
+<Interactive name="Mission" id="w01-first-commit" steps={[{ id: 'open', text: 'Buka terminal anda. Di Windows, guna Git Bash.' }, { id: 'folder', text: 'Buat folder baru.', command: 'mkdir real-diary' }, { id: 'cd', text: 'Masuk ke dalamnya.', command: 'cd real-diary' }, { id: 'init', text: 'Jadikan ia repo.', command: 'git init' }, { id: 'file', text: 'Buat fail laman utama.', command: 'echo "<h1>My Diary</h1>" > index.html' }, { id: 'add', text: 'Masukkan ke dalam kotak.', command: 'git add index.html' }, { id: 'commit', text: 'Simpan dengan mesej.', command: 'git commit -m "Add home page"' }, { id: 'log', text: 'Baca semula. Cari nama anda, tarikh dan hash.', command: 'git log' }]} success="Itu titik simpan sebenar, anda taip sendiri!" />
+
+<Hint>Tersekat dalam `git log`? Tekan `q` untuk keluar.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat commit dan baca dalam git log.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show` papar commit terbaru dan apa sebenarnya yang berubah. Nak nota lebih panjang? Tambah `-m` kedua. Yang pertama jadi tajuk, yang kedua jadi isi.
+
+<Interactive name="TermReplay" scenario="w01-l05-saved" commands={['git show']} label="git show: commit Add home page, kemudian dua baris baru index.html berwarna hijau." />
+</Card>

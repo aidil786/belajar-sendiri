@@ -1,0 +1,72 @@
+---
+id: git-w02-l06
+world: 2
+title: Which undo?
+summary: "You will learn: how to pick restore, reset or revert for each mistake."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, SortCards, Choice]
+needs: [git-w02-l05]
+scenario: w02-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" effect="wobble" label="Mistakes everywhere: a changed file in the working folder, a file in the box and a bad commit in the repository. They all wobble." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], staging: [{ name: 'style.css', tag: 'notReady' }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+restore, reset, revert. Three undo words that sound alike. Pick the wrong one, and you might lose work.
+</Card>
+
+<Card id="see-restore" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git restore index.html" label="The changed tag on index.html disappears. The file is back to its saved version." frames={[{ working: [{ name: 'index.html', tag: 'changed', glow: true }] }, { working: ['index.html'] }]} />
+
+Mistake not committed yet? Use **<Term id="restore">restore</Term>**. It fixes files in your folder or in the box.
+</Card>
+
+<Card id="see-reset" type="see">
+<Interactive name="GraphScene" scenario="w02-l04" commands={['git reset HEAD~1']} showLost label="The main label and HEAD move back one commit. The newest commit fades to a dashed dot." />
+
+Commit only on your laptop? Use **<Term id="reset">reset</Term>**. It moves your branch back, as if the commit never happened.
+</Card>
+
+<Card id="see-revert" type="see">
+<Interactive name="GraphScene" scenario="w02-l05" commands={['git revert HEAD~1']} label="A new undo commit appears at the end. Every older commit stays." />
+
+Commit already shared? Use **<Term id="revert">revert</Term>**. It adds a new commit that undoes the bad one.
+</Card>
+
+<Card id="try-sort" type="try">
+Sort each mistake into the right undo.
+
+<Interactive name="SortCards" buckets={[{ id: 'restore', label: 'git restore' }, { id: 'reset', label: 'git reset' }, { id: 'revert', label: 'git revert' }]} items={[{ label: 'I changed index.html. I want it back as it was.', bucket: 'restore', why: 'Not committed yet, so restore fixes the file.' }, { label: 'I put the wrong file in the box.', bucket: 'restore', why: 'git restore --staged takes it out of the box.' }, { label: 'I deleted README.md by mistake.', bucket: 'restore', why: 'README.md is in a commit. restore brings it back.' }, { label: 'My last 2 commits are only on my laptop. I want them gone.', bucket: 'reset', why: 'Nobody else has them. Moving the branch back is fine.' }, { label: 'I want to redo my last commit. Nobody has it yet.', bucket: 'reset', why: 'git reset --soft HEAD~1 keeps the changes in the box.' }, { label: 'A bad commit is already shared with the team.', bucket: 'revert', why: 'Revert adds an undo commit. Shared history stays the same.' }, { label: 'A teammate already has my broken commit.', bucket: 'revert', why: 'They have that commit. Undo it with a new commit.' }]} success="All sorted! You know which undo fits." />
+
+<Hint>Ask: is it committed? Is it shared?</Hint>
+</Card>
+
+<Card id="check-danger" type="check">
+Which one can lose work for good?
+
+<Interactive name="Choice" options={[{ label: '`git reset --hard`', correct: true, why: 'It wipes changes you never committed. There is no undo for those.' }, { label: '`git revert`', why: 'Revert only adds a commit. Nothing is lost.' }, { label: '`git restore --staged`', why: 'It only empties the box. Your edits stay in the folder.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick the right undo for any mistake.
+</Card>
+
+<Card id="deeper" type="deeper">
+A quick map. Pick by where the mistake lives.
+
+```
+Not committed      → git restore <file>
+In the box         → git restore --staged <file>
+Last commit, typo  → git commit --amend
+Only on my laptop  → git reset HEAD~1
+Already shared     → git revert <commit>
+```
+</Card>

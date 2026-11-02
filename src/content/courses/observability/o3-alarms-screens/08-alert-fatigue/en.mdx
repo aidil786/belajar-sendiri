@@ -1,0 +1,59 @@
+---
+id: obs-o3-l08
+world: 3
+title: "Alert fatigue"
+summary: "You will learn: to cut noisy alerts so the real bell still gets heard."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, SortCards, AlertRuleBuilder, Choice, SpotLines]
+needs: [obs-o3-l07]
+scenario: o3-flappy
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alerting rules: for and keep_firing_for", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '01:02', title: 'CPU above 80%', text: 'Gone by itself at 01:05.' }, { when: '01:40', title: 'CPU above 80%', text: 'Gone again at 01:43.' }, { when: '02:15', title: 'Queue above 25', text: 'Back under 25 a minute later.' }, { when: '02:16', title: 'Queue above 25', text: 'Under again. And over. And under.' }, { when: '03:30', title: 'Orders failing: 6%', text: 'The only real one. Did anyone still look?' }]} />
+
+Last night the pager buzzed again and again. Tap each buzz. How many needed a human?
+</Card>
+
+<Card id="see-sort" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Page' }, { id: 'ticket', label: 'Ticket' }, { id: 'delete', label: 'Delete (or a screen)' }]} items={[{ label: 'Orders failing above 5% for 2 minutes', bucket: 'page', why: 'Customers hurt right now.' }, { label: 'Disk full in 4 hours', bucket: 'ticket', why: 'Fix it awake, today.' }, { label: 'Certificate ends in 14 days', bucket: 'ticket', why: 'Plenty of time. A ticket is enough.' }, { label: 'CPU above 80%', bucket: 'delete', why: 'Busy is not broken. Show it on a screen.' }, { label: 'One pod restarted', bucket: 'delete', why: 'It healed itself. Count it on a dashboard.' }]} success="Fewer bells, each one worth waking for." />
+
+Too many bells, and people stop hearing them. That is **<Term id="alert-fatigue" course="cicd">alert fatigue</Term>**.
+</Card>
+
+<Card id="try-flap" type="try">
+The queue bounces around 25. The bell flaps on, off, on. Make it ring once, in one stretch.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-flappy" alert="QueueLong" exprs={[{ expr: 'kedai_queue_length > 25' }, { expr: 'avg_over_time(kedai_queue_length[5m]) > 25' }]} fors={['0s', '3m']} keepFiringFor={['0s', '5m']} goal={{ noFlap: true, firingAt: ['13m'], quietAt: ['4m'] }} solution={{ expr: 0, for: 1 }} hints={['A short bounce should not ring. Wait a few minutes first.']} success="One stretch of bell for the real long queue. No flapping." />
+
+<Hint>`for` ignores short bounces. `keep_firing_for` stops the bell from blinking off too soon.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+An alert fired 40 times last month. Each time, nobody did anything. What now?
+
+<Interactive name="Choice" options={[{ label: 'Delete it, or make it a ticket', correct: true, why: 'Yes. A bell nobody acts on only trains people to ignore bells.' }, { label: 'Keep it, just in case', why: '"Just in case" is how the real bell gets missed.' }, { label: 'Make it louder', why: 'Louder noise is still noise.' }]} />
+</Card>
+
+<Card id="check-report" type="check">
+<Interactive name="SpotLines" prompt="This week's alert report. Tap every alert that needs tuning." lines={[{ text: 'ALERT            FIRED  SOMEONE ACTED' }, { text: 'QueueLong           42              0', target: true }, { text: 'OrdersFailing        1              1' }, { text: 'CpuBusy             17              0', target: true }, { text: 'DiskFillsIn4h        2              2' }, { text: 'PodRestarted        23              0', target: true }]} success="Fired a lot, acted on never: tune them or delete them." />
+
+Look for bells that ring often and change nothing.
+</Card>
+
+<Card id="win" type="win">
+You can now cut alert noise so the real bell gets heard.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks. A real control room has one loud bell. Ours has many quiet ones, with labels, routes, groups and silences. And a real bell never learns. Your alerts should: review them often, and delete freely.
+</Card>

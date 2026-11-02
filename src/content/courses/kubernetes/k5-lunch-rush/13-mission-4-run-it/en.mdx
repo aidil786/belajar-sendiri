@@ -1,0 +1,89 @@
+---
+id: k8s-k5-m4
+world: 5
+title: "Capstone mission 4: Run it"
+summary: "You will learn: to run Kedai Kancil in your kind cluster with overlays, a Gateway, probes and an HPA, then prove it survives."
+minutes: 5
+xp: 100
+interactives: [ManagersBoard, SortCards, Choice, Mission, MissionCheck]
+needs: [k8s-k5-l12]
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "Gateway API: getting started", url: "https://gateway-api.sigs.k8s.io/guides/" }
+  - { label: "Kubernetes: configure probes", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" }
+  - { label: "Kubernetes: HPA walkthrough", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={['deletePod']} goal={{ healed: 1 }} label="Want 3, see 3. Delete a tray: the manager sees 2 and makes 1 more." success="Healed! That is the goal for your own shop." />
+
+Mission 4: Run it. Kedai Kancil moves into your kind cluster. Goal: it survives a pod kill and a lunch rush. Kill a tray above to see the idea.
+</Card>
+
+<Card id="see-layout" type="see">
+Your repo gets a `k8s/` folder. The base holds what every kitchen shares. An overlay changes it for one kitchen: dev. Where does each piece go?
+
+<Interactive name="SortCards" buckets={[{ id: 'base', label: 'k8s/base (shared)' }, { id: 'dev', label: 'k8s/overlays/dev' }]} items={[{ label: 'web, api and db Deployments and Services', bucket: 'base', why: 'Every kitchen runs the same three parts.' }, { label: 'Readiness probes and CPU requests', bucket: 'base', why: 'Every kitchen needs honest checks and plate sizes.' }, { label: 'The kedai namespace and your GHCR image names', bucket: 'dev', why: 'They belong to this kitchen.' }, { label: 'The HPA and the Gateway for your kind cluster', bucket: 'dev', why: 'Another kitchen may scale or open its doors differently.' }]} success="That is the layout. Same base, small overlays." />
+</Card>
+
+<Card id="see-overlay" type="see">
+The base only says `kedai-kancil-web`. The dev overlay below has an `images:` part. What does it do?
+
+<Interactive name="Choice" options={[{ label: 'Swaps the short image names for your GHCR images', correct: true, why: 'The base says kedai-kancil-web. The overlay points it at your freezer.' }, { label: 'Builds the images', why: 'Mission 2’s pipeline builds them. Kustomize only changes names.' }, { label: 'Pushes them to GHCR', why: 'Kustomize never pushes. It only writes YAML.' }]} />
+
+Here is the overlay. Put your GitHub name where it says YOU.
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kedai
+resources: [../../base, hpa.yaml, gateway.yaml]
+images:
+  - { name: kedai-kancil-web, newName: ghcr.io/YOU/kedai-kancil-web, newTag: main }
+  - { name: kedai-kancil-api, newName: ghcr.io/YOU/kedai-kancil-api, newTag: main }
+```
+</Card>
+
+<Card id="try-build" type="try">
+Step 1: build it, on your machine. Your ticks are saved.
+
+<Interactive name="Mission" id="k5-m4-build" steps={[{ id: 'folders', text: 'In your kedai-kancil repo, make the folders.', command: 'mkdir -p k8s/base k8s/overlays/dev' }, { id: 'base', text: 'In k8s/base, write web.yaml and api.yaml: a Deployment and a Service each, labelled app=web and app=api. Image names kedai-kancil-web and kedai-kancil-api. Add a readiness probe and a CPU request to each container.' }, { id: 'db', text: 'Add db.yaml: Postgres 18 with a PersistentVolumeClaim, as in K4. It reads its password from a Secret you make with kubectl, never from Git.' }, { id: 'base-kust', text: 'In k8s/base, list the three files under resources: in kustomization.yaml.' }, { id: 'overlay', text: 'In k8s/overlays/dev, save the overlay from the last card as kustomization.yaml. Add hpa.yaml (api: 2 to 6 trays, 50% CPU) and gateway.yaml (a Gateway and an HTTPRoute for / and /api).' }, { id: 'public', text: 'Make both GHCR packages public, so kind can pull them without a password.' }, { id: 'gateway', text: 'Install a Gateway API controller on kind, from its official docs (as in K3).' }, { id: 'ns', text: 'Make the kedai zone.', command: 'kubectl create namespace kedai' }, { id: 'dry', text: 'Dry run first. Read every line.', command: 'kubectl apply -k k8s/overlays/dev --dry-run=server' }, { id: 'apply', text: 'Apply it for real.', command: 'kubectl apply -k k8s/overlays/dev' }, { id: 'push', text: 'Save it in Git and push.', command: 'git add k8s && git commit -m "Run Kedai Kancil on Kubernetes" && git push' }]} success="Kedai Kancil is running in your cluster!" />
+</Card>
+
+<Card id="predict" type="predict">
+api runs 2 ready trays. You delete one during the load test. What should a customer see?
+
+<Interactive name="Choice" options={[{ label: 'Nothing: the order number sends them to the other tray', correct: true, why: 'The Service only uses ready trays. The Deployment makes a new one.' }, { label: 'An error until you fix it by hand', why: 'The manager makes a new tray by itself.' }, { label: 'The whole shop closes', why: 'One tray left keeps serving while the new one starts.' }]} />
+</Card>
+
+<Card id="try-prove" type="try">
+Step 2: prove it survives. Use a second terminal to watch.
+
+<Interactive name="Mission" id="k5-m4-prove" steps={[{ id: 'metrics', text: 'Install metrics-server, as in lesson 1 of this world.' }, { id: 'watch', text: 'In a second terminal, watch the trays.', command: 'kubectl get pods -n kedai --watch' }, { id: 'kill', text: 'Pick one api pod name, then delete it. Your shop should keep answering.', command: 'kubectl delete pod -n kedai API_POD_NAME' }, { id: 'load', text: 'Start a lunch rush aimed at api.', command: 'kubectl run load -n kedai --image=busybox:1.37 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://api; done"' }, { id: 'hpa', text: 'Watch the HPA add trays.', command: 'kubectl get hpa -n kedai --watch' }, { id: 'stop', text: 'End the rush. In about 5 minutes the HPA shrinks api again.', command: 'kubectl delete pod load -n kedai' }]} success="It healed and it scaled. That was real Kubernetes!" />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub's public API can see your files. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your kedai-kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/base/kustomization.yaml', label: 'It has a kustomization.yaml in k8s/base' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/overlays/dev/kustomization.yaml', label: 'It has a kustomization.yaml in k8s/overlays/dev' }]} success="GitHub sees your Kubernetes files!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see your laptop's cluster. Check these yourself.
+
+<Interactive name="Mission" id="k5-m4-self" steps={[{ id: 'ready', text: 'kubectl get pods -n kedai: every tray is Running and ready.' }, { id: 'healed', text: 'The deleted api tray came back with a new name. The shop kept answering.' }, { id: 'scaled', text: 'The HPA grew during the rush, and shrank again after.' }, { id: 'doors', text: '/ and /api both answer through the Gateway.' }, { id: 'tags', text: 'No image uses the latest tag.' }, { id: 'clean', text: 'The load pod is deleted.' }]} success="Mission 4 complete: Kedai Kancil runs, heals and scales!" />
+</Card>
+
+<Card id="win" type="win">
+You can now run Kedai Kancil on Kubernetes, and prove it heals and scales.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safety: use a throwaway kind cluster. Run `kubectl config current-context` before every delete. The insecure metrics-server flag is for kind only. Your images are public, so never bake a secret into them. Make the database Secret with kubectl, and keep the password out of Git.
+</Card>

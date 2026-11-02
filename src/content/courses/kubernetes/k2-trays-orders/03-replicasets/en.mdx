@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l03
+world: 2
+title: "ReplicaSets keep the count"
+summary: "You will learn: how a ReplicaSet keeps the right number of pods, and how it counts them."
+minutes: 3
+xp: 15
+interactives: [Choice, ManagersBoard, YamlDoctor, FoodCourtSim, KubeReplay]
+needs: [k8s-k2-l02]
+scenario: k2-replicaset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: ReplicaSet", url: "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" }
+  - { label: "kubectl scale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/" }
+---
+
+<Card id="hook" type="hook">
+Lunch time. You want 3 trays out, always. One tray slips and falls. Who notices, and who makes a new one?
+
+<Interactive name="Choice" options={[{ label: 'A helper who keeps counting the trays', correct: true, why: 'Count, compare, fix. Kubernetes has a helper that does exactly this.' }, { label: 'Nobody, unless you see it', why: 'That works at 3 trays. Not at 300, and not at 3 a.m.' }, { label: 'The tray fixes itself', why: 'A fallen tray is gone. Something must make a new one.' }]} />
+</Card>
+
+<Card id="see-count" type="see">
+<Interactive name="ManagersBoard" scenario="k2-replicaset" kind="ReplicaSet" target="trays" actions={['deletePod']} goal={{ healed: 1 }} success="Want 3, see 2, make 1. The count is right again." label="The board says want 3, see 3. Deleting a pod makes it see 2, so it makes 1 more." />
+
+A **<Term id="replicaset">ReplicaSet</Term>** counts trays, again and again. Want 3, see 2? It makes 1 more. Tap delete on a tray and watch the board.
+</Card>
+
+<Card id="try-fix" type="try">
+A ReplicaSet has 3 parts: how many (`replicas`), which trays count (`selector`), how to make one (`template`). Here the labels do not match. Fix it.
+
+<Interactive name="YamlDoctor" file="trays.yaml" manifest={'apiVersion: apps/v1\nkind: ReplicaSet\nmetadata:\n  name: trays\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: tray\n  template:\n    metadata:\n      labels:\n        app: food\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} solution={'apiVersion: apps/v1\nkind: ReplicaSet\nmetadata:\n  name: trays\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: tray\n  template:\n    metadata:\n      labels:\n        app: tray\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} keep={['matchLabels:\\n\\s+app: tray', 'replicas: 3']} hint="New trays must carry the label the selector looks for." success="It applies! Every new tray carries app: tray." />
+
+<Hint>The template's label must match the selector, word for word.</Hint>
+</Card>
+
+<Card id="try-scale" type="try">
+The rush is coming. Ask the ReplicaSet for 5 trays.
+
+<Interactive name="FoodCourtSim" scenario="k2-replicaset" faults={['deletePod']} goal={{ replicas: { name: 'trays', count: 5, kind: 'ReplicaSet' }, podsReady: { selector: 'app=tray', count: 5 } }} hints={['Type kubectl scale rs trays --replicas=5', 'Wait a few seconds, then kubectl get rs trays']} success="Want 5, see 5. Ready for the rush." />
+
+<Hint>`kubectl scale rs trays --replicas=5` changes the count on the order.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The ReplicaSet wants 3. You start one more pod by hand, with the label `app=tray`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It counts 4 and deletes one', correct: true, why: 'It counts every tray with its label, no matter who made it.' }, { label: 'It ignores your pod', why: 'It counts by label. Your pod has the label, so it counts.' }, { label: 'It now wants 4', why: 'The order still says 3. Only you can change that.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-replicaset" commands={['kubectl run extra --image=nginx:1.29-alpine --labels=app=tray', 'kubectl get pods']} label="kubectl run creates the pod extra. A moment later get pods lists only the 3 trays: extra was one too many." />
+
+`extra` was created, then deleted at once. It matched `app=tray`, so it made 4. Labels decide what counts.
+</Card>
+
+<Card id="win" type="win">
+You can now explain how a ReplicaSet keeps the count.
+</Card>
+
+<Card id="deeper" type="deeper">
+You will rarely write a ReplicaSet yourself. A Deployment makes them for you, and adds safe updates. That is the next lesson.
+
+Real rep (optional): on a throwaway cluster, apply a ReplicaSet, delete one pod, then run `kubectl describe rs trays`. Its Events show each new pod.
+</Card>

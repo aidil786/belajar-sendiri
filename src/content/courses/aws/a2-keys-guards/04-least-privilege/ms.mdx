@@ -1,0 +1,61 @@
+---
+id: aws-a2-l04
+world: 2
+title: Keistimewaan minimum
+summary: "Anda akan belajar: beri kunci yang kerja itu perlu sahaja, dan cara kecilkan kunci yang terlalu besar."
+minutes: 4
+xp: 20
+interactives: [Choice, SwipeJudge, IamJudge, OrderList]
+needs: [aws-a2-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM security best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" }
+  - { label: "IAM Access Analyzer policy generation", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html" }
+  - { label: "Refine permissions with last accessed information", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_last-accessed.html" }
+---
+
+<Card id="hook" type="hook">
+Tukang cuci datang waktu malam untuk kemas stor. Kunci mana yang anda beri?
+
+<Interactive name="Choice" options={[{ label: 'Satu kunci: stor sahaja', correct: true, why: 'Kerjanya di stor. Kuncinya pun stor.' }, { label: 'Kunci induk, supaya cepat', why: 'Nanti kunci yang hilang buka peti besi dan kaunter juga.' }, { label: 'Semua kunci kecuali peti besi', why: 'Masih jauh lebih daripada yang kerja itu perlu.' }]} />
+</Card>
+
+<Card id="see-swipe" type="see">
+Idea itu ialah **<Term id="iam-least-privilege">keistimewaan minimum (least privilege)</Term>**: tindakan ini, pada benda ini, tiada lebih. Padan dengan idea itu, atau terlalu banyak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Robot menu boleh letak fail dalam kedai-menu sahaja.', good: true, why: 'Satu tindakan, satu bucket.' }, { text: 'Robot menu dapat s3:* pada setiap bucket.', good: false, why: 'Ia boleh padam bucket pesanan juga.' }, { text: 'Robot CI dapat AdministratorAccess, supaya selamat.', good: false, why: 'Selamat untuk siapa? Kebocoran akan buka semuanya.' }, { text: 'Mula kecil; tambah tindakan bila ralat sebenar minta.', good: true, why: 'AccessDenied beritahu tepat apa yang kurang.' }]} />
+</Card>
+
+<Card id="try-shrink" type="try">
+Robot menu tak boleh padam langsung. Kuncinya benarkan semua tindakan S3. Kecilkan baris merah jambu supaya padam dapat Deny.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/menu-robot', who: 'robot menu', action: 's3:DeleteObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-robot', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} task={{ type: 'edit', policy: 0, line: 6, want: 'Deny', forbid: ['\\*'] }} solution={'"Action": ["s3:GetObject", "s3:PutObject"],'} success="Baca dan simpan sahaja. Padam kini dapat tidak yang senyap." />
+
+<Hint>Senaraikan apa yang robot buat sahaja: `["s3:GetObject", "s3:PutObject"]`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+AWS sediakan managed policy siap guna, seperti `ReadOnlyAccess`. Adakah ia keistimewaan minimum untuk robot anda?
+
+<Interactive name="Choice" options={[{ label: 'Jarang: ia dibuat untuk semua, jadi ia luas', correct: true, why: 'Okey untuk bermula. Kemudian kecilkan ikut kerja anda.' }, { label: 'Sentiasa: AWS yang tulis', why: 'AWS tulis untuk banyak kegunaan, bukan untuk satu kerja anda.' }, { label: 'Jangan guna langsung', why: 'Ia titik mula yang munasabah. Cuma jangan berhenti di situ.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Kunci yang terlalu besar dikecilkan secara berperingkat. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['Tulis apa yang kerja itu betul-betul buat', 'Mula dengan polisi kecil untuk itu', 'Uji: baca sebarang ralat AccessDenied', 'Semak data last accessed untuk hak yang tak diguna', 'Buang yang tak pernah diguna']} label="Langkah pertama di atas" success="Kecil dahulu, uji, kemudian pangkas. Itulah keistimewaan minimum." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kecilkan polisi kepada apa yang kerja itu perlu sahaja.
+</Card>
+
+<Card id="deeper" type="deeper">
+IAM Access Analyzer boleh baca log aktiviti anda (CloudTrail). Ia tulis draf polisi daripada apa yang betul-betul diguna. Anggap draf itu permulaan, kemudian semak.
+
+Latihan sebenar (percuma): dalam konsol IAM, buka tab "Last accessed" pengguna admin anda. Servis mana yang tak pernah disentuh?
+</Card>

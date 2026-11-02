@@ -1,0 +1,202 @@
+# Terraform & OpenTofu rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Level Up Rescue Center (/<lang>/level-up/rescue/) lists them under Part 2.
+# Flow ids must be unique across linux, iac, observability and aws: one page, one #<flow-id> link each.
+# Start ids with `iac-` (e.g. iac-state-locked). About 5 flows (docs/LEVEL-UP-PLAN.md §7, wave B).
+flows:
+  # --- IaC flows (add below this line) ---
+  # T3 + T4 flows. Checked 2026-11-01 against OpenTofu 1.12.4 (lock error and workspace output rechecked
+  # with 1.13.5 on 2026-11-02: same text, apart from the lock's Version line): the lock error, workspace and
+  # migration outputs quoted in the lessons come from real runs; the plan wording comes from the
+  # engine's verify lists (scenarios/t3.ts, t4.ts). Facts: opentofu.org/docs.
+  - id: iac-plan-destroys
+    title: { en: "My plan wants to destroy something", ms: "Plan saya mahu musnahkan sesuatu" }
+    start: why
+    steps:
+      - id: why
+        question: { en: "Don't apply yet. Read the grey line under the # header. What does it say?", ms: "Jangan apply dulu. Baca baris kelabu di bawah tajuk #. Apa tulisannya?" }
+        answers:
+          - { label: { en: "(because … is not in configuration)", ms: "(because … is not in configuration)" }, next: gone }
+          - { label: { en: "An argument says # forces replacement", ms: "Satu argumen tulis # forces replacement" }, next: r-forces }
+          - { label: { en: "Note: Objects have changed outside of OpenTofu", ms: "Note: Objects have changed outside of OpenTofu" }, next: r-drift }
+      - id: gone
+        question: { en: "Did you rename it, or move it into a module?", ms: "Adakah anda tukar namanya, atau pindahkannya ke dalam modul?" }
+        answers:
+          - { label: { en: "Yes, it has a new name or place", ms: "Ya, ia ada nama atau tempat baharu" }, next: r-moved }
+          - { label: { en: "No, I removed it, but the real thing must stay", ms: "Tidak, saya buang, tapi benda sebenar mesti kekal" }, next: r-forget }
+          - { label: { en: "No, I really want it gone", ms: "Tidak, saya memang mahu ia hilang" }, next: r-really }
+      - id: r-moved
+        result:
+          text: { en: "OpenTofu knows things by address. A new name looks like a new thing. Add a moved block, then plan again: it should say has moved to, and 0 to destroy.", ms: "OpenTofu kenal benda melalui alamat. Nama baharu nampak macam benda baharu. Tambah blok moved, kemudian plan semula: ia patut kata has moved to, dan 0 to destroy." }
+          commands:
+            - { command: "moved {\n  from = random_pet.stall\n  to   = random_pet.chef\n}", en: "Old address in from, new address in to. Use your own addresses.", ms: "Alamat lama dalam from, alamat baharu dalam to. Guna alamat anda sendiri." }
+            - { command: "tofu plan", en: "Check: has moved to, and 0 to destroy.", ms: "Semak: has moved to, dan 0 to destroy." }
+          danger: safe
+          lesson: iac-t3-l05
+      - id: r-forget
+        result:
+          text: { en: "Tell OpenTofu to forget it, not destroy it. A removed block does that in a plan the team can review.", ms: "Suruh OpenTofu lupakan, bukan musnahkan. Blok removed buat begitu dalam plan yang pasukan boleh semak." }
+          commands:
+            - { command: "removed {\n  from = local_file.sign\n  lifecycle {\n    destroy = false\n  }\n}", en: "Plan then says: will be removed from the OpenTofu state but will not be destroyed.", ms: "Plan kemudian kata: will be removed from the OpenTofu state but will not be destroyed." }
+            - { command: "tofu plan", en: "Check before you apply.", ms: "Semak sebelum apply." }
+          danger: careful
+          lesson: iac-t3-l06
+      - id: r-really
+        result:
+          text: { en: "Then the plan is right. Get a second pair of eyes on it, and make sure nothing else depends on it.", ms: "Kalau begitu plan itu betul. Minta orang kedua semak, dan pastikan tiada benda lain bergantung padanya." }
+          commands:
+            - { command: "tofu plan -out tfplan", en: "Save the exact plan someone reviewed.", ms: "Simpan plan tepat yang sudah disemak." }
+            - { command: "tofu apply tfplan", en: "Apply exactly that plan, nothing more.", ms: "Apply plan itu sahaja, tiada lebih." }
+          danger: lose
+          lesson: iac-t4-l04
+      - id: r-forces
+        result:
+          text: { en: "Some arguments can't change in place, so the thing is rebuilt. Change the argument back, or plan the rebuild for a quiet time.", ms: "Sesetengah argumen tak boleh diubah di tempat, jadi benda itu dibina semula. Kembalikan argumen itu, atau rancang binaan semula pada waktu lapang." }
+          commands:
+            - { command: "tofu plan", en: "Find the line that ends # forces replacement.", ms: "Cari baris yang berakhir # forces replacement." }
+          danger: careful
+          lesson: iac-t1-l04
+      - id: r-drift
+        result:
+          text: { en: "Someone changed the real thing by hand. Look first, then decide: put it back with apply, or write the change into the blueprint.", ms: "Seseorang ubah benda sebenar dengan tangan. Tengok dahulu, kemudian putuskan: pulihkan dengan apply, atau tulis perubahan itu dalam pelan." }
+          commands:
+            - { command: "tofu plan -refresh-only", en: "See only what changed outside OpenTofu. Changes nothing.", ms: "Lihat apa yang berubah di luar OpenTofu sahaja. Tak ubah apa-apa." }
+          danger: safe
+          lesson: iac-t3-l03
+
+  - id: iac-state-locked
+    title: { en: "Error acquiring the state lock", ms: "Error acquiring the state lock (kunci state)" }
+    start: alive
+    steps:
+      - id: alive
+        question: { en: "Read Who and Created in the error. Is that run still going?", ms: "Baca Who dan Created dalam ralat. Adakah larian itu masih berjalan?" }
+        answers:
+          - { label: { en: "Yes, or I'm not sure", ms: "Ya, atau saya tak pasti" }, next: r-wait }
+          - { label: { en: "No: it crashed or was cancelled", ms: "Tidak: ia rosak atau dibatalkan" }, next: r-unlock }
+      - id: r-wait
+        result:
+          text: { en: "The lock is doing its job. Ask the person in Who, or check the pipeline. Then wait your turn.", ms: "Kunci itu sedang buat kerjanya. Tanya orang dalam Who, atau semak pipeline. Kemudian tunggu giliran." }
+          commands:
+            - { command: "tofu plan -lock-timeout=5m", en: "Keep trying for up to 5 minutes before giving up.", ms: "Terus cuba sehingga 5 minit sebelum mengalah." }
+          danger: safe
+          lesson: iac-t3-l02
+      - id: r-unlock
+        result:
+          text: { en: "Only when the run is really dead: remove the stuck lock with its ID. Never use -lock=false to get past it.", ms: "Hanya bila larian itu betul-betul mati: buang kunci tersekat dengan ID-nya. Jangan guna -lock=false untuk lepasinya." }
+          commands:
+            - { command: "tofu force-unlock LOCK_ID", en: "Copy the ID from your own error message.", ms: "Salin ID dari mesej ralat anda sendiri." }
+            - { command: "tofu plan", en: "Plan again, and read it before any apply.", ms: "Plan semula, dan baca sebelum apa-apa apply." }
+          danger: careful
+          lesson: iac-t3-l02
+
+  - id: iac-drift
+    title: { en: "Someone changed things by hand", ms: "Ada orang ubah benda dengan tangan" }
+    start: keep
+    steps:
+      - id: keep
+        question: { en: "Should the hand-made change stay?", ms: "Patutkah perubahan tangan itu kekal?" }
+        answers:
+          - { label: { en: "No, put it back", ms: "Tidak, pulihkannya" }, next: r-undo }
+          - { label: { en: "Yes, it was a needed fix", ms: "Ya, ia baikan yang perlu" }, next: r-keep }
+          - { label: { en: "Something new was built by hand, and should stay", ms: "Benda baharu dibina dengan tangan, dan patut kekal" }, next: r-adopt }
+      - id: r-undo
+        result:
+          text: { en: "The blueprint is right. Look at the drift, then apply the blueprint again.", ms: "Pelan itu betul. Tengok drift, kemudian apply pelan semula." }
+          commands:
+            - { command: "tofu plan -refresh-only", en: "See what changed outside OpenTofu.", ms: "Lihat apa yang berubah di luar OpenTofu." }
+            - { command: "tofu apply", en: "Put it back. Read the plan, then type yes.", ms: "Pulihkan. Baca plan, kemudian taip yes." }
+          danger: careful
+          lesson: iac-t3-l03
+      - id: r-keep
+        result:
+          text: { en: "Write the change into the .tf files, then plan until it says No changes. Merge it with a review.", ms: "Tulis perubahan itu dalam fail .tf, kemudian plan sehingga ia kata No changes. Merge dengan semakan." }
+          commands:
+            - { command: "tofu plan", en: "Repeat until: No changes. Your infrastructure matches the configuration.", ms: "Ulang sehingga: No changes. Your infrastructure matches the configuration." }
+          danger: safe
+          lesson: iac-t4-l08
+      - id: r-adopt
+        result:
+          text: { en: "Write a resource block for it, then an import block with its real id. Plan should say 1 to import, 0 to destroy.", ms: "Tulis blok resource untuknya, kemudian blok import dengan id sebenarnya. Plan patut kata 1 to import, 0 to destroy." }
+          commands:
+            - { command: "import {\n  to = random_string.door\n  id = \"KANCIL\"\n}", en: "Use your own address and the id from the provider's docs.", ms: "Guna alamat anda sendiri dan id dari dokumentasi provider." }
+            - { command: "tofu plan", en: "Look for 1 to import, 0 to destroy.", ms: "Cari 1 to import, 0 to destroy." }
+          danger: careful
+          lesson: iac-t3-l04
+
+  - id: iac-lost-state
+    title: { en: "I lost or deleted the state file", ms: "Fail state saya hilang atau terpadam" }
+    start: copy
+    steps:
+      - id: copy
+        question: { en: "Don't apply: OpenTofu thinks nothing exists. Is there an older copy of the register?", ms: "Jangan apply: OpenTofu sangka tiada apa wujud. Ada salinan lama daftar?" }
+        answers:
+          - { label: { en: "Yes: a backup file or an older version in the bucket", ms: "Ya: fail sandaran atau versi lama dalam bucket" }, next: r-restore }
+          - { label: { en: "No copy anywhere", ms: "Tiada salinan langsung" }, next: r-import }
+      - id: r-restore
+        result:
+          text: { en: "Put the newest good copy back, then plan. A plan close to No changes means it worked. Turn on bucket versioning for next time.", ms: "Letak semula salinan baik yang terbaharu, kemudian plan. Plan yang hampir No changes maksudnya berjaya. Hidupkan versioning bucket untuk lain kali." }
+          commands:
+            - { command: "tofu state pull > now.tfstate", en: "Keep a copy of whatever is there now, just in case.", ms: "Simpan salinan apa sahaja yang ada sekarang, untuk berjaga-jaga." }
+            - { command: "tofu state push good-copy.tfstate", en: "Upload the good copy as the register. Be sure it is the right file.", ms: "Muat naik salinan baik sebagai daftar. Pastikan itu fail yang betul." }
+            - { command: "tofu plan", en: "Check: close to No changes.", ms: "Semak: hampir No changes." }
+          danger: lose
+          lesson: iac-t3-l01
+      - id: r-import
+        result:
+          text: { en: "Rebuild the register by adopting each real thing with an import block. Plan until it says 0 to add, 0 to destroy.", ms: "Bina semula daftar dengan ambil alih setiap benda sebenar menggunakan blok import. Plan sehingga ia kata 0 to add, 0 to destroy." }
+          commands:
+            - { command: "tofu plan", en: "Add import blocks until nothing is left to add.", ms: "Tambah blok import sehingga tiada apa lagi untuk ditambah." }
+          danger: careful
+          lesson: iac-t3-l04
+
+  - id: iac-secret-in-git
+    title: { en: "A secret or the state file went into Git", ms: "Rahsia atau fail state masuk ke dalam Git" }
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Was the commit pushed to GitHub (or anywhere shared)?", ms: "Adakah commit itu sudah di-push ke GitHub (atau tempat yang dikongsi)?" }
+        answers:
+          - { label: { en: "Yes, it was pushed", ms: "Ya, sudah di-push" }, next: r-pushed }
+          - { label: { en: "No, only on my laptop", ms: "Tidak, hanya di laptop saya" }, next: r-local }
+      - id: r-pushed
+        result:
+          text: { en: "Treat the secret as stolen. Change it first: a new password or key. Then take the file out of Git and ignore it.", ms: "Anggap rahsia itu sudah dicuri. Tukar dahulu: kata laluan atau kunci baharu. Kemudian keluarkan fail dari Git dan abaikannya." }
+          commands:
+            - { command: "git rm --cached terraform.tfstate", en: "Stop tracking the file. It stays on your disk.", ms: "Berhenti jejak fail itu. Ia kekal dalam cakera anda." }
+            - { command: "printf '*.tfstate\\n*.tfstate.*\\n.terraform/\\n' >> .gitignore", en: "Keep registers and downloads out of Git from now on.", ms: "Jauhkan daftar dan muat turun dari Git mulai sekarang." }
+            - { command: "git commit -m \"Stop tracking state\"", en: "Save that. The old commit still has the secret, which is why you changed it.", ms: "Simpan. Commit lama masih ada rahsia itu, sebab itu anda tukar ia." }
+          danger: careful
+          lesson: iac-t3-l07
+      - id: r-local
+        result:
+          text: { en: "Lucky. Take it out of the last commit before anyone sees it, and ignore it from now on.", ms: "Bernasib baik. Keluarkan dari commit terakhir sebelum sesiapa nampak, dan abaikannya mulai sekarang." }
+          commands:
+            - { command: "git rm --cached terraform.tfstate", en: "Stop tracking the file. It stays on your disk.", ms: "Berhenti jejak fail itu. Ia kekal dalam cakera anda." }
+            - { command: "git commit --amend --no-edit", en: "Rewrite the last commit without it. Only for commits you never pushed.", ms: "Tulis semula commit terakhir tanpanya. Hanya untuk commit yang belum di-push." }
+          danger: careful
+          lesson: iac-t3-l07
+
+  - id: iac-lock-file-inconsistent
+    title: { en: "Inconsistent dependency lock file", ms: "Inconsistent dependency lock file (fail lock tak sepadan)" }
+    start: what
+    steps:
+      - id: what
+        question: { en: "What changed in the blueprint?", ms: "Apa yang berubah dalam pelan?" }
+        answers:
+          - { label: { en: "A new provider was added", ms: "Provider baharu ditambah" }, next: r-new }
+          - { label: { en: "A version pin was changed", ms: "Pin versi diubah" }, next: r-upgrade }
+      - id: r-new
+        result:
+          text: { en: "The lock file doesn't know the new provider yet. Run init, then commit the lock file with the change.", ms: "Fail lock belum kenal provider baharu itu. Jalankan init, kemudian commit fail lock bersama perubahan." }
+          commands:
+            - { command: "tofu init", en: "Adds the new provider to .terraform.lock.hcl.", ms: "Tambah provider baharu ke .terraform.lock.hcl." }
+            - { command: "git add .terraform.lock.hcl", en: "Review and commit the lock file change too.", ms: "Semak dan commit perubahan fail lock juga." }
+          danger: safe
+          lesson: iac-t4-l03
+      - id: r-upgrade
+        result:
+          text: { en: "The locked version no longer fits your pin. Let init pick a new one inside the pin, then review the lock file change.", ms: "Versi yang dikunci tak lagi muat dalam pin anda. Biar init pilih yang baharu dalam pin, kemudian semak perubahan fail lock." }
+          commands:
+            - { command: "tofu init -upgrade", en: "Picks the newest versions your pins allow.", ms: "Pilih versi terbaharu yang pin anda benarkan." }
+            - { command: "tofu plan", en: "Check nothing unexpected changed.", ms: "Semak tiada perubahan yang tak dijangka." }
+          danger: careful
+          lesson: iac-t4-l03

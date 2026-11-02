@@ -1,0 +1,77 @@
+---
+id: linux-l2-l07
+world: 2
+title: Environment variables and PATH
+summary: "You will learn: to set notes that programs can read, and to teach the shell where your tools live."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, OrderList, SwipeJudge]
+needs: [linux-l2-l06]
+scenario: linux-l2-path
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Bash Variables", url: "https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html" }
+  - { label: "Bash manual: Environment", url: "https://www.gnu.org/software/bash/manual/html_node/Environment.html" }
+  - { label: "environ(7): the environment", url: "https://man7.org/linux/man-pages/man7/environ.7.html" }
+  - { label: "which (Debian 13 man page)", url: "https://manpages.debian.org/trixie/debianutils/which.debianutils.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+You keep a helper script called `menu` in `~/tools`. You type `menu`. The shell says `-bash: menu: command not found`. It is right there! Why?
+
+<Interactive name="Choice" options={[{ label: 'The shell only searches the folders on a list', correct: true, why: 'That list is PATH. ~/tools is not on it yet.' }, { label: 'The script is broken', why: 'The shell never found it, so it never ran.' }, { label: 'You need sudo', why: 'sudo would not help. The shell does not know where to look.' }]} />
+</Card>
+
+<Card id="see-vars" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-path" intro={['echo $HOME', 'echo $PATH']} />
+
+Notes on the wall: **environment variables**. `$HOME` is your room. `$PATH` lists the rooms the shell searches for commands, split by `:`.
+</Card>
+
+<Card id="predict-export" type="predict">
+You type `SHOP=Kancil`, then run `tools/menu`. It prints `Today at : nasi lemak`. Why is SHOP empty?
+
+<Interactive name="Choice" options={[{ label: 'The note stayed in the shell. export shares it.', correct: true, why: 'A plain variable is private to this shell. export pins it on the wall for programs you start.' }, { label: 'The script cannot read variables', why: 'It can, once the variable is exported.' }, { label: 'Kancil has a typo', why: 'The spelling is fine. The script never got the note.' }]} />
+</Card>
+
+<Card id="try-export" type="try">
+Pin the note on the wall: `export SHOP=Kancil`. Then run `tools/menu` again.
+
+<Interactive name="LinuxSim" scenario="linux-l2-path" goal={{ envVar: { SHOP: '^Kancil$' }, lastTyped: '^(\\./)?tools/menu$' }} hints={['Type export SHOP=Kancil', 'Then run tools/menu']} solution={['export SHOP=Kancil', 'tools/menu']} success="Today at Kancil: nasi lemak. The script read the note." />
+
+<Hint>No spaces around `=`.</Hint>
+</Card>
+
+<Card id="order-path" type="check">
+Say PATH is `/home/you/tools:/usr/local/bin:/usr/bin:/bin`. You type `menu`. Put the rooms in the order the shell searches.
+
+<Interactive name="OrderList" items={['/home/you/tools', '/usr/local/bin', '/usr/bin', '/bin']} label="Searched first at the top" success="Left to right. The first match wins." />
+</Card>
+
+<Card id="try-path" type="try">
+Put `~/tools` at the front of the <Term id="path-variable">PATH</Term>: `export PATH="$HOME/tools:$PATH"`. Then type just `menu`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-path" goal={{ envVar: { PATH: '/home/you/tools:.*' }, lastTyped: '^menu$' }} hints={['Copy it exactly: export PATH="$HOME/tools:$PATH"', 'Then type menu']} solution={['export PATH="$HOME/tools:$PATH"', 'menu']} success="menu works from anywhere now. Try which menu to see where it lives." />
+
+<Hint>`$PATH` at the end keeps the old list.</Hint>
+</Card>
+
+<Card id="judge-path" type="check">
+Good PATH habit, or risky?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'export PATH="$HOME/tools:$PATH"', good: true, why: 'Adds your folder and keeps the rest.' }, { text: 'export PATH="$HOME/tools"', good: false, why: 'The old list is gone. Even ls stops being found.' }, { text: 'export PATH=".:$PATH"', good: false, why: 'Any folder you walk into could run a fake ls. Risky.' }, { text: 'which menu', good: true, why: 'Checks which file really runs.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now share notes with export and tell the shell where tools live.
+</Card>
+
+<Card id="deeper" type="deeper">
+These changes last until you log out. To keep them, add the export line to `~/.profile`. On Debian, `~/.profile` already adds `~/bin` to PATH when it exists. `env` lists every exported note; `unset SHOP` takes one down.
+
+Real rep (optional): on Linux, `echo $PATH`, then `which ls`, then `env | wc -l`.
+</Card>

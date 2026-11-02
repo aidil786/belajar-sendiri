@@ -1,0 +1,76 @@
+---
+id: git-w03-l02
+world: 3
+title: Buat dan tukar branch
+summary: "Anda akan belajar: cara pindah ke branch lain, dan buat branch dalam satu langkah."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, UniverseSplitter, Choice]
+needs: [git-w03-l01]
+scenario: w03-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l02" commands={['git branch']} label="git branch senaraikan dark-mode dan main. Bintang ada di sebelah main." />
+
+Anda dah buat nota `dark-mode`. Tapi bintang masih di main. Macam mana nak pindah ke sana?
+</Card>
+
+<Card id="see-switch" type="see">
+<Interactive name="GraphScene" scenario="w03-l02" commands={['git switch dark-mode']} label="HEAD melompat dari main ke nota dark-mode. Kedua-dua nota di atas commit yang sama." />
+
+`git switch dark-mode` alihkan HEAD ke nota itu. Commit baru anda kini masuk ke dark-mode. main kekal selamat.
+</Card>
+
+<Card id="try-switch" type="try">
+Pindah ke branch `dark-mode`.
+
+<Interactive name="Sim" scenario="w03-l02" panels={['graph']} goal={{ currentBranch: 'dark-mode' }} hints={['Taip git switch dark-mode dan tekan Enter.']} success="Anda di dark-mode. Cubalah apa saja. main selamat." />
+
+<Hint>Taip `git switch dark-mode`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-create" type="see">
+<Interactive name="GraphScene" scenario="w03-l02" commands={['git switch -c about']} label="Nota baru, about, muncul pada commit yang sama, dan HEAD terus pindah ke situ." />
+
+Nak cepat? `git switch -c about` buat nota baru dan terus pindah ke situ. Dua langkah jadi satu.
+</Card>
+
+<Card id="try-universe" type="try">
+Dua branch dah berpisah jalan. Anggap ia dua alam. Masuk ke setiap satu dan tengok fail anda.
+
+<Interactive name="UniverseSplitter" scenario="w03-l02-split" file="index.html" task={{ type: 'visitAll' }} success="Setiap alam ada fail sendiri. Bila bertukar, fail dalam folder pun bertukar." />
+
+<Hint>Ketik lorong yang satu lagi, atau butang `about`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda di about. Anda tukar ke main. Apa jadi pada `about.html` dalam folder anda?
+
+<Interactive name="Choice" options={[{ label: 'Ia keluar dari folder. Ia selamat di about.', correct: true, why: 'Git tukar masuk fail-fail main. Tukar balik, dan about.html muncul semula.' }, { label: 'Ia kekal dalam folder', why: 'main tiada about.html, jadi Git keluarkannya dari folder.' }, { label: 'Git padam buat selamanya', why: 'Ia selamat dalam commit di about. Tukar balik untuk tengok.' }]} />
+</Card>
+
+<Card id="try-create" type="try">
+Buat branch bernama `contact` dan pindah ke situ, dengan satu arahan.
+
+<Interactive name="Sim" scenario="w03-l02" panels={['graph']} goal={{ currentBranch: 'contact' }} hints={['Taip git switch -c contact dan tekan Enter.']} success="Branch baru, dan anda dah di situ. Satu arahan sahaja!" />
+
+<Hint>`switch` untuk pindah. `-c` untuk buat dulu.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat branch dan lompat antara branch.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git switch -` lompat balik ke branch tadi. Ada fail berubah tapi belum commit? Git bawa perubahan itu bersama kalau selamat. Kalau perubahan boleh hilang, Git berhenti dan beritahu anda. Pelajaran 9 tunjuk caranya: stash.
+
+<Interactive name="TermReplay" scenario="w03-l02" commands={['git switch -c contact', 'git switch -', 'git branch']} label="Buat contact dan pindah ke situ, kemudian git switch - lompat balik ke main." />
+</Card>

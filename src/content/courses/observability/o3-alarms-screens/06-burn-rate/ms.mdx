@@ -1,0 +1,64 @@
+---
+id: obs-o3-l06
+world: 3
+title: "Amaran burn rate SLO"
+summary: "Anda akan belajar: panggil orang hanya bila bajet ralat terbakar laju, dan berhenti sejurus selepas dibaiki."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, AlertRuleBuilder, SortCards, Mission]
+needs: [obs-o3-l05]
+scenario: o3-fast-burn
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting on SLOs (Google SRE workbook)", url: "https://sre.google/workbook/alerting-on-slos/" }
+  - { label: "Recording rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/" }
+  - { label: "Grafana SLO", url: "https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/" }
+---
+
+<Card id="hook" type="hook">
+SLO anda: 99.9% pesanan berjaya bulan ini. Pada minit 20, 5% pesanan gagal selama 4 minit. Kemudian ia pulih. Perlukah seseorang bangun?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia guna secebis sahaja bulan ini.', correct: true, why: 'Betul. Empat minit buruk hanya belanja sedikit bajet ralat.' }, { label: 'Ya. Ralat melebihi 0.1% tetap buruk.', why: 'Nanti pager berbunyi untuk setiap kelip. Orang berhenti peduli.' }]} />
+</Card>
+
+<Card id="see-burn" type="see">
+Bahagikan nisbah ralat dengan bajet (0.001). Itulah burn rate.
+
+<Interactive name="PromQLPlayground" scenario="o3-fast-burn" at="80m" initial="job:shop_error_ratio:rate1h" goal={{ resultCount: 1, typed: '/\\s*0\\.001' }} hints={['Tambah / 0.001 di hujung.']} solution="job:shop_error_ratio:rate1h / 0.001" success="Lebih kurang 19 pada minit 80: bajet sebulan habis dalam lebih kurang sehari setengah." />
+
+**<Term id="burn-rate">Burn rate</Term>** 1 bermaksud bajet cukup tepat sebulan. Lebih besar, lebih laju terbakar.
+</Card>
+
+<Card id="predict" type="predict">
+Burn rate kekal 14.4 selama sejam. Berapa banyak bajet sebulan dah habis?
+
+<Interactive name="Choice" options={[{ label: 'Lebih kurang 2%', correct: true, why: 'Betul. 14.4 × 1 jam ÷ 720 jam dalam 30 hari = 2%.' }, { label: 'Lebih kurang 14%', why: '14.4 ialah kelajuan, bukan bahagian. Sejam itu singkat.' }, { label: 'Semuanya', why: 'Pada 14.4, seluruh bajet tahan lebih kurang dua hari.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Panggil orang untuk pembakaran besar dari minit 61. Senyap untuk lonjakan 4 minit. Berhenti sejurus selepas dibaiki pada minit 91.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-fast-burn" alert="FastBurn" exprs={[{ label: 'Melebihi SLO, tetingkap 5m', expr: 'job:shop_error_ratio:rate5m > 0.001', why: 'Setiap benjolan kecil bunyikannya, macam lonjakan pada minit 20.' }, { label: 'Burn 14.4, tetingkap 1h sahaja', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001)', why: 'Sejam itu ingat bahagian buruk. Ia berbunyi lama selepas dibaiki.' }, { label: 'Burn 14.4, tetingkap 5m sahaja', expr: 'job:shop_error_ratio:rate5m > (14.4 * 0.001)', why: 'Lima minit terlalu pendek. Lonjakan minit 20 bunyikannya.' }, { label: 'Burn 14.4 dalam tetingkap 1h DAN 5m', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001) and job:shop_error_ratio:rate5m > (14.4 * 0.001)', graph: 'job:shop_error_ratio:rate1h', threshold: 0.0144 }]} fors={['2m']} labels={[{ labels: { severity: 'page' } }]} goal={{ firingAt: ['80m'], quietAt: ['25m', '50m', '100m'], noFlap: true }} solution={{ expr: 3 }} hints={['Tetingkap panjang buktikan ia penting. Tetingkap pendek buktikan ia masih berlaku.']} success="Ia panggil untuk pembakaran sebenar dan senyap beberapa minit selepas dibaiki." />
+
+<Hint>Lihat minit 25 dan 100 pada garis masa. Rule mana yang senyap pada kedua-duanya?</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Panggil orang sekarang' }, { id: 'ticket', label: 'Tiket untuk waktu kerja' }]} items={[{ label: 'Burn 14.4 dalam 1h, dan dalam 5m', bucket: 'page', why: '2% bulan ini habis dalam sejam. Bertindak sekarang.' }, { label: 'Burn 6 dalam 6h, dan dalam 30m', bucket: 'page', why: '5% habis dalam enam jam. Masih cukup laju untuk panggil.' }, { label: 'Burn 1 dalam 3 hari, dan dalam 6h', bucket: 'ticket', why: 'Kebocoran perlahan. Baiki minggu ini.' }]} success="Pembakaran laju panggil orang. Yang perlahan jadi tiket." />
+
+Pembakaran laju kejutkan seseorang. Yang perlahan tunggu esok pagi.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis amaran burn rate dengan tetingkap panjang dan pendek.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nombor ini datang dari buku kerja SRE Google, untuk SLO 99.9% selama 30 hari. Simpan nisbah ralat setiap tetingkap dengan recording rule, contohnya `job:shop_error_ratio:rate1h`. Jadi amaran kekal pendek dan laju.
+
+<Interactive name="Mission" id="obs-o3-l06-real" steps={[{ id: 'rules', text: 'Tulis dua recording rule (nisbah ralat 5m dan 1h) dan amaran FastBurn dalam satu rules.yml.' }, { id: 'check', text: 'Semak fail itu dengan promtool.', command: 'docker run --rm --entrypoint promtool -v "$PWD:/w" -w /w quay.io/prometheus/prometheus:v3.13.5 check rules rules.yml' }]} success="Rule burn rate anda lulus promtool!" />
+</Card>

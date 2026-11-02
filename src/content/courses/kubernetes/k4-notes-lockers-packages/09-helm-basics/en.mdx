@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l09
+world: 4
+title: "Helm 4: install, upgrade, rollback"
+summary: "You will learn: to install a packaged app with Helm, change it, and roll it back."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SortCards, FoodCourtSim, Transcript, Choice, OrderList, CommandBuilder, Mission]
+needs: [k8s-k4-l08]
+scenario: k4-helm
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Helm: Using Helm", url: "https://helm.sh/docs/intro/using_helm/" }
+  - { label: "helm install", url: "https://helm.sh/docs/helm/helm_install/" }
+  - { label: "helm rollback", url: "https://helm.sh/docs/helm/helm_rollback/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-helm" commands={['helm template shop ./kedai']} picture={false} label="helm template shop ./kedai prints two objects: a Service and a Deployment, both named shop-kedai, with 2 replicas." />
+
+Your shop needs a Deployment and a Service. Someone already packed both as a kit. One command filled in all that YAML.
+</Card>
+
+<Card id="see-kit" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'kit', label: 'In the meal kit (chart)' }, { id: 'order', label: 'In your order' }]} items={[{ label: 'Templates with holes to fill', bucket: 'kit', why: 'The chart brings the YAML shapes.' }, { label: 'Default values, like replicaCount: 2', bucket: 'kit', why: 'values.yaml ships inside the chart.' }, { label: 'The release name, shop', bucket: 'order', why: 'You name each install.' }, { label: '--set replicaCount=3', bucket: 'order', why: 'Your change wins over the default.' }]} success="The kit brings templates and defaults. You bring the order." />
+
+**<Term id="helm">Helm</Term>** is Kubernetes' package manager. A <Term id="chart">chart</Term> is a meal kit: templates plus default values.
+</Card>
+
+<Card id="try-template" type="try">
+Order 3 trays from the kit. Look at the YAML before anything is installed.
+
+<Interactive name="FoodCourtSim" scenario="k4-helm" goal={{ lastTyped: '^helm template .*replicaCount=3' }} hints={['Type helm template shop ./kedai --set replicaCount=3']} success="replicas: 3 in the YAML. Nothing is installed yet." />
+
+<Hint>`--set` changes one value for this run only.</Hint>
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="Transcript" title="bash" label="Four Helm commands: install shop, upgrade it to 3 replicas, show its history, and roll back to revision 1." lines={[{ cmd: 'helm install shop ./kedai' }, { cmd: 'helm upgrade shop ./kedai --set replicaCount=3' }, { cmd: 'helm history shop' }, { cmd: 'helm rollback shop 1' }]} />
+
+`install` makes a **<Term id="helm-release">release</Term>** called shop, at revision 1. Every `upgrade` adds a revision. `rollback` brings an old one back.
+</Card>
+
+<Card id="predict" type="predict">
+Revision 1: install. Revision 2: an upgrade with a bad image. You run `helm rollback shop 1`. What is the newest revision now?
+
+<Interactive name="Choice" options={[{ label: '3, a copy of revision 1', correct: true, why: 'A rollback is a new revision. History never gets erased.' }, { label: '1', why: 'Almost! Helm never rewinds history. It writes revision 3 with the old settings.' }, { label: '2', why: 'Revision 2 is the bad one you are leaving.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put one release's life in order, first at the top.
+
+<Interactive name="OrderList" items={['helm install shop ./kedai', 'helm upgrade shop ./kedai --set image.tag=1.30-alpine', 'helm history shop', 'helm rollback shop 1', 'helm uninstall shop']} label="First step at the top" success="Install, change, look, undo, and finally clean up." />
+</Card>
+
+<Card id="check-build" type="check">
+shop is installed. Build the command that moves it to nginx 1.30.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'helm', means: 'Talk to Helm' }, { text: 'upgrade', means: 'change a release you already have' }, { text: 'shop', means: 'the release name' }, { text: './kedai', means: 'the chart' }, { text: '--set image.tag=1.30-alpine', means: 'your change to the order' }]} decoys={[{ text: 'install', means: 'shop is already installed. Use upgrade.' }, { text: '--image=nginx:1.30', means: 'Not a Helm flag. Values go through --set.' }]} success="That writes revision 2, with nginx 1.30." />
+</Card>
+
+<Card id="win" type="win">
+You can now install, upgrade and roll back an app with Helm.
+</Card>
+
+<Card id="deeper" type="deeper">
+Learn Helm 4: it shipped in November 2025. Helm 3 gets security fixes only until 11 November 2026. Charts come from chart repos or OCI registries. `helm uninstall shop` deletes the release and everything it made.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-l09-rep" steps={[{ id: 'install-helm', text: 'Install Helm 4 from helm.sh. Follow the official install page only.' }, { id: 'version', text: 'Check it says v4.', command: 'helm version' }, { id: 'create', text: 'Make a starter chart.', command: 'helm create kedai' }, { id: 'install', text: 'Install it as shop.', command: 'helm install shop ./kedai' }, { id: 'upgrade', text: 'Order 3 trays.', command: 'helm upgrade shop ./kedai --set replicaCount=3' }, { id: 'history', text: 'Read the revisions.', command: 'helm history shop' }, { id: 'rollback', text: 'Go back to revision 1.', command: 'helm rollback shop 1' }, { id: 'tidy', text: 'Tidy up.', command: 'helm uninstall shop' }]} success="A real release, upgraded and rolled back." />
+</Card>

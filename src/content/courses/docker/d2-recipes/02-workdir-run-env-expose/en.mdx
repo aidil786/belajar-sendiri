@@ -1,0 +1,75 @@
+---
+id: docker-d2-l02
+world: 2
+title: "WORKDIR, RUN, ENV and EXPOSE"
+summary: "You will learn: four more recipe lines, and why EXPOSE does not open the hatch."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, SortCards, KitchenSim, CommandBuilder, Mission]
+needs: [docker-d2-l01]
+scenario: d2-l02
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: WORKDIR", url: "https://docs.docker.com/reference/dockerfile/#workdir" }
+  - { label: "Dockerfile reference: RUN", url: "https://docs.docker.com/reference/dockerfile/#run" }
+  - { label: "Dockerfile reference: ENV", url: "https://docs.docker.com/reference/dockerfile/#env" }
+  - { label: "Dockerfile reference: EXPOSE", url: "https://docs.docker.com/reference/dockerfile/#expose" }
+---
+
+<Card id="hook" type="hook">
+A recipe says `COPY server.js .` and nothing else. The node base sets no work folder. Where does `server.js` land?
+
+<Interactive name="Choice" options={[{ label: 'In /, the very top folder', correct: true, why: 'With no work folder, the dot means /. Your file sits next to the system folders. Messy!' }, { label: 'In /app', why: 'Only if a line says WORKDIR /app first.' }, { label: 'On your laptop', why: 'COPY always puts files inside the image.' }]} />
+</Card>
+
+<Card id="see-workdir" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l02" commands={['cat Dockerfile', 'docker build -t api:1.0 .', 'docker run --rm api:1.0 pwd']} label="The recipe has WORKDIR /app, COPY of the package files, RUN npm ci, COPY server.js, ENV PORT=3000, EXPOSE 3000 and CMD. After the build, pwd inside the container prints /app." />
+
+**WORKDIR** `/app` is your work counter. Every later line works there. `RUN` cooks while baking: here it installs packages. `pwd` prints the counter: `/app`.
+</Card>
+
+<Card id="try-sort" type="try">
+Some lines bake a layer. Others only stick a note on the pack. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'layer', label: 'Bakes a layer' }, { id: 'note', label: 'Only a note' }]} items={[{ label: 'WORKDIR /app', bucket: 'layer', why: 'It makes the folder. That is a numbered build step.' }, { label: 'RUN npm ci --omit=dev', bucket: 'layer', why: 'RUN cooks something. The result is a new layer.' }, { label: 'COPY server.js .', bucket: 'layer', why: 'New files go in a new layer.' }, { label: 'ENV PORT=3000', bucket: 'note', why: 'A setting for later. No files change.' }, { label: 'EXPOSE 3000', bucket: 'note', why: 'Just a note: "I listen on 3000".' }, { label: 'CMD ["node", "server.js"]', bucket: 'note', why: 'It only says what to run when the box opens.' }]} success="Right! Only WORKDIR, RUN and COPY show up as numbered steps." />
+</Card>
+
+<Card id="try-run" type="try">
+The image is built. Run it with hatch 3000 open, then knock with `curl`.
+
+<Interactive name="KitchenSim" scenario="d2-l02" intro={['docker build -t api:1.0 .']} goal={{ running: ['api'], portMapped: { api: '3000:3000' }, lastTyped: '^curl\\b.*localhost:3000' }} hints={['Type docker run -d --name api -p 3000:3000 api:1.0', 'Then type curl localhost:3000']} success="The API answers through hatch 3000." />
+
+<Hint>`-p 3000:3000` opens the hatch: laptop port, then container port.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The recipe says `EXPOSE 3000`. You run the image with no `-p`. Can your laptop reach port 3000?
+
+<Interactive name="Choice" options={[{ label: 'No. EXPOSE is only a note', correct: true, why: 'EXPOSE tells people which port the app uses. Only -p opens a hatch.' }, { label: 'Yes. EXPOSE opens the hatch', why: 'Many people think so! EXPOSE opens nothing.' }, { label: 'Yes, but only with curl -s', why: 'curl flags cannot open a closed hatch.' }]} />
+</Card>
+
+<Card id="check-expose" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l02" commands={['docker build -t api:1.0 .', 'docker run -d --name api api:1.0', 'curl localhost:3000', 'docker ps']} fails={['curl localhost:3000']} label="The api container runs without -p. curl localhost:3000 says: Failed to connect to localhost port 3000: Couldn't connect to server. docker ps shows 3000/tcp with no laptop port." />
+
+Real error: `Couldn't connect to server`. Plain words: no hatch is open. `docker ps` shows `3000/tcp` with no arrow.
+</Card>
+
+<Card id="try-env" type="try">
+`ENV PORT=3000` is only a default. Build the command that runs the API on port 4000.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d', means: 'start in the background' }, { text: '--name api', means: 'call the box api' }, { text: '-e PORT=4000', means: 'change the PORT setting' }, { text: '-p 4000:4000', means: 'open hatch 4000' }, { text: 'api:1.0', means: 'from this image' }]} decoys={[{ text: '--build-arg PORT=4000', means: 'only works while building' }]} success="ENV gives a default. -e changes it for this box." />
+</Card>
+
+<Card id="win" type="win">
+You can now use WORKDIR, RUN, ENV and EXPOSE.
+</Card>
+
+<Card id="deeper" type="deeper">
+Chain related commands in one `RUN` with `&&`. One RUN is one layer. `EXPOSE` also helps `docker run -P`, which opens every exposed port on a random laptop port.
+
+<Interactive name="Mission" id="d2-l02-rep" steps={[{ id: 'workdir', text: 'Add WORKDIR /app to your recipe from lesson 1.' }, { id: 'build', text: 'Build it again.', command: 'docker build -t hello:1.1 .' }, { id: 'pwd', text: 'Check the work folder.', command: 'docker run --rm hello:1.1 pwd' }]} success="Your counter is set up!" />
+</Card>

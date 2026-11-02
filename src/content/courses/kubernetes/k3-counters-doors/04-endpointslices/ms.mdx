@@ -1,0 +1,71 @@
+---
+id: k8s-k3-l04
+world: 3
+title: "EndpointSlice: siapa jawab?"
+summary: "Anda akan belajar: lihat pod mana yang jawab sebuah Service, dan baiki Service yang tiada penjawab."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, LabelMatchmaker, FoodCourtSim, Choice, OrderList, Mission]
+needs: [k8s-k3-l03]
+scenario: k3-endpoints
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: EndpointSlice", url: "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/" }
+  - { label: "Kubernetes: nyahpepijat Service", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-endpoints" commands={['kubectl get endpointslices -l kubernetes.io/service-name=menu', 'kubectl exec client -- wget -qO- -T 5 http://menu']} fails={['kubectl exec client -- wget -qO- -T 5 http://menu']} label="EndpointSlice menu tunjuk port unset dan endpoint unset. wget dapat Connection refused." />
+
+Menu ada nombor pesanan, tapi anda dapat `Connection refused`. Maksudnya: tiada dulang di belakang nombor itu.
+</Card>
+
+<Card id="try-labels" type="try">
+**<Term id="endpointslice">EndpointSlice</Term>** ialah senarai di belakang nombor pesanan. Ia namakan dulang yang menjawab. Service ini mahu kedua-dua label. Buat ia pilih dua dulang kedai.
+
+<Interactive name="LabelMatchmaker" pods={[{ name: 'shop-1', labels: { app: 'shop', tier: 'web' } }, { name: 'shop-2', labels: { app: 'shop' } }, { name: 'api-1', labels: { app: 'api', tier: 'web' } }]} labels={['tier=web', 'app=shop', 'app=api']} selector={{ app: 'shop', tier: 'web' }} task={{ type: 'select', pods: ['shop-1', 'shop-2'] }} success="Kedua-dua dulang kedai ada dalam senarai. api-1 ada tier=web, tapi bukan app=shop." />
+
+<Hint>Dulang mesti ada setiap label dalam selector.</Hint>
+</Card>
+
+<Card id="see-ready" type="see">
+<Interactive name="KubeReplay" scenario="k3-endpoints" commands={['kubectl get endpointslices -l kubernetes.io/service-name=shop', 'kubectl scale deployment shop --replicas=1', 'sleep 10', 'kubectl get endpointslices -l kubernetes.io/service-name=shop']} label="Senarai kedai ada tiga IP. Selepas scale ke satu dulang, tinggal satu IP." />
+
+Senarai ikut dulang. Scale turun ke satu, senarai pun tinggal satu. Dulang yang belum sedia pun keluar dari senarai.
+</Card>
+
+<Card id="try-fix" type="try">
+Masa jadi detektif. Cari kenapa menu tiada dulang. Kemudian buat semula nombor pesanannya.
+
+<Interactive name="FoodCourtSim" scenario="k3-endpoints" goal={{ serviceEndpoints: { name: 'menu', min: 1 }, reachable: { url: 'http://menu', from: 'client' } }} hints={['Banding Selector dalam kubectl describe service menu dengan kubectl get pods --show-labels', 'Selector kata app=menus. Pod kata app=menu.', 'Buat semula: kubectl delete service menu, kemudian kubectl expose deployment menu --port=80']} success="Menu menjawab semula. expose salin selector yang betul daripada Deployment." />
+
+<Hint>`kubectl expose deployment menu --port=80` salin selector Deployment itu sendiri, jadi ia sepadan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu dulang gagal readiness probe. Adakah nombor pesanan masih hantar pesanan kepadanya?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: ia keluar dari senarai sampai sedia semula', correct: true, why: 'Hanya dulang sedia dapat pesanan. Itulah guna readiness.' }, { label: 'Ya: setiap dulang berlabel dapat pesanan', why: 'Label masukkan ia ke senarai. Readiness tentukan sama ada ia dapat pesanan.' }, { label: 'Service itu dipadam', why: 'Service kekal. Hanya dulang itu ke tepi.' }]} />
+</Card>
+
+<Card id="check-ladder" type="check">
+Sebuah Service tiada endpoint. Susun langkahnya.
+
+<Interactive name="OrderList" items={['kubectl get endpointslices -l kubernetes.io/service-name=menu', 'kubectl describe service menu (baca Selector)', 'kubectl get pods --show-labels', 'Baiki selector atau label', 'Semak endpoint sekali lagi']} label="Langkah pertama di atas" success="Itulah tangganya: lihat, banding, baiki, semak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lihat siapa jawab sebuah Service, dan baikinya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Objek Endpoints yang lama sudah deprecated sejak Kubernetes 1.33. Guna EndpointSlice. Satu slice muat hingga 100 endpoint secara lalai. Service besar dapat beberapa slice. Pod yang sedang ditutup kekal dalam senarai sekejap, bertanda belum sedia.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l04-rep" steps={[{ id: 'list', text: 'Lihat siapa jawab kedai.', command: 'kubectl get endpointslices -l kubernetes.io/service-name=shop' }, { id: 'break', text: 'Buat Service dengan selector yang tiada siapa ada.', command: 'kubectl create service clusterip nobody --tcp=80:80' }, { id: 'empty', text: 'Senarainya kosong: tiada dulang ada app=nobody.', command: 'kubectl get endpointslices -l kubernetes.io/service-name=nobody' }]} success="Anda boleh baca senarai di belakang mana-mana nombor pesanan!" />
+</Card>

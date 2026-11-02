@@ -1,0 +1,61 @@
+---
+id: cicd-c2-l06
+world: 2
+title: Run tests inside containers
+summary: "You will learn: to taste-test the same lunchbox your customers get."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, OrderList, ConveyorBelt, Mission]
+needs: [cicd-c2-l05]
+scenario: c2-tests-in-container
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: test before push with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/test-before-push/" }
+  - { label: "Docker docs: multi-stage builds", url: "https://docs.docker.com/build/building/multi-stage/" }
+---
+
+<Card id="hook" type="hook">
+The tests pass on the runner. Then the image crashes in production: a system library is missing. How could the belt catch that?
+
+<Interactive name="Choice" options={[{ label: 'Run the tests inside the image', correct: true, why: 'Same lunchbox, same taste. Anything missing shows up in CI.' }, { label: 'Run the tests twice on the runner', why: 'The runner has things the image lacks. Twice still misses it.' }, { label: 'Test only on your laptop', why: 'Your laptop has things the image lacks too.' }]} />
+</Card>
+
+<Card id="see-stages" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine AS base' }, { text: 'WORKDIR /app' }, { text: 'COPY package*.json ./' }, { text: 'RUN npm ci' }, { text: 'COPY . .' }, { text: 'FROM base AS test', target: true }, { text: 'CMD ["npm", "test"]' }, { text: 'FROM base AS app' }, { text: 'RUN npm prune --omit=dev' }, { text: 'CMD ["node", "server.js"]' }]} prompt="Tap the line where the test stage starts." success="Yes! Same base, then a stage just for tests." />
+
+One recipe, two dishes. The **test stage** keeps the test tools. The app stage is what customers get. Both grow from the same base layers.
+</Card>
+
+<Card id="try-order" type="try">
+Put the belt's steps in order.
+
+<Interactive name="OrderList" items={['Set up Buildx', 'Build the test stage, and load it into Docker', 'Run npm test inside that image', 'Build the app stage and push it']} label="First at the top" success="Test first. Push only what passed." />
+</Card>
+
+<Card id="predict" type="predict">
+One test fails inside the container. Tap the station that will stop the line, then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-tests-in-container" task={{ type: 'predict' }} success="Right! The test station stopped the line." />
+</Card>
+
+<Card id="check" type="check">
+The build step says `load: true`. Why?
+
+<Interactive name="Choice" options={[{ label: "It copies the image into the runner's Docker, so docker run finds it", correct: true, why: 'Buildx builds in its own box. load brings the image out.' }, { label: 'It uploads the image to GHCR', why: 'That is push. load keeps the image on the runner.' }, { label: 'It loads the layer cache', why: 'cache-from does that.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run your tests inside the image you ship.
+</Card>
+
+<Card id="deeper" type="deeper">
+Another way: put `RUN npm test` in the test stage. Then a failing test fails the build itself. Keep test tools out of the app stage. The shipped image stays small.
+
+Real rep (optional), in a public practice repo:
+
+<Interactive name="Mission" id="c2-l06-rep" steps={[{ id: 'stage', text: 'Add a test stage to your Dockerfile, like the one above.' }, { id: 'local', text: 'Try it on your machine first.', command: 'docker build --target test -t myapp:test .' }, { id: 'run', text: 'Run the tests inside it.', command: 'docker run --rm myapp:test' }, { id: 'ci', text: 'Add the same two steps to your workflow and push.' }]} success="Your tests now taste the real lunchbox!" />
+</Card>

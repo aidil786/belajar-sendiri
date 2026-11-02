@@ -1,0 +1,70 @@
+---
+id: cicd-c4-l09
+world: 4
+title: Tahap SLSA dan senarai dibenarkan
+summary: "Anda akan belajar: cara buktikan asal sesuatu binaan, dan cara benarkan action yang dipercayai sahaja."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, OrderList, CommandBuilder, SwipeJudge]
+needs: [cicd-c4-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "SLSA: Build track basics", url: "https://slsa.dev/spec/v1.2/build-track-basics" }
+  - { label: "Artifact attestations", url: "https://docs.github.com/en/actions/concepts/security/artifact-attestations" }
+  - { label: "gh attestation verify", url: "https://cli.github.com/manual/gh_attestation_verify" }
+  - { label: "Limiting GitHub Actions for your organization", url: "https://docs.github.com/en/organizations/managing-organization-settings/disabling-or-limiting-github-actions-for-your-organization" }
+---
+
+<Card id="hook" type="hook">
+Anda tarik `ghcr.io/you/shop:1.2.0` untuk deploy. Pipeline anda yang bina, atau laptop seseorang? Bagaimana anda tahu?
+
+<Interactive name="Choice" options={[{ label: 'Semak rekod binaan yang ditandatangani', correct: true, why: 'Rekod bertandatangan sebut repo, commit dan workflow yang membinanya.' }, { label: 'Percaya tag itu', why: 'Sesiapa yang boleh push boleh push image dengan tag itu.' }, { label: 'Semak saiz image', why: 'Saiz tak beritahu siapa yang membinanya.' }]} />
+</Card>
+
+<Card id="see-provenance" type="see">
+Pek beku ada label: dapur mana, resepi mana, bila. Label sesuatu binaan dipanggil **provenance** (asal usul). Bila ditandatangani, tiada siapa boleh palsukannya secara senyap. Apa yang ia beritahu?
+
+<Interactive name="SortCards" buckets={[{ id: 'tells', label: 'Provenance beritahu anda' }, { id: 'not', label: 'Ia tak beritahu anda' }]} items={[{ label: 'Repo dan commit asalnya', bucket: 'tells', why: 'Itulah inti label itu.' }, { label: 'Workflow yang membinanya', bucket: 'tells', why: 'Langkah binaan pun dinamakan.' }, { label: 'Tiada siapa ubahnya selepas dibina', bucket: 'tells', why: 'Image yang diubah tak lagi sepadan dengan rekod bertandatangan.' }, { label: 'Kod itu tiada pepijat', bucket: 'not', why: 'Ia buktikan tempat dibuat, bukan resepi itu bagus.' }]} success="Siap! Di mana dan bagaimana, bukan sebaik mana." />
+</Card>
+
+<Card id="see-levels" type="see">
+**<Term id="slsa">SLSA</Term>** (sebut "salsa") beri gred kepada binaan, macam gred keselamatan makanan. Susun tahap Build-nya. Paling lemah di atas.
+
+<Interactive name="OrderList" items={['L0: tiada janji', 'L1: provenance wujud', 'L2: platform binaan berhos menandatanganinya', 'L3: binaan diperkukuh, jadi run tak boleh sentuh satu sama lain']} label="Paling lemah di atas" success="Itulah tangganya. Setiap tahap buat pemalsuan lebih susah." />
+</Card>
+
+<Card id="predict" type="predict">
+Workflow GitHub Actions anda buat artifact attestation: rekod provenance bertandatangan. Tahap SLSA Build yang mana?
+
+<Interactive name="Choice" options={[{ label: 'Build L2', correct: true, why: 'Platform berhos menandatanganinya. Workflow guna semula yang dikongsi boleh capai L3.' }, { label: 'Build L0', why: 'Ada provenance bertandatangan, jadi ia lebih daripada L0.' }, { label: 'Sentiasa Build L3', why: 'L3 perlukan binaan diasingkan daripada pemanggilnya, contohnya workflow guna semula yang dikongsi.' }]} />
+</Card>
+
+<Card id="try-verify" type="try">
+Semak image sebelum anda deploy. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'Alat baris arahan GitHub' }, { text: 'attestation', means: 'urus rekod binaan' }, { text: 'verify', means: 'semak rekod bertandatangan' }, { text: 'oci://ghcr.io/you/shop:1.2.0', means: 'image ini dalam registry' }, { text: '--owner', means: 'ia mesti datang dari pemilik ini' }, { text: 'you', means: 'akaun anda' }]} decoys={[{ text: 'download', means: 'simpan rekod ke dalam fail' }, { text: 'docker', means: 'Alat Docker sendiri' }]} success="Betul! Tiada rekod sah daripada anda, tiada deploy." />
+</Card>
+
+<Card id="see-allow" type="see">
+Pasukan besar juga simpan senarai pembekal yang diluluskan: **<Term id="allow-list">allow-list</Term>** (senarai dibenarkan). Hanya action dalam senarai boleh jalan. Peraturan yang baik, atau berisiko?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Benarkan action yang dibuat oleh GitHub', good: true, why: 'Action GitHub sendiri ialah pembekal yang dipercayai.' }, { text: 'Benarkan setiap action daripada sesiapa', good: false, why: 'Mana-mana pembekal, beracun atau tidak, sampai ke dapur anda.' }, { text: 'Benarkan action Marketplace dari pembuat yang disahkan', good: true, why: 'GitHub dah semak siapa pembuat ini.' }, { text: 'Wajibkan setiap action dipin pada SHA penuh', good: true, why: 'Satu tetapan jadikan pelajaran 3 peraturan untuk semua.' }]} />
+</Card>
+
+<Card id="try-pattern" type="try">
+Allow-list anda mesti sekat satu action jahat, dan kekalkan yang lain. Entri mana yang buat begitu?
+
+<Interactive name="Choice" options={[{ label: '`*, !example-org/changed-files@*`', correct: true, why: '* benarkan semua. ! sekat action itu, semua versinya.' }, { label: '`example-org/*`', why: 'Itu hanya benarkan action example-org. Yang lain semua disekat.' }, { label: '`example-org/changed-files@*`', why: 'Itu benarkan action jahat itu. Letak ! di depan untuk sekat.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buktikan asal sesuatu binaan, dan benarkan action yang dipercayai sahaja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: label makanan melekat pada pek. Provenance ialah fail bertandatangan yang berasingan. Alat yang semak, bukan mata anda. Dan tiada gred kata resepi itu bagus. SLSA 1.2 juga tambah Source track, untuk percaya kod itu sendiri. Latihan sebenar: sahkan image yang anda push dalam Dunia C2.
+</Card>

@@ -1,0 +1,79 @@
+---
+id: linux-l1-l02
+world: 1
+title: "Saya di mana? pwd, cd, ls"
+summary: "Anda akan belajar: tengok di mana anda berdiri, senaraikan folder dan bergerak antara folder."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, CommandBuilder, Mission]
+needs: [linux-l1-l01]
+scenario: linux-l1-shop
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "pwd (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/pwd.1.en.html" }
+  - { label: "ls (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/ls.1.en.html" }
+  - { label: "cd: Bash builtins (GNU)", url: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" }
+  - { label: "How Linux finds a path (man7.org)", url: "https://man7.org/linux/man-pages/man7/path_resolution.7.html" }
+---
+
+<Card id="hook" type="hook">
+Anda taip `cat today.txt`. Server jawab `cat: today.txt: No such file or directory`. Tapi fail menu itu wujud! Apa yang tak kena?
+
+<Interactive name="Choice" options={[{ label: 'Saya berdiri di bilik yang salah', correct: true, why: 'Shell cari nama dalam folder tempat anda berdiri. Menu ada di bilik lain.' }, { label: 'Fail itu rosak', why: 'Fail itu okey. Shell cuma cari di tempat yang salah.' }, { label: 'Saya perlu kata laluan', why: 'Tak perlu kata laluan. Nama itu memang tiada dalam folder ini.' }]} />
+</Card>
+
+<Card id="see-pwd" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-shop" intro={['pwd', 'ls']} />
+
+Setiap bilik ada alamat: **path** (laluan). `pwd` cetak tempat anda berdiri. `ls` senaraikan isi bilik ini. Cuba `ls kedai` juga.
+</Card>
+
+<Card id="see-paths" type="see">
+`/home/you` bermula di `/`, pintu depan. Ia jalan dari mana-mana. `kedai/menu` bermula dari tempat anda berdiri. Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'abs', label: 'Dari pintu depan /' }, { id: 'rel', label: 'Dari tempat saya berdiri' }]} items={[{ label: '/home/you/kedai', bucket: 'abs', why: 'Ia bermula dengan /: alamat sama dari bilik mana pun.' }, { label: 'kedai/menu', bucket: 'rel', why: 'Tiada / di depan: ia bermula di bilik anda sekarang.' }, { label: '/etc', bucket: 'abs', why: 'Ia bermula dengan /.' }, { label: '../counter', bucket: 'rel', why: '.. maksudnya naik satu bilik dari tempat anda.' }]} success="/ di depan maksudnya: mula dari pintu depan." />
+</Card>
+
+<Card id="try-cd" type="try">
+Masuk ke dapur dengan `cd kedai/kitchen`. Kemudian senaraikan isinya dengan `ls`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ cwd: '~/kedai/kitchen', lastTyped: '^ls' }} hints={['Taip cd kedai/kitchen dan tekan Enter.', 'Sekarang taip ls.']} solution={['cd kedai/kitchen', 'ls']} success="Anda di dapur. Ada dua resepi di sini." />
+
+<Hint>`cd` maksudnya "change directory": masuk ke folder.</Hint>
+</Card>
+
+<Card id="predict-up" type="predict">
+Anda berdiri di `/home/you/kedai/kitchen`. Anda taip `cd ..` (dua titik). Di mana anda sekarang?
+
+<Interactive name="Choice" options={[{ label: '/home/you/kedai', correct: true, why: '.. ialah bilik satu tingkat di atas. kitchen ada di dalam kedai.' }, { label: '/home/you', why: 'Itu dua tingkat ke atas. Satu .. naik satu tingkat.' }, { label: '/', why: 'Itu pintu depan, paling atas. .. naik satu tingkat sahaja.' }]} />
+</Card>
+
+<Card id="try-counter" type="try">
+Anda bermula di dapur. Pergi ke kaunter di sebelah dengan satu langkah: `cd ../counter`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" intro={['cd kedai/kitchen']} goal={{ cwd: '~/kedai/counter' }} hints={['Naik satu bilik, kemudian masuk counter: cd ../counter']} solution={['cd ../counter']} success="Naik satu bilik, kemudian masuk kaunter. Bar merah jambu ikut anda." />
+
+<Hint>`..` naik satu tingkat. Kemudian tambah `/counter`.</Hint>
+</Card>
+
+<Card id="check-home" type="check">
+Sesat? Bina arahan yang bawa anda ke <Term id="home-folder">folder rumah</Term> dari mana-mana.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'cd', means: 'pergi ke folder' }, { text: '~', means: 'rumah anda, /home/you' }]} decoys={[{ text: '..', means: 'naik satu bilik' }, { text: '/', means: 'pintu depan' }]} success="cd ~ sentiasa bawa anda pulang. cd sahaja pun sama." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tahu di mana anda berada dan bergerak antara folder.
+</Card>
+
+<Card id="deeper" type="deeper">
+`cd -` lompat balik ke bilik sebelum ini. `ls -a` juga tunjuk nama tersembunyi yang bermula dengan titik, seperti `.keys`. `ls -l` tunjuk pemilik dan kunci: itu Dunia L2.
+
+Latihan sebenar (pilihan), di mesin anda sendiri:
+
+<Interactive name="Mission" id="linux-l1-l02-rep" steps={[{ id: 'where', text: 'Anda di mana?', command: 'pwd' }, { id: 'list', text: 'Apa ada di sini, termasuk nama tersembunyi?', command: 'ls -a' }, { id: 'door', text: 'Pergi ke pintu depan dan tengok.', command: 'cd / && ls' }, { id: 'home', text: 'Pulang semula.', command: 'cd ~' }]} success="Anda sudah jelajah sistem fail sebenar!" />
+</Card>

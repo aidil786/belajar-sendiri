@@ -1,0 +1,229 @@
+# Command pages for the Terraform & OpenTofu course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/iac/commands/<id>/ and in the cheat sheet /<lang>/iac/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Syntax uses `tofu` (OpenTofu 1.13); name the `terraform` twin in a variant when it is the same.
+# Mark risky commands (apply, destroy, state rm, force-unlock …) with danger: careful or lose.
+# Facts: opentofu.org/docs and developer.hashicorp.com/terraform/cli.
+groups:
+  - { id: loop, title: { en: "The loop: init, plan, apply", ms: "Kitaran: init, plan, apply" } }
+  - { id: tidy, title: { en: "Check and tidy", ms: "Semak dan kemaskan" } }
+  - { id: state, title: { en: "State", ms: "State" } }
+  - { id: environments, title: { en: "Workspaces and outputs", ms: "Workspace dan output" } }
+
+commands:
+  # --- World T1 commands (groups: loop, tidy) ---
+  - id: tofu-init
+    group: loop
+    syntax: "tofu init"
+    danger: safe
+    lesson: iac-t1-l03
+    docs: "https://opentofu.org/docs/cli/commands/init/"
+    what: { en: "Gets the providers a blueprint needs and writes the lock file.", ms: "Dapatkan provider yang pelan perlukan dan tulis fail lock." }
+    when: { en: "First, in a new folder. Again after you add a provider.", ms: "Mula-mula, dalam folder baru. Sekali lagi selepas anda tambah provider." }
+    example: { command: "tofu init", en: "Get the suppliers ready for this folder.", ms: "Sediakan pembekal untuk folder ini." }
+    variants:
+      - { command: "terraform init", en: "The same job in Terraform.", ms: "Kerja yang sama dalam Terraform." }
+      - { command: "tofu init -upgrade", en: "Pick the newest provider versions your pins allow.", ms: "Pilih versi provider terbaru yang pin anda benarkan." }
+
+  - id: tofu-plan
+    group: loop
+    syntax: "tofu plan [-var name=value] [-var-file=FILE] [-out FILE]"
+    danger: safe
+    lesson: iac-t1-l04
+    docs: "https://opentofu.org/docs/cli/commands/plan/"
+    what: { en: "Shows what apply would do: + create, ~ change, - destroy, -/+ replace. Changes nothing.", ms: "Tunjuk apa yang apply akan buat: + cipta, ~ ubah, - musnah, -/+ ganti. Tak ubah apa-apa." }
+    when: { en: "Before every apply. Read it like the site inspector's report.", ms: "Sebelum setiap apply. Baca macam laporan pemeriksa tapak." }
+    example: { command: "tofu plan", en: "Compare the blueprint with what is built.", ms: "Banding pelan dengan apa yang sudah dibina." }
+    variants:
+      - { command: "tofu plan -var tables=6", en: "Fill in one variable for this plan.", ms: "Isi satu variable untuk plan ini." }
+      - { command: "tofu plan -var-file=penang.tfvars", en: "Read variable values from a file.", ms: "Baca nilai variable dari satu fail." }
+      - { command: "tofu plan -destroy", en: "Preview what destroy would delete.", ms: "Tengok dulu apa yang destroy akan padam." }
+      - { command: "tofu plan -out tfplan", en: "Save the plan, so apply does exactly this.", ms: "Simpan plan, supaya apply buat tepat seperti ini." }
+
+  - id: tofu-apply
+    group: loop
+    syntax: "tofu apply [-var name=value] [-var-file=FILE] [PLAN FILE]"
+    danger: careful
+    lesson: iac-t1-l05
+    docs: "https://opentofu.org/docs/cli/commands/apply/"
+    what: { en: "Builds or changes real things to match the blueprint. It shows the plan and asks first.", ms: "Bina atau ubah benda sebenar supaya sama dengan pelan. Ia tunjuk plan dan tanya dulu." }
+    when: { en: "After you read the plan and it looks right.", ms: "Selepas anda baca plan dan ia nampak betul." }
+    example: { command: "tofu apply", en: "Show the plan, then build it if you type yes.", ms: "Tunjuk plan, kemudian bina jika anda taip yes." }
+    variants:
+      - { command: "tofu apply tfplan", en: "Apply exactly the plan you saved and read.", ms: "Apply tepat plan yang anda simpan dan baca." }
+      - { command: "tofu apply -auto-approve", en: "Careful: no question. Only for practice or a pipeline that showed a plan first.", ms: "Hati-hati: tiada soalan. Hanya untuk latihan atau pipeline yang sudah tunjuk plan." }
+
+  - id: tofu-destroy
+    group: loop
+    syntax: "tofu destroy"
+    danger: lose
+    lesson: iac-t1-l05
+    docs: "https://opentofu.org/docs/cli/commands/destroy/"
+    what: { en: "Deletes every real thing this blueprint built. It asks first.", ms: "Padam setiap benda sebenar yang pelan ini bina. Ia tanya dulu." }
+    when: { en: "When a test is over and you want nothing left running.", ms: "Bila ujian selesai dan anda mahu tiada apa yang tinggal berjalan." }
+    example: { command: "tofu destroy", en: "Show what goes, then delete it if you type yes.", ms: "Tunjuk apa yang akan hilang, kemudian padam jika anda taip yes." }
+    variants:
+      - { command: "tofu plan -destroy", en: "Only a preview. Nothing is deleted.", ms: "Tengok dulu sahaja. Tiada apa yang dipadam." }
+
+  - id: tofu-fmt
+    group: tidy
+    syntax: "tofu fmt [-check] [-diff] [-recursive]"
+    danger: safe
+    lesson: iac-t1-l07
+    docs: "https://opentofu.org/docs/cli/commands/fmt/"
+    what: { en: "Tidies .tf files: spaces, indents and lined-up = signs. Same meaning.", ms: "Kemaskan fail .tf: ruang, inden dan tanda = yang sebaris. Maksud sama." }
+    when: { en: "Before every commit. CI runs tofu fmt -check.", ms: "Sebelum setiap commit. CI jalankan tofu fmt -check." }
+    example: { command: "tofu fmt", en: "Tidy every .tf file in this folder.", ms: "Kemaskan setiap fail .tf dalam folder ini." }
+    variants:
+      - { command: "tofu fmt -check", en: "Only check. Lists messy files; changes nothing.", ms: "Semak sahaja. Senaraikan fail yang bersepah; tak ubah apa-apa." }
+      - { command: "tofu fmt -diff", en: "Show the changes it makes.", ms: "Tunjuk perubahan yang ia buat." }
+
+  - id: tofu-validate
+    group: tidy
+    syntax: "tofu validate"
+    danger: safe
+    lesson: iac-t1-l07
+    docs: "https://opentofu.org/docs/cli/commands/validate/"
+    what: { en: "Checks the blueprint for mistakes: typos, wrong names, missing settings.", ms: "Semak pelan untuk kesilapan: salah taip, nama salah, tetapan yang tiada." }
+    when: { en: "After you edit .tf files, before plan. It needs tofu init first.", ms: "Selepas anda edit fail .tf, sebelum plan. Ia perlu tofu init dulu." }
+    example: { command: "tofu validate", en: "Is this blueprint drawn right?", ms: "Adakah pelan ini dilukis dengan betul?" }
+
+  - id: tofu-version
+    group: tidy
+    syntax: "tofu version"
+    danger: safe
+    lesson: iac-t1-l08
+    docs: "https://opentofu.org/docs/cli/commands/version/"
+    what: { en: "Prints the OpenTofu version, and the providers this folder uses.", ms: "Paparkan versi OpenTofu, dan provider yang folder ini guna." }
+    when: { en: "When a teammate's output looks different from yours.", ms: "Bila output rakan sepasukan nampak lain daripada anda." }
+    example: { command: "tofu version", en: "Which OpenTofu is this?", ms: "OpenTofu versi mana ini?" }
+    variants:
+      - { command: "terraform version", en: "The same question for Terraform.", ms: "Soalan yang sama untuk Terraform." }
+  # --- World T2 commands (group: environments) ---
+  - id: tofu-output
+    group: environments
+    syntax: "tofu output [-raw | -json] [NAME]"
+    danger: safe
+    lesson: iac-t2-l03
+    docs: "https://opentofu.org/docs/cli/commands/output/"
+    what: { en: "Prints the outputs the blueprint shared, read from the state file.", ms: "Paparkan output yang pelan kongsi, dibaca dari fail state." }
+    when: { en: "After apply, when you or a script needs a built value.", ms: "Selepas apply, bila anda atau skrip perlukan nilai yang dibina." }
+    example: { command: "tofu output", en: "Every output, name = value.", ms: "Semua output, nama = nilai." }
+    variants:
+      - { command: "tofu output -raw stall_name", en: "Just one value, no quotes. Good for scripts.", ms: "Satu nilai sahaja, tanpa tanda petik. Sesuai untuk skrip." }
+      - { command: "tofu output -json", en: "Every output as JSON, for other programs.", ms: "Semua output sebagai JSON, untuk program lain." }
+  # --- World T3 commands (groups: state, environments) ---
+  - id: tofu-state-list
+    group: state
+    syntax: "tofu state list [address]"
+    danger: safe
+    lesson: iac-t3-l06
+    docs: "https://opentofu.org/docs/cli/commands/state/list/"
+    what: { en: "Lists every thing in the register (the state), one address per line.", ms: "Senaraikan setiap benda dalam daftar (state), satu alamat setiap baris." }
+    when: { en: "To see what OpenTofu manages right now.", ms: "Untuk lihat apa yang OpenTofu urus sekarang." }
+    example: { command: "tofu state list", en: "What is in the register?", ms: "Apa ada dalam daftar?" }
+    variants:
+      - { command: "tofu state list module.kiosk", en: "Only the things inside one module.", ms: "Hanya benda dalam satu modul." }
+
+  - id: tofu-state-show
+    group: state
+    syntax: "tofu state show <address>"
+    danger: safe
+    lesson: iac-t3-l06
+    docs: "https://opentofu.org/docs/cli/commands/state/show/"
+    what: { en: "Prints every saved detail of one thing in the register. Sensitive values stay hidden.", ms: "Paparkan setiap butiran satu benda dalam daftar. Nilai sensitif kekal tersorok." }
+    when: { en: "To check one value, like an id or a file's content.", ms: "Untuk semak satu nilai, seperti id atau isi fail." }
+    example: { command: "tofu state show random_integer.table", en: "Which table number did we get?", ms: "Kita dapat meja nombor berapa?" }
+
+  - id: tofu-state-rm
+    group: state
+    syntax: "tofu state rm <address>"
+    danger: careful
+    lesson: iac-t3-l06
+    docs: "https://opentofu.org/docs/cli/commands/state/rm/"
+    what: { en: "Makes OpenTofu forget a thing. The real thing stays, but nobody manages it any more.", ms: "Buat OpenTofu lupa satu benda. Benda sebenar kekal, tapi tiada siapa urus lagi." }
+    when: { en: "Rarely. Prefer a removed block, so the change gets a plan and a review.", ms: "Jarang sekali. Lebih baik blok removed, supaya perubahan dapat plan dan semakan." }
+    example: { command: "tofu state rm local_file.sign", en: "Forget the sign. The next plan wants to build it again.", ms: "Lupakan papan tanda. Plan seterusnya mahu bina semula." }
+
+  - id: tofu-state-mv
+    group: state
+    syntax: "tofu state mv <from> <to>"
+    danger: careful
+    lesson: iac-t3-l05
+    docs: "https://opentofu.org/docs/cli/commands/state/mv/"
+    what: { en: "Renames a thing inside the register only. Nothing real changes.", ms: "Tukar nama satu benda dalam daftar sahaja. Tiada benda sebenar berubah." }
+    when: { en: "Rarely. A moved block does the same in a plan the team can review.", ms: "Jarang sekali. Blok moved buat perkara sama dalam plan yang pasukan boleh semak." }
+    example: { command: "tofu state mv random_pet.stall random_pet.chef", en: "The stall is now called chef in the register.", ms: "Gerai itu kini bernama chef dalam daftar." }
+
+  - id: tofu-import
+    group: state
+    syntax: "tofu import <address> <id>"
+    danger: careful
+    lesson: iac-t3-l04
+    docs: "https://opentofu.org/docs/cli/commands/import/"
+    what: { en: "Adopts one thing that was built by hand, straight into the register, with no plan first.", ms: "Ambil alih satu benda yang dibina dengan tangan, terus ke dalam daftar, tanpa plan dahulu." }
+    when: { en: "Prefer an import block: you see a plan first. Check the id: a mistyped one adopts something else.", ms: "Lebih baik blok import: anda nampak plan dahulu. Semak id: id salah ambil alih benda yang salah." }
+    example: { command: "tofu import random_string.door KANCIL", en: "Adopt the door code KANCIL as random_string.door.", ms: "Ambil alih kod pintu KANCIL sebagai random_string.door." }
+
+  - id: tofu-plan-refresh-only
+    group: state
+    syntax: "tofu plan -refresh-only"
+    danger: safe
+    lesson: iac-t3-l03
+    confusable: [tofu-plan]
+    docs: "https://opentofu.org/docs/cli/commands/plan/"
+    what: { en: "Shows what changed outside OpenTofu (drift), and changes nothing.", ms: "Tunjuk apa berubah di luar OpenTofu (drift), dan tak ubah apa-apa." }
+    when: { en: "When you suspect someone clicked, or a file was edited by hand.", ms: "Bila anda syak ada orang klik, atau fail diubah dengan tangan." }
+    example: { command: "tofu plan -refresh-only", en: "Did anything drift?", ms: "Ada apa-apa yang hanyut?" }
+    variants:
+      - { command: "tofu apply -refresh-only", en: "Accept the drift into the register only. It asks first.", ms: "Terima drift ke dalam daftar sahaja. Ia tanya dahulu." }
+      - { command: "tofu plan -detailed-exitcode", en: "Exit code 0 = no changes, 1 = error, 2 = changes. Good for nightly drift checks.", ms: "Kod keluar 0 = tiada perubahan, 1 = ralat, 2 = ada perubahan. Sesuai untuk semakan drift waktu malam." }
+
+  - id: tofu-force-unlock
+    group: state
+    syntax: "tofu force-unlock <LOCK_ID>"
+    danger: careful
+    lesson: iac-t3-l02
+    docs: "https://opentofu.org/docs/cli/commands/force-unlock/"
+    what: { en: "Removes a stuck lock from the register, using the ID from the lock error.", ms: "Buang kunci yang tersekat pada daftar, guna ID dari ralat kunci." }
+    when: { en: "Only when the run that held the lock is really dead. Ask the person named in Who first.", ms: "Hanya bila larian yang pegang kunci betul-betul mati. Tanya orang dalam Who dahulu." }
+    example: { command: "tofu force-unlock 94da26d5-0aeb-a021-8eda-d41c2046f8f1", en: "Free the lock with this ID. Copy the ID from your own error.", ms: "Bebaskan kunci dengan ID ini. Salin ID dari ralat anda sendiri." }
+    variants:
+      - { command: "tofu plan -lock-timeout=5m", en: "Wait up to 5 minutes for a busy lock instead of failing at once.", ms: "Tunggu sehingga 5 minit untuk kunci yang sibuk, bukan terus gagal." }
+
+  - id: tofu-workspace
+    group: environments
+    syntax: "tofu workspace list | show | new <name> | select [-or-create] <name> | delete <name>"
+    danger: careful
+    lesson: iac-t3-l08
+    docs: "https://opentofu.org/docs/cli/workspaces/"
+    what: { en: "Manages extra registers for the same blueprint and backend.", ms: "Urus daftar tambahan untuk pelan dan backend yang sama." }
+    when: { en: "For short-lived test copies. Real environments get their own folders and backends.", ms: "Untuk salinan ujian sekejap. Persekitaran sebenar dapat folder dan backend sendiri." }
+    example: { command: "tofu workspace new test", en: "Make a test register and switch to it.", ms: "Buat daftar ujian dan tukar ke sana." }
+    variants:
+      - { command: "tofu workspace select -or-create test", en: "Switch to test, making it if it is missing.", ms: "Tukar ke test, dan ciptanya jika belum ada." }
+      - { command: "tofu workspace delete test", en: "Delete a workspace. Destroy its things first.", ms: "Padam satu workspace. Destroy benda-bendanya dahulu." }
+  # --- World T4 commands (groups: loop, tidy) ---
+  # (tofu init -upgrade is a variant on the T1 page tofu-init.)
+  - id: tofu-providers-lock
+    group: tidy
+    syntax: "tofu providers lock [-platform=os_arch …]"
+    danger: safe
+    lesson: iac-t4-l03
+    docs: "https://opentofu.org/docs/cli/commands/providers/lock/"
+    what: { en: "Writes provider checksums into the lock file, for the platforms you name.", ms: "Tulis checksum provider ke dalam fail lock, untuk platform yang anda namakan." }
+    when: { en: "When a teammate or CI runs on another kind of computer.", ms: "Bila rakan atau CI berjalan pada jenis komputer lain." }
+    example: { command: "tofu providers lock -platform=linux_amd64 -platform=darwin_arm64", en: "Checksums for Linux runners and Apple laptops.", ms: "Checksum untuk runner Linux dan laptop Apple." }
+
+  - id: tofu-show
+    group: tidy
+    syntax: "tofu show [-json] [planfile]"
+    danger: safe
+    lesson: iac-t4-l05
+    docs: "https://opentofu.org/docs/cli/commands/show/"
+    what: { en: "Prints the register, or a saved plan, in a readable way. With -json, for robots like policy and cost checks.", ms: "Paparkan daftar, atau plan yang disimpan, dengan kemas. Dengan -json, untuk robot seperti semakan polisi dan kos." }
+    when: { en: "To read a saved plan before applying it, or to feed it to a check in CI.", ms: "Untuk baca plan yang disimpan sebelum apply, atau beri kepada semakan dalam CI." }
+    example: { command: "tofu show -json tfplan > plan.json", en: "Save the plan as JSON for Conftest.", ms: "Simpan plan sebagai JSON untuk Conftest." }
+    variants:
+      - { command: "tofu show tfplan", en: "Read a saved plan, exactly as it will be applied.", ms: "Baca plan yang disimpan, tepat seperti yang akan di-apply." }
+      - { command: "tofu show", en: "Read the whole register in a readable way.", ms: "Baca seluruh daftar dengan kemas." }

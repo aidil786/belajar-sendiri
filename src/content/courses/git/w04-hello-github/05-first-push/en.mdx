@@ -1,0 +1,65 @@
+---
+id: git-w04-l05
+world: 4
+title: Your first push
+summary: "You will learn: how to send your commits to GitHub with git push."
+minutes: 4
+xp: 20
+interactives: [Choice, Courier, TermReplay, Sim]
+needs: [git-w04-l04]
+scenario: w04-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "Pushing commits to a remote repository", url: "https://docs.github.com/en/get-started/using-git/pushing-commits-to-a-remote-repository" }
+---
+
+<Card id="hook" type="hook">
+Your diary has 3 commits. Your GitHub repo is empty. What carries the commits up there?
+
+<Interactive name="Choice" options={[{ label: '`git push`', correct: true, why: 'Push sends commits to a remote. Watch it on the next card.' }, { label: '`git commit`', why: 'A commit saves on your laptop only.' }, { label: 'GitHub copies them by itself', why: 'GitHub cannot see your laptop. You send them.' }]} />
+</Card>
+
+<Card id="see-push" type="see">
+<Interactive name="Courier" scenario="w04-l05" commands={['git push -u origin main']} label="A courier carries three commits from your laptop to the empty GitHub repo. Now GitHub's main matches yours, and your laptop shows origin/main." />
+
+A **<Term id="push">push</Term>** is a courier. It carries your new commits up to GitHub. `git push -u origin main` sends main to origin.
+</Card>
+
+<Card id="see-upstream" type="see">
+<Interactive name="TermReplay" scenario="w04-l05" commands={['git push -u origin main', 'git status']} label="The push says main set up to track origin/main. Then git status says: Your branch is up to date with origin/main." />
+
+`-u` sets the **<Term id="upstream">upstream</Term>**: main now follows `origin/main`. From now on, plain `git push` knows where to go.
+</Card>
+
+<Card id="try-courier" type="try">
+Your turn. Tap a command and watch the courier.
+
+<Interactive name="Courier" scenario="w04-l05" actions={[{ cmd: 'git push' }, { cmd: 'git push -u origin main' }]} goal={{ pushed: ['main'], upstream: { main: 'origin/main' } }} hints={['The very first push needs -u, the remote and the branch.']} success="Delivered! GitHub has your diary, and main follows origin/main." />
+
+<Hint>Try the short one first. Read what Git says.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Nothing is new. You run `git push` again. What does Git say?
+
+<Interactive name="Choice" options={[{ label: 'Everything up-to-date', correct: true, why: 'GitHub already has every commit. Nothing to carry.' }, { label: 'It pushes the 3 commits again', why: 'Git only sends what GitHub is missing.' }, { label: 'An error', why: 'No error. It is happy news!' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+You added an about page. Send it with the short command.
+
+<Interactive name="Sim" scenario="w04-l05-next" panels={['graph']} goal={{ pushed: ['main'] }} hints={['Type git push']} success="Pushed! origin/main caught up with main." />
+
+<Hint>The upstream is set, so `git push` is enough.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now push your commits to GitHub.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git config --global push.autoSetupRemote true` makes plain `git push` set the upstream for new branches too. `git push origin --delete old-branch` deletes a branch on GitHub. Pushing a new branch makes GitHub print a pull request link.
+</Card>

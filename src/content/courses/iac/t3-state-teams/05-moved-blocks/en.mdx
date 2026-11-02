@@ -1,0 +1,74 @@
+---
+id: iac-t3-l05
+world: 3
+title: moved blocks and refactors
+summary: "You will learn: how to rename things in the blueprint without tearing them down."
+minutes: 4
+xp: 20
+interactives: [PlanReader, SpotLines, TofuSim, Choice, SortCards, CommandBuilder, SwipeJudge, Mission]
+needs: [iac-t3-l04]
+scenario: t3-rename
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: refactoring with moved blocks", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+  - { label: "tofu state mv", url: "https://opentofu.org/docs/cli/commands/state/mv/" }
+  - { label: "Terraform: moved block", url: "https://developer.hashicorp.com/terraform/language/block/moved" }
+---
+
+<Card id="hook" type="hook">
+You renamed `random_pet.stall` to `random_pet.chef` in `main.tf`. Nothing else. Read the plan.
+
+<Interactive name="PlanReader" scenario="t3-rename" prompt="Tap what OpenTofu will do to each one." success="A rename became destroy + create. The stall would lose its name." />
+</Card>
+
+<Card id="see-moved" type="see">
+<Interactive name="SpotLines" prompt="Tap the line with the old name." lines={[{ text: 'moved {' }, { text: '  from = random_pet.stall', target: true }, { text: '  to   = random_pet.chef' }, { text: '}' }]} success="from is the old address. to is the new one." />
+
+OpenTofu knows things by their address. A new name looks like a new thing. A **<Term id="moved-block">moved block</Term>** says: "Same thing, new name."
+</Card>
+
+<Card id="try-moved" type="try">
+Add the moved block to `main.tf`. Then `tofu plan`: look for `has moved to`. Then `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-rename" goal={{ resourceInState: ['random_pet.chef'], outputEquals: { stall: 'lucky-civet' } }} hints={['Add a moved block: from = random_pet.stall, to = random_pet.chef, one per line.', 'tofu plan should say: Plan: 0 to add, 0 to change, 0 to destroy.', 'Then tofu apply and yes. Got a new name? Press Start again.']} success="Renamed, and the stall kept its name: lucky-civet." />
+
+<Hint>Copy the four lines from the last card.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Next refactor: `count` becomes `for_each`. So `random_pet.stall[0]` becomes `random_pet.stall["nasi"]`. What keeps it alive?
+
+<Interactive name="Choice" options={[{ label: 'A moved block from stall[0] to stall["nasi"]', correct: true, why: 'Each instance has its own address. moved works for those too.' }, { label: 'Nothing: same resource name', why: 'The index is part of the address. [0] and ["nasi"] differ.' }, { label: 'A new import block', why: 'Import adopts things built outside OpenTofu. This one is already managed.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Which changes need a moved block?
+
+<Interactive name="SortCards" buckets={[{ id: 'moved', label: 'Needs a moved block' }, { id: 'none', label: 'No moved block' }]} items={[{ label: 'Rename a resource', bucket: 'moved', why: 'The address changes.' }, { label: 'Move a resource into a module', bucket: 'moved', why: 'Its address now starts with module.' }, { label: 'Change length = 2 to 3', bucket: 'none', why: 'Same address. It is a normal change.' }, { label: 'Rename main.tf to shop.tf', bucket: 'none', why: 'File names never count. Only addresses do.' }, { label: 'Switch count to for_each', bucket: 'moved', why: 'Index [0] becomes a key like ["nasi"].' }]} success="Address changes need moved. Everything else is a normal plan." />
+</Card>
+
+<Card id="see-cli" type="see">
+The old way edits the register directly. Nobody reviews it. Build it anyway, so you can read it.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'talk to OpenTofu' }, { text: 'state mv', means: 'rename inside the register only' }, { text: 'random_pet.stall', means: 'the old address' }, { text: 'random_pet.chef', means: 'the new address' }]} decoys={[{ text: 'apply', means: 'build changes' }, { text: '-auto-approve', means: 'skip the question' }]} success="tofu state mv random_pet.stall random_pet.chef. A moved block does this in a reviewed plan." />
+</Card>
+
+<Card id="check-review" type="check">
+You review a teammate's refactor. Swipe: good, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Renamed a resource and added a moved block in the same change', good: true, why: 'The plan shows "has moved to". Nothing is rebuilt.' }, { text: 'Renamed it, saw "1 to destroy", and applied anyway', good: false, why: 'Stop at the destroy. Add a moved block.' }, { text: 'Ran state mv on the shared register, telling nobody', good: false, why: 'No plan, no review. The team gets a surprise.' }, { text: 'Kept the moved block until every copy has applied it', good: true, why: 'Other folders that use the same code may still have the old name.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now rename and reshuffle the blueprint without rebuilding anything.
+</Card>
+
+<Card id="deeper" type="deeper">
+moved also renames whole modules: `from = module.a`, `to = module.b`. To stop managing a thing without destroying it, use a `removed` block with `lifecycle { destroy = false }`. A module others use should keep its moved blocks for a long time.
+
+<Interactive name="Mission" id="iac-t3-l05-rep" steps={[{ id: 'build', text: 'In a practice folder, build a random_pet "stall".', command: 'tofu init && tofu apply' }, { id: 'rename', text: 'Rename it to chef. Plan: see destroy + create.', command: 'tofu plan' }, { id: 'moved', text: 'Add a moved block. Plan again: see has moved to.', command: 'tofu plan' }, { id: 'apply', text: 'Apply. The pet keeps its name.', command: 'tofu apply' }]} success="A real refactor, with nothing rebuilt." />
+</Card>

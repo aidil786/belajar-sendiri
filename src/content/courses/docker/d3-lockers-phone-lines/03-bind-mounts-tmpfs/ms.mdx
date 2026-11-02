@@ -1,0 +1,75 @@
+---
+id: docker-d3-l03
+world: 3
+title: Bind mount dan tmpfs
+summary: "Anda akan belajar: kongsi folder laptop dengan container, dan simpan data dalam memori sahaja."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, Choice, LockerTest, SortCards, Mission]
+needs: [docker-d3-l02]
+scenario: d3-site
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Bind mounts", url: "https://docs.docker.com/engine/storage/bind-mounts/" }
+  - { label: "Docker docs: tmpfs mounts", url: "https://docs.docker.com/engine/storage/tmpfs/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-site-baked" commands={['curl -s localhost:8080', 'echo "<h1>Kedai Kancil: open today</h1>" > site/index.html', 'cat site/index.html', 'curl -s localhost:8080']} label="Halaman tulis Kedai Kancil. Fail di laptop kini tulis open today. curl masih tunjuk halaman lama." />
+
+Anda dah baiki halaman kedai di laptop. Bekas masih tunjuk halaman lama. Ia dah dibakar dalam image. Nak bina semula untuk setiap salah taip?
+</Card>
+
+<Card id="see-bind" type="see">
+**<Term id="bind-mount">Bind mount</Term>** (rak sendiri) sorong rak anda masuk ke bekas. Bekas nampak folder laptop itu sendiri, bukan salinan. Tekan kepingan ikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d --name site', means: 'Mulakan bekas site' }, { text: '-p 8080:80', means: 'Buka tingkap 8080' }, { text: '-v ./site:/usr/share/nginx/html:ro', means: 'Rak ./site anda, di tempat nginx mencari; ro = baca sahaja' }, { text: 'nginx:1.30-alpine', means: 'nginx biasa, tanpa bakar' }]} decoys={[{ text: '-v site:/usr/share/nginx/html', means: 'Tiada ./ di depan: itu loker bernama site' }]} success="Betul! ./ maksudnya folder di laptop anda." />
+</Card>
+
+<Card id="try-bind" type="try">
+Jalankan site dengan rak ./site anda. Kemudian ubah index.html dan curl sekali lagi.
+
+<Interactive name="KitchenSim" scenario="d3-site" goal={{ running: ['site'], reachableContains: { 'localhost:8080': 'open today' }, lastTyped: '^curl' }} hints={['Taip docker run -d --name site -p 8080:80 -v ./site:/usr/share/nginx/html:ro nginx:1.30-alpine', 'Taip echo "<h1>Kedai Kancil: open today</h1>" > site/index.html', 'Taip curl localhost:8080']} success="Halaman terus berubah. Tak perlu bina semula!" />
+
+<Hint>Folder perlukan `./` di depan: `-v ./site:/usr/share/nginx/html:ro`.</Hint>
+</Card>
+
+<Card id="check-ro" type="check">
+site berjalan dengan `:ro`. Sesuatu dalam bekas cuba simpan fail dalam folder itu. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia dapat "Read-only file system"', correct: true, why: 'ro = baca sahaja. Bekas boleh tengok rak anda tapi tak boleh ubah.' }, { label: 'Fail itu masuk ke laptop anda', why: 'Hanya tanpa :ro. Barulah bekas boleh ubah fail sebenar anda.' }, { label: 'Fail itu masuk ke loker', why: 'Tiada loker di sini. Ini rak anda, dikunci untuk dibaca sahaja.' }]} />
+</Card>
+
+<Card id="see-tmpfs" type="see">
+<Interactive name="KitchenReplay" scenario="d3-fresh" commands={['docker run -d --name app --tmpfs /tmp/cache alpine:3.22 sleep 3600', 'docker exec app sh -c "echo hot > /tmp/cache/menu.txt"', 'docker exec app cat /tmp/cache/menu.txt', 'docker restart app', 'docker exec app ls /tmp/cache/menu.txt']} fails={['docker exec app ls /tmp/cache/menu.txt']} label="menu.txt ditulis ke /tmp/cache dan dibaca semula. Selepas docker restart app, ls kata No such file or directory." />
+
+**<Term id="tmpfs">tmpfs</Term>** ialah nota di papan putih: dalam memori sahaja. Ia laju dan tak pernah sentuh cakera. Setiap kali berhenti, ia dipadam.
+</Card>
+
+<Card id="predict" type="predict">
+Empat tempat untuk simpan fail. Teka dulu, kemudian jalankan.
+
+<Interactive name="LockerTest" ask={['restart', 'recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="check-sort" type="check">
+Pilih tempat yang betul untuk setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'volume', label: 'Loker (volume)' }, { id: 'bind', label: 'Rak sendiri (bind mount)' }, { id: 'tmpfs', label: 'Papan putih (tmpfs)' }]} items={[{ label: 'Folder data Postgres', bucket: 'volume', why: 'Docker jaga loker itu, dan ia hidup lebih lama daripada bekas.' }, { label: 'Laman web anda semasa disunting', bucket: 'bind', why: 'Suntingan di laptop terus nampak.' }, { label: 'Cache yang sementara', bucket: 'tmpfs', why: 'Laju, dan tak apa kalau hilang.' }, { label: 'Fail muat naik yang mesti kekal selepas kemas kini', bucket: 'volume', why: 'Kemas kini buat bekas baru. Loker kekal.' }, { label: 'Fail config yang anda ubah di laptop', bucket: 'bind', why: 'Ubah dalam editor; bekas terus nampak.' }]} success="Loker, rak, papan putih: setiap satu ada kerjanya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh guna bind mount dan tmpfs.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--mount type=bind,src=./site,dst=/data` ialah bentuk panjang. Ia menolak folder yang tiada; `-v` diam-diam buat folder kosong. Di Docker Desktop, volume lebih laju daripada bind mount.
+
+Latihan sebenar (pilihan), dalam folder projek anda:
+
+<Interactive name="Mission" id="d3-l03-rep" steps={[{ id: 'folder', text: 'Buat folder site dengan satu halaman.', command: 'mkdir -p site && echo "<h1>Hello</h1>" > site/index.html' }, { id: 'run', text: 'Hidangkan dengan bind mount.', command: 'docker run -d --name site -p 8080:80 -v ./site:/usr/share/nginx/html:ro nginx:1.30-alpine' }, { id: 'edit', text: 'Sunting index.html dalam editor. Muat semula localhost:8080.' }, { id: 'clean', text: 'Buang bekas itu. Folder anda kekal.', command: 'docker rm -f site' }]} success="Anda sunting laman hidup tanpa bina semula." />
+</Card>

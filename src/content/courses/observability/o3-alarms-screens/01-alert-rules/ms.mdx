@@ -1,0 +1,70 @@
+---
+id: obs-o3-l01
+world: 3
+title: "Peraturan amaran: for, label, anotasi"
+summary: "Anda akan belajar: menulis alert rule yang berbunyi hanya bila ada masalah sebenar."
+minutes: 5
+xp: 25
+interactives: [PromQLPlayground, SpotLines, Choice, AlertRuleBuilder, SortCards, Transcript, Mission]
+needs: [obs-o2-l09]
+scenario: o3-target-down
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Template examples", url: "https://prometheus.io/docs/prometheus/latest/configuration/template_examples/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PromQLPlayground" scenario="o3-target-down" initial="up" prompt="Tekan Run. Lihat shop-1 pada graf." />
+
+Pada minit ke-11, shop-1 berhenti menjawab. Tiada siapa tengok skrin. Macam mana bilik kawalan boleh bunyikan loceng sendiri?
+</Card>
+
+<Card id="see-rule" type="see">
+<Interactive name="SpotLines" prompt="Ketik baris yang kata berapa lama perlu tunggu." lines={[{ text: 'groups:' }, { text: '  - name: kedai' }, { text: '    rules:' }, { text: '      - alert: InstanceDown' }, { text: '        expr: up == 0' }, { text: '        for: 5m', target: true }, { text: '        labels:' }, { text: '          severity: page' }, { text: '        annotations:' }, { text: '          summary: "{{ $labels.instance }} is down"' }]} success="Betul. for: 5m maksudnya: masih benar selepas 5 minit? Barulah berbunyi." />
+
+**<Term id="alerting-rule">Alert rule</Term>** (peraturan amaran) ialah soalan yang Prometheus tanya setiap minit. Ada baris dalam jawapan? Loceng bersedia.
+</Card>
+
+<Card id="predict-blip" type="predict">
+db-1 mati selama 3 minit sahaja. Rule itu tunggu `for: 5m`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Pending, kemudian senyap. Tiada loceng.', correct: true, why: 'Betul! Ia tunggu, db-1 kembali, dan masa tunggu bermula semula.' }, { label: 'Loceng terus berbunyi', why: 'Hanya rule tanpa for yang terus berbunyi.' }, { label: 'Loceng berbunyi selepas 5 minit', why: 'db-1 dah kembali selepas 3 minit. Masa tunggu berhenti di situ.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina rule itu. Panggil orang bila target betul-betul mati, bukan untuk kelip sekejap.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-target-down" alert="InstanceDown" exprs={[{ expr: 'up == 0' }, { expr: 'up == 1', why: 'up == 1 benar bila target itu sihat.' }]} fors={['0s', '1m', '5m']} labels={[{ labels: {} }, { labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: 'Something is down' } }, { annotations: { summary: '{{ $labels.instance }} is down' } }]} goal={{ firingAt: ['20m'], quietAt: ['7m'], noFlap: true, firingLabels: { instance: 'shop-1' }, labels: { severity: 'page' }, annotationUses: ['$labels.instance'] }} solution={{ expr: 0, for: 2, labels: 1, annotations: 1 }} hints={['Kelip db-1 cuma 3 minit. Tunggu lebih lama daripada itu.', 'Pilih severity: page, dan mesej yang sebut nama instance.']} success="Shop-1 bunyikan loceng. Kelip db-1 kekal senyap." />
+
+<Hint>Ambar ⏳ ialah pending: sedang tunggu. Merah 🔔 ialah firing: loceng berbunyi.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'labels', label: 'labels' }, { id: 'annotations', label: 'annotations' }]} items={[{ label: 'severity: page', bucket: 'labels', why: 'Label tentukan siapa dapat loceng.' }, { label: 'team: kedai', bucket: 'labels', why: 'Label: ia bantu hantar loceng ke pasukan yang betul.' }, { label: 'summary: shop-1 is down', bucket: 'annotations', why: 'Nota untuk manusia yang membacanya.' }, { label: 'runbook_url: pautan ke langkah baiki', bucket: 'annotations', why: 'Nota: di mana nak baca apa perlu buat.' }]} success="Label kemudi loceng. Anotasi terangkan loceng itu." />
+
+**Label** kemudi loceng ke orang yang betul. Anotasi ialah nota yang dilekat padanya.
+</Card>
+
+<Card id="check-promtool" type="check">
+<Interactive name="Transcript" title="bash" label="promtool semak broken.yml: FAILED, parse error unexpected =. Kemudian ia semak rules.yml: SUCCESS, 1 rules found." lines={[{ cmd: 'promtool check rules broken.yml' }, { out: 'Checking broken.yml\n  FAILED:\nbroken.yml: 5:15: group "kedai", rule 1, "InstanceDown": could not parse expression: 1:4: parse error: unexpected "="', color: 'red' }, { cmd: 'promtool check rules rules.yml' }, { out: 'Checking rules.yml\n  SUCCESS: 1 rules found', color: 'green' }]} />
+
+`promtool check rules` uji fail itu sebelum Prometheus memuatkannya. Baris merah bermaksud: `=` bukan semakan. PromQL banding dengan `==`.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis alert rule yang menunggu, kemudian panggil orang yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+`keep_firing_for: 5m` biar loceng terus berbunyi sekejap selepas masalah tamat. Ia hentikan bunyi hidup-mati-hidup. Dalam mesej, `{{ $labels.instance }}` ialah target dan `{{ $value }}` ialah nombornya.
+
+Latihan sebenar: jalankan promtool dari image rasmi. Laptop anda sendiri pun boleh.
+
+<Interactive name="Mission" id="obs-o3-l01-real" steps={[{ id: 'file', text: 'Simpan rule dari kad kedua sebagai rules.yml dalam folder kosong.' }, { id: 'check', text: 'Semak dengan promtool dari image Prometheus rasmi.', command: 'docker run --rm --entrypoint promtool -v "$PWD:/w" -w /w quay.io/prometheus/prometheus:v3.13.5 check rules rules.yml' }, { id: 'break', text: 'Tukar == kepada = dan semak lagi. Baca baris merah dengan tenang, kemudian baiki.' }]} success="Anda dah semak fail rule sebenar!" />
+</Card>

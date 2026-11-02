@@ -1,0 +1,74 @@
+---
+id: k8s-k6-l03
+world: 6
+title: "Tanya dulu: kubectl auth can-i"
+summary: "Anda akan belajar: tanya kluster apa yang anda, atau bot, boleh buat, sebelum apa-apa rosak."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, RbacSwitchboard]
+needs: [k8s-k6-l02]
+scenario: k6-rbac
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl auth can-i", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/" }
+  - { label: "Checking API access", url: "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#checking-api-access" }
+  - { label: "User impersonation", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation" }
+---
+
+<Card id="hook" type="hook">
+Kerja CI anda gagal pukul 2 pagi. Ini ralatnya.
+
+```
+Error from server (Forbidden): secrets is forbidden: User "system:serviceaccount:default:ci-bot" cannot list resource "secrets" in API group "" in the namespace "default"
+```
+
+Macam mana anda boleh tahu sebelum ia berjalan?
+
+<Interactive name="Choice" options={[{ label: 'Tanya kluster dulu, sebagai bot itu', correct: true, why: 'Satu soalan tunjuk jawapannya. Tiada apa yang rosak.' }, { label: 'Beri bot itu cluster-admin', why: 'Itu sorok masalah dan buka semua pintu.' }, { label: 'Jalankan semula dan harap', why: 'Jawapannya tak akan berubah sendiri.' }]} />
+</Card>
+
+<Card id="see-cani" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac" commands={['kubectl auth can-i list pods --as=system:serviceaccount:default:ci-bot', 'kubectl auth can-i delete pods --as=system:serviceaccount:default:ci-bot']} picture={false} label="can-i list pods sebagai bot CI jawab yes. can-i delete pods jawab no." />
+
+`kubectl auth can-i` tanya pintu 2 soalan ya atau tidak. Ia tak ubah apa-apa. `--as` biar anda **impersonate** (menyamar) bot itu: tanya seolah-olah anda bot itu.
+</Card>
+
+<Card id="try-build" type="try">
+Bina soalan: bolehkah bot patch deployment?
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'bercakap dengan Kubernetes' }, { text: 'auth', means: 'kaunter akses' }, { text: 'can-i', means: 'tanya ya atau tidak' }, { text: 'patch', means: 'kata kerja' }, { text: 'deployments', means: 'bendanya' }, { text: '--as=system:serviceaccount:default:ci-bot', means: 'jawab sebagai bot CI' }]} decoys={[{ text: 'delete', means: 'kata kerja lain' }, { text: '--dry-run=server', means: 'semak perubahan, bukan hak' }]} success="Itulah soalannya. Selamat ditanya bila-bila masa." />
+</Card>
+
+<Card id="predict" type="predict">
+RoleBinding bot itu duduk dalam zon `default`. Bolehkah ia patch deployment dalam `kube-system`?
+
+<Interactive name="Choice" options={[{ label: 'Tidak', correct: true, why: 'RoleBinding hanya dikira dalam zonnya sendiri.' }, { label: 'Boleh', why: 'Kad tugasnya dipin dalam default sahaja. Zon lain kata tidak.' }, { label: 'Hanya pada hari Isnin', why: 'RBAC tiada kalendar. Zon yang tentukan.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Sekarang semak tekaan anda. Tanya kluster, sebagai bot, tentang `kube-system`.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac" picture={false} prefill="kubectl auth can-i patch deployments " goal={{ typed: '^(?=.*can-i patch deployments)(?=.*kube-system)(?=.*--as=system:serviceaccount:default:ci-bot)' }} hints={['Tambah -n kube-system dan --as=system:serviceaccount:default:ci-bot']} success="No, macam tekaan anda. Satu zon, satu kad." />
+
+<Hint>`-n kube-system` pilih zonnya.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Baca wayarnya. Adakah Kubernetes akan kata ya atau tidak?
+
+<Interactive name="RbacSwitchboard" task={{ type: 'predict' }} subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'shop', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'pod-reader', rules: [{ apiGroups: [''], resources: ['pods', 'pods/log'], verbs: ['get', 'list'] }] }]} bindings={[{ kind: 'RoleBinding', name: 'ci-bot-deployer', namespace: 'shop', roleRef: { kind: 'Role', name: 'deployer' }, subjects: [{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }] }, { kind: 'ClusterRoleBinding', name: 'mei-pod-reader', roleRef: { kind: 'ClusterRole', name: 'pod-reader' }, subjects: [{ kind: 'User', name: 'mei' }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'shop' }, { as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'default' }, { as: 'User:mei', verb: 'list', resource: 'pods', namespace: 'ci' }, { as: 'User:mei', verb: 'delete', resource: 'pods', namespace: 'shop' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tanya kluster sebelum bertindak, sebagai sesiapa pun.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl auth can-i --list --as=…` senaraikan semua yang identiti itu boleh buat. can-i keluar dengan 0 untuk ya dan 1 untuk tidak, jadi skrip boleh gunanya. Untuk guna `--as`, anda sendiri perlu hak `impersonate`. Admin kluster memilikinya.
+
+<Interactive name="Mission" id="k6-l03-rep" steps={[{ id: 'me', text: 'Dalam kluster buang sahaja, tanya tentang diri anda.', command: 'kubectl auth can-i create deployments' }, { id: 'bot', text: 'Tanya sebagai ServiceAccount default.', command: 'kubectl auth can-i list pods --as=system:serviceaccount:default:default' }, { id: 'list', text: 'Lihat seluruh kad tugasnya.', command: 'kubectl auth can-i --list --as=system:serviceaccount:default:default' }]} success="Anda tanya sebelum bertindak. Itulah tabiatnya." />
+</Card>

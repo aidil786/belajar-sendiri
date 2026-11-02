@@ -1,0 +1,69 @@
+---
+id: k8s-k4-l03
+world: 4
+title: "External Secrets dan Sealed Secrets"
+summary: "Anda akan belajar: dua cara jaga kata laluan bila Git simpan seluruh tetapan anda."
+minutes: 3
+xp: 15
+interactives: [SpotLines, OrderList, Transcript, SortCards, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Sealed Secrets (project README)", url: "https://github.com/bitnami-labs/sealed-secrets" }
+  - { label: "External Secrets Operator", url: "https://external-secrets.io/latest/" }
+  - { label: "Good practices for Kubernetes Secrets", url: "https://kubernetes.io/docs/concepts/security/secrets-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Secret' }, { text: 'metadata:' }, { text: '  name: till' }, { text: 'data:' }, { text: '  PASSWORD: c3VwM3ItcmFoc2lh', target: true }]} prompt="Fail ini ada dalam repo Git awam. Tekan baris yang orang asing boleh baca." success="Satu base64 -d, dan mesin kira terbuka." />
+
+Pasukan anda simpan setiap fail YAML dalam Git. Bagus, sehingga satu fail ialah Secret. Macam mana nak simpan kata laluan bersama yang lain?
+</Card>
+
+<Card id="see-sealed" type="see">
+Susun langkah **<Term id="sealed-secret">Sealed Secrets</Term>**, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Tulis YAML Secret di laptop anda (dry run)', 'kubeseal kunci ia dengan kunci awam kluster', 'Commit fail SealedSecret ke Git', 'Apply ia ke kluster', 'Controller buka kuncinya jadi Secret biasa']} label="Langkah pertama di atas" success="Dikunci di laptop anda. Dibuka hanya di dalam kluster." />
+
+Hanya controller dalam kluster pegang kunci peribadi.
+</Card>
+
+<Card id="see-kubeseal" type="see">
+<Interactive name="Transcript" title="bash" label="Tiga arahan: buat YAML Secret tanpa hantar ke kluster, kunci dengan kubeseal, kemudian padam fail biasa." lines={[{ cmd: 'kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia --dry-run=client -o yaml > secret.yaml' }, { cmd: 'kubeseal --format yaml < secret.yaml > sealed-secret.yaml' }, { cmd: 'rm secret.yaml' }]} />
+
+`--dry-run=client` tulis Secret ke fail sahaja. `kubeseal` menguncinya. Commit fail yang dikunci, dan buang fail biasa.
+</Card>
+
+<Card id="see-external" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'sealed', label: 'Sealed Secrets' }, { id: 'external', label: 'External Secrets' }, { id: 'both', label: 'Kedua-duanya' }]} items={[{ label: 'Git simpan kata laluan, berkunci', bucket: 'sealed', why: 'Fail SealedSecret ialah kata laluan yang dikunci.' }, { label: 'Git simpan penunjuk ke peti besi sahaja', bucket: 'external', why: 'ExternalSecret sebut nama kunci, bukan nilainya.' }, { label: 'Perlu peti besi di luar kluster', bucket: 'external', why: 'Contohnya pengurus rahsia awan, atau Vault.' }, { label: 'Akhirnya jadi Secret biasa dalam kluster', bucket: 'both', why: 'Pod baca Secret biasa dalam kedua-dua cara.' }]} success="Dikunci dalam Git, atau diambil dari peti besi." />
+
+**<Term id="external-secrets">External Secrets Operator</Term>** simpan kata laluan dalam peti besi luar. Ia salin ke dalam Secret, dan sentiasa kemas kini.
+</Card>
+
+<Card id="predict" type="predict">
+Syarikat anda sudah simpan kata laluan dalam peti besi awan. Alat mana paling sesuai?
+
+<Interactive name="Choice" options={[{ label: 'External Secrets Operator', correct: true, why: 'Ia ambil dari peti besi yang anda sudah percaya.' }, { label: 'Sealed Secrets', why: 'Hampir! Ia boleh, tetapi anda simpan salinan kedua dalam Git.' }, { label: 'YAML Secret biasa dalam Git', why: 'base64 dalam Git boleh dibaca semua orang.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Selamat untuk commit ke Git? Leret setiap fail.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'sealed-secret.yaml yang dibuat oleh kubeseal', good: true, why: 'Hanya kluster boleh membukanya.' }, { text: 'secret.yaml dengan kata laluan base64', good: false, why: 'base64 bukan kunci.' }, { text: 'ExternalSecret yang sebut nama kunci peti besi', good: true, why: 'Ia simpan penunjuk, bukan kata laluan.' }, { text: 'Secret yang simpan kunci akses peti besi', good: false, why: 'Kunci itu buka semua kata laluan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jaga kata laluan bila Git simpan tetapan anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kedua-dua alat berakhir dengan Secret biasa. Jadi RBAC dan encryption at rest masih penting. Fail yang dikunci hanya terbuka dengan nama dan namespace yang sama. Backup kunci peribadi controller. Jika hilang, fail lama tak boleh dibuka lagi. Alat lain: SOPS, dan Secrets Store CSI driver.
+
+Latihan sebenar (pilihan), hanya pada kluster latihan:
+
+<Interactive name="Mission" id="k8s-k4-l03-rep" steps={[{ id: 'install', text: 'Pasang controller Sealed Secrets dan kubeseal. Ikut README projek sahaja.' }, { id: 'draft', text: 'Tulis Secret latihan ke dalam fail.', command: 'kubectl create secret generic till --from-literal=PASSWORD=practice-only --dry-run=client -o yaml > secret.yaml' }, { id: 'seal', text: 'Kuncikan ia.', command: 'kubeseal --format yaml < secret.yaml > sealed-secret.yaml' }, { id: 'apply', text: 'Apply fail yang dikunci.', command: 'kubectl apply -f sealed-secret.yaml' }, { id: 'see', text: 'Lihat Secret biasa yang controller buat.', command: 'kubectl get secret till' }, { id: 'tidy', text: 'Padam fail biasa.', command: 'rm secret.yaml' }]} success="Kata laluan anda masuk Git dalam keadaan berkunci." />
+</Card>

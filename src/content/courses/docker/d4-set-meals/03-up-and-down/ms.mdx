@@ -1,0 +1,74 @@
+---
+id: docker-d4-l03
+world: 4
+title: "Hidupkan stack: up dan down"
+summary: "Anda akan belajar: hidupkan, semak, masuk ke dalam dan hentikan seluruh stack."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, KitchenSim, CommandBuilder, Choice, Mission]
+needs: [docker-d4-l02]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "docker compose ps", url: "https://docs.docker.com/reference/cli/docker/compose/ps/" }
+  - { label: "docker compose logs", url: "https://docs.docker.com/reference/cli/docker/compose/logs/" }
+  - { label: "docker compose exec", url: "https://docs.docker.com/reference/cli/docker/compose/exec/" }
+  - { label: "docker compose down", url: "https://docs.docker.com/reference/cli/docker/compose/down/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d']} label="Tiga bekas hidup di latar belakang. Terminal bebas semula." />
+
+`-d` jalankan set hidangan di latar belakang. Terminal anda bebas semula. Tapi sekarang anda tak nampak ke dalam. API dah bangun ke belum?
+</Card>
+
+<Card id="try-ps" type="try">
+Tanya Compose apa yang sedang berjalan. `docker compose ps` senaraikan bekas dalam <Term id="compose-project">projek</Term> ini dan keadaannya.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d']} goal={{ lastTyped: '^docker compose ps' }} hints={['Taip docker compose ps dan tekan Enter.']} success="Tiga hidangan, semuanya Up. Hanya web ada tingkap: 8080." />
+
+<Hint>Taip `docker compose ps`.</Hint>
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose logs api']} label="Log api ada satu baris: API listening on port 3000." />
+
+`docker compose logs api` tunjuk apa yang api paparkan. Setiap baris bermula dengan nama hidangan, contohnya `api-1 |`. Tambah `-f` untuk terus tengok.
+</Card>
+
+<Card id="try-exec" type="try">
+Bina arahan yang buka shell di dalam hidangan web.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Bercakap dengan Docker' }, { text: 'compose', means: 'alat set hidangan' }, { text: 'exec', means: 'jalankan sesuatu dalam hidangan yang sedang hidup' }, { text: 'web', means: 'nama service' }, { text: 'sh', means: 'satu shell' }]} decoys={[{ text: 'run', means: 'mulakan bekas baru pula' }, { text: 'kedai-kancil-web-1', means: 'nama bekas; exec mahu nama service' }]} success="Betul! Di dalam, taip exit untuk kembali." />
+
+<Hint>Arahan Compose guna nama service: web, api, db.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `docker compose down`. Apa jadi pada pesanan dalam loker `db-data`?
+
+<Interactive name="Choice" options={[{ label: 'Pesanan kekal', correct: true, why: 'down buang bekas dan talian telefon. Loker kekal.' }, { label: 'Pesanan dipadam', why: 'Hanya down -v padam loker. Arahan itu ada lencana bahaya.' }, { label: 'Pesanan pindah ke laptop', why: 'Loker tinggal dalam storan Docker. down biarkan di situ.' }]} />
+</Card>
+
+<Card id="try-down" type="try">
+Tutup kedai untuk malam ini. Simpan loker.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d']} goal={{ composeDown: 'kedai-kancil', volumeExists: ['kedai-kancil_db-data'] }} hints={['Taip docker compose down, tanpa -v.', 'Loker hilang? Mula semula dengan docker compose up -d, kemudian down.']} success="Kedai tutup. Loker db-data tunggu esok." />
+
+<Hint>Tiada `-v` malam ini.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hidupkan, semak dan hentikan seluruh stack.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose stop` hentikan kedai tapi simpan bekas; `start` bangunkannya. `docker compose restart api` mula semula satu hidangan. `docker compose down -v` padam loker dan datanya juga: guna dengan sengaja sahaja. `docker compose ls` senaraikan setiap projek yang hidup.
+
+<Interactive name="Mission" id="d4-l03-rep" steps={[{ id: 'up', text: 'Dalam hello-set, hidupkan set hidangan.', command: 'docker compose up -d' }, { id: 'ps', text: 'Tengok apa yang berjalan.', command: 'docker compose ps' }, { id: 'logs', text: 'Baca log web.', command: 'docker compose logs web' }, { id: 'exec', text: 'Masuk ke dalam, tengok, kemudian taip exit.', command: 'docker compose exec web sh' }, { id: 'down', text: 'Tutup untuk malam ini.', command: 'docker compose down' }]} success="Anda dah jalankan sehari penuh set hidangan!" />
+</Card>

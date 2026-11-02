@@ -1,0 +1,54 @@
+---
+// Daily review: up to 10 one-minute cards a day, from lessons the learner finished in any course.
+import Base from '~/layouts/Base.astro';
+import ReviewDeck from '~/components/review/ReviewDeck';
+import { LANGS, t, type Lang } from '~/i18n';
+import { flatten, getCourse, itemUrl } from '~/lib/course';
+import { getReviewPool } from '~/lib/content';
+import { ROOT_COURSE } from '~/lib/catalog';
+import '~/components/lesson/lesson.css';
+import '~/components/interactives/quiz.css';
+import '~/components/review/review.css';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const course = await getCourse(ROOT_COURSE);
+const first = flatten(course).find((x) => x.status === 'ready')!;
+const items = await getReviewPool(lang);
+---
+
+<Base lang={lang} title={t(lang, 'review.title')} altPath={`/${other}/review/`}>
+  <div class="container review-page">
+    <header class="review-head">
+      <h1>{t(lang, 'review.title')}</h1>
+      <p>{t(lang, 'review.intro')}</p>
+    </header>
+    <ReviewDeck client:only="react" lang={lang} items={items} startHref={itemUrl(lang, ROOT_COURSE, first)} homeHref={`/${lang}/`}>
+      <p slot="fallback" class="review-loading">{t(lang, 'review.loading')}</p>
+    </ReviewDeck>
+    <noscript><p>{t(lang, 'review.noscript')}</p></noscript>
+    <details class="deeper review-how">
+      <summary>{t(lang, 'review.how')}</summary>
+      <div class="deeper-body"><p>{t(lang, 'review.howText')}</p></div>
+    </details>
+  </div>
+</Base>
+
+<style>
+  .review-page {
+    padding-block: var(--space-5);
+    max-width: calc(var(--card-max) + 2 * var(--gutter));
+  }
+  .review-head p {
+    color: var(--color-text-muted);
+  }
+  .review-loading {
+    color: var(--color-text-muted);
+  }
+  .review-how {
+    margin-top: var(--space-6);
+  }
+</style>

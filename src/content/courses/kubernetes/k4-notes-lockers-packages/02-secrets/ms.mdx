@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l02
+world: 4
+title: "Secret: base64 bukan kunci"
+summary: "Anda akan belajar: beri pod kata laluan dengan Secret, dan apa yang betul-betul menjaganya."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, Transcript, Choice, FoodCourtSim, YamlDoctor, SortCards, SwipeJudge, Mission]
+needs: [k8s-k4-l01]
+scenario: k4-secret
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Secrets", url: "https://kubernetes.io/docs/concepts/configuration/secret/" }
+  - { label: "Good practices for Kubernetes Secrets", url: "https://kubernetes.io/docs/concepts/security/secrets-good-practices/" }
+  - { label: "Encrypting confidential data at rest", url: "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-secret" commands={['kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia', 'kubectl get secret till -o yaml']} picture={false} label="kubectl cipta Secret bernama till. YAML-nya tunjuk PASSWORD: c3VwM3ItcmFoc2lh." />
+
+Anda simpan kata laluan mesin kira dalam **<Term id="secret">Secret</Term>** (kotak rempah berkunci). YAML-nya tulis `c3VwM3ItcmFoc2lh`. Nampak berselerak. Tapi selamatkah?
+</Card>
+
+<Card id="see-base64" type="see">
+<Interactive name="Transcript" title="bash" label="echo teks berselerak itu ke base64 -d. Ia cetak sup3r-rahsia." lines={[{ cmd: 'echo c3VwM3ItcmFoc2lh | base64 -d' }, { out: 'sup3r-rahsia', color: 'red' }]} />
+
+Satu arahan tukar ia balik. Itu **base64**: apa-apa data ditulis sebagai huruf biasa. Ia pelekat yang nampak macam kunci.
+</Card>
+
+<Card id="predict" type="predict">
+Siapa boleh baca kata laluan mesin kira sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Sesiapa yang dibenarkan baca Secret dalam namespace ini', correct: true, why: 'Baca Secret itu sudah cukup. base64 tak halang sesiapa.' }, { label: 'Hanya pod till', why: 'Hampir! Pod membacanya, tetapi sesiapa yang boleh get Secret pun boleh.' }, { label: 'Tiada sesiapa. Ia sudah disulitkan.', why: 'base64 bukan penyulitan. Satu arahan sudah boleh buka.' }]} />
+</Card>
+
+<Card id="try-till" type="try">
+Buat Secret dan buka mesin kira. Kemudian semak kata laluannya.
+
+<Interactive name="FoodCourtSim" scenario="k4-secret" goal={{ podsReady: { selector: 'app=till', count: 1 }, lastTyped: 'printenv PASSWORD' }} hints={['Taip kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia', 'Kemudian: kubectl apply -f till.yaml', 'Akhir sekali: kubectl exec deploy/till -- printenv PASSWORD']} success="Mesin kira dapat kata laluannya, tanpa letak dalam image." />
+
+<Hint>`till.yaml` minta kunci `PASSWORD` daripada Secret `till`.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Rakan sepasukan tulis Secret ini sendiri. Apply gagal. Baiki ia.
+
+<Interactive name="YamlDoctor" file="secret.yaml" manifest={'apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice-box\ntype: Opaque\ndata:\n  password: kancil123\n'} solution={'apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice-box\ntype: Opaque\nstringData:\n  password: kancil123\n'} keep={['kancil123']} keepHint="Kekalkan kata laluan. Tukar cara ia ditulis." hint="data: mahu base64. stringData: terima teks biasa." success="Berjaya! stringData simpan sebagai base64 untuk anda." />
+</Card>
+
+<Card id="see-locks" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'lock', label: 'Kunci sebenar' }, { id: 'sticker', label: 'Pelekat sahaja' }]} items={[{ label: 'base64 dalam Secret', bucket: 'sticker', why: 'Sesiapa boleh nyahkodnya.' }, { label: 'Encryption at rest dalam etcd', bucket: 'lock', why: 'Cakera yang dicuri cuma tunjuk data berselerak.' }, { label: 'RBAC: hanya till boleh baca Secret', bucket: 'lock', why: 'Orang lain tak lepas API server.' }, { label: 'Fail YAML Secret dalam Git', bucket: 'sticker', why: 'Semua yang ada repo boleh nyahkodnya.' }]} success="Dua kunci sebenar: encryption at rest dan RBAC." />
+
+Kunci sebenar memang ada. Dengan **encryption at rest** (penyulitan semasa disimpan), API server kunci Secret sebelum menyimpannya. RBAC tentukan siapa boleh membacanya.
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik atau tidak? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Commit secret.yaml dengan kata laluan sebenar ke Git.', good: false, why: 'base64 dalam Git ialah teks biasa untuk semua.' }, { text: 'Benarkan hanya till baca Secret dalam namespace-nya.', good: true, why: 'Kurang pembaca, kurang bocor.' }, { text: 'Hidupkan encryption at rest untuk Secret.', good: true, why: 'Backup dan cakera kekal berselerak.' }, { text: 'Cetak kata laluan dalam log untuk nyahpepijat.', good: false, why: 'Log dibaca oleh ramai orang dan alat.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri pod kata laluan dengan Secret, secara selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe secret till` tunjuk saiz, bukan nilai. Mount Secret sebagai fail, bukan env var. Env var boleh bocor dalam laporan crash. Kluster terurus selalunya sulitkan Secret dengan kunci awan (KMS). Pelajaran seterusnya: jauhkan Secret daripada Git.
+
+Latihan sebenar (pilihan), hanya pada kluster latihan. Guna kata laluan palsu:
+
+<Interactive name="Mission" id="k8s-k4-l02-rep" steps={[{ id: 'where', text: 'Pastikan anda di kluster latihan.', command: 'kubectl config current-context' }, { id: 'make', text: 'Buat Secret dengan kata laluan palsu.', command: 'kubectl create secret generic till --from-literal=PASSWORD=practice-only' }, { id: 'peek', text: 'Lihat teks base64.', command: 'kubectl get secret till -o jsonpath={.data.PASSWORD}' }, { id: 'decode', text: 'Tampal teks itu selepas echo, kemudian nyahkod.', command: 'echo cHJhY3RpY2Utb25seQ== | base64 -d' }, { id: 'tidy', text: 'Kemas.', command: 'kubectl delete secret till' }]} success="Anda lihat sendiri: base64 bukan kunci." />
+</Card>

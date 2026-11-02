@@ -1,0 +1,67 @@
+---
+id: git-w05-boss
+world: 5
+title: "Simulasi pasukan: semak dan merge"
+summary: "Anda akan belajar: review PR rakan sepasukan, dari semakan merah sampai di-merge, dengan baik."
+minutes: 6
+xp: 50
+interactives: [Choice, PracticeRepo]
+needs: [git-w05-l14]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+  - { label: "About status checks", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks" }
+  - { label: "About merge methods on GitHub", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github" }
+  - { label: "Linking a pull request to an issue", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue" }
+---
+
+<Card id="hook" type="hook">
+Mei minta anda review PR #12: halaman acara yang baru. Semakannya tunjuk ✗ merah. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Buka semakan itu dan baca kenapa ia gagal', correct: true, why: 'Log beritahu apa yang rosak. Barulah review anda berguna.' }, { label: 'Merge sahaja. Mungkin okey', why: 'Semakan merah bermaksud ada yang rosak. Tengok dulu.' }, { label: 'Tutup PR itu', why: 'Terlalu kasar! Kebanyakan kegagalan itu kecil. Cari sebabnya.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Bilik 1: buka run yang gagal. Cari step yang gagal, dan baca lognya.
+
+<Interactive name="PracticeRepo" screen="run" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} pulls={[{ number: 12, title: 'Tambah halaman acara', body: 'Tambah halaman acara dengan acara kami yang akan datang.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.htm">Sign up</a>', '+<p>Coding night: next month</p>'] }] }]} runs={[{ id: 31, workflow: 'CI', event: 'pull_request', branch: 'events-page', status: 'fail', jobs: [{ name: 'test', steps: [{ name: 'Check out code', status: 'pass', log: ['Fetching the repository', 'Done'] }, { name: 'Check links', status: 'fail', log: ['Checking 4 pages...', 'events.html line 3: signup.htm not found', '1 broken link', 'Error: Process completed with exit code 1.'] }, { name: 'Build preview', status: 'skipped' }] }] }]} task={{ type: 'findFailingStep', run: 31 }} success="Jumpa! events.html pautkan ke signup.htm. Halaman sebenar ialah signup.html." />
+
+<Hint>Step dengan ✓ dah lulus. Tekan yang ada ✗.</Hint>
+</Card>
+
+<Card id="try-review" type="try">
+Bilik 2: review PR Mei. Minta perubahan, dengan baik. Sebut pautan mana yang perlu dibaiki.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 9, title: 'Tambah halaman acara kelab', body: 'Senaraikan acara akan datang dengan tarikh.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Tambah halaman acara', body: 'Tambah halaman acara dengan acara kami yang akan datang.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.htm">Sign up</a>', '+<p>Coding night: next month</p>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }, { id: 'requireChecks', label: 'Perlu semua semakan lulus', on: true }] }} task={{ type: 'requestChanges', pr: 12 }} success="Dah hantar! Jelas dan baik. Mei tahu apa yang perlu dibaiki." />
+
+<Hint>Tulis sesuatu seperti "Halaman yang cantik! Pautan daftar tulis signup.htm. Boleh tukar jadi signup.html?" Pilih Minta perubahan, kemudian Hantar review.</Hint>
+</Card>
+
+<Card id="try-approve" type="try">
+Bilik 3: Mei dah push pembaikan, dan semakan dah hijau. Tengok Fail yang berubah. Puas hati? Luluskan.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 9, title: 'Tambah halaman acara kelab', body: 'Senaraikan acara akan datang dengan tarikh.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Tambah halaman acara', body: 'Tambah halaman acara dengan acara kami yang akan datang.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.html">Sign up</a>', '+<p>Coding night: next month</p>'] }], reviews: [{ author: 'anda', state: 'changes', body: 'Halaman yang cantik! Pautan daftar tulis signup.htm. Boleh tukar jadi signup.html?' }], comments: [{ author: 'mei', body: 'Mata yang tajam! Pautan dah dibaiki. Semakan dah hijau.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }, { id: 'requireChecks', label: 'Perlu semua semakan lulus', on: true }] }} task={{ type: 'approve', pr: 12 }} success="Diluluskan! Permintaan perubahan anda dah selesai." />
+
+<Hint>Dalam "Review anda", pilih Luluskan, kemudian tekan Hantar review.</Hint>
+</Card>
+
+<Card id="try-merge" type="try">
+Bilik 4: dah lulus dan hijau. Pasukan ini squash setiap PR. Squash dan merge (cantum). Kemudian semak issue #9.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 9, title: 'Tambah halaman acara kelab', body: 'Senaraikan acara akan datang dengan tarikh.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Tambah halaman acara', body: 'Tambah halaman acara dengan acara kami yang akan datang.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.html">Sign up</a>', '+<p>Coding night: next month</p>'] }], reviews: [{ author: 'anda', state: 'changes', body: 'Halaman yang cantik! Pautan daftar tulis signup.htm. Boleh tukar jadi signup.html?' }, { author: 'anda', state: 'approved', body: 'Pautan dah jalan. Halaman yang cantik, terima kasih Mei!' }], comments: [{ author: 'mei', body: 'Mata yang tajam! Pautan dah dibaiki. Semakan dah hijau.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }, { id: 'requireChecks', label: 'Perlu semua semakan lulus', on: true }, { id: 'linearHistory', label: 'Simpan sejarah dalam satu garis lurus', on: true }] }} task={{ type: 'merge', pr: 12, method: 'squash' }} success="Dah merge! Buka tab Issues: #9 tutup dengan sendiri." />
+
+<Hint>Di bawah "Cara merge", pilih "Squash dan merge". Kemudian tekan "Merge pull request".</Hint>
+</Card>
+
+<Card id="check-closes" type="check">
+Tiada siapa sentuh issue #9. Kenapa ia ditutup?
+
+<Interactive name="Choice" options={[{ label: 'PR itu tulis "Closes #9" dan di-merge ke main', correct: true, why: 'Kata kunci penutup, tambah merge ke branch utama, tutup issue itu.' }, { label: 'Squash merge sentiasa tutup issue', why: 'Semua cara merge berfungsi. Kata kunci itu yang buat kerja.' }, { label: 'Mei tutup secara manual', why: 'Tiada siapa sentuh. Kata kunci itu yang buat kerja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh review, baiki dan merge PR rakan sepasukan macam pro.
+</Card>

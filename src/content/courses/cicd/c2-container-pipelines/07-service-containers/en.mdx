@@ -1,0 +1,66 @@
+---
+id: cicd-c2-l07
+world: 2
+title: "Service containers: a test database"
+summary: "You will learn: to give your tests a throwaway Postgres on the runner."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SpotLines, Choice, SortCards, Mission]
+needs: [cicd-c2-l06]
+scenario: c2-service-db
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers" }
+  - { label: "Creating PostgreSQL service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-service-db" label="A pull request runs the tests. They fail: connect ECONNREFUSED 127.0.0.1:5432." />
+
+Press Run. The order tests fail: `connect ECONNREFUSED 127.0.0.1:5432`. Plain words: nobody answers at the database's door.
+</Card>
+
+<Card id="see-service" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'services:' }, { text: '  db:' }, { text: '    image: postgres:18' }, { text: '    env:' }, { text: '      POSTGRES_PASSWORD: test' }, { text: '    options: --health-cmd pg_isready' }, { text: '    ports:' }, { text: '      - 5432:5432', target: true }]} prompt="Tap the line that opens the fridge door to the runner." success="Yes! Port 5432 on the runner reaches Postgres." />
+
+A **<Term id="service-container">service container</Term>** is a practice fridge wheeled next to the station. GitHub starts it before your steps. It is thrown away after the job.
+</Card>
+
+<Card id="try-fix" type="try">
+Fix the yellow line: give the job a database. Then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-service-db" task={{ type: 'green' }} fixes={[
+  { label: 'Postgres service on port 5432', text: '    runs-on: ubuntu-latest\n    services:\n      db:\n        image: postgres:18\n        env:\n          POSTGRES_PASSWORD: test\n        options: --health-cmd pg_isready --health-interval 5s --health-retries 10\n        ports:\n          - 5432:5432' },
+  { label: 'Redis service on port 6379', text: '    runs-on: ubuntu-latest\n    services:\n      cache:\n        image: redis:8\n        ports:\n          - 6379:6379', why: 'Redis is a cache, not the database the tests call.' }]}
+  success="Green! The tests found their database." />
+
+<Hint>The tests call Postgres on localhost, port 5432.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Why add `options: --health-cmd pg_isready`?
+
+<Interactive name="Choice" options={[{ label: 'The runner waits until Postgres is ready', correct: true, why: 'Postgres needs a few seconds to wake up. Without a check, tests may knock too early.' }, { label: 'It makes Postgres faster', why: 'It only checks if Postgres is ready. Speed stays the same.' }, { label: 'It hides the password', why: 'It has nothing to do with the password.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Where does each line go?
+
+<Interactive name="SortCards" buckets={[{ id: 'svc', label: 'In the service' }, { id: 'step', label: 'In the test step' }]} items={[{ label: '`image: postgres:18`', bucket: 'svc', why: 'The service says which container to start.' }, { label: '`POSTGRES_PASSWORD: test`', bucket: 'svc', why: 'Postgres reads it when it starts.' }, { label: '`DATABASE_URL: postgres://…@localhost:5432/…`', bucket: 'step', why: 'Your tests read it to find the database.' }, { label: '`ports: - 5432:5432`', bucket: 'svc', why: 'It opens the service to the runner.' }]} success="Sorted! The fridge on one side, the address on the other." />
+</Card>
+
+<Card id="win" type="win">
+You can now give your tests a throwaway database.
+</Card>
+
+<Card id="deeper" type="deeper">
+`test` is fine as a password here. The fridge lives for one job only. Real secrets still go in the locked spice box. Job running in a `container:`? Call the service by its name, `db`.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="c2-l07-rep" steps={[{ id: 'svc', text: 'In a public practice repo, add a postgres:18 service to your test job.' }, { id: 'env', text: 'Give the test step DATABASE_URL with localhost:5432.' }, { id: 'push', text: 'Push, and open the job log. Find "Starting db service container".' }]} success="A real database, for one job only!" />
+</Card>

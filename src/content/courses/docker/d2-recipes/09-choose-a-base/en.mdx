@@ -1,0 +1,67 @@
+---
+id: docker-d2-l09
+world: 2
+title: "Choose a base image"
+summary: "You will learn: how alpine, slim, distroless and hardened bases change size and safety."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, TimelineTap, ShrinkRay, Choice, Transcript, SortCards, Mission]
+needs: [docker-d2-l08]
+scenario: d2-l09
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Best practices (choose the right base image)", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "Docker docs: Base images", url: "https://docs.docker.com/build/building/base-images/" }
+  - { label: "Docker Hardened Images", url: "https://docs.docker.com/dhi/" }
+  - { label: "Docker Hardened Images: get started", url: "https://docs.docker.com/dhi/get-started/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l09" commands={['docker build -t diary:debian .', 'docker build --build-arg BASE=nginx:1.30-alpine -t diary:alpine .', 'docker images diary']} label="The same diary page is built twice: on nginx:latest (Debian) and on nginx:1.30-alpine. docker images shows the Debian one is more than twice as big." />
+
+Same page, same recipe, two bases. One pack is more than twice as big. Which base would you ship?
+</Card>
+
+<Card id="see-bases" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1.22GB', title: 'node:24', text: 'Full Debian with many tools. Easy, but heavy.' }, { when: '249MB', title: 'node:24-slim', text: 'Debian with the extras removed. Still has a shell.' }, { when: '181MB', title: 'node:24-alpine', text: 'Tiny Alpine Linux. Has a shell. Uses musl instead of glibc.' }, { when: '159MB', title: 'distroless', text: 'Only what the app needs. No shell, no package manager.' }, { when: 'Hardened', title: 'Docker Hardened Images', text: 'Minimal, non-root by default, very few known bugs. Free and open source since Dec 2025.' }]} />
+
+The **<Term id="base-image">base image</Term>** is the FROM line: the pack you start from. Tap each one, from biggest to smallest.
+</Card>
+
+<Card id="try-shrink" type="try">
+Shrink the API's meal pack below 200MB. Swap the base and try a build stage.
+
+<Interactive name="ShrinkRay" target={200} />
+</Card>
+
+<Card id="predict" type="predict">
+You ship on <Term id="distroless">distroless</Term>. Then you type `docker exec -it api sh` to look around. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It fails: there is no shell', correct: true, why: 'Distroless has no sh at all. Less to break, less to attack.' }, { label: 'You get a shell as usual', why: 'Only if the base has one. Distroless does not.' }, { label: 'Docker adds a shell for you', why: 'Docker never adds programs to your image.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="Transcript" title="bash" label="docker run with sh on a distroless image fails: exec sh: executable file not found in $PATH." lines={[{ cmd: 'docker run --rm gcr.io/distroless/static-debian13:nonroot sh' }, { out: 'docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "sh": executable file not found in $PATH', color: 'red' }, { out: "\nRun 'docker run --help' for more information" }]} />
+
+Real error: `executable file not found in $PATH`. Plain words: there is no `sh` in this pack. That is the point.
+</Card>
+
+<Card id="check-sort" type="check">
+Which base fits?
+
+<Interactive name="SortCards" buckets={[{ id: 'alpine', label: 'alpine' }, { id: 'slim', label: 'slim' }, { id: 'hard', label: 'distroless or hardened' }]} items={[{ label: 'Small, and I still want a shell to poke around', bucket: 'alpine', why: 'Alpine is tiny and keeps a shell.' }, { label: 'A library that needs glibc', bucket: 'slim', why: 'Slim is Debian, so glibc works as usual.' }, { label: 'Production, nothing extra to attack', bucket: 'hard', why: 'No shell and no package manager to misuse.' }, { label: 'The fewest known security bugs, for free', bucket: 'hard', why: 'Docker Hardened Images aim for near zero.' }]} success="Pick the smallest base your app can live with." />
+</Card>
+
+<Card id="win" type="win">
+You can now pick a base by size, tools and safety.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker Hardened Images live at `dhi.io`. Log in with your free Docker account, then pull, like `dhi.io/python:3.13`. They come with an SBOM and signed provenance (World D5). Distroless and hardened bases pair well with a build stage.
+
+<Interactive name="Mission" id="d2-l09-rep" steps={[{ id: 'pull', text: 'Pull two bases you use.', command: 'docker pull node:24-alpine' }, { id: 'sizes', text: 'Compare their sizes.', command: 'docker images' }, { id: 'switch', text: 'Try your project on the smaller base. Does it still run?' }]} success="You chose your base on purpose!" />
+</Card>

@@ -1,0 +1,73 @@
+---
+id: git-w02-l04
+world: 2
+title: Makmal reset
+summary: "Anda akan belajar: cara git reset undurkan branch anda, dalam tiga mod."
+minutes: 5
+xp: 25
+interactives: [AreasScene, GraphScene, ResetLab, Choice, Sim, TermReplay]
+needs: [git-w02-l03]
+scenario: w02-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD~1)", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Tiga commit dalam repositori. Yang terbaru, Add day 2 entry, bergoyang." frames={[{ repo: [{ name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit', glow: true }] }]} />
+
+Commit (titik simpan) terakhir anda satu kesilapan. Ia hanya ada dalam laptop anda. Boleh undur satu langkah?
+</Card>
+
+<Card id="see-reset" type="see">
+<Interactive name="GraphScene" scenario="w02-l04" commands={['git reset HEAD~1']} showLost label="Label main dan HEAD bergerak balik dari Add day 2 entry ke Add style. Add day 2 entry pudar jadi titik putus-putus." />
+
+**<Term id="reset">Reset</Term>** (undur) gerakkan branch (jalan cerita) anda ke belakang. `HEAD~1` maksudnya "satu commit sebelum HEAD". Mod yang anda pilih tentukan ke mana perubahan pergi.
+</Card>
+
+<Card id="try-lab" type="try">
+Cuba ketiga-tiga mod. Tengok ke mana perubahan pergi.
+
+<Interactive name="ResetLab" scenario="w02-l04" />
+
+<Hint>Soft, kemudian mixed, kemudian hard. Setiap satu jalankan `git reset --<mode> HEAD~1`.</Hint>
+</Card>
+
+<Card id="predict-soft" type="predict">
+Anda mahu buat semula commit itu. Perubahan patut kekal dalam kotak. Mod mana?
+
+<Interactive name="Choice" compact options={[{ label: '`--soft`', correct: true, why: 'Soft cuma gerakkan branch. Perubahan menunggu dalam kotak.' }, { label: '`--mixed`', why: 'Mixed kosongkan kotak. Perubahan balik ke folder anda.' }, { label: '`--hard`', why: 'Hard padam perubahan. Bukan itu yang anda mahu!' }]} />
+</Card>
+
+<Card id="see-hard" type="see">
+<Interactive name="AreasScene" command="git reset --hard HEAD~1" label="Sebelum: index.html ada perubahan yang belum disimpan, dan Add day 2 entry ialah commit terbaru. Selepas: commit dan perubahan itu dua-dua hilang." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], staging: [], repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit', glow: true }] }, { working: ['index.html'], staging: [], repo: [{ name: 'Add style', kind: 'commit' }] }]} />
+
+⚠️ **Bahaya**: `--hard` padam perubahan dalam fail anda juga. Suntingan yang belum di-commit hilang terus. Guna hanya bila anda pasti.
+</Card>
+
+<Card id="try-sim" type="try">
+Undurkan commit terakhir. Kekalkan perubahan dalam folder anda.
+
+<Interactive name="Sim" scenario="w02-l04" panels={['areas', 'graph']} showLost goal={{ commits: 3, modified: ['index.html'], notStaged: ['index.html'] }} hints={['Taip git reset HEAD~1 dan tekan Enter.', 'Tanpa mod bermaksud --mixed. Perubahan balik ke folder anda.']} success="Commit itu dah diundur. Catatan day 2 anda menunggu dalam folder." />
+
+<Hint>Taip `git reset HEAD~1`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="check-default" type="check">
+Anda taip `git reset HEAD~1` tanpa mod. Ke mana perubahan pergi?
+
+<Interactive name="Choice" options={[{ label: 'Balik ke folder kerja', correct: true, why: '--mixed ialah mod lalai. Ia kosongkan kotak dan kekalkan perubahan anda.' }, { label: 'Masuk ke dalam kotak', why: 'Itu --soft. Anda kena minta secara khusus.' }, { label: 'Tiada mana, ia dipadam', why: 'Hanya --hard yang padam. Git tak akan pilih mod itu untuk anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh undurkan branch anda, dengan tiga cara berbeza.
+</Card>
+
+<Card id="deeper" type="deeper">
+`HEAD~2` undur dua commit. Anda juga boleh reset ke satu hash dari `git log --oneline`. Reset tulis semula sejarah. Reset hanya commit yang masih dalam komputer anda. Commit yang dikongsi perlukan revert (pelajaran seterusnya).
+
+<Interactive name="TermReplay" scenario="w02-l04" commands={['git reset --soft HEAD~1', 'git status -s', 'git log --oneline']} label="Selepas git reset --soft HEAD~1, index.html menunggu dalam kotak dan log tunjuk tiga commit." />
+</Card>

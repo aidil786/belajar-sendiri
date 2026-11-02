@@ -1,0 +1,78 @@
+---
+id: docker-d4-l08
+world: 4
+title: Muat semula langsung dengan compose watch
+summary: "Anda akan belajar: nampak suntingan anda dalam aplikasi yang sedang berjalan setiap kali anda simpan."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, Choice, KitchenSim, Transcript, SortCards, Mission]
+needs: [docker-d4-l07]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Use Compose Watch", url: "https://docs.docker.com/compose/how-tos/file-watch/" }
+  - { label: "docker compose watch", url: "https://docs.docker.com/reference/cli/docker/compose/watch/" }
+  - { label: "Compose file reference: develop", url: "https://docs.docker.com/reference/compose-file/develop/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'echo "<h1>Kedai Kancil: open!</h1>" > web/index.html', 'curl -s localhost:8080']} label="Anda simpan laman baru. curl masih tunjuk yang lama: Kedai Kancil, tanpa open." />
+
+Anda simpan laman baru. Kedai masih tunjuk yang lama. Kenapa? Laman itu dah dibakar ke dalam image sebelum anda sunting.
+</Card>
+
+<Card id="predict" type="predict">
+Macam mana nak masukkan laman baru ke dalam kedai?
+
+<Interactive name="Choice" options={[{ label: 'docker compose up -d --build', correct: true, why: 'Bakar image baru, kemudian Compose tukar bekas web dengan yang baru.' }, { label: 'docker compose restart web', why: 'Restart guna image yang sama. Laman lama juga.' }, { label: 'docker compose ps', why: 'ps cuma tengok. Ia tak ubah apa-apa.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Buktikan. Bakar semula, kemudian ketuk tingkap 8080.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d', 'echo "<h1>Kedai Kancil: open!</h1>" > web/index.html']} goal={{ reachableContains: { 'localhost:8080': 'open!' }, lastTyped: '^curl' }} hints={['Taip docker compose up -d --build', 'Kemudian taip curl localhost:8080']} success="Laman baru dah masuk. Tapi bakar selepas setiap simpanan memang lambat." />
+
+<Hint>`docker compose up -d --build`, kemudian `curl localhost:8080`.</Hint>
+</Card>
+
+<Card id="see-watch" type="see">
+```yaml
+  web:
+    build: ./web
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /usr/share/nginx/html
+```
+
+<Interactive name="Transcript" title="bash" label="docker compose watch hidupkan kedai (baris binaannya tak ditunjuk di sini), kemudian kata Watch enabled. Anda simpan web/index.html dalam editor. Watch salin ia masuk: Syncing service web after 1 changes were detected." lines={[{ cmd: 'docker compose watch' }, { out: 'Watch enabled' }, { out: 'Syncing service "web" after 1 changes were detected', color: 'green' }]} />
+
+**<Term id="compose-watch">compose watch</Term>** perhati folder anda. Bila anda simpan, ia salin fail itu ke dalam bekas yang sedang berjalan. Tiada bakar, tiada restart.
+</Card>
+
+<Card id="try-sort" type="try">
+Pilih tindakan watch yang betul untuk setiap fail.
+
+<Interactive name="SortCards" buckets={[{ id: 'sync', label: 'sync' }, { id: 'rebuild', label: 'rebuild' }, { id: 'restart', label: 'sync+restart' }]} items={[{ label: 'web/index.html', bucket: 'sync', why: 'Satu laman: salin masuk. nginx terus hidangkannya.' }, { label: 'web/style.css', bucket: 'sync', why: 'Sama macam laman: salin masuk.' }, { label: 'web/Dockerfile', bucket: 'rebuild', why: 'Resepi baru maksudnya bakar baru.' }, { label: 'api/package.json', bucket: 'rebuild', why: 'Pakej baru perlukan image baru.' }, { label: 'api/server.js', bucket: 'restart', why: 'Node baca fail ini masa mula sahaja. Salin, kemudian restart.' }]} success="sync untuk laman, rebuild untuk resepi, sync+restart untuk kod yang dibaca masa mula." />
+</Card>
+
+<Card id="check" type="check">
+Watch hanya ikut hidangan yang ada `build:`. Hidangan kedai kita yang mana tak boleh langsung diperhati?
+
+<Interactive name="Choice" compact options={[{ label: 'db', correct: true, why: 'db ialah pek siap dari peti sejuk. Tiada folder resepi untuk diperhati.' }, { label: 'web', why: 'web ada build: ./web, jadi watch boleh ikut.' }, { label: 'api', why: 'api ada build: ./api, jadi watch boleh ikut.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh nampak suntingan anda secara langsung dengan compose watch.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose up --watch` hidupkan dan perhati sekali gus, dengan log bercampur. Bekas perlukan `stat`, `mkdir` dan `rmdir`, dan penggunanya mesti boleh tulis ke sasaran. `ignore:` langkau folder seperti `node_modules/`. Bina semula paparkan `Rebuilding service(s) ["api"] after changes were detected...`.
+
+<Interactive name="Mission" id="d4-l08-rep" steps={[{ id: 'yaml', text: 'Tambah blok develop: watch: dari pelajaran ini pada service web anda.' }, { id: 'watch', text: 'Mula perhati.', command: 'docker compose watch' }, { id: 'edit', text: 'Sunting web/index.html, simpan, dan muat semula pelayar.' }, { id: 'stop', text: 'Tekan Ctrl+C untuk berhenti perhati, kemudian kemas meja.', command: 'docker compose down' }]} success="Suntingan langsung dalam container sebenar!" />
+</Card>

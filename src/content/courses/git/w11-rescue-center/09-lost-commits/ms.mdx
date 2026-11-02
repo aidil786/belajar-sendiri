@@ -1,0 +1,61 @@
+---
+id: git-w11-l09
+world: 11
+title: Commit hilang selepas reset
+summary: "Anda akan belajar: cara bawa balik commit selepas reset --hard."
+minutes: 3
+xp: 15
+interactives: [GraphScene, Choice, TermReplay, Sim, OrderList]
+needs: [git-w02-l09]
+scenario: w11-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD@{1})", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w11-l09-before" commands={['git reset --hard HEAD~2']} showLost label="main dan HEAD lompat balik dua commit. Add day 2 entry dan Add day 3 entry jadi titik putus-putus yang hilang." />
+
+Alamak. Satu `git reset --hard HEAD~2`, dan dua hari diari lenyap. Tarik nafas. Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+Hari 2 dan hari 3 ialah commit (titik simpan). Boleh Git bawa balik?
+
+<Interactive name="Choice" options={[{ label: 'Boleh. Commit masih boleh dicari untuk sementara', correct: true, why: 'Reflog ingat setiap commit yang HEAD pernah duduki.' }, { label: 'Tak boleh, reset --hard padam commit', why: 'Ia cuma gerakkan branch. Commit masih menunggu.' }, { label: 'Hanya kalau dah push', why: 'Reflog tinggal dalam komputer anda. Dah push atau belum, ia berfungsi.' }]} />
+</Card>
+
+<Card id="see-reflog" type="see">
+<Interactive name="TermReplay" scenario="w11-l09" commands={['git reflog']} label="git reflog: HEAD@{0} ialah reset. HEAD@{1} ialah commit: Add day 3 entry." />
+
+`git reflog` senaraikan setiap langkah HEAD. `HEAD@{1}` ialah tempat anda sejurus sebelum reset.
+</Card>
+
+<Card id="try-back" type="try">
+Lompat balik ke sejurus sebelum reset.
+
+<Interactive name="Sim" scenario="w11-l09" panels={['graph']} showLost goal={{ headAtMessage: '^Add day 3 entry$', commits: 5 }} hints={['Taip git reflog', 'Kemudian taip git reset --hard HEAD@{1}']} success="Hari 2 dan hari 3 dah balik! Titik putus-putus jadi penuh semula." />
+
+<Hint>Taip `git reset --hard HEAD@{1}`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah menyelamat, yang pertama di atas.
+
+<Interactive name="OrderList" items={['git status: pastikan tiada yang belum di-commit', 'git reflog: cari baris sebelum reset', 'git reset --hard HEAD@{1}', 'git log --oneline: pastikan commit dah balik']} label="Langkah pertama di atas" success="Susunan sempurna. Semak dulu, baru lompat." />
+
+<Hint>`--hard` padam perubahan yang belum di-commit. Jadi tengok dulu sebelum lompat.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bawa balik commit selepas reset --hard.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nak lebih berhati-hati? `git branch rescue HEAD@{1}` cuma letak label pada commit yang hilang. Tiada yang bergerak, tiada yang dipadam. Sejurus selepas reset, `ORIG_HEAD` juga tunjuk ke tempat anda tadi. Perubahan yang tak pernah di-commit tak boleh balik. Selalu commit!
+</Card>

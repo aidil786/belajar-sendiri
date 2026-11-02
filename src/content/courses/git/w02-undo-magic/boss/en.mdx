@@ -1,0 +1,65 @@
+---
+id: git-w02-boss
+world: 2
+title: "Escape room: 6 disasters"
+summary: "You will learn: to fix six Git disasters in a row, without panic."
+minutes: 6
+xp: 50
+interactives: [AreasScene, TermReplay, Challenge, Choice]
+needs: [git-w02-l09]
+scenario: w02-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" effect="wobble" label="Trouble in every area: debug.log in the working folder, secret.txt in the box and a commit called Add day 2 entyr. They all wobble." frames={[{ working: [{ name: 'debug.log', tag: 'new' }], staging: [{ name: 'secret.txt', tag: 'notReady' }], repo: [{ name: 'Add day 2 entyr', kind: 'commit' }] }]} />
+
+Six Git disasters. One locked room. Fix them all to escape!
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w02-boss-1" commands={['git status']} label="git status in room 1. secret.txt and index.html are both in the box. A hint line names the command to unstage." />
+
+Each room is a real terminal. Stuck? Try `git status` first. After 2 tries, a hint appears. Mistakes are free, so experiment!
+</Card>
+
+<Card id="try-escape" type="try">
+Fix each disaster to unlock the next room.
+
+<Interactive name="Challenge" theme="escape" stages={[
+  { title: 'Wrong file staged', text: 'secret.txt jumped into the box. Take it out. Keep index.html in.', scenario: 'w02-boss-1', goal: { staged: ['index.html'], notStaged: ['secret.txt'], filesExist: ['secret.txt'] }, hints: ['Run git status. It names the command.', 'Type git restore --staged secret.txt'] },
+  { title: 'Typo in the message', text: 'Your last commit says "Add day 2 entyr". Fix the message.', scenario: 'w02-boss-2', goal: { lastMessage: '^Add day 2 entry$', commits: 4 }, hints: ['Fix the last commit with --amend.', 'Type git commit --amend -m "Add day 2 entry"'] },
+  { title: 'Forgot a file', text: 'You committed day2.html but forgot day2.css. Add it to the same commit.', scenario: 'w02-boss-3', goal: { lastCommitHas: ['day2.html', 'day2.css'], lastMessage: '^Add day 2 page$', commits: 4 }, hints: ['First put day2.css in the box with git add.', 'Then type git commit --amend --no-edit'] },
+  { title: 'Junk in a commit', text: 'debug.log sneaked into your last commit. Take it out of that commit.', scenario: 'w02-boss-4', goal: { lastCommitLacks: ['debug.log'], lastMessage: '^Add day 2 entry$', commits: 4 }, hints: ['git rm --cached debug.log takes it out of the box. The file stays.', 'Then type git commit --amend --no-edit'] },
+  { title: 'Lost commits', text: 'You ran git reset --hard HEAD~2 by accident. Day 2 and day 3 vanished. Bring them back.', scenario: 'w02-boss-5', goal: { headAtMessage: '^Add day 3 entry$', headDetached: false, commits: 5 }, hints: ['git reflog shows where HEAD has been.', 'Type git reset --hard HEAD@{1}'] },
+  { title: 'Undo a shared commit', text: '"Add dark mode" is already shared, and everyone hates it. Undo it safely.', scenario: 'w02-boss-6', goal: { lastIsRevert: true, fileNotContains: { 'style.css': 'black' }, commits: 6 }, hints: ['Shared commits need git revert, not reset.', 'Type git revert HEAD~1'] }
+]} />
+
+<Hint>Read each room's note. Then `git status` or `git log --oneline`.</Hint>
+</Card>
+
+<Card id="check-shared" type="check">
+A bad commit is already shared. Which fix is safe?
+
+<Interactive name="Choice" options={[{ label: '`git revert`', correct: true, why: 'It adds an undo commit. Nobody loses history.' }, { label: '`git reset --hard`', why: 'Reset rewrites history that your team already has.' }, { label: '`git commit --amend`', why: 'Amend rewrites the last commit. Not safe once it is shared.' }]} />
+</Card>
+
+<Card id="check-reflog" type="check">
+Which mistake can the reflog NOT fix?
+
+<Interactive name="Choice" options={[{ label: 'Uncommitted changes wiped by reset --hard', correct: true, why: 'Git never saved them, so the reflog never saw them.' }, { label: 'A commit lost after reset --hard', why: 'The reflog remembers it. That was room 5!' }, { label: 'The old version of an amended commit', why: 'The reflog remembers that one too.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now escape almost any Git disaster.
+</Card>

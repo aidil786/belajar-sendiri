@@ -1,0 +1,237 @@
+# Cloud with AWS rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Level Up Rescue Center (/<lang>/level-up/rescue/) lists them under Part 4.
+# Flow ids must be unique across linux, iac, observability and aws: one page, one #<flow-id> link each.
+# Start ids with `aws-` (e.g. aws-surprise-bill). About 5 flows (docs/LEVEL-UP-PLAN.md §7, wave B).
+flows:
+  # --- AWS flows (add below this line) ---
+  # Written 2026-11-01 for worlds A1–A4. Every command is a real AWS CLI v2 command (docs.aws.amazon.com/cli);
+  # names like kedai-deploy, SUBNET_ID and YOUR_IP are placeholders. Results link the lesson that teaches the fix.
+  - id: aws-access-denied
+    title: { en: "AccessDenied: \"not authorized to perform\"", ms: "AccessDenied: \"not authorized to perform\" (tiada kebenaran)" }
+    start: who
+    steps:
+      - id: who
+        question: { en: "Run aws sts get-caller-identity. Is that the user or role you expected?", ms: "Jalankan aws sts get-caller-identity. Adakah itu pengguna atau role yang anda jangka?" }
+        answers:
+          - { label: { en: "No: another user, role or account", ms: "Tidak: pengguna, role atau akaun lain" }, next: r-profile }
+          - { label: { en: "Yes, that is me", ms: "Ya, itu saya" }, next: why }
+      - id: why
+        question: { en: "Read the end of the error. What does it say?", ms: "Baca hujung ralat itu. Apa katanya?" }
+        answers:
+          - { label: { en: "It mentions an explicit deny", ms: "Ia sebut explicit deny" }, next: r-explicit }
+          - { label: { en: "No policy allows the action", ms: "Tiada polisi benarkan tindakan itu" }, next: r-allow }
+      - id: r-profile
+        result:
+          text: { en: "The CLI is using other keys: another profile, or an old environment variable. Pick the right profile, then try again.", ms: "CLI guna kunci lain: profil lain, atau environment variable lama. Pilih profil yang betul, kemudian cuba lagi." }
+          commands:
+            - { command: "aws configure list", en: "See which profile and which key source the CLI uses now.", ms: "Lihat profil dan sumber kunci yang CLI guna sekarang." }
+            - { command: "aws sts get-caller-identity --profile kedai", en: "Check who that profile is. Use your profile's name.", ms: "Semak siapa profil itu. Guna nama profil anda." }
+            - { command: "export AWS_PROFILE=kedai", en: "Use that profile for this terminal.", ms: "Guna profil itu untuk terminal ini." }
+          danger: safe
+          lesson: aws-a1-l07
+      - id: r-allow
+        result:
+          text: { en: "Nothing allows it, so AWS says no (an implicit deny). Find the exact action and resource, then add one narrow Allow.", ms: "Tiada yang benarkan, jadi AWS kata tidak (implicit deny). Cari tindakan dan sumber yang tepat, kemudian tambah satu Allow yang sempit." }
+          commands:
+            - { command: "aws iam list-attached-role-policies --role-name kedai-deploy", en: "See which policies the role has. Use your role's name.", ms: "Lihat polisi yang role itu ada. Guna nama role anda." }
+            - { command: "aws iam simulate-principal-policy --policy-source-arn arn:aws:iam::111122223333:role/kedai-deploy --action-names ecr:PutImage", en: "Ask IAM to test one action, without doing it.", ms: "Minta IAM uji satu tindakan, tanpa melakukannya." }
+          danger: careful
+          lesson: aws-a2-l03
+      - id: r-explicit
+        result:
+          text: { en: "A Deny fits, and a Deny always wins. It may sit in a policy, a permissions boundary or an SCP. An extra Allow cannot beat it. Ask whoever owns that Deny.", ms: "Satu Deny sepadan, dan Deny sentiasa menang. Ia mungkin dalam polisi, permissions boundary atau SCP. Allow tambahan tak boleh kalahkannya. Tanya pemilik Deny itu." }
+          commands:
+            - { command: "aws iam get-role --role-name kedai-deploy", en: "PermissionsBoundary in the answer means the role has a fence.", ms: "PermissionsBoundary dalam jawapan bermaksud role itu ada pagar." }
+            - { command: "aws iam list-role-policies --role-name kedai-deploy", en: "List the role's own inline policies. Look for Deny.", ms: "Senaraikan polisi inline role itu. Cari Deny." }
+          danger: safe
+          lesson: aws-a2-l08
+
+  - id: aws-surprise-bill
+    title: { en: "The bill is bigger than I expected", ms: "Bil lebih besar daripada jangkaan" }
+    start: top
+    steps:
+      - id: top
+        question: { en: "Open Cost Explorer and group by service. What is the biggest line?", ms: "Buka Cost Explorer dan kumpulkan ikut servis. Apa baris paling besar?" }
+        answers:
+          - { label: { en: "EC2-Other or VPC", ms: "EC2-Other atau VPC" }, next: network }
+          - { label: { en: "EKS, RDS or Elastic Load Balancing", ms: "EKS, RDS atau Elastic Load Balancing" }, next: r-big }
+          - { label: { en: "I can't find the cause", ms: "Saya tak jumpa puncanya" }, next: r-look }
+      - id: network
+        question: { en: "In the Region you used, which of these do you find?", ms: "Dalam Region yang anda guna, yang mana anda jumpa?" }
+        answers:
+          - { label: { en: "A NAT gateway", ms: "Satu NAT gateway" }, next: r-nat }
+          - { label: { en: "Elastic IPs or loose disks", ms: "Elastic IP atau cakera yang terbiar" }, next: r-ips }
+      - id: r-nat
+        result:
+          text: { en: "A NAT gateway bills every hour it exists, even idle. Delete it, then release its Elastic IP. Back rooms lose their way out.", ms: "NAT gateway dicaj setiap jam ia wujud, walaupun senyap. Padam ia, kemudian lepaskan Elastic IPnya. Bilik belakang hilang jalan keluar." }
+          commands:
+            - { command: "aws ec2 describe-nat-gateways", en: "List NAT gateways and their state.", ms: "Senaraikan NAT gateway dan keadaannya." }
+            - { command: "aws ec2 delete-nat-gateway --nat-gateway-id nat-04ae55e711cec5680", en: "Delete it. Use your own id.", ms: "Padam ia. Guna id anda sendiri." }
+            - { command: "aws ec2 release-address --allocation-id eipalloc-64d5890a", en: "Release its Elastic IP once the NAT is gone.", ms: "Lepaskan Elastic IPnya selepas NAT hilang." }
+          danger: careful
+          lesson: aws-a3-l03
+      - id: r-ips
+        result:
+          text: { en: "Public IPv4 addresses and stored disks bill even when nothing uses them. Release spare addresses. Delete disks you no longer need, after a last look.", ms: "Alamat IPv4 awam dan cakera yang disimpan dicaj walaupun tiada yang guna. Lepaskan alamat lebihan. Padam cakera yang tak perlu, selepas semakan terakhir." }
+          commands:
+            - { command: "aws ec2 describe-addresses", en: "Elastic IPs with no AssociationId are idle.", ms: "Elastic IP tanpa AssociationId sedang terbiar." }
+            - { command: "aws ec2 describe-volumes --filters Name=status,Values=available", en: "Disks attached to nothing.", ms: "Cakera yang tak disambung ke apa-apa." }
+            - { command: "aws ec2 delete-volume --volume-id vol-049df61146c4d7901", en: "Delete one disk for good (use its id). Its data is gone.", ms: "Padam satu cakera selamanya (guna idnya). Datanya hilang." }
+          danger: lose
+          lesson: aws-a3-l05
+      - id: r-big
+        result:
+          text: { en: "Clusters, databases and load balancers bill by the hour, busy or not. List them, keep what you need, delete the rest. Take a final snapshot of any data you want.", ms: "Kluster, pangkalan data dan load balancer dicaj ikut jam, sibuk atau tidak. Senaraikan, simpan yang perlu, padam selebihnya. Ambil snapshot akhir bagi data yang anda mahu." }
+          commands:
+            - { command: "aws eks list-clusters", en: "Each EKS cluster has an hourly fee.", ms: "Setiap kluster EKS ada caj sejam." }
+            - { command: "aws rds describe-db-instances", en: "Databases, running or stopped.", ms: "Pangkalan data, berjalan atau berhenti." }
+            - { command: "aws elbv2 describe-load-balancers", en: "Load balancers, even with no visitors.", ms: "Load balancer, walaupun tiada pelawat." }
+          danger: lose
+          lesson: aws-a4-l08
+      - id: r-look
+        result:
+          text: { en: "Look in every Region you might have used, and group the costs by Region. Keep your budget alarm. AWS Support helps with billing questions too.", ms: "Tengok setiap Region yang mungkin anda guna, dan kumpulkan kos ikut Region. Kekalkan penggera bajet. AWS Support juga bantu soalan bil." }
+          commands:
+            - { command: "aws ec2 describe-regions --query \"Regions[].RegionName\"", en: "List the Regions your account can use.", ms: "Senaraikan Region yang akaun anda boleh guna." }
+            - { command: "aws resourcegroupstaggingapi get-resources --region ap-southeast-5", en: "List tagged resources in one Region. Repeat per Region.", ms: "Senaraikan sumber bertag dalam satu Region. Ulang untuk setiap Region." }
+          danger: safe
+          lesson: aws-a1-l05
+
+  - id: aws-cant-reach-server
+    title: { en: "I can't reach my server", ms: "Saya tak dapat capai server saya" }
+    start: symptom
+    steps:
+      - id: symptom
+        question: { en: "Try curl -v with the server's address. What happens?", ms: "Cuba curl -v dengan alamat server itu. Apa jadi?" }
+        answers:
+          - { label: { en: "It waits, then times out", ms: "Ia tunggu, kemudian tamat masa" }, next: road }
+          - { label: { en: "Connection refused, at once", ms: "Connection refused, serta-merta" }, next: r-app }
+      - id: road
+        question: { en: "Is the server in a public subnet, with a public IP?", ms: "Adakah server itu dalam subnet awam, dengan IP awam?" }
+        answers:
+          - { label: { en: "No, or I'm not sure", ms: "Tidak, atau saya tak pasti" }, next: r-route }
+          - { label: { en: "Yes", ms: "Ya" }, next: door }
+      - id: door
+        question: { en: "Does its security group allow your port from your IP?", ms: "Adakah security groupnya benarkan port anda dari IP anda?" }
+        answers:
+          - { label: { en: "No, or I'm not sure", ms: "Tidak, atau saya tak pasti" }, next: r-sg }
+          - { label: { en: "Yes, it does", ms: "Ya, memang ada" }, next: r-nacl }
+      - id: r-app
+        result:
+          text: { en: "Refused means you reached the server, but nothing listens on that port. The guards are fine. Check that the app runs and listens on 0.0.0.0, not only localhost.", ms: "Refused bermaksud anda sampai ke server, tetapi tiada yang mendengar di port itu. Pengawal tak bermasalah. Semak aplikasi berjalan dan mendengar di 0.0.0.0, bukan localhost sahaja." }
+          commands:
+            - { command: "ss -tlnp", en: "On the server: which ports are listening, and by whom.", ms: "Di server: port mana yang mendengar, dan oleh siapa." }
+            - { command: "curl -v http://localhost:80", en: "On the server: does the app answer itself?", ms: "Di server: adakah aplikasi menjawab dirinya?" }
+          danger: safe
+          lesson: aws-a3-l05
+      - id: r-route
+        result:
+          text: { en: "The street reaches a server only in a public row. Its row needs 0.0.0.0/0 → internet gateway. The server needs a public IP. Check both.", ms: "Jalan hanya sampai ke server dalam baris awam. Barisnya perlu 0.0.0.0/0 → internet gateway. Server perlu IP awam. Semak kedua-duanya." }
+          commands:
+            - { command: "aws ec2 describe-route-tables --filters Name=association.subnet-id,Values=SUBNET_ID", en: "Read the road signs of the server's row. Look for igw-.", ms: "Baca papan tanda baris server itu. Cari igw-." }
+            - { command: "aws ec2 describe-instances --instance-ids i-1234567890abcdef0 --query \"Reservations[].Instances[].PublicIpAddress\"", en: "Empty means the server has no public IP.", ms: "Kosong bermaksud server itu tiada IP awam." }
+          danger: safe
+          lesson: aws-a3-l02
+      - id: r-sg
+        result:
+          text: { en: "A new security group lets nothing in. Add one narrow rule: your port, from your own IP only. Never open 22 to the whole internet.", ms: "Security group baru tak benarkan apa-apa masuk. Tambah satu peraturan sempit: port anda, dari IP anda sahaja. Jangan buka 22 kepada seluruh internet." }
+          commands:
+            - { command: "curl -s https://checkip.amazonaws.com", en: "Find your own public IP.", ms: "Cari IP awam anda sendiri." }
+            - { command: "aws ec2 authorize-security-group-ingress --group-id SG_ID --protocol tcp --port 80 --cidr YOUR_IP/32", en: "Let only you in on port 80.", ms: "Benarkan anda sahaja masuk di port 80." }
+          danger: careful
+          lesson: aws-a3-l04
+      - id: r-nacl
+        result:
+          text: { en: "Then the row's gate may block it. A network ACL remembers nothing. It needs an In rule for your port. It needs an Out rule for the reply ports.", ms: "Kalau begitu, pagar baris mungkin menyekat. Network ACL tak ingat apa-apa. Ia perlukan peraturan In untuk port anda. Ia perlukan peraturan Out untuk port jawapan." }
+          commands:
+            - { command: "aws ec2 describe-network-acls --filters Name=association.subnet-id,Values=SUBNET_ID", en: "Read the row gate's In and Out rules, lowest number first.", ms: "Baca peraturan In dan Out pagar baris, nombor paling rendah dahulu." }
+          danger: safe
+          lesson: aws-a3-l04
+
+  - id: aws-leaked-key
+    title: { en: "I leaked an AWS access key", ms: "Saya terbocorkan access key AWS" }
+    start: whose
+    steps:
+      - id: whose
+        question: { en: "Whose key is it? Check the user name in IAM, or the Arn from get-caller-identity.", ms: "Kunci siapa itu? Semak nama pengguna dalam IAM, atau Arn dari get-caller-identity." }
+        answers:
+          - { label: { en: "An IAM user's key", ms: "Kunci pengguna IAM" }, next: used }
+          - { label: { en: "The root user's key (Arn ends in :root)", ms: "Kunci pengguna root (Arn berakhir dengan :root)" }, next: r-root }
+      - id: used
+        question: { en: "In CloudTrail Event history, do you see anything you didn't do?", ms: "Dalam Event history CloudTrail, ada apa-apa yang anda tak buat?" }
+        answers:
+          - { label: { en: "No, nothing strange yet", ms: "Tidak, belum ada yang pelik" }, next: r-rotate }
+          - { label: { en: "Yes, or I can't tell", ms: "Ya, atau saya tak pasti" }, next: r-abuse }
+      - id: r-rotate
+        result:
+          text: { en: "Turn the key off first, before anything else. Then make a new key, move your apps to it, and delete the old one. Removing the file is not enough: copies live on.", ms: "Matikan kunci itu dahulu, sebelum apa-apa. Kemudian buat kunci baru, pindahkan aplikasi, dan padam yang lama. Buang fail sahaja tak cukup: salinan masih wujud." }
+          commands:
+            - { command: "aws iam update-access-key --access-key-id AKIAIOSFODNN7EXAMPLE --status Inactive --user-name Bob", en: "Step 1: switch the leaked key off. Use your key and user.", ms: "Langkah 1: matikan kunci yang bocor. Guna kunci dan pengguna anda." }
+            - { command: "aws iam create-access-key --user-name Bob", en: "Step 2: a new key, only if you truly need one.", ms: "Langkah 2: kunci baru, hanya jika betul-betul perlu." }
+            - { command: "aws iam delete-access-key --access-key-id AKIAIOSFODNN7EXAMPLE --user-name Bob", en: "Step 3: delete the old key for good.", ms: "Langkah 3: padam kunci lama selamanya." }
+          danger: careful
+          lesson: aws-a2-l06
+      - id: r-abuse
+        result:
+          text: { en: "Switch the key off now. Then look for new users, keys and servers in every Region. Contact AWS Support: they help with leaked keys and odd charges.", ms: "Matikan kunci itu sekarang. Kemudian cari pengguna, kunci dan server baru di setiap Region. Hubungi AWS Support: mereka bantu dengan kunci bocor dan caj pelik." }
+          commands:
+            - { command: "aws iam update-access-key --access-key-id AKIAIOSFODNN7EXAMPLE --status Inactive --user-name Bob", en: "First: switch the leaked key off.", ms: "Pertama: matikan kunci yang bocor." }
+            - { command: "aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIAIOSFODNN7EXAMPLE", en: "See what that key did. Repeat in each Region.", ms: "Lihat apa yang kunci itu buat. Ulang di setiap Region." }
+            - { command: "aws iam list-users", en: "Look for users you did not make.", ms: "Cari pengguna yang anda tak buat." }
+          danger: careful
+          lesson: aws-a2-l06
+      - id: r-root
+        result:
+          text: { en: "Root keys should never exist. Sign in as root, open Security credentials and delete the key now. Check MFA, then follow the leaked-key steps for CloudTrail.", ms: "Kunci root tak patut wujud langsung. Log masuk sebagai root, buka Security credentials dan padam kunci itu sekarang. Semak MFA, kemudian ikut langkah CloudTrail untuk kunci bocor." }
+          commands:
+            - { command: "aws iam get-account-summary", en: "AccountAccessKeysPresent: 1 means a root key still exists.", ms: "AccountAccessKeysPresent: 1 bermaksud kunci root masih wujud." }
+            - { command: "aws sts get-caller-identity", en: "An Arn ending in :root means you are using root. Stop.", ms: "Arn yang berakhir dengan :root bermaksud anda guna root. Berhenti." }
+          danger: careful
+          lesson: aws-a1-l04
+
+  - id: aws-wrong-region
+    title: { en: "My resources are gone (wrong Region?)", ms: "Sumber saya hilang (Region salah?)" }
+    start: where
+    steps:
+      - id: where
+        question: { en: "Where can't you find them?", ms: "Di mana anda tak jumpa mereka?" }
+        answers:
+          - { label: { en: "In the console", ms: "Dalam konsol" }, next: console }
+          - { label: { en: "In the CLI", ms: "Dalam CLI" }, next: r-cli }
+          - { label: { en: "Calls to ap-southeast-5 fail", ms: "Panggilan ke ap-southeast-5 gagal" }, next: r-optin }
+      - id: console
+        question: { en: "Which Region does the console's top bar show?", ms: "Region mana yang bar atas konsol tunjuk?" }
+        answers:
+          - { label: { en: "Not the one I used", ms: "Bukan yang saya guna" }, next: r-console }
+          - { label: { en: "The right one", ms: "Yang betul" }, next: r-account }
+      - id: r-cli
+        result:
+          text: { en: "Most resources live in one Region. The CLI looks only in its default Region. Ask it, then point it at the right one.", ms: "Kebanyakan sumber tinggal dalam satu Region. CLI hanya tengok Region lalainya. Tanya ia, kemudian halakan ke Region yang betul." }
+          commands:
+            - { command: "aws configure get region", en: "Which Region the CLI uses by default.", ms: "Region mana yang CLI guna secara lalai." }
+            - { command: "aws ec2 describe-instances --region ap-southeast-5", en: "Look in one Region on purpose.", ms: "Tengok dalam satu Region dengan sengaja." }
+            - { command: "aws configure set region ap-southeast-5 --profile kedai", en: "Make it the default for your profile.", ms: "Jadikan ia lalai untuk profil anda." }
+          danger: safe
+          lesson: aws-a1-l02
+      - id: r-console
+        result:
+          text: { en: "Switch the Region in the top bar. Servers, VPCs and databases show only in their own Region. IAM is global, so it shows everywhere.", ms: "Tukar Region di bar atas. Server, VPC dan pangkalan data hanya muncul dalam Region masing-masing. IAM global, jadi ia muncul di mana-mana." }
+          commands:
+            - { command: "aws ec2 describe-regions --query \"Regions[].RegionName\"", en: "List every Region you could have used.", ms: "Senaraikan setiap Region yang mungkin anda guna." }
+          danger: safe
+          lesson: aws-a1-l02
+      - id: r-account
+        result:
+          text: { en: "Then check the account. You may be signed in to another one. A terminated server also vanishes from the list after a while.", ms: "Kalau begitu, semak akaun. Mungkin anda log masuk ke akaun lain. Server yang di-terminate juga hilang dari senarai selepas seketika." }
+          commands:
+            - { command: "aws sts get-caller-identity", en: "The Account number shows where you are.", ms: "Nombor Account tunjuk anda di mana." }
+          danger: safe
+          lesson: aws-a1-l07
+      - id: r-optin
+        result:
+          text: { en: "The Malaysia Region is opt-in. It works only after the account turns it on. Check first; turning it on can take a while.", ms: "Region Malaysia perlu dihidupkan (opt-in). Ia berfungsi hanya selepas akaun menghidupkannya. Semak dahulu; menghidupkannya boleh ambil masa." }
+          commands:
+            - { command: "aws account get-region-opt-status --region-name ap-southeast-5", en: "ENABLED means it is on.", ms: "ENABLED bermaksud ia hidup." }
+            - { command: "aws account enable-region --region-name ap-southeast-5", en: "Turn it on for this account.", ms: "Hidupkan untuk akaun ini." }
+          danger: careful
+          lesson: aws-a1-l02

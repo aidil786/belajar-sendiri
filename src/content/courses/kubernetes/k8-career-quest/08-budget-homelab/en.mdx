@@ -1,0 +1,73 @@
+---
+id: k8s-k8-l08
+world: 8
+title: A budget homelab
+summary: "You will learn: how to practise Kubernetes at home for free, safely."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, CommandBuilder, Transcript, SwipeJudge]
+needs: [k8s-k8-l07]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kind: quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "k3d", url: "https://k3d.io/" }
+  - { label: "K3s docs", url: "https://docs.k3s.io/" }
+  - { label: "minikube: get started", url: "https://minikube.sigs.k8s.io/docs/start/" }
+  - { label: "Codespaces billing (free monthly hours)", url: "https://docs.github.com/en/billing/concepts/product-billing/github-codespaces" }
+---
+
+<Card id="hook" type="hook">
+You want a cluster you can break at 2 a.m. No bill, no boss watching. What do you need?
+
+<Interactive name="Choice" options={[{ label: 'An old laptop or a small PC, plus free tools', correct: true, why: 'Free tools like kind and k3s run on modest machines.' }, { label: 'A big cloud account', why: 'Cloud bills add up fast. Start at home, for free.' }, { label: 'A room full of servers', why: 'One spare machine is plenty to start.' }]} />
+</Card>
+
+<Card id="see-rungs" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Rung 1', title: "This course's simulator", text: 'Free, in your browser. Mistakes cost nothing.' }, { when: 'Rung 2', title: 'Free online labs', text: 'Killercoda gives you a real terminal for a short session.' }, { when: 'Rung 3', title: 'Codespaces', text: 'A cloud computer from GitHub, with free monthly hours.' }, { when: 'Rung 4', title: 'Your laptop', text: 'kind or k3d makes a cluster inside Docker.' }, { when: 'Rung 5', title: 'An old laptop or mini PC', text: 'It runs k3s all week, like a real server in a corner.' }]} />
+
+A **<Term id="homelab">homelab</Term>** is your own practice kitchen at home. Climb as far as your machine allows. Tap each rung.
+</Card>
+
+<Card id="try-sort" type="try">
+Two homelab styles are popular. Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'docker', label: 'kind or k3d (inside Docker)' }, { id: 'k3s', label: 'k3s (on its own machine)' }]} items={[{ label: 'Make and delete a cluster in minutes', bucket: 'docker', why: 'Clusters inside Docker are quick and throwaway.' }, { label: 'Each node is a container', bucket: 'docker', why: 'kind runs nodes as containers. k3d does the same for k3s.' }, { label: 'Great for testing one manifest fast', bucket: 'docker', why: 'Make a cluster, test, delete. Done.' }, { label: 'Runs all week on an old laptop', bucket: 'k3s', why: 'k3s is light, so old hardware copes.' }, { label: 'Works on small ARM boards too', bucket: 'k3s', why: 'The K3s docs list single-board ARM computers.' }, { label: 'Feels like a real server', bucket: 'k3s', why: 'It runs on its own, day and night.' }]} success="Sorted! Many people use both." />
+
+<Hint>Does it live inside Docker, or on its own machine?</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Make your first homelab cluster with kind. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'the tool: Kubernetes in Docker' }, { text: 'create', means: 'make something new' }, { text: 'cluster', means: 'a whole cluster' }, { text: '--name', means: 'give it a name' }, { text: 'homelab', means: 'the name' }]} decoys={[{ text: 'delete', means: 'remove a cluster' }, { text: 'kubectl', means: 'talks to a cluster that already exists' }]} success="That makes a one-node cluster called homelab." />
+</Card>
+
+<Card id="check-context" type="check">
+<Interactive name="Transcript" title="bash" label="kubectl config current-context prints kind-homelab: you are on the new homelab cluster." lines={[{ cmd: 'kubectl config current-context' }, { out: 'kind-homelab', color: 'green' }]} />
+
+kind points kubectl at your new cluster. This is your <Term id="context">context</Term>, the "you are here" sign. Check it before every delete.
+</Card>
+
+<Card id="predict-codespaces" type="predict">
+Your laptop is old and slow. What is a free fallback?
+
+<Interactive name="Choice" options={[{ label: 'A codespace: a cloud computer with free monthly hours', correct: true, why: 'A free personal account gets 120 hours a month. That is about 60 hours on a 2-core machine.' }, { label: 'A paid cloud cluster, left on all month', why: 'That can cost a lot. Free options come first.' }, { label: 'Give up on Kubernetes', why: 'Never! Codespaces and online labs need only a browser.' }]} />
+</Card>
+
+<Card id="check-safe" type="check">
+Safe habits keep a homelab fun. Judge each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Practise only on throwaway clusters.', good: true, why: 'Break it, delete it, make a new one.' }, { text: 'Open your homelab to the whole internet on day one.', good: false, why: 'Keep it at home first. K6 shows how to lock things down.' }, { text: "Back up the old laptop's files before you wipe it.", good: true, why: 'Your old photos matter more than a cluster.' }, { text: 'Practise on your work cluster at night.', good: false, why: 'Never. Use your own throwaway cluster.' }, { text: 'Stop your codespace when you are done.', good: true, why: 'A stopped codespace stops using your free hours.' }, { text: 'Set a budget alert before any paid cloud test.', good: true, why: 'An alert warns you before a bill surprises you.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now build a free homelab to practise Kubernetes.
+</Card>
+
+<Card id="deeper" type="deeper">
+How much memory? Here is a rough guide: 8 GB runs a small cluster. 16 GB feels comfy. minikube is another good local option. Where the story breaks: a homelab is a toy kitchen. It is perfect for practice, but never for real customers.
+</Card>

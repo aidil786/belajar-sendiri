@@ -1,0 +1,69 @@
+---
+id: docker-d2-l08
+world: 2
+title: "Multi-stage builds"
+summary: "You will learn: to cook in one stage and pack only the finished dish."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d2-l07]
+scenario: d2-l08
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Multi-stage builds", url: "https://docs.docker.com/build/building/multi-stage/" }
+  - { label: "Docker docs: Multi-stage builds (concepts)", url: "https://docs.docker.com/get-started/docker-concepts/building-images/multi-stage-builds/" }
+---
+
+<Card id="hook" type="hook">
+Your Kedai Kancil page is built with Node. Your one-stage image is 244MB, for one HTML page! What takes the space?
+
+<Interactive name="Choice" options={[{ label: 'Node and npm, used only to build', correct: true, why: 'The diners never need the cooking tools.' }, { label: 'The HTML page', why: 'The page is tiny, under 1kB.' }, { label: 'Docker adds 200MB to every image', why: 'Docker adds nothing. The base and your layers are the size.' }]} />
+</Card>
+
+<Card id="see-stages" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l08" commands={['cat Dockerfile', 'docker build -t kedai:1.0 .']} label="The recipe has two FROM lines. Steps marked build run in node:24-alpine. The last stage starts from nginx and copies /src/dist from the build stage." />
+
+A **<Term id="multi-stage-build">multi-stage build</Term>** has two kitchens. The `build` stage cooks with Node. The last stage starts fresh from nginx. `COPY --from=build` carries over only the dish: `dist/`.
+</Card>
+
+<Card id="try-order" type="try">
+Put this two-stage recipe in order.
+
+<Interactive name="OrderList" items={['FROM node:24-alpine AS build', 'RUN npm ci', 'RUN npm run build', 'FROM nginx:1.30-alpine', 'COPY --from=build /src/dist/ /usr/share/nginx/html/']} label="First line at the top" success="Cook first, then a fresh stage takes only the dish." />
+
+<Hint>Each stage starts with its own FROM. Cook before you serve.</Hint>
+</Card>
+
+<Card id="try-target" type="try">
+Build only the cooking stage as `kedai:build`. Then build the full recipe as `kedai:1.0`. Compare their sizes.
+
+<Interactive name="KitchenSim" scenario="d2-l08" goal={{ imageExists: ['kedai:build', 'kedai:1.0'], lastTyped: '^docker images' }} hints={['Type docker build --target build -t kedai:build .', 'Then docker build -t kedai:1.0 .', 'Then docker images kedai']} success="Same recipe. The served pack is a fraction of the kitchen." />
+
+<Hint>`--target build` stops after the stage called `build`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Is `npm` inside `kedai:1.0`?
+
+<Interactive name="Choice" options={[{ label: 'No. It stayed in the build stage', correct: true, why: 'The last stage started from nginx. Only dist/ was copied in.' }, { label: 'Yes. Every stage ends up in the image', why: 'Only the last stage becomes the image. The others are left behind.' }, { label: 'Only npm, not Node', why: 'Neither. The final stage never had them.' }]} />
+</Card>
+
+<Card id="check-npm" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l08" commands={['docker build -t kedai:1.0 .', 'docker run --rm kedai:1.0 which npm', 'docker build --target build -t kedai:build .', 'docker run --rm kedai:build which npm']} fails={['docker run --rm kedai:1.0 which npm']} label="which npm prints nothing in kedai:1.0 and exits with code 1. In kedai:build it prints /usr/local/bin/npm." />
+
+`which npm` finds nothing in `kedai:1.0`. In the build stage, npm is there. Diners never see the kitchen.
+</Card>
+
+<Card id="win" type="win">
+You can now cook in one stage and ship only the dish.
+</Card>
+
+<Card id="deeper" type="deeper">
+Stages without a name are called by number: `COPY --from=0`. Names are clearer. `COPY --from` can also copy from any image, like `--from=nginx:1.30-alpine`. Fewer tools in the final image also means fewer security holes.
+
+<Interactive name="Mission" id="d2-l08-rep" steps={[{ id: 'stage', text: 'Take a project with a build step. Add a build stage named build.' }, { id: 'final', text: 'Start a second stage from nginx and COPY --from=build the output folder.' }, { id: 'compare', text: 'Build both stages and compare sizes.', command: 'docker images' }]} success="Your served image lost its kitchen!" />
+</Card>

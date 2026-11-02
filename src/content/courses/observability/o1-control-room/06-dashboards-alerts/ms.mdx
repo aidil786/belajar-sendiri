@@ -1,0 +1,62 @@
+---
+id: obs-o1-l06
+world: 1
+title: Dashboard atau amaran?
+summary: "Anda akan belajar: apa yang patut ada di skrin, apa yang layak kejutkan orang, dan cara bezakannya."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, AlertRuleBuilder, SwipeJudge, Mission]
+needs: [obs-o1-l05]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Prometheus: alerting practices", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Grafana: dashboards", url: "https://grafana.com/docs/grafana/latest/dashboards/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 3 pagi. Cakera 71% penuh dan makin penuh perlahan-lahan. Kejutkan seseorang?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Letak di skrin, atau tiket untuk pagi esok.', correct: true, why: 'Ya. Tiada yang rosak malam ini. Biar orang tidur.' }, { label: 'Ya. Lebih baik berjaga-jaga.', why: 'Panggilan yang tak perlu tindakan ajar orang abaikan panggilan.' }, { label: 'Kejutkan seluruh pasukan', why: 'Masalah sebenar pun perlukan seorang, bukan semua.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+**<Term id="dashboard">Dashboard</Term>** (papan pemuka) tunggu sampai anda tengok. Amaran panggil seseorang, sekarang. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'dash', label: 'Dashboard' }, { id: 'alert', label: 'Amaran' }]} items={[{ label: 'Pesanan seminit hari ini', bucket: 'dash', why: 'Seronok ditengok. Tiada siapa perlu bertindak.' }, { label: 'CPU setiap server', bucket: 'dash', why: 'Punca untuk ditengok, bukan panggilan.' }, { label: 'Cakera 71% penuh, naik perlahan', bucket: 'dash', why: 'Uruskan waktu kerja.' }, { label: '6% bayaran gagal selama 5 minit', bucket: 'alert', why: 'Pelanggan terjejas sekarang. Seseorang perlu bertindak.' }, { label: 'Laman kedai tak jawab sesiapa', bucket: 'alert', why: 'Rosak sepenuhnya. Bertindak sekarang.' }]} success="Skrin untuk ditengok. Amaran untuk bertindak." />
+</Card>
+
+<Card id="try-alert" type="try">
+Bina satu **<Term id="alert">amaran</Term>** yang panggil orang hanya bila pelanggan terjejas. Pilih blok, kemudian uji.
+
+<Interactive name="AlertRuleBuilder" scenario="o1-lunch-rush" alert="CheckoutFailing" exprs={[{ expr: 'kedai_orders_per_minute > 30', label: 'Banyak pesanan', why: 'Sibuk itu berita baik. Banyak pesanan bukan masalah.' }, { expr: 'kedai_checkout_errors_ratio > 0.02', label: 'Lebih 2% bayaran gagal' }]} fors={['0s', '5m']} goal={{ firingAt: ['25m'], quietAt: ['18m'] }} solution={{ expr: 1, for: 1 }} hints={['Blok mana yang menyakitkan pelanggan: banyak pesanan, atau bayaran gagal?']} success="Ia senyap waktu sibuk, dan panggil bila bayaran gagal." />
+
+<Hint>Amaran patut bermaksud: pelanggan terjejas, bertindak sekarang.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Amaran anda tunggu 5 minit sebelum memanggil (`for: 5m`). Kenapa tunggu?
+
+<Interactive name="Choice" options={[{ label: 'Supaya gangguan sekejap tak kejutkan sesiapa', correct: true, why: 'Ya. Kalau masih teruk selepas 5 minit, ia memang betul.' }, { label: 'Beri masa untuk masalah membesar', why: 'Tujuannya kurangkan penggera palsu, bukan besarkan masalah.' }, { label: 'Prometheus lambat', why: 'Prometheus semak setiap minit. Tunggu itu pilihan anda.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Adakah ini amaran yang baik? Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ralat bayaran lebih 2% selama 5 minit', good: true, why: 'Pelanggan terjejas, dan ia bukan gangguan sekejap.' }, { text: 'CPU lebih 70%', good: false, why: 'CPU sibuk mungkin okey. Beri amaran pada apa yang pengguna rasa.' }, { text: 'Cakera penuh dalam 4 jam pada kadar ini', good: true, why: 'Bertindak sekarang, sebelum ia rosak.' }, { text: 'Deploy dah siap', good: false, why: 'Bagus untuk tahu, tapi tiada siapa perlu bertindak. Hantar mesej chat sahaja.' }, { text: 'Banyak pesanan sekarang', good: false, why: 'Itu berita baik!' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih antara dashboard dan amaran.
+</Card>
+
+<Card id="deeper" type="deeper">
+Amaran yang baik itu segera, perlukan manusia, dan perlukannya sekarang. Yang lain masuk dashboard, tiket atau mesej chat. Dunia O3 bina peraturan amaran sebenar dan hantarnya dengan Alertmanager.
+
+<Interactive name="Mission" id="obs-o1-l06-real" steps={[{ id: 'list', text: 'Senaraikan amaran yang sampai kepada anda bulan lepas, atau bayangkan lima untuk aplikasi anda.' }, { id: 'act', text: 'Untuk setiap satu, tanya: adakah seseorang perlu bertindak serta-merta?' }, { id: 'move', text: 'Pindahkan setiap “tidak” ke dashboard atau tiket.' }]} success="Kurang amaran, lebih bermakna. Diri anda pada masa depan berterima kasih." />
+</Card>

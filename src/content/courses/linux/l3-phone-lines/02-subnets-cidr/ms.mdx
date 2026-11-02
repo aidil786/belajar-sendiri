@@ -1,0 +1,73 @@
+---
+id: linux-l3-l02
+world: 3
+title: "Subnet dan CIDR"
+summary: "Anda akan belajar: maksud /24, dan bila panggilan melalui gateway."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SortCards, OrderList, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l01]
+scenario: linux-l3-ip
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ip-route(8)", url: "https://man7.org/linux/man-pages/man8/ip-route.8.html" }
+  - { label: "RFC 4632: CIDR", url: "https://www.rfc-editor.org/rfc/rfc4632" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ip" intro={['ip -br addr', 'ip route']} network />
+
+kedai ialah `10.0.0.5/24`. Apa maksud `/24`? Ia tentukan siapa yang kedai boleh hubungi terus.
+</Card>
+
+<Card id="try-street" type="try">
+Bayangkan satu jalan. Tiga nombor pertama ialah nama jalan. Nombor terakhir ialah rumah. Jalan itu dipanggil <Term id="subnet">subnet</Term>. Rumah mana di jalan kedai?
+
+<Interactive name="SortCards" buckets={[{ id: 'same', label: 'Jalan sama (10.0.0.x)' }, { id: 'other', label: 'Jalan lain' }]} items={[{ label: '10.0.0.20', bucket: 'same', why: '10.0.0, kemudian rumah 20.' }, { label: '10.0.0.250', bucket: 'same', why: '10.0.0, kemudian rumah 250.' }, { label: '10.0.1.5', bucket: 'other', why: 'Nombor ketiga berbeza: 10.0.1 ialah jalan sebelah.' }, { label: '203.0.113.10', bucket: 'other', why: 'Kawasan bandar yang lain langsung.' }]} success="Tiga nombor pertama sama: jalan sama." />
+</Card>
+
+<Card id="see-size" type="see">
+Nombor selepas garis condong ialah **CIDR**. Ia kira berapa banyak alamat yang namakan jalan. Nombor lebih besar bermaksud jalan lebih pendek. Susun dari rumah paling sedikit ke paling banyak.
+
+<Interactive name="OrderList" items={['/32: satu rumah', '/28: 16 rumah', '/24: 256 rumah', '/16: 65,536 rumah']} label="Rumah paling sedikit di atas" success="Nombor lebih besar, jalan lebih kecil." />
+</Card>
+
+<Card id="check-count" type="check">
+Jalan /24 ada 256 nombor. Dua disimpan: `.0` namakan jalan dan `.255` hubungi semua rumah serentak. Berapa komputer muat?
+
+<Interactive name="Choice" options={[{ label: '254', correct: true, why: '256 tolak dua nombor yang disimpan.' }, { label: '256', why: '.0 dan .255 disimpan untuk jalan itu sendiri.' }, { label: '24', why: '/24 kira bahagian jalan, bukan rumah.' }]} />
+</Card>
+
+<Card id="try-route" type="try">
+Panggilan ke jalan lain pergi ke <Term id="gateway">gateway</Term>: ibu sawat telefon. Cari nombornya dengan `ip route`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ip" goal={{ lastTyped: '^ip r' }} hints={['Taip ip route dan tekan Enter.', 'Baca baris yang bermula dengan default.']} solution={['ip route']} success="default via 10.0.0.1: setiap jalan lain melalui 10.0.0.1." />
+</Card>
+
+<Card id="predict" type="predict">
+kedai hubungi 10.0.0.20. Adakah panggilan itu melalui ibu sawat di 10.0.0.1?
+
+<Interactive name="Choice" options={[{ label: 'Tidak, ia terus ke sana', correct: true, why: 'Jalan sama. Baris 10.0.0.0/24 dev eth0 meliputinya.' }, { label: 'Ya, setiap panggilan begitu', why: 'Hanya panggilan ke jalan lain guna laluan default.' }, { label: 'Ia tak boleh hubungi', why: 'Jalan sama, jadi panggilan terus berjaya.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Betul atau tidak? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '10.0.0.77 berada di jalan 10.0.0.0/24.', good: true, why: 'Tiga nombor pertama sama.' }, { text: 'Jalan /16 lebih kecil daripada jalan /24.', good: false, why: 'Nombor lebih kecil, jalan lebih besar: 65,536 nombor.' }, { text: 'kedai.example (203.0.113.10) dicapai melalui gateway.', good: true, why: 'Jalan lain, jadi guna laluan default.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca /24 dan tahu bila panggilan melalui gateway.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di sebalik tabir, /24 bermaksud 24 bit pertama daripada 32. Cara lama menulisnya ialah mask: `255.255.255.0`. Rangkaian cloud guna idea yang sama. Dalam Dunia A3, anda rancang subnet untuk pusat beli-belah.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="linux-l3-l02-rep" steps={[{ id: 'route', text: 'Linux atau WSL: tunjuk laluan anda. Cari baris default.', command: 'ip route' }, { id: 'street', text: 'Tulis jalan anda, contohnya 192.168.1.0/24.' }]} success="Anda jumpa jalan rumah anda dan ibu sawatnya." />
+</Card>

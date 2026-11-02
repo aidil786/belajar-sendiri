@@ -1,0 +1,78 @@
+---
+id: aws-a4-l07
+world: 4
+title: "Deploy from GitHub Actions with OIDC"
+summary: "You will learn: to push Kedai Kancil's image to ECR and roll it out on ECS from GitHub Actions, with no stored AWS keys."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, SpotLines, YamlBuilder, IamJudge]
+needs: [aws-a4-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM: Create an OIDC identity provider", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html" }
+  - { label: "IAM: Role for web identity (OIDC) federation", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html" }
+  - { label: "GitHub: OpenID Connect in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "GitHub: Deploy to Amazon ECS", url: "https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/amazon-elastic-container-service" }
+  - { label: "aws-actions/configure-aws-credentials", url: "https://github.com/aws-actions/configure-aws-credentials" }
+---
+
+<Card id="hook" type="hook">
+Your workflow must push a new image to ECR and update the ECS service. It needs AWS keys. Which ones?
+
+<Interactive name="Choice" options={[{ label: 'A short-lived role, borrowed with a GitHub badge', correct: true, why: 'Yes. OIDC from CI/CD World C3. Nothing is stored, so nothing old can leak.' }, { label: 'Access keys saved in repo secrets', why: 'They never expire. A leak works for years.' }, { label: 'The root user’s keys', why: 'Never. Root keys open the whole account.' }]} />
+</Card>
+
+<Card id="see-flow" type="see">
+This is <Term id="oidc" course="cicd">OIDC</Term>, as in CI/CD World C3, now aimed at AWS. Put one deploy in order.
+
+<Interactive name="OrderList" items={['The job asks GitHub for an ID token', 'AWS checks the repo and environment', 'AWS lends short-lived role keys', 'The job pushes the image to ECR', 'ECS rolls out new tasks']} label="First step at the top" success="Badge, check, borrowed keys, push, roll out. The keys melt after the job." />
+</Card>
+
+<Card id="see-trust" type="see">
+The role's trust policy says which badges it accepts. Tap the line that allows only one repo and one environment.
+
+<Interactive name="SpotLines" prompt="Tap the line that limits who may borrow the role." success="Only production deploys of you/kedai-kancil get the keys." lines={[{ text: '"Principal": { "Federated": "arn:aws:iam::111122223333:oidc-provider/token.actions.githubusercontent.com" },' }, { text: '"Action": "sts:AssumeRoleWithWebIdentity",' }, { text: '"Condition": {' }, { text: '  "StringEquals": {' }, { text: '    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",' }, { text: '    "token.actions.githubusercontent.com:sub": "repo:you/kedai-kancil:environment:production"', target: true }, { text: '  }' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-yaml" type="try">
+Build the deploy workflow. No stored keys.
+
+<Interactive name="YamlBuilder" workflow="Deploy to ECS" goal={{ order: ['push', 'perms', 'job', 'checkout', 'login', 'ecr', 'build', 'render', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run when main gets new commits.' },
+  { id: 'perms', kind: 'permissions', label: 'Ask for a badge, read the code', yaml: 'id-token: write\ncontents: read', means: 'The job may ask GitHub for an ID token.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'The trust policy checks this environment name.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy the code onto the runner.' },
+  { id: 'login', kind: 'step', label: 'Borrow the AWS role', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    role-to-assume: arn:aws:iam::111122223333:role/kedai-deploy\n    aws-region: ap-southeast-5', means: 'Swap the badge for short-lived keys.' },
+  { id: 'keys', kind: 'step', label: 'Log in with stored keys', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}\n    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}\n    aws-region: ap-southeast-5', means: 'Keys kept in secrets.', why: 'Those are the long-lived keys we want gone.' },
+  { id: 'ecr', kind: 'step', label: 'Log in to ECR', yaml: '- id: ecr\n  uses: aws-actions/amazon-ecr-login@v2', means: 'Docker may now push to your shelf.' },
+  { id: 'build', kind: 'step', label: 'Build and push the image', yaml: '- run: docker build -t $REGISTRY/kedai-kancil:$GITHUB_SHA . && docker push $REGISTRY/kedai-kancil:$GITHUB_SHA\n  env:\n    REGISTRY: ${{ steps.ecr.outputs.registry }}', means: 'Tag it with the commit, then push.' },
+  { id: 'render', kind: 'step', label: 'Write the new image on the card', yaml: '- id: render\n  uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc\n  with:\n    task-definition: taskdef.json\n    container-name: web\n    image: ${{ steps.ecr.outputs.registry }}/kedai-kancil:${{ github.sha }}', means: 'A new recipe card with the new image.' },
+  { id: 'deploy', kind: 'step', label: 'Roll out on ECS', yaml: '- uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a\n  with:\n    task-definition: ${{ steps.render.outputs.task-definition }}\n    cluster: kedai\n    service: shop\n    wait-for-service-stability: true', means: 'Register the card, update the service, wait until healthy.' }]}
+  success="A keyless deploy: badge in, image out, tasks rolled." />
+
+<Hint>Trigger, the badge permission, the job, then the steps in deploy order.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Someone pushes to a test branch without the production environment. Their job asks for the role. What happens?
+
+<Interactive name="Choice" options={[{ label: 'AWS refuses: the badge names no production environment', correct: true, why: 'The sub line must match exactly. Theirs does not.' }, { label: 'It works, it is the same repo', why: 'The trust policy names the environment too.' }, { label: 'It uses stored keys instead', why: 'There are none. That was the point.' }]} />
+</Card>
+
+<Card id="check-key" type="check">
+The deploy role may update the service. Now a run tries to delete it. Will AWS allow it?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-deploy/run-7', who: 'kedai-deploy', action: 'ecs:DeleteService', resource: 'arn:aws:ecs:ap-southeast-5:111122223333:service/kedai/shop' }} policies={[{ name: 'deploy-shop', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecs:UpdateService', 'ecs:DescribeServices'], Resource: 'arn:aws:ecs:ap-southeast-5:111122223333:service/kedai/shop' }] } }]} success="Right. A deploy key can update. It can never delete." />
+</Card>
+
+<Card id="win" type="win">
+You can now deploy to ECS from GitHub Actions, with no stored keys.
+</Card>
+
+<Card id="deeper" type="deeper">
+The full role also needs ECR push rights, `ecs:RegisterTaskDefinition` and `iam:PassRole` for the task roles. GitHub's guide pins the ECS steps to exact commits, as here. Newer repos may use another subject format. Copy the exact one from GitHub's OIDC docs.
+</Card>

@@ -1,0 +1,64 @@
+---
+id: iac-t1-l01
+world: 1
+title: Klik atau tulis?
+summary: "Anda akan belajar: kenapa pasukan tulis server mereka sebagai pelan."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, TofuSim, SortCards, Mission]
+needs: []
+scenario: t1-sign
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "What is OpenTofu?", url: "https://opentofu.org/docs/intro/" }
+  - { label: "Installing OpenTofu", url: "https://opentofu.org/docs/intro/install/" }
+  - { label: "What is Terraform?", url: "https://developer.hashicorp.com/terraform/intro" }
+---
+
+<Card id="hook" type="hook">
+Anda sediakan gerai Kedai Kancil dengan klik 40 butang di sebuah laman web. Bos kata: "Buat yang sama di Penang." Apa yang boleh jadi masalah?
+
+<Interactive name="Choice" options={[{ label: 'Anda terlepas satu klik, jadi dua gerai itu berbeza', correct: true, why: 'Tiada siapa ingat 40 klik. Senarai bertulis tak pernah lupa.' }, { label: 'Tiada masalah. Klik sentiasa tepat.', why: 'Orang terlepas langkah. Salinan itu jadi sedikit berbeza.' }, { label: 'Laman web itu tak benarkan buat dua', why: 'Ia boleh buat dua. Masalahnya ialah buat kedua-duanya sama.' }]} />
+</Card>
+
+<Card id="see-loop" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1. Lukis', title: 'Tulis pelan', text: 'Satu fail teks kata apa yang kedai perlukan: papan tanda, menu, server.' }, { when: '2. Periksa', title: 'Baca plan', text: 'Alat itu banding pelan dengan apa yang sudah dibina. Ia senaraikan setiap perubahan dulu.' }, { when: '3. Bina', title: 'Apply', text: 'Anda kata yes. Alat itu bina tepat seperti yang pelan kata.' }, { when: '4. Ubah', title: 'Edit dan ulang', text: 'Perlu ubah? Edit fail itu, bukan laman web. Kemudian periksa dan bina semula.' }]} />
+
+Arkitek lukis dulu, baru bina. Cara tulis tetapan anda begini ialah **<Term id="infrastructure-as-code">infrastructure as code (infrastruktur sebagai kod)</Term>**. Tekan setiap langkah.
+</Card>
+
+<Card id="try-build" type="try">
+Fail ini, `main.tf`, ialah pelan. Ia minta satu benda: `sign.txt`. Taip `tofu apply`, kemudian `yes`.
+
+<Interactive name="TofuSim" scenario="t1-sign" intro={['tofu init']} goal={{ resourceInState: ['local_file.sign'], filesExist: ['sign.txt'] }} hints={['Taip tofu apply dan tekan Enter.', 'OpenTofu tanya satu soalan. Taip yes dan tekan Enter.']} success="Siap dibina! sign.txt wujud, tepat seperti yang pelan kata." />
+
+<Hint>Taip `tofu apply`. Bila ia tanya, taip `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kawan anda jalankan `main.tf` yang sama di laptop dia. Apa dia dapat?
+
+<Interactive name="Choice" options={[{ label: 'sign.txt yang sama, perkataan demi perkataan', correct: true, why: 'Pelan sama, bangunan sama. Itulah tujuannya.' }, { label: 'Papan tanda yang sedikit berbeza', why: 'Tiada apa bergantung pada ingatan. Fail itu tulis setiap perkataan.' }, { label: 'Tiada apa, sebab anda bina dulu', why: 'Laptop dia ada folder sendiri. Dia bina salinan sendiri.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Klik atau pelan? Asingkan setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'click', label: 'Klik dengan tangan' }, { id: 'code', label: 'Pelan dalam fail' }]} items={[{ label: 'Hasil sama setiap kali', bucket: 'code', why: 'Fail tak pernah lupa langkah.' }, { label: 'Rakan boleh semak sebelum apa-apa dibina', bucket: 'code', why: 'Teks boleh masuk pull request.' }, { label: 'Susah nak tahu siapa ubah apa', bucket: 'click', why: 'Klik tak tinggalkan sejarah. Git simpan setiap perubahan fail.' }, { label: 'Cepat untuk tengok-tengok sekali sahaja', bucket: 'click', why: 'Okey untuk meneroka. Tulis bila ia penting.' }, { label: 'Undur dengan kembali ke versi lama', bucket: 'code', why: 'Git ada setiap versi lama pelan itu.' }]} success="Fail menang bila ia mesti sama dua kali." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa pasukan lukis pelan, bukan klik.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pelajaran ini guna OpenTofu (arahan `tofu`). Terraform (`terraform`) baca fail yang sama; pelajaran 8 bandingkan kedua-duanya. Ada alat lain juga. Ideanya tetap sama: lukis, periksa, bina.
+
+Latihan sebenar (pilihan), di komputer anda sendiri. Provider local cuma tulis fail, jadi tiada kos.
+
+<Interactive name="Mission" id="iac-t1-l01-rep" steps={[{ id: 'install', text: 'Pasang OpenTofu. Ikut langkah untuk sistem anda di opentofu.org.' }, { id: 'folder', text: 'Buat folder kosong dan masuk ke dalamnya.', command: 'mkdir kedai && cd kedai' }, { id: 'file', text: 'Buat main.tf dengan blok papan tanda dari pelajaran ini. Salin dari editor.' }, { id: 'init', text: 'Dapatkan provider.', command: 'tofu init' }, { id: 'apply', text: 'Bina. Taip yes bila ditanya.', command: 'tofu apply' }, { id: 'look', text: 'Baca papan tanda anda.', command: 'cat sign.txt' }]} success="Itu OpenTofu sebenar!" />
+</Card>

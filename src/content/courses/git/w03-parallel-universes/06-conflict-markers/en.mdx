@@ -1,0 +1,66 @@
+---
+id: git-w03-l06
+world: 3
+title: Read conflict markers
+summary: "You will learn: why a merge stops, and how to read Git's conflict markers."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, SpotLines, Choice]
+needs: [git-w03-l05]
+scenario: w03-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge: how conflicts are presented", url: "https://git-scm.com/docs/git-merge#_how_conflicts_are_presented" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake']} label="git merge cake prints: Auto-merging index.html. CONFLICT (content): Merge conflict in index.html. Automatic merge failed." />
+
+You merge `cake` into main, and Git stops. CONFLICT! Did you break your diary?
+</Card>
+
+<Card id="see-why" type="see">
+<Interactive name="GraphScene" scenario="w03-l06" commands={['git merge cake']} label="main and cake each have a new commit. The merge stops: a red Conflict badge with a warning sign appears under HEAD." />
+
+Nothing broke. Both branches wrote a different day 2 on the same line. That's a **<Term id="conflict">conflict</Term>**. Git can't guess, so it asks you.
+</Card>
+
+<Card id="see-markers" type="see">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'cat index.html']} label="index.html now holds both day 2 lines, between three marker lines." />
+
+Git wrote both versions into the file. **<Term id="conflict-markers">Conflict markers</Term>** fence them in. Your line sits on top. Theirs sits below.
+</Card>
+
+<Card id="try-spot" type="try">
+Find the fences.
+
+<Interactive name="SpotLines" scenario="w03-l06" commands={['git merge cake', 'cat index.html']} targets="^(<<<<<<<|=======|>>>>>>>)" prompt="Tap the three marker lines." success="Found them! You delete these lines when you fix the file." />
+
+<Hint>They start with seven `<`, seven `=` or seven `>`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Which day 2 line came from your branch, main?
+
+<Interactive name="Choice" options={[{ label: 'The line between `<<<<<<< HEAD` and `=======`', correct: true, why: 'HEAD is your branch. Its version comes first.' }, { label: 'The line between `=======` and `>>>>>>> cake`', why: 'That part came from cake, the branch you merged in.' }, { label: 'Neither. Git deleted yours.', why: 'Git never throws your work away here. Both lines are in the file.' }]} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'git status']} pulse label="git status says: You have unmerged paths. Under Unmerged paths: both modified: index.html." />
+
+Lost mid-merge? Run `git status`. It lists the files to fix as both modified. It even names your next steps.
+</Card>
+
+<Card id="win" type="win">
+You can now read conflict markers without panic.
+</Card>
+
+<Card id="deeper" type="deeper">
+During a conflict, `git diff` shows both sides at once. Want to see the line before either change? Run `git config --global merge.conflictStyle diff3`. Then a part starting with `|||||||` shows the old base line.
+
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'git diff']} label="git diff during the conflict: a combined diff with both day 2 lines and the markers." />
+</Card>

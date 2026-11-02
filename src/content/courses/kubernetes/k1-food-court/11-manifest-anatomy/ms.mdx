@@ -1,0 +1,71 @@
+---
+id: k8s-k1-l11
+world: 1
+title: Anatomi manifest
+summary: "Anda akan belajar: empat bahagian setiap pesanan Kubernetes, dan satu yang Kubernetes tulis sendiri."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, SortCards, Choice, YamlDoctor]
+needs: [k8s-k1-l10]
+scenario: k1-tray
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Objects in Kubernetes", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/" }
+  - { label: "Declarative management with kubectl apply", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-first-pod" commands={['kubectl apply -f tray.yaml', 'kubectl get pods']} label="kubectl apply -f tray.yaml cipta pod/tray. Satu fail kecil buat satu dulang penuh." />
+
+Satu fail kecil buat dulang ini. Apa yang setiap baris beritahu Kubernetes?
+</Card>
+
+<Card id="try-keys" type="try">
+Fail ini ialah **<Term id="manifest">manifest (slip pesanan)</Term>**: pesanan yang ditulis dalam YAML. Tekan 4 kunci paling luarnya. Ia bermula di tepi kiri.
+
+<Interactive name="SpotLines" prompt="Tekan 4 kunci paling luar dalam tray.yaml." lines={[{ text: 'apiVersion: v1', target: true }, { text: 'kind: Pod', target: true }, { text: 'metadata:', target: true }, { text: '  name: tray' }, { text: '  labels:' }, { text: '    app: tray' }, { text: 'spec:', target: true }, { text: '  containers:' }, { text: '    - name: web' }, { text: '      image: nginx:1.29-alpine' }]} success="apiVersion, kind, metadata, spec: setiap pesanan ada semuanya." />
+
+<Hint>Baris yang menjorok milik kunci di atasnya.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Siapa tulis setiap bahagian? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'Anda tulis' }, { id: 'k8s', label: 'Kubernetes tulis' }]} items={[{ label: '`apiVersion: v1`', bucket: 'you', why: 'Versi buku peraturan yang mana.' }, { label: '`kind: Pod`', bucket: 'you', why: 'Jenis benda yang perlu dibuat.' }, { label: '`metadata.name: tray`', bucket: 'you', why: 'Namanya, dan label jika mahu.' }, { label: '`spec.containers`', bucket: 'you', why: 'Apa yang anda mahu: pesanan itu sendiri.' }, { label: '`status.phase: Running`', bucket: 'k8s', why: 'Apa yang benar-benar ada sekarang.' }, { label: '`metadata.uid`', bucket: 'k8s', why: 'Id unik yang kluster berikan.' }]} success="Anda tulis pesanan. Kubernetes tulis apa yang berlaku." />
+</Card>
+
+<Card id="see-status" type="see">
+<Interactive name="KubeReplay" scenario="k1-tray" commands={['kubectl get pod tray -o jsonpath={.status.phase}']} label="Minta status.phase sahaja cetak: Running." />
+
+`spec` ialah apa yang anda pesan. **<Term id="status">status</Term>** ialah apa yang Kubernetes nampak sekarang. Ia kotak Nampak pada papan pengurus.
+</Card>
+
+<Card id="predict" type="predict">
+Anda tambah `replicas: 3` di bawah `spec` Pod ini. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia ditolak', correct: true, why: 'Kubernetes kata: strict decoding error: unknown field "spec.replicas". Maksudnya: Pod tiada medan itu. Mengira dulang ialah kerja Deployment.' }, { label: '3 dulang muncul', why: 'Pod ialah satu dulang. Ia tak boleh mengira. Deployment boleh (Dunia K2).' }, { label: 'Ia diabaikan senyap-senyap', why: 'Kubernetes semak medan dengan ketat. Medan yang ia tak kenal ditolak.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+Pesanan ini ditolak. Baca baris merah, kemudian betulkan fail sehingga `kubectl apply` jadi hijau.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: apps/v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} keep={['^kind: Pod$', 'name: tray']} hint="Pod tinggal dalam kumpulan teras. apiVersion-nya cuma v1." success="pod/tray created. Buku peraturan betul, jenis betul." />
+
+<Hint>Deployment guna apps/v1. Pod guna v1.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca empat bahagian mana-mana manifest.
+</Card>
+
+<Card id="deeper" type="deeper">
+Lihat setiap medan yang Kubernetes tambah. `uid`, `creationTimestamp` dan seluruh `status` datang daripada kluster. Jangan salin balik ke dalam fail anda.
+
+<Interactive name="KubeReplay" scenario="k1-tray" picture={false} commands={['kubectl get pod tray -o yaml']} label="Pod penuh seperti yang disimpan: medan anda, ditambah banyak nilai lalai dan blok status yang Kubernetes tulis." />
+
+Latihan sebenar (pilihan): di kluster kind anda, jalankan `kubectl get pod tray -o yaml` dan cari blok status.
+</Card>

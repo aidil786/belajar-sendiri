@@ -1,0 +1,70 @@
+---
+id: obs-o3-l01
+world: 3
+title: "Alert rules: for, labels, annotations"
+summary: "You will learn: to write an alert rule that rings only for real trouble."
+minutes: 5
+xp: 25
+interactives: [PromQLPlayground, SpotLines, Choice, AlertRuleBuilder, SortCards, Transcript, Mission]
+needs: [obs-o2-l09]
+scenario: o3-target-down
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Template examples", url: "https://prometheus.io/docs/prometheus/latest/configuration/template_examples/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PromQLPlayground" scenario="o3-target-down" initial="up" prompt="Press Run. Look at shop-1 on the graph." />
+
+At 11m, shop-1 stopped answering. Nobody was watching the screen. How can the control room ring a bell by itself?
+</Card>
+
+<Card id="see-rule" type="see">
+<Interactive name="SpotLines" prompt="Tap the line that says how long to wait." lines={[{ text: 'groups:' }, { text: '  - name: kedai' }, { text: '    rules:' }, { text: '      - alert: InstanceDown' }, { text: '        expr: up == 0' }, { text: '        for: 5m', target: true }, { text: '        labels:' }, { text: '          severity: page' }, { text: '        annotations:' }, { text: '          summary: "{{ $labels.instance }} is down"' }]} success="Yes. for: 5m means: still true after 5 minutes? Then ring." />
+
+An **<Term id="alerting-rule">alert rule</Term>** is a question Prometheus asks every minute. Any rows in the answer? The bell gets ready.
+</Card>
+
+<Card id="predict-blip" type="predict">
+db-1 was down for only 3 minutes. The rule waits `for: 5m`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Pending, then quiet. No bell.', correct: true, why: 'Yes! It waited, db-1 came back, and the wait started over.' }, { label: 'The bell rings at once', why: 'Only a rule with no for rings at once.' }, { label: 'The bell rings after 5 minutes', why: 'db-1 was back after 3. The wait stopped there.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build the rule. Page someone when a target is really down. Not for a short blip.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-target-down" alert="InstanceDown" exprs={[{ expr: 'up == 0' }, { expr: 'up == 1', why: 'up == 1 is true when the target is fine.' }]} fors={['0s', '1m', '5m']} labels={[{ labels: {} }, { labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: 'Something is down' } }, { annotations: { summary: '{{ $labels.instance }} is down' } }]} goal={{ firingAt: ['20m'], quietAt: ['7m'], noFlap: true, firingLabels: { instance: 'shop-1' }, labels: { severity: 'page' }, annotationUses: ['$labels.instance'] }} solution={{ expr: 0, for: 2, labels: 1, annotations: 1 }} hints={['The db-1 blip lasts 3 minutes. Wait longer than that.', 'Pick severity: page, and a message that names the instance.']} success="Shop-1 rings the bell. The db-1 blip stays quiet." />
+
+<Hint>Amber ⏳ is pending: waiting. Red 🔔 is firing: the bell rings.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'labels', label: 'labels' }, { id: 'annotations', label: 'annotations' }]} items={[{ label: 'severity: page', bucket: 'labels', why: 'Labels decide who gets the bell.' }, { label: 'team: kedai', bucket: 'labels', why: 'A label: it helps route the bell to the right team.' }, { label: 'summary: shop-1 is down', bucket: 'annotations', why: 'A note for the human who reads it.' }, { label: 'runbook_url: a link to the fix steps', bucket: 'annotations', why: 'A note: where to read what to do.' }]} success="Labels steer the bell. Annotations explain it." />
+
+**Labels** steer the bell to the right person. Annotations are the note on it.
+</Card>
+
+<Card id="check-promtool" type="check">
+<Interactive name="Transcript" title="bash" label="promtool checks broken.yml: FAILED, parse error unexpected =. Then it checks rules.yml: SUCCESS, 1 rules found." lines={[{ cmd: 'promtool check rules broken.yml' }, { out: 'Checking broken.yml\n  FAILED:\nbroken.yml: 5:15: group "kedai", rule 1, "InstanceDown": could not parse expression: 1:4: parse error: unexpected "="', color: 'red' }, { cmd: 'promtool check rules rules.yml' }, { out: 'Checking rules.yml\n  SUCCESS: 1 rules found', color: 'green' }]} />
+
+`promtool check rules` tests the file before Prometheus loads it. The red line means: `=` is not a check. PromQL compares with `==`.
+</Card>
+
+<Card id="win" type="win">
+You can now write an alert rule that waits, then rings the right person.
+</Card>
+
+<Card id="deeper" type="deeper">
+`keep_firing_for: 5m` keeps the bell ringing a little after the problem ends. It stops on-off-on noise. In a message, `{{ $labels.instance }}` is the target and `{{ $value }}` is the number.
+
+Real rep: run promtool from the official image. Your own laptop is fine.
+
+<Interactive name="Mission" id="obs-o3-l01-real" steps={[{ id: 'file', text: 'Save the rule from the second card as rules.yml in an empty folder.' }, { id: 'check', text: 'Check it with promtool from the official Prometheus image.', command: 'docker run --rm --entrypoint promtool -v "$PWD:/w" -w /w quay.io/prometheus/prometheus:v3.13.5 check rules rules.yml' }, { id: 'break', text: 'Change == to = and check again. Read the red line kindly, then fix it.' }]} success="You checked a real rule file!" />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: k8s-k1-l09
+world: 1
+title: "You are here: contexts"
+summary: "You will learn: how to see, and change, which cluster kubectl talks to."
+minutes: 4
+xp: 20
+interactives: [YouAreHere, KubeReplay, FoodCourtSim, Choice, SwipeJudge]
+needs: [k8s-k1-l08]
+scenario: k1-two-sites
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Organizing cluster access using kubeconfig files", url: "https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" }
+  - { label: "Configure access to multiple clusters", url: "https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/" }
+  - { label: "kubectl config", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="YouAreHere" context="prod-like" namespace="shop" prodLike />
+
+Ben wanted to delete a test tray. But his terminal pointed at the live shop. Lunch orders stopped. How could he have known?
+</Card>
+
+<Card id="see-kubeconfig" type="see">
+<Interactive name="KubeReplay" scenario="k1-two-sites" commands={['kubectl config get-contexts']} label="kubectl config get-contexts lists two contexts: kind-dev with a star, and prod-like with the namespace shop." />
+
+kubectl keeps a list of food courts in one file: your **<Term id="kubeconfig">kubeconfig</Term>**. It lives at `~/.kube/config`. Each row is one place you can talk to.
+</Card>
+
+<Card id="try-where" type="try">
+Each row is a **<Term id="context">context</Term>**: a cluster, a user and a namespace. The star marks where commands go. Type `kubectl config current-context`.
+
+<Interactive name="FoodCourtSim" scenario="k1-two-sites" goal={{ typed: 'config current-context' }} hints={['Type kubectl config current-context and press Enter.']} success="kind-dev: your practice cluster. Same as the pink bar." />
+
+<Hint>The pink bar on top shows the same answer.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You type `kubectl delete pod tray` now. Which cluster loses a tray?
+
+<Interactive name="Choice" options={[{ label: 'kind-dev, the one with the star', correct: true, why: 'Right. Commands go to the current context. Here that is safe.' }, { label: 'prod-like', why: 'Only if you switch to it first. The star says kind-dev.' }, { label: 'Both', why: 'One command goes to one context.' }]} />
+</Card>
+
+<Card id="try-switch" type="try">
+Peek at prod-like, then come back. Watch the pink bar change each time.
+
+<Interactive name="FoodCourtSim" scenario="k1-two-sites" goal={{ typed: 'use-context prod-like', contextIs: 'kind-dev' }} hints={['Type kubectl config use-context prod-like', 'Then kubectl get pods to look around.', 'Then kubectl config use-context kind-dev to come back.']} success="Back home on kind-dev. You switched on purpose, and checked the bar." />
+
+<Hint>`kubectl config use-context prod-like`, then `kubectl get pods`, then `kubectl config use-context kind-dev`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Run current-context before anything risky', good: true, why: 'Two seconds that can save the lunch rush.' }, { text: 'Leave your terminal pointed at production all day', good: false, why: 'Switch there on purpose, then switch back.' }, { text: 'Read the pink bar before you delete', good: true, why: 'It names the cluster and the namespace.' }, { text: 'Copy a delete command from chat and run it at once', good: false, why: 'Check where it will land first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now check where kubectl points before you act.
+</Card>
+
+<Card id="deeper" type="deeper">
+Run one command somewhere else, without switching: `kubectl --context prod-like get pods`. A shell prompt that shows your context helps too.
+
+Real rep (optional): on your laptop, `kubectl config get-contexts` lists every cluster you can reach. Is there one you forgot about?
+</Card>

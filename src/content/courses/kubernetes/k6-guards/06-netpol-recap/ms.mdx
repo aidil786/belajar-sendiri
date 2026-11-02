@@ -1,0 +1,67 @@
+---
+id: k8s-k6-l06
+world: 6
+title: "Ulang kaji NetworkPolicy"
+summary: "Anda akan belajar: pagar pangkalan data supaya hanya pod yang perlu boleh capainya."
+minutes: 3
+xp: 15
+interactives: [Choice, RequestTracer, YamlDoctor, FoodCourtSim, SwipeJudge]
+needs: [k8s-k6-l05]
+scenario: k6-netpol
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "Declare a network policy", url: "https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/" }
+---
+
+<Card id="hook" type="hook">
+Pintu-pintu halang orang asing di luar. Tapi di dalam, mana-mana dulang boleh bercakap dengan pangkalan data. Pencuri masuk ke pod web. Lepas tu?
+
+<Interactive name="Choice" options={[{ label: 'Pencuri boleh capai pangkalan data juga', correct: true, why: 'Secara lalai, setiap pod boleh capai setiap pod. Pagar membaikinya.' }, { label: 'Pangkalan data selamat sebab ada Service', why: 'Service ialah alamat, bukan kunci.' }, { label: 'Kubernetes sekat secara lalai', why: 'Tidak. Pod terbuka antara satu sama lain sehingga anda tambah polisi.' }]} />
+</Card>
+
+<Card id="see-fence" type="see">
+Ulang kaji dari [Dunia K3](/ms/kubernetes/#world-3): **NetworkPolicy** ialah pagar antara gerai. Pagar ini benarkan pintu masuk. Rosakkannya: lupakan pintu masuk. Kemudian hantar.
+
+<Interactive name="RequestTracer" breaks={['policy']} task={{ type: 'outcome', want: 'timeout' }} route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'shop', rules: [{ path: '/api', service: 'api', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 3000, selector: { app: 'api' } }], pods: [{ name: 'api-7d4f9-x2kq4', labels: { app: 'api' }, containerPort: 3000 }], policy: { name: 'lock-api', allowGateway: true }, request: { path: '/api/menu' } }} success="Tamat masa. Pagar buang paket secara senyap. Tiada halaman ralat." />
+</Card>
+
+<Card id="try-doctor" type="try">
+Pagar ini tak boleh di-apply. Baiki baris yang API server tak kenal.
+
+<Interactive name="YamlDoctor" file="db-from-api.yaml" manifest={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-from-api\nspec:\n  podSelector:\n    app: db\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n'} solution={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-from-api\nspec:\n  podSelector:\n    matchLabels:\n      app: db\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n'} keep={['app: db', 'app: api']} keepHint="Simpan kedua-dua label. Pagar memerlukannya." hint="podSelector simpan matchLabels. Tiru bentuk yang di bawah." success="Berjaya! Pagar jaga app=db, dan buka untuk app=api." />
+</Card>
+
+<Card id="try-sim" type="try">
+Pagar pangkalan data betul-betul. Apply pagar deny-all. Kemudian buka pintu untuk api sahaja.
+
+<Interactive name="FoodCourtSim" scenario="k6-netpol" goal={{ reachable: { url: 'http://db', from: 'api' }, unreachable: { url: 'http://db', from: 'stranger' } }} hints={['Taip kubectl apply -f deny.yaml', 'Kemudian kubectl apply -f allow-api.yaml', 'Uji: kubectl exec stranger -- wget -qO- -T 2 http://db']} success="api dapat masuk. stranger tamat masa. Berpagar!" />
+
+<Hint>Dua fail, ikut urutan: `deny.yaml`, kemudian `allow-api.yaml`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Plugin rangkaian kluster anda abaikan NetworkPolicy. Anda apply deny-all. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa berubah. Pagar itu atas kertas sahaja.', correct: true, why: 'Kubernetes simpan polisi itu. Plugin rangkaian yang mesti kuatkuasakannya.' }, { label: 'Semua pod berhenti bercakap', why: 'Hanya plugin yang kuatkuasakan polisi akan sekat trafik.' }, { label: 'kubectl tolak fail itu', why: 'API server terima fail itu. Cuma ia tiada kesan.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat pagar yang baik, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mulakan setiap zon dengan deny-all, kemudian buka pintu kecil', good: true, why: 'Tertutup secara lalai. Buka hanya apa yang perlu.' }, { text: 'Benarkan semua namespace capai pangkalan data', good: false, why: 'Mana-mana pod yang dicuri boleh capainya.' }, { text: 'Selepas pagar deny-all egress, benarkan DNS pada port 53', good: true, why: 'Tanpanya, pod tak boleh cari nama pun.' }, { text: 'Harap Service sorokkan pangkalan data anda', good: false, why: 'Service ialah alamat. Pagar ialah kuncinya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pagar pangkalan data dengan NetworkPolicy.
+</Card>
+
+<Card id="deeper" type="deeper">
+`policyTypes: [Egress]` pagar apa yang keluar. `namespaceSelector` benarkan seluruh zon lalu. Plugin seperti Cilium dan Calico kuatkuasakan polisi. Semak dokumen plugin anda sebelum percaya pada pagar.
+
+<Interactive name="Mission" id="k6-l06-rep" steps={[{ id: 'plugin', text: 'Dalam kluster buang sahaja, semak plugin rangkaian anda kuatkuasakan NetworkPolicy.' }, { id: 'deny', text: 'Apply pagar deny-all dalam zon ujian, seperti deny.yaml dalam pelajaran ini.', command: 'kubectl apply -n fence-test -f deny.yaml' }, { id: 'test', text: 'Dari pod dalam zon itu, cuba capai pod lain. Ia patut tamat masa.' }, { id: 'allow', text: 'Buka satu pintu kecil dengan podSelector. Uji semula.' }]} success="Zon anda ada pagar!" />
+</Card>

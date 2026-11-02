@@ -1,0 +1,76 @@
+---
+id: cicd-c2-l03
+world: 2
+title: Push ke GHCR
+summary: "Anda akan belajar: push image ke registry GitHub dengan token job itu sendiri."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [cicd-c2-l02]
+scenario: c2-fix-permissions
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Working with the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "GITHUB_TOKEN permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-fix-permissions" label="Push ke main bina image, kemudian push ke ghcr.io ditolak. Stesen build jadi merah." />
+
+Tekan Run. Pek siap dibina, kemudian tersekat di pintu peti sejuk: `denied: permission_denied: write_package`. Maksudnya: kunci job ini tak boleh masukkan pek.
+</Card>
+
+<Card id="see-ghcr" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/login-action@v4' }, { text: '  with:' }, { text: '    registry: ghcr.io' }, { text: '    username: ${{ github.actor }}' }, { text: '    password: ${{ secrets.GITHUB_TOKEN }}', target: true }]} prompt="Ketik baris yang serahkan pas job." success="Ya! GITHUB_TOKEN: tiada secret untuk dibuat atau ditukar." />
+
+**<Term id="ghcr">GHCR</Term>** (ghcr.io) ialah peti sejuk kedai milik GitHub. Job log masuk dengan `GITHUB_TOKEN`. Ia pas yang tamat bila job tamat.
+</Card>
+
+<Card id="try-sort" type="try">
+Apa yang pas job ini perlukan? Beri yang paling sedikit.
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'Job ini perlukannya' }, { id: 'off', label: 'Jangan beri' }]} items={[{ label: '`contents: read`', bucket: 'need', why: 'Job ini baca kod anda.' }, { label: '`packages: write`', bucket: 'need', why: 'Inilah kunci peti sejuk: push ke GHCR.' }, { label: '`contents: write`', bucket: 'off', why: 'Push image tak pernah ubah kod anda.' }, { label: '`issues: write`', bucket: 'off', why: 'Tali sawat tak pernah sentuh issue.' }]} success="Hak paling sedikit: baca kod, tulis package." />
+</Card>
+
+<Card id="try-fix" type="try">
+Sekarang baiki baris kuning. Pilih permissions, kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-fix-permissions" task={{ type: 'green' }} fixes={[
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Tulis kod bukan sama dengan tulis package.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'Setiap langkah akan dapat semua kunci.', correct: false },
+  { label: 'contents: read dan packages: write', text: 'permissions:\n  contents: read\n  packages: write' }]}
+  success="Hijau! Pek dah masuk peti sejuk di ghcr.io." />
+
+<Hint>Kunci peti sejuk dipanggil packages. Biarkan contents pada read.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Mei buka PR dari fork dia. Workflow ini push pada PR juga. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Push ditolak: PR dari fork dapat pas baca sahaja', correct: true, why: 'GitHub beri fork GITHUB_TOKEN baca sahaja. Orang luar tak boleh isi peti sejuk anda.' }, { label: 'Image Mei masuk ke peti sejuk anda', why: 'Itu akan biar sesiapa hantar pek. Fork dapat token baca sahaja.' }, { label: 'Workflow itu langsung tak jalan', why: 'Ia jalan. Cuma tulisan yang disekat.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Bina arahan yang tarik versi 1.2.0 dari GHCR.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Bercakap dengan Docker' }, { text: 'pull', means: 'muat turun image' }, { text: 'ghcr.io/you/kedai-kancil:1.2.0', means: 'peti sejuk / pemilik / repo : tag' }]} decoys={[{ text: 'ghcr.io/You/Kedai-Kancil:1.2.0', means: 'huruf besar' }, { text: 'docker.io/you/kedai-kancil:1.2.0', means: 'Docker Hub, peti sejuk lain' }]} success="Itulah alamat penuh pek anda." />
+
+<Hint>Nama image di GHCR semuanya huruf kecil.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh push image ke GHCR dengan kunci yang perlu sahaja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Package yang di-push dengan `GITHUB_TOKEN` ikut keterlihatan dan akses repo itu. Nama pemilik berhuruf besar merosakkan `ghcr.io/${{ github.repository }}`. metadata-action tukar nama image jadi huruf kecil untuk anda.
+
+Latihan sebenar (pilihan), dalam repo latihan awam:
+
+<Interactive name="Mission" id="c2-l03-rep" steps={[{ id: 'perm', text: 'Beri job image contents: read dan packages: write.' }, { id: 'login', text: 'Tambah docker/login-action untuk ghcr.io dengan GITHUB_TOKEN.' }, { id: 'push', text: 'Letak push: true dan guna tag dari metadata-action.' }, { id: 'see', text: 'Push ke main. Cari image itu di bawah Packages repo anda.' }]} success="Image anda dah masuk peti sejuk sebenar!" />
+</Card>

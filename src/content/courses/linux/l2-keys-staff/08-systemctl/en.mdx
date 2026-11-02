@@ -1,0 +1,78 @@
+---
+id: linux-l2-l08
+world: 2
+title: Services with systemctl
+summary: "You will learn: to check, start, stop and restart a service, and make it start at boot."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, SortCards, Mission]
+needs: [linux-l2-l07]
+scenario: linux-l2-services
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "systemctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/systemctl.1.en.html" }
+  - { label: "systemd.io: the systemd project", url: "https://systemd.io/" }
+  - { label: "Debian Reference: system initialization", url: "https://www.debian.org/doc/manuals/debian-reference/ch03.en.html" }
+---
+
+<Card id="hook" type="hook">
+Last night the power went out. The server came back. The menu website did not. Nobody touched it. What happened?
+
+<Interactive name="Choice" options={[{ label: 'The web server was not set to start at boot', correct: true, why: 'Some staff only come in when someone calls them. Boot is a new day.' }, { label: 'The website files were deleted', why: 'The files are fine. Nothing is serving them.' }, { label: 'The whole internet is down', why: 'Other sites work. The problem is on this server.' }]} />
+</Card>
+
+<Card id="see-state" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-services" intro={['systemctl is-active nginx', 'systemctl is-enabled nginx']} />
+
+nginx is a <Term id="service">service</Term>: staff who work all day in the back. **systemd** is the shift manager. nginx is `inactive` now, and `disabled` at boot.
+</Card>
+
+<Card id="predict-sudo" type="predict">
+You type `systemctl start nginx`, without sudo. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Failed to start nginx.service: Access denied', correct: true, why: 'Plain words: only root may start or stop services. Add sudo.' }, { label: 'nginx starts', why: 'Starting a service changes the whole server. That needs root.' }, { label: 'command not found', why: 'systemctl is found. It just refuses without sudo.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Start the web server now: `sudo systemctl start nginx`. Then ask for the page: `curl -sI localhost`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-services" goal={{ serviceActive: ['nginx'], lastTyped: '^curl' }} hints={['Type sudo systemctl start nginx', 'Then: curl -sI localhost']} solution={['sudo systemctl start nginx', 'curl -sI localhost']} success="HTTP/1.1 200 OK. The light is green and the page is back." />
+
+<Hint>Watch the Services light turn green.</Hint>
+</Card>
+
+<Card id="sort-now-boot" type="check">
+Some commands act now. Others decide what happens at the next boot. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'now', label: 'Right now' }, { id: 'boot', label: 'At the next boot' }]} items={[{ label: 'start: turn it on', bucket: 'now', why: 'It runs at once, until stopped or rebooted.' }, { label: 'enable: come back after a power cut', bucket: 'boot', why: 'enable only plans the next boot.' }, { label: 'stop: turn it off for a fix', bucket: 'now', why: 'Off at once.' }, { label: 'disable: stay off after reboots', bucket: 'boot', why: 'It changes the boot plan, not now.' }]} success="start and stop: now. enable and disable: at boot." />
+</Card>
+
+<Card id="try-enable" type="try">
+Do both jobs in one go: start nginx now and at every boot: `sudo systemctl enable --now nginx`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-services" goal={{ serviceActive: ['nginx'], serviceEnabled: ['nginx'] }} hints={['Type sudo systemctl enable --now nginx', 'Check: systemctl is-enabled nginx']} solution={['sudo systemctl enable --now nginx']} success="Running, and it starts at boot. The next power cut won't bite." />
+
+<Hint>`--now` means "and start it right away too".</Hint>
+</Card>
+
+<Card id="check-restart" type="check">
+You changed nginx's settings file. Which command makes nginx use the new settings?
+
+<Interactive name="Choice" options={[{ label: 'sudo systemctl restart nginx', correct: true, why: 'Stop, then start with the new settings. reload is gentler for nginx.' }, { label: 'sudo systemctl enable nginx', why: 'enable only plans the next boot.' }, { label: 'systemctl status nginx', why: 'status only looks. It changes nothing.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now start, stop, restart and enable a service.
+</Card>
+
+<Card id="deeper" type="deeper">
+`systemctl status nginx` shows it all: a green ● running, ○ stopped, × failed, plus the last log lines. `reload` re-reads settings without dropping visitors. `systemctl list-units --type=service` lists every service.
+
+Real rep (optional), on a Debian or Ubuntu VM:
+
+<Interactive name="Mission" id="linux-l2-l08-rep" steps={[{ id: 'status', text: 'Look at the SSH service.', command: 'systemctl status ssh' }, { id: 'boot', text: 'Does it start at boot?', command: 'systemctl is-enabled ssh' }, { id: 'list', text: 'List every service.', command: 'systemctl list-units --type=service' }]} success="Real services, real systemd!" />
+</Card>

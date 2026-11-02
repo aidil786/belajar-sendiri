@@ -1,0 +1,107 @@
+---
+id: cicd-c3-m3
+world: 3
+title: "Capstone mission 3: Release it"
+summary: "You will learn: to give Kedai Kancil staging, production, a canary step and a rollback job, then prove it with a bad release."
+minutes: 5
+xp: 100
+interactives: [ConveyorBelt, Mission, YamlBuilder, MissionCheck]
+needs: [cicd-c3-l11]
+scenario: c3-mission-bad
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare: Wrangler environments", url: "https://developers.cloudflare.com/workers/wrangler/environments/" }
+  - { label: "Cloudflare: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "gh secret set", url: "https://cli.github.com/manual/gh_secret_set" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c3-mission-bad" label="Tag v1.0.1: the canary fails its smoke test, production is skipped, and rollback runs." />
+
+Mission 3: Release it. Kedai Kancil already tests and builds itself. Now make releasing safe. Your goal: a bad release, caught and rolled back by the pipeline. Run it to see the goal.
+</Card>
+
+<Card id="try-setup" type="try">
+Step 1: two kitchens. Your shop's web front end goes on Cloudflare's free Workers plan. Add this to `wrangler.jsonc`:
+
+```jsonc
+"account_id": "YOUR_ACCOUNT_ID",
+"env": { "staging": {}, "production": {} }
+```
+
+<Interactive name="Mission" id="cicd-m3-setup" steps={[
+  { id: 'token', text: 'Make a Cloudflare API token from the "Edit Cloudflare Workers" template. Limit it to your one account.' },
+  { id: 'health', text: 'Make your built site answer /health with ok. A health.html file in the build folder works.' },
+  { id: 'staging', text: 'Create the staging environment in your repo.', command: 'gh api --method PUT "repos/{owner}/{repo}/environments/staging"' },
+  { id: 'production', text: 'Create production too. Then, in its settings, add yourself as a required reviewer.', command: 'gh api --method PUT "repos/{owner}/{repo}/environments/production"' },
+  { id: 'secret-staging', text: 'Store the token in staging. It asks you to paste the value.', command: 'gh secret set CLOUDFLARE_API_TOKEN --env staging' },
+  { id: 'secret-production', text: 'Store a token in production too.', command: 'gh secret set CLOUDFLARE_API_TOKEN --env production' },
+  { id: 'vars', text: 'Save your staging address as a repository variable. Do the same for SITE_URL.', command: 'gh variable set STAGING_URL --body "https://kedai-kancil-staging.YOUR-SUBDOMAIN.workers.dev"' }]}
+  success="Both kitchens are ready, each with its own locked spice box." />
+</Card>
+
+<Card id="try-build" type="try">
+Step 2: build `release.yml`. Canary first. Production after it, with your approval. Rollback only if the canary fails.
+
+<Interactive name="YamlBuilder" workflow="Release" goal={{ order: ['tag', 'perms', 'canary', 'ready1', 'stage', 'smoke', 'prod', 'ready2', 'ship', 'rollback', 'ready3', 'undo'] }} blocks={[
+  { id: 'tag', kind: 'trigger', label: 'On a version tag', yaml: "push:\n  tags: ['v*']", means: 'Run when you push a tag like v1.0.0.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The token can only read the code.' },
+  { id: 'canary', kind: 'job', label: 'Job: canary (staging)', yaml: 'canary:\n  runs-on: ubuntu-latest\n  environment: staging', means: 'Try the new version on staging first.' },
+  { id: 'ready1', kind: 'step', label: 'Get ready (canary)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Copy the code. Install packages.' },
+  { id: 'stage', kind: 'step', label: 'Deploy to staging', yaml: '- run: npx wrangler deploy --env staging\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Upload to the kedai-kancil-staging Worker.' },
+  { id: 'smoke', kind: 'step', label: 'Smoke test staging', yaml: '- run: curl --fail --silent "$STAGING_URL/health"\n  env:\n    STAGING_URL: ${{ vars.STAGING_URL }}', means: 'One quick taste. An error page stops the line.' },
+  { id: 'loose', kind: 'job', label: 'Job: production (no needs)', yaml: 'production:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Deploy to production.', why: 'Without needs: canary, production would not wait for the canary.' },
+  { id: 'prod', kind: 'job', label: 'Job: production (after canary)', yaml: 'production:\n  needs: canary\n  runs-on: ubuntu-latest\n  environment:\n    name: production\n    url: ${{ vars.SITE_URL }}', means: 'Only after a green canary, and your approval.' },
+  { id: 'ready2', kind: 'step', label: 'Get ready (production)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'A new runner needs the code again.' },
+  { id: 'ship', kind: 'step', label: 'Deploy to production', yaml: '- run: npx wrangler deploy --env production\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Upload to the kedai-kancil-production Worker.' },
+  { id: 'rollback', kind: 'job', label: 'Job: rollback (canary failed)', yaml: 'rollback:\n  needs: canary\n  if: failure()\n  runs-on: ubuntu-latest\n  environment: staging', means: 'Runs only when the canary failed.' },
+  { id: 'ready3', kind: 'step', label: 'Get ready (rollback)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Wrangler and the config, once more.' },
+  { id: 'undo', kind: 'step', label: 'Roll staging back', yaml: '- run: npx wrangler rollback --env staging --message "Canary failed"\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Put the last good version back on staging.' }]}
+  success="That is your release.yml. Save it in .github/workflows/." />
+
+<Hint>Three jobs, each with its steps: canary, then production, then rollback.</Hint>
+</Card>
+
+<Card id="try-ship" type="try">
+Step 3: ship one good release, then one bad one on purpose.
+
+<Interactive name="Mission" id="cicd-m3-ship" steps={[
+  { id: 'save', text: 'Commit the workflow and push it.', command: 'git add .github/workflows/release.yml && git commit -m "ci: add release workflow" && git push' },
+  { id: 'good', text: 'Ship a good release: make the tag v1.0.0 and push it.', command: 'git tag v1.0.0 && git push origin v1.0.0' },
+  { id: 'approve', text: 'The canary passes. Production waits. Open the run and approve it.' },
+  { id: 'break', text: 'Break it on purpose: delete the health page, then commit and push.' },
+  { id: 'bad', text: 'Tag the bad release and push the tag.', command: 'git tag v1.0.1 && git push origin v1.0.1' },
+  { id: 'watch', text: 'Watch the run: canary red, production skipped, rollback green.' },
+  { id: 'fix', text: 'Put the health page back, then ship v1.0.2 the same way.' }]}
+  success="The pipeline caught a bad release and undid it. That was real!" />
+</Card>
+
+<Card id="check-api" type="check">
+Let GitHub's public API confirm it. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your Kedai Kancil repo is public' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 3, label: 'Workflows ran at least 3 times' }, { type: 'tags', repo: 'kedai-kancil', min: 2, label: 'It has at least 2 release tags' }]} success="GitHub sees your releases!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see inside a run. Check these yourself.
+
+<Interactive name="Mission" id="cicd-m3-self" steps={[
+  { id: 'run', text: 'The v1.0.1 run shows: canary failed, production skipped, rollback passed.' },
+  { id: 'staging', text: 'Your staging /health page says ok again.' },
+  { id: 'prod', text: 'Production never got v1.0.1.' },
+  { id: 'gate', text: 'Production waited for your approval on v1.0.0.' }]}
+  success="Mission 3 done: Kedai Kancil has an undo button." />
+</Card>
+
+<Card id="win" type="win">
+You can now release Kedai Kancil safely, with an undo button.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safety: the free Workers plan is enough here. Containers for the API need Workers Paid. Set a budget alert first. Use test tokens and delete them when done. This canary is a staging copy. A true canary sends a share of real users. On Cloudflare, that is a gradual deployment.
+</Card>

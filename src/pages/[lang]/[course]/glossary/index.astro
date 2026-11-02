@@ -1,0 +1,14 @@
+---
+// /en/<course>/glossary/: every course after the first has its own glossary page.
+import { getCollection } from 'astro:content';
+import GlossaryPage from '~/components/pages/GlossaryPage.astro';
+import { LANGS, type Lang } from '~/i18n';
+import { ROOT_COURSE } from '~/lib/catalog';
+export async function getStaticPaths() {
+  const courses = (await getCollection('courses')).filter((c) => c.data.id !== ROOT_COURSE);
+  return courses.flatMap((c) => LANGS.map((lang) => ({ params: { lang, course: c.data.id } })));
+}
+const { lang, course } = Astro.params as { lang: Lang; course: string };
+---
+
+<GlossaryPage lang={lang} courseId={course} />

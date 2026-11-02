@@ -1,0 +1,73 @@
+---
+id: linux-l4-l08
+world: 4
+title: "Skrip lebih selamat: set -euo pipefail"
+summary: "Anda akan belajar: membuat skrip berhenti pada masalah pertama, sebelum ia merosakkan."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, SwipeJudge, Mission]
+needs: [linux-l4-l07]
+scenario: linux-l4-strict
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: the set builtin", url: "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html" }
+  - { label: "Bash manual: pipelines", url: "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html" }
+---
+
+<Card id="hook" type="hook">
+Malam ini, `tidy.sh` berjalan. Tetapi folder `kedai/tmp` tak wujud. Apa jadi?
+
+```bash
+#!/bin/bash
+# set -euo pipefail
+cd "$HOME/kedai/tmp"
+rm -f *.txt
+echo "tidy done"
+```
+
+<Interactive name="Choice" options={[{ label: 'cd gagal, dan rm berjalan dalam folder rumah anda', correct: true, why: 'Bash teruskan selepas kegagalan. rm -f *.txt padam fail .txt di rumah.' }, { label: 'Ia berhenti di cd', why: 'Hanya dengan set -e. Di sini baris itu ialah komen.' }, { label: 'Tiada apa berlaku', why: 'rm tetap berjalan: dalam bilik yang salah.' }]} />
+</Card>
+
+<Card id="see-disaster" type="see">
+<Interactive name="LinuxSim" scenario="linux-l4-strict" intro={['ls', './tidy.sh', 'ls']} />
+
+Ralat sebenar kata `cd: … No such file or directory`. Maksudnya: skrip terus berjalan dalam bilik yang salah. Ia padam `menu.txt` dan `prices.txt`, kemudian kata `tidy done`.
+</Card>
+
+<Card id="see-strict" type="see">
+**Strict mode** (mod ketat) ialah penyelia yang tegas. `set -euo pipefail` ialah tiga peraturan. Susun apa yang setiap satu hentikan.
+
+<Interactive name="SortCards" buckets={[{ id: 'e', label: '-e' }, { id: 'u', label: '-u' }, { id: 'p', label: '-o pipefail' }]} items={[{ label: 'Satu arahan gagal: berhenti sekarang', bucket: 'e', why: '-e: keluar pada ralat pertama.' }, { label: 'cd ke folder yang tiada', bucket: 'e', why: 'cd gagal, jadi -e hentikan skrip.' }, { label: 'Balang yang namanya salah eja', bucket: 'u', why: '-u: balang yang tak pernah diisi ialah ralat.' }, { label: 'grep gagal dalam grep … | sort', bucket: 'p', why: 'pipefail: paip gagal jika mana-mana bahagian gagal.' }]} success="-e: ralat. -u: balang tak dikenali. pipefail: paip rosak." />
+</Card>
+
+<Card id="try-strict" type="try">
+Kejutkan penyelia: buang `# ` di depan baris 2 dengan `sed`. Kemudian jalankan `tidy.sh`. Fail anda mesti selamat.
+
+<Interactive name="LinuxSim" scenario="linux-l4-strict" goal={{ fileContains: { '~/tidy.sh': '^set -euo pipefail' }, scriptExitCode: { '~/tidy.sh': 1 }, fileExists: ['~/menu.txt', '~/prices.txt'] }} hints={["sed -i 's/^# set/set/' tidy.sh", 'head -n 2 tidy.sh, kemudian ./tidy.sh', 'ls: menu.txt dan prices.txt masih ada.']} solution={["sed -i 's/^# set/set/' tidy.sh", './tidy.sh']} success="Ia berhenti di cd dengan kod keluar 1. Tiada apa dipadam." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu skrip jalankan `rm -rf "$BAKUP_DIR"/*`. Nama balang itu salah eja, jadi ia kosong. Tanpa `-u`, apa yang rm dapat?
+
+<Interactive name="Choice" options={[{ label: '/*: setiap folder di puncak cakera', correct: true, why: 'Balang kosong tinggalkan /* sahaja. Dengan -u, bash berhenti: BAKUP_DIR: unbound variable.' }, { label: 'Tiada: rm langkau balang kosong', why: 'Balang itu hilang, dan /* yang tinggal.' }, { label: 'Ralat, setiap kali', why: 'Hanya dengan set -u. Tanpanya, balang kosong okey bagi bash.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Baris yang bagus atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'set -euo pipefail', good: true, why: 'Di bahagian atas, baris 2.' }, { text: 'cd "$dir" || exit 1', good: true, why: 'Berhenti jika folder itu tiada.' }, { text: 'rm -rf $DIR/*', good: false, why: 'Tiada petikan, tiada semakan. Jika DIR kosong: rm -rf /*.' }, { text: 'cp "$src" "$dest"', good: true, why: 'Balang berpetikan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat skrip berhenti pada masalah pertama.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-e` ada titik buta: ia abaikan kegagalan dalam ujian `if`, atau sebelum `&&` dan `||`. Untuk benarkan satu kegagalan dengan sengaja, tulis `cmd || true`. `trap` boleh mengemas bila skrip berhenti. Uji skrip di mesin pakai buang dahulu.
+
+<Interactive name="Mission" id="linux-l4-l08-rep" steps={[{ id: 'top', text: 'Tambah set -euo pipefail sebagai baris 2 skrip anda sendiri.' }, { id: 'u', text: 'Lihat -u tangkap balang yang tak dikenali.', command: "bash -c 'set -u; echo \"$NOPE\"'" }, { id: 'lint', text: 'Biar shellcheck baca skrip anda.', command: 'shellcheck myscript.sh' }]} success="Skrip anda ada penyelia sekarang." />
+</Card>

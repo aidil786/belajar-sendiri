@@ -1,0 +1,66 @@
+---
+id: git-w08-l07
+world: 8
+title: SECURITY.md and advisories
+summary: "You will learn: how to report security bugs privately, and how projects fix them."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Sim, OrderList, Choice, SwipeJudge]
+needs: [git-w08-l06]
+scenario: w08-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Adding a security policy", url: "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository" }
+  - { label: "About repository security advisories", url: "https://docs.github.com/en/code-security/security-advisories/working-with-repository-security-advisories/about-repository-security-advisories" }
+  - { label: "About coordinated disclosure", url: "https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/about-coordinated-disclosure-of-security-vulnerabilities" }
+---
+
+<Card id="hook" type="hook">
+You find a bug in a popular project. It leaks passwords. Do you post it in a public issue? Attackers read issues too.
+</Card>
+
+<Card id="see-policy" type="see">
+<Interactive name="TermReplay" scenario="w08-l07-policy" commands={['cat SECURITY.md']} label="cat SECURITY.md shows a short policy: please do not open a public issue; use private vulnerability reporting; we will reply within 7 days." />
+
+A **<Term id="security-policy">SECURITY.md</Term>** file tells people how to report security bugs privately. It's like a README, just for security.
+</Card>
+
+<Card id="try-write" type="try">
+Give your diary a security policy. Write `SECURITY.md`, then commit it.
+
+<Interactive name="Sim" scenario="w08-l07" panels={['areas']} goal={{ lastCommitHas: ['SECURITY.md'], clean: true }} hints={['Write the file: echo "Report bugs privately" > SECURITY.md', 'Put it in the box: git add SECURITY.md', 'Save it: git commit -m "Add security policy"']} success="Your repo now tells people how to report bugs safely." />
+
+<Hint>Start with `echo "Report bugs privately" > SECURITY.md`.</Hint>
+</Card>
+
+<Card id="see-advisory" type="see">
+A report comes in. Now the maintainers open a **<Term id="security-advisory">security advisory</Term>**. It's a private room. They talk, fix the bug, then publish a warning for everyone.
+</Card>
+
+<Card id="try-order" type="try">
+Put the safe way to handle a security bug in order. First at the top.
+
+<Interactive name="OrderList" items={['Someone reports the bug privately', 'Maintainers open a draft advisory', 'They fix it in private', 'They release the fixed version', 'They publish the advisory']} label="First step at the top" success="Fix first, tell everyone after. That's called coordinated disclosure." />
+</Card>
+
+<Card id="predict" type="predict">
+The advisory is out. Your friend's app still uses the old version. Who warns them?
+
+<Interactive name="Choice" options={[{ label: 'Dependabot can send them an alert', correct: true, why: 'Published advisories join the GitHub Advisory Database. Dependabot reads it.' }, { label: 'Nobody. They must watch the news', why: 'Dependabot watches for this. Remember lesson 5?' }, { label: 'The maintainers email every user', why: 'They cannot know every user. Dependabot does that job.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good reporter, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Follow the steps in SECURITY.md', good: true, why: 'The maintainers asked for it that way.' }, { text: 'Post the bug details in a public issue', good: false, why: 'Attackers could use it before the fix.' }, { text: 'Give the maintainers time to fix it', good: true, why: 'Fix first, tell everyone after.' }, { text: 'No policy? Ask for a security contact, with no details', good: true, why: 'The details stay private until the right person reads them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now handle security bugs the safe way.
+</Card>
+
+<Card id="deeper" type="deeper">
+Repo owners can turn on private vulnerability reporting. Then anyone can report straight into a draft advisory. Maintainers can fix the bug in a temporary private fork. They can also ask GitHub for a CVE id. That's a worldwide name for the bug.
+</Card>

@@ -1,0 +1,71 @@
+---
+id: git-w02-l08
+world: 2
+title: Bersihkan fail sampah
+summary: "Anda akan belajar: cara pratonton dan padam fail sampah yang tak dijejak."
+minutes: 3
+xp: 15
+interactives: [AreasScene, Choice, TermReplay, Sim]
+needs: [git-w02-l07]
+scenario: w02-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git clean", url: "https://git-scm.com/docs/git-clean" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Folder kerja anda penuh: index.html, dan fail sampah baru test.html, index-copy.html serta folder tmp. Sampah itu bergoyang." frames={[{ working: ['index.html', { name: 'test.html', tag: 'new' }, { name: 'index-copy.html', tag: 'new' }, { name: 'tmp/', tag: 'new' }] }]} />
+
+Folder diari anda penuh dengan fail ujian yang tak berguna. Padam satu-satu? Lambat dan membosankan.
+</Card>
+
+<Card id="see-clean" type="see">
+<Interactive name="AreasScene" zones={['working']} command="git clean -f" label="Arahan git clean -f menaip sendiri. Fail baru test.html dan index-copy.html hilang. index.html kekal." frames={[{ working: ['index.html', { name: 'test.html', tag: 'new', glow: true }, { name: 'index-copy.html', tag: 'new', glow: true }] }, { working: ['index.html'] }]} />
+
+`git clean -f` padam fail <Term id="untracked">untracked</Term> (tak dijejak): fail baru yang Git tak pernah simpan. Ini dipanggil **<Term id="clean">clean</Term>** (bersihkan). Fail yang dijejak kekal selamat.
+</Card>
+
+<Card id="see-danger" type="see">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="test.html dan index-copy.html bertanda dipadam. Tiada tong sampah untuk ambil balik." frames={[{ working: [{ name: 'test.html', tag: 'deleted' }, { name: 'index-copy.html', tag: 'deleted' }] }]} />
+
+⚠️ **Bahaya**: clean padam terus. Tiada tong sampah dan tiada undo. Jadi, sentiasa pratonton dulu dengan `git clean -n`.
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `git clean -n` dalam folder ini. Fail mana yang disenaraikan?
+
+```
+index.html         dijejak
+debug.log          diabaikan (*.log)
+test.html          tak dijejak
+index-copy.html    tak dijejak
+tmp/scribble.txt   tak dijejak, dalam folder
+```
+
+<Interactive name="Choice" options={[{ label: 'test.html dan index-copy.html', correct: true, why: 'Hanya fail tak dijejak. Folder perlukan -d. Fail yang diabaikan kekal.' }, { label: 'test.html, index-copy.html dan tmp/', why: 'Hampir! Folder hanya muncul bila anda tambah -d.' }, { label: 'Semua kecuali index.html', why: 'debug.log diabaikan. git clean simpan fail yang diabaikan.' }]} />
+</Card>
+
+<Card id="check-preview" type="check">
+<Interactive name="TermReplay" scenario="w02-l08" commands={['git clean -n', 'git clean -n -d']} label="git clean -n senaraikan test.html dan index-copy.html. git clean -n -d juga senaraikan tmp/." />
+
+`-n` cuma tunjuk, tiada apa dipadam. Tambah `-d` untuk masukkan folder. debug.log tak pernah muncul, sebab ia diabaikan.
+</Card>
+
+<Card id="try-clean" type="try">
+Pratonton dulu. Kemudian padam fail sampah dan folder tmp.
+
+<Interactive name="Sim" scenario="w02-l08" panels={['areas']} goal={{ filesMissing: ['test.html', 'index-copy.html', 'tmp/scribble.txt'], filesExist: ['debug.log', 'index.html'] }} hints={['Taip git clean -n -d untuk pratonton.', 'Kemudian taip git clean -f -d untuk padam.']} success="Bersih! debug.log masih ada, sebab ia diabaikan." />
+
+<Hint>Pratonton dengan `git clean -n -d`. Kemudian padam dengan `git clean -f -d`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bersihkan fail sampah. Pratonton dulu, setiap kali!
+</Card>
+
+<Card id="deeper" type="deeper">
+`git clean` biasa tak akan padam apa-apa tanpa `-f`. Itu cara Git berhati-hati. `-x` padam fail yang diabaikan juga, contohnya `.env` atau fail log. Guna dengan sangat berhati-hati. Terminal latihan ini sekat `-x`. `git clean -i` tanya tentang setiap fail.
+</Card>

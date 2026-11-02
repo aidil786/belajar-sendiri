@@ -1,0 +1,69 @@
+---
+id: linux-l2-l04
+world: 2
+title: "Change the owner: chown"
+summary: "You will learn: to hand a file or folder to another user or group with sudo chown."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, LinuxSim, SortCards]
+needs: [linux-l2-l03]
+scenario: linux-l2-chown
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "chown (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/chown.1.en.html" }
+  - { label: "GNU coreutils: chown invocation", url: "https://www.gnu.org/software/coreutils/manual/html_node/chown-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+Customers upload photos of their food. The web staff, user `www-data`, saves them in `/srv/kedai/uploads`. Every upload fails. Why?
+
+<Interactive name="Choice" options={[{ label: 'The folder belongs to you, not to www-data', correct: true, why: 'To www-data it is someone else’s room, with no w key.' }, { label: 'www-data needs a password', why: 'Service users never type passwords. Keys decide.' }, { label: 'The disk is full', why: 'Possible one day, but ls -l shows the real reason here.' }]} />
+</Card>
+
+<Card id="see-fail" type="see">
+<Interactive name="Transcript" title="you@kedai:/srv/kedai" label="ls -l, then the web staff tries to save a photo: Permission denied." lines={[{ cmd: 'ls -l' }, { out: 'total 8\n-rw-r--r-- 1 you you   14 Nov  1 08:55 menu.html\ndrwxr-xr-x 2 you you 4096 Nov  1 08:55 uploads' }, { cmd: 'sudo -u www-data touch uploads/a.jpg' }, { out: "touch: cannot touch 'uploads/a.jpg': Permission denied", color: 'red' }]} />
+
+`sudo -u www-data` runs one command as the web staff. Real error: `Permission denied`. Plain words: `uploads` is yours, and others have no `w` key.
+</Card>
+
+<Card id="predict-give" type="predict">
+You own `uploads`. Can you give it away yourself with `chown www-data uploads`?
+
+<Interactive name="Choice" options={[{ label: "No: chown: changing ownership of 'uploads': Operation not permitted", correct: true, why: 'Plain words: only root may hand files to someone else. Use sudo.' }, { label: 'Yes. It is your folder.', why: 'Owners may change keys, but not give the folder away.' }, { label: 'Yes, but only to your group', why: 'Changing the owner always needs root.' }]} />
+</Card>
+
+<Card id="try-chown" type="try">
+Hand the folder to the web staff and their group: `sudo chown www-data:www-data uploads`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chown" goal={{ owner: { '/srv/kedai/uploads': 'www-data:www-data' } }} hints={['Type sudo chown www-data:www-data uploads', 'Check with ls -l']} solution={['sudo chown www-data:www-data uploads']} success="uploads now belongs to www-data. The picture shows the new owner." />
+
+<Hint>**chown** means "change owner". The form is `owner:group`.</Hint>
+</Card>
+
+<Card id="sort-mod-own" type="check">
+chmod or chown? Pick the right tool.
+
+<Interactive name="SortCards" buckets={[{ id: 'own', label: 'chown: who owns it' }, { id: 'mod', label: 'chmod: which keys' }]} items={[{ label: 'Give the folder to the web staff', bucket: 'own', why: 'A new owner: chown.' }, { label: 'Let the group run a script', bucket: 'mod', why: 'The owner stays. A key changes: chmod.' }, { label: 'Move a file to the kitchen team', bucket: 'own', why: 'A new group is part of ownership: chown :kitchen.' }, { label: 'Hide a file from others', bucket: 'mod', why: 'Take keys away: chmod o-r.' }]} success="chown changes who. chmod changes what they may do." />
+</Card>
+
+<Card id="try-test" type="try">
+The folder is handed over. Test it as the web staff: `sudo -u www-data touch uploads/a.jpg`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chown" intro={['sudo chown www-data:www-data uploads']} goal={{ fileExists: ['/srv/kedai/uploads/a.jpg'] }} hints={['Type sudo -u www-data touch uploads/a.jpg']} solution={['sudo -u www-data touch uploads/a.jpg']} success="The upload worked. Customers can share their nasi lemak photos!" />
+
+<Hint>`touch` makes an empty file, like a test upload.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now hand files and folders to the right owner.
+</Card>
+
+<Card id="deeper" type="deeper">
+`sudo chown -R www-data:www-data uploads` changes a folder and everything inside: check the path twice. `sudo chown :kitchen roster.txt` changes only the group. Never hand your whole home to another user.
+
+Real rep (optional): on Linux, `ls -l /var/www` shows who owns the web files.
+</Card>

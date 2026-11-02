@@ -1,0 +1,65 @@
+---
+id: git-w11-l12
+world: 11
+title: I committed a huge file
+summary: "You will learn: how to get a huge file out of a commit before it spreads."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice, TermReplay, Sim, SortCards]
+needs: [git-w01-l10]
+scenario: w11-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rm --cached", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "About large files on GitHub", url: "https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github" }
+  - { label: "About Git Large File Storage", url: "https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Two commits in the repository. The newest, Add trip page, glows and wobbles. It holds trip.html and a huge video.mp4." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add trip page', kind: 'commit', glow: true }] }]} />
+
+Your push crawls. Then GitHub refuses it: `video.mp4` is too big. Oops! This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+GitHub refused the push. So where is the video now?
+
+<Interactive name="Choice" options={[{ label: 'Only in my local commit', correct: true, why: 'A refused push changes nothing on GitHub. Fix it on your computer.' }, { label: 'On GitHub, half uploaded', why: 'No. A refused push leaves GitHub as it was.' }, { label: 'Nowhere, Git deleted it', why: 'The file is still on your desk and in your commit.' }]} />
+</Card>
+
+<Card id="see-untrack" type="see">
+<Interactive name="TermReplay" scenario="w11-l12" commands={['git rm --cached video.mp4', 'git status -s']} label="git rm --cached video.mp4 prints rm video.mp4. Then git status -s shows D video.mp4 in the box, and video.mp4 as untracked." />
+
+`git rm --cached video.mp4` tells Git to stop tracking it. The video stays on your computer, safe.
+</Card>
+
+<Card id="try-fix" type="try">
+Take the video out of the last commit. Ignore `*.mp4` so it can't sneak back.
+
+<Interactive name="Sim" scenario="w11-l12" panels={['areas']} goal={{ lastCommitLacks: ['video.mp4'], lastCommitHas: ['trip.html'], filesExist: ['video.mp4'], fileContains: { '.gitignore': 'mp4' }, commits: 4 }} hints={['Type git rm --cached video.mp4', 'Then: echo "*.mp4" >> .gitignore and git add .gitignore', 'Last: git commit --amend --no-edit']} success="Light again! The commit keeps trip.html. The video stays on your computer." />
+
+<Hint>Type `git rm --cached video.mp4`, then `echo "*.mp4" >> .gitignore` and `git add .gitignore`. Last, `git commit --amend --no-edit`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+New story: the video was smaller, and the push worked. You delete it in a new commit. Is the repo small again?
+
+<Interactive name="Choice" options={[{ label: 'No. Old commits still hold it', correct: true, why: 'Every clone downloads history. Wiping it needs git filter-repo, with care.' }, { label: 'Yes, right away', why: 'History keeps every snapshot, the video too.' }, { label: 'Yes, after a day', why: 'Git never cleans history by itself.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Commit it, or keep it out of Git? Sort each file.
+
+<Interactive name="SortCards" buckets={[{ id: 'git', label: 'Commit it' }, { id: 'out', label: 'Keep it out of Git' }]} items={[{ label: 'index.html', bucket: 'git', why: 'Small text you change often. Perfect for Git.' }, { label: 'style.css', bucket: 'git', why: 'Small text. Git loves it.' }, { label: 'holiday-video.mp4 (300 MB)', bucket: 'out', why: 'Too big. Use Git LFS or cloud storage.' }, { label: 'node_modules/', bucket: 'out', why: 'npm can rebuild it any time.' }]} success="Sorted! Small text in Git. Big or rebuildable stuff stays out." />
+</Card>
+
+<Card id="win" type="win">
+You can now get a huge file out before it spreads.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub warns above 50 MiB and blocks files over 100 MiB. Need big files in a repo? Git LFS is an add-on: `git lfs track "*.mp4"` keeps videos outside normal history. Big file in an older commit, not pushed? `git reset --soft origin/main` puts all unpushed work back in the box. Remove the file, then commit again.
+</Card>

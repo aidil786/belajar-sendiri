@@ -1,0 +1,74 @@
+---
+id: docker-d1-l09
+world: 1
+title: Tags and the latest trap
+summary: "You will learn: what a tag is, and why latest can surprise you."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l08]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "What is an image?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" }
+---
+
+<Card id="hook" type="hook">
+Aina ran `docker run nginx` in January. Ben ran the same line today. They got different versions of nginx! How?
+
+<Interactive name="Choice" options={[{ label: 'nginx means nginx:latest, and latest moves', correct: true, why: 'Same name, but the pack behind it changed. The next cards show how.' }, { label: 'Ben made a typo', why: 'Same text, letter for letter. The pack behind the name changed.' }, { label: 'Docker picks a random version', why: 'Not random. latest points wherever its makers move it.' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker pull nginx', 'docker images']} label="docker pull nginx prints Using default tag: latest, then pulls nginx:latest. docker images now lists nginx:1.30-alpine and nginx:latest side by side." />
+
+A **<Term id="tag">tag</Term>** is the label after the colon, like `1.30-alpine`. No tag? Docker says `Using default tag: latest`.
+</Card>
+
+<Card id="try-sort" type="try">
+Which labels could suddenly give you a new version?
+
+<Interactive name="SortCards" buckets={[{ id: 'jump', label: 'May jump to a new version' }, { id: 'stay', label: 'Stays on one version line' }]} items={[{ label: 'nginx', bucket: 'jump', why: 'No tag means latest.' }, { label: 'nginx:latest', bucket: 'jump', why: 'Its makers move latest to each new release.' }, { label: 'nginx:1.30-alpine', bucket: 'stay', why: 'Only small 1.30 fixes. Never 1.31.' }, { label: 'postgres:18-alpine', bucket: 'stay', why: 'Postgres 18 only. No surprise jump to 19.' }, { label: 'redis:latest', bucket: 'jump', why: 'latest again. It moves.' }]} success="Pin a version tag. Then no surprises." />
+</Card>
+
+<Card id="predict" type="predict">
+Is <Term id="latest-tag">latest</Term> always the newest, safest version?
+
+<Interactive name="Choice" options={[{ label: 'No. It is just a name its makers can move.', correct: true, why: 'Docker does not check it. For nginx today, latest is 1.31, not the stable 1.30 line.' }, { label: 'Yes. Docker checks it every day.', why: 'Docker never checks latest. It is only the default name.' }, { label: 'Yes. latest always means stable.', why: 'For nginx, latest follows the newest line (1.31), not the stable 1.30.' }]} />
+</Card>
+
+<Card id="check-versions" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run -d --name pinned -p 8080:80 nginx:1.30-alpine', 'docker run -d --name newest -p 8081:80 nginx', 'curl -sI localhost:8080 | grep Server', 'curl -sI localhost:8081 | grep Server']} label="Two boxes, both nginx. pinned answers Server: nginx/1.30.6. newest, from latest, answers Server: nginx/1.31.8." />
+
+Two boxes, both "nginx". One answers 1.30.6, the other 1.31.8. You tested one, but production got the other. That is the **latest trap**.
+</Card>
+
+<Card id="try-pin" type="try">
+Your turn. Run web from a pinned tag: nginx 1.30 on Alpine. No surprise jumps.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'], lastTyped: '^docker (container )?run (.* )?nginx:1\\.30-alpine$' }} hints={['Type docker run -d --name web nginx:1.30-alpine']} success="Pinned! web runs nginx 1.30, today and next month." />
+</Card>
+
+<Card id="check-typo" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker pull nginx:9.9']} fails={['docker pull nginx:9.9']} label="docker pull nginx:9.9 fails: failed to resolve reference, nginx:9.9 not found." />
+
+A tag that doesn't exist? The real error ends with `nginx:9.9: not found`. Plain words: the freezer has no pack with that label.
+</Card>
+
+<Card id="win" type="win">
+You can now pick tags on purpose and dodge the latest trap.
+</Card>
+
+<Card id="deeper" type="deeper">
+Even `1.30-alpine` gets small fixes, so the pack can still change a little. To freeze one exact pack, use its digest: `nginx@sha256:…`. World D5 covers digests. One rule for now: never `latest` in production.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l09-rep" steps={[{ id: 'pull', text: 'Pull a pinned tag.', command: 'docker pull nginx:1.30-alpine' }, { id: 'list', text: 'See its tag in the list.', command: 'docker images nginx' }, { id: 'hub', text: 'Open hub.docker.com/_/nginx and find the Tags tab. Which tag is latest today?' }]} success="You read tags like a pro." />
+</Card>

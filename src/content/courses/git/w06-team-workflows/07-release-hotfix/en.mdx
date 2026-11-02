@@ -1,0 +1,83 @@
+---
+id: git-w06-l07
+world: 6
+title: Release and hotfix drills
+summary: "You will learn: the calm steps to ship a release, and to fix a live bug fast."
+minutes: 5
+xp: 25
+interactives: [AreasScene, TimelineTap, CommandBuilder, OrderList, Sim, Choice, SortCards]
+needs: [git-w06-l06]
+scenario: w06-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git tag", url: "https://git-scm.com/docs/git-tag" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+  - { label: "Automatically generated release notes", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'Live now: 2.4.0' }} effect="wobble" label="The live version 2.4.0 has three commits. The newest, Add card payment, glows and wobbles." frames={[{ repo: [{ name: 'Add menu page', kind: 'commit' }, { name: 'Add cart', kind: 'commit' }, { name: 'Add card payment', kind: 'commit', glow: true }] }]} />
+
+Friday, 5 pm. Version 2.4.0 is live. Customers tap Pay, and nothing happens. How do you fix it fast, without panic?
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Freeze', text: 'Pick what goes in. New work waits for next time.' }, { when: '2', title: 'Test', text: 'Run every check. Click through the app.' }, { when: '3', title: 'Changelog', text: 'Write down what changed, for people.' }, { when: '4', title: 'Tag', text: 'Mark the commit with its version, like v2.4.0.' }, { when: '5', title: 'Publish', text: 'Deploy it. Add a GitHub Release with the notes.' }]} />
+
+First, the calm part. A **release** is a version you ship to users. Good teams follow the same short drill every time.
+</Card>
+
+<Card id="try-tag" type="try">
+Build the command that tags this release.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'tag', means: 'put a name on a commit' }, { text: '-a', means: 'a full tag, with your name and the date' }, { text: 'v2.4.0', means: 'the version' }, { text: '-m', means: 'a message comes next' }, { text: '"Release 2.4.0"', means: 'the message' }]} decoys={[{ text: '2.4', means: 'SemVer needs three numbers' }, { text: 'branch', means: 'a branch moves on; a tag stays put' }]} success="Tagged! v2.4.0 will always point at this commit." />
+
+<Hint>tag, then -a, then the version. The message comes last.</Hint>
+</Card>
+
+<Card id="see-hotfix" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'hotfix/pay-button', repo: 'main' }} label="A hotfix branch starts at v2.4.0. One commit, fix: pay button works again, appears on it. Then it slides into main." frames={[{ repo: [{ name: 'v2.4.0', kind: 'commit' }] }, { working: [{ name: 'fix: pay button works again', kind: 'commit' }], repo: [{ name: 'v2.4.0', kind: 'commit' }] }, { repo: [{ name: 'v2.4.0', kind: 'commit' }, { name: 'fix: pay button works again', kind: 'commit' }] }]} />
+
+Now the fast part. A **<Term id="hotfix">hotfix</Term>** is a small, urgent fix for live code. Branch from the live version. Fix only the bug.
+</Card>
+
+<Card id="try-order" type="try">
+Put the hotfix drill in order.
+
+<Interactive name="OrderList" items={['Check the bug and how bad it is', 'Branch from the live version', 'Fix it and add a test', 'Open a PR for a quick review', 'Merge, tag v2.4.1 and deploy', 'Write down what went wrong, without blame']} label="First step at the top" success="Calm and fast. That's a real hotfix drill!" />
+
+<Hint>Understand the bug first. Learn from it last.</Hint>
+</Card>
+
+<Card id="try-commit" type="try">
+You made `hotfix/pay-button` from the v2.4.0 tag. The fix in `pay.js` is ready. Commit it with a `fix:` label.
+
+<Interactive name="Sim" scenario="w06-l07" panels={['areas', 'graph']} goal={{ lastMessage: '^fix(\\([a-z-]+\\))?: \\S', lastCommitHas: ['pay.js'], commits: 4 }} hints={['First put the fix in the box: git add pay.js', 'Then commit it: git commit -m "fix: make pay button work again"']} success="Fixed and labelled! This commit becomes version 2.4.1." />
+
+<Hint>Run `git diff` to see the fix. Then `git add pay.js` and commit.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+2.4.0 is live. You ship this hotfix. What is the new version?
+
+<Interactive name="Choice" compact options={[{ label: '2.4.1', correct: true, why: 'A bug fix bumps PATCH.' }, { label: '2.5.0', why: 'No new feature, so MINOR stays the same.' }, { label: '3.0.0', why: 'Nothing breaks, so MAJOR stays the same.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Hotfix now, or wait for the next release?
+
+<Interactive name="SortCards" buckets={[{ id: 'now', label: 'Hotfix now' }, { id: 'next', label: 'Next release' }]} items={[{ label: 'Customers cannot pay', bucket: 'now', why: 'The shop loses money every minute.' }, { label: 'A button is the wrong shade of green', bucket: 'next', why: 'Annoying, but nothing is broken.' }, { label: 'Customer passwords show on the screen', bucket: 'now', why: 'Safety first. Fix it right away.' }, { label: 'Add a new dessert menu', bucket: 'next', why: 'New features wait for a normal release.' }, { label: 'The app crashes on start for everyone', bucket: 'now', why: 'Nobody can use it. Hotfix now.' }]} success="Sorted! Hotfixes are for real emergencies." />
+</Card>
+
+<Card id="win" type="win">
+You can now run a calm release and a fast hotfix.
+</Card>
+
+<Card id="deeper" type="deeper">
+In Git Flow, merge the hotfix into develop too. If not, the bug comes back next release. Trunk-based teams fix main first. Then they copy the fix to the release branch with `git cherry-pick`. On GitHub, a Release adds notes to a tag. GitHub can draft those notes for you.
+</Card>

@@ -1,0 +1,648 @@
+# Command pages for the Kubernetes course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/kubernetes/commands/<id>/ and in the cheat sheet /<lang>/kubernetes/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Mark risky commands (kubectl delete, helm uninstall …) with danger: careful or lose.
+# Every example runs in the food-court practice terminal (FoodCourtSim) unless it says otherwise.
+groups:
+  - { id: look, title: { en: "Look around", ms: "Tinjau keadaan" } }
+  - { id: change, title: { en: "Change the cluster", ms: "Ubah kluster" } }
+  - { id: rollout, title: { en: "Rollouts", ms: "Rollout" } }
+  - { id: debug, title: { en: "Debug", ms: "Nyahpepijat" } }
+  - { id: where, title: { en: "Where am I?", ms: "Saya di mana?" } }
+  - { id: nodes, title: { en: "Nodes", ms: "Node" } }
+  - { id: package, title: { en: "Packages and overlays", ms: "Pakej dan overlay" } }
+  - { id: admin, title: { en: "Run the cluster itself (CKA)", ms: "Urus kluster itu sendiri (CKA)" } }
+
+commands:
+  - id: get
+    group: look
+    syntax: "kubectl get <type> [name] [-n ns | -A] [-o wide|yaml|name|jsonpath=…] [-l key=value] [-w]"
+    danger: safe
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/"
+    what: { en: "Lists objects as a table: pods, deployments, services and more.", ms: "Senaraikan objek dalam jadual: pod, deployment, service dan lain-lain." }
+    when: { en: "Any time you want to see what exists right now.", ms: "Bila-bila masa anda mahu lihat apa yang wujud sekarang." }
+    example: { command: "kubectl get pods", en: "Show my trays and how they are doing.", ms: "Tunjuk dulang saya dan keadaannya." }
+    variants:
+      - { command: "kubectl get pods -o wide", en: "Also show each pod's IP and node.", ms: "Tunjuk juga IP dan node setiap pod." }
+      - { command: "kubectl get deployment shop -o yaml", en: "Show the whole object, spec and status.", ms: "Tunjuk seluruh objek, spec dan status." }
+      - { command: "kubectl get pods -l app=shop", en: "Only pods with the label app=shop.", ms: "Hanya pod dengan label app=shop." }
+      - { command: "kubectl get pods -A", en: "Pods in every namespace.", ms: "Pod dalam semua namespace." }
+
+  - id: describe
+    group: look
+    syntax: "kubectl describe <type> <name>"
+    danger: safe
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_describe/"
+    what: { en: "Tells the whole story of one object, with its events at the end.", ms: "Cerita penuh satu objek, dengan event di hujung." }
+    when: { en: "When a pod is stuck and you want to know why.", ms: "Bila pod tersekat dan anda mahu tahu kenapa." }
+    example: { command: "kubectl describe pod tray", en: "Why is this tray not ready? Read the Events.", ms: "Kenapa dulang ini belum sedia? Baca Events." }
+
+  - id: apply
+    group: change
+    syntax: "kubectl apply -f <file|folder> [--dry-run=client|server] | -k <folder>"
+    danger: careful
+    lesson: k8s-k1-l11
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/"
+    what: { en: "Makes the cluster match your YAML file. Creates or changes objects.", ms: "Jadikan kluster sama dengan fail YAML anda. Cipta atau ubah objek." }
+    when: { en: "To create or update anything from a file you keep in Git.", ms: "Untuk cipta atau kemas kini apa-apa daripada fail dalam Git." }
+    example: { command: "kubectl apply -f shop.yaml", en: "Put up the order written in shop.yaml.", ms: "Pasang pesanan yang tertulis dalam shop.yaml." }
+    variants:
+      - { command: "kubectl apply -f shop.yaml --dry-run=server", en: "Ask the cluster to check it, change nothing.", ms: "Minta kluster semak, tanpa ubah apa-apa." }
+      - { command: "kubectl diff -f shop.yaml", en: "See what apply would change first.", ms: "Lihat apa yang apply akan ubah dulu." }
+
+  - id: create
+    group: change
+    syntax: "kubectl create deployment|namespace|configmap|secret generic|job|service … <name>"
+    danger: careful
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/"
+    what: { en: "Makes one new object from flags, without a file.", ms: "Buat satu objek baharu daripada flag, tanpa fail." }
+    when: { en: "For quick tries, or to print starter YAML with --dry-run=client -o yaml.", ms: "Untuk cuba cepat, atau cetak YAML permulaan dengan --dry-run=client -o yaml." }
+    example: { command: "kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3", en: "A standing order: always 3 trays of nginx.", ms: "Arahan tetap: sentiasa 3 dulang nginx." }
+    variants:
+      - { command: "kubectl create deployment shop --image=nginx:1.29-alpine --dry-run=client -o yaml", en: "Print the YAML, create nothing.", ms: "Cetak YAML, tiada yang dicipta." }
+      - { command: "kubectl create namespace food", en: "Make a new zone called food.", ms: "Buat zon baharu bernama food." }
+
+  - id: delete
+    group: change
+    syntax: "kubectl delete <type> <name> | -f <file> | -l key=value"
+    danger: lose
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_delete/"
+    what: { en: "Removes objects. A deleted namespace takes everything inside with it.", ms: "Buang objek. Namespace yang dipadam bawa semua isinya sekali." }
+    when: { en: "Only after you read the pink bar: right cluster, right namespace?", ms: "Hanya selepas baca bar merah jambu: kluster betul, namespace betul?" }
+    example: { command: "kubectl delete pod tray", en: "Take away one tray.", ms: "Ambil satu dulang." }
+    variants:
+      - { command: "kubectl delete -f shop.yaml", en: "Remove what the file made.", ms: "Buang apa yang fail itu buat." }
+
+  - id: scale
+    group: change
+    syntax: "kubectl scale deployment <name> --replicas=<n>"
+    danger: careful
+    lesson: k8s-k1-l04
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/"
+    what: { en: "Changes how many copies the order asks for.", ms: "Ubah berapa salinan yang pesanan minta." }
+    when: { en: "More visitors are coming, or fewer.", ms: "Bila pelawat bertambah, atau berkurang." }
+    example: { command: "kubectl scale deployment shop --replicas=5", en: "Want 5 now. The manager makes 2 more.", ms: "Kini mahu 5. Pengurus buat 2 lagi." }
+
+  - id: set-image
+    group: rollout
+    syntax: "kubectl set image deployment/<name> <container>=<image>"
+    danger: careful
+    lesson: k8s-k2-l05
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_image/"
+    what: { en: "Puts a new image in the pod template. A rolling update starts.", ms: "Letak image baharu dalam templat pod. Rolling update bermula." }
+    when: { en: "To ship a new version of your app.", ms: "Untuk hantar versi baharu aplikasi anda." }
+    example: { command: "kubectl set image deployment/shop web=nginx:1.30-alpine", en: "Swap the trays to version 1.30, a few at a time.", ms: "Tukar dulang ke versi 1.30, sedikit demi sedikit." }
+
+  - id: rollout-status
+    group: rollout
+    syntax: "kubectl rollout status deployment/<name> [--timeout=…]"
+    danger: safe
+    lesson: k8s-k2-l05
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_status/"
+    what: { en: "Waits and reports until the new version is fully out.", ms: "Tunggu dan lapor sehingga versi baharu siap keluar." }
+    when: { en: "Right after a change, before you call it done.", ms: "Sejurus selepas perubahan, sebelum anda kata siap." }
+    example: { command: "kubectl rollout status deployment/shop", en: "Tell me when all new trays are ready.", ms: "Beritahu bila semua dulang baharu sedia." }
+
+  - id: rollout-history
+    group: rollout
+    syntax: "kubectl rollout history deployment/<name> [--revision=n]"
+    danger: safe
+    lesson: k8s-k2-l05
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_history/"
+    what: { en: "Lists the revisions: one per version of the pod template.", ms: "Senarai revision: satu bagi setiap versi templat pod." }
+    when: { en: "To pick a version to go back to.", ms: "Untuk pilih versi untuk kembali." }
+    example: { command: "kubectl rollout history deployment/shop", en: "Which versions has the shop had?", ms: "Versi apa yang kedai ini pernah ada?" }
+
+  - id: rollout-undo
+    group: rollout
+    syntax: "kubectl rollout undo deployment/<name> [--to-revision=n]"
+    danger: careful
+    lesson: k8s-k2-l05
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_undo/"
+    what: { en: "Goes back to the previous pod template, with a rolling update.", ms: "Kembali ke templat pod sebelum ini, dengan rolling update." }
+    when: { en: "A new version is broken: undo fast, then fix calmly.", ms: "Versi baharu rosak: undur cepat, kemudian baiki dengan tenang." }
+    example: { command: "kubectl rollout undo deployment/shop", en: "Back to the last good version.", ms: "Kembali ke versi baik terakhir." }
+
+  - id: rollout-restart
+    group: rollout
+    syntax: "kubectl rollout restart deployment/<name>"
+    danger: careful
+    lesson: k8s-k2-l06
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/"
+    what: { en: "Replaces every pod with a fresh one, a few at a time.", ms: "Ganti setiap pod dengan yang baharu, sedikit demi sedikit." }
+    when: { en: "After you change a ConfigMap the pods read at start.", ms: "Selepas anda ubah ConfigMap yang pod baca semasa mula." }
+    example: { command: "kubectl rollout restart deployment/shop", en: "Fresh trays, same recipe.", ms: "Dulang baharu, resepi sama." }
+
+  - id: expose
+    group: change
+    syntax: "kubectl expose deployment <name> --port=<port> [--target-port=…] [--type=…]"
+    danger: careful
+    lesson: k8s-k3-l02
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_expose/"
+    what: { en: "Makes a Service: one order number for all matching pods.", ms: "Buat Service: satu nombor pesanan untuk semua pod yang sepadan." }
+    when: { en: "Other pods need a stable name to reach your app.", ms: "Pod lain perlukan nama tetap untuk sampai ke aplikasi anda." }
+    example: { command: "kubectl expose deployment shop --port=80", en: "Give the shop the order number shop.", ms: "Beri kedai nombor pesanan shop." }
+
+  - id: run
+    group: change
+    syntax: "kubectl run <name> --image=<image> [-- command …]"
+    danger: careful
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_run/"
+    what: { en: "Starts one lone pod. Nothing replaces it if it goes.", ms: "Mulakan satu pod sendirian. Tiada pengganti kalau ia hilang." }
+    when: { en: "For a quick test pod, not for your app.", ms: "Untuk pod ujian cepat, bukan untuk aplikasi anda." }
+    example: { command: "kubectl run tray --image=nginx:1.29-alpine", en: "One tray, no manager.", ms: "Satu dulang, tanpa pengurus." }
+
+  - id: label
+    group: change
+    syntax: "kubectl label <type> <name> key=value [--overwrite] | key-"
+    danger: careful
+    lesson: k8s-k1-l12
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/"
+    what: { en: "Adds or removes a label. Selectors pick objects by labels.", ms: "Tambah atau buang label. Selector pilih objek ikut label." }
+    when: { en: "To group pods, or to switch a namespace's Pod Security level.", ms: "Untuk kumpul pod, atau tukar tahap Pod Security namespace." }
+    example: { command: "kubectl label pod tray tier=front", en: "Stick a tier=front sticker on the tray.", ms: "Tampal pelekat tier=front pada dulang." }
+
+  - id: logs
+    group: debug
+    syntax: "kubectl logs <pod|deploy/name> [-c container] [--previous] [-f] [--tail=n]"
+    danger: safe
+    lesson: k8s-k5-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/"
+    what: { en: "Shows what a container printed.", ms: "Tunjuk apa yang container cetak." }
+    when: { en: "When an app crashes: --previous shows the run that crashed.", ms: "Bila aplikasi rosak: --previous tunjuk larian yang rosak." }
+    example: { command: "kubectl logs deployment/oops --previous", en: "What did it say before it crashed?", ms: "Apa yang ia kata sebelum rosak?" }
+
+  - id: exec
+    group: debug
+    syntax: "kubectl exec <pod> [-c container] -- <command> [args]"
+    danger: careful
+    lesson: k8s-k5-l10
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_exec/"
+    what: { en: "Runs one command inside a running container.", ms: "Jalankan satu arahan di dalam container yang berjalan." }
+    when: { en: "To test from inside the cluster, for example a Service name.", ms: "Untuk uji dari dalam kluster, contohnya nama Service." }
+    example: { command: "kubectl exec client -- wget -qO- http://shop", en: "From the client pod, ask the shop for its page.", ms: "Dari pod client, minta halaman kedai." }
+
+  - id: port-forward
+    group: debug
+    syntax: "kubectl port-forward <pod|svc/name> <local>:<remote>"
+    danger: safe
+    lesson: k8s-k3-l06
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_port-forward/"
+    what: { en: "Opens a private tunnel from your laptop to one pod.", ms: "Buka terowong peribadi dari laptop anda ke satu pod." }
+    when: { en: "To try an app from your browser without opening it to the world.", ms: "Untuk cuba aplikasi dari pelayar tanpa buka kepada dunia." }
+    example: { command: "kubectl port-forward svc/shop 8080:80", en: "localhost:8080 now reaches a shop pod.", ms: "localhost:8080 kini sampai ke pod kedai." }
+
+  - id: debug
+    group: debug
+    syntax: "kubectl debug -it <pod> --image=busybox:1.37 [--target=container]"
+    danger: careful
+    lesson: k8s-k5-l10
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/"
+    what: { en: "Adds a temporary debug container to a pod, with your own tools.", ms: "Tambah container debug sementara ke pod, dengan alatan anda sendiri." }
+    when: { en: "The app image has no shell or tools.", ms: "Image aplikasi tiada shell atau alatan." }
+    example: { command: "kubectl debug -it tray --image=busybox:1.37 --target=web", en: "Bring a toolbox into the tray.", ms: "Bawa kotak alat ke dalam dulang." }
+
+  - id: explain
+    group: look
+    syntax: "kubectl explain <type>[.field.field]"
+    danger: safe
+    lesson: k8s-k1-l13
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_explain/"
+    what: { en: "Shows the built-in docs for a field.", ms: "Tunjuk dokumen terbina untuk satu medan." }
+    when: { en: "You forgot what a YAML field means.", ms: "Anda lupa maksud satu medan YAML." }
+    example: { command: "kubectl explain deployment.spec.replicas", en: "What does replicas mean?", ms: "Apa maksud replicas?" }
+
+  - id: get-contexts
+    group: where
+    syntax: "kubectl config get-contexts"
+    danger: safe
+    lesson: k8s-k1-l09
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/kubectl_config_get-contexts/"
+    what: { en: "Lists your clusters. A star marks where commands go.", ms: "Senarai kluster anda. Bintang tanda ke mana arahan pergi." }
+    when: { en: "Before anything risky: where am I?", ms: "Sebelum apa-apa yang berisiko: saya di mana?" }
+    example: { command: "kubectl config get-contexts", en: "Which cluster am I talking to?", ms: "Saya sedang bercakap dengan kluster mana?" }
+
+  - id: use-context
+    group: where
+    syntax: "kubectl config use-context <name>"
+    danger: careful
+    lesson: k8s-k1-l09
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/kubectl_config_use-context/"
+    what: { en: "Switches to another cluster. Every later command goes there.", ms: "Tukar ke kluster lain. Semua arahan seterusnya pergi ke sana." }
+    when: { en: "On purpose only. Then check the pink bar.", ms: "Hanya dengan sengaja. Kemudian semak bar merah jambu." }
+    example: { command: "kubectl config use-context kind-dev", en: "Back to my practice cluster.", ms: "Kembali ke kluster latihan saya." }
+
+  - id: set-namespace
+    group: where
+    syntax: "kubectl config set-context --current --namespace=<ns>"
+    danger: careful
+    lesson: k8s-k1-l10
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/kubectl_config_set-context/"
+    what: { en: "Changes the namespace your commands use by default.", ms: "Tukar namespace yang arahan anda guna secara lalai." }
+    when: { en: "You work in one zone for a while.", ms: "Anda bekerja dalam satu zon untuk seketika." }
+    example: { command: "kubectl config set-context --current --namespace=food", en: "From now on, work in the food zone.", ms: "Mulai sekarang, bekerja di zon food." }
+
+  - id: auth-can-i
+    group: where
+    syntax: "kubectl auth can-i <verb> <resource> [-n ns] [--as=user|system:serviceaccount:ns:name]"
+    danger: safe
+    lesson: k8s-k6-l03
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/"
+    what: { en: "Asks RBAC: may this user do this? Answers yes or no.", ms: "Tanya RBAC: bolehkah pengguna ini buat begini? Jawapan ya atau tidak." }
+    when: { en: "To check a bot has only the rights it needs.", ms: "Untuk semak bot hanya ada hak yang perlu." }
+    example: { command: "kubectl auth can-i delete pods --as=system:serviceaccount:default:ci-bot", en: "May the CI bot delete pods?", ms: "Bolehkah bot CI padam pod?" }
+
+  # K6 Guards
+  - id: auth-whoami
+    group: where
+    syntax: "kubectl auth whoami"
+    danger: safe
+    lesson: k8s-k6-l01
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_whoami/"
+    what: { en: "Shows who gate 1 thinks you are: your user name and groups.", ms: "Tunjuk siapa anda pada pandangan pintu 1: nama pengguna dan kumpulan." }
+    when: { en: "When a command is refused and you wonder which identity you use.", ms: "Bila arahan ditolak dan anda tertanya identiti mana yang anda guna." }
+    example: { command: "kubectl auth whoami", en: "Who am I in this cluster?", ms: "Siapa saya dalam kluster ini?" }
+
+  - id: create-role
+    group: change
+    syntax: "kubectl create role <name> --verb=<verbs> --resource=<things> [-n ns]"
+    danger: careful
+    lesson: k8s-k6-l02
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_role/"
+    what: { en: "Makes a job card: which verbs on which things, in one zone.", ms: "Buat kad tugas: kata kerja apa pada benda apa, dalam satu zon." }
+    when: { en: "To give a person or bot a small set of rights.", ms: "Untuk beri orang atau bot sedikit hak." }
+    example: { command: "kubectl create role deployer --verb=get,list,patch --resource=deployments", en: "A card for reading and patching Deployments.", ms: "Kad untuk baca dan patch Deployment." }
+    variants:
+      - { command: "kubectl create clusterrole node-reader --verb=get,list --resource=nodes", en: "A card for every zone, and things with no zone.", ms: "Kad untuk semua zon, dan benda tanpa zon." }
+
+  - id: create-rolebinding
+    group: change
+    syntax: "kubectl create rolebinding <name> --role=<role>|--clusterrole=<role> --serviceaccount=<ns>:<name>|--user=<name> [-n ns]"
+    danger: careful
+    lesson: k8s-k6-l02
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_rolebinding/"
+    what: { en: "Pins a job card to a person or bot, in one zone.", ms: "Pin kad tugas pada orang atau bot, dalam satu zon." }
+    when: { en: "Right after you make a Role. A card does nothing alone.", ms: "Sejurus selepas buat Role. Kad sahaja tak buat apa-apa." }
+    example: { command: "kubectl create rolebinding ci-bot-deployer --role=deployer --serviceaccount=default:ci-bot", en: "Give the CI bot the deployer card here.", ms: "Beri bot CI kad deployer di sini." }
+    variants:
+      - { command: "kubectl create serviceaccount ci-bot", en: "First, make the bot's badge.", ms: "Mula-mula, buat lencana bot itu." }
+
+  - id: top
+    group: debug
+    syntax: "kubectl top pods|nodes"
+    danger: safe
+    lesson: k8s-k5-l01
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/"
+    what: { en: "Shows CPU and memory in use now (needs metrics-server).", ms: "Tunjuk CPU dan memori yang diguna sekarang (perlu metrics-server)." }
+    when: { en: "To find the busy or hungry pod.", ms: "Untuk cari pod yang sibuk atau lapar." }
+    example: { command: "kubectl top pods", en: "Who is using the most?", ms: "Siapa guna paling banyak?" }
+
+  - id: autoscale
+    group: change
+    syntax: "kubectl autoscale deployment <name> --cpu=50% --min=n --max=n"
+    danger: careful
+    lesson: k8s-k5-l02
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_autoscale/"
+    what: { en: "Makes a HorizontalPodAutoscaler that changes replicas from CPU use.", ms: "Buat HorizontalPodAutoscaler yang ubah replika ikut guna CPU." }
+    when: { en: "Traffic goes up and down during the day.", ms: "Trafik naik turun sepanjang hari." }
+    example: { command: "kubectl autoscale deployment shop --cpu=50% --min=3 --max=10", en: "3 to 10 trays, aiming at half-busy CPU.", ms: "3 hingga 10 dulang, sasar CPU separuh sibuk." }
+
+  - id: cordon
+    group: nodes
+    syntax: "kubectl cordon <node> | kubectl uncordon <node>"
+    danger: careful
+    lesson: k8s-k5-l11
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cordon/"
+    what: { en: "Stops new pods going to a node. Pods already there stay.", ms: "Halang pod baharu pergi ke node. Pod sedia ada kekal." }
+    when: { en: "Before work on a node.", ms: "Sebelum kerja pada node." }
+    example: { command: "kubectl cordon dev-worker", en: "No new trays at this stall.", ms: "Tiada dulang baharu di gerai ini." }
+    variants:
+      - { command: "kubectl uncordon dev-worker", en: "The stall takes trays again.", ms: "Gerai terima dulang semula." }
+
+  - id: drain
+    group: nodes
+    syntax: "kubectl drain <node> --ignore-daemonsets [--delete-emptydir-data]"
+    danger: lose
+    lesson: k8s-k5-l11
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/"
+    what: { en: "Cordons a node and evicts its pods. emptyDir data is lost.", ms: "Cordon node dan usir podnya. Data emptyDir hilang." }
+    when: { en: "Before you upgrade or remove a node.", ms: "Sebelum anda naik taraf atau buang node." }
+    example: { command: "kubectl drain dev-worker --ignore-daemonsets", en: "Move every tray off this stall.", ms: "Pindah semua dulang keluar dari gerai ini." }
+
+  - id: taint
+    group: nodes
+    syntax: "kubectl taint nodes <node> key=value:NoSchedule | key:NoSchedule-"
+    danger: careful
+    lesson: k8s-k5-l05
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_taint/"
+    what: { en: "Puts a lock on a node. Only pods with the key (a toleration) may come.", ms: "Letak kunci pada node. Hanya pod dengan kunci (toleration) boleh datang." }
+    when: { en: "To keep a node for special pods.", ms: "Untuk simpan node bagi pod istimewa." }
+    example: { command: "kubectl taint nodes dev-worker2 gpu=yes:NoSchedule", en: "Only GPU pods at this stall.", ms: "Hanya pod GPU di gerai ini." }
+
+  - id: wait
+    group: look
+    syntax: "kubectl wait --for=condition=Ready pod/<name> [--timeout=…]"
+    danger: safe
+    lesson: k8s-k1-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_wait/"
+    what: { en: "Waits until something becomes true.", ms: "Tunggu sehingga sesuatu menjadi benar." }
+    when: { en: "In scripts, before the next step.", ms: "Dalam skrip, sebelum langkah seterusnya." }
+    example: { command: "kubectl wait --for=condition=Ready pod/tray --timeout=60s", en: "Wait until the tray is ready.", ms: "Tunggu sehingga dulang sedia." }
+
+  - id: kustomize
+    group: package
+    syntax: "kubectl kustomize <folder> | kubectl apply -k <folder>"
+    danger: safe
+    lesson: k8s-k4-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_kustomize/"
+    what: { en: "Builds YAML from a base plus an overlay (names, labels, images, replicas).", ms: "Bina YAML daripada base dan overlay (nama, label, image, replika)." }
+    when: { en: "Same app, different settings for dev, staging and prod.", ms: "Aplikasi sama, tetapan berbeza untuk dev, staging dan prod." }
+    example: { command: "kubectl kustomize overlays/prod", en: "Show the prod version before applying it.", ms: "Tunjuk versi prod sebelum di-apply." }
+
+  - id: helm-template
+    group: package
+    syntax: "helm template <release> <chart> [--set key=value]"
+    danger: safe
+    lesson: k8s-k4-l10
+    docs: "https://helm.sh/docs/helm/helm_template/"
+    what: { en: "Fills a chart with values and prints the YAML. Installs nothing.", ms: "Isi chart dengan nilai dan cetak YAML. Tiada yang dipasang." }
+    when: { en: "To see what a chart will make.", ms: "Untuk lihat apa yang chart akan buat." }
+    example: { command: "helm template shop ./kedai --set replicaCount=3", en: "Show the YAML for 3 replicas.", ms: "Tunjuk YAML untuk 3 replika." }
+
+  - id: helm-install
+    group: package
+    syntax: "helm install|upgrade|rollback|uninstall <release> …"
+    danger: careful
+    lesson: k8s-k4-l09
+    docs: "https://helm.sh/docs/helm/helm_install/"
+    what: { en: "Installs a chart as a release, and later upgrades or rolls it back.", ms: "Pasang chart sebagai release, kemudian upgrade atau rollback." }
+    when: { en: "To run packaged apps. Shown in the lesson, not in the practice terminal.", ms: "Untuk jalankan aplikasi berpakej. Ditunjuk dalam pelajaran, bukan dalam terminal latihan." }
+    example: { command: "helm install shop ./kedai", en: "Install the kedai chart as release shop.", ms: "Pasang chart kedai sebagai release shop." }
+
+  # --- World K4 commands ---
+  - id: create-configmap
+    group: change
+    syntax: "kubectl create configmap <name> --from-literal=KEY=value [--from-file=<file>]"
+    danger: safe
+    lesson: k8s-k4-l01
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_configmap/"
+    what: { en: "Pins a note of settings on the wall: a ConfigMap.", ms: "Tampal nota tetapan di dinding: satu ConfigMap." }
+    when: { en: "Settings that change more often than the image.", ms: "Tetapan yang berubah lebih kerap daripada image." }
+    example: { command: "kubectl create configmap settings --from-literal=GREETING=Hai", en: "A note that says GREETING is Hai.", ms: "Nota yang kata GREETING ialah Hai." }
+    variants:
+      - { command: "kubectl create configmap settings --from-literal=GREETING=Hai --dry-run=client -o yaml", en: "Print the YAML, create nothing.", ms: "Cetak YAML, tiada yang dicipta." }
+
+  - id: create-secret
+    group: change
+    syntax: "kubectl create secret generic <name> --from-literal=KEY=value"
+    danger: careful
+    lesson: k8s-k4-l02
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_secret_generic/"
+    what: { en: "Puts a password or token in a Secret. It is only base64, not locked.", ms: "Letak kata laluan atau token dalam Secret. Ia cuma base64, bukan dikunci." }
+    when: { en: "Pods need a password. Limit who can read Secrets.", ms: "Pod perlukan kata laluan. Hadkan siapa boleh baca Secret." }
+    example: { command: "kubectl create secret generic till --from-literal=PASSWORD=practice-only", en: "A Secret called till with one key, PASSWORD.", ms: "Secret bernama till dengan satu kunci, PASSWORD." }
+    variants:
+      - { command: "kubectl get secret till -o jsonpath={.data.PASSWORD}", en: "Show the base64 text. Anyone who can read it can decode it.", ms: "Tunjuk teks base64. Sesiapa yang boleh baca boleh nyahkodnya." }
+
+  - id: version
+    group: look
+    syntax: "kubectl version [--client]"
+    danger: safe
+    lesson: k8s-k1-l07
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_version/"
+    what: { en: "Shows the kubectl and cluster versions.", ms: "Tunjuk versi kubectl dan kluster." }
+    when: { en: "Check they are close: kubectl may be one minor version away.", ms: "Semak ia hampir: kubectl boleh berbeza satu versi minor." }
+    example: { command: "kubectl version", en: "Which Kubernetes am I using?", ms: "Kubernetes versi mana yang saya guna?" }
+
+  # --- World K1 additions (practice cluster and "where am I?") ---
+  - id: current-context
+    group: where
+    syntax: "kubectl config current-context"
+    danger: safe
+    lesson: k8s-k1-l09
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_config/kubectl_config_current-context/"
+    what: { en: "Prints the one context your commands go to right now.", ms: "Cetak context yang arahan anda pergi sekarang." }
+    when: { en: "Before anything risky. Two seconds well spent.", ms: "Sebelum apa-apa yang berisiko. Dua saat yang berbaloi." }
+    example: { command: "kubectl config current-context", en: "Where am I? kind-dev, good.", ms: "Saya di mana? kind-dev, bagus." }
+
+  - id: cluster-info
+    group: where
+    syntax: "kubectl cluster-info [--context <name>]"
+    danger: safe
+    lesson: k8s-k1-l07
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cluster-info/"
+    what: { en: "Shows the address of the control plane (the API server) and CoreDNS.", ms: "Tunjuk alamat control plane (API server) dan CoreDNS." }
+    when: { en: "Right after you open a cluster: does it answer?", ms: "Sejurus selepas anda buka kluster: adakah ia menjawab?" }
+    example: { command: "kubectl cluster-info", en: "Say hello to the manager's office.", ms: "Sapa pejabat pengurus." }
+
+  - id: kind-create
+    group: where
+    syntax: "kind create cluster [--name <name>] [--config <file>]"
+    danger: safe
+    lesson: k8s-k1-l07
+    docs: "https://kind.sigs.k8s.io/docs/user/quick-start/"
+    what: { en: "Opens a practice cluster on your laptop. Each node is a Docker container.", ms: "Buka kluster latihan dalam laptop anda. Setiap node ialah container Docker." }
+    when: { en: "To practise safely. Runs on your own machine, not in the practice terminal.", ms: "Untuk berlatih dengan selamat. Jalan di mesin anda, bukan dalam terminal latihan." }
+    example: { command: "kind create cluster --name dev --config kind-dev.yaml", en: "Open the food court dev with 3 stalls. kubectl now points at kind-dev.", ms: "Buka medan selera dev dengan 3 gerai. kubectl kini menghala ke kind-dev." }
+
+  - id: kind-delete
+    group: where
+    syntax: "kind delete cluster [--name <name>]"
+    danger: lose
+    lesson: k8s-k1-l07
+    docs: "https://kind.sigs.k8s.io/docs/user/quick-start/"
+    what: { en: "Deletes a kind cluster and everything in it.", ms: "Padam kluster kind dan semua isinya." }
+    when: { en: "Done practising? Free your memory. Check the name first.", ms: "Dah habis berlatih? Pulangkan memori anda. Semak nama dahulu." }
+    example: { command: "kind delete cluster --name dev", en: "Close the practice food court for the night.", ms: "Tutup medan selera latihan untuk malam ini." }
+
+  # --- World K2 commands (added by the K2 lessons) ---
+  - id: set-resources
+    group: change
+    syntax: "kubectl set resources deployment/<name> [--requests=cpu=…,memory=…] [--limits=cpu=…,memory=…]"
+    danger: careful
+    lesson: k8s-k2-l09
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_resources/"
+    what: { en: "Changes the requests and limits in the pod template. A rolling update starts.", ms: "Tukar requests dan limits dalam templat pod. Rolling update bermula." }
+    when: { en: "A tray asks for too much room, or needs a cap.", ms: "Dulang minta ruang terlalu banyak, atau perlukan had." }
+    example: { command: "kubectl set resources deployment big --requests=cpu=100m", en: "Book a tenth of a CPU, not 64.", ms: "Tempah satu persepuluh CPU, bukan 64." }
+    variants:
+      - { command: "kubectl set resources deployment shop --limits=memory=128Mi", en: "Cap each tray at 128Mi of memory.", ms: "Hadkan setiap dulang kepada 128Mi memori." }
+
+  - id: create-job-from-cronjob
+    group: change
+    syntax: "kubectl create job <name> --from=cronjob/<cronjob>"
+    danger: careful
+    lesson: k8s-k2-l13
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_job/"
+    what: { en: "Runs a CronJob's task once, right now, as a new Job.", ms: "Jalankan tugas CronJob sekali, sekarang juga, sebagai Job baharu." }
+    when: { en: "To test a scheduled task without waiting for its time.", ms: "Untuk uji tugas berjadual tanpa tunggu masanya." }
+    example: { command: "kubectl create job tally-now --from=cronjob/nightly", en: "Count the plates now, with tonight's recipe.", ms: "Kira pinggan sekarang, dengan resepi malam ini." }
+
+  - id: events
+    group: debug
+    syntax: "kubectl events [--for=pod/<name>] [--types=Warning] [-n ns | -A]"
+    danger: safe
+    lesson: k8s-k5-l08
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_events/"
+    what: { en: "Shows the manager's notice board: scheduled, pulled, started, and warnings.", ms: "Tunjuk papan notis pengurus: dijadualkan, ditarik, dimulakan, dan amaran." }
+    when: { en: "Something is stuck and you want the recent story of the zone.", ms: "Sesuatu tersekat dan anda mahu cerita terkini zon itu." }
+    example: { command: "kubectl events", en: "What happened in this zone lately?", ms: "Apa yang berlaku dalam zon ini baru-baru ini?" }
+    variants:
+      - { command: "kubectl get events --field-selector reason=FailedScheduling", en: "Only the notes about trays with no stall.", ms: "Hanya nota tentang pod yang tiada node." }
+
+  # --- World K9 commands (Level Up CKA pack: kubeadm, crictl, etcdctl, node shell; group: admin) ---
+  # K9 part 1 (lessons l01–l06: building a cluster, inside a node). Node commands run in the
+  # practice terminal after ssh <node> or docker exec -it <node> bash; kubeadm init/join do not.
+  - id: ssh-node
+    group: admin
+    syntax: "ssh <node>   |   docker exec -it <node> bash   (kind)"
+    danger: safe
+    lesson: k8s-k9-l01
+    docs: "https://kubernetes.io/docs/tasks/debug/debug-cluster/"
+    what: { en: "Opens a shell inside one node: the stall's back room. exit takes you back.", ms: "Buka shell di dalam satu node: bilik belakang gerai. exit bawa anda kembali." }
+    when: { en: "When kubectl can't tell you why: look at the kubelet, its diary and the stove.", ms: "Bila kubectl tak dapat beritahu kenapa: lihat kubelet, diarinya dan dapur." }
+    example: { command: "ssh dev-worker", en: "Step into dev-worker's back room, like on the exam.", ms: "Masuk ke bilik belakang dev-worker, seperti dalam peperiksaan." }
+    variants:
+      - { command: "docker exec -it dev-worker bash", en: "The same on kind: each node is a Docker container with no SSH server.", ms: "Sama dalam kind: setiap node ialah container Docker tanpa server SSH." }
+
+  - id: systemctl
+    group: admin
+    syntax: "systemctl status|is-active|is-enabled|start|restart|stop|enable <service>"
+    danger: careful
+    lesson: k8s-k9-l04
+    docs: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+    what: { en: "Talks to systemd, the machine's power room: is a service like the kubelet running? Start, restart or stop it.", ms: "Bercakap dengan systemd, bilik kuasa mesin: servis seperti kubelet berjalan? Hidupkan, mulakan semula atau hentikannya." }
+    when: { en: "Inside a node. status only looks; start, restart and stop change the node.", ms: "Di dalam node. status cuma melihat; start, restart dan stop mengubah node." }
+    example: { command: "systemctl status kubelet", en: "Is the supervisor on duty, and since when?", ms: "Penyelia sedang bertugas, dan sejak bila?" }
+    variants:
+      - { command: "systemctl start kubelet", en: "Bring a stopped supervisor back. The stall turns Ready.", ms: "Bawa penyelia yang berhenti kembali. Gerai jadi Ready." }
+      - { command: "systemctl restart kubelet", en: "Stop and start it, after a kubelet setting changes.", ms: "Henti dan hidupkan semula, selepas tetapan kubelet berubah." }
+      - { command: "systemctl is-enabled kubelet", en: "Does it start by itself at boot?", ms: "Adakah ia hidup sendiri semasa but?" }
+      - { command: "systemctl stop kubelet", en: "Careful: the stall goes NotReady soon after. Throwaway clusters only.", ms: "Hati-hati: gerai jadi NotReady tak lama kemudian. Kluster pakai buang sahaja." }
+
+  - id: journalctl
+    group: admin
+    syntax: "journalctl -u <service> [-n N] [--no-pager] [-f]"
+    danger: safe
+    lesson: k8s-k9-l04
+    docs: "https://www.freedesktop.org/software/systemd/man/latest/journalctl.html"
+    what: { en: "Reads a service's diary: the log lines systemd keeps for it.", ms: "Baca diari sesuatu servis: baris log yang systemd simpan untuknya." }
+    when: { en: "The kubelet stopped or keeps failing, and you want to know why.", ms: "kubelet berhenti atau asyik gagal, dan anda mahu tahu kenapa." }
+    example: { command: "journalctl -u kubelet -n 20 --no-pager", en: "The kubelet's last 20 diary lines, printed all at once.", ms: "20 baris terakhir diari kubelet, dicetak sekali gus." }
+    variants:
+      - { command: "journalctl -u kubelet -f", en: "Keep watching for new lines. Ctrl+C stops.", ms: "Terus perhati baris baharu. Ctrl+C untuk berhenti." }
+
+  - id: crictl
+    group: admin
+    syntax: "crictl pods | ps [-a] [--name <regex>] | logs [--tail N] <container id> | images"
+    danger: safe
+    lesson: k8s-k9-l05
+    docs: "https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/"
+    what: { en: "Looks straight at the stove: the pods, containers and images containerd has on this one node.", ms: "Lihat terus ke dapur: pod, container dan image yang containerd ada pada node ini sahaja." }
+    when: { en: "Inside a node, when kubectl can't help: the API server or the kubelet is down.", ms: "Di dalam node, bila kubectl tak dapat membantu: API server atau kubelet mati." }
+    example: { command: "crictl ps -a", en: "Every container on this stall, stopped ones too.", ms: "Setiap container di gerai ini, termasuk yang sudah berhenti." }
+    variants:
+      - { command: "crictl pods --name oven", en: "Only the pods whose name matches oven.", ms: "Hanya pod yang namanya padan dengan oven." }
+      - { command: "crictl logs <container id>", en: "A container's last words. The first letters of the id are enough.", ms: "Kata-kata terakhir sesebuah container. Huruf pertama id sudah cukup." }
+      - { command: "crictl images", en: "What the stove has pulled onto this machine.", ms: "Apa yang dapur sudah tarik ke mesin ini." }
+
+  - id: kubeadm-init
+    group: admin
+    syntax: "kubeadm init [--pod-network-cidr <cidr>] [--control-plane-endpoint <host:port>]"
+    danger: careful
+    lesson: k8s-k9-l02
+    docs: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/"
+    what: { en: "Turns a fresh machine into the manager's office: certificates, kubeconfig files, static pod manifests and a join token.", ms: "Jadikan mesin kosong pejabat pengurus: sijil, fail kubeconfig, manifest static pod dan join token." }
+    when: { en: "Once, on the first machine of a new cluster. Real machines only, not the practice terminal.", ms: "Sekali, pada mesin pertama kluster baharu. Mesin sebenar sahaja, bukan terminal latihan." }
+    example: { command: "sudo kubeadm init --pod-network-cidr 10.244.0.0/16", en: "Build the office, and give pods their own address range.", ms: "Bina pejabat, dan beri pod julat alamat sendiri." }
+
+  - id: kubeadm-join
+    group: admin
+    syntax: "kubeadm join <host>:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>"
+    danger: careful
+    lesson: k8s-k9-l02
+    docs: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/"
+    what: { en: "Brings a new machine into the cluster as a stall, with a ticket and the office's ID check.", ms: "Bawa mesin baharu masuk ke kluster sebagai gerai, dengan tiket dan semakan ID pejabat." }
+    when: { en: "On each new worker, after kubeadm init. Real machines only, not the practice terminal.", ms: "Pada setiap worker baharu, selepas kubeadm init. Mesin sebenar sahaja, bukan terminal latihan." }
+    example: { command: "sudo kubeadm join 172.18.0.2:6443 --token abcdef.0123456789abcdef --discovery-token-ca-cert-hash sha256:<hash>", en: "Join the food court at the office's front counter.", ms: "Sertai medan selera di kaunter depan pejabat." }
+    variants:
+      - { command: "kubeadm token create --print-join-command", en: "On the office machine: print a fresh join command. Tokens last 24 hours by default.", ms: "Pada mesin pejabat: cetak arahan join baharu. Token tahan 24 jam secara lalai." }
+
+  # K9 part 2 (l08–l11): upgrades, etcd snapshots, certificates, CSRs. cordon/drain/uncordon are above (group nodes).
+  - id: kubeadm-upgrade
+    group: admin
+    syntax: "sudo kubeadm upgrade plan | sudo kubeadm upgrade apply v1.37.x | sudo kubeadm upgrade node"
+    danger: careful
+    lesson: k8s-k9-l08
+    docs: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/"
+    what: { en: "Upgrades a kubeadm cluster's control plane. plan only looks; apply changes the first control-plane node; node does the others.", ms: "Naik taraf control plane kluster kubeadm. plan cuma melihat; apply ubah node control-plane pertama; node untuk yang lain." }
+    when: { en: "One minor version at a time, after an etcd snapshot. Then drain each node and upgrade its kubelet.", ms: "Satu versi minor setiap kali, selepas snapshot etcd. Kemudian drain setiap node dan naik taraf kubelet-nya." }
+    example: { command: "sudo kubeadm upgrade plan", en: "Look only: can we upgrade, and to which versions?", ms: "Lihat sahaja: boleh naik taraf, dan ke versi mana?" }
+    variants:
+      - { command: "sudo kubeadm upgrade apply v1.37.2", en: "Upgrade the first control-plane node. Back up etcd first.", ms: "Naik taraf node control-plane pertama. Sandarkan etcd dulu." }
+      - { command: "sudo kubeadm upgrade node", en: "On every other node, after the first one is done.", ms: "Pada setiap node lain, selepas yang pertama siap." }
+
+  - id: kubeadm-certs
+    group: admin
+    syntax: "kubeadm certs check-expiration | kubeadm certs renew all|<name>"
+    danger: careful
+    lesson: k8s-k9-l10
+    docs: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-certs/"
+    what: { en: "Shows when the control plane's certificates expire, and renews them. The CAs are not renewed.", ms: "Tunjuk bila sijil control plane luput, dan baharuinya. CA tidak dibaharui." }
+    when: { en: "Check a few times a year. Renew before the date, then restart the control-plane pods.", ms: "Semak beberapa kali setahun. Baharui sebelum tarikh itu, kemudian mulakan semula pod control-plane." }
+    example: { command: "kubeadm certs check-expiration", en: "On the control-plane node: when does each card expire? It only looks.", ms: "Pada node control-plane: bila setiap kad luput? Ia cuma melihat." }
+    variants:
+      - { command: "kubeadm certs renew apiserver", en: "Renew one card. Then restart the API server's pod.", ms: "Baharui satu kad. Kemudian mulakan semula pod API server." }
+      - { command: "kubeadm certs renew all", en: "Renew every card kubeadm manages. Copy the new admin.conf after.", ms: "Baharui semua kad yang kubeadm urus. Salin admin.conf baharu selepas itu." }
+
+  - id: etcdctl-snapshot
+    group: admin
+    syntax: "etcdctl --endpoints=<url> --cacert=<ca> --cert=<cert> --key=<key> snapshot save <file>"
+    danger: safe
+    lesson: k8s-k9-l09
+    docs: "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+    what: { en: "Saves a snapshot of the running etcd: a photocopy of the order book. Without the certificate flags it waits forever.", ms: "Simpan snapshot etcd yang sedang berjalan: fotokopi buku pesanan. Tanpa flag sijil ia tunggu selamanya." }
+    when: { en: "On a schedule, and always before an upgrade or a risky change. Copy the file off the node.", ms: "Ikut jadual, dan sentiasa sebelum naik taraf atau perubahan berisiko. Salin fail itu keluar dari node." }
+    example: { command: "etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db", en: "On the control-plane node: save the whole cluster to /opt/backup.db.", ms: "Pada node control-plane: simpan seluruh kluster ke /opt/backup.db." }
+    variants:
+      - { command: "kubectl -n kube-system exec etcd-dev-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db", en: "On kind: the nodes have no etcdctl, so run it in the etcd pod.", ms: "Pada kind: node tiada etcdctl, jadi jalankannya dalam pod etcd." }
+
+  - id: etcdutl-status
+    group: admin
+    syntax: "etcdutl [--write-out=table|json] snapshot status <file>"
+    danger: safe
+    lesson: k8s-k9-l09
+    docs: "https://etcd.io/docs/v3.7/op-guide/recovery/"
+    what: { en: "Reads a snapshot file: its hash, revision, keys and size. In etcd 3.7, etcdctl no longer does this.", ms: "Baca fail snapshot: hash, revision, kunci dan saiznya. Dalam etcd 3.7, etcdctl tak buat ini lagi." }
+    when: { en: "Right after a save, and before any restore. Trust a copy only after you check it.", ms: "Sejurus selepas simpan, dan sebelum sebarang pemulihan. Percayai salinan hanya selepas disemak." }
+    example: { command: "etcdutl --write-out=table snapshot status /opt/backup.db", en: "Is this copy healthy? Show it as a table.", ms: "Salinan ini sihat? Tunjuk sebagai jadual." }
+
+  - id: etcdutl-restore
+    group: admin
+    syntax: "etcdutl --data-dir <new-empty-dir> snapshot restore <file>"
+    danger: lose
+    lesson: k8s-k9-l09
+    docs: "https://etcd.io/docs/v3.7/op-guide/recovery/"
+    what: { en: "Unpacks a snapshot into a new data folder. Point etcd at it, and the cluster goes back in time. Newer objects are lost.", ms: "Buka snapshot ke folder data baharu. Tunjukkan etcd ke situ, dan kluster kembali ke masa lalu. Objek yang lebih baharu hilang." }
+    when: { en: "The last resort, when objects are lost and Git can't bring them back.", ms: "Jalan terakhir, bila objek hilang dan Git tak dapat pulihkannya." }
+    example: { command: "etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db", en: "Restore the copy into a new folder, never the live one.", ms: "Pulihkan salinan ke folder baharu, bukan folder yang sedang digunakan." }
+    variants:
+      - { command: "sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml", en: "Then point etcd's static pod at that folder. The kubelet restarts etcd.", ms: "Kemudian tunjukkan static pod etcd ke folder itu. Kubelet mulakan semula etcd." }
+
+  - id: certificate-approve
+    group: admin
+    syntax: "kubectl certificate approve <csr-name> | kubectl certificate deny <csr-name>"
+    danger: careful
+    lesson: k8s-k9-l11
+    docs: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_certificate/kubectl_certificate_approve/"
+    what: { en: "Approves a CertificateSigningRequest, so the cluster signs that ID card. It names who, not what they may do.", ms: "Luluskan CertificateSigningRequest, supaya kluster tandatangan kad pengenalan itu. Ia sebut siapa, bukan apa yang boleh dibuat." }
+    when: { en: "After you check the request: the right name (CN), team (O), signer and usage.", ms: "Selepas anda semak permohonan itu: nama (CN), pasukan (O), penandatangan dan usage yang betul." }
+    example: { command: "kubectl certificate approve aina", en: "Sign Aina's ID card. Then give her rights with RBAC.", ms: "Tandatangan kad pengenalan Aina. Kemudian beri dia hak dengan RBAC." }
+    variants:
+      - { command: "kubectl get csr", en: "List the requests and their CONDITION.", ms: "Senaraikan permohonan dan CONDITION-nya." }
+      - { command: "kubectl get csr aina -o jsonpath='{.status.certificate}' | base64 -d > aina.crt", en: "Save the signed card as a file.", ms: "Simpan kad yang ditandatangan sebagai fail." }

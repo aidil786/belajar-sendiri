@@ -1,0 +1,63 @@
+---
+id: k8s-k4-l11
+world: 4
+title: "Helm atau Kustomize?"
+summary: "Anda akan belajar: bila guna Helm, bila guna Kustomize, dan bila guna kedua-duanya."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SortCards, FoodCourtSim, Choice, Mission]
+needs: [k8s-k4-l10]
+scenario: k4-kz
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "Helm: Charts", url: "https://helm.sh/docs/topics/charts/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kz" commands={['kubectl kustomize overlays/prod']} picture={false} label="kubectl kustomize overlays/prod cetak YAML prod: satu Namespace, ConfigMap settings dan Deployment dengan 3 replika." />
+
+Kustomize buat YAML prod dengan patch fail biasa. Pelajaran lepas, Helm buat YAML dengan isi ruang kosong. Dua alat, satu kerja? Pasukan anda sedang bertekak.
+</Card>
+
+<Card id="see-compare" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'helm', label: 'Helm' }, { id: 'kz', label: 'Kustomize' }, { id: 'both', label: 'Kedua-duanya' }]} items={[{ label: 'Terbina dalam kubectl', bucket: 'kz', why: 'kubectl kustomize dan apply -k tak perlu apa-apa tambahan.' }, { label: 'Templat dengan ruang kosong', bucket: 'helm', why: 'Kustomize tak pernah guna bahasa templat.' }, { label: 'Simpan sejarah release dan boleh rollback', bucket: 'helm', why: 'helm rollback guna sejarah itu.' }, { label: 'Patch YAML biasa', bucket: 'kz', why: 'Overlay ubah base tanpa ruang kosong.' }, { label: 'Akhirnya jadi YAML dalam kluster', bucket: 'both', why: 'Apa pun caranya, API server terima objek biasa.' }]} success="Helm: set siap dan sejarah. Kustomize: patch atas YAML biasa." />
+
+**Helm** isi templat dan ingat release. Kustomize patch YAML biasa, dapur demi dapur. Ramai pasukan guna kedua-duanya.
+</Card>
+
+<Card id="try-both" type="try">
+Buat YAML dengan dua cara. Mula-mula dapur dev Kustomize, kemudian set Helm.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" goal={{ typed: '^kubectl kustomize overlays/', lastTyped: '^helm template ' }} hints={['Taip kubectl kustomize overlays/dev', 'Kemudian: helm template shop ./kedai']} success="Matlamat sama, dua jalan: YAML biasa di hujungnya." />
+
+<Hint>Kedua-dua arahan tak ubah kluster. Ia cuma cetak.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda perlukan pangkalan data yang pakar sudah bungkus, dengan 40 tetapan. Apa yang anda capai?
+
+<Interactive name="Choice" options={[{ label: 'Chart Helm-nya', correct: true, why: 'Seseorang sudah bungkus. Anda cuma isi values.' }, { label: 'Tulis YAML, kemudian base Kustomize', why: 'Hampir! Boleh, tetapi anda bina semula kerja mereka.' }, { label: 'Kedua-duanya tak sesuai untuk pangkalan data', why: 'Kedua-duanya boleh pasang pangkalan data. Chart jimat paling banyak kerja di sini.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Alat mana paling sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'helm', label: 'Helm' }, { id: 'kz', label: 'Kustomize' }]} items={[{ label: 'Hanya kubectl dibenarkan pada mesin build', bucket: 'kz', why: 'Kustomize sudah ada dalam kubectl.' }, { label: 'Batalkan upgrade seluruh aplikasi dengan satu arahan', bucket: 'helm', why: 'helm rollback bawa balik satu revision.' }, { label: 'Ubah satu baris YAML yang bukan anda tulis', bucket: 'kz', why: 'Patch ubahnya tanpa sunting fail asal.' }, { label: 'Kongsi aplikasi dengan pasukan lain sebagai pakej berversi', bucket: 'helm', why: 'Chart ada versi dan boleh dipasang di mana-mana.' }]} success="Pilih ikut kerja, bukan ikut trend." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih antara Helm dan Kustomize untuk satu kerja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Guna kedua-duanya memang biasa. Hasilkan chart dengan `helm template`, kemudian patch dengan overlay. Kustomize juga boleh hasilkan chart sendiri (`helmCharts`, dengan `--enable-helm`). Alat GitOps dalam Dunia K7 faham kedua-duanya.
+
+Latihan sebenar (pilihan), di mesin anda:
+
+<Interactive name="Mission" id="k8s-k4-l11-rep" steps={[{ id: 'helm', text: 'Hasilkan chart Helm ke dalam fail.', command: 'helm template shop ./kedai > from-helm.yaml' }, { id: 'kz', text: 'Hasilkan overlay Kustomize ke dalam fail.', command: 'kubectl kustomize overlays/prod > from-kustomize.yaml' }, { id: 'compare', text: 'Buka kedua-dua fail. Kedua-duanya YAML Kubernetes biasa.' }]} success="Dua jalan, destinasi sama." />
+</Card>

@@ -1,0 +1,83 @@
+---
+id: k8s-k6-l05
+world: 6
+title: "securityContext: lock the lunchbox"
+summary: "You will learn: the four locks the restricted level wants, and where each one goes."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, KubeReplay, YamlDoctor, FoodCourtSim, SortCards]
+needs: [k8s-k6-l04]
+scenario: k6-locks
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Configure a security context", url: "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" }
+  - { label: "Pod Security Standards: restricted", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted" }
+  - { label: "Restrict a container's syscalls with seccomp", url: "https://kubernetes.io/docs/tutorials/security/seccomp/" }
+---
+
+<Card id="hook" type="hook">
+A thief breaks into one lunchbox: your shop's container. It runs as root, with every power on. How far can the thief get?
+
+<Interactive name="Choice" options={[{ label: 'Too far: root with powers can try to break out to the node', correct: true, why: 'Root plus extra powers is the best start for a breakout. Lock the box.' }, { label: 'Nowhere: a container is a perfect wall', why: 'A container is a fence, not a vault. Locks make it stronger.' }, { label: 'Only into the logs', why: 'The worry is bigger: the node it runs on.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+Lock 1 goes on the whole tray. **<Term id="security-context">securityContext</Term>** holds the locks. Tap the two lines that stop root.
+
+<Interactive name="SpotLines" lines={[{ text: 'spec:' }, { text: '  securityContext:' }, { text: '    runAsNonRoot: true', target: true }, { text: '    runAsUser: 1000', target: true }, { text: '    seccompProfile:' }, { text: '      type: RuntimeDefault' }]} prompt="Tap every line that keeps the cook from being root." success="Yes! No root, and a normal user number. The last two lines turn on seccomp." />
+
+<Hint>Root is user 0. Look for user words.</Hint>
+</Card>
+
+<Card id="see-container" type="see">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['kubectl apply -f half.yaml']} fails={['kubectl apply -f half.yaml']} picture={false} label="half.yaml has the tray locks only. It is forbidden: the container must set allowPrivilegeEscalation=false and drop ALL capabilities." />
+
+The tray locks are not enough. Each container needs two more. **<Term id="capabilities">Capabilities</Term>** are slices of root's power. Drop them all:
+
+```yaml
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+```
+</Card>
+
+<Card id="try-doctor" type="try">
+Mei put a container lock on the tray. The API server does not know it there. Move it into the container.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  securityContext:\n    runAsNonRoot: true\n    allowPrivilegeEscalation: false\n  containers:\n    - name: web\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  securityContext:\n    runAsNonRoot: true\n  containers:\n    - name: web\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n      securityContext:\n        allowPrivilegeEscalation: false\n'} keep={['allowPrivilegeEscalation: false', 'runAsNonRoot: true']} keepHint="Keep both locks. Just move the second one." hint="allowPrivilegeEscalation lives under a container's own securityContext." success="Applied! Each lock sits where it belongs." />
+</Card>
+
+<Card id="try-sim" type="try">
+Two trays wait in your folder. `cat` them, then apply the one the guard accepts.
+
+<Interactive name="FoodCourtSim" scenario="k6-locks" namespace="kedai" goal={{ podsReady: { selector: 'app=tray', namespace: 'kedai', count: 1 } }} hints={['Read them: cat half.yaml, then cat locked.yaml', 'Apply the one with all the locks: kubectl apply -f locked.yaml']} success="A locked tray, running in a guarded zone." />
+
+<Hint>Count the locks. The guard wants four.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You add `readOnlyRootFilesystem: true`. The app writes a temp file to `/tmp`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The write fails. Give it an emptyDir volume at /tmp.', correct: true, why: 'Read-only means the whole box. A small writable locker fixes it.' }, { label: 'Kubernetes makes /tmp writable for you', why: 'It does not. You add the volume yourself.' }, { label: 'The guard refuses the pod', why: 'Restricted does not ask for this lock. The pod gets in; the app fails later.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Where can each lock go? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'container', label: 'Container only' }, { id: 'both', label: 'Pod or container' }]} items={[{ label: '`allowPrivilegeEscalation`', bucket: 'container', why: 'Only a container has it.' }, { label: '`capabilities`', bucket: 'container', why: 'Each container drops its own powers.' }, { label: '`readOnlyRootFilesystem`', bucket: 'container', why: 'Each container has its own files.' }, { label: '`runAsNonRoot`', bucket: 'both', why: 'Set it once on the pod. Containers may set it too.' }, { label: '`seccompProfile`', bucket: 'both', why: 'Pod-wide, or per container.' }, { label: '`runAsUser`', bucket: 'both', why: 'Pod-wide, or per container.' }]} success="Sorted! When both set one, the container's value wins." />
+</Card>
+
+<Card id="win" type="win">
+You can now lock a lunchbox with securityContext.
+</Card>
+
+<Card id="deeper" type="deeper">
+Restricted lets one power back in: `NET_BIND_SERVICE`, for ports under 1024. Many images run as root by default. With `runAsNonRoot: true` and a root image, the kubelet refuses to start it: `CreateContainerConfigError`. Pick a non-root image, or set `runAsUser`.
+
+<Interactive name="Mission" id="k6-l05-rep" steps={[{ id: 'zone', text: 'On a throwaway cluster, make a restricted zone.', command: 'kubectl create namespace locks && kubectl label ns locks pod-security.kubernetes.io/enforce=restricted' }, { id: 'file', text: 'Write locked.yaml: a busybox pod named locked, with the locks from this lesson. Leave out the namespace line.' }, { id: 'apply', text: 'Apply it in the zone.', command: 'kubectl apply -n locks -f locked.yaml' }, { id: 'id', text: 'Ask who it runs as.', command: 'kubectl exec -n locks locked -- id' }]} success="Your lunchbox is locked!" />
+</Card>

@@ -1,0 +1,81 @@
+---
+id: git-w10-l05
+world: 10
+title: Revision syntax
+summary: "You will learn: how to name any commit, or a group of commits, without copying ids."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, GraphPick, Choice, Sim, SpotLines]
+needs: [git-w10-l04]
+scenario: w10-revisions
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitrevisions", url: "https://git-scm.com/docs/gitrevisions" }
+  - { label: "git rev-parse", url: "https://git-scm.com/docs/git-rev-parse" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git log --oneline --graph --all']} label="The graph: main has seven commits, with the menu branch merged in. The prices branch has one extra commit." />
+
+You need the commit two steps back. Copying long ids gets old fast. Is there a shorter way?
+</Card>
+
+<Card id="see-tilde" type="see">
+<Interactive name="GraphScene" scenario="w10-revisions" commands={['git switch --detach HEAD~2']} label="HEAD jumps two commits back along main, to Merge menu." />
+
+A **<Term id="revision">revision</Term>** is any way to name a commit. `HEAD~2` means two steps back from HEAD. Each step follows the first parent.
+</Card>
+
+<Card id="try-pick" type="try">
+Count the steps back along main.
+
+<Interactive name="GraphPick" scenario="w10-revisions" answer="^Say we open daily$" prompt="Tap the commit that HEAD~3 names." why="Three steps back: Link the menu, Merge menu, then Say we open daily." />
+
+<Hint>The merge has two parents. `~` always takes the first one, on main.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`HEAD~2` is a merge, so it has two parents. `^2` picks the second one. Which commit is `HEAD~2^2`?
+
+<Interactive name="Choice" options={[{ label: 'Add onde-onde, the tip of menu', correct: true, why: 'The second parent is the branch that was merged in.' }, { label: 'Say we open daily', why: 'That is the first parent, HEAD~2^1. Same as HEAD~3.' }, { label: 'Add shop page', why: 'That is further back. ^2 takes one step, into the merged branch.' }]} />
+</Card>
+
+<Card id="try-visit" type="try">
+Visit "Add menu page" with `git switch --detach`. Name it from HEAD, using `~` and `^`.
+
+<Interactive name="Sim" scenario="w10-revisions" panels={['graph']} goal={{ headDetached: true, headAtMessage: '^Add menu page$' }} hints={['Start at HEAD~2^2. That is Add onde-onde.', 'Add onde-onde has one parent. Take one more step with ~1.', 'Type git switch --detach HEAD~2^2~1']} success="You walked the graph by name! HEAD~2^2~1 is Add menu page." />
+
+<Hint>Start from `HEAD~2^2`. Then go one more step back.</Hint>
+</Card>
+
+<Card id="see-two-dots" type="see">
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git log --oneline main..prices', 'git log --oneline prices..main']} label="main..prices lists Add a price. prices..main lists Add about page." />
+
+`A..B` (two dots) lists commits in B that A does not have. Swap the sides, and you see the other side's extra work.
+</Card>
+
+<Card id="try-three-dots" type="try">
+`A...B` (three dots) lists commits on either side, but not both. `--left-right` marks the sides: `<` for A, `>` for B.
+
+<Interactive name="SpotLines" scenario="w10-revisions" commands={['git log --oneline --left-right main...prices']} targets="^>" prompt="Tap the commit that only prices has." success="Yes! The > marks the right side: prices." />
+</Card>
+
+<Card id="check" type="check">
+Before a merge, you review what `prices` will bring into `main`. Which command?
+
+<Interactive name="Choice" options={[{ label: '`git log main..prices`', correct: true, why: 'Commits in prices that main does not have yet.' }, { label: '`git log prices..main`', why: 'That is the other way: what main has and prices lacks.' }, { label: '`git log main...prices`', why: 'Three dots also shows the new commits on main.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now name any commit without copying its id.
+</Card>
+
+<Card id="deeper" type="deeper">
+`HEAD^` is the same as `HEAD~1`. `HEAD@{1}` is where HEAD was one move ago, from the reflog. `v1.0^{}` is the commit a tag points to. `git rev-parse` turns any revision into a full id. `git diff main...prices` shows what prices changed since it split off.
+
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git rev-parse --short HEAD~2^2', 'git diff main...prices']} label="rev-parse prints the short id of Add onde-onde. git diff main...prices shows one line in menu.html gaining RM1." />
+</Card>

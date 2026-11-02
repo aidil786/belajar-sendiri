@@ -1,0 +1,397 @@
+# Command pages for the Cloud with AWS course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/aws/commands/<id>/ and in the cheat sheet /<lang>/aws/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Commands are AWS CLI v2 (`aws …`). Anything that creates a resource costs money: say so in `when`,
+# and mark deletes `careful` or `lose`. Facts: docs.aws.amazon.com/cli (command reference).
+groups:
+  - { id: setup, title: { en: "Sign in and profiles", ms: "Log masuk dan profil" } }
+  - { id: iam, title: { en: "Keys and guards (IAM)", ms: "Kunci dan pengawal (IAM)" } }
+  - { id: network, title: { en: "Network and servers", ms: "Rangkaian dan server" } }
+  - { id: storage, title: { en: "Storage (S3)", ms: "Storan (S3)" } }
+  - { id: containers, title: { en: "Containers", ms: "Container" } }
+  - { id: money, title: { en: "Budgets and clean-up", ms: "Bajet dan bersihkan" } }
+
+commands:
+  # --- World A1 commands (groups: setup, money) ---
+  - id: sts-get-caller-identity
+    group: setup
+    syntax: "aws sts get-caller-identity [--profile <name>]"
+    danger: safe
+    lesson: aws-a1-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html"
+    what: { en: "Shows who you are right now: your account number and your ARN.", ms: "Tunjuk siapa anda sekarang: nombor akaun dan ARN anda." }
+    when: { en: "Before any change. Check you are not root, and in the right account.", ms: "Sebelum sebarang perubahan. Pastikan anda bukan root, dan dalam akaun yang betul." }
+    example: { command: "aws sts get-caller-identity", en: "Ask AWS: who am I?", ms: "Tanya AWS: saya siapa?" }
+    variants:
+      - { command: "aws sts get-caller-identity --profile my-dev-profile", en: "The same, for one profile.", ms: "Sama, untuk satu profil." }
+  - id: sso-login
+    group: setup
+    syntax: "aws sso login --profile <name>"
+    danger: safe
+    lesson: aws-a1-l07
+    confusable: [login]
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/sso/login.html"
+    what: { en: "Signs in through IAM Identity Center and keeps short-lived badges for the CLI.", ms: "Log masuk melalui IAM Identity Center dan simpan pas jangka pendek untuk CLI." }
+    when: { en: "Each day you use the CLI with an Identity Center profile.", ms: "Setiap hari anda guna CLI dengan profil Identity Center." }
+    example: { command: "aws sso login --profile my-dev-profile", en: "Sign in at the front desk with these settings.", ms: "Log masuk di kaunter depan dengan tetapan ini." }
+    variants:
+      - { command: "aws configure sso", en: "Set up a new Identity Center profile, step by step.", ms: "Sediakan profil Identity Center baru, langkah demi langkah." }
+      - { command: "aws sso logout", en: "Sign out and clear the cached badges.", ms: "Log keluar dan buang pas dalam cache." }
+  - id: login
+    group: setup
+    syntax: "aws login [--profile <name>]"
+    danger: safe
+    lesson: aws-a1-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html"
+    what: { en: "Uses your console sign-in to give the CLI short-lived keys (AWS CLI 2.32.0 or newer).", ms: "Guna log masuk konsol anda untuk beri CLI kunci jangka pendek (AWS CLI 2.32.0 atau lebih baru)." }
+    when: { en: "When you sign in as an IAM user, not through Identity Center. No access keys needed.", ms: "Bila anda log masuk sebagai pengguna IAM, bukan melalui Identity Center. Tak perlu access key." }
+    example: { command: "aws login", en: "Sign in through the browser; the CLI keeps the badges fresh.", ms: "Log masuk melalui pelayar; CLI pastikan pas sentiasa segar." }
+    variants:
+      - { command: "aws login --profile my-dev-profile", en: "Sign in to one named profile.", ms: "Log masuk ke satu profil bernama." }
+      - { command: "aws logout", en: "End the session.", ms: "Tamatkan sesi." }
+  - id: configure-list-profiles
+    group: setup
+    syntax: "aws configure list-profiles"
+    danger: safe
+    lesson: aws-a1-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/configure/list-profiles.html"
+    what: { en: "Lists the profiles the CLI knows about.", ms: "Senaraikan profil yang CLI tahu." }
+    when: { en: "When you forget a profile's name, or tidy up old ones.", ms: "Bila anda lupa nama profil, atau mahu kemas profil lama." }
+    example: { command: "aws configure list-profiles", en: "Which profiles do I have?", ms: "Profil apa yang saya ada?" }
+  - id: account-enable-region
+    group: setup
+    syntax: "aws account enable-region --region-name <code>"
+    danger: safe
+    lesson: aws-a1-l02
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/account/enable-region.html"
+    what: { en: "Switches on an opt-in Region, like Malaysia (ap-southeast-5), for your account.", ms: "Hidupkan opt-in Region, seperti Malaysia (ap-southeast-5), untuk akaun anda." }
+    when: { en: "Once, before you build in a newer Region. It is free and can take minutes to hours.", ms: "Sekali, sebelum anda bina di Region baru. Ia percuma dan boleh ambil beberapa minit hingga jam." }
+    example: { command: "aws account enable-region --region-name ap-southeast-5", en: "Open the Malaysia mall for this account. No output means it worked.", ms: "Buka pusat Malaysia untuk akaun ini. Tiada output bermakna berjaya." }
+    variants:
+      - { command: "aws account get-region-opt-status --region-name ap-southeast-5", en: "Is it ENABLING or ENABLED yet?", ms: "Sudah ENABLING atau ENABLED?" }
+      - { command: "aws account disable-region --region-name ap-southeast-5", en: "Switch it off. Careful: what you built there keeps billing.", ms: "Matikan. Hati-hati: apa yang dibina di sana terus dibil." }
+  - id: budgets-create-budget
+    group: money
+    syntax: "aws budgets create-budget --account-id <id> --budget file://<file> [--notifications-with-subscribers file://<file>]"
+    danger: safe
+    lesson: aws-a1-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/budgets/create-budget.html"
+    what: { en: "Creates a budget: a line on the bill, with emails when spending passes it.", ms: "Cipta bajet: garisan pada bil, dengan emel bila belanja melepasinya." }
+    when: { en: "On day one, before you build anything. An alert warns you; it never stops anything.", ms: "Pada hari pertama, sebelum bina apa-apa. Amaran beri tahu anda; ia tak hentikan apa-apa." }
+    example: { command: "aws budgets create-budget --account-id 111122223333 --budget file://budget.json --notifications-with-subscribers file://notify.json", en: "Set the line and who gets the email. No output means it worked.", ms: "Tetapkan garisan dan siapa dapat emel. Tiada output bermakna berjaya." }
+    variants:
+      - { command: "aws budgets describe-budgets --account-id 111122223333", en: "List your budgets and what you have spent.", ms: "Senaraikan bajet anda dan apa yang sudah dibelanja." }
+  # --- World A2 commands (group: iam) ---
+  - id: iam-create-role
+    group: iam
+    syntax: "aws iam create-role --role-name <name> --assume-role-policy-document file://<trust.json>"
+    danger: safe
+    lesson: aws-a2-l01
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/iam/create-role.html"
+    what: { en: "Makes a role from a trust policy: who may borrow it.", ms: "Buat role daripada trust policy: siapa boleh pinjam." }
+    when: { en: "When a service, a robot or a workflow needs short-lived keys. Roles are free.", ms: "Bila servis, robot atau workflow perlukan kunci jangka pendek. Role percuma." }
+    example: { command: "aws iam create-role --role-name kedai-web --assume-role-policy-document file://trust.json", en: "Make the web server's role.", ms: "Buat role untuk server web." }
+    variants:
+      - { command: "aws iam delete-role --role-name kedai-web", en: "Delete it when done (detach its policies first).", ms: "Padam bila siap (tanggalkan polisinya dahulu)." }
+  - id: iam-attach-role-policy
+    group: iam
+    syntax: "aws iam attach-role-policy --role-name <name> --policy-arn <arn>"
+    danger: careful
+    lesson: aws-a2-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/iam/attach-role-policy.html"
+    what: { en: "Clips a managed policy onto a role, so the role gets its keys.", ms: "Klip managed policy pada role, supaya role dapat kuncinya." }
+    when: { en: "After you write a small policy. Careful: a broad policy hands out broad keys.", ms: "Selepas anda tulis polisi kecil. Hati-hati: polisi luas beri kunci luas." }
+    example: { command: "aws iam attach-role-policy --role-name kedai-web --policy-arn arn:aws:iam::111122223333:policy/menu-reader", en: "Give the web server's role the menu-reader key.", ms: "Beri role server web kunci menu-reader." }
+    variants:
+      - { command: "aws iam list-attached-role-policies --role-name kedai-web", en: "Which policies does this role hold?", ms: "Polisi mana yang role ini pegang?" }
+      - { command: "aws iam detach-role-policy --role-name kedai-web --policy-arn arn:aws:iam::111122223333:policy/menu-reader", en: "Take the policy off again.", ms: "Tanggalkan polisi itu semula." }
+  - id: iam-list-access-keys
+    group: iam
+    syntax: "aws iam list-access-keys [--user-name <name>]"
+    danger: safe
+    lesson: aws-a2-l06
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/iam/list-access-keys.html"
+    what: { en: "Lists a user's access keys and whether each is Active or Inactive. It never shows the secret.", ms: "Senaraikan access key pengguna dan sama ada Active atau Inactive. Ia tak pernah tunjuk rahsia." }
+    when: { en: "To find old keys to switch off and delete.", ms: "Untuk cari kunci lama yang perlu dimatikan dan dipadam." }
+    example: { command: "aws iam list-access-keys --user-name Bob", en: "Show Bob's keys.", ms: "Tunjuk kunci Bob." }
+    variants:
+      - { command: "aws iam get-access-key-last-used --access-key-id AKIAIOSFODNN7EXAMPLE", en: "When did this key last work?", ms: "Bila kunci ini terakhir berfungsi?" }
+  - id: iam-update-access-key
+    group: iam
+    syntax: "aws iam update-access-key --access-key-id <id> --status Active|Inactive [--user-name <name>]"
+    danger: careful
+    lesson: aws-a2-l06
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/iam/update-access-key.html"
+    what: { en: "Switches an access key off (Inactive) or on (Active). The key is kept.", ms: "Matikan (Inactive) atau hidupkan (Active) access key. Kunci itu disimpan." }
+    when: { en: "When rotating, or right after a leak. Careful: apps using the key stop working.", ms: "Semasa rotate, atau sejurus selepas bocor. Hati-hati: aplikasi yang guna kunci itu berhenti berfungsi." }
+    example: { command: "aws iam update-access-key --access-key-id AKIAIOSFODNN7EXAMPLE --status Inactive --user-name Bob", en: "Switch Bob's old key off, but keep it for now.", ms: "Matikan kunci lama Bob, tetapi simpan dahulu." }
+  - id: iam-delete-access-key
+    group: iam
+    syntax: "aws iam delete-access-key --access-key-id <id> [--user-name <name>]"
+    danger: lose
+    lesson: aws-a2-l06
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/iam/delete-access-key.html"
+    what: { en: "Deletes an access key for good. There is no undo.", ms: "Padam access key untuk selamanya. Tiada undo." }
+    when: { en: "After the key has been Inactive for a while and nothing broke.", ms: "Selepas kunci itu Inactive untuk seketika dan tiada yang rosak." }
+    example: { command: "aws iam delete-access-key --access-key-id AKIDPMS9RO4H3FEXAMPLE --user-name Bob", en: "Remove Bob's old key forever.", ms: "Buang kunci lama Bob selamanya." }
+  # --- World A3 commands (groups: network, storage) ---
+  # Examples and their outputs follow the official AWS CLI reference examples (checked 2026-11-01).
+  - id: ec2-create-vpc
+    group: network
+    syntax: "aws ec2 create-vpc --cidr-block <cidr>"
+    danger: safe
+    lesson: aws-a3-l01
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html"
+    what: { en: "Fences off a new VPC: your own plot of addresses.", ms: "Pagar satu VPC baru: lot alamat anda sendiri." }
+    when: { en: "To start a network for your servers. A VPC alone costs nothing; some parts inside it do.", ms: "Untuk mulakan rangkaian bagi server anda. VPC sahaja tiada caj; ada bahagian di dalamnya yang ada caj." }
+    example: { command: "aws ec2 create-vpc --cidr-block 10.0.0.0/16", en: "A plot with 65,536 private addresses.", ms: "Satu lot dengan 65,536 alamat peribadi." }
+    variants:
+      - { command: "aws ec2 describe-vpcs", en: "List your VPCs, the default one too.", ms: "Senaraikan VPC anda, termasuk yang lalai." }
+
+  - id: ec2-create-subnet
+    group: network
+    syntax: "aws ec2 create-subnet --vpc-id <vpc> --cidr-block <cidr>"
+    danger: safe
+    lesson: aws-a3-l02
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-subnet.html"
+    what: { en: "Adds a row of units (a subnet) inside your VPC.", ms: "Tambah satu baris unit (subnet) dalam VPC anda." }
+    when: { en: "To split the VPC into public and private rows, one per wing.", ms: "Untuk bahagikan VPC kepada baris awam dan peribadi, satu di setiap sayap." }
+    example: { command: "aws ec2 create-subnet --vpc-id vpc-081ec835f3EXAMPLE --cidr-block 10.0.0.0/24", en: "A /24 row: 251 usable addresses, because AWS keeps 5.", ms: "Baris /24: 251 alamat boleh guna, kerana AWS simpan 5." }
+    variants:
+      - { command: "aws ec2 describe-subnets", en: "List your rows and their free addresses.", ms: "Senaraikan baris anda dan alamat yang masih kosong." }
+
+  - id: ec2-create-route
+    group: network
+    syntax: "aws ec2 create-route --route-table-id <rtb> --destination-cidr-block <cidr> (--gateway-id <igw> | --nat-gateway-id <nat>)"
+    danger: careful
+    lesson: aws-a3-l03
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-route.html"
+    what: { en: "Adds a road sign to a route table.", ms: "Tambah satu papan tanda pada jadual laluan." }
+    when: { en: "To make a row public (to an internet gateway). Or to let back rooms out (to a NAT gateway). Check which row first.", ms: "Untuk jadikan baris awam (ke internet gateway). Atau benarkan bilik belakang keluar (ke NAT gateway). Semak baris mana dahulu." }
+    example: { command: "aws ec2 create-route --route-table-id rtb-22574640 --destination-cidr-block 0.0.0.0/0 --gateway-id igw-c0a643a9", en: "Send every other address to the internet gateway.", ms: "Hantar semua alamat lain ke internet gateway." }
+    variants:
+      - { command: "aws ec2 describe-route-tables", en: "Read every row's road signs.", ms: "Baca papan tanda setiap baris." }
+
+  - id: ec2-delete-nat-gateway
+    group: network
+    syntax: "aws ec2 delete-nat-gateway --nat-gateway-id <nat>"
+    danger: careful
+    lesson: aws-a3-l03
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-nat-gateway.html"
+    what: { en: "Deletes a NAT gateway, which bills every hour it exists.", ms: "Padam NAT gateway, yang dicaj setiap jam ia wujud." }
+    when: { en: "After practice. Back rooms lose their way out. Then release its Elastic IP too.", ms: "Selepas berlatih. Bilik belakang hilang jalan keluar. Kemudian lepaskan Elastic IPnya juga." }
+    example: { command: "aws ec2 delete-nat-gateway --nat-gateway-id nat-04ae55e711cec5680", en: "Stop the hourly NAT bill.", ms: "Hentikan caj NAT setiap jam." }
+    variants:
+      - { command: "aws ec2 describe-nat-gateways", en: "Find NAT gateways you forgot.", ms: "Cari NAT gateway yang anda terlupa." }
+      - { command: "aws ec2 release-address --allocation-id eipalloc-64d5890a", en: "Give back the Elastic IP, so it stops billing.", ms: "Pulangkan Elastic IP, supaya caj berhenti." }
+
+  - id: ec2-authorize-security-group-ingress
+    group: network
+    syntax: "aws ec2 authorize-security-group-ingress --group-id <sg> --protocol tcp --port <port> (--cidr <cidr> | --source-group <sg>)"
+    danger: careful
+    lesson: aws-a3-l04
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/authorize-security-group-ingress.html"
+    what: { en: "Adds an allow rule to a security group: who may come in, on which port.", ms: "Tambah peraturan benarkan pada security group: siapa boleh masuk, di port mana." }
+    when: { en: "To open one door, as narrow as you can. Never 22 or 3389 to 0.0.0.0/0.", ms: "Untuk buka satu pintu, sesempit yang boleh. Jangan sekali-kali 22 atau 3389 kepada 0.0.0.0/0." }
+    example: { command: "aws ec2 authorize-security-group-ingress --group-id sg-1234567890abcdef0 --protocol tcp --port 22 --cidr 203.0.113.0/24", en: "SSH only from one office range.", ms: "SSH dari satu julat pejabat sahaja." }
+    variants:
+      - { command: "aws ec2 authorize-security-group-ingress --group-id sg-1234567890abcdef0 --protocol tcp --port 80 --source-group sg-1a2b3c4d", en: "Port 80 only from servers in another group.", ms: "Port 80 dari server dalam kumpulan lain sahaja." }
+      - { command: "aws ec2 create-security-group --group-name MySecurityGroup --description \"My security group\" --vpc-id vpc-1a2b3c4d", en: "Make a new group first. It lets nothing in.", ms: "Buat kumpulan baru dahulu. Ia tak benarkan apa-apa masuk." }
+
+  - id: ec2-run-instances
+    group: network
+    syntax: "aws ec2 run-instances --image-id <ami> --instance-type <type> [--subnet-id <subnet>] [--security-group-ids <sg>]"
+    danger: careful
+    lesson: aws-a3-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html"
+    what: { en: "Rents a new server (an EC2 instance).", ms: "Sewa server baru (instance EC2)." }
+    when: { en: "It costs money while it runs, and its disk costs even when stopped. Set a budget alarm first; pick a small size.", ms: "Ia ada caj selagi berjalan, dan cakeranya ada caj walaupun berhenti. Pasang penggera bajet dahulu; pilih saiz kecil." }
+    example: { command: "aws ec2 run-instances --image-id ami-0abcdef1234567890 --instance-type t3.micro", en: "One small server from this starting disk.", ms: "Satu server kecil dari cakera permulaan ini." }
+    variants:
+      - { command: "aws ec2 describe-instances", en: "List your servers and their states.", ms: "Senaraikan server anda dan keadaannya." }
+
+  - id: ec2-stop-instances
+    group: network
+    syntax: "aws ec2 stop-instances --instance-ids <id>"
+    danger: careful
+    lesson: aws-a3-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/stop-instances.html"
+    what: { en: "Pauses a server. Compute stops billing; its disks and Elastic IPs do not.", ms: "Rehatkan server. Caj pengiraan berhenti; cakera dan Elastic IP tidak." }
+    when: { en: "To pause a server you will use again. Data in memory is lost.", ms: "Untuk rehatkan server yang anda akan guna lagi. Data dalam memori hilang." }
+    example: { command: "aws ec2 stop-instances --instance-ids i-1234567890abcdef0", en: "running → stopping → stopped.", ms: "running → stopping → stopped." }
+    variants:
+      - { command: "aws ec2 start-instances --instance-ids i-1234567890abcdef0", en: "Start it again.", ms: "Mulakan semula." }
+
+  - id: ec2-terminate-instances
+    group: network
+    syntax: "aws ec2 terminate-instances --instance-ids <id>"
+    danger: lose
+    lesson: aws-a3-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ec2/terminate-instances.html"
+    what: { en: "Deletes a server for good. Its root disk goes too, by default.", ms: "Padam server buat selamanya. Cakera utamanya ikut hilang, secara lalai." }
+    when: { en: "When you are done. There is no undo. Check for extra disks left behind.", ms: "Bila anda dah siap. Tak boleh dibatalkan. Semak cakera tambahan yang tertinggal." }
+    example: { command: "aws ec2 terminate-instances --instance-ids i-1234567890abcdef0", en: "running → shutting-down → terminated.", ms: "running → shutting-down → terminated." }
+    variants:
+      - { command: "aws ec2 describe-volumes --filters Name=status,Values=available", en: "Find disks attached to nothing. They still bill.", ms: "Cari cakera yang tak disambung ke apa-apa. Ia masih dicaj." }
+
+  - id: elbv2-describe-target-health
+    group: network
+    syntax: "aws elbv2 describe-target-health --target-group-arn <arn>"
+    danger: safe
+    lesson: aws-a3-l06
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/elbv2/describe-target-health.html"
+    what: { en: "Shows which servers behind a load balancer pass their health check.", ms: "Tunjuk server mana di belakang load balancer yang lulus pemeriksaan kesihatan." }
+    when: { en: "When shoppers see errors. Unhealthy targets get no traffic.", ms: "Bila pembeli nampak ralat. Sasaran tak sihat tak dapat trafik." }
+    example: { command: "aws elbv2 describe-target-health --target-group-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067", en: "Each target with its state: healthy or not.", ms: "Setiap sasaran dengan keadaannya: sihat atau tidak." }
+    variants:
+      - { command: "aws elbv2 delete-load-balancer --load-balancer-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188", en: "Delete a test load balancer. It bills every hour.", ms: "Padam load balancer ujian. Ia dicaj setiap jam." }
+
+  - id: s3-mb
+    group: storage
+    syntax: "aws s3 mb s3://<bucket>"
+    danger: safe
+    lesson: aws-a3-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/s3/mb.html"
+    what: { en: "Makes a new S3 bucket: a storeroom for files.", ms: "Buat bucket S3 baru: stor untuk fail." }
+    when: { en: "To store files. The name must be unique. Stored files cost money each month.", ms: "Untuk simpan fail. Nama mesti unik. Fail yang disimpan ada caj setiap bulan." }
+    example: { command: "aws s3 mb s3://amzn-s3-demo-bucket", en: "Prints make_bucket: s3://amzn-s3-demo-bucket.", ms: "Cetak make_bucket: s3://amzn-s3-demo-bucket." }
+    variants:
+      - { command: "aws s3 ls", en: "List your buckets.", ms: "Senaraikan bucket anda." }
+      - { command: "aws s3 ls s3://amzn-s3-demo-bucket", en: "List the files in one bucket.", ms: "Senaraikan fail dalam satu bucket." }
+
+  - id: s3api-get-public-access-block
+    group: storage
+    syntax: "aws s3api get-public-access-block --bucket <bucket>"
+    danger: safe
+    lesson: aws-a3-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html"
+    what: { en: "Shows the four Block Public Access locks of a bucket.", ms: "Tunjuk empat kunci Block Public Access bagi satu bucket." }
+    when: { en: "To make sure nothing can go public. All four should say true.", ms: "Untuk pastikan tiada yang boleh jadi awam. Keempat-empat patut sebut true." }
+    example: { command: "aws s3api get-public-access-block --bucket amzn-s3-demo-bucket", en: "Read the four locks.", ms: "Baca empat kunci itu." }
+    variants:
+      - { command: "aws s3api put-public-access-block --bucket amzn-s3-demo-bucket --public-access-block-configuration \"BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true\"", en: "Turn all four locks on.", ms: "Hidupkan keempat-empat kunci." }
+
+  - id: s3-rb
+    group: storage
+    syntax: "aws s3 rb s3://<bucket> [--force]"
+    danger: lose
+    lesson: aws-a3-l07
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/s3/rb.html"
+    what: { en: "Deletes a bucket. With --force, it deletes every file inside first.", ms: "Padam bucket. Dengan --force, ia padam setiap fail di dalam dahulu." }
+    when: { en: "To clean up after practice. Treat it as final; check the name twice.", ms: "Untuk bersihkan selepas berlatih. Anggap ia muktamad; semak nama dua kali." }
+    example: { command: "aws s3 rb s3://amzn-s3-demo-bucket", en: "Remove an empty bucket.", ms: "Buang bucket yang kosong." }
+    variants:
+      - { command: "aws s3 rb s3://amzn-s3-demo-bucket --force", en: "Delete every file, then the bucket.", ms: "Padam setiap fail, kemudian bucket itu." }
+
+  - id: cloudfront-create-invalidation
+    group: network
+    syntax: "aws cloudfront create-invalidation --distribution-id <id> --paths <path>..."
+    danger: safe
+    lesson: aws-a3-l08
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/cloudfront/create-invalidation.html"
+    what: { en: "Tells CloudFront's kiosks to forget old copies of some pages.", ms: "Suruh kiosk CloudFront lupakan salinan lama beberapa halaman." }
+    when: { en: "When shoppers still see an old page after you changed it.", ms: "Bila pembeli masih nampak halaman lama selepas anda ubah." }
+    example: { command: "aws cloudfront create-invalidation --distribution-id EDFDVBD6EXAMPLE --paths \"/example-path/example-file.jpg\"", en: "Forget one file everywhere. Status starts as InProgress.", ms: "Lupakan satu fail di semua tempat. Status bermula dengan InProgress." }
+
+  # --- World A4 commands (groups: containers, money) ---
+  - id: ecr-get-login-password
+    group: containers
+    syntax: "aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com"
+    danger: safe
+    lesson: aws-a4-l01
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecr/get-login-password.html"
+    what: { en: "Gets a short-lived ECR password and hands it to docker login.", ms: "Dapatkan kata laluan ECR jangka pendek dan serahkan kepada docker login." }
+    when: { en: "Before docker push or pull with ECR. The token lasts 12 hours.", ms: "Sebelum docker push atau pull dengan ECR. Token tahan 12 jam." }
+    example: { command: "aws ecr get-login-password --region ap-southeast-5 | docker login --username AWS --password-stdin 111122223333.dkr.ecr.ap-southeast-5.amazonaws.com", en: "Log Docker in to your shelf. The password never shows.", ms: "Log masuk Docker ke rak anda. Kata laluan tak pernah muncul." }
+
+  - id: ecr-create-repository
+    group: containers
+    syntax: "aws ecr create-repository --repository-name <name>"
+    danger: safe
+    lesson: aws-a4-l01
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html"
+    what: { en: "Makes a private image shelf (repository) in ECR.", ms: "Buat rak image peribadi (repository) dalam ECR." }
+    when: { en: "Before your first push. You pay for the image data stored.", ms: "Sebelum push pertama. Anda bayar data image yang disimpan." }
+    example: { command: "aws ecr create-repository --repository-name project-a/sample-repo", en: "Prints the new shelf's ARN.", ms: "Cetak ARN rak baru." }
+    variants:
+      - { command: "aws ecr create-repository --repository-name project-a/sample-repo --image-tag-mutability IMMUTABLE", en: "Tags can never be swapped.", ms: "Tag tak boleh ditukar." }
+      - { command: "aws ecr create-repository --repository-name kedai-kancil --image-scanning-configuration scanOnPush=true", en: "Scan every image on push.", ms: "Imbas setiap image semasa push." }
+
+  - id: ecr-delete-repository
+    group: containers
+    syntax: "aws ecr delete-repository --repository-name <name> [--force]"
+    danger: lose
+    lesson: aws-a4-l01
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecr/delete-repository.html"
+    what: { en: "Deletes a shelf. With --force, every image on it goes too.", ms: "Padam rak. Dengan --force, setiap image di atasnya pun hilang." }
+    when: { en: "When the project is over. Check the name twice.", ms: "Bila projek dah tamat. Semak nama dua kali." }
+    example: { command: "aws ecr delete-repository --repository-name ubuntu --force", en: "Delete the shelf and its images.", ms: "Padam rak dan imagenya." }
+
+  - id: ecs-list-tasks
+    group: containers
+    syntax: "aws ecs list-tasks --cluster <cluster>"
+    danger: safe
+    lesson: aws-a4-l02
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecs/list-tasks.html"
+    what: { en: "Lists the tasks running in an ECS cluster.", ms: "Senaraikan task yang berjalan dalam kluster ECS." }
+    when: { en: "To check how many copies run, or find a forgotten one.", ms: "Untuk semak berapa salinan berjalan, atau cari yang terlupa." }
+    example: { command: "aws ecs list-tasks --cluster default", en: "Each running task's ARN.", ms: "ARN setiap task yang berjalan." }
+    variants:
+      - { command: "aws ecs stop-task --task 666fdccc2e2d4b6894dd422f4eeee8f8", en: "Stop one task. A service starts a new one.", ms: "Hentikan satu task. Service mulakan yang baru." }
+
+  - id: ecs-run-task
+    group: containers
+    syntax: "aws ecs run-task --cluster <cluster> --launch-type FARGATE --task-definition <family:rev> --network-configuration <config>"
+    danger: careful
+    lesson: aws-a4-l03
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecs/run-task.html"
+    what: { en: "Starts a task once, for example on Fargate.", ms: "Mulakan task sekali, contohnya di Fargate." }
+    when: { en: "For one-off jobs and tests. Fargate bills each second it runs; stop it when done.", ms: "Untuk kerja sekali jalan dan ujian. Fargate caj setiap saat ia berjalan; hentikan bila siap." }
+    example: { command: "aws ecs run-task --cluster kedai --launch-type FARGATE --task-definition kedai-web:1 --network-configuration \"awsvpcConfiguration={subnets=[subnet-0e99b93155EXAMPLE],securityGroups=[sg-903004f8],assignPublicIp=ENABLED}\"", en: "One small task in your row, behind your guard.", ms: "Satu task kecil dalam baris anda, di belakang pengawal anda." }
+
+  - id: ecs-delete-service
+    group: containers
+    syntax: "aws ecs delete-service --cluster <cluster> --service <service> [--force]"
+    danger: careful
+    lesson: aws-a4-m10
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/ecs/delete-service.html"
+    what: { en: "Deletes an ECS service. Its tasks stop.", ms: "Padam service ECS. Tasknya berhenti." }
+    when: { en: "First step of clean-up. --force works even with tasks still running.", ms: "Langkah pertama pembersihan. --force berfungsi walaupun task masih berjalan." }
+    example: { command: "aws ecs delete-service --cluster kedai --service shop --force", en: "Close the shop's counter.", ms: "Tutup kaunter kedai." }
+    variants:
+      - { command: "aws ecs delete-cluster --cluster kedai", en: "Then delete the empty cluster.", ms: "Kemudian padam kluster yang kosong." }
+      - { command: "aws ecs deregister-task-definition --task-definition kedai-web:1", en: "Retire an old recipe card revision.", ms: "Bersarakan revision kad resepi yang lama." }
+
+  - id: eks-update-kubeconfig
+    group: containers
+    syntax: "aws eks update-kubeconfig --name <cluster>"
+    danger: safe
+    lesson: aws-a4-l04
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/eks/update-kubeconfig.html"
+    what: { en: "Adds an EKS cluster to your kubeconfig, so kubectl can reach it.", ms: "Tambah kluster EKS ke kubeconfig anda, supaya kubectl boleh capai ia." }
+    when: { en: "After an EKS cluster is made. Then check kubectl's current context.", ms: "Selepas kluster EKS dibuat. Kemudian semak context semasa kubectl." }
+    example: { command: "aws eks update-kubeconfig --name my-eks-cluster", en: "Prints the updated context and the kubeconfig file.", ms: "Cetak context yang dikemas kini dan fail kubeconfig." }
+    variants:
+      - { command: "aws eks list-clusters", en: "List your EKS clusters. Each one bills by the hour.", ms: "Senaraikan kluster EKS anda. Setiap satu dicaj ikut jam." }
+
+  - id: rds-stop-db-instance
+    group: containers
+    syntax: "aws rds stop-db-instance --db-instance-identifier <name>"
+    danger: careful
+    lesson: aws-a4-l05
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/rds/stop-db-instance.html"
+    what: { en: "Stops a database for a while. Storage and backups still bill.", ms: "Hentikan pangkalan data sekejap. Storan dan backup masih dicaj." }
+    when: { en: "For short pauses only: it starts again by itself after 7 days.", ms: "Untuk rehat pendek sahaja: ia mula semula sendiri selepas 7 hari." }
+    example: { command: "aws rds stop-db-instance --db-instance-identifier test-instance", en: "Status becomes stopping, then stopped.", ms: "Status jadi stopping, kemudian stopped." }
+
+  - id: secretsmanager-delete-secret
+    group: containers
+    syntax: "aws secretsmanager delete-secret --secret-id <name> [--recovery-window-in-days <7-30>]"
+    danger: careful
+    lesson: aws-a4-l06
+    docs: "https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/delete-secret.html"
+    what: { en: "Deletes a secret after a recovery window, so you can still undo it.", ms: "Padam rahsia selepas tempoh pemulihan, supaya anda masih boleh batalkan." }
+    when: { en: "For secrets you no longer use. Each stored secret costs money monthly.", ms: "Untuk rahsia yang tak digunakan lagi. Setiap rahsia ada caj bulanan." }
+    example: { command: "aws secretsmanager delete-secret --secret-id MyTestSecret --recovery-window-in-days 7", en: "Gone in 7 days, unless you restore it.", ms: "Hilang dalam 7 hari, kecuali anda pulihkannya." }
+    variants:
+      - { command: "aws secretsmanager restore-secret --secret-id MyTestSecret", en: "Changed your mind? Bring it back within the window.", ms: "Ubah fikiran? Kembalikan dalam tempoh itu." }

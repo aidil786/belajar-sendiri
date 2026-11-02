@@ -1,0 +1,76 @@
+---
+id: k8s-k9-l10
+world: 9
+title: Sijil dan bila ia luput
+summary: "Anda akan belajar: baca bila kad pengenalan pejabat luput, dan baharuinya sebelum itu berlaku."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, OrderList, SortCards, Mission]
+needs: [k8s-k9-l09]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: certificate management with kubeadm", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/" }
+  - { label: "Kubernetes: PKI certificates and requirements", url: "https://kubernetes.io/docs/setup/best-practices/certificates/" }
+  - { label: "kubeadm certs", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-certs/" }
+---
+
+<Card id="hook" type="hook">
+Satu kluster kubeadm berjalan lancar selama setahun. Pagi ini pejabat berhenti berhubung. Tiada siapa ubah apa-apa. Apa punca yang mungkin?
+
+<Interactive name="Choice" options={[{ label: 'Kad pengenalan pejabat (sijil) sudah luput', correct: true, why: 'Sijil kubeadm tahan setahun. Pada hari itu ia berhenti berfungsi.' }, { label: 'Seseorang padam etcd', why: 'Mungkin, tapi tiada yang berubah. Tarikh lebih sesuai sebagai punca.' }, { label: 'Kubelet perlukan lebih memori', why: 'Masalah memori tak bermula pada satu hari yang tepat.' }]} />
+</Card>
+
+<Card id="see-check" type="see">
+<Interactive name="KubeReplay" scenario="k9-certs" picture={false} commands={['docker exec -it dev-control-plane bash', 'kubeadm certs check-expiration', 'exit']} label="kubeadm certs check-expiration senaraikan setiap sijil dengan tarikh luputnya: baki 364d untuk yang biasa, 9y untuk tiga CA." />
+
+Setiap bahagian tunjuk kad pengenalan kepada yang lain. Setiap kad ada tarikh **<Term id="cert-expiry">certificate expiry</Term>** (luput). `kubeadm certs check-expiration` senaraikan semuanya.
+</Card>
+
+<Card id="try-spot" type="try">
+Jadual terakhir senaraikan penandatangan. Ketik baris yang tahan 9 tahun.
+
+<Interactive name="SpotLines" prompt="Ketik setiap penandatangan yang tahan 9 tahun." lines={[{ text: 'apiserver                  Oct 31, 2027 00:54 UTC   364d            ca                      no' }, { text: 'etcd-server                Oct 31, 2027 00:54 UTC   364d            etcd-ca                 no' }, { text: 'CERTIFICATE AUTHORITY   EXPIRES                  RESIDUAL TIME   EXTERNALLY MANAGED' }, { text: 'ca                      Oct 28, 2036 00:54 UTC   9y              no', target: true }, { text: 'etcd-ca                 Oct 28, 2036 00:54 UTC   9y              no', target: true }, { text: 'front-proxy-ca          Oct 28, 2036 00:54 UTC   9y              no', target: true }]} success="Ya. Penandatangan tahan sepuluh tahun. Kad yang ditandatangan, setahun." />
+
+**<Term id="certificate-authority">Certificate authority</Term>** (CA) tandatangan setiap kad. kubeadm buat CA-nya tahan sepuluh tahun.
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `kubeadm certs renew all`. Ia kata “renewed” untuk setiap kad. Tapi API server masih tunjuk kad lama. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Ia baca kadnya semasa bermula. Mulakan semula pod control-plane.', correct: true, why: 'Ya. Dokumentasi suruh mulakan semula selepas renew.' }, { label: 'Renew itu gagal', why: 'Ia cetak renewed untuk setiap kad. Failnya sudah baharu.' }, { label: 'Anda mesti baharui CA juga', why: 'CA tahan sepuluh tahun. renew all tak sentuh CA.' }]} />
+</Card>
+
+<Card id="try-renew" type="try">
+Baharui kad API server, kemudian semak tarikh semula. Renew ubah pejabat, jadi nota bahaya muncul.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" goal={{ typed: '^kubeadm certs renew ', lastTyped: '^kubeadm certs check-expiration' }} hints={['Taip docker exec -it dev-control-plane bash', 'Kemudian kubeadm certs renew apiserver', 'Semak: kubeadm certs check-expiration']} success="Tarikh baharu pada baris apiserver. Seterusnya: mulakan semula pod-nya." />
+
+<Hint>Buka node control-plane dulu. Kemudian renew, kemudian semak.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Susun hari membaharui sijil ikut urutan.
+
+<Interactive name="OrderList" items={['kubeadm certs check-expiration', 'kubeadm certs renew all', 'Mulakan semula pod control-plane: alih setiap manifest keluar, tunggu 20 s, alih balik', 'Salin admin.conf baharu ke ~/.kube/config']} label="Langkah pertama di atas" success="Lihat, baharui, mula semula, kemudian kemas kini kubeconfig anda sendiri." />
+</Card>
+
+<Card id="check-sort" type="check">
+Siapa yang pastikan setiap kad sentiasa baharu? Susun ikut kumpulan.
+
+<Interactive name="SortCards" buckets={[{ id: 'kubeadm', label: 'kubeadm baharuinya (atau naik taraf)' }, { id: 'self', label: 'Kubelet tukar sendiri' }, { id: 'ca', label: 'CA: tahan sepuluh tahun' }]} items={[{ label: 'apiserver', bucket: 'kubeadm', why: 'Kad setahun. renew atau naik taraf buat yang baharu.' }, { label: 'admin.conf', bucket: 'kubeadm', why: 'Kad admin anda. Salin yang baharu ke ~/.kube/config selepas itu.' }, { label: 'Kad klien kubelet', bucket: 'self', why: 'kubeadm tetapkan kubelet supaya menukarnya di bawah /var/lib/kubelet/pki.' }, { label: 'etcd-ca', bucket: 'ca', why: 'Penandatangan. Ia tiada dalam renew all.' }]} success="Siap! Hanya kad setahun perlukan anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca tarikh luput sijil dan baharuinya tepat pada masa.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubeadm upgrade` juga baharui sijil. Jadi naik taraf setiap tahun pastikan kad sentiasa baharu. Banyak pasukan juga pasang penggera sebulan sebelum tarikh itu.
+
+<Interactive name="Mission" id="k8s-k9-l10-real" steps={[{ id: 'check', text: 'Pada kluster kind latihan, baca tarikhnya. Ia cuma melihat.', command: 'docker exec <cluster>-control-plane kubeadm certs check-expiration' }, { id: 'renew', text: 'Baharui satu kad pada kluster latihan itu.', command: 'docker exec <cluster>-control-plane kubeadm certs renew apiserver' }, { id: 'again', text: 'Baca tarikh semula. Cari yang baharu.', command: 'docker exec <cluster>-control-plane kubeadm certs check-expiration' }]} success="Anda baharui sijil sebenar pada kluster latihan!" />
+</Card>

@@ -1,0 +1,83 @@
+---
+id: k8s-k1-l01
+world: 1
+title: Apa yang anda dah tahu
+summary: "Anda akan belajar: guna Kubernetes untuk apa, dan pelajaran K1 mana yang boleh dilangkau."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, SortCards, Placement, SwipeJudge, Mission]
+needs: []
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes overview", url: "https://kubernetes.io/docs/concepts/overview/" }
+  - { label: "Kubernetes components", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+---
+
+<Card id="hook" type="hook">
+Selamat datang ke medan selera! Aplikasi kedai anda jalan dalam satu bekas makanan. Kemudian 500 orang lapar datang waktu tengah hari. Apa yang anda perlu?
+
+<Interactive name="Choice" options={[{ label: 'Banyak salinan, dan pengurus yang memantau', correct: true, why: 'Ya! Pengurus itu ialah Kubernetes. Ia pastikan salinan terus berjalan.' }, { label: 'Satu bekas makanan yang sangat besar', why: 'Sebesar mana pun, satu bekas masih boleh jatuh. Semua orang terpaksa tunggu.' }, { label: 'Anda isi semula bekas dengan tangan sepanjang hari', why: 'Anda pun perlu tidur. Pengurus tak pernah tidur.' }]} />
+</Card>
+
+<Card id="see-court" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods']} label="kubectl get pods senaraikan tiga dulang kedai, semuanya Running. Gambar tunjuk ia di atas dua gerai." />
+
+Kubernetes jalankan seluruh medan selera, dipanggil **<Term id="cluster">cluster (kluster)</Term>**. Gerai ialah mesin. Dulang bawa container anda. `kubectl get pods` senaraikan dulang anda.
+</Card>
+
+<Card id="try-sort" type="try">
+Anda dah kenal dapur. Di mana anda jumpa setiap perkataan ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'kitchen', label: 'Jumpa di dapur Docker' }, { id: 'court', label: 'Baharu di medan selera' }]} items={[{ label: 'Bekas makanan (container)', bucket: 'kitchen', why: 'Bahagian 1: satu bekas bertutup dengan aplikasi anda.' }, { label: 'Pek makanan beku (image)', bucket: 'kitchen', why: 'Templat untuk setiap bekas makanan.' }, { label: 'Resepi (Dockerfile)', bucket: 'kitchen', why: 'Ia beritahu Docker cara bina image.' }, { label: 'Gerai (node)', bucket: 'court', why: 'Satu mesin dalam kluster.' }, { label: 'Dulang (pod)', bucket: 'court', why: 'Kubernetes bawa container di atas dulang.' }, { label: 'Papan pesanan (desired state)', bucket: 'court', why: 'Apa yang anda mahu, ditulis. Kubernetes kejar keadaan itu.' }]} success="Siap! Dapur bungkus makanan. Medan selera hidangkannya." />
+
+<Hint>Bekas makanan, pek beku dan resepi datang dari Bahagian 1.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu dulang jatuh ke lantai waktu tengah hari. Pengurus nampak. Apa jadi lepas ni?
+
+<Interactive name="Choice" options={[{ label: 'Dulang baharu dibuat, serta-merta', correct: true, why: 'Betul. Kubernetes ganti apa yang hilang. Pelajaran 4 tunjuk caranya.' }, { label: 'Tiada apa-apa, sehingga seseorang telefon anda', why: 'Itu hidup tanpa pengurus. Kubernetes bertindak sendiri.' }, { label: 'Seluruh medan selera tutup', why: 'Gerai lain terus menjual. Hanya satu dulang diganti.' }]} />
+</Card>
+
+<Card id="try-placement" type="try">
+Sekarang ujian pantas. Setiap jawapan betul tandakan pelajaran yang boleh dilangkau. Tak pasti? Tekan “Saya belum tahu”. Tiada pemasa.
+
+<Interactive name="Placement" questions={[
+  { q: 'Anda jalankan 200 container di atas 10 mesin. Satu mesin mati waktu malam. Apa yang paling membantu?', options: [{ label: 'Orchestrator yang pindahkan semuanya sendiri', correct: true }, { label: 'Mesin yang lebih besar' }, { label: 'Penggera yang kejutkan anda' }], marks: ['k8s-k1-l02'] },
+  { q: 'Laman kedai kek dapat 30 pelawat sehari. Di mana ia patut diletak?', options: [{ label: 'Kluster Kubernetes tiga node' }, { label: 'Hos statik yang ringkas', correct: true }, { label: 'Sepuluh server, untuk berjaga-jaga' }], marks: ['k8s-k1-l03'] },
+  { q: 'Anda minta 3 salinan. Satu pod mati. Apa Kubernetes buat?', options: [{ label: 'Buat pod baharu, supaya kembali 3', correct: true }, { label: 'Turunkan pesanan ke 2' }, { label: 'Tunggu anda' }], marks: ['k8s-k1-l04'] },
+  { q: 'Apakah benda paling kecil yang Kubernetes jalankan?', options: [{ label: 'Satu container sahaja' }, { label: 'Satu pod', correct: true }, { label: 'Satu node' }], marks: ['k8s-k1-l05'] },
+  { q: 'Bahagian mana yang pilih node untuk pod baharu?', options: [{ label: 'kubelet' }, { label: 'etcd' }, { label: 'Scheduler', correct: true }], marks: ['k8s-k1-l06'] },
+  { q: 'Alat mana yang jalankan seluruh kluster dalam container Docker di laptop anda?', options: [{ label: 'kind', correct: true }, { label: 'kubectl' }, { label: 'Helm' }], marks: ['k8s-k1-l07'] },
+  { q: 'Satu pod tersekat. Arahan mana yang tunjuk event pod itu?', options: [{ label: '`kubectl describe pod tray`', correct: true }, { label: '`kubectl delete pod tray`' }, { label: '`kubectl apply -f tray.yaml`' }], marks: ['k8s-k1-l08'] },
+  { q: 'Arahan mana yang namakan kluster tempat arahan anda pergi?', options: [{ label: '`kubectl get nodes`' }, { label: '`kubectl config current-context`', correct: true }, { label: '`kubectl version --client`' }], marks: ['k8s-k1-l09'] },
+  { q: 'Macam mana nak senaraikan pod dalam namespace food?', options: [{ label: '`kubectl get food`' }, { label: '`kubectl get pods --all`' }, { label: '`kubectl get pods -n food`', correct: true }], marks: ['k8s-k1-l10'] },
+  { q: 'Bahagian manifest mana yang Kubernetes tulis, bukan anda?', options: [{ label: '`spec`' }, { label: '`metadata`' }, { label: '`status`', correct: true }], marks: ['k8s-k1-l11'] },
+  { q: 'Macam mana Service cari pod-podnya?', options: [{ label: 'Dengan label selector', correct: true }, { label: 'Dengan nama pod' }, { label: 'Dengan alamat IP' }], marks: ['k8s-k1-l12'] },
+  { q: 'Flag mana yang cetak YAML tanpa cipta apa-apa?', options: [{ label: '`--force -o wide`' }, { label: '`--dry-run=client -o yaml`', correct: true }, { label: '`--watch`' }], marks: ['k8s-k1-l13'] }
+]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Pusingan terakhir. Tabiat baik, atau perlu diperbaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Berlatih di kluster pakai buang dalam laptop anda', good: true, why: 'Silap di situ tiada kos. Rosakkan, padam, buat yang baharu.' }, { text: 'Cuba arahan baharu di kluster syarikat yang sedang live', good: false, why: 'Pelanggan sebenar guna kluster itu. Berlatih di tempat selamat dahulu.' }, { text: 'Baca bar merah jambu “anda di sini” sebelum padam', good: true, why: 'Ia namakan kluster dan namespace yang arahan anda akan kena.' }, { text: 'Padam dulu, tengok kemudian', good: false, why: 'Tengok dulu dengan get dan describe. Padam hanya bila pasti.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kerja Kubernetes, dan langkau apa yang anda dah tahu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Terlepas beberapa soalan? Tak apa. Setiap pelajaran tetap terbuka, bertanda atau tidak. Kubernetes jalankan container, jadi [bahagian Docker](/ms/docker/) pun membantu.
+
+Latihan sebenar (pilihan): kenali kluster sebenar dalam pelayar anda.
+
+<Interactive name="Mission" id="k8s-k1-l01-real" steps={[{ id: 'lab', text: 'Buka taman permainan Kubernetes percuma dalam pelayar, contohnya di Killercoda. Guna yang pakai buang, jangan kluster kerja.' }, { id: 'nodes', text: 'Senaraikan gerai (node).', command: 'kubectl get nodes' }, { id: 'pods', text: 'Senaraikan setiap dulang (pod) dalam setiap zon.', command: 'kubectl get pods -A' }]} success="Anda dah bercakap dengan kluster sebenar!" />
+</Card>

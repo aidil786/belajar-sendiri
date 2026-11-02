@@ -1,0 +1,76 @@
+---
+id: docker-d1-l10
+world: 1
+title: Docker Hub dan image dipercayai
+summary: "Anda akan belajar: baca nama penuh image, dan pilih pek yang boleh dipercayai."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, OrderList, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l09]
+scenario: d1-hub
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Trusted content on Docker Hub", url: "https://docs.docker.com/docker-hub/image-library/trusted-content/" }
+  - { label: "What is a registry?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-registry/" }
+  - { label: "docker image pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+---
+
+<Card id="hook" type="hook">
+Anda cari pelayan web di Docker Hub. Beratus-ratus pek muncul. Sesiapa pun boleh muat naik. Yang mana anda panaskan untuk kedai anda?
+
+<Interactive name="Choice" options={[{ label: 'nginx, dengan lencana Docker Official Image', correct: true, why: 'Docker pilih pek ini dengan teliti dan sentiasa kemas kini.' }, { label: 'nginx-free-fast, oleh orang asing, 12 tarikan', why: 'Pek orang asing boleh mengandungi apa sahaja. Percaya lencana dulu.' }, { label: 'Yang namanya paling hebat', why: 'Nama itu percuma. Lencana perlu diusahakan.' }]} />
+</Card>
+
+<Card id="see-hub" type="see">
+<Interactive name="KitchenReplay" scenario="d1-hub" commands={['docker pull nginx']} label="docker pull nginx muat turun nginx terbaru. Baris terakhir tunjuk nama penuhnya: docker.io/library/nginx:latest." />
+
+**<Term id="docker-hub">Docker Hub</Term>** ialah peti sejuk kedai awam yang terbesar. Baca baris terakhir: `docker.io/library/nginx:latest`. `library` ialah rak untuk pek rasmi.
+</Card>
+
+<Card id="try-order" type="try">
+Setiap nama pendek ada nama penuh. Susun bahagian `docker.io/library/nginx:1.30-alpine` ikut urutan, dari kiri ke kanan.
+
+<Interactive name="OrderList" items={['docker.io: peti sejuk (Docker Hub)', 'library: rak (pek rasmi)', 'nginx: hidangan', '1.30-alpine: label (tag)']} label="Bahagian paling kiri di atas" success="Peti sejuk, rak, hidangan, label." />
+</Card>
+
+<Card id="try-sort" type="try">
+Docker Hub tandakan pek dipercayai dengan lencana. Susun yang ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'trusted', label: 'Ada lencana dipercayai' }, { id: 'check', label: 'Semak sebelum guna' }]} items={[{ label: 'Docker Official Image: nginx, postgres, alpine', bucket: 'trusted', why: 'Docker pilih dan sentiasa kemas kini.' }, { label: 'Verified Publisher: syarikat yang Docker sudah semak', bucket: 'trusted', why: 'Docker sudah semak siapa penerbitnya.' }, { label: 'Sumber terbuka tajaan: projek yang Docker sokong', bucket: 'trusted', why: 'Projek sumber terbuka yang aktif, dengan lencana.' }, { label: 'Tiada lencana, pengguna tak dikenali, 12 tarikan', bucket: 'check', why: 'Mungkin okey, mungkin apa sahaja. Semak lebih teliti dulu.' }, { label: 'Nama terkenal di bawah akaun orang asing', bucket: 'check', why: 'Peniru guna nama terkenal. Semak nama raknya.' }]} success="Lencana dulu, orang asing kemudian." />
+</Card>
+
+<Card id="predict" type="predict">
+`aina/nginx:1.30` dan `nginx:1.30`. Pek yang sama?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. aina/ ialah rak Aina sendiri.', correct: true, why: 'Tiada nama sebelum garis miring bermaksud rak rasmi library.' }, { label: 'Ya. Kedua-duanya sebut nginx.', why: 'Bahagian sebelum garis miring ialah pemiliknya. Pemilik lain, pek lain.' }, { label: 'Ya. Docker gabungkan kedua-duanya.', why: 'Docker tak pernah campur pek daripada pemilik berbeza.' }]} />
+</Card>
+
+<Card id="try-pull" type="try">
+Tarik pek redis rasmi, versi 8 atas Alpine. Tengok ia masuk ke peti sejuk anda.
+
+<Interactive name="KitchenSim" scenario="d1-hub" goal={{ imageExists: 'redis:8-alpine' }} hints={['Taip docker pull redis:8-alpine']} success="redis rasmi sudah ada dalam peti sejuk anda: docker.io/library/redis:8-alpine." />
+
+<Hint>`docker pull redis:8-alpine`</Hint>
+</Card>
+
+<Card id="check-denied" type="check">
+<Interactive name="KitchenReplay" scenario="d1-hub" commands={['docker pull kancil-practice/no-such-pack:1.0']} fails={['docker pull kancil-practice/no-such-pack:1.0']} label="docker pull kancil-practice/no-such-pack:1.0 gagal: pull access denied, repository does not exist or may require docker login." />
+
+Ralat sebenar bermula dengan `pull access denied`. Maksudnya: pek itu tiada, atau ia peribadi. Semak ejaan dan nama raknya.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca nama image dan pilih pek yang boleh dipercayai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cari lencana <Term id="official-image">Docker Official Image</Term> dan <Term id="verified-publisher">Verified Publisher</Term>. Docker juga ada Docker Hardened Images: asas kecil yang lebih selamat (Dunia D2). Docker Hub hadkan tarikan bila anda tak log masuk. Dunia D5 terangkan.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l10-rep" steps={[{ id: 'hub', text: 'Buka hub.docker.com dan cari nginx.' }, { id: 'badge', text: 'Cari lencana Docker Official Image pada yang sebenar.' }, { id: 'pull', text: 'Tarik dengan tag yang tetap.', command: 'docker pull nginx:1.30-alpine' }]} success="Anda boleh kenal pek yang dipercayai." />
+</Card>

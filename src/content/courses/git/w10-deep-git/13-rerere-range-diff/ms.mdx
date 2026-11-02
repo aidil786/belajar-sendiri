@@ -1,0 +1,70 @@
+---
+id: git-w10-l13
+world: 10
+title: rerere dan range-diff
+summary: "Anda akan belajar: cara Git ingat pembaikan konflik, dan cara banding dua versi sesuatu branch."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Sim, Transcript, SortCards]
+needs: [git-w10-l12]
+scenario: w10-aliases
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rerere", url: "https://git-scm.com/docs/git-rerere" }
+  - { label: "git range-diff", url: "https://git-scm.com/docs/git-range-diff" }
+---
+
+<Card id="hook" type="hook">
+Anda rebase branch (cabang) yang panjang setiap minggu. Konflik yang sama muncul setiap kali. Perlukah anda baiki dengan tangan berulang kali?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Git boleh ingat pembaikan anda', correct: true, why: 'Hidupkan satu tetapan, dan Git ulang pembaikan anda lain kali.' }, { label: 'Ya, setiap kali', why: 'Tidak, kalau Git ingat untuk anda. Teruskan!' }, { label: 'Berhenti rebase selama-lamanya', why: 'Tak perlu mengalah. Git ada pembantu untuk ini.' }]} />
+</Card>
+
+<Card id="see-rerere" type="see">
+**<Term id="rerere">rerere</Term>** maksudnya "reuse recorded resolution" (guna semula pembaikan yang dirakam). Git ingat cara anda baiki konflik. Ketik untuk tengok apa berlaku lain kali.
+
+<Interactive name="TimelineTap" events={[{ when: 'Minggu 1', title: 'Anda baiki', text: 'Konflik muncul. Anda baiki dengan tangan. Git rakam pembaikan anda.' }, { when: 'Minggu 2', title: 'Konflik sama', text: 'Anda rebase lagi. Konflik yang sama muncul semula.' }, { when: 'Serta-merta', title: 'Git ulang pembaikan', text: 'Git guna pembaikan yang dirakam. Anda semak dan add.' }]} />
+</Card>
+
+<Card id="try-turn-on" type="try">
+Hidupkan rerere untuk semua projek anda. Satu tetapan sudah cukup.
+
+<Interactive name="Sim" scenario="w10-aliases" panels={[]} goal={{ config: { 'rerere.enabled': 'true' } }} hints={['Ia tetapan global: git config --global', 'Taip git config --global rerere.enabled true']} success="Hidup! Mulai sekarang, Git rakam setiap pembaikan konflik." />
+
+<Hint>Taip `git config --global rerere.enabled true`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+rerere baiki satu konflik untuk anda semasa rebase. Apa yang anda masih perlu buat?
+
+<Interactive name="Choice" options={[{ label: 'Semak fail itu, kemudian git add', correct: true, why: 'Secara lalai, rerere baiki fail tapi tak add. Keputusan akhir di tangan anda.' }, { label: 'Tiada. Git dah commit', why: 'rerere tak pernah commit untuk anda.' }, { label: 'Baiki dengan tangan sekali lagi', why: 'Tak perlu. Cuma semak pembaikan itu masih masuk akal.' }]} />
+</Card>
+
+<Card id="see-range-diff" type="see">
+<Interactive name="Transcript" title="bash" label="Dua arahan: git rebase main, kemudian git range-diff main feature@{1} feature." lines={[{ cmd: 'git rebase main' }, { cmd: 'git range-diff main feature@{1} feature' }]} />
+
+Selepas rebase, ada commit yang berubah? **<Term id="range-diff">range-diff</Term>** banding dua versi branch, satu commit demi satu commit. `feature@{1}` ialah branch itu sebelum rebase.
+</Card>
+
+<Card id="check-marks" type="check">
+range-diff tandakan setiap pasangan commit. `=` maksudnya "sama". Apa maksud `!`?
+
+<Interactive name="Choice" options={[{ label: 'Commit ini berubah antara dua versi', correct: true, why: 'range-diff kemudian tunjuk caranya. < tanda commit dalam versi lama sahaja, > dalam versi baru sahaja.' }, { label: 'Commit ini rosak', why: 'Bukan rosak. Perubahannya cuma berbeza sekarang.' }, { label: 'Commit ini dipadam', why: 'Commit yang ada dalam versi lama sahaja dapat < sebagai ganti.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+rerere atau range-diff? Yang mana membantu di sini?
+
+<Interactive name="SortCards" buckets={[{ id: 'rerere', label: 'rerere' }, { id: 'range', label: 'range-diff' }]} items={[{ label: 'Konflik sama asyik muncul semula', bucket: 'rerere', why: 'Git ulang pembaikan yang anda rakam.' }, { label: 'Adakah rebase saya ubah mana-mana commit?', bucket: 'range', why: 'Banding branch sebelum dan selepas.' }, { label: 'Semak versi 2 branch rakan sepasukan', bucket: 'range', why: 'Tengok apa yang berubah sejak versi 1 sahaja.' }, { label: 'Ingat cara saya baiki konflik', bucket: 'rerere', why: 'Itulah yang rerere rakam.' }]} success="Tersusun! rerere ingat pembaikan. range-diff banding versi." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh guna semula pembaikan konflik dan banding versi sesuatu branch.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pembaikan yang dirakam tinggal dalam `.git/rr-cache`. `git rerere forget index.html` buang pembaikan yang tak elok. Tetapkan `rerere.autoUpdate` kepada true supaya pembaikan yang diulang terus di-add. `git range-diff main...feature` banding dua branch yang berkongsi asas. Terminal latihan cuma terangkan arahan ini.
+</Card>

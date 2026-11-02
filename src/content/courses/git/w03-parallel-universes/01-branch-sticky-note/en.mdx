@@ -1,0 +1,74 @@
+---
+id: git-w03-l01
+world: 3
+title: A branch is a sticky note
+summary: "You will learn: what a branch really is, and how to make one."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, Sim, TermReplay, UniverseSplitter, Choice]
+needs: [git-w02-l09]
+scenario: w03-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "Branches in a nutshell (Pro Git)", url: "https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} effect="wobble" label="Three commits on main: Add README, Add day 1 page and Add style. The newest one glows and wobbles." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit', glow: true }] }]} />
+
+You want to try a dark theme for your diary. But main must keep working. Where can you play safely?
+</Card>
+
+<Card id="see-note" type="see">
+<Interactive name="GraphScene" scenario="w03-l01" commands={['git branch dark-mode']} label="A new green label, dark-mode, appears on the newest commit, next to main. HEAD stays on main." />
+
+A **<Term id="branch">branch</Term>** is a sticky note on a commit. `git branch dark-mode` sticks a new note here. You stay where you are.
+</Card>
+
+<Card id="try-type" type="try">
+Make a branch called `dark-mode`.
+
+<Interactive name="Sim" scenario="w03-l01" panels={['graph']} goal={{ branches: ['dark-mode'], currentBranch: 'main' }} hints={['Type git branch dark-mode and press Enter.', 'Moved onto it? Type git switch main to go back.']} success="A new sticky note! You are still on main." />
+
+<Hint>Type `git branch dark-mode`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="TermReplay" scenario="w03-l01" commands={['git branch dark-mode', 'git branch']} label="git branch lists dark-mode and main. A star sits next to main." />
+
+`git branch` with no name lists your notes. The star marks the one you are on.
+</Card>
+
+<Card id="try-place" type="try">
+Notes can go on old commits too. Stick a note called `idea` on “Add day 1 page”.
+
+<Interactive name="UniverseSplitter" scenario="w03-l01" task={{ type: 'create', at: '^Add day 1 page$', name: 'idea' }} success="The idea note sits on Add day 1 page. Notes go on any commit." />
+
+<Hint>Tap the middle commit. Then tap “Stick it here”.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You are on main. You make a new commit. Which note moves forward?
+
+<Interactive name="Choice" options={[{ label: '`main`', correct: true, why: 'HEAD sits on main, so main follows your new commit.' }, { label: '`dark-mode`', why: 'dark-mode stays put. Only the note HEAD sits on moves.' }, { label: 'Both notes', why: 'Only the note HEAD sits on moves.' }]} />
+</Card>
+
+<Card id="check-move" type="check">
+<Interactive name="GraphScene" scenario="w03-l01" commands={['git branch dark-mode', 'echo "<p>Day 2: I made a branch.</p>" >> index.html', 'git commit -am "Add day 2 entry"']} label="After the new commit, main and HEAD move forward to Add day 2 entry. dark-mode stays on Add style." />
+
+See? Only main moved. HEAD rides along on main. dark-mode waits on the old commit.
+</Card>
+
+<Card id="win" type="win">
+You can now make branches and see what they really are.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git branch -v` shows the commit under each note. `git branch -m dark-mode night-mode` renames one. Branch names can't have spaces. Teams use `-` and `/`, like `feature/dark-mode`. Why are branches so cheap? Inside Git, a branch is just a name holding one commit id.
+
+<Interactive name="TermReplay" scenario="w03-l01" commands={['git branch dark-mode', 'git branch -v']} label="git branch -v shows dark-mode and main, each with a short hash and the message Add style." />
+</Card>

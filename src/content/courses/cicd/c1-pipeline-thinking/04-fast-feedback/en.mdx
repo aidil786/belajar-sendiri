@@ -1,0 +1,72 @@
+---
+id: cicd-c1-l04
+world: 1
+title: Fast feedback and flaky tests
+summary: "You will learn: how to hear bad news fast, and what to do with a test that can't make up its mind."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, OrderList, TimelineTap, SwipeJudge]
+needs: [cicd-c1-l03]
+scenario: c1-typo
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+  - { label: "Re-running workflows and jobs", url: "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs" }
+---
+
+<Card id="hook" type="hook">
+You push. The pipeline runs for 40 minutes. Then it fails on a typo. 40 minutes, gone! How could you know sooner?
+
+<Interactive name="Choice" options={[{ label: 'Run the quick checks first', correct: true, why: 'A typo check takes seconds. Put it at the front.' }, { label: 'Push less often', why: 'Then each push holds more changes, and more can break.' }, { label: 'Stop running the pipeline', why: 'Then the typo reaches users instead.' }]} />
+</Card>
+
+<Card id="try-predict" type="predict">
+A typo slipped into the code.
+
+<Interactive name="ConveyorBelt" scenario="c1-typo" task={{ type: 'predict' }} success="Lint caught it in seconds!" />
+
+Quick checks go first, so bad news comes fast. That is **<Term id="fast-feedback">fast feedback</Term>**.
+</Card>
+
+<Card id="try-order" type="try">
+Order these checks. Put the fastest at the top.
+
+<Interactive name="OrderList" items={['Lint (10 seconds)', 'Unit tests (1 minute)', 'Build (3 minutes)', 'End-to-end tests (12 minutes)']} label="Fastest at the top" success="Fast first! Most mistakes show up in the first minute." />
+</Card>
+
+<Card id="see-cache" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-first-pipeline" events={['push-main', 'pr']} task={{ type: 'cacheHit' }} success="Shortcut! The packages came from the cache." />
+
+Run it twice. The second run skips the slow download. A cache makes every run faster.
+</Card>
+
+<Card id="see-flaky" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Run 1', title: '✓ Passed', text: 'Commit 3f9c2a7. All 42 tests pass.' }, { when: 'Run 2', title: '✗ Failed', text: 'The same commit. One test timed out waiting for a page.' }, { when: 'Run 3', title: '✓ Passed', text: 'The same commit again. Green.' }]} />
+
+Same dish, three tastings, two answers. A test that does this is a **<Term id="flaky-test">flaky test</Term>**.
+</Card>
+
+<Card id="try-swipe" type="try">
+Your test is flaky. Good fix, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Press re-run until it turns green', good: false, why: 'The flake stays. Soon nobody trusts a red run.' }, { text: 'Wait until the page is ready, not a fixed 2 seconds', good: true, why: 'Waiting for the real thing stops timing flakes.' }, { text: 'Give each test its own fresh data', good: true, why: 'Tests that share data can trip each other up.' }, { text: 'Mark it, track it, fix it this week', good: true, why: 'A known flake with an owner gets fixed.' }, { text: 'Delete every test that ever failed', good: false, why: 'Then real bugs walk straight through.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Your team presses re-run on every red run. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'People stop trusting red, and real bugs slip through', correct: true, why: 'A red run should mean stop. Flakes teach people to ignore it.' }, { label: 'The tests get faster', why: 'Re-runs make the wait longer, not shorter.' }, { label: 'Nothing changes', why: 'Trust drains away, one re-run at a time.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now get fast feedback and handle flaky tests.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many teams aim for CI feedback in about ten minutes. To go faster: caches, jobs side by side, and path filters (World C2). GitHub can re-run only the failed jobs. Handy, but still fix the flake.
+
+Real rep (optional): open your repo's last ten runs. Did one commit go red, then green, with no change? You found a flaky test.
+</Card>

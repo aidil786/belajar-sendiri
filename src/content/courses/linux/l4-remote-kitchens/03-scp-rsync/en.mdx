@@ -1,0 +1,80 @@
+---
+id: linux-l4-l03
+world: 4
+title: "Copy files: scp and rsync"
+summary: "You will learn: to send files to a server, and to send only what changed."
+minutes: 4
+xp: 20
+interactives: [Transcript, CommandBuilder, Choice, OrderList, SortCards, Mission]
+needs: [linux-l4-l02]
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: scp", url: "https://man.openbsd.org/scp" }
+  - { label: "Debian: rsync(1)", url: "https://manpages.debian.org/trixie/rsync/rsync.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop (lab)" label="rsync -av site/ kedai:shop/ after one change: only menu.html travels."
+  lines={[{ cmd: 'rsync -av site/ kedai:shop/' }, { out: 'sending incremental file list\n./\nmenu.html\n\nsent 186 bytes  received 44 bytes  460.00 bytes/sec\ntotal size is 58  speedup is 0.25' }]} />
+
+You changed one price on the menu. Only `menu.html` travelled. The other files stayed put. How did it know?
+</Card>
+
+<Card id="try-scp" type="try">
+First the simple courier: `scp` copies over SSH, every time. Build "copy menu.txt to my home folder on kedai".
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'scp', means: 'copy over the SSH line' }, { text: 'menu.txt', means: 'the file here' }, { text: 'kedai:', means: 'to kedai: the colon means the other machine' }]} decoys={[{ text: 'kedai', means: 'no colon: a local copy named kedai!' }]} success="scp menu.txt kedai: lands in your home folder there." />
+</Card>
+
+<Card id="see-rsync" type="see">
+<Interactive name="Transcript" title="laptop (lab)" label="The first rsync -av site/ kedai:shop/ creates shop and sends index.html, menu.html and old.html."
+  lines={[{ cmd: 'rsync -av site/ kedai:shop/' }, { out: 'sending incremental file list\ncreated directory shop\n./\nindex.html\nmenu.html\nold.html\n\nsent 313 bytes  received 103 bytes  832.00 bytes/sec\ntotal size is 62  speedup is 0.15' }]} />
+
+<Term id="rsync">rsync</Term> is a smart courier. It compares both sides first, then carries only what differs. `-a` keeps times and permissions. `-v` lists each file.
+</Card>
+
+<Card id="predict" type="predict">
+You leave out the slash: `rsync -av site kedai:copy/`. Then you list both folders on kedai. What did the slash change?
+
+```
+copy/site/menu.html
+copy/site/index.html
+shop/menu.html
+shop/index.html
+```
+
+<Interactive name="Choice" options={[{ label: 'No slash sends the folder itself', correct: true, why: 'site travels as copy/site. With site/ only what is inside travels.' }, { label: 'Nothing: both are the same', why: 'Look again: copy has an extra site folder.' }, { label: 'No slash deletes files', why: 'Only --delete removes files. The slash picks what to send.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+You want kedai's shop folder to match your site folder exactly, extras removed. `--delete` can remove files there. Put the safe steps in order.
+
+<Interactive name="OrderList" items={['rsync -av --delete --dry-run site/ kedai:shop/', 'Read the list: is every deleting line expected?', 'rsync -av --delete site/ kedai:shop/', 'curl the page to check it']} label="First step at the top" success="Dry run, read, then the real run." />
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="Transcript" title="laptop (lab)" label="rsync -av --delete --dry-run says deleting old.html and ends with (DRY RUN)."
+  lines={[{ cmd: 'rsync -av --delete --dry-run site/ kedai:shop/' }, { out: 'sending incremental file list\ndeleting old.html\n\nsent 104 bytes  received 31 bytes  270.00 bytes/sec\ntotal size is 58  speedup is 0.43 (DRY RUN)', color: 'yellow' }]} />
+
+`--dry-run` says what would happen and changes nothing. Here: `deleting old.html`. Expected? Then run it for real.
+</Card>
+
+<Card id="check" type="check">
+scp or rsync?
+
+<Interactive name="SortCards" buckets={[{ id: 'scp', label: 'scp' }, { id: 'rsync', label: 'rsync' }]} items={[{ label: 'Copy one file, once', bucket: 'scp', why: 'Quick and simple.' }, { label: 'Update a big folder every day', bucket: 'rsync', why: 'Only changes travel.' }, { label: 'Make a folder match, extras removed (after a dry run)', bucket: 'rsync', why: '--delete, carefully.' }, { label: 'Grab one log from the server', bucket: 'scp', why: 'scp kedai:/path/file . works too.' }]} success="One file: scp. A folder you keep in sync: rsync." />
+</Card>
+
+<Card id="win" type="win">
+You can now send files to a server, and sync a folder safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Our practice server stands alone. These outputs came from two real Debian 13 machines. rsync must be on both machines: `sudo apt install rsync`. Copy back the other way with `scp kedai:menu.txt .` (the dot means here).
+
+<Interactive name="Mission" id="linux-l4-l03-rep" steps={[{ id: 'scp', text: 'Send one file to your VM.', command: 'scp notes.txt myvm:' }, { id: 'dry', text: 'Dry-run a folder sync.', command: 'rsync -av --dry-run site/ myvm:site/' }, { id: 'real', text: 'Run it for real, then change one file and run it again.', command: 'rsync -av site/ myvm:site/' }]} success="Only the change travelled the second time." />
+</Card>

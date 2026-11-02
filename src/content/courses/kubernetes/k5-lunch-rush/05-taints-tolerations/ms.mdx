@@ -1,0 +1,87 @@
+---
+id: k8s-k5-l05
+world: 5
+title: Taint, toleration dan sebaran
+summary: "Anda akan belajar: cara kunci gerai, beri sesetengah pod anak kunci, dan sebarkan pod."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, SchedulerTetris, FoodCourtSim, SortCards]
+needs: [k8s-k5-l04]
+scenario: k5-taint
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: taints and tolerations", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" }
+  - { label: "Kubernetes: pod topology spread", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/" }
+  - { label: "kubectl taint", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_taint/" }
+---
+
+<Card id="hook" type="hook">
+Node (gerai) dev-worker2 ada ketuhar besar. Ia untuk hidangan ketuhar sahaja. Tapi pod (dulang) kedai asyik mendarat di situ. Macam mana nak halang mereka?
+
+<Interactive name="Choice" options={[{ label: 'Pasang kunci pada gerai itu', correct: true, why: 'Kunci halang semua pod, kecuali yang ada anak kunci.' }, { label: 'Tambah papan tanda pada setiap pod lain', why: 'Anda kena ingat untuk setiap pod, selama-lamanya.' }, { label: 'Padam gerai itu', why: 'Kemudian hidangan ketuhar tiada tempat untuk dimasak.' }]} />
+</Card>
+
+<Card id="see-taint" type="see">
+<Interactive name="KubeReplay" scenario="k5-taint" commands={['kubectl get node dev-worker2 -o jsonpath={.spec.taints}', 'kubectl get pods -l app=shop -o jsonpath={.items[*].spec.nodeName}']} label="dev-worker2 ada taint oven=big dengan kesan NoSchedule. Ketiga-tiga pod kedai berjalan di dev-worker." />
+
+**<Term id="taint">Taint</Term>** ialah kunci pada gerai. Yang ini datang daripada `kubectl taint nodes dev-worker2 oven=big:NoSchedule`. Semua pod kedai pergi ke dev-worker.
+</Card>
+
+<Card id="try-key" type="try">
+**<Term id="toleration">Toleration</Term>** ialah anak kunci, dibawa oleh pod. Beri anak kunci ketuhar kepada oven-tray. Kemudian letak setiap pod.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'oven-stall', cpu: '2', memory: '4Gi', labels: { oven: 'big' }, taints: [{ key: 'oven', value: 'big', effect: 'NoSchedule' }] }]} pods={[{ name: 'tray-1', cpu: '1', memory: '1Gi' }, { name: 'tray-2', cpu: '1', memory: '1Gi' }, { name: 'oven-tray', cpu: '1', memory: '1Gi', nodeSelector: { oven: 'big' } }]} keys={[{ key: 'oven', operator: 'Equal', value: 'big', effect: 'NoSchedule' }]} success="Pod ketuhar ada anak kunci dan papan tanda. Kunci halang yang lain." />
+
+<Hint>Tekan anak kunci, kemudian tekan oven-tray. Kini ia boleh masuk oven-stall.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu pod ada anak kunci ketuhar, tapi tiada papan tanda (tiada nodeSelector). Di mana ia boleh mendarat?
+
+<Interactive name="Choice" options={[{ label: 'Di mana-mana gerai, termasuk gerai ketuhar', correct: true, why: 'Anak kunci buka kunci. Ia tak tarik anda masuk. Tambah papan tanda untuk itu.' }, { label: 'Hanya di gerai ketuhar', why: 'Hampir! Anak kunci cuma benarkan. nodeSelector yang hantar ke sana.' }, { label: 'Tiada tempat: ia kekal Pending', why: 'Gerai yang tak berkunci pun boleh terima.' }]} />
+</Card>
+
+<Card id="try-oven" type="try">
+`oven.yaml` ada kedua-duanya: anak kunci dan papan tanda. Apply fail itu. Kemudian semak gerai mana yang ia pilih.
+
+<Interactive name="FoodCourtSim" scenario="k5-taint" goal={{ podsReady: { selector: 'app=oven', count: 1 } }} hints={['Taip kubectl apply -f oven.yaml', 'Kemudian kubectl get pod oven -o wide tunjuk gerainya.']} success="Pod ketuhar memasak di dev-worker2, di sebalik kunci." />
+
+<Hint>Taip `kubectl apply -f oven.yaml`, kemudian `kubectl get pod oven -o wide`.</Hint>
+</Card>
+
+<Card id="see-spread" type="see">
+Jangan letak semua pod dalam satu gerai. **<Term id="topology-spread">Topology spread</Term>** jaga gerai seimbang. `maxSkew: 1` maksudnya bilangan pod antara gerai beza paling banyak 1. 4 pod, 2 gerai: pembahagian mana yang dibenarkan?
+
+<Interactive name="Choice" compact options={[{ label: '2 dan 2', correct: true, why: 'Bezanya 0. Dalam had maxSkew 1.' }, { label: '3 dan 1', why: 'Bezanya 2. maxSkew 1 kata beza paling banyak 1.' }, { label: '4 dan 0', why: 'Satu gerai tutup akan hentikan makan tengah hari. Itulah yang sebaran elakkan.' }]} />
+
+Dalam YAML, di dalam templat pod:
+
+```yaml
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels: { app: shop }
+```
+</Card>
+
+<Card id="check-facts" type="check">
+Betul atau tidak? Asingkan setiap ayat.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Betul' }, { id: 'no', label: 'Tidak betul' }]} items={[{ label: 'NoSchedule halang pod baharu. Pod yang sudah ada kekal.', bucket: 'yes', why: 'Ia cuma jaga pintu untuk pod baharu.' }, { label: 'NoExecute juga halau pod tanpa anak kunci', bucket: 'yes', why: 'Ia usir pod yang sudah ada di gerai juga.' }, { label: 'Toleration tarik pod ke gerai itu', bucket: 'no', why: 'Anak kunci cuma benarkan. Papan tanda (nodeSelector atau affinity) yang hantar.' }, { label: 'Dalam kind, gerai control-plane ada taint', bucket: 'yes', why: 'Sebab itu pod anda tak pernah mendarat di situ.' }]} success="Semua siap!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci gerai, beri anak kunci, dan sebarkan pod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kesan: `NoSchedule`, `PreferNoSchedule` (cuba elak) dan `NoExecute` (turut mengusir). Tanda tolak di hujung buang taint: `kubectl taint nodes dev-worker2 oven=big:NoSchedule-`. Dengan `whenUnsatisfiable: DoNotSchedule`, sebaran jadi peraturan keras. Gerai berkunci masih boleh dikira sebagai domain. Baca dokumen sebelum guna.
+
+Latihan sebenar (pilihan): taint satu pekerja kind, kemudian buang semula.
+</Card>

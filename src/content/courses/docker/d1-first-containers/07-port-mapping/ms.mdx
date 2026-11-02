@@ -1,0 +1,80 @@
+---
+id: docker-d1-l07
+world: 1
+title: "Tingkap pesanan: port mapping"
+summary: "Anda akan belajar: buka pintu dari laptop anda ke dalam container dengan -p."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, OrderHatch, KitchenSim, Choice, Mission]
+needs: [docker-d1-l06]
+scenario: d1-no-hatch
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Port publishing and mapping", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "Publishing and exposing ports", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/" }
+  - { label: "docker port", url: "https://docs.docker.com/reference/cli/docker/container/port/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-no-hatch" commands={['docker ps', 'curl localhost:8080']} fails={['curl localhost:8080']} label="docker ps tunjuk web Up, dengan 80/tcp dan tiada port laptop. curl localhost:8080 gagal: Couldn't connect to server." />
+
+web Up, tapi ralat sebenar kata `Couldn't connect to server`. Maksudnya: tiada siapa jawab di port 8080 laptop anda. Bekas itu bertutup.
+</Card>
+
+<Card id="try-hatch" type="try">
+Buka **tingkap pesanan**: sambung port laptop 8080 ke port 80 web. Inilah <Term id="port-mapping">port mapping</Term>.
+
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }]} task={{ type: 'map', host: 8080, container: 'web', port: 80 }} success="Tingkap terbuka! Pesanan di 8080 sampai ke nginx di 80." />
+</Card>
+
+<Card id="see-order" type="see">
+<Interactive name="KitchenReplay" scenario="d1-no-hatch" commands={['docker rm -f web', 'docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'docker port web', 'curl -s localhost:8080 | grep title']} label="web yang lama dibuang. web baru bermula dengan -p 8080:80. docker port web tunjuk 80/tcp -> 0.0.0.0:8080. curl dapat halaman Welcome to nginx!" />
+
+Tingkap dibuka semasa bekas dibuat, jadi web dibuat semula. Baca `-p 8080:80` dari kiri: laptop dulu, bekas kemudian.
+</Card>
+
+<Card id="try-sim" type="try">
+Giliran anda. Jalankan web dengan tingkap di 8080. Kemudian `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'], portMapped: { web: '8080:80' }, lastTyped: '^curl ' }} hints={['Taip docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'Kemudian taip curl localhost:8080']} success="Halaman itu sampai melalui tingkap. Lihat papan 8080 dalam gambar." />
+</Card>
+
+<Card id="predict" type="predict">
+web pegang tingkap 8080. Bekas baru, api, juga minta port laptop 8080. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Docker tolak: 8080 sudah diambil', correct: true, why: 'Satu port laptop, satu bekas. Kalau tidak, pesanan bercampur.' }, { label: 'Kedua-duanya kongsi tingkap 8080', why: 'Satu port laptop hanya boleh ke satu bekas.' }, { label: 'api rampas dari web', why: 'Docker tak pernah ambil tingkap dari bekas yang berjalan.' }]} />
+</Card>
+
+<Card id="check-busy" type="check">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker run -d --name api -p 8080:80 nginx:1.30-alpine']} fails={['docker run -d --name api -p 8080:80 nginx:1.30-alpine']} label="web sudah pegang port laptop 8080. docker run untuk api gagal: Bind for 0.0.0.0:8080 failed: port is already allocated. api tinggal Created." />
+
+Ralat sebenar berakhir dengan `port is already allocated`. Maksudnya: bekas lain sudah guna port laptop 8080.
+</Card>
+
+<Card id="try-two" type="try">
+Beri api tingkapnya sendiri. Mana-mana port laptop yang kosong boleh.
+
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }, { name: 'api', ports: [80], image: 'nginx:1.30-alpine' }]} start={[{ host: 8080, container: 'web', port: 80 }]} hostPorts={[8080, 8081]} task={{ type: 'map', maps: [{ container: 'api', port: 80 }] }} prompt="api pun perlukan tingkap. 8080 sudah diambil." success="Dua tingkap. Di dalam, kedua-dua bekas guna 80. Setiap bekas ada port sendiri." />
+</Card>
+
+<Card id="check-order" type="check">
+`docker run -d -p 3000:80 nginx:1.30-alpine`. Alamat mana yang buka halaman itu?
+
+<Interactive name="Choice" options={[{ label: 'localhost:3000', correct: true, why: 'Sebelah laptop dulu. 3000 ada di laptop anda.' }, { label: 'localhost:80', why: '80 ada dalam bekas. Sebelah laptop datang dulu.' }, { label: 'Kedua-duanya boleh', why: 'Hanya sebelah laptop terbuka untuk pelayar anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka tingkap pesanan ke dalam container.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tanpa alamat, `-p` buka tingkap pada setiap rangkaian laptop anda. Orang lain dalam Wi-Fi anda mungkin boleh capai! `-p 127.0.0.1:8080:80` simpan untuk laptop anda sahaja. Lebih banyak helah tingkap dalam Dunia D3.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l07-rep" steps={[{ id: 'run', text: 'Mulakan web dengan tingkap 8080, untuk laptop anda sahaja.', command: 'docker run -d --name web -p 127.0.0.1:8080:80 nginx:1.30-alpine' }, { id: 'open', text: 'Buka http://localhost:8080 dalam pelayar anda.' }, { id: 'port', text: 'Tanya tingkap apa yang web ada.', command: 'docker port web' }, { id: 'tidy', text: 'Kemas.', command: 'docker rm -f web' }]} success="Halaman sebenar, melalui tingkap sebenar." />
+</Card>

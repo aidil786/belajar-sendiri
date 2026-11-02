@@ -1,0 +1,64 @@
+---
+id: git-w01-l09
+world: 1
+title: Ignore files
+summary: "You will learn: how to tell Git which files to never save."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, SortCards, Sim, Choice]
+needs: [git-w01-l08]
+scenario: w01-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Four items wobble in the working folder: index.html, debug.log, .env and node_modules/. Three of them are junk or secret." frames={[{ working: ['index.html', { name: 'debug.log', tag: 'new' }, { name: '.env', tag: 'new' }, { name: 'node_modules/', tag: 'new' }] }]} />
+
+Your folder fills up with junk: logs, downloads, even `.env` with your passwords. One careless `git add .` grabs it all.
+</Card>
+
+<Card id="see-gitignore" type="see">
+<Interactive name="TermReplay" scenario="w01-l09" commands={['git status -s', 'echo "*.log" > .gitignore', 'git status -s']} label="Before: git status -s lists debug.log and error.log. After writing *.log into .gitignore, only .gitignore is listed." />
+
+A **.gitignore** file lists names Git should skip. One line, `*.log`, and both log files vanish from `git status`.
+</Card>
+
+<Card id="see-patterns" type="see">
+<Interactive name="TermReplay" scenario="w01-l09" commands={['echo "node_modules/" > .gitignore', 'echo ".env" >> .gitignore', 'echo "*.log" >> .gitignore', 'cat .gitignore']} label="Three echo commands build a .gitignore. cat shows its three lines: node_modules/, .env and *.log." />
+
+Each line is a **pattern**. A name ending in `/` means a folder. `*` means "anything". `>` writes a new file, `>>` adds a line.
+</Card>
+
+<Card id="try-sort" type="try">
+Should Git ignore it, or keep it? Sort each file.
+
+<Interactive name="SortCards" buckets={[{ id: 'ignore', label: 'Ignore' }, { id: 'keep', label: 'Keep' }]} items={[{ label: 'node_modules/', bucket: 'ignore', why: 'Downloaded code. You can download it again any time.' }, { label: '.env', bucket: 'ignore', why: 'It holds secrets like passwords and keys.' }, { label: 'debug.log', bucket: 'ignore', why: 'Programs make logs. You did not write them.' }, { label: '.DS_Store', bucket: 'ignore', why: 'Junk that a Mac makes in folders.' }, { label: 'index.html', bucket: 'keep', why: 'This is your diary itself!' }, { label: 'style.css', bucket: 'keep', why: 'Your design. Keep it.' }, { label: 'README.md', bucket: 'keep', why: 'It explains your project.' }, { label: '.gitignore', bucket: 'keep', why: 'Save it, so everyone skips the same junk.' }]} success="All sorted! Junk and secrets stay out." />
+</Card>
+
+<Card id="try-write" type="try">
+Hide the log files from Git. Then put `.gitignore` in the box.
+
+<Interactive name="Sim" scenario="w01-l09" panels={['areas']} goal={{ fileContains: { '.gitignore': '*.log' }, staged: ['.gitignore'], notStaged: ['debug.log', 'error.log'], noUntracked: true }} hints={['Write the rule: echo "*.log" > .gitignore', 'Now put it in the box: git add .gitignore']} success="The logs are hidden, and your rule is ready to commit." />
+
+<Hint>Type `echo "*.log" > .gitignore`. Then `git add .gitignore`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+You committed `debug.log` last week. Today you add `*.log` to `.gitignore`. What happens to `debug.log`?
+
+<Interactive name="Choice" options={[{ label: 'Git keeps tracking it', correct: true, why: '.gitignore only hides files Git does not track yet. The next lesson shows the fix.' }, { label: 'Git deletes it', why: '.gitignore never deletes anything.' }, { label: 'Git stops tracking it', why: 'Not by itself. .gitignore only hides untracked files.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep junk and secrets out of your commits.
+</Card>
+
+<Card id="deeper" type="deeper">
+Commit your `.gitignore`, so your whole team uses it. A line starting with `!` brings a file back, like `!keep.log`. `git add .` skips ignored files without a word.
+
+<Interactive name="TermReplay" scenario="w01-l09-ignored" commands={['git add .', 'git status -s']} label="With *.log in .gitignore, git add . adds only .gitignore. The two log files stay out." />
+</Card>

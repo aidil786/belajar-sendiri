@@ -1,0 +1,66 @@
+---
+id: git-w09-l08
+world: 9
+title: API, webhooks and Apps
+summary: "You will learn: how programs talk to GitHub, and how to tell an API, a webhook and an App apart."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, TimelineTap, SortCards, SwipeJudge]
+needs: [git-w09-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About the REST API", url: "https://docs.github.com/en/rest/about-the-rest-api/about-the-rest-api" }
+  - { label: "About webhooks", url: "https://docs.github.com/en/webhooks/about-webhooks" }
+  - { label: "GitHub Apps overview", url: "https://docs.github.com/en/apps/overview" }
+  - { label: "gh api", url: "https://cli.github.com/manual/gh_api" }
+---
+
+<Card id="hook" type="hook">
+Your club wants a screen that shows new issues as they arrive. Do you sit and refresh GitHub all day?
+
+<Interactive name="Choice" options={[{ label: 'No. Let a program talk to GitHub', correct: true, why: 'Programs have their own doors into GitHub. Meet them now.' }, { label: 'Yes, refresh every minute', why: 'Then you would never do anything else!' }, { label: 'Copy new issues by hand', why: 'Slow, and you would miss some.' }]} />
+</Card>
+
+<Card id="see-api" type="see">
+<Interactive name="Transcript" title="bash" label="gh api asks GitHub's API how many stars the diary repo has. The answer is 3." lines={[{ cmd: 'gh api repos/aina-codes/diary --jq .stargazers_count' }, { out: '3' }]} />
+
+An **<Term id="api">API</Term>** is a service window for programs. A program asks a question. GitHub answers with data. `gh api` lets you ask from the terminal.
+</Card>
+
+<Card id="see-webhook" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Step 1', title: 'Something happens', text: 'Someone opens an issue.' }, { when: 'Step 2', title: 'GitHub rings', text: 'It sends a message to your web address.' }, { when: 'Step 3', title: 'Your app acts', text: 'Your club screen shows the new issue.' }]} />
+
+A **<Term id="webhook">webhook</Term>** is a doorbell. When something happens, GitHub calls your web address. Nobody has to keep asking.
+</Card>
+
+<Card id="try-sort" type="try">
+Ask, or get told? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'api', label: 'API: you ask' }, { id: 'hook', label: 'Webhook: GitHub tells you' }]} items={[{ label: "Count a repo's stars right now", bucket: 'api', why: 'You ask once, you get the number.' }, { label: 'Hear about each new issue the moment it opens', bucket: 'hook', why: 'GitHub rings you when it happens.' }, { label: 'List open pull requests once a day', bucket: 'api', why: 'Your program asks at the time it chooses.' }, { label: 'Get pinged after every push', bucket: 'hook', why: 'A push is an event. Webhooks report events.' }, { label: 'Make an issue from a script', bucket: 'api', why: 'Your script asks the API to create it.' }]} success="Sorted! Ask with the API. Listen with a webhook." />
+</Card>
+
+<Card id="see-app" type="see">
+A **<Term id="github-app">GitHub App</Term>** is a robot helper. You install it on the repos you choose. Before you install, you see what it may do. Bots that label issues or check pull requests are often Apps.
+</Card>
+
+<Card id="predict" type="predict">
+An app only posts a weekly report. It asks to change your settings and read all your code. Do you install it?
+
+<Interactive name="Choice" options={[{ label: 'Not yet. Ask why it needs so much', correct: true, why: 'A report needs little access. Give apps only what they need.' }, { label: 'Yes. Apps are always safe', why: 'Anyone can make an app. Check first.' }, { label: 'Yes, on every repo', why: 'Choose only the repos it needs.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Install an app only on the repos it needs', good: true, why: 'Less access means less risk.' }, { text: 'Give an app every permission, just in case', good: false, why: 'If the app goes wrong, it can do anything.' }, { text: 'Check who made an app before you install it', good: true, why: 'Trust people you can find and check.' }, { text: 'Put your token in a script on a public repo', good: false, why: 'Anyone could use it. Keep tokens secret.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell an API, a webhook and an App apart.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub has a REST API and a GraphQL API. You can read public data without signing in. But the limits are lower. FahamLah's mission checks do exactly that. Webhooks can sit on a repo, an organisation or an App. Apps use short-lived tokens, so a leak hurts less.
+</Card>

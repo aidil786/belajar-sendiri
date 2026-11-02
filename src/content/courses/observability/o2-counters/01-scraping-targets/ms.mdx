@@ -1,0 +1,100 @@
+---
+id: obs-o2-l01
+world: 2
+title: Scrape dan target
+summary: "Anda akan belajar: bagaimana Prometheus kutip nombor dengan melawat target, dan cara baca up."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, YamlPlayground, PromQLPlayground, SpotLines, Mission]
+needs: [obs-o1-boss]
+scenario: o2-targets
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/" }
+  - { label: "Prometheus: configuration", url: "https://prometheus.io/docs/prometheus/latest/configuration/configuration/" }
+  - { label: "Prometheus: jobs and instances", url: "https://prometheus.io/docs/concepts/jobs_instances/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+Setiap pembantu Kedai Kancil simpan satu kaunter. Bagaimana bilik kawalan patut dapat nombornya?
+
+<Interactive name="Choice" options={[{ label: 'Seorang kerani pusing setiap 15 s dan salin setiap kaunter', correct: true, why: 'Ya. Itulah Prometheus: ia tarik nombor sendiri.' }, { label: 'Setiap pembantu telefon dan beritahu nombornya', why: 'Itu push (tolak). Prometheus kebanyakannya tarik.' }, { label: 'Seseorang taip semuanya waktu malam', why: 'Terlalu lambat, dan mudah silap.' }]} />
+</Card>
+
+<Card id="see-target" type="see">
+<Interactive name="Transcript" title="bash" label="curl baca laman metrik sebuah mesin. Tiga baris tentang node_load1 keluar." lines={[{ cmd: "curl -s localhost:9100/metrics | grep 'node_load1 '" }, { out: '# HELP node_load1 1m load average.\n# TYPE node_load1 gauge' }, { out: 'node_load1 11.37', color: 'green' }]} />
+
+**<Term id="target">Target</Term>** tunjuk nombornya sebagai teks biasa di `/metrics`. Yang ini sebuah mesin, di port 9100.
+</Card>
+
+<Card id="try-config" type="try">
+Beritahu Prometheus tentang mesin itu. Tambah job kedua bernama `node`.
+
+<Interactive name="YamlPlayground" file="prometheus.yml" initial={'global:\n  scrape_interval: 15s\n\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n'} prompt="Tambah job bernama node dengan target node-exporter:9100." expect={[{ path: 'scrape_configs', type: 'list', count: 2, hint: 'Tambah item kedua bawah scrape_configs: dua ruang, sengkang, kemudian job_name: node.' }, { path: 'scrape_configs.1.job_name', equals: 'node', hint: 'Namakan job baru itu node.' }, { path: 'scrape_configs.1.static_configs.0.targets.0', equals: 'node-exporter:9100', hint: 'Salin baris static_configs, dengan node-exporter:9100 sebagai target.' }]} solution={'global:\n  scrape_interval: 15s\n\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["node-exporter:9100"]\n'} hint="Salin tiga baris terakhir. Tukar nama dan targetnya." success="Dua job. Prometheus akan lawat kedua-duanya setiap 15 saat." />
+
+Setiap lawatan ialah satu **<Term id="scrape">scrape</Term>** (kutip).
+</Card>
+
+<Card id="try-up" type="try">
+Query <Term id="promql">PromQL</Term> pertama anda hanya satu perkataan. Untuk setiap target, Prometheus tulis `up`: 1 kalau scrape berjaya, 0 kalau gagal.
+
+<Interactive name="PromQLPlayground" scenario="o2-targets" prompt="Taip up dan tekan Run." goal={{ typed: '^\\s*up\\s*$', resultCount: 4 }} hints={['Dua huruf sahaja: up']} solution="up" success="Empat target. Satu daripadanya kata 0." />
+</Card>
+
+<Card id="predict" type="predict">
+Pada 12m, shop-2 tunjuk `up` = 0. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Prometheus tak dapat scrape ia', correct: true, why: 'Ya. Aplikasinya mati, atau jalan ke situ tersekat.' }, { label: 'shop-2 tiada pesanan langsung', why: 'up tentang lawatan, bukan tentang pesanan.' }, { label: 'Prometheus sendiri mati', why: 'Kalau begitu, tiada apa yang jawab query anda.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+Satu silap konfigurasi. Ralat sebenar dulu: tekan baris yang kata apa yang salah.
+
+<Interactive name="SpotLines" prompt="Tekan baris yang namakan masalahnya." lines={[{ text: '$ promtool check config prometheus.yml' }, { text: 'Checking prometheus.yml' }, { text: '  FAILED: parsing YAML file prometheus.yml: not a valid duration string: "15"', color: 'red', target: true }]} success="Dalam bahasa mudah: masa perlukan unit. Tulis 15s, bukan 15." />
+
+<Hint>Cari FAILED.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh halakan Prometheus ke target dan baca `up`.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nama job jadi label `job`, dan host:port jadi `instance`. Setiap scrape juga tulis `scrape_duration_seconds`. Latihan sebenar: bilik kawalan kecil di laptop anda. Simpan dua fail ini dalam satu folder.
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+```
+
+```yaml
+# compose.yaml
+services:
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.13.5
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+    ports:
+      - "9100:9100"
+```
+
+<Interactive name="Mission" id="obs-o2-l01-real" steps={[{ id: 'folder', text: 'Buat satu folder dan simpan dua fail itu di dalamnya.', command: 'mkdir kedai-watch && cd kedai-watch' }, { id: 'up', text: 'Mulakan Prometheus dan node exporter.', command: 'docker compose up -d' }, { id: 'check', text: 'Semak konfigurasi dengan promtool yang ada dalam image.', command: 'docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml' }, { id: 'curl', text: 'Baca nombor mesin itu sendiri.', command: "curl -s localhost:9100/metrics | grep 'node_load1 '" }, { id: 'targets', text: 'Buka http://localhost:9090/targets. Kedua-dua target patut kata UP.' }, { id: 'query', text: 'Di laman query, jalankan up. Anda nampak dua baris dengan 1.' }, { id: 'stop', text: 'Hentikan bila dah siap. Simpan folder itu: pelajaran seterusnya guna.', command: 'docker compose down' }]} success="Bilik kawalan anda sendiri dah scrape dua target sebenar." />
+</Card>

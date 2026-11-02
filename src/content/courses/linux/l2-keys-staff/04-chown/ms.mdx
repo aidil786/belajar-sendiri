@@ -1,0 +1,69 @@
+---
+id: linux-l2-l04
+world: 2
+title: "Tukar pemilik: chown"
+summary: "Anda akan belajar: serahkan fail atau folder kepada pengguna atau kumpulan lain dengan sudo chown."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, LinuxSim, SortCards]
+needs: [linux-l2-l03]
+scenario: linux-l2-chown
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "chown (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/chown.1.en.html" }
+  - { label: "GNU coreutils: chown invocation", url: "https://www.gnu.org/software/coreutils/manual/html_node/chown-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+Pelanggan muat naik gambar makanan mereka. Pekerja web, pengguna `www-data`, simpan gambar itu dalam `/srv/kedai/uploads`. Setiap muat naik gagal. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Folder itu milik anda, bukan www-data', correct: true, why: 'Bagi www-data, itu bilik orang lain, tanpa kunci w.' }, { label: 'www-data perlukan kata laluan', why: 'Pengguna servis tak pernah taip kata laluan. Kunci yang menentukan.' }, { label: 'Cakera sudah penuh', why: 'Mungkin satu hari nanti, tapi ls -l tunjuk sebab sebenar di sini.' }]} />
+</Card>
+
+<Card id="see-fail" type="see">
+<Interactive name="Transcript" title="you@kedai:/srv/kedai" label="ls -l, kemudian pekerja web cuba simpan gambar: Permission denied." lines={[{ cmd: 'ls -l' }, { out: 'total 8\n-rw-r--r-- 1 you you   14 Nov  1 08:55 menu.html\ndrwxr-xr-x 2 you you 4096 Nov  1 08:55 uploads' }, { cmd: 'sudo -u www-data touch uploads/a.jpg' }, { out: "touch: cannot touch 'uploads/a.jpg': Permission denied", color: 'red' }]} />
+
+`sudo -u www-data` jalankan satu arahan sebagai pekerja web. Ralat sebenar: `Permission denied`. Maksudnya: `uploads` milik anda, dan orang lain tiada kunci `w`.
+</Card>
+
+<Card id="predict-give" type="predict">
+Anda pemilik `uploads`. Bolehkah anda sendiri serahkannya dengan `chown www-data uploads`?
+
+<Interactive name="Choice" options={[{ label: "Tak: chown: changing ownership of 'uploads': Operation not permitted", correct: true, why: 'Maksudnya: hanya root boleh serahkan fail kepada orang lain. Guna sudo.' }, { label: 'Ya. Itu folder anda.', why: 'Pemilik boleh tukar kunci, tapi tak boleh serahkan folder.' }, { label: 'Ya, tapi kepada kumpulan anda sahaja', why: 'Tukar pemilik sentiasa perlukan root.' }]} />
+</Card>
+
+<Card id="try-chown" type="try">
+Serahkan folder itu kepada pekerja web dan kumpulan mereka: `sudo chown www-data:www-data uploads`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chown" goal={{ owner: { '/srv/kedai/uploads': 'www-data:www-data' } }} hints={['Taip sudo chown www-data:www-data uploads', 'Semak dengan ls -l']} solution={['sudo chown www-data:www-data uploads']} success="uploads kini milik www-data. Gambar tunjuk pemilik baru." />
+
+<Hint>**chown** maksudnya "change owner" (tukar pemilik). Bentuknya `pemilik:kumpulan`.</Hint>
+</Card>
+
+<Card id="sort-mod-own" type="check">
+chmod atau chown? Pilih alat yang betul.
+
+<Interactive name="SortCards" buckets={[{ id: 'own', label: 'chown: siapa pemiliknya' }, { id: 'mod', label: 'chmod: kunci yang mana' }]} items={[{ label: 'Serahkan folder kepada pekerja web', bucket: 'own', why: 'Pemilik baru: chown.' }, { label: 'Benarkan kumpulan jalankan skrip', bucket: 'mod', why: 'Pemilik kekal. Satu kunci berubah: chmod.' }, { label: 'Pindahkan fail kepada pasukan dapur', bucket: 'own', why: 'Kumpulan baru ialah sebahagian pemilikan: chown :kitchen.' }, { label: 'Sorok fail daripada orang lain', bucket: 'mod', why: 'Buang kunci: chmod o-r.' }]} success="chown ubah siapa. chmod ubah apa yang mereka boleh buat." />
+</Card>
+
+<Card id="try-test" type="try">
+Folder sudah diserahkan. Uji sebagai pekerja web: `sudo -u www-data touch uploads/a.jpg`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chown" intro={['sudo chown www-data:www-data uploads']} goal={{ fileExists: ['/srv/kedai/uploads/a.jpg'] }} hints={['Taip sudo -u www-data touch uploads/a.jpg']} solution={['sudo -u www-data touch uploads/a.jpg']} success="Muat naik berjaya. Pelanggan boleh kongsi gambar nasi lemak mereka!" />
+
+<Hint>`touch` buat fail kosong, macam muat naik ujian.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh serahkan fail dan folder kepada pemilik yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+`sudo chown -R www-data:www-data uploads` ubah folder dan semua isinya: semak path dua kali. `sudo chown :kitchen roster.txt` tukar kumpulan sahaja. Jangan sekali-kali serahkan seluruh rumah anda kepada pengguna lain.
+
+Latihan sebenar (pilihan): di Linux, `ls -l /var/www` tunjuk siapa pemilik fail web.
+</Card>

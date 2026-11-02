@@ -1,0 +1,70 @@
+---
+id: obs-o4-l01
+world: 4
+title: "Log berstruktur"
+summary: "Anda akan belajar: tulis baris diari yang komputer boleh tapis dan manusia masih boleh baca."
+minutes: 4
+xp: 20
+interactives: [SpotLines, Choice, CommandBuilder, SwipeJudge, OrderList, Mission]
+needs: [obs-o3-boss]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: logs", url: "https://opentelemetry.io/docs/concepts/signals/logs/" }
+  - { label: "Loki: log queries (json, logfmt)", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" prompt="Ketik setiap baris tentang pesanan A1041." lines={[{ text: 'Order received!!' }, { text: 'payment failed for A1041??', target: true }, { text: 'ERROR something went wrong' }, { text: 'user aina paid' }, { text: 'a1041 timeout after 3s', target: true }, { text: 'retrying order #A-1041', target: true }]} success="Tiga cara tulis satu pesanan. Carian A1041 cuma jumpa satu." />
+
+Diari kedai bersepah. Pelanggan tanya: apa jadi pada pesanan A1041?
+</Card>
+
+<Card id="see-json" type="see">
+```json
+{"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000}
+```
+
+**<Term id="structured-log">Log berstruktur</Term>** tulis medan bernama. Medan mana yang jumpa setiap masalah?
+
+<Interactive name="Choice" compact options={[{ label: 'level', correct: true, why: 'Betul. level="error" jumpa setiap ralat, apa pun bunyi msg.' }, { label: 'msg', why: 'Mesej boleh tukar ayat. Medan kekal sama.' }, { label: 'duration_ms', why: 'Itu beritahu berapa lambat, bukan sama ada ia rosak.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina satu baris diari untuk bayaran yang gagal. Ketik kepingan mengikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{"level":"error",', means: 'seberapa teruk' }, { text: '"msg":"payment timeout",', means: 'apa berlaku, dalam perkataan' }, { text: '"order_id":"A1041",', means: 'pesanan mana: kini boleh dicari' }, { text: '"duration_ms":3000}', means: 'berapa lama ia menunggu' }]} decoys={[{ text: '"card_number":"4111 1111 1111 1111",', means: 'jangan sekali-kali: nombor kad tak boleh masuk log' }]} success="Baris yang komputer boleh tapis, tanpa rahsia." />
+
+<Hint>Mula dengan level. Tinggalkan apa-apa yang rahsia.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pasukan web tulis `orderId`. Pasukan bayaran tulis `order_id`. Anda cari `order_id = A1041`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Baris pasukan web terlepas', correct: true, why: 'Betul. Setuju nama medan sekali, untuk setiap servis.' }, { label: 'Kedua-duanya padan', why: 'Komputer banding nama dengan tepat.' }, { label: 'Ralat', why: 'Tiada ralat. Cuma baris hilang senyap-senyap, lagi teruk.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Leret ke kanan jika medan itu boleh dilog. Leret ke kiri jika patut dikeluarkan.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'order_id', good: true, why: 'Ia bantu cari satu pesanan.' }, { text: 'password', good: false, why: 'Jangan sekali-kali. Log dibaca ramai orang dan alat.' }, { text: 'trace_id', good: true, why: 'Ia sambungkan baris itu dengan trace pesanan.' }, { text: 'card_number', good: false, why: 'Jangan sekali-kali. Data bayaran mesti di luar log.' }, { text: 'duration_ms', good: true, why: 'Masa bantu cari langkah yang lambat.' }]} />
+</Card>
+
+<Card id="check-levels" type="check">
+<Interactive name="OrderList" items={['debug', 'info', 'warn', 'error']} label="Paling ringan di atas" success="debug untuk perincian, error untuk masalah sebenar." />
+
+Susun level, dari yang banyak cakap hingga yang serius.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis baris log berstruktur dengan medan jelas dan tanpa rahsia.
+</Card>
+
+<Card id="deeper" type="deeper">
+logfmt ialah gaya berstruktur yang lain: `level=error msg="payment timeout" order_id=A1041`. Dalam container, tulis log ke output standard. Platform akan kumpulkannya untuk anda.
+
+<Interactive name="Mission" id="obs-o4-l01-real" steps={[{ id: 'run', text: 'Cetak satu baris diari JSON dari container sementara.', command: 'docker run --name diary-try alpine:3.22 echo \'{"level":"info","msg":"shop open"}\'' }, { id: 'logs', text: 'Docker simpan baris itu. Baca semula.', command: 'docker logs diary-try' }, { id: 'clean', text: 'Kemas.', command: 'docker rm diary-try' }]} success="Begitulah log container mula perjalanannya." />
+</Card>

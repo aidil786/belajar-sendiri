@@ -1,0 +1,42 @@
+---
+// Risk level: icon + colour + word (never colour alone).
+import { t, type Lang } from '~/i18n';
+import Icon from './Icon.astro';
+interface Props {
+  lang: Lang;
+  level: 'safe' | 'careful' | 'lose';
+}
+const { lang, level } = Astro.props;
+const icon = level === 'safe' ? 'shield' : level === 'careful' ? 'danger' : 'danger';
+---
+
+<span class="danger-badge" data-level={level}>
+  <Icon name={icon} size={16} />
+  <span><span class="visually-hidden">{t(lang, 'commands.danger')}: </span>{t(lang, `commands.danger.${level}`)}</span>
+</span>
+
+<style>
+  .danger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    border: 1.5px solid currentColor;
+    white-space: nowrap;
+  }
+  .danger-badge[data-level='safe'] {
+    color: var(--c-repo-ink);
+    background: var(--c-repo-soft);
+  }
+  .danger-badge[data-level='careful'] {
+    color: var(--c-staging-ink);
+    background: var(--c-staging-soft);
+  }
+  .danger-badge[data-level='lose'] {
+    color: var(--c-danger-ink);
+    background: var(--c-danger-soft);
+  }
+</style>

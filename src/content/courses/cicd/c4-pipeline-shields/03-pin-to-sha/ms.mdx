@@ -1,0 +1,75 @@
+---
+id: cicd-c4-l03
+world: 4
+title: Pin action pada SHA penuh
+summary: "Anda akan belajar: cara pin action pinjaman pada SHA commit penuh, dan biar Dependabot kemas kininya."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotTheHole, Transcript, OrderList, SwipeJudge, Mission]
+needs: [cicd-c4-l02]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Secure use: using third-party actions", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "Keeping your actions up to date with Dependabot", url: "https://docs.github.com/en/code-security/dependabot/working-with-dependabot/keeping-your-actions-up-to-date-with-dependabot" }
+---
+
+<Card id="hook" type="hook">
+Anda pin 12 action pinjaman pada SHA penuh. Selamat! Sebulan kemudian, 3 daripadanya baiki pepijat keselamatan. Pin anda masih jalankan kod lama. Siapa kemas kininya?
+
+<Interactive name="Choice" options={[{ label: 'Robot yang buka PR untuk setiap kemas kini', correct: true, why: 'Anda semak, CI uji, anda merge.' }, { label: 'Anda sendiri, setiap minggu', why: 'Boleh, tapi lambat. Orang selalu lupa.' }, { label: 'Tiada siapa: pin tak perlu dikemas kini', why: 'Versi lama simpan pepijat lama. Pin perlu dijaga.' }]} />
+</Card>
+
+<Card id="see-who" type="see">
+Nasihat GitHub: pin setiap action pihak ketiga pada SHA commit penuh. Guna tag hanya jika anda percaya pembuatnya. Susun yang ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'sha', label: 'Pin pada SHA penuh' }, { id: 'tag', label: 'Tag pun okey (SHA lebih selamat)' }]} items={[{ label: '`example-org/changed-files@v2`', bucket: 'sha', why: 'Pembuat pihak ketiga. Pin ia.' }, { label: '`random-dev/helper@main`', bucket: 'sha', why: 'Branch bergerak dengan setiap commit baharu. Pin ia.' }, { label: '`actions/checkout@v7`', bucket: 'tag', why: 'Dibuat oleh GitHub sendiri. Tag okey jika anda percaya pembuatnya.' }, { label: '`actions/setup-node@v7`', bucket: 'tag', why: 'Juga dibuat oleh GitHub. Organisasi anda mungkin tetap minta SHA.' }]} success="Siap! Orang asing dapat pin SHA." />
+</Card>
+
+<Card id="try-spot" type="try">
+Tekan setiap baris yang boleh diracun oleh tag atau branch yang dialih.
+
+<Interactive name="SpotTheHole" file=".github/workflows/ci.yml" workflow={['name: CI', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  test:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@v7', '      - uses: example-org/changed-files@0123456789abcdef0123456789abcdef01234567 # v2.0.0 (example SHA)',
+  { text: '      - uses: example-org/lint-action@v4', hole: { kind: 'unpinned', fixCode: '      - uses: example-org/lint-action@89abcdef0123456789abcdef0123456789abcdef # v4.2.0 (example SHA)' } },
+  { text: '      - uses: random-dev/test-report@main', hole: { kind: 'unpinned', fixCode: '      - uses: random-dev/test-report@fedcba9876543210fedcba9876543210fedcba98 # v1.3.0 (example SHA)' } },
+  '      - run: npm ci && npm test']} success="Dua-dua jumpa! Satu tag dan satu branch. Pin SHA pada baris 10 selamat." />
+
+<Hint>Lihat apa selepas setiap @. Adakah 40 aksara?</Hint>
+</Card>
+
+<Card id="see-dependabot" type="see">
+<Interactive name="Transcript" title="bash" label="cat tunjuk .github/dependabot.yml: version 2, satu peraturan kemas kini untuk github-actions dalam direktori garis miring, disemak setiap minggu." lines={[{ cmd: 'cat .github/dependabot.yml' }, { out: 'version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: "/"\n    schedule:\n      interval: "weekly"' }]} />
+
+Kenali penjaga pin anda: **<Term id="dependabot" course="git">Dependabot</Term>**. Fail ini minta ia semak action anda setiap minggu. `directory: "/"` meliputi setiap fail dalam `.github/workflows`.
+</Card>
+
+<Card id="try-order" type="try">
+Versi baharu keluar. Susun langkah Dependabot ikut urutan.
+
+<Interactive name="OrderList" items={['Dependabot nampak v2.1.0 dah keluar', 'Ia buka PR: SHA baharu dan komen `# v2.1.0` baharu', 'CI anda jalan pada PR itu', 'Anda baca nota release, kemudian merge']} label="Langkah pertama di atas" success="Itulah kitarannya. Pin segar, disemak oleh anda." />
+</Card>
+
+<Card id="predict" type="predict">
+Orang asing hantar PR. Ia tukar `@0123… # v2.0.0` kepada `@89ab… # v2.1.0`. Bagaimana anda tahu SHA baharu itu tulen?
+
+<Interactive name="Choice" options={[{ label: 'Semak ia commit release itu, dalam repo action itu sendiri', correct: true, why: 'Bukan dari fork. GitHub suruh semak ini.' }, { label: 'Percaya sahaja: komen kata v2.1.0', why: 'Komen hanya teks. Sesiapa boleh taip v2.1.0.' }, { label: 'Kira aksaranya', why: 'SHA jahat pun ada 40 aksara.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat pin yang baik, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pin dengan versi dalam komen: `@<sha> # v2.0.0`', good: true, why: 'SHA untuk GitHub. Komen untuk manusia.' }, { text: 'Merge setiap PR Dependabot tanpa tengok', good: false, why: 'Biar CI jalan, dan baca apa yang berubah.' }, { text: 'Salin SHA dari halaman fork', good: false, why: 'Salin dari repo action itu sendiri.' }, { text: 'Biar Dependabot semak action anda setiap minggu', good: true, why: 'Pembaikan segar, tetap dipin.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pin action pada SHA penuh dan pastikan ia sentiasa segar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Amaran Dependabot langkau pin SHA: ia hanya kenal nombor versi. Kemas kini versi tetap berfungsi. GitHub juga sedang uji lockfile workflow (pratonton). Ia rekod commit tepat setiap action, termasuk yang bersarang. Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="cicd-c4-dependabot" steps={[{ id: 'file', text: 'Dalam repo anda, buat `.github/dependabot.yml` dengan enam baris di atas.' }, { id: 'push', text: 'Commit dan push ke main.', command: 'git add .github/dependabot.yml && git commit -m "Keep actions up to date" && git push' }, { id: 'pin', text: 'Pin satu action pihak ketiga. Salin SHA penuhnya dari halaman release action itu sendiri. Simpan versi sebagai komen.' }, { id: 'pr', text: 'Bila PR Dependabot sampai, biar CI jalan, baca nota, kemudian merge.' }]} success="Pin anda kini ada penjaga." />
+</Card>

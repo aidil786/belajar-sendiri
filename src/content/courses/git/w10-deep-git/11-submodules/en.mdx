@@ -1,0 +1,62 @@
+---
+id: git-w10-l11
+world: 10
+title: Submodules vs subtrees
+summary: "You will learn: two ways to keep another repo inside yours, and when to pick each."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, CommandBuilder, SortCards]
+needs: [git-w10-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git submodule", url: "https://git-scm.com/docs/git-submodule" }
+  - { label: "gitsubmodules", url: "https://git-scm.com/docs/gitsubmodules" }
+  - { label: "git clone (--recurse-submodules)", url: "https://git-scm.com/docs/git-clone" }
+---
+
+<Card id="hook" type="hook">
+Two shop apps use the same `kuih-menu` code, from its own repo. You fix a bug in it. How do both apps get the fix?
+
+<Interactive name="Choice" options={[{ label: 'Link the menu repo inside each app', correct: true, why: 'Git has two ways to do that. Let us meet them.' }, { label: 'Copy and paste the files by hand', why: 'Then every fix means more copying. Easy to forget one.' }, { label: 'Email the fixed file to yourself', why: 'That works once. Then the copies drift apart.' }]} />
+</Card>
+
+<Card id="see-submodule" type="see">
+<Interactive name="Transcript" title="bash" label="git submodule add puts the kuih-menu repo in a folder called menu. Then .gitmodules shows the path menu and the url." lines={[{ cmd: 'git submodule add https://github.com/you/kuih-menu.git menu' }, { cmd: 'cat .gitmodules' }, { out: '[submodule "menu"]\n\tpath = menu\n\turl = https://github.com/you/kuih-menu.git' }]} />
+
+A **<Term id="submodule">submodule</Term>** is a repo inside your repo. Your repo keeps a link: the URL and one exact commit.
+</Card>
+
+<Card id="try-clone" type="try">
+Build the command that clones the app and its submodules at once.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'clone', means: 'copy a repo to your computer' }, { text: '--recurse-submodules', means: 'and fill in every submodule too' }, { text: 'https://github.com/you/shop.git', means: 'the app repo' }]} decoys={[{ text: '--depth 1', means: 'only the newest commit' }, { text: '--bare', means: 'no working folder' }]} success="That's it! The menu folder arrives full." />
+</Card>
+
+<Card id="predict" type="predict">
+Mei clones the app without `--recurse-submodules`. What is in the `menu` folder?
+
+<Interactive name="Choice" options={[{ label: 'Nothing yet. It is empty', correct: true, why: 'She can fill it later with git submodule update --init.' }, { label: 'The newest menu code', why: 'A plain clone does not fetch submodules.' }, { label: 'An error message', why: 'No error. The folder is just empty, waiting.' }]} />
+</Card>
+
+<Card id="see-subtree" type="see">
+<Interactive name="Transcript" title="bash" label="git subtree add copies the main branch of kuih-menu into the menu folder, squashed into one commit." lines={[{ cmd: 'git subtree add --prefix=menu https://github.com/you/kuih-menu.git main --squash' }]} />
+
+A **<Term id="subtree">subtree</Term>** copies the other repo's files into a folder. They become normal files in your repo. Teammates need nothing extra.
+</Card>
+
+<Card id="check-sort" type="check">
+Submodule or subtree? Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'submodule', label: 'submodule' }, { id: 'subtree', label: 'subtree' }]} items={[{ label: 'Stores a link to one commit of the other repo', bucket: 'submodule', why: 'Your repo keeps the URL and the commit id.' }, { label: 'Copies the files into your repo', bucket: 'subtree', why: 'The files live in your history, like your own.' }, { label: 'Teammates need an extra step after cloning', bucket: 'submodule', why: 'They need --recurse-submodules or git submodule update --init.' }, { label: 'A plain clone just works', bucket: 'subtree', why: 'The files are already inside the repo.' }]} success="Sorted! Submodule: a link. Subtree: a copy." />
+</Card>
+
+<Card id="win" type="win">
+You can now pick a submodule or a subtree, and explain why.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git submodule update --remote` moves a submodule to the newest commit of its branch. Then commit that change. `git subtree pull --prefix=menu <url> main --squash` brings in new menu work. `git subtree` lives in Git's contrib area, so check `git subtree -h` first. Sometimes a package manager is simpler than both.
+</Card>

@@ -1,0 +1,62 @@
+---
+id: cicd-c4-l01
+world: 4
+title: Why pipelines are targets
+summary: "You will learn: why attackers aim at your pipeline, and the main ways in."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TimelineTap, SortCards, SwipeJudge]
+needs: [cicd-c3-m3]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+---
+
+<Card id="hook" type="hook">
+Your conveyor belt can open the locked spice box. It ships to customers every day. A thief wants your keys. Where would they aim?
+
+<Interactive name="Choice" options={[{ label: 'At the pipeline: it holds the keys and can ship', correct: true, why: 'One sneaky step can copy the keys, or ship bad code to everyone.' }, { label: 'At your laptop only', why: 'Laptops matter too. But the pipeline holds the keys for every deploy.' }, { label: 'Nowhere: robots cannot be tricked', why: 'Robots run whatever code they are given. That is the weak spot.' }]} />
+</Card>
+
+<Card id="see-keys" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: Ship' }, { text: 'on: push' }, { text: 'permissions:' }, { text: '  contents: write', target: true }, { text: 'jobs:' }, { text: '  ship:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - run: npm publish' }, { text: '        env:' }, { text: '          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}', target: true }, { text: '      - run: npx wrangler deploy' }, { text: '        env:' }, { text: '          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', target: true }]} prompt="Tap every line that hands this job a key." success="Three keys! Push code, publish a package, deploy the site." />
+
+Count the keys. Each **<Term id="secret">secret</Term>** opens a door. This one job can change your code, your package and your live site.
+</Card>
+
+<Card id="see-supply" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Day 1', title: 'You borrow a helper', text: 'You add `uses: example-org/helper@v2`. It saves you 30 lines.' }, { when: 'Day 60', title: 'The supplier is hacked', text: 'An attacker gets into the helper repo. They change the code behind `v2`.' }, { when: 'Day 61', title: 'Your next run', text: 'Your job runs the poisoned helper. It can reach every key the job holds.' }]} />
+
+Every action you borrow is a supplier. Poison one supplier, and every kitchen that uses it gets sick. This is a **<Term id="supply-chain-attack">supply chain attack</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+This world gives you one shield for each hole. Sort these habits now. You will meet each one again.
+
+<Interactive name="SortCards" buckets={[{ id: 'shield', label: 'Shield: lowers the risk' }, { id: 'hole', label: 'Hole: lets attackers in' }]} items={[{ label: 'Pin borrowed actions to a full commit SHA', bucket: 'shield', why: 'Nobody can swap the code under you.' }, { label: '`permissions: write-all` in every workflow', bucket: 'hole', why: 'Every step gets every key.' }, { label: "Test a stranger's PR with `pull_request`", bucket: 'shield', why: 'Fork code gets no secrets and a read-only key.' }, { label: 'Paste an issue title straight into `run:`', bucket: 'hole', why: 'A sneaky title can turn into a command.' }, { label: 'Print a token to check it works', bucket: 'hole', why: 'Logs can leak. Lesson 7 shows how.' }, { label: 'A self-hosted runner on a public repo', bucket: 'hole', why: "A stranger's PR could run on your own machine." }]} success="Sorted! Two shields, four holes to close." />
+</Card>
+
+<Card id="predict" type="predict">
+A borrowed action gets hacked. Your job has `permissions: write-all`. What can the attacker do?
+
+<Interactive name="Choice" options={[{ label: 'Anything the token allows: push code, delete releases', correct: true, why: 'write-all gives every key. The bad code gets them all.' }, { label: "Nothing: it is GitHub's token", why: 'The token works for any code in the job, good or bad.' }, { label: 'Only read your code', why: 'That would be true with contents: read. write-all is far more.' }]} />
+</Card>
+
+<Card id="check-ways" type="check">
+Attackers have a few ways onto the belt. Safe, or a way in? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A borrowed action whose owner was hacked', good: false, why: "Its code runs with your job's keys." }, { text: 'A test that fails because of a typo', good: true, why: 'Annoying, but no attacker gets in. Fix the typo.' }, { text: "A stranger's PR that runs with your secrets", good: false, why: 'Their code could copy the secrets.' }, { text: 'A job that only has `contents: read`', good: true, why: 'Even if it is tricked, it can only read.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why attackers aim at pipelines.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): open one workflow in your own repo. Count its secrets. Find its `permissions:` line. No line at all? Lesson 4 shows why to add one. Next lesson: a real attack from March 2025.
+</Card>

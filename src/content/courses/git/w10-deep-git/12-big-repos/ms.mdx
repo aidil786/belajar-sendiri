@@ -1,0 +1,69 @@
+---
+id: git-w10-l12
+world: 10
+title: "Repo besar: shallow, sparse, LFS"
+summary: "Anda akan belajar: cara ambil bahagian repo gergasi yang anda perlukan sahaja."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, CommandBuilder, SortCards]
+needs: [git-w10-l11]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git clone (--depth, --filter)", url: "https://git-scm.com/docs/git-clone" }
+  - { label: "git sparse-checkout", url: "https://git-scm.com/docs/git-sparse-checkout" }
+  - { label: "Partial clone", url: "https://git-scm.com/docs/partial-clone" }
+  - { label: "About Git Large File Storage", url: "https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage" }
+---
+
+<Card id="hook" type="hook">
+Repo sebuah permainan sangat besar: sejarah 15 tahun dan gambar gergasi. Hari ini anda cuma perlu baiki satu salah taip. Perlukah muat turun semuanya?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Git boleh ambil apa yang perlu sahaja', correct: true, why: 'Kurang sejarah, kurang fail, atau fail besar bila perlu. Jom tengok setiap satu.' }, { label: 'Ya, clone sentiasa ambil semua', why: 'Secara lalai, ya. Tapi clone ada pilihan untuk ambil kurang.' }, { label: 'Ya, kalau tak Git akan rosak', why: 'Git berfungsi dengan baik dengan salinan yang lebih kecil.' }]} />
+</Card>
+
+<Card id="see-shallow" type="see">
+<Interactive name="Transcript" title="bash" label="Satu arahan: git clone --depth 1 dengan alamat repo permainan itu." lines={[{ cmd: 'git clone --depth 1 https://github.com/you/big-game.git' }]} />
+
+**<Term id="shallow-clone">Shallow clone</Term>** (clone cetek) ambil commit terbaru sahaja. `--depth 1` maksudnya yang terakhir sahaja. Pantas untuk pembaikan sekali atau robot ujian.
+</Card>
+
+<Card id="predict" type="predict">
+Anda buat shallow clone dengan `--depth 1`. Anda jalankan `git log --oneline`. Apa yang anda nampak?
+
+<Interactive name="Choice" options={[{ label: 'Satu commit sahaja', correct: true, why: 'Sejarah lama tak pernah dimuat turun. git fetch --unshallow boleh ambil kemudian.' }, { label: 'Seluruh sejarah', why: 'Hanya satu commit yang turun. Yang lain kekal di pelayan.' }, { label: 'Kosong langsung', why: 'Anda masih dapat commit terbaru dan semua failnya.' }]} />
+</Card>
+
+<Card id="see-partial" type="see">
+<Interactive name="Transcript" title="bash" label="Satu arahan: git clone --filter=blob:none dengan alamat repo permainan itu." lines={[{ cmd: 'git clone --filter=blob:none https://github.com/you/big-game.git' }]} />
+
+**<Term id="partial-clone">Partial clone</Term>** (clone separa) ambil setiap commit. Isi fail diambil bila perlu sahaja. `blob:none` maksudnya tiada blob pada awalnya. Git ambil blob bila anda checkout fail.
+</Card>
+
+<Card id="try-sparse" type="try">
+**<Term id="sparse-checkout">sparse-checkout</Term>** papar sebahagian folder sahaja atas meja anda. Bina arahan untuk tengok folder `docs` sahaja.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'sparse-checkout', means: 'papar sebahagian folder sahaja' }, { text: 'set', means: 'pilih folder' }, { text: 'docs', means: 'folder yang anda mahu' }]} decoys={[{ text: 'disable', means: 'papar semua folder semula' }, { text: '--depth', means: 'pilihan untuk clone, bukan ini' }]} success="Betul! Hanya docs yang muncul. Yang lain kekal selamat dalam repo." />
+</Card>
+
+<Card id="see-lfs" type="see">
+<Interactive name="Transcript" title="bash" label="git lfs install, kemudian git lfs track bintang titik psd. Fail .gitattributes kini sebut *.psd filter=lfs diff=lfs merge=lfs -text." lines={[{ cmd: 'git lfs install' }, { cmd: 'git lfs track "*.psd"' }, { cmd: 'cat .gitattributes' }, { out: '*.psd filter=lfs diff=lfs merge=lfs -text' }]} />
+
+**<Term id="git-lfs">Git LFS</Term>** ialah tambahan untuk fail besar. Git simpan penunjuk kecil sahaja. Fail sebenar tinggal di pelayan LFS.
+</Card>
+
+<Card id="check-sort" type="check">
+Alat mana sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'shallow', label: 'shallow clone' }, { id: 'sparse', label: 'sparse-checkout' }, { id: 'lfs', label: 'Git LFS' }]} items={[{ label: 'Robot ujian perlukan commit terbaru sahaja', bucket: 'shallow', why: 'Tak perlu sejarah, jadi --depth 1 sangat sesuai.' }, { label: 'Anda kerja dalam folder docs sahaja', bucket: 'sparse', why: 'Papar docs sahaja atas meja anda.' }, { label: 'Pereka commit fail .psd yang besar', bucket: 'lfs', why: 'LFS simpan fail besar di luar sejarah biasa.' }, { label: 'Baiki salah taip sekali sahaja', bucket: 'shallow', why: 'Ambil commit terbaru, baiki, push.' }, { label: 'Monorepo dengan 200 aplikasi, anda jaga satu', bucket: 'sparse', why: 'Checkout folder aplikasi anda sahaja.' }]} success="Tersusun! Kurang sejarah, kurang folder, atau fail besar diasingkan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kerja dengan repo gergasi tanpa muat turun semuanya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git fetch --unshallow` tukar shallow clone jadi clone penuh. `git clone --sparse` mula dengan folder atas sahaja; kemudian `git sparse-checkout set`. `git sparse-checkout disable` papar semua semula. Git LFS ialah tambahan: kalau Git anda tiada, dapatkan dari git-lfs.com. Laman hosting hadkan storan LFS, jadi semak pelan anda.
+</Card>

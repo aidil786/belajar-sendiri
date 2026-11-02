@@ -1,0 +1,76 @@
+---
+id: k8s-k2-l05
+world: 2
+title: "Rolling updates and rollout undo"
+summary: "You will learn: to ship a new version with no downtime, and to undo a bad one fast."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder]
+needs: [k8s-k2-l04]
+scenario: k2-rolling
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Updating a Deployment", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment" }
+  - { label: "kubectl rollout", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/" }
+  - { label: "kubectl set image", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_image/" }
+---
+
+<Card id="hook" type="hook">
+Lunch rush. The new menu, nginx 1.30, is ready. If you close the stall to swap trays, hungry customers walk away. What do you want?
+
+<Interactive name="Choice" options={[{ label: 'Swap a few trays at a time, stall open', correct: true, why: 'Customers always find a tray. Kubernetes does this by default.' }, { label: 'Close, swap every tray, reopen', why: 'That works, but the closed sign costs you customers.' }, { label: 'Wait until midnight', why: 'Then every fix waits for midnight too. Ship safely in daylight instead.' }]} />
+</Card>
+
+<Card id="see-rolling" type="see">
+<Interactive name="KubeReplay" scenario="k2-rolling" commands={['kubectl set image deployment/shop web=nginx:1.30-alpine', 'sleep 3', 'kubectl get pods', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl get rs']} label="After set image, a new pod is created while the 3 old ones keep running. When the rollout finishes, the old ReplicaSet has 0 pods and the new one has 3." />
+
+`kubectl set image` writes a new image into the order. A **<Term id="rolling-update" course="cicd">rolling update</Term>** starts. One new tray comes in, one old tray leaves, again and again.
+</Card>
+
+<Card id="try-update" type="try">
+Your turn. Ship nginx 1.30 to the shop. Then wait for the rollout to finish.
+
+<Interactive name="FoodCourtSim" scenario="k2-rolling" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop', revision: 2 } }} hints={['Type kubectl set image deployment/shop web=nginx:1.30-alpine', 'Then kubectl rollout status deployment/shop']} success="All 3 trays serve 1.30, and the stall never closed." />
+
+<Hint>`kubectl set image deployment/shop web=nginx:1.30-alpine`, then `kubectl rollout status deployment/shop`.</Hint>
+</Card>
+
+<Card id="see-history" type="see">
+<Interactive name="KubeReplay" scenario="k2-rolling" commands={['kubectl set image deployment/shop web=nginx:1.30-alpine', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl rollout history deployment/shop']} label="rollout history lists revision 1 and revision 2." />
+
+Each new template gets a **<Term id="revision">revision</Term>** number. The old ReplicaSet stays, empty, so going back is quick.
+</Card>
+
+<Card id="predict" type="predict">
+A teammate ships `nginx:1.299`. That tag does not exist. What happens to the 3 old trays?
+
+<Interactive name="Choice" options={[{ label: 'They keep serving. The new tray is stuck.', correct: true, why: 'The rollout waits for the new tray to be ready. It never is, so the old trays stay.' }, { label: 'All 3 go down', why: 'With 3 trays, an old tray leaves only after a new one is ready.' }, { label: 'Kubernetes undoes it by itself', why: "It stops and waits. The undo is your job, or your pipeline's." }]} />
+</Card>
+
+<Card id="try-undo" type="try">
+It happened. The new tray shows `ErrImagePull`, then `ImagePullBackOff`. Plain words: that image cannot be fetched. Undo the rollout.
+
+<Interactive name="FoodCourtSim" scenario="k2-bad-rollout" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.29-alpine' }, rolloutComplete: { name: 'shop', minRevision: 3 }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Type kubectl rollout undo deployment/shop', 'Then kubectl rollout status deployment/shop']} success="Back on the last good version. The stuck tray is gone." />
+
+<Hint>`kubectl rollout undo deployment/shop` goes back one revision.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Build the command that goes back to revision 1 exactly.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Talk to the cluster' }, { text: 'rollout', means: 'about a rollout' }, { text: 'undo', means: 'go back' }, { text: 'deployment/shop', means: 'for the shop order' }, { text: '--to-revision=1', means: 'to revision 1' }]} decoys={[{ text: 'delete', means: 'remove something' }, { text: '--force', means: 'skip the safety checks' }]} success="That is the command. Undo is a new rollout, so the stall stays open." />
+</Card>
+
+<Card id="win" type="win">
+You can now ship a new version with no downtime, and undo a bad one.
+</Card>
+
+<Card id="deeper" type="deeper">
+After `rollout undo`, kubectl prints a Warning: the cluster changed, but your file did not. Fix the file in Git too, or the next `apply` brings the bug back. By default, a rollout adds up to 25% extra trays. It takes away at most 25%.
+
+Real rep (optional): on a throwaway cluster, set a bad image, then undo it.
+</Card>

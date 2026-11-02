@@ -1,0 +1,81 @@
+---
+id: git-w00-l02
+world: 0
+title: Terminal basics
+summary: "You will learn: four commands to find your way around the terminal."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Sim, Choice]
+needs: [git-w00-l01]
+scenario: w00-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "pwd", url: "https://www.gnu.org/software/coreutils/manual/html_node/pwd-invocation.html" }
+  - { label: "ls", url: "https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html" }
+  - { label: "cd", url: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" }
+  - { label: "mkdir", url: "https://www.gnu.org/software/coreutils/manual/html_node/mkdir-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['cd Music', 'ls']} label="Someone types cd Music, then ls. The terminal answers: playlist.txt." />
+
+Git lives in the **<Term id="terminal">terminal</Term>**. No mouse, no icons. Just words. How do you find your way around?
+</Card>
+
+<Card id="see-pwd" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['pwd']} label="pwd prints /home/you." />
+
+`pwd` asks: where am I? The answer is a **path**, like an address for folders. Here, you are home: `/home/you`.
+</Card>
+
+<Card id="see-ls" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['ls']} label="ls lists Documents and Music in blue, and notes.txt in plain text." />
+
+`ls` asks: what's in here? Blue names are **<Term id="folder">folders</Term>**. The others are files.
+</Card>
+
+<Card id="see-cd" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['cd Documents', 'pwd']} label="cd Documents moves you into Documents. Now pwd prints /home/you/Documents." />
+
+`cd` means change **directory**. Directory is another word for folder. `cd Documents` walks into Documents. `cd ..` walks back out.
+</Card>
+
+<Card id="try-cd" type="try">
+Go into Documents. Then list what's inside.
+
+<Interactive name="Sim" scenario="w00-l02" panels={[]} goal={{ cwd: '/home/you/Documents', lastTyped: '^ls' }} hints={['Type cd Documents and press Enter. Then type ls.']} success="You're in Documents. You moved with words!" />
+
+<Hint>First `cd Documents`. Then `ls`.</Hint>
+</Card>
+
+<Card id="see-mkdir" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['mkdir projects', 'ls']} label="mkdir projects makes a new folder. Now ls shows Documents, Music, notes.txt and projects." />
+
+`mkdir` means **make directory**. `mkdir projects` makes a new, empty folder called projects.
+</Card>
+
+<Card id="try-mkdir" type="try">
+Make a folder called `projects`. Then go into it.
+
+<Interactive name="Sim" scenario="w00-l02" panels={[]} goal={{ dirsExist: ['/home/you/projects'], cwd: '/home/you/projects' }} hints={['Type mkdir projects and press Enter.', 'Now type cd projects.']} success="Your projects folder is ready. Your Git projects can live here." />
+
+<Hint>First `mkdir projects`. Then `cd projects`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You are in `/home/you`. You type `cd Music`. What will `pwd` show?
+
+<Interactive name="Choice" compact options={[{ label: '`/home/you/Music`', correct: true, why: '`cd Music` walks one folder deeper.' }, { label: '`/home/you`', why: '`cd` moved you. The path grows by one folder.' }, { label: '`/Music`', why: 'Music lives inside your home folder. So the path starts with `/home/you`.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find your way around with `pwd`, `ls`, `cd` and `mkdir`.
+</Card>
+
+<Card id="deeper" type="deeper">
+`ls -a` also shows hidden files. Their names start with a dot. `cd ~` (or just `cd`) takes you home. `mkdir -p` makes folders inside folders in one go.
+
+<Interactive name="TermReplay" scenario="w00-l02" commands={['mkdir -p projects/diary', 'cd projects/diary', 'pwd', 'cd ~', 'pwd']} label="mkdir -p makes projects and diary inside it. cd ~ goes back home." />
+</Card>

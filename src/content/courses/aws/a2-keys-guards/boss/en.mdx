@@ -1,0 +1,68 @@
+---
+id: aws-a2-boss
+world: 2
+title: Just enough keys
+summary: "You will learn: to let a CI role push one image to one repository, and nothing more."
+minutes: 6
+xp: 50
+interactives: [Choice, OrderList, SpotLines, IamJudge, Mission]
+needs: [aws-a2-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon ECR: IAM permissions for pushing an image", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push-iam.html" }
+  - { label: "Create a role for OIDC (GitHub)", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html" }
+  - { label: "GitHub: OIDC in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil’s workflow must push its image to the `kedai` shelf in ECR. Who should do the pushing?
+
+<Interactive name="Choice" options={[{ label: 'A role the workflow borrows with OIDC', correct: true, why: 'Short-lived, tied to one repo, no stored keys.' }, { label: 'An IAM user with access keys in GitHub secrets', why: 'Keys that never expire, sitting in a repo’s settings. Avoid.' }, { label: 'Your admin user’s keys, just this once', why: '“Just once” keys stay forever. And admin is far too much.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Room 1: plan the build. Put the steps in order.
+
+<Interactive name="OrderList" items={['Add GitHub’s OIDC provider to IAM', 'Make role ci-deployer, trusting only the shop repo', 'Attach a login policy and a push policy', 'Give the workflow id-token: write', 'Push the image, then check who you were']} label="First step at the top" success="Room 1 cleared! Provider, role, policies, workflow, push." />
+</Card>
+
+<Card id="try-trust" type="try">
+Room 2: a teammate wrote this trust policy. Tap the line that lets strangers in.
+
+<Interactive name="SpotLines" lines={[{ text: '"Action": "sts:AssumeRoleWithWebIdentity",' }, { text: '"Condition": {' }, { text: '  "StringEquals": {' }, { text: '    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"' }, { text: '  },' }, { text: '  "StringLike": {' }, { text: '    "token.actions.githubusercontent.com:sub": "repo:*"', target: true }, { text: '  }' }, { text: '}' }]} prompt="Tap the risky line." success="Room 2 cleared! repo:* means any repo on GitHub. Name yours." />
+</Card>
+
+<Card id="try-edit" type="try">
+Room 3: the push policy works on every shelf. Fix the pink line so a push to `kedai-admin` gets Deny. Name only the `kedai` shelf.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-admin' }} policies={[{ name: 'ecr-push', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'], Resource: '*' }] } }]} task={{ type: 'edit', policy: 0, line: 13, want: 'Deny', forbid: ['\\*'] }} solution={'"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai"'} success="Room 3 cleared! One shelf only." />
+
+<Hint>`"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai"`</Hint>
+</Card>
+
+<Card id="predict-login" type="predict">
+Room 4: before any push, the workflow must log in to ECR. That needs one more key. Which one?
+
+<Interactive name="Choice" options={[{ label: 'ecr:GetAuthorizationToken, on "*"', correct: true, why: 'The ECR docs list it for pushing. It cannot be narrowed to one shelf.' }, { label: 'ecr:*, on "*"', why: 'That opens every ECR action, deletes included.' }, { label: 'iam:PassRole', why: 'That hands roles to services. Pushing doesn’t need it.' }]} />
+</Card>
+
+<Card id="check-push" type="check">
+Room 5: the full set. The role pushes to the `kedai` shelf. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }} policies={[{ name: 'ecr-login', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:GetAuthorizationToken', Resource: '*' }] } }, { name: 'ecr-push', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'], Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }] } }]} success="Allowed. Just enough keys: one shelf, push only." />
+</Card>
+
+<Card id="try-real" type="try">
+Final room, for real (only with a budget alarm set). IAM is free; stored images cost a little. Clean-up list: the image, the repository, the role, the provider.
+
+<Interactive name="Mission" id="aws-a2-boss-real" steps={[{ id: 'alarm', text: 'Check your budget alarm is on.' }, { id: 'provider', text: 'Add GitHub’s OIDC provider (audience sts.amazonaws.com).' }, { id: 'repo', text: 'Create a private ECR repository called kedai in ap-southeast-5.' }, { id: 'role', text: 'Make ci-deployer, trusting only your test repo’s main branch.' }, { id: 'policies', text: 'Attach ecr-login and ecr-push (one shelf).' }, { id: 'push', text: 'Run the workflow: log in, build a tiny image, push it.' }, { id: 'clean', text: 'Clean up: delete the image and repository, then the role and the provider.' }]} success="Boss beaten! Just enough keys, and nothing left behind." />
+</Card>
+
+<Card id="win" type="win">
+You can now give a CI role just enough keys: one shelf, push only.
+</Card>

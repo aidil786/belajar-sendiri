@@ -1,0 +1,72 @@
+---
+id: linux-l4-l06
+world: 4
+title: "Skrip bash: pemboleh ubah dan if"
+summary: "Anda akan belajar: membaca dan menjalankan skrip kecil dengan pemboleh ubah, argumen dan if."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, Choice, SortCards, SwipeJudge, Mission]
+needs: [linux-l4-l05]
+scenario: linux-l4-vars
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: shell parameters", url: "https://www.gnu.org/software/bash/manual/html_node/Shell-Parameters.html" }
+  - { label: "Bash manual: conditional constructs", url: "https://www.gnu.org/software/bash/manual/html_node/Conditional-Constructs.html" }
+  - { label: "Bash manual: conditional expressions", url: "https://www.gnu.org/software/bash/manual/html_node/Bash-Conditional-Expressions.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-vars" intro={['./open.sh']} />
+
+Senarai semak pembukaan enggan bermula. Ia mahukan sesuatu daripada anda. Apa?
+</Card>
+
+<Card id="see-script" type="see">
+<Term id="script">Skrip</Term> ialah senarai semak bertulis untuk shell. Ini `open.sh`. Tekan baris yang baca apa yang anda taip selepas `./open.sh`.
+
+<Interactive name="SpotLines" lines={[{ text: '#!/bin/bash' }, { text: '# open.sh: open the shop and greet the first worker.' }, { text: 'shop="Kedai Kancil"' }, { text: 'worker=$1', target: true }, { text: 'if [ -z "$worker" ]; then' }, { text: '  echo "Who is opening? Try: ./open.sh Aina"' }, { text: '  exit 1' }, { text: 'fi' }, { text: 'echo "$worker opens $shop."' }]} prompt="Tekan baris yang baca perkataan anda." success="worker=$1 isi balang dengan perkataan pertama selepas nama skrip." />
+</Card>
+
+<Card id="try-jar" type="try">
+**Variable** (pemboleh ubah) ialah balang berlabel. `name=Aina` mengisinya (tiada ruang di sekeliling `=`). `$name` membacanya. Cuba.
+
+<Interactive name="LinuxSim" scenario="linux-l4-vars" goal={{ typed: '^name=', lastTyped: '^echo .*\\$name' }} hints={['name=Aina', 'echo "Hi $name"']} solution={['name=Aina', 'echo "Hi $name"']} success="Balang itu sebut Aina." />
+</Card>
+
+<Card id="predict" type="predict">
+`name=Aina`, kemudian `echo 'Hi $name'` dengan petikan tunggal. Apa yang dicetak?
+
+<Interactive name="Choice" options={[{ label: 'Hi $name', correct: true, why: 'Petikan tunggal kekalkan teks seperti ditaip. Guna petikan berganda untuk balang.' }, { label: 'Hi Aina', why: 'Hanya petikan berganda yang buka balang.' }, { label: 'Ralat', why: 'Ia berjalan baik. Ia cuma cetak labelnya, bukan isi balang.' }]} />
+</Card>
+
+<Card id="see-tests" type="see">
+`if [ -z "$worker" ]` tanya soalan ya/tidak. `-z` bermaksud "adakah ia kosong?". Susun soalan ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'files', label: 'Tentang fail dan folder' }, { id: 'values', label: 'Tentang teks dan nombor' }]} items={[{ label: '[ -f menu.txt ]: adakah ia fail?', bucket: 'files', why: '-f: fail yang wujud.' }, { label: '[ -d kedai ]: adakah ia folder?', bucket: 'files', why: '-d: folder yang wujud.' }, { label: '[ -z "$worker" ]: adakah ia kosong?', bucket: 'values', why: '-z: teks kosong.' }, { label: '[ 5 -gt 3 ]: adakah 5 lebih besar daripada 3?', bucket: 'values', why: '-gt: lebih besar, untuk nombor.' }]} success="Fail dan folder, atau teks dan nombor." />
+</Card>
+
+<Card id="try-run" type="try">
+Jalankan senarai semak dengan satu nama. Kemudian buat `menu.txt` dan jalankan lagi. Tengok `if` tukar jawapannya.
+
+<Interactive name="LinuxSim" scenario="linux-l4-vars" goal={{ fileExists: ['~/menu.txt'], scriptExitCode: { '~/open.sh': 0 }, lastTyped: '^\\./open\\.sh \\S' }} hints={['./open.sh Aina', 'echo "nasi lemak" > menu.txt', './open.sh Aina']} solution={['./open.sh Aina', 'echo "nasi lemak" > menu.txt', './open.sh Aina']} success="No menu yet!, kemudian The menu is ready. if itu baca rak." />
+</Card>
+
+<Card id="check" type="check">
+Baris yang bagus atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'name=Aina', good: true, why: 'Tiada ruang di sekeliling =.' }, { text: 'name = Aina', good: false, why: 'Dengan ruang, bash jalankan arahan bernama name.' }, { text: 'echo "Hi $name"', good: true, why: 'Petikan berganda buka balang.' }, { text: 'if [-f menu.txt]; then', good: false, why: '[ dan ] perlukan ruang di dalam: [ -f menu.txt ].' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca pemboleh ubah dan if dalam skrip, dan jalankannya dengan satu perkataan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sentiasa letak petikan pada balang: `"$worker"`. Dengan itu nama yang ada ruang kekal satu perkataan. `$(date +%F)` isi balang dengan output arahan. `shellcheck` baca skrip dan tunjuk kesilapan (`sudo apt install shellcheck`).
+
+<Interactive name="Mission" id="linux-l4-l06-rep" steps={[{ id: 'write', text: 'Tulis hi.sh: name=$1, kemudian echo "Hi $name". Guna mana-mana editor.' }, { id: 'x', text: 'Benarkan ia berjalan.', command: 'chmod +x hi.sh' }, { id: 'run', text: 'Jalankan dengan nama anda.', command: './hi.sh Aina' }]} success="Skrip pertama anda dengan pemboleh ubah." />
+</Card>

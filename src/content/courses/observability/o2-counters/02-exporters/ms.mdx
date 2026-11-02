@@ -1,0 +1,97 @@
+---
+id: obs-o2-l02
+world: 2
+title: "Exporter: node dan blackbox"
+summary: "Anda akan belajar: bagaimana exporter terjemah mesin atau laman web jadi nombor yang Prometheus boleh scrape."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, PromQLPlayground, Transcript, SortCards, Mission]
+needs: [obs-o2-l01]
+scenario: o2-machines
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: exporters and integrations", url: "https://prometheus.io/docs/instrumenting/exporters/" }
+  - { label: "Monitoring Linux with node exporter", url: "https://prometheus.io/docs/guides/node-exporter/" }
+  - { label: "Blackbox exporter (multi-target exporter guide)", url: "https://prometheus.io/docs/guides/multi-target-exporter/" }
+---
+
+<Card id="hook" type="hook">
+Dapur masak tak tahu bahasa Prometheus. Bagaimana nak letak suhunya di skrin?
+
+<Interactive name="Choice" options={[{ label: 'Penterjemah baca dapur dan tunjuk /metrics', correct: true, why: 'Ya. Penterjemah itu dipanggil exporter.' }, { label: 'Ajar dapur PromQL', why: 'PromQL untuk tanya soalan, bukan untuk dapur.' }, { label: 'Dapur tak boleh dipantau', why: 'Boleh, dengan penterjemah kecil di sebelahnya.' }]} />
+</Card>
+
+<Card id="see-node" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris yang terangkan ruang cakera kosong." lines={[{ text: '# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.' }, { text: '# HELP node_filesystem_avail_bytes Filesystem space available to non-root users in bytes.', target: true }, { text: '# HELP node_load1 1m load average.' }, { text: '# HELP node_memory_MemAvailable_bytes Memory information field MemAvailable_bytes.' }]} success="Ya: ruang filesystem yang tersedia, dalam bait." />
+
+**<Term id="exporter">Exporter</Term>** menterjemah. Node exporter baca sebuah mesin: CPU, memori, cakera, beban. Baris-baris ini sebenar.
+</Card>
+
+<Card id="try-memory" type="try">
+Berapa peratus memori kosong pada setiap mesin? Bahagikan yang tersedia dengan jumlah.
+
+<Interactive name="PromQLPlayground" scenario="o2-machines" metrics={['node_memory_MemAvailable_bytes', 'node_memory_MemTotal_bytes']} initial="node_memory_MemAvailable_bytes" prompt="Tambah / node_memory_MemTotal_bytes, kemudian Run." goal={{ resultEquals: [{ labels: { job: 'node', instance: 'kedai-1:9100' }, value: 0.6 }, { labels: { job: 'node', instance: 'kedai-2:9100' }, value: 0.25 }] }} hints={['Taip ruang, /, ruang, kemudian tekan node_memory_MemTotal_bytes.']} solution="node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes" success="kedai-2 tinggal 25% sahaja. Perhatikan ia." />
+
+<Hint>Label sama di kedua-dua belah, jadi Prometheus padankan mesin untuk anda.</Hint>
+</Card>
+
+<Card id="see-blackbox" type="see">
+<Interactive name="Transcript" title="bash" label="curl minta blackbox exporter ketuk satu laman. Ia lapor kod status 200 dan probe_success 1." lines={[{ cmd: "curl -s 'localhost:9115/probe?target=http://prometheus:9090/-/ready&module=http_2xx' | grep -E 'probe_success|probe_http_status_code'" }, { out: '# HELP probe_http_status_code Response HTTP status code\n# TYPE probe_http_status_code gauge\nprobe_http_status_code 200\n# HELP probe_success Displays whether or not the probe was a success\n# TYPE probe_success gauge' }, { out: 'probe_success 1', color: 'green' }]} />
+
+Blackbox exporter ketuk satu laman dari luar, macam pelanggan. `probe_success 1` bermaksud pintu dibuka. Output ini sebenar.
+</Card>
+
+<Card id="try-probe" type="try">
+Laman kedai mana yang gagal diketuk pada 12m?
+
+<Interactive name="PromQLPlayground" scenario="o2-machines" metrics={['probe_success', 'up']} prompt="Tunjuk probe yang gagal sahaja: taip probe_success == 0 dan Run." goal={{ typed: '==\\s*0', resultCount: 1 }} hints={['Taip probe_success == 0', '== 0 simpan hanya siri yang bernilai 0 sekarang.']} solution="probe_success == 0" success="Laman utama gagal. Laman menu okey." />
+</Card>
+
+<Card id="predict" type="predict">
+Pada 12m, `up` untuk blackbox sendiri ialah 1. Tapi `probe_success` untuk laman utama ialah 0. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Exporter berjalan. Laman yang ia ketuk yang gagal.', correct: true, why: 'Ya. up tentang scrape. probe_success tentang laman kedai.' }, { label: 'Prometheus rosak', why: 'Prometheus scrape dengan baik: up ialah 1.' }, { label: 'Nombor tak sepadan, jadi abaikan kedua-duanya', why: 'Ia jawab soalan berbeza. Kedua-duanya benar.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Pandangan dari dalam atau dari luar? Susun setiap semakan.
+
+<Interactive name="SortCards" buckets={[{ id: 'node', label: 'Node exporter' }, { id: 'blackbox', label: 'Blackbox exporter' }]} items={[{ label: 'Masa CPU sibuk', bucket: 'node', why: 'Dibaca dari dalam mesin.' }, { label: 'Memori kosong', bucket: 'node', why: 'Dibaca dari dalam mesin.' }, { label: 'Cakera hampir penuh', bucket: 'node', why: 'Dibaca dari dalam mesin.' }, { label: 'Laman utama jawab 200', bucket: 'blackbox', why: 'Disemak dari luar, macam pelanggan.' }, { label: 'Sijil TLS hampir tamat', bucket: 'blackbox', why: 'Probe baca sijil yang ia terima.' }, { label: 'Port 443 terima sambungan', bucket: 'blackbox', why: 'Ketukan dari luar.' }]} success="Dalam dan luar. Anda mahu kedua-duanya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan exporter dan baca nombor node dan blackbox.
+</Card>
+
+<Card id="deeper" type="deeper">
+Banyak exporter wujud: pangkalan data, Redis, barisan mesej. Aplikasi anda sendiri pun boleh tunjuk `/metrics` dengan pustaka klien. Latihan sebenar: tambah blackbox ke stack `kedai-watch` anda. Tambah servis ini ke `compose.yaml`, dan job ini ke `prometheus.yml`.
+
+```yaml
+  blackbox-exporter:
+    image: quay.io/prometheus/blackbox-exporter:v0.29.1
+    ports:
+      - "9115:9115"
+```
+
+```yaml
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://prometheus:9090/-/ready"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+```
+
+<Interactive name="Mission" id="obs-o2-l02-real" steps={[{ id: 'edit', text: 'Tambah servis dan job di atas ke dalam dua fail anda.' }, { id: 'up', text: 'Mulakan stack semula.', command: 'docker compose up -d' }, { id: 'probe', text: 'Ketuk sendiri.', command: "curl -s 'localhost:9115/probe?target=http://prometheus:9090/-/ready&module=http_2xx' | grep -E 'probe_success|probe_http_status_code'" }, { id: 'query', text: 'Di http://localhost:9090, jalankan probe_success. Anda nampak 1.' }, { id: 'stop', text: 'Hentikan bila dah siap.', command: 'docker compose down' }]} success="Bilik kawalan anda kini mengetuk dari luar juga." />
+</Card>

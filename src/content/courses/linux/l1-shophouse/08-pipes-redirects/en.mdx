@@ -1,0 +1,82 @@
+---
+id: linux-l1-l08
+world: 1
+title: Pipes and redirects
+summary: "You will learn: to chain small commands with | and save their output to files."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, OrderList, SortCards, Mission]
+needs: [linux-l1-l07]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Pipelines", url: "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html" }
+  - { label: "Bash manual: Redirections", url: "https://www.gnu.org/software/bash/manual/html_node/Redirections.html" }
+  - { label: "sort (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/sort.1.en.html" }
+  - { label: "uniq (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/uniq.1.en.html" }
+  - { label: "cut (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cut.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+The boss wants a list: each dish sold today, best seller first. No single command does that. What now?
+
+<Interactive name="Choice" options={[{ label: 'Chain small commands, each doing one job', correct: true, why: 'Linux tools are small stations. Join them into a line.' }, { label: 'Write a big new program', why: 'No need. Four tiny tools already do it together.' }, { label: 'Count with paper and pen', why: 'Fine for 15 orders. Not for 900.' }]} />
+</Card>
+
+<Card id="see-pipe" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['grep -i unpaid orders.log | wc -l']} />
+
+The <Term id="pipe">pipe</Term> `|` is a conveyor belt. grep's lines ride along to `wc -l`, which counts them. Answer: 3 unpaid.
+</Card>
+
+<Card id="order-stations" type="try">
+Build the best-seller belt. Put the four stations in order.
+
+<Interactive name="OrderList" items={['cut -d" " -f3 orders.log: keep only the dish column', 'sort: line up the same dishes together', 'uniq -c: count each group', 'sort -rn: biggest number first']} label="First station at the top" success="Cut, sort, count, sort again. A real belt!" />
+</Card>
+
+<Card id="try-belt" type="try">
+Now run the whole belt in one line:
+
+`cut -d" " -f3 orders.log | sort | uniq -c | sort -rn`
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: 'uniq -c *\\| *sort -(rn|nr)' }} hints={['Copy the line above exactly. The spaces around | do not matter.']} solution={['cut -d" " -f3 orders.log | sort | uniq -c | sort -rn']} success="6 nasi-lemak, 4 teh-tarik, 3 roti-canai, 2 mee-goreng." />
+
+<Hint>`-d" "` splits on spaces. `-f3` keeps the third piece.</Hint>
+</Card>
+
+<Card id="predict-overwrite" type="predict">
+`unpaid.txt` holds 3 lines. You type `echo oops > unpaid.txt`. What is in the file now?
+
+<Interactive name="Choice" options={[{ label: 'Only the word oops', correct: true, why: '> empties the file first, then writes. The 3 lines are gone, with no undo.' }, { label: 'The 3 lines, then oops', why: 'That is >>. A single > replaces everything.' }, { label: 'An error: the file exists', why: 'Bash replaces it without asking. Be careful with >.' }]} />
+</Card>
+
+<Card id="try-save" type="try">
+Save every unpaid order into a new file, a **redirect**: `grep -i unpaid orders.log > unpaid.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ fileContains: { '~/kedai/counter/unpaid.txt': 'Unpaid' }, fileNotContains: { '~/kedai/counter/unpaid.txt': ' paid' } }} hints={['Type grep -i unpaid orders.log > unpaid.txt', 'Check it with cat unpaid.txt']} solution={['grep -i unpaid orders.log > unpaid.txt']} success="unpaid.txt holds the three tables. The picture shows the new file." />
+
+<Hint>Nothing prints: the lines went into the file. `cat unpaid.txt` shows them.</Hint>
+</Card>
+
+<Card id="sort-arrows" type="check">
+Three arrows. Which one fits each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'new', label: '> replace' }, { id: 'add', label: '>> add to the end' }, { id: 'err', label: '2> errors only' }]} items={[{ label: 'Start a fresh daily report', bucket: 'new', why: 'A new file, or an old one wiped clean.' }, { label: 'Add one more line to the diary', bucket: 'add', why: '>> keeps what is there.' }, { label: 'Keep error messages in their own file', bucket: 'err', why: '2> catches only the error lines.' }, { label: "Add today's total under yesterday's", bucket: 'add', why: 'Adding, not replacing.' }]} success="> replaces, >> adds, 2> catches errors." />
+</Card>
+
+<Card id="win" type="win">
+You can now chain commands with pipes and save output to files.
+</Card>
+
+<Card id="deeper" type="deeper">
+`2> /dev/null` throws error lines away. `cmd > all.txt 2>&1` saves both kinds. `tee report.txt` shows the lines and saves them too. `<` feeds a file in: `sort < today.txt`.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="linux-l1-l08-rep" steps={[{ id: 'count', text: 'Count the users with the bash shell.', command: 'grep bash /etc/passwd | wc -l' }, { id: 'save', text: 'Save your process list to a file.', command: 'ps aux > procs.txt' }, { id: 'top', text: 'See its first 5 lines.', command: 'head -n 5 procs.txt' }]} success="Real belts, real files!" />
+</Card>

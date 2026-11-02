@@ -1,0 +1,61 @@
+---
+id: cicd-c2-l06
+world: 2
+title: Jalankan ujian dalam container
+summary: "Anda akan belajar: uji rasa bekas makanan yang sama yang pelanggan anda dapat."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, OrderList, ConveyorBelt, Mission]
+needs: [cicd-c2-l05]
+scenario: c2-tests-in-container
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: test before push with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/test-before-push/" }
+  - { label: "Docker docs: multi-stage builds", url: "https://docs.docker.com/build/building/multi-stage/" }
+---
+
+<Card id="hook" type="hook">
+Ujian lulus di runner. Kemudian image itu rosak di production: satu pustaka sistem tiada. Macam mana tali sawat boleh tangkap masalah itu?
+
+<Interactive name="Choice" options={[{ label: 'Jalankan ujian di dalam image itu', correct: true, why: 'Bekas sama, rasa sama. Apa yang tiada akan nampak dalam CI.' }, { label: 'Jalankan ujian dua kali di runner', why: 'Runner ada benda yang image tiada. Dua kali pun masih terlepas.' }, { label: 'Uji di laptop anda sahaja', why: 'Laptop anda pun ada benda yang image tiada.' }]} />
+</Card>
+
+<Card id="see-stages" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine AS base' }, { text: 'WORKDIR /app' }, { text: 'COPY package*.json ./' }, { text: 'RUN npm ci' }, { text: 'COPY . .' }, { text: 'FROM base AS test', target: true }, { text: 'CMD ["npm", "test"]' }, { text: 'FROM base AS app' }, { text: 'RUN npm prune --omit=dev' }, { text: 'CMD ["node", "server.js"]' }]} prompt="Ketik baris di mana peringkat ujian bermula." success="Ya! Base yang sama, kemudian satu peringkat khas untuk ujian." />
+
+Satu resipi, dua hidangan. **Peringkat ujian** simpan alat ujian. Peringkat app ialah apa yang pelanggan dapat. Kedua-duanya tumbuh dari layer base yang sama.
+</Card>
+
+<Card id="try-order" type="try">
+Susun langkah tali sawat ikut urutan.
+
+<Interactive name="OrderList" items={['Sediakan Buildx', 'Bina peringkat ujian, dan muatkan ke dalam Docker', 'Jalankan npm test di dalam image itu', 'Bina peringkat app dan push']} label="Yang pertama di atas" success="Uji dulu. Push hanya yang lulus." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu ujian gagal di dalam container. Ketik stesen yang akan hentikan talian, kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-tests-in-container" task={{ type: 'predict' }} success="Betul! Stesen ujian hentikan talian." />
+</Card>
+
+<Card id="check" type="check">
+Langkah build tulis `load: true`. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Ia salin image ke Docker runner, supaya docker run jumpa', correct: true, why: 'Buildx bina dalam kotaknya sendiri. load bawa image itu keluar.' }, { label: 'Ia muat naik image ke GHCR', why: 'Itu push. load simpan image di runner.' }, { label: 'Ia muatkan cache layer', why: 'cache-from yang buat kerja itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan ujian di dalam image yang anda hantar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cara lain: letak `RUN npm test` dalam peringkat ujian. Kemudian ujian yang gagal akan gagalkan build itu sendiri. Jauhkan alat ujian dari peringkat app. Image yang dihantar kekal kecil.
+
+Latihan sebenar (pilihan), dalam repo latihan awam:
+
+<Interactive name="Mission" id="c2-l06-rep" steps={[{ id: 'stage', text: 'Tambah peringkat ujian dalam Dockerfile anda, macam contoh di atas.' }, { id: 'local', text: 'Cuba di mesin anda dulu.', command: 'docker build --target test -t myapp:test .' }, { id: 'run', text: 'Jalankan ujian di dalamnya.', command: 'docker run --rm myapp:test' }, { id: 'ci', text: 'Tambah dua langkah yang sama dalam workflow anda dan push.' }]} success="Ujian anda kini rasa bekas makanan yang sebenar!" />
+</Card>

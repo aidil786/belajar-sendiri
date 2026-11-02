@@ -1,0 +1,74 @@
+---
+id: k8s-k6-l04
+world: 6
+title: "Pod Security Standards"
+summary: "You will learn: the three Pod Security levels, and how one label switches a zone's guard on."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, SortCards, FoodCourtSim, Choice, SwipeJudge]
+needs: [k8s-k6-l03]
+scenario: k6-psa
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Pod Security Admission", url: "https://kubernetes.io/docs/concepts/security/pod-security-admission/" }
+  - { label: "Enforce with namespace labels", url: "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['kubectl apply -f plain.yaml']} fails={['kubectl apply -f plain.yaml']} namespace="kedai" label="kubectl apply -f plain.yaml is forbidden in the kedai zone: it violates PodSecurity restricted, with four reasons." />
+
+A plain nginx tray. It ran fine yesterday. Today the kedai zone refuses it, with four reasons. Plain words: this zone only takes locked-up trays.
+</Card>
+
+<Card id="see-levels" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Level 1', title: 'privileged', text: 'No rules at all. Only for system pods you trust.' }, { when: 'Level 2', title: 'baseline', text: 'Blocks known dangers: privileged mode, the node network, node folders.' }, { when: 'Level 3', title: 'restricted', text: 'Strict hygiene: no root, no extra powers, a seccomp filter on.' }]} />
+
+The **<Term id="pod-security-standards">Pod Security Standards</Term>** are three hygiene levels for trays. Tap each one, loosest first.
+</Card>
+
+<Card id="see-label" type="see">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['cat zone.yaml']} picture={false} label="cat shows zone.yaml: a Namespace called kedai with the label pod-security.kubernetes.io/enforce: restricted." />
+
+One **label** on the zone switches the guard on. `enforce` refuses bad pods. `warn` lets them in, with a warning.
+</Card>
+
+<Card id="try-sort" type="try">
+Which level is the first to refuse each tray?
+
+<Interactive name="SortCards" buckets={[{ id: 'baseline', label: 'Baseline already refuses it' }, { id: 'restricted', label: 'Only restricted refuses it' }]} items={[{ label: '`privileged: true`', bucket: 'baseline', why: 'Full power over the node. Baseline says no.' }, { label: '`hostNetwork: true`', bucket: 'baseline', why: 'Sharing the node network is a known danger.' }, { label: 'A `hostPath` volume (a folder from the node)', bucket: 'baseline', why: 'Node folders can leak or break the node.' }, { label: 'Runs as root', bucket: 'restricted', why: 'Baseline allows root. Restricted does not.' }, { label: 'No seccomp profile', bucket: 'restricted', why: 'Only restricted asks for a seccomp filter.' }, { label: 'Capabilities not dropped', bucket: 'restricted', why: 'Restricted wants drop ALL.' }]} success="Sorted! Baseline stops the big dangers. Restricted locks the rest." />
+</Card>
+
+<Card id="try-sim" type="try">
+Switch the guard on for the kedai zone, at the restricted level.
+
+<Interactive name="FoodCourtSim" scenario="k6-psa" namespace="kedai" goal={{ podSecurity: { namespace: 'kedai', level: 'restricted' } }} hints={['Type kubectl label namespace kedai pod-security.kubernetes.io/enforce=restricted']} success="The kedai zone is guarded. Try kubectl apply -f plain.yaml now." />
+
+<Hint>The label key is `pod-security.kubernetes.io/enforce`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Three old root pods already run in kedai. You switch on restricted. What happens to them?
+
+<Interactive name="Choice" options={[{ label: 'They keep running. You get a warning.', correct: true, why: 'The guard checks the door, not the room. New pods are checked.' }, { label: 'They are deleted at once', why: 'Kubernetes never deletes them for you. Fix and replace them yourself.' }, { label: 'The label is refused', why: 'The label is saved. Kubernetes only warns about the old pods.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Turn on warn=restricted first, then fix what it reports', good: true, why: 'See the damage before you lock the door.' }, { text: 'Label your app zone enforce=privileged', good: false, why: 'Privileged means no rules at all.' }, { text: 'Try the label with --dry-run=server first', good: true, why: 'The cluster lists the pods that would break. Nothing changes.' }, { text: 'Lock kube-system at restricted', good: false, why: 'System pods often need more power. Keep your apps in their own zones.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now switch on a Pod Security level for a zone.
+</Card>
+
+<Card id="deeper" type="deeper">
+There are three modes: `enforce`, `warn` and `audit` (writes to the audit log). Pin a version with `pod-security.kubernetes.io/enforce-version: v1.37`. For a Deployment, the guard only warns. Its ReplicaSet's pods are refused later. You meet that in the boss.
+
+<Interactive name="Mission" id="k6-l04-rep" steps={[{ id: 'ns', text: 'On a throwaway cluster, make a zone.', command: 'kubectl create namespace guard-test' }, { id: 'dry', text: 'Dry run first.', command: 'kubectl label --dry-run=server --overwrite ns guard-test pod-security.kubernetes.io/enforce=restricted' }, { id: 'label', text: 'Now for real.', command: 'kubectl label ns guard-test pod-security.kubernetes.io/enforce=restricted' }, { id: 'try', text: 'Try a plain pod. Read the four reasons.', command: 'kubectl run plain -n guard-test --image=nginx:1.29-alpine' }]} success="Your zone has a guard!" />
+</Card>

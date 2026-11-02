@@ -1,0 +1,76 @@
+---
+id: k8s-k1-l05
+world: 1
+title: Food court, stalls, trays
+summary: "You will learn: what a cluster, a node and a pod are, and how they fit together."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, Choice, SortCards, OrderList]
+needs: [k8s-k1-l04]
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Nodes", url: "https://kubernetes.io/docs/concepts/architecture/nodes/" }
+  - { label: "Pods", url: "https://kubernetes.io/docs/concepts/workloads/pods/" }
+  - { label: "Cluster architecture", url: "https://kubernetes.io/docs/concepts/architecture/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods -o wide']} label="Three shop pods. The NODE column says dev-worker for two of them and dev-worker2 for one." />
+
+Your shop has 3 pods. Scroll to the NODE column: two different names. So where do your pods really live?
+</Card>
+
+<Card id="try-nodes" type="try">
+The whole food court is one **<Term id="cluster">cluster</Term>**: machines that work as one. Type `kubectl get nodes` to list its machines.
+
+<Interactive name="FoodCourtSim" scenario="k1-want3" goal={{ typed: '^(kubectl|k) get (nodes?|no)\\b' }} hints={['Type kubectl get nodes and press Enter.']} success="Three machines, one food court." />
+
+<Hint>`get nodes` lists every machine in the cluster.</Hint>
+</Card>
+
+<Card id="check-node" type="check">
+Each machine is a **<Term id="node">node</Term>**: one stall. Why does dev-control-plane hold none of your trays?
+
+<Interactive name="Choice" options={[{ label: 'It runs the manager’s office', correct: true, why: 'Yes. Its job is to run the cluster. Lesson 6 opens the office door.' }, { label: 'It is broken', why: 'get nodes said Ready. It is fine, just busy managing.' }, { label: 'It is too small', why: 'Size is not the reason. Its job is to manage, so it keeps app trays away.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods']} label="kubectl get pods: three shop pods, each READY 1/1 and Running." />
+
+Your containers ride on a **<Term id="pod">pod</Term>**: a tray of dishes that always go together. READY 1/1 means one container on the tray, and it is ready.
+</Card>
+
+<Card id="try-sort" type="try">
+Food court, stall or tray? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'cluster', label: 'Cluster' }, { id: 'node', label: 'Node' }, { id: 'pod', label: 'Pod' }]} items={[{ label: 'kind-dev', bucket: 'cluster', why: 'The name of the whole food court.' }, { label: 'The whole food court', bucket: 'cluster', why: 'Every machine together.' }, { label: 'dev-worker2', bucket: 'node', why: 'One machine: a stall.' }, { label: 'One machine', bucket: 'node', why: 'A stall in the food court.' }, { label: 'shop-747bf9cf8-gnjxm', bucket: 'pod', why: 'One tray. Its name ends in random letters.' }, { label: 'Containers that always go together', bucket: 'pod', why: 'That is a tray of dishes.' }]} success="Food court, stalls, trays. All sorted!" />
+
+<Hint>A cluster holds nodes. A node holds pods.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+One pod holds two containers: web and a helper. Can they sit on different nodes?
+
+<Interactive name="Choice" options={[{ label: 'No. They always share one node.', correct: true, why: 'Right. A tray never splits across two stalls.' }, { label: 'Yes, if one node is full', why: 'A pod is placed as a whole. If no stall has room, it waits.' }, { label: 'Yes, always', why: 'A pod’s containers always travel together, on one node.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Biggest to smallest. Put them in order.
+
+<Interactive name="OrderList" items={['cluster (food court)', 'node (stall)', 'pod (tray)', 'container (lunchbox)']} label="Biggest at the top" success="Food court, stall, tray, lunchbox!" />
+</Card>
+
+<Card id="win" type="win">
+You can now name the cluster, its nodes and their pods.
+</Card>
+
+<Card id="deeper" type="deeper">
+Containers in one pod share one IP address. They talk to each other over localhost. Most pods hold just one container. Pods with helpers come in World K2.
+
+Real rep (optional): on your kind cluster, `kubectl get nodes` and `kubectl get pods -o wide` show the same picture.
+</Card>

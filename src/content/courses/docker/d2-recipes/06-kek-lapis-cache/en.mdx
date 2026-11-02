@@ -1,0 +1,74 @@
+---
+id: docker-d2-l06
+world: 2
+title: "Kek lapis: layers and cache"
+summary: "You will learn: why the order of your recipe lines makes builds fast or slow."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, KekLapisBuilder, KitchenSim, SwipeJudge, Mission]
+needs: [docker-d2-l05]
+scenario: d2-l06
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Understanding image layers", url: "https://docs.docker.com/get-started/docker-concepts/building-images/understanding-image-layers/" }
+  - { label: "Docker docs: Build cache", url: "https://docs.docker.com/build/cache/" }
+  - { label: "Docker docs: Optimize cache usage", url: "https://docs.docker.com/build/cache/optimize/" }
+  - { label: "docker history", url: "https://docs.docker.com/reference/cli/docker/image/history/" }
+---
+
+<Card id="hook" type="hook">
+You change one word in `server.js`. The build runs `npm ci` again, and you wait two minutes. Why?
+
+<Interactive name="Choice" options={[{ label: 'The recipe copies all the code before npm ci', correct: true, why: 'Changed code breaks that layer. Every layer on top bakes again, npm ci too.' }, { label: 'Docker forgets everything after each build', why: 'It remembers! The trouble is the order of the lines.' }, { label: 'Your laptop is too slow', why: 'Even a fast laptop waits if npm ci runs every time.' }]} />
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="KitchenReplay" scenario="d2-diary-dockerfile" commands={['docker build -t diary:1.0 .', 'echo "body { color: hotpink; }" > style.css', 'docker build -t diary:1.1 .']} label="The second build changes style.css. WORKDIR and COPY index.html say CACHED. COPY style.css bakes again." />
+
+Each recipe line bakes one **<Term id="layer">layer</Term>**, like kek lapis. Docker keeps old layers. Change `style.css`: only its layer and the layers on top bake again. The rest say CACHED.
+</Card>
+
+<Card id="try-cake" type="try">
+This recipe bakes `npm ci` again after every code change. Move the lines so it stays CACHED when `server.js` changes.
+
+<Interactive name="KekLapisBuilder" edit="server.js" goal={{ cached: ['install'] }} lines={[
+  { id: 'from', text: 'FROM node:24-alpine', size: '181MB' }, { id: 'workdir', text: 'WORKDIR /app', size: '8.19kB' },
+  { id: 'copy-all', text: 'COPY . .', size: '36.9kB' }, { id: 'copy-pkg', text: 'COPY package.json package-lock.json ./', size: '53.2kB' },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: '12.8MB' }, { id: 'cmd', text: 'CMD ["node", "server.js"]' }]} />
+
+<Hint>Copy the package files and install first. Copy the code last.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now the order is good. You add a package, so `package.json` changes. What bakes again?
+
+<Interactive name="Choice" options={[{ label: 'COPY package files, npm ci, and every layer on top', correct: true, why: 'That layer changed, so every layer on top bakes again.' }, { label: 'Only COPY . .', why: 'The package files changed lower in the cake. Every layer on top bakes again.' }, { label: 'Nothing. The cache has it', why: 'The cache only fits layers whose input did not change.' }]} />
+</Card>
+
+<Card id="try-cache" type="try">
+This recipe is in good order. Its layers sit in the <Term id="build-cache">build cache</Term>. Change the code, build `api:1.1`, and count the CACHED lines.
+
+<Interactive name="KitchenSim" scenario="d2-l06" goal={{ fileContains: { 'api/server.js': 'v2' }, imageExists: 'api:1.1', cacheHits: 3, maxRebuilt: 1 }} hints={['Change the code: echo "// v2" >> server.js', 'Then build: docker build -t api:1.1 .']} success="Three layers CACHED. Only COPY . . baked again. Kek Lapis Master!" />
+
+<Hint>`>>` adds a line to the end of a file.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Good cache habit? Swipe right for yes, left for "needs work".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Copy the package files and install before copying the code', good: true, why: 'Code changes often. Keep it near the top of the cake.' }, { text: 'Put COPY . . right after FROM', good: false, why: 'Every code change would bake every layer again.' }, { text: 'Use .dockerignore so junk files do not break the cache', good: true, why: 'A changed log file should not bake a new layer.' }, { text: 'Always build with --no-cache', good: false, why: 'You lose all the speed. Use it only to force a fresh bake.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now order a recipe so rebuilds stay fast.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker history api:1.1` lists the layers, newest on top, with their sizes. Lines like `ENV` and `CMD` show `0B`: notes, not layers. Deleting a file in a later layer only hides it. The image does not shrink.
+
+<Interactive name="Mission" id="d2-l06-rep" steps={[{ id: 'twice', text: 'Build a project twice. The second time, every step says CACHED.' }, { id: 'change', text: 'Change one code file and build again. Which steps bake?' }, { id: 'history', text: 'Look at the layers.', command: 'docker history api:1.1' }]} success="You can read the kek lapis now!" />
+</Card>

@@ -1,0 +1,64 @@
+---
+id: iac-t4-boss
+world: 4
+title: Review the blueprint
+summary: "You will learn: to review a refactor into a module, fix the pins, and catch a risky plan on a pull request, on your own."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, SwipeJudge, SpotTheHole, PracticeRepo]
+needs: [iac-t4-l08]
+scenario: t4-boss-module
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "OpenTofu: refactoring modules (moved)", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+  - { label: "OpenTofu: dependency lock file", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+  - { label: "GitHub: secure use of Actions", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Boss: you are the reviewer today. Ben's pull request says "Tidy: move the stalls into a module". Its plan: `2 to add, 2 to destroy`. Do you approve?
+
+<Interactive name="Choice" options={[{ label: 'Not yet: a tidy-up should rebuild nothing', correct: true, why: 'Moving code into a module needs moved blocks. Then the plan is 0 to destroy.' }, { label: 'Yes: the new files look the same', why: 'Same content, but OpenTofu would still destroy and rebuild them.' }, { label: 'Yes: destroy and add cancel out', why: 'Real things would go down and come back. That is not a tidy-up.' }]} />
+</Card>
+
+<Card id="try-module" type="try">
+Fix it yourself. Run `tofu init` for the new module, then add two moved blocks. The plan must say `0 to destroy`. Then apply.
+
+<Interactive name="TofuSim" scenario="t4-boss-module" goal={{ fileContains: { 'main.tf': 'moved' }, resourceInState: ['module.nasi.local_file.sign', 'module.mee.local_file.sign'], resourceMissing: ['local_file.nasi', 'local_file.mee'] }} hints={['tofu plan says Module not installed: run tofu init.', 'Add: moved { from = local_file.nasi, to = module.nasi.local_file.sign }, one setting per line. Same for mee.', 'tofu plan: 0 to add, 0 to destroy. Then tofu apply and yes.']} success="Both stalls moved into the module. Nothing was rebuilt." />
+
+<Hint>The new address is `module.nasi.local_file.sign`.</Hint>
+</Card>
+
+<Card id="check-pins" type="check">
+Ben's pins. Swipe: good, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'required_providers: null with version = "~> 3.2"', good: true, why: 'Fixes arrive, breaking versions wait.' }, { text: 'A Git module with no ?ref=', good: false, why: 'It follows a moving branch. Pin a tag or a commit.' }, { text: '.terraform.lock.hcl left out of the pull request', good: false, why: 'Then CI may pick other provider versions. Commit it.' }, { text: 'The lock file change reviewed with the code change', good: true, why: 'New providers are new code. Read them too.' }]} />
+</Card>
+
+<Card id="try-lock" type="try">
+Ben added a bell that needs the `null` provider, but CI fails. Find out why, fix it, then apply.
+
+<Interactive name="TofuSim" scenario="t4-boss-lock" goal={{ fileContains: { '.terraform.lock.hcl': 'hashicorp/null' }, resourceInState: ['null_resource.bell'] }} hints={['Type tofu plan and read the error.', 'The lock file needs the new provider: tofu init.', 'Then tofu apply and yes.']} success="Lock file updated, bell built. Commit the lock file with the change." />
+
+<Hint>"Inconsistent dependency lock file" means: run init.</Hint>
+</Card>
+
+<Card id="check-workflow" type="check">
+Ben also wrote the plan workflow. Find the three holes.
+
+<Interactive name="SpotTheHole" file=".github/workflows/plan.yml" workflow={['name: Plan', 'on: pull_request', { text: 'permissions: write-all', hole: { kind: 'writeAll' } }, 'jobs:', '  plan:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1', { text: '      - uses: opentofu/setup-opentofu@v2', hole: { kind: 'unpinned' } }, '      - run: tofu init -input=false', '      - run: tofu plan -input=false', { text: '      - run: tofu apply -auto-approve -input=false', hole: { attack: 'Every pull request, even an unreviewed one, builds real things.', fix: 'Delete it. Apply only after review and merge.', fixCode: '' } }]} success="Too many rights, a tag that can move, and an apply nobody reviewed." />
+</Card>
+
+<Card id="check-pr" type="check">
+Last pull request of the day. Read the plan comment. Then choose.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kedai-kancil', name: 'blueprint', readme: '# Blueprint\n\nKedai Kancil, written down as OpenTofu.\n' }} pulls={[{ number: 12, title: 'Clean up old stall code', body: 'Removes code we do not use any more.', author: 'ben', from: 'cleanup', to: 'main', state: 'open', checks: [{ name: 'tofu plan', status: 'pass' }], files: [{ path: 'main.tf', diff: ['@@ -1,9 +0,0 @@', '-module "nasi" {', '-  source = "./modules/stall"', '-  name   = "nasi"', '-}', '-', '-module "mee" {', '-  source = "./modules/stall"', '-  name   = "mee"', '-}'] }], comments: [{ author: 'plan-bot', body: 'Plan for this pull request:\n\n```\n# module.mee.local_file.sign will be destroyed\n# module.nasi.local_file.sign will be destroyed\nPlan: 0 to add, 0 to change, 2 to destroy.\n```' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'requestChanges', pr: 12 }} success="Changes requested: that unused-looking code still runs two real stalls. Green checks are not the whole story." />
+</Card>
+
+<Card id="win" type="win">
+You can now review infrastructure changes like a pro: modules, pins, pipelines and plans.
+</Card>

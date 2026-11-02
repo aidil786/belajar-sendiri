@@ -1,0 +1,70 @@
+---
+id: git-w10-l13
+world: 10
+title: rerere and range-diff
+summary: "You will learn: how Git can remember conflict fixes, and how to compare two versions of a branch."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Sim, Transcript, SortCards]
+needs: [git-w10-l12]
+scenario: w10-aliases
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rerere", url: "https://git-scm.com/docs/git-rerere" }
+  - { label: "git range-diff", url: "https://git-scm.com/docs/git-range-diff" }
+---
+
+<Card id="hook" type="hook">
+You rebase a long branch every week. The same conflict comes back every time. Must you fix it by hand again and again?
+
+<Interactive name="Choice" options={[{ label: 'No. Git can remember your fix', correct: true, why: 'Turn on one setting, and Git replays your fix next time.' }, { label: 'Yes, every single time', why: 'Not if Git remembers it for you. Keep going!' }, { label: 'Stop rebasing forever', why: 'No need to give up. Git has a helper for this.' }]} />
+</Card>
+
+<Card id="see-rerere" type="see">
+**<Term id="rerere">rerere</Term>** means "reuse recorded resolution". Git remembers how you fixed a conflict. Tap to see what happens next time.
+
+<Interactive name="TimelineTap" events={[{ when: 'Week 1', title: 'You fix it', text: 'A conflict appears. You fix it by hand. Git records your fix.' }, { when: 'Week 2', title: 'Same conflict', text: 'You rebase again. The very same conflict comes back.' }, { when: 'At once', title: 'Git replays it', text: 'Git applies your recorded fix. You check it and add it.' }]} />
+</Card>
+
+<Card id="try-turn-on" type="try">
+Turn rerere on for all your projects. One setting is enough.
+
+<Interactive name="Sim" scenario="w10-aliases" panels={[]} goal={{ config: { 'rerere.enabled': 'true' } }} hints={['It is a global setting: git config --global', 'Type git config --global rerere.enabled true']} success="On! From now on, Git records every conflict fix." />
+
+<Hint>Type `git config --global rerere.enabled true`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+rerere fixed a conflict for you during a rebase. What should you still do?
+
+<Interactive name="Choice" options={[{ label: 'Check the file, then git add it', correct: true, why: 'By default, rerere fixes the file but does not add it. You get the final say.' }, { label: 'Nothing. Git committed it', why: 'rerere never commits for you.' }, { label: 'Fix it by hand again', why: 'No need. Just check that the replayed fix still makes sense.' }]} />
+</Card>
+
+<Card id="see-range-diff" type="see">
+<Interactive name="Transcript" title="bash" label="Two commands: git rebase main, then git range-diff main feature@{1} feature." lines={[{ cmd: 'git rebase main' }, { cmd: 'git range-diff main feature@{1} feature' }]} />
+
+After a rebase, did any commit change? **<Term id="range-diff">range-diff</Term>** compares two versions of a branch, commit by commit. `feature@{1}` is the branch before the rebase.
+</Card>
+
+<Card id="check-marks" type="check">
+range-diff marks each pair of commits. `=` means "the same". What does `!` mean?
+
+<Interactive name="Choice" options={[{ label: 'This commit changed between the versions', correct: true, why: 'range-diff then shows how. < marks a commit only in the old version, > only in the new.' }, { label: 'This commit is broken', why: 'Not broken. Its change is just different now.' }, { label: 'This commit was deleted', why: 'A commit only in the old version gets < instead.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+rerere or range-diff? Which helps here?
+
+<Interactive name="SortCards" buckets={[{ id: 'rerere', label: 'rerere' }, { id: 'range', label: 'range-diff' }]} items={[{ label: 'The same conflict keeps coming back', bucket: 'rerere', why: 'Git replays your recorded fix.' }, { label: 'Did my rebase change any commit?', bucket: 'range', why: 'Compare the branch before and after.' }, { label: "Review version 2 of a teammate's branch", bucket: 'range', why: 'See only what changed since version 1.' }, { label: 'Remember how I fixed a conflict', bucket: 'rerere', why: 'That is exactly what rerere records.' }]} success="Sorted! rerere remembers fixes. range-diff compares versions." />
+</Card>
+
+<Card id="win" type="win">
+You can now reuse conflict fixes and compare versions of a branch.
+</Card>
+
+<Card id="deeper" type="deeper">
+Recorded fixes live in `.git/rr-cache`. `git rerere forget index.html` drops a bad one. Set `rerere.autoUpdate` to true to add replayed fixes for you. `git range-diff main...feature` compares two branches that share a base. The practice terminal only explains these commands.
+</Card>

@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l03
+world: 2
+title: "ReplicaSet jaga bilangan"
+summary: "Anda akan belajar: cara ReplicaSet kekalkan bilangan pod yang betul, dan cara ia mengira."
+minutes: 3
+xp: 15
+interactives: [Choice, ManagersBoard, YamlDoctor, FoodCourtSim, KubeReplay]
+needs: [k8s-k2-l02]
+scenario: k2-replicaset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: ReplicaSet", url: "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" }
+  - { label: "kubectl scale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/" }
+---
+
+<Card id="hook" type="hook">
+Waktu makan tengah hari. Anda mahu 3 dulang keluar, sentiasa. Satu dulang tergelincir dan jatuh. Siapa perasan, dan siapa buat yang baharu?
+
+<Interactive name="Choice" options={[{ label: 'Pembantu yang asyik mengira dulang', correct: true, why: 'Kira, banding, baiki. Kubernetes ada pembantu yang buat tepat begitu.' }, { label: 'Tiada siapa, kecuali anda nampak', why: 'Itu boleh untuk 3 dulang. Bukan untuk 300, dan bukan pukul 3 pagi.' }, { label: 'Dulang itu baiki sendiri', why: 'Dulang yang jatuh sudah hilang. Sesuatu mesti buat yang baharu.' }]} />
+</Card>
+
+<Card id="see-count" type="see">
+<Interactive name="ManagersBoard" scenario="k2-replicaset" kind="ReplicaSet" target="trays" actions={['deletePod']} goal={{ healed: 1 }} success="Mahu 3, nampak 2, buat 1. Bilangan betul semula." label="Papan tunjuk mahu 3, nampak 3. Padam satu pod, ia nampak 2, jadi ia buat 1 lagi." />
+
+**<Term id="replicaset">ReplicaSet</Term>** mengira dulang, berulang kali. Mahu 3, nampak 2? Ia buat 1 lagi. Tekan delete pada satu dulang dan perhati papan.
+</Card>
+
+<Card id="try-fix" type="try">
+ReplicaSet ada 3 bahagian: berapa banyak (`replicas`), dulang mana dikira (`selector`), cara buat satu (`template`). Di sini label tak sepadan. Baiki.
+
+<Interactive name="YamlDoctor" file="trays.yaml" manifest={'apiVersion: apps/v1\nkind: ReplicaSet\nmetadata:\n  name: trays\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: tray\n  template:\n    metadata:\n      labels:\n        app: food\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} solution={'apiVersion: apps/v1\nkind: ReplicaSet\nmetadata:\n  name: trays\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: tray\n  template:\n    metadata:\n      labels:\n        app: tray\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} keep={['matchLabels:\\n\\s+app: tray', 'replicas: 3']} hint="Dulang baharu mesti bawa label yang selector cari." success="Berjaya! Setiap dulang baharu bawa app: tray." />
+
+<Hint>Label dalam template mesti sama dengan selector, perkataan demi perkataan.</Hint>
+</Card>
+
+<Card id="try-scale" type="try">
+Waktu puncak hampir tiba. Minta ReplicaSet sediakan 5 dulang.
+
+<Interactive name="FoodCourtSim" scenario="k2-replicaset" faults={['deletePod']} goal={{ replicas: { name: 'trays', count: 5, kind: 'ReplicaSet' }, podsReady: { selector: 'app=tray', count: 5 } }} hints={['Taip kubectl scale rs trays --replicas=5', 'Tunggu beberapa saat, kemudian kubectl get rs trays']} success="Mahu 5, nampak 5. Sedia untuk waktu puncak." />
+
+<Hint>`kubectl scale rs trays --replicas=5` tukar bilangan dalam pesanan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+ReplicaSet mahu 3. Anda mulakan satu pod lagi dengan tangan, berlabel `app=tray`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia kira 4 dan padam satu', correct: true, why: 'Ia kira setiap dulang yang ada labelnya, tak kira siapa yang buat.' }, { label: 'Ia abaikan pod anda', why: 'Ia mengira ikut label. Pod anda ada label itu, jadi ia dikira.' }, { label: 'Kini ia mahu 4', why: 'Pesanan masih kata 3. Hanya anda boleh tukar.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-replicaset" commands={['kubectl run extra --image=nginx:1.29-alpine --labels=app=tray', 'kubectl get pods']} label="kubectl run cipta pod extra. Sekejap kemudian get pods hanya senaraikan 3 dulang: extra satu terlebih." />
+
+`extra` dicipta, kemudian terus dipadam. Ia sepadan dengan `app=tray`, jadi jumlahnya 4. Label tentukan apa yang dikira.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara ReplicaSet jaga bilangan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Anda jarang tulis ReplicaSet sendiri. Deployment buatkannya untuk anda, dan tambah kemas kini yang selamat. Itu pelajaran seterusnya.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, apply ReplicaSet, padam satu pod, kemudian jalankan `kubectl describe rs trays`. Events tunjuk setiap pod baharu.
+</Card>

@@ -1,0 +1,68 @@
+---
+id: iac-t4-l01
+world: 4
+title: "Modules: a stall you can reuse"
+summary: "You will learn: how to write one stall design and build it many times, with a module."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, TofuSim, SortCards, Mission]
+needs: [iac-t3-boss]
+scenario: t4-kiosk
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: modules", url: "https://opentofu.org/docs/language/modules/" }
+  - { label: "OpenTofu: creating modules", url: "https://opentofu.org/docs/language/modules/develop/" }
+  - { label: "Terraform: modules", url: "https://developer.hashicorp.com/terraform/language/modules" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil has three kiosks. Each one was copied and pasted into `main.tf`. Now every sign needs new wording. How many places do you edit?
+
+<Interactive name="Choice" options={[{ label: 'Three, and hope you miss none', correct: true, why: 'Copies never know about each other. One miss, and the kiosks differ.' }, { label: 'One: OpenTofu links the copies', why: 'It treats each copy as a separate thing.' }, { label: 'None: plan fixes them', why: 'Plan only builds what the files say.' }]} />
+</Card>
+
+<Card id="see-module" type="see">
+<Interactive name="SpotLines" prompt="This is modules/kiosk/main.tf. Tap its input and its output." lines={[{ text: 'variable "name" {', target: true }, { text: '  type = string' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "sign" {' }, { text: '  filename = "${var.name}.txt"' }, { text: '  content  = "Kiosk: ${var.name}\\n"' }, { text: '}' }, { text: '' }, { text: 'output "file" {', target: true }, { text: '  value = local_file.sign.filename' }, { text: '}' }]} success="Name goes in, file name comes out. The middle is the design." />
+
+A **<Term id="module">module</Term>** is a stall design you can reuse: a folder of `.tf` files. Variables go in, outputs come out.
+</Card>
+
+<Card id="predict" type="predict">
+You copy a `module` block in `main.tf` and name it `roti`. Then you run `tofu plan`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Error: Module not installed. Run tofu init.', correct: true, why: 'init gets modules ready, just like providers.' }, { label: 'It plans one new kiosk', why: 'Not yet. A new module block needs tofu init first.' }, { label: 'It copies the folder modules/kiosk', why: 'The folder is used as it is. Nothing gets copied.' }]} />
+</Card>
+
+<Card id="try-add" type="try">
+Add a third kiosk. In `main.tf`, copy a module block. Name it `roti`, with `name = "roti-canai"`. Then plan, init and apply.
+
+<Interactive name="TofuSim" scenario="t4-kiosk" goal={{ resourceInState: ['module.roti.local_file.sign'] }} hints={['Copy the module "nasi" block. Change nasi to roti, and nasi-lemak to roti-canai.', 'tofu plan says Module not installed: run tofu init.', 'Then tofu apply and yes.']} success="Three kiosks, one design. Change the design once, all three follow." />
+
+<Hint>Only the block name and `name` change. `source` stays the same.</Hint>
+</Card>
+
+<Card id="check-spot" type="check">
+This is `tofu state list` now. Find the new kiosk in the register.
+
+<Interactive name="SpotLines" prompt="Tap the address that belongs to module roti." lines={[{ text: 'module.nasi.local_file.sign' }, { text: 'module.roti.local_file.sign', target: true }, { text: 'module.teh.local_file.sign' }]} success="Addresses inside a module start with module.<name>." />
+</Card>
+
+<Card id="check-sort" type="check">
+Where does each line live: in the module, or in the blueprint that calls it?
+
+<Interactive name="SortCards" buckets={[{ id: 'module', label: 'In modules/kiosk' }, { id: 'caller', label: 'In main.tf (the caller)' }]} items={[{ label: 'variable "name"', bucket: 'module', why: 'The module declares its inputs.' }, { label: 'source = "./modules/kiosk"', bucket: 'caller', why: 'The caller says where the design is.' }, { label: 'name = "roti-canai"', bucket: 'caller', why: 'The caller fills in the input.' }, { label: 'resource "local_file" "sign"', bucket: 'module', why: 'The design itself.' }, { label: 'module.teh.file', bucket: 'caller', why: 'The caller reads the module output.' }]} success="The module is the design. The caller orders copies of it." />
+</Card>
+
+<Card id="win" type="win">
+You can now wrap a design in a module and build it many times.
+</Card>
+
+<Card id="deeper" type="deeper">
+Modules can call other modules. Keep them small and boring: one clear job each. A module with one resource and ten inputs is usually just extra typing. `tofu init` sets up modules too. `tofu get` fetches modules only.
+
+<Interactive name="Mission" id="iac-t4-l01-rep" steps={[{ id: 'module', text: 'In a practice folder, make modules/kiosk/main.tf like the one in this lesson.' }, { id: 'call', text: 'In main.tf, call it twice with two names.' }, { id: 'build', text: 'Set up and build.', command: 'tofu init && tofu apply' }, { id: 'look', text: 'See the module addresses.', command: 'tofu state list' }]} success="You built two kiosks from one design." />
+</Card>

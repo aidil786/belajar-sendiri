@@ -1,0 +1,74 @@
+---
+id: obs-o2-l03
+world: 2
+title: Counter, gauge, histogram, summary
+summary: "You will learn: the four kinds of metrics, and why a counter can suddenly drop to 0."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, PromQLPlayground, SortCards, Transcript, Mission]
+needs: [obs-o2-l02]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: metric types", url: "https://prometheus.io/docs/concepts/metric_types/" }
+  - { label: "Prometheus: histograms and summaries", url: "https://prometheus.io/docs/practices/histograms/" }
+  - { label: "Prometheus: metric and label naming", url: "https://prometheus.io/docs/practices/naming/" }
+---
+
+<Card id="hook" type="hook">
+The Bangsar orders counter said 225. A minute later it says 0. Did customers cancel every order?
+
+<Interactive name="Choice" options={[{ label: 'No. The till restarted, so the counter started again at 0.', correct: true, why: 'Yes. Counters live in the app’s memory. A restart wipes them.' }, { label: 'Yes. 225 orders were cancelled.', why: 'Counters never go down for cancels. Something restarted.' }, { label: 'Prometheus lost the data', why: 'Prometheus kept the old numbers. The app started from 0.' }]} />
+</Card>
+
+<Card id="see-types" type="see">
+<Interactive name="SpotLines" prompt="Tap the counter." lines={[{ text: '# TYPE go_goroutines gauge' }, { text: '# TYPE prometheus_engine_query_duration_seconds summary' }, { text: '# TYPE prometheus_http_request_duration_seconds histogram' }, { text: '# TYPE prometheus_http_requests_total counter', target: true }]} success="Yes. A counter, and its name ends in _total." />
+
+Every metric has a type. A **<Term id="counter">counter</Term>** only goes up, like orders served. These lines are from a real Prometheus.
+</Card>
+
+<Card id="try-gauge" type="try">
+Show the customers waiting. Then slide the time.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total', 'kedai_customers_waiting']} prompt="Tap kedai_customers_waiting, then Run. Watch the graph go up and down." goal={{ typed: 'kedai_customers_waiting', resultCount: 2 }} hints={['Tap the chip kedai_customers_waiting, then press Run.']} solution="kedai_customers_waiting" success="Up and down, all day. That is a gauge." />
+
+A number that goes up and down is a **<Term id="gauge">gauge</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Counter or gauge? Sort each number.
+
+<Interactive name="SortCards" buckets={[{ id: 'counter', label: 'Counter' }, { id: 'gauge', label: 'Gauge' }]} items={[{ label: 'Orders served since opening', bucket: 'counter', why: 'Only goes up.' }, { label: 'Bytes sent so far', bucket: 'counter', why: 'Only goes up.' }, { label: 'Errors so far', bucket: 'counter', why: 'Only goes up.' }, { label: 'Customers waiting now', bucket: 'gauge', why: 'Goes up and down.' }, { label: 'Fridge temperature', bucket: 'gauge', why: 'Goes up and down.' }, { label: 'Free memory', bucket: 'gauge', why: 'Goes up and down.' }]} success="So far = counter. Right now = gauge." />
+</Card>
+
+<Card id="see-histogram" type="see">
+<Interactive name="Transcript" title="bash" label="A real histogram from Prometheus: bucket lines with le labels from 0.1 to +Inf, then a sum and a count." lines={[{ cmd: "curl -s localhost:9090/metrics | grep -E '^prometheus_http_request_duration_seconds_(bucket|sum|count)\\{handler=\"/metrics\"'" }, { out: 'prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.2"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.4"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="1"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="3"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="8"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 3\nprometheus_http_request_duration_seconds_sum{handler="/metrics"} 0.024123016999999997\nprometheus_http_request_duration_seconds_count{handler="/metrics"} 3' }]} />
+
+A **<Term id="histogram">histogram</Term>** counts requests into buckets. `le` means “less or equal”. All 3 requests here took 0.1 s or less.
+</Card>
+
+<Card id="try-bucket" type="try">
+Buckets count everything below them. `le="0.25"` says 100. `le="0.5"` says 114. How many took between 0.25 s and 0.5 s?
+
+<Interactive name="Choice" options={[{ label: '14', correct: true, why: 'Yes. 114 − 100 = 14 requests were in that slice.' }, { label: '114', why: '114 includes the 100 faster ones too.' }, { label: '214', why: 'Buckets overlap: subtract, do not add.' }]} />
+</Card>
+
+<Card id="check-summary" type="check">
+A **<Term id="summary">summary</Term>** works out quantiles inside the app. Histogram or summary? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'h', label: 'Histogram' }, { id: 's', label: 'Summary' }]} items={[{ label: 'Bucket lines with le labels', bucket: 'h', why: 'Buckets are the histogram’s shape.' }, { label: 'You can add many servers together', bucket: 'h', why: 'Add the buckets, then work out the quantile.' }, { label: 'Lines with quantile="0.9"', bucket: 's', why: 'The app already did the maths.' }, { label: 'Quantiles from two servers cannot be added', bucket: 's', why: 'An average of two p90s is not the p90.' }]} success="Histograms add up. Summaries do not." />
+</Card>
+
+<Card id="win" type="win">
+You can now tell counters, gauges, histograms and summaries apart.
+</Card>
+
+<Card id="deeper" type="deeper">
+Names help: counters end in `_total`; units go in the name, like `_seconds` or `_bytes`. Prometheus 3 also has native histograms, with buckets built in. You turn them on with `scrape_native_histograms`. This course uses the classic `le` buckets.
+
+<Interactive name="Mission" id="obs-o2-l03-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack.', command: 'docker compose up -d' }, { id: 'types', text: 'List every metric type Prometheus shows about itself.', command: "curl -s localhost:9090/metrics | grep '^# TYPE'" }, { id: 'find', text: 'Find one counter, one gauge, one histogram and one summary.' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="Four types, found in the wild." />
+</Card>

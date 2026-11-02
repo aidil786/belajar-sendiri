@@ -1,0 +1,70 @@
+---
+id: git-w12-l04
+world: 12
+title: Git interview questions
+summary: "You will learn: short, clear answers to four classic Git questions."
+minutes: 4
+xp: 20
+interactives: [GraphPick, GraphScene, Choice, SortCards, SwipeJudge]
+needs: [git-w12-l03]
+scenario: w12-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git fetch", url: "https://git-scm.com/docs/git-fetch" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git rebase", url: "https://git-scm.com/docs/git-rebase" }
+---
+
+<Card id="hook" type="hook">
+The interviewer smiles: "So, what is **<Term id="head">HEAD</Term>**?" Your mind goes blank. Don't panic. Show it instead.
+
+<Interactive name="GraphPick" scenario="w12-l04" answer="^Add broken menu$" prompt="Tap the commit HEAD points at." why="The pink HEAD marker sits there. HEAD means: you are here." />
+</Card>
+
+<Card id="see-revert" type="see">
+<Interactive name="GraphScene" scenario="w12-l04" commands={['git revert --no-edit HEAD']} label="A new commit, Revert Add broken menu, appears at the end. All the older commits stay where they were." />
+
+Question two: reset or revert? **<Term id="revert">Revert</Term>** adds a new commit that undoes an old one. Nothing is erased. So it is safe for shared work.
+</Card>
+
+<Card id="predict-reset" type="predict">
+"Then when is reset the better choice?" Pick the answer you would give.
+
+<Interactive name="Choice" options={[{ label: 'For local commits that nobody else has yet', correct: true, why: 'Reset rewrites history. That is fine when only you have it.' }, { label: 'For commits already shared on main', why: 'Then use revert. Reset would rewrite history your team has.' }, { label: 'Never. Reset is always a mistake', why: 'Reset is a great tool for your own local commits.' }]} />
+</Card>
+
+<Card id="try-fetch" type="try">
+Question three: fetch or pull? **fetch** downloads the news but changes nothing. pull downloads it and joins it in. Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'fetch', label: 'git fetch' }, { id: 'pull', label: 'git pull' }]} items={[{ label: 'Downloads new commits only', bucket: 'fetch', why: 'It brings the news. Your branch stays put.' }, { label: 'Leaves your files alone', bucket: 'fetch', why: 'Fetch never touches your working folder.' }, { label: 'A safe way to peek first', bucket: 'fetch', why: 'Fetch, look, then decide.' }, { label: 'Downloads, then joins into your branch', bucket: 'pull', why: 'Pull = fetch + merge (or rebase).' }, { label: 'Can cause a merge conflict', bucket: 'pull', why: 'Joining work can clash. Fetch alone never does.' }, { label: 'Updates your branch and your files', bucket: 'pull', why: 'Pull changes your branch. Fetch only updates the news.' }]} success="Sorted! That answer would impress any interviewer." />
+
+<Hint>Need a refresher? See "Fetch vs pull" in World 4.</Hint>
+</Card>
+
+<Card id="predict-merge" type="predict">
+Last one: "Merge or rebase?" Pick the clearest answer.
+
+<Interactive name="Choice" options={[{ label: 'Merge ties two histories together. Rebase replays your commits on top, in a straight line.', correct: true, why: 'Clear and true. Add: never rebase commits others already have.' }, { label: 'They are the same. Rebase is just faster.', why: 'They make different history. Rebase makes new copies of your commits.' }, { label: 'Rebase deletes your commits.', why: 'Rebase copies your work onto a new base. The changes stay.' }]} />
+
+<Hint>World 3 has the full story: "Merge or rebase? Plus cherry-pick".</Hint>
+</Card>
+
+<Card id="check-answers" type="check">
+Interviewers love honest, careful habits. Judge each answer.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '"I run `git status` before every commit."', good: true, why: 'It shows a careful habit.' }, { text: '"I never make mistakes in Git."', good: false, why: 'Everyone does. Say how you fix them, like reflog or revert.' }, { text: '"I rebase shared branches all the time."', good: false, why: "That rewrites your teammates' history. Avoid it." }, { text: '"I keep commits small, with clear messages."', good: true, why: 'Small commits are easy to review and undo.' }, { text: '"When I am stuck, I read git-scm.com/docs."', good: true, why: 'Knowing where to look is a real skill.' }, { text: '"I force push until it works."', good: false, why: "Force push can wipe teammates' work. Use `--force-with-lease`, with care." }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now answer four classic Git interview questions.
+</Card>
+
+<Card id="deeper" type="deeper">
+More classics: "What is a detached HEAD?" (World 2). "What does git stash do?" and "How do you fix a conflict?" (World 3). Practise each answer out loud, in two sentences. Then give a real example from your own project.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: git-w07-l03
+world: 7
+title: "Pencetus: push, PR, jadual, manual"
+summary: "Anda akan belajar: cara pilih bila workflow berjalan."
+minutes: 4
+xp: 20
+interactives: [PracticeRepo, SpotLines, Choice, Transcript, SortCards, SwipeJudge]
+needs: [git-w07-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Events that trigger workflows", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows" }
+  - { label: "Workflow syntax: on", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="actions" repo={{ owner: 'aina-codes', name: 'diary' }} runs={[
+  { id: 24, workflow: 'Deploy', event: 'workflow_dispatch', branch: 'main', status: 'running', jobs: [{ name: 'deploy', steps: [{ name: 'Terbitkan laman', status: 'running' }] }] },
+  { id: 23, workflow: 'Semakan pautan malam', event: 'schedule', branch: 'main', status: 'pass', jobs: [{ name: 'links', steps: [{ name: 'Semak setiap pautan', status: 'pass', log: ['Tiada pautan rosak.'] }] }] },
+  { id: 22, workflow: 'CI', event: 'pull_request', branch: 'contact-page', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Jalankan ujian', status: 'pass', log: ['Semua ujian lulus.'] }] }] },
+  { id: 21, workflow: 'CI', event: 'push', branch: 'main', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Jalankan ujian', status: 'pass', log: ['Semua ujian lulus.'] }] }] }]} />
+
+Empat larian, empat cara bermula. Satu push. Satu pull request. Satu jam. Satu butang. Macam mana robot tahu bila nak bangun?
+</Card>
+
+<Card id="see-push-pr" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'on:' }, { text: '  push:' }, { text: '    branches: [main]' }, { text: '  pull_request:', target: true }]} prompt="Ketik baris yang semak pull request." success="Ya! Setiap PR baru, dan setiap commit baru di dalamnya, akan disemak." />
+
+Setiap permulaan ialah satu **<Term id="trigger">event</Term>** (peristiwa). `push` berlaku bila commit sampai. `branches: [main]` hadkan kepada main. `pull_request` berlaku bila PR dibuka atau berubah.
+</Card>
+
+<Card id="see-schedule" type="see">
+`schedule` ialah jam loceng. Ia guna **<Term id="cron">cron</Term>**: minit, jam, hari, bulan, hari minggu. Secara lalai, masa dalam UTC. Bila `cron: '30 1 * * 1'` berbunyi?
+
+<Interactive name="Choice" options={[{ label: '01:30 UTC setiap Isnin', correct: true, why: 'Minit 30, jam 1, mana-mana hari, mana-mana bulan, hari minggu 1 (Isnin). Itu 9:30 pagi di Malaysia.' }, { label: 'Setiap 30 minit', why: 'Itu `*/30 * * * *`. Di sini, 30 ialah minit.' }, { label: 'Pada 1 haribulan setiap bulan', why: 'Hari dalam bulan ialah medan ketiga. Di sini ia `*`, mana-mana hari.' }]} />
+</Card>
+
+<Card id="see-manual" type="see">
+<Interactive name="Transcript" title="bash" label="Arahan GitHub CLI gh workflow run deploy.yml mulakan workflow Deploy secara manual." lines={[{ cmd: 'gh workflow run deploy.yml' }]} />
+
+`workflow_dispatch` beri anda butang **Run workflow** di GitHub. Tekan bila-bila masa. GitHub CLI pun boleh tekan untuk anda, macam di atas.
+</Card>
+
+<Card id="try-sort" type="try">
+Trigger mana sesuai untuk setiap tugas? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'push', label: 'push' }, { id: 'pr', label: 'pull_request' }, { id: 'schedule', label: 'schedule' }]} items={[{ label: 'Deploy bila main berubah', bucket: 'push', why: 'Commit baru di main sampai melalui push.' }, { label: 'Semak PR kawan sebelum merge', bucket: 'pr', why: 'pull_request berjalan pada PR itu sendiri.' }, { label: 'Semak pautan rosak setiap malam', bucket: 'schedule', why: 'Malam datang ikut jam. Guna cron.' }, { label: 'Uji commit baru pada PR yang terbuka', bucket: 'pr', why: 'pull_request berjalan semula pada setiap commit PR yang baru.' }, { label: 'Bina semula laman setiap Isnin', bucket: 'schedule', why: 'Setiap Isnin ialah tugas ikut jam.' }]} success="Siap! Setiap tugas ada loceng yang betul." />
+</Card>
+
+<Card id="predict" type="predict">
+Workflow malam anda ada pada branch lain. Ia belum ada di main. Adakah loceng akan berbunyi?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Jadual hanya berjalan dari branch lalai.', correct: true, why: 'Merge fail itu ke main dulu. Barulah jam mula berdetik.' }, { label: 'Ya, setiap malam', why: 'Larian berjadual hanya guna branch lalai.' }, { label: 'Ya, tapi sekali sahaja', why: 'Ia tak pernah bermula. Fail mesti ada di branch lalai.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Adakah setiap trigger sesuai dengan matlamat? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Uji setiap PR: `on: pull_request`', good: true, why: 'Setiap PR baru, dan setiap commit baru di dalamnya, disemak.' }, { text: 'Semakan malam: `on: push`', good: false, why: 'push cuma berjalan bila ada orang push. Guna schedule untuk jam.' }, { text: 'Deploy secara manual: `on: workflow_dispatch`', good: true, why: 'Ia tambah butang. Tiada apa berjalan sehingga anda tekan.' }, { text: "Setiap minit: `cron: '* * * * *'`", good: false, why: 'Jarak paling pendek ialah 5 minit.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih bila workflow berjalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+`paths:` jalankan workflow hanya bila fail tertentu berubah. `types: [opened]` hadkan `pull_request` kepada PR baru sahaja. Waktu sibuk boleh lambatkan larian berjadual. Awal jam paling sibuk. Jadi pilih minit macam 30, bukan 0.
+</Card>

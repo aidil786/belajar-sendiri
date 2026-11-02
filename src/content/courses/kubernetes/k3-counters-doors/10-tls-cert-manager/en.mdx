@@ -1,0 +1,89 @@
+---
+id: k8s-k3-l10
+world: 3
+title: TLS with cert-manager
+summary: "You will learn: to serve HTTPS at the Gateway, with certificates that renew themselves."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KubeReplay, OrderList, FoodCourtSim, YamlDoctor, Mission]
+needs: [k8s-k3-l09]
+scenario: k3-tls
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "cert-manager: Gateway API support", url: "https://cert-manager.io/docs/usage/gateway/" }
+  - { label: "Gateway API: TLS", url: "https://gateway-api.sigs.k8s.io/guides/tls/" }
+  - { label: "Kubernetes: TLS Secrets", url: "https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets" }
+---
+
+<Card id="hook" type="hook">
+Customers type their card number on your shop page. The browser says "Not secure". Who can read that number on the way?
+
+<Interactive name="Choice" options={[{ label: 'Anyone on the path, like the owner of a café Wi-Fi', correct: true, why: 'Plain HTTP travels as readable text, like a postcard.' }, { label: 'Only your shop', why: 'Without encryption, anyone in the middle can read it.' }, { label: 'Nobody: the internet is private', why: 'Plain HTTP is like a postcard. Anyone who handles it can read it.' }]} />
+</Card>
+
+<Card id="see-tls" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Hello', text: 'The browser asks the entrance for its certificate.' }, { when: '2', title: 'Check', text: 'A trusted authority signed it for kedai.example, and it has not expired.' }, { when: '3', title: 'Keys', text: 'Browser and entrance agree on a secret key.' }, { when: '4', title: 'Sealed', text: 'Every order now travels locked.' }]} />
+
+**<Term id="tls">TLS</Term>** seals the tray: nobody can read or swap the order on the way. It is the S in HTTPS.
+</Card>
+
+<Card id="see-listener" type="see">
+<Interactive name="KubeReplay" scenario="k3-tls" commands={['kubectl get secret kedai-tls', 'kubectl apply -f tls.yaml', 'kubectl get gateway entrance']} label="The Secret kedai-tls has type kubernetes.io/tls with 2 data items. After apply, the entrance is still PROGRAMMED True." />
+
+The entrance gets a second door: HTTPS on port 443. It shows the certificate kept in the Secret `kedai-tls`.
+
+```yaml
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: kedai.example
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: kedai-tls
+```
+</Card>
+
+<Card id="see-cert-manager" type="see">
+Certificates expire. **<Term id="cert-manager">cert-manager</Term>** gets and renews them for you. Put its steps in order.
+
+<Interactive name="OrderList" items={['You add a cert-manager annotation to the Gateway', 'cert-manager reads the HTTPS listener and its hostname', 'It asks Let’s Encrypt for a certificate', 'It proves you own kedai.example', 'It saves the certificate in the Secret kedai-tls', 'It renews it before it expires']} label="First step at the top" success="That's the loop. You never touch the certificate yourself." />
+</Card>
+
+<Card id="try-https" type="try">
+The Secret is ready. In this practice cluster a helper made it, as cert-manager would. Open the HTTPS door with `tls.yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k3-tls" goal={{ reachable: { url: 'https://172.18.0.200/', host: 'kedai.example' } }} hints={['Type cat tls.yaml to read it first.', 'Type kubectl apply -f tls.yaml', 'Check it: kubectl get gateway entrance']} success="The entrance now serves HTTPS on port 443 for kedai.example." />
+
+<Hint>`kubectl apply -f tls.yaml` updates the entrance. Nothing else changes.</Hint>
+</Card>
+
+<Card id="check-doctor" type="check">
+This HTTPS door won't apply. Read the error, then fix it.
+
+<Interactive name="YamlDoctor" file="tls.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: eg\n  listeners:\n    - name: https\n      protocol: HTTPS\n      hostname: kedai.example\n      tls:\n        mode: Terminate\n        certificateRefs:\n          - name: kedai-tls\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: eg\n  listeners:\n    - name: https\n      protocol: HTTPS\n      port: 443\n      hostname: kedai.example\n      tls:\n        mode: Terminate\n        certificateRefs:\n          - name: kedai-tls\n'} keep={['protocol: HTTPS', 'name: kedai-tls', 'hostname: kedai.example']} hint="Every listener needs a port. HTTPS usually uses 443." success="Applied! A door needs a number: 443 for HTTPS." />
+
+Plain words: this listener has no port.
+</Card>
+
+<Card id="predict" type="predict">
+The certificate is close to its end date. What happens?
+
+<Interactive name="Choice" options={[{ label: 'cert-manager renews it early, by itself', correct: true, why: 'By default it renews when two thirds of its life has passed.' }, { label: 'The site breaks until someone notices', why: 'That is the old way. cert-manager watches the date for you.' }, { label: 'Kubernetes renews it', why: 'Kubernetes only stores the Secret. cert-manager renews it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now serve HTTPS with a certificate that renews itself.
+</Card>
+
+<Card id="deeper" type="deeper">
+cert-manager 1.15 and newer reads Gateways when its Helm value `config.gatewayAPI.enabled` is true. The listener needs a hostname, `mode: Terminate` and a certificateRefs name. Try Let's Encrypt's staging server first: it has looser limits.
+
+Real rep (optional), on a throwaway kind cluster with a Gateway controller:
+
+<Interactive name="Mission" id="k3-l10-rep" steps={[{ id: 'install', text: 'Install cert-manager from cert-manager.io, with Gateway API support on.' }, { id: 'issuer', text: 'On kind there is no public domain. Make a self-signed ClusterIssuer instead.' }, { id: 'gateway', text: 'Annotate your Gateway and add an HTTPS listener.' }, { id: 'ready', text: 'Wait for READY True on the Certificate cert-manager made.', command: 'kubectl get certificate' }]} success="Your entrance has a real lock!" />
+</Card>

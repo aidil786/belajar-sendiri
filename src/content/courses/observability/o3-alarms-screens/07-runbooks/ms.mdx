@@ -1,0 +1,59 @@
+---
+id: obs-o3-l07
+world: 3
+title: "Runbook"
+summary: "Anda akan belajar: beri setiap amaran kad baiki yang boleh diikut oleh orang yang mengantuk."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, YamlPlayground, AlertRuleBuilder, SwipeJudge]
+needs: [obs-o3-l06]
+scenario: o3-runbook
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting rules (annotations)", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 3 pagi. Malam pertama anda on-call. Loceng kata `QueueTooLong`. Apa yang anda harap ada?
+
+<Interactive name="Choice" options={[{ label: 'Satu halaman pendek: maksudnya, apa nak semak, cara jadikan selamat', correct: true, why: 'Betul. Otak mengantuk perlukan langkah, bukan teka-teki.' }, { label: 'Kod sumber kedai', why: 'Terlalu banyak untuk dibaca pukul 3 pagi.' }, { label: 'Nombor telefon orang yang tulis amaran itu', why: 'Dia pun tengah tidur. Tulis sekali sahaja.' }]} />
+</Card>
+
+<Card id="see-runbook" type="see">
+<Interactive name="OrderList" items={['Maksud amaran ini', 'Semak dulu: gerai mana, sejak bila', 'Jadikan selamat: buka kaunter kedua', 'Masih teruk selepas 15 minit? Panggil orang seterusnya']} label="Bahagian atas runbook dulu" success="Maksud, semak, jadikan selamat, minta bantuan." />
+
+**<Term id="runbook">Runbook</Term>** ialah kad baiki di sebelah loceng. Susun bahagiannya mengikut urutan.
+</Card>
+
+<Card id="try-link" type="try">
+Pautkan runbook dari rule itu. Tambah baris `runbook_url` di bawah `annotations`.
+
+<Interactive name="YamlPlayground" file="rules.yml" initial={'groups:\n  - name: kedai\n    rules:\n      - alert: QueueTooLong\n        expr: kedai_queue_length > 50\n        for: 3m\n        labels:\n          severity: ticket\n        annotations:\n          summary: "Queue at {{ $labels.stall }} is {{ $value }}"\n'} expect={[{ path: 'groups.0.rules.0.annotations.runbook_url', type: 'text', hint: 'Di bawah summary, inden sama: runbook_url: https://wiki.example.com/runbooks/queue-too-long' }, { path: 'groups.0.rules.0.annotations.summary', type: 'text', hint: 'Kekalkan baris summary.' }]} solution={'groups:\n  - name: kedai\n    rules:\n      - alert: QueueTooLong\n        expr: kedai_queue_length > 50\n        for: 3m\n        labels:\n          severity: ticket\n        annotations:\n          summary: "Queue at {{ $labels.stall }} is {{ $value }}"\n          runbook_url: https://wiki.example.com/runbooks/queue-too-long\n'} hint="Salin inden baris summary." success="Setiap loceng kini tunjuk kad baikinya." />
+
+<Hint>`runbook_url` sebaris dengan `summary`: sepuluh ruang ke dalam.</Hint>
+</Card>
+
+<Card id="check-message" type="check">
+Pilih mesej yang on-call baca. Guna gelangsar untuk lihatnya pada minit 15.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-runbook" alert="QueueTooLong" exprs={[{ expr: 'kedai_queue_length > 50' }]} fors={['3m']} labels={[{ labels: { severity: 'ticket' } }]} annotations={[{ label: 'Pendek', annotations: { summary: 'Queue alert' }, why: 'Gerai mana? Berapa lama? Buat apa sekarang?' }, { label: 'Gerai, nombor dan runbook', annotations: { summary: 'Queue at {{ $labels.stall }} is {{ $value }}', runbook_url: 'https://wiki.example.com/runbooks/queue-too-long' } }]} goal={{ firingAt: ['15m'], annotationUses: ['$labels.stall', 'runbooks/'] }} solution={{ annotations: 1 }} success="Gerai, nombor dan pautan: on-call boleh terus mula." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Leret ke kanan untuk langkah runbook yang baik. Leret ke kiri untuk yang perlu dibaiki.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Buka panel Queue dan cari gerai yang disebut dalam amaran.', good: true, why: 'Jelas, dan guna apa yang amaran dah beritahu.' }, { text: 'Baiki masalah itu.', good: false, why: 'Masalah mana? Bagaimana? Sebut langkah pertama.' }, { text: 'Tanya Ali, dia tahu yang ini.', good: false, why: 'Ali tidur dan bercuti. Tulis apa yang Ali tahu.' }, { text: 'Masih melebihi 50 selepas 15 minit? Panggil ketua dapur.', good: true, why: 'Masa yang jelas dan orang seterusnya yang jelas.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri setiap amaran runbook yang boleh diikut oleh orang mengantuk.
+</Card>
+
+<Card id="deeper" type="deeper">
+Simpan runbook dalam Git, di sebelah rule. Selepas setiap insiden, baiki langkah yang mengelirukan anda. Belum ada runbook? Mungkin amaran itu belum sedia untuk panggil sesiapa.
+</Card>

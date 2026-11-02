@@ -1,0 +1,1081 @@
+/* Ship It part 2 (CI/CD): ConveyorBelt (cv-), SpotTheHole (sth-), TrafficDial (td-).
+   Colours mean state: amber = running/waiting, green = passed, red + icon = failed,
+   pink = you are here, blue/green in the traffic dial = old/new version. Tokens only. */
+
+.cv,
+.sth,
+.td {
+  container-type: inline-size;
+}
+
+.card-content .interactive .cv-head,
+.cv-head {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.cv-path {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: var(--weight-normal);
+}
+
+.card-content .interactive .cv-caption,
+.cv-caption {
+  font-size: var(--text-s);
+  color: var(--color-text-muted);
+}
+
+/* Event picker */
+.cv-events,
+.cv-fixes {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.cv-event-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cv-event,
+.cv-fix {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: var(--text-s);
+  cursor: pointer;
+}
+
+.cv-fix {
+  display: flex;
+  border-radius: var(--radius-m);
+  margin-bottom: var(--space-2);
+}
+
+.cv-event.is-on,
+.cv-fix.is-on {
+  border-color: var(--deco-head);
+  background: var(--c-head-soft);
+  color: var(--c-head-ink);
+}
+
+.cv-event input,
+.cv-fix input {
+  accent-color: var(--c-head);
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+}
+
+.cv-event:focus-within,
+.cv-fix:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Two panels: side by side when there is room, else stacked. */
+.cv-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: var(--space-2);
+}
+
+@container (min-width: 36rem) {
+  .cv-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+.cv-panel {
+  min-width: 0;
+}
+
+/* YAML with line numbers and indent guides (Ship It rule 18). */
+.cv-yaml {
+  position: relative;
+  margin: 0;
+  padding: var(--space-2) 0;
+  overflow: auto;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.cv-yaml:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Syntax colours for a light code box (the ink tokens work in both themes). */
+.cv-yaml .ybt-key,
+.sth-code .ybt-key {
+  color: var(--c-working-ink);
+}
+.cv-yaml .ybt-dash,
+.cv-yaml .ybt-punct,
+.cv-yaml .ybt-comment,
+.sth-code .ybt-dash,
+.sth-code .ybt-punct,
+.sth-code .ybt-comment {
+  color: var(--color-text-muted);
+}
+.cv-yaml .ybt-str,
+.sth-code .ybt-str {
+  color: var(--c-repo-ink);
+}
+.cv-yaml .ybt-num,
+.sth-code .ybt-num {
+  color: var(--c-staging-ink);
+}
+.cv-yaml .ybt-comment,
+.sth-code .ybt-comment {
+  font-style: italic;
+}
+
+.cv-line {
+  display: block;
+  padding-right: var(--space-3);
+  border-left: 4px solid transparent;
+  white-space: pre;
+}
+
+.cv-line.is-fix {
+  border-left-color: var(--deco-staging);
+  background: var(--c-staging-soft);
+}
+
+.cv-line.is-issue {
+  border-left-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+}
+
+.cv-line.is-here {
+  border-left-color: var(--deco-head);
+  background: var(--c-head-soft);
+}
+
+.cv-ln {
+  display: inline-block;
+  width: 2.2em;
+  padding-right: 0.6em;
+  text-align: right;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.cv-code {
+  font-family: var(--font-mono);
+}
+
+.cv-guide {
+  display: inline-block;
+  width: 2ch;
+  box-shadow: inset 1px 0 0 var(--color-border-strong);
+}
+
+.card-content .interactive .cv-legend,
+.cv-legend {
+  font-size: var(--text-xs);
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-2);
+  border-left: 4px solid var(--color-border);
+}
+
+.cv-legend.is-fix {
+  border-left-color: var(--deco-staging);
+}
+
+.cv-legend.is-here {
+  border-left-color: var(--deco-head);
+}
+
+.cv-edit {
+  display: block;
+}
+
+.cv-edit textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  padding: var(--space-2);
+  border: 2px solid var(--deco-staging);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  color: var(--color-text);
+  white-space: pre;
+  resize: vertical;
+}
+
+.cv-issues {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-s);
+}
+
+.cv-issues li {
+  padding: var(--space-2);
+  border-radius: var(--radius-s);
+  border-left: 4px solid var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.cv-real {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The belt */
+.card-content .interactive .cv-trigger,
+.cv-trigger {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-s);
+}
+
+.card-content .interactive .cv-chip,
+.cv-chip {
+  display: inline-block;
+  margin: 0 0 var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  font-size: var(--text-xs);
+}
+
+.cv-chip.is-waiting {
+  border-color: var(--deco-staging);
+  background: var(--c-staging-soft);
+  color: var(--c-staging-ink);
+}
+
+.card-content .interactive .cv-banner,
+.cv-banner {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-2);
+  font-size: var(--text-s);
+}
+
+.cv-banner.is-bad {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.cv-belt {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The track with rollers on the left. It only moves while a run plays. */
+.cv-belt::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 6px;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(to bottom, var(--color-border-strong) 0 6px, transparent 6px 12px);
+}
+
+.cv-belt.is-moving::before {
+  animation: cv-roll var(--dur-slow) linear infinite;
+}
+
+@keyframes cv-roll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 12px;
+  }
+}
+
+.cv-col {
+  min-width: 0;
+}
+
+.cv-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+}
+
+.cv-station {
+  min-width: 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  transition: border-color var(--dur-ui), background var(--dur-ui);
+}
+
+.cv-station-btn {
+  width: 100%;
+  min-height: var(--tap);
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-m);
+}
+
+.cv-station-btn:disabled {
+  cursor: default;
+}
+
+.cv-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.cv-name {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-s);
+  overflow-wrap: anywhere;
+}
+
+.cv-dur {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.cv-station.is-running,
+.cv-station.is-waiting {
+  border-color: var(--deco-staging);
+  background: var(--c-staging-soft);
+}
+.cv-station.is-running .cv-badge,
+.cv-station.is-waiting .cv-badge {
+  color: var(--c-staging-ink);
+}
+
+.cv-station.is-success {
+  border-color: var(--deco-repo);
+  background: var(--c-repo-soft);
+}
+.cv-station.is-success .cv-badge {
+  color: var(--c-repo-ink);
+}
+
+.cv-station.is-failure {
+  border-color: var(--deco-danger);
+  border-width: 3px;
+  background: var(--c-danger-soft);
+}
+.cv-station.is-failure .cv-badge {
+  color: var(--c-danger-ink);
+}
+
+.cv-station.is-skipped,
+.cv-station.is-cancelled {
+  border-style: dashed;
+}
+.cv-station.is-skipped .cv-name,
+.cv-station.is-cancelled .cv-name {
+  color: var(--color-text-muted);
+}
+
+.cv-station.is-selected {
+  box-shadow: 0 0 0 3px var(--deco-head);
+}
+
+.cv-station.is-picked {
+  border-color: var(--deco-head);
+  box-shadow: 0 0 0 3px var(--deco-head);
+}
+
+.cv-lanes {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.cv-lane {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+}
+
+.cv-lane.is-success {
+  border-color: var(--deco-repo);
+  color: var(--c-repo-ink);
+}
+.cv-lane.is-failure {
+  border-color: var(--deco-danger);
+  color: var(--c-danger-ink);
+}
+.cv-lane.is-running {
+  border-color: var(--deco-staging);
+  color: var(--c-staging-ink);
+}
+.cv-lane.is-cancelled,
+.cv-lane.is-skipped {
+  border-style: dashed;
+}
+
+.card-content .interactive .cv-cache,
+.card-content .interactive .cv-note,
+.card-content .interactive .cv-art,
+.cv-cache,
+.cv-note,
+.cv-art {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.cv-cache.is-hit,
+.cv-cache.is-partial {
+  font-weight: var(--weight-bold);
+  color: var(--c-repo-ink);
+}
+
+.cv-none {
+  margin-top: var(--space-2);
+  min-height: var(--tap);
+  padding: var(--space-1) var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cv-none.is-picked {
+  border-style: solid;
+  border-color: var(--deco-head);
+  box-shadow: 0 0 0 3px var(--deco-head);
+}
+
+.cv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.cv-approval {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border: 2px solid var(--deco-staging);
+  background: var(--c-staging-soft);
+  color: var(--c-staging-ink);
+}
+
+.cv-approval p {
+  margin: 0;
+}
+
+.cv-summary {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border-left: 6px solid var(--deco-repo);
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.cv-summary.is-bad {
+  border-left-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.card-content .interactive .cv-summary p,
+.cv-summary p {
+  margin: 0 0 var(--space-1);
+}
+
+.cv-summary-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--weight-bold);
+}
+
+.cv-summary .cv-head {
+  margin: var(--space-2) 0 0;
+  display: block;
+  color: inherit;
+}
+
+.card-content .interactive .cv-hint,
+.cv-hint {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  border-left: 4px solid var(--color-border-strong);
+  background: var(--color-surface-2);
+  font-size: var(--text-s);
+}
+
+/* The runner's log: a small dark terminal. */
+.cv-log {
+  margin-top: var(--space-3);
+}
+
+.cv-log summary {
+  cursor: pointer;
+  font-weight: var(--weight-bold);
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+}
+
+.cv-legs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.cv-leg {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.cv-leg.is-on {
+  border-color: var(--deco-head);
+  background: var(--c-head-soft);
+  color: var(--c-head-ink);
+}
+
+.cv-term {
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.cv-tstep + .cv-tstep {
+  margin-top: var(--space-2);
+}
+
+.cv-tname {
+  font-weight: var(--weight-bold);
+}
+
+.cv-tname.is-success {
+  color: var(--term-green);
+}
+.cv-tname.is-failure {
+  color: var(--term-red);
+}
+.cv-tname.is-skipped,
+.cv-tname.is-cancelled {
+  color: var(--term-muted);
+}
+
+.cv-tl {
+  padding-left: 1.4em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cv-tl.is-err {
+  color: var(--term-red);
+}
+.cv-tl.is-ok {
+  color: var(--term-green);
+}
+.cv-tl.is-warn {
+  color: var(--term-yellow);
+}
+.cv-tl.is-dim {
+  color: var(--term-muted);
+}
+
+.cv-tplain {
+  margin: var(--space-1) 0 0 1.4em;
+  font-family: var(--font-body);
+  color: var(--term-yellow);
+}
+
+/* ---------- Spot the hole ---------- */
+.card-content .interactive .sth-count,
+.sth-count {
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+.sth-code {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  overflow-x: auto;
+}
+
+.sth-btn {
+  display: grid;
+  grid-template-columns: 2.4em max-content;
+  align-items: center;
+  width: max-content;
+  min-width: 100%;
+  min-height: 36px;
+  padding: 2px var(--space-3) 2px 0;
+  border: 0;
+  border-left: 4px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  white-space: pre;
+}
+
+.sth-btn:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.sth-btn:disabled {
+  cursor: default;
+}
+
+.sth-btn .cv-code {
+  white-space: pre;
+}
+
+.sth-line.is-found > .sth-btn {
+  border-left-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+}
+
+.sth-line.is-miss > .sth-btn {
+  border-left-color: var(--color-kind);
+  background: var(--color-kind-soft);
+}
+
+.sth-flag {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--c-danger-ink);
+  white-space: nowrap;
+}
+
+.sth-reveal {
+  margin: 0 var(--space-2) var(--space-2) var(--space-6);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-s);
+  border-left: 4px solid var(--deco-danger);
+  background: var(--color-surface);
+  font-size: var(--text-s);
+}
+
+.card-content .interactive .sth-reveal p,
+.sth-reveal p {
+  margin: 0 0 var(--space-2);
+}
+
+.sth-fixcode {
+  margin: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-s);
+  border-left: 4px solid var(--deco-repo);
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sth-fixed {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---------- Traffic dial ---------- */
+.td-split {
+  display: flex;
+  height: 2.2rem;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 2px solid var(--color-border-strong);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.td-old,
+.td-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-basis: 0;
+  min-width: 0;
+  white-space: nowrap;
+  transition: flex-grow var(--dur-slow) var(--ease-out);
+}
+
+.td-old {
+  background: var(--c-working-soft);
+  color: var(--c-working-ink);
+}
+
+.td-new {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  box-shadow: inset 2px 0 0 var(--color-surface);
+}
+
+.card-content .interactive .td-split-text,
+.td-split-text {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-s);
+}
+
+.td-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.td-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.td-step {
+  min-height: var(--tap);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--deco-repo);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.td-step.is-on {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.td-step:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.td-rollback {
+  margin-left: auto;
+}
+
+.card-content .interactive .td-smoke,
+.td-smoke {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  font-size: var(--text-s);
+}
+
+.td-smoke.is-bad {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.td-smoke.is-ok {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.td-graph {
+  margin: var(--space-3) 0 0;
+}
+
+.td-graph svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-m);
+}
+
+.td-grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.td-axis,
+.td-label {
+  fill: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 10px;
+}
+
+.td-label {
+  fill: var(--color-text);
+  font-weight: var(--weight-bold);
+}
+
+.td-alarm {
+  stroke: var(--deco-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.td-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.td-line-old {
+  stroke: var(--deco-working);
+}
+
+.td-line-new {
+  stroke: var(--deco-repo);
+}
+
+.td-dot-old {
+  fill: var(--deco-working);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.td-dot-new {
+  fill: var(--deco-repo);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.td-dot-new.is-bad {
+  fill: var(--deco-danger);
+}
+
+.td-spike path {
+  fill: var(--c-danger-soft);
+  stroke: var(--deco-danger);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.td-spike .td-spike-mark {
+  fill: none;
+  stroke: var(--c-danger-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.card-content .interactive .td-legend,
+.td-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+}
+
+.td-key {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  border-top: 2px solid;
+}
+
+.td-key-old {
+  border-color: var(--deco-working);
+}
+
+.td-key-new {
+  border-color: var(--deco-repo);
+}
+
+.td-stats {
+  margin-top: var(--space-2);
+  font-size: var(--text-s);
+}
+
+.card-content .interactive .td-stats p,
+.td-stats p {
+  margin: 0 0 var(--space-1);
+}
+
+.td-k-old,
+.td-k-new {
+  font-weight: var(--weight-bold);
+  padding: 0 4px;
+  border-radius: var(--radius-s);
+}
+
+.td-k-old {
+  background: var(--c-working-soft);
+  color: var(--c-working-ink);
+}
+
+.td-k-new {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.td-hurt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.td-hurt.is-bad {
+  color: var(--c-danger-ink);
+  font-weight: var(--weight-bold);
+}
+
+.td-meter {
+  flex: 1 1 8rem;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.td-meter span {
+  display: block;
+  height: 100%;
+  background: var(--deco-danger);
+  transition: width var(--dur-ui);
+}
+
+.card-content .interactive .td-alert,
+.td-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  border-left: 6px solid var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  font-weight: var(--weight-bold);
+}
+
+.td-numbers {
+  margin-top: var(--space-3);
+}
+
+.td-numbers summary {
+  cursor: pointer;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+}
+
+.td-table-wrap {
+  overflow-x: auto;
+}
+
+.td-numbers table {
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+.td-numbers th,
+.td-numbers td {
+  padding: 2px var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.td-numbers td.is-bad {
+  color: var(--c-danger-ink);
+  font-weight: var(--weight-bold);
+}

@@ -1,0 +1,77 @@
+---
+id: k8s-k2-l01
+world: 2
+title: "Pods: a tray of dishes"
+summary: "You will learn: what a pod is, and what the containers in one pod share."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim, SortCards, Transcript]
+needs: [k8s-k1-boss]
+scenario: k2-pods
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pods", url: "https://kubernetes.io/docs/concepts/workloads/pods/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+Nasi lemak is rice, sambal and egg. They leave the kitchen together, on one tray. Your web app needs a small helper right beside it, always. Where should the helper go?
+
+<Interactive name="Choice" options={[{ label: 'On the same tray', correct: true, why: 'Things that must stay together share one tray. In Kubernetes, that tray is a pod.' }, { label: 'On another stall', why: 'Then they could end up far apart. The helper must sit right beside the app.' }, { label: 'Inside the same container', why: 'One container, one job. Two jobs in one box are hard to update.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+<Interactive name="KubeReplay" scenario="k2-pods" commands={['kubectl apply -f tray.yaml', 'kubectl wait --for=condition=Ready pod/tray --timeout=60s', 'kubectl get pods']} label="kubectl apply sends tray.yaml. The pod tray lands on a stall and becomes Running, READY 1/1." />
+
+A **<Term id="pod">pod</Term>** is a tray. It holds one or more containers. Kubernetes puts the whole tray on one stall, never half. `kubectl apply -f tray.yaml` sends the tray to the food court.
+</Card>
+
+<Card id="try-fix" type="try">
+This `tray.yaml` has one small slip. Press Apply, read the real error, then fix the line.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  container:\n    - name: web\n      image: nginx:1.29-alpine\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} keep={['image: nginx:1.29-alpine']} hint="A tray can hold many containers. The field name is plural." success="Fixed! kubectl accepts the tray." />
+
+<Hint>`unknown field` means a word Kubernetes does not know. Check the spelling.</Hint>
+</Card>
+
+<Card id="try-apply" type="try">
+Your turn. Send the tray to the food court. Then check it with `kubectl get pods`.
+
+<Interactive name="FoodCourtSim" scenario="k2-pods" goal={{ podsReady: { selector: 'app=tray', count: 1 }, typed: 'get pods?$' }} hints={['Type kubectl apply -f tray.yaml', 'Now type kubectl get pods']} success="Your tray is Running on a stall." />
+
+<Hint>Type `kubectl apply -f tray.yaml`, then `kubectl get pods`.</Hint>
+</Card>
+
+<Card id="see-duo" type="see">
+<Interactive name="KubeReplay" scenario="k2-pods" commands={['kubectl apply -f duo.yaml', 'kubectl wait --for=condition=Ready pod/duo --timeout=60s', 'kubectl get pod duo -o wide']} label="The pod duo has two containers. READY shows 2/2. The pod has one IP and sits on one node." />
+
+Two containers, one tray. READY says 2/2. Look: one IP address, one stall. Inside the tray, they reach each other at `localhost`.
+</Card>
+
+<Card id="predict" type="predict">
+You run `kubectl delete pod tray`. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'The tray is gone for good', correct: true, why: 'A lone pod has no manager. Nobody orders a new one. Lessons 3 and 4 fix that.' }, { label: 'A new tray appears', why: 'Only a manager replaces trays. This lone pod has none.' }, { label: 'It restarts on the same stall', why: 'Delete removes the whole pod. Restarts happen to containers inside a living pod.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Shared by the whole tray, or one per container? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'shared', label: 'Shared by the tray' }, { id: 'own', label: 'Each container has its own' }]} items={[{ label: 'The IP address', bucket: 'shared', why: 'One tray, one address. Containers talk over localhost.' }, { label: 'The stall (node) it sits on', bucket: 'shared', why: 'The whole tray sits on one stall.' }, { label: 'The image', bucket: 'own', why: 'Each container comes from its own image.' }, { label: 'The restart count', bucket: 'own', why: 'If one container crashes, only that one restarts.' }]} success="Sorted! A tray moves as one." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain what a pod is and what it shares.
+</Card>
+
+<Card id="deeper" type="deeper">
+Most pods hold one container. Add a second only when the two truly belong together. Containers can also share files through a volume (World K4).
+
+Real rep (optional): use a throwaway kind cluster, never a work one. Read the context before you delete.
+
+<Interactive name="Transcript" title="bash" label="Make a practice cluster, check where you are, send the tray, then delete it." lines={[{ cmd: 'kind create cluster --name practice' }, { cmd: 'kubectl config current-context' }, { cmd: 'kubectl apply -f tray.yaml' }, { cmd: 'kubectl delete pod tray' }]} />
+</Card>

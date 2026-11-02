@@ -1,0 +1,68 @@
+---
+id: cicd-c3-l11
+world: 3
+title: "Quiet, useful alerts"
+summary: "You will learn: which pipeline events deserve a ping, and what a useful alert says."
+minutes: 3
+xp: 15
+interactives: [SwipeJudge, Choice, SpotLines, ConveyorBelt, SortCards]
+needs: [cicd-c3-l10]
+scenario: c3-notify
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing GitHub Actions notifications", url: "https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications" }
+  - { label: "gh issue create", url: "https://cli.github.com/manual/gh_issue_create" }
+  - { label: "Status check functions: failure()", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+---
+
+<Card id="hook" type="hook">
+Your phone buzzes 80 times a day: "Build passed!" Which messages are worth a ping? Swipe right for "ping me".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Production deploy failed.', good: true, why: 'Someone must act now.' }, { text: 'Lint passed on a branch.', good: false, why: 'Nobody needs to act. Leave it in the run log.' }, { text: 'The pipeline rolled back production.', good: true, why: 'People should know, even though it fixed itself.' }, { text: 'Every test passed, again.', good: false, why: 'Green is normal. Silence means green.' }]} />
+</Card>
+
+<Card id="see-fatigue" type="see">
+Too many pings cause **<Term id="alert-fatigue">alert fatigue</Term>**: people stop reading them. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'The one real alarm gets missed', correct: true, why: 'It drowns among 79 harmless pings.' }, { label: 'People read them all, just slower', why: 'In real life, people mute the channel.' }, { label: 'Nothing changes', why: 'A muted channel catches nothing.' }]} />
+</Card>
+
+<Card id="see-good" type="see">
+A useful alert says what broke, where, and how to see more. Tap the line that takes you to the details.
+
+<Interactive name="SpotLines" prompt="Tap the line that takes you to the details." success="Yes! One tap from the alert to the failed run." lines={[{ text: 'Deploy failed: shop v2.3.0' }, { text: 'Where: production, smoke test step' }, { text: 'Run: https://github.com/you/shop/actions/runs/1234567890', target: true }, { text: 'Who: whoever is on call today' }]} />
+</Card>
+
+<Card id="try-run" type="try">
+This workflow opens one GitHub issue, only when the deploy fails. The issue links to the run. Run it, then tap the notify station.
+
+<Interactive name="ConveyorBelt" scenario="c3-notify" label="The smoke test fails, so the notify job opens one issue with the run link." />
+
+<Hint>Press Run. The deploy fails, then notify runs.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Tomorrow the deploy is healthy. What does the notify job do?
+
+<Interactive name="Choice" options={[{ label: 'It is skipped. No noise.', correct: true, why: 'if: failure() is false, so nobody is pinged.' }, { label: 'It opens an issue saying all is fine', why: 'Green needs no ping.' }, { label: 'It fails', why: 'It simply does not start.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Where should each message go?
+
+<Interactive name="SortCards" buckets={[{ id: 'ping', label: 'Ping a person' }, { id: 'log', label: 'Just the run log' }]} items={[{ label: 'A rollback ran in production', bucket: 'ping', why: 'People need to know the release was undone.' }, { label: 'A cache hit saved 40 seconds', bucket: 'log', why: 'Nice, but nobody must act.' }, { label: 'Production is healthy again after a failure', bucket: 'ping', why: 'Close the loop, so people can stop worrying.' }, { label: 'Tests passed on a feature branch', bucket: 'log', why: 'The green tick on the pull request says enough.' }]} success="Sorted! Ping for action. Log the rest." />
+</Card>
+
+<Card id="win" type="win">
+You can now send alerts people will actually read.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a van can't take back a meal. But code rolls back in seconds. Yet a rollback brings back old code, not old data. Orders the bad version saved stay saved.
+
+Real rep (optional): turn on "Only notify for failed workflows" in GitHub settings.
+</Card>

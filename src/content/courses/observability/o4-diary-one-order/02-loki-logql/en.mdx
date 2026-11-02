@@ -1,0 +1,72 @@
+---
+id: obs-o4-l02
+world: 4
+title: "Loki and LogQL basics"
+summary: "You will learn: to pick a diary by its labels and filter its lines with LogQL."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, CommandBuilder, SpotLines, Mission]
+needs: [obs-o4-l01]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Loki overview", url: "https://grafana.com/docs/loki/latest/get-started/overview/" }
+  - { label: "LogQL: log queries", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+  - { label: "LogQL: metric queries", url: "https://grafana.com/docs/loki/latest/query/metric_queries/" }
+  - { label: "logcli", url: "https://grafana.com/docs/loki/latest/query/logcli/" }
+---
+
+<Card id="hook" type="hook">
+Five services keep five diaries, on five machines. A payment timed out somewhere. Where do you start?
+
+<Interactive name="Choice" options={[{ label: 'Send every diary to one place, then ask once', correct: true, why: 'Yes. One shelf of diaries, one question.' }, { label: 'Log in to each machine and search', why: 'Slow, and the machine may already be gone.' }, { label: 'Wait for the customer to explain', why: 'They only know it failed. The diary knows why.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="Transcript" title="bash" label="logcli labels lists the labels app and service_name. logcli labels app lists kedai-api and kedai-pay." lines={[{ cmd: 'logcli labels' }, { out: 'app\nservice_name' }, { cmd: 'logcli labels app' }, { out: 'kedai-api\nkedai-pay', color: 'green' }]} />
+
+**<Term id="loki">Loki</Term>** keeps every diary on one shelf. It indexes only the labels, like `app`. Not every word.
+</Card>
+
+<Card id="try-build" type="try">
+Ask for kedai-api's lines that contain "timeout". Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{app="kedai-api"}', means: 'pick the diary by its label' }, { text: '|=', means: 'keep lines that contain…' }, { text: '"timeout"', means: '…this text' }]} decoys={[{ text: '!=', means: 'drop lines that contain the text' }]} success="That is your first LogQL query." />
+
+<Hint>Braces first: they pick the diary. Then the filter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+<Interactive name="SpotLines" prompt={'Which lines does {app="kedai-api"} | json | level="error" return?'} lines={[{ text: '{"level":"info","msg":"order received","order_id":"A1042"}' }, { text: '{"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000}', target: true }, { text: '{"level":"info","msg":"order received","order_id":"A1041"}' }, { text: '{"level":"info","msg":"order paid","order_id":"A1040","duration_ms":180}' }]} success={'Yes. | json reads the fields; level="error" keeps one line.'} />
+
+**<Term id="logql">LogQL</Term>** reads like a pipe. `| json` turns fields into labels. Then you can filter on them.
+</Card>
+
+<Card id="check-real" type="check">
+<Interactive name="Transcript" title="bash" label="Real Loki returns the same single line for both queries: the payment timeout for order A1041 at 17:45:22." lines={[{ cmd: 'logcli query --quiet \'{app="kedai-api"} |= "timeout"\'' }, { out: '2026-11-01T17:45:22Z {} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}', color: 'green' }, { cmd: 'logcli query --quiet \'{app="kedai-api"} | json | level="error"\'' }, { out: '2026-11-01T17:45:22Z {} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}', color: 'green' }]} />
+
+Real Loki 3.7 agrees: one line, two ways to ask. Notice its `trace_id`. You will need it soon.
+</Card>
+
+<Card id="check-error" type="check">
+```text
+parse error : queries require at least one regexp or equality matcher that does not have an empty-compatible value. For instance, app=~".*" does not meet this requirement, but app=~".+" will
+```
+
+You asked for `{app=~".*"}`: "every diary". Loki refused. Which fix works?
+
+<Interactive name="Choice" options={[{ label: '{app=~"kedai-.*"}', correct: true, why: 'Yes. It cannot match an empty label, so Loki knows where to look.' }, { label: '{app=~".*"} |= ""', why: 'The selector itself must narrow the diaries first.' }, { label: '{}', why: 'Empty braces pick nothing. Loki needs one real matcher.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick diaries by label and filter their lines with LogQL.
+</Card>
+
+<Card id="deeper" type="deeper">
+LogQL can count too: `sum by (app) (count_over_time({app=~"kedai-.*"} | json | level=~"error|warn" [10m]))` counts problem lines per app. Keep labels few and fixed, like `app`. Never put `order_id` in a label: each value makes a new <Term id="log-stream">log stream</Term>.
+
+<Interactive name="Mission" id="obs-o4-l02-real" steps={[{ id: 'net', text: 'Make a small network for the try-out.', command: 'docker network create logs-try' }, { id: 'loki', text: 'Start Loki on it. Wait about 20 seconds.', command: 'docker run -d --name loki-try --network logs-try -p 3100:3100 grafana/loki:3.7.9' }, { id: 'push', text: 'Push one diary line.', command: 'curl -s -H "Content-Type: application/json" -X POST http://localhost:3100/loki/api/v1/push --data-raw "{\\"streams\\":[{\\"stream\\":{\\"app\\":\\"try\\"},\\"values\\":[[\\"$(date +%s)000000000\\",\\"hello loki\\"]]}]}"' }, { id: 'ask', text: 'Ask for it with logcli.', command: 'docker run --rm --network logs-try grafana/logcli:3.7.9 --addr=http://loki-try:3100 query --quiet \'{app="try"}\'' }, { id: 'clean', text: 'Clean up.', command: 'docker rm -f loki-try && docker network rm logs-try' }]} success="You stored and found a real log line!" />
+</Card>

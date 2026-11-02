@@ -1,0 +1,70 @@
+---
+id: git-w08-l04
+world: 8
+title: Leaked a key? Rotate first
+summary: "You will learn: what to do, in what order, when a key leaks."
+minutes: 5
+xp: 25
+interactives: [TermReplay, TimeMachine, OrderList, CommandBuilder, Choice, SwipeJudge]
+needs: [git-w08-l03]
+scenario: w08-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l04-leak" commands={['git show --stat']} label="git show --stat: the newest commit, Add weather widget, added two files: .env and app.js." />
+
+Oh no. This commit went to a public repo an hour ago. It holds `.env` and its key. Assume someone already copied it.
+</Card>
+
+<Card id="see-rotate" type="see">
+Step one: **<Term id="rotate-key">rotate</Term>** the key. Go to the service that gave it to you. Cancel the old key and make a new one. Now the leaked copy is useless.
+</Card>
+
+<Card id="try-history" type="try">
+Some people just stop tracking `.env` in a new commit. Is the key gone? Slide back in time.
+
+<Interactive name="TimeMachine" scenario="w08-l04" file=".env" label=".env at each commit" />
+
+The newest commit has no `.env`. One step back, the key is still there. Anyone can look.
+</Card>
+
+<Card id="try-order" type="try">
+Here is the full rescue plan. Put it in order, first step at the top.
+
+<Interactive name="OrderList" items={['Rotate the key: cancel it, make a new one', 'Untrack .env and add it to .gitignore', 'Rewrite history with git filter-repo', 'Force-push and tell your team', 'Check the secret scanning alert, then close it']} label="First step at the top" success="Perfect plan. Rotating always comes first." />
+
+<Hint>The leaked key must stop working before anything else.</Hint>
+</Card>
+
+<Card id="try-command" type="try">
+**<Term id="filter-repo">git filter-repo</Term>** rewrites every commit. It is a separate tool you install. Build the command that wipes `.env` from all history.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'filter-repo', means: 'rewrite history (a separate tool)' }, { text: '--sensitive-data-removal', means: 'extra clean-up for secrets' }, { text: '--invert-paths', means: 'remove the path, keep the rest' }, { text: '--path .env', means: 'the file to wipe' }]} decoys={[{ text: 'rm', means: 'delete from now on only' }, { text: '--path app.js', means: 'the wrong file' }]} success="That's it! .env vanishes from every commit." />
+</Card>
+
+<Card id="predict" type="predict">
+You rewrote history and force-pushed. But you never rotated the old key. Is it safe now?
+
+<Interactive name="Choice" options={[{ label: 'No. Copies may live on in clones, forks and caches', correct: true, why: 'You cannot reach every copy. Only rotating makes the key useless.' }, { label: 'Yes, it is gone from GitHub', why: 'Forks, old clones and cached pages can still show it.' }, { label: 'Yes, if the repo is private now', why: 'It was public for an hour. Someone may have it already.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good move, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rotate the key right away', good: true, why: 'This makes the leaked copy useless.' }, { text: 'Just stop tracking .env in a new commit', good: false, why: 'The key still lives in the old commit.' }, { text: 'Ask teammates to re-clone after the rewrite', good: true, why: 'Old clones still hold the key. They could push it back.' }, { text: 'Rewrite history, but keep using the old key', good: false, why: 'Copies may exist already. Rotate it!' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now handle a leaked key in the right order.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rotating is the must. Rewriting history is extra clean-up, and it changes every later commit id. Key inside a normal file, like `app.js`? Use `--replace-text` with a list of secrets. `--sensitive-data-removal` needs git filter-repo 2.47 or newer. Old pull requests may still show the key. GitHub Support can help clear those.
+</Card>

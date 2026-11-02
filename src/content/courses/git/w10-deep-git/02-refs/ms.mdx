@@ -1,0 +1,76 @@
+---
+id: git-w10-l02
+world: 10
+title: Ref, fail HEAD dan reftable
+summary: "Anda akan belajar: apa sebenarnya branch di dalam .git, dan di mana Git 3.0 akan simpannya."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, Sim, SortCards]
+needs: [git-w10-l01]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitglossary (ref)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git pack-refs", url: "https://git-scm.com/docs/git-pack-refs" }
+  - { label: "git show-ref", url: "https://git-scm.com/docs/git-show-ref" }
+  - { label: "Git 3.0 breaking changes", url: "https://git-scm.com/docs/BreakingChanges" }
+---
+
+<Card id="hook" type="hook">
+Anda buat branch (cabang) dalam projek yang sangat besar. Ia muncul serta-merta. Tiada salinan, tiada tunggu. Jadi, apa sebenarnya branch di dalam `.git`?
+
+<Interactive name="Choice" options={[{ label: 'Fail kecil yang simpan satu id commit', correct: true, why: 'Sebab itu branch sangat pantas. Git tulis satu id sahaja.' }, { label: 'Salinan penuh setiap fail', why: 'Itu lambat. Branch tak salin apa-apa.' }, { label: 'Folder penuh dengan commit', why: 'Commit tinggal bersama objek lain. Branch cuma tunjuk ke satu.' }]} />
+</Card>
+
+<Card id="see-ref" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['cat .git/refs/heads/main', 'git rev-parse main']} label="cat .git/refs/heads/main cetak satu id 40 aksara. git rev-parse main cetak id yang sama." />
+
+**<Term id="ref">Ref</Term>** ialah nama untuk satu commit. Branch `main` ialah fail kecil dalam `.git/refs/heads`. Di dalamnya ada satu id commit.
+</Card>
+
+<Card id="try-head" type="try">
+`.git/HEAD` beritahu di mana anda berada. Baca fail itu. Kemudian detach HEAD, dan baca sekali lagi.
+
+<Interactive name="Sim" scenario="w10-objects" panels={['graph']} goal={{ headDetached: true, lastTyped: 'cat \\.git/HEAD' }} hints={['Taip cat .git/HEAD', 'Kemudian taip git switch --detach HEAD~1', 'Akhir sekali, taip cat .git/HEAD lagi']} success="Di atas branch, HEAD sebut nama branch. Bila terlerai, ia simpan id commit." />
+
+<Hint>`cat .git/HEAD`, kemudian `git switch --detach HEAD~1`, kemudian `cat .git/HEAD` lagi.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda buat commit baru di `main`. Apa yang berubah dalam `.git/refs/heads/main`?
+
+<Interactive name="Choice" options={[{ label: 'Id di dalamnya, kepada commit baru', correct: true, why: 'Branch bergerak ke depan. Git tulis id baru ke dalam fail itu.' }, { label: 'Tiada. Ref tak pernah berubah', why: 'Branch bergerak setiap kali commit. Tag yang kekal di tempatnya.' }, { label: 'Id kedua ditambah di bawah', why: 'Satu ref simpan satu id sahaja. Id lama diganti.' }]} />
+</Card>
+
+<Card id="try-pack" type="try">
+Beribu fail ref kecil jadi lambat. `git pack-refs --all` masukkan semuanya dalam satu fail: **<Term id="packed-refs">packed-refs</Term>**. Padatkan, kemudian baca fail itu.
+
+<Interactive name="Sim" scenario="w10-objects" panels={[]} goal={{ packedRefs: ['refs/heads/main', 'refs/tags/v1.0'], lastTyped: 'cat \\.git/packed-refs' }} hints={['Taip git pack-refs --all', 'Kemudian taip cat .git/packed-refs']} success="Satu fail, semua ref. Baris dengan ^ ialah commit yang tag itu tunjuk." />
+
+<Hint>Taip `git pack-refs --all`, kemudian `cat .git/packed-refs`.</Hint>
+</Card>
+
+<Card id="sort-reftable" type="check">
+**<Term id="reftable">Reftable</Term>** ialah cara yang lebih baru. Ref disimpan dalam beberapa jadual padat. Format mana sesuai dengan setiap fakta?
+
+<Interactive name="SortCards" buckets={[{ id: 'files', label: 'files (sekarang)' }, { id: 'reftable', label: 'reftable' }]} items={[{ label: 'Satu fail kecil untuk setiap branch', bucket: 'files', why: 'Itulah format files yang anda baru baca.' }, { label: 'Lalai untuk repo baru dalam Git 2.56', bucket: 'files', why: 'Sekarang anda perlu minta reftable.' }, { label: 'Lalai untuk repo baru dalam Git 3.0', bucket: 'reftable', why: 'Pelan Git 3.0 tukar repo baru kepada reftable.' }, { label: 'Kemas kini banyak ref sebagai satu langkah, semua atau tiada', bucket: 'reftable', why: 'Reftable tulis banyak perubahan ref bersama-sama, dengan selamat.' }]} success="Tersusun! Ref yang sama, dua cara simpan." />
+</Card>
+
+<Card id="check" type="check">
+Repo anda guna reftable. Arahan mana yang masih tunjuk id commit `main`?
+
+<Interactive name="Choice" options={[{ label: '`git rev-parse main`', correct: true, why: 'Arahan Git berfungsi dengan apa-apa format ref. Sebab itu skrip patut guna arahan.' }, { label: '`cat .git/refs/heads/main`', why: 'Dengan reftable, tiada fail kecil untuk setiap branch.' }, { label: 'Kedua-duanya tak boleh. Ref tersembunyi', why: 'Ref cuma disimpan dengan cara lain. Arahan Git masih jumpa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca ref dan fail HEAD, dan anda kenal reftable.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show-ref` senaraikan setiap ref dengan idnya. Mahu cuba reftable sekarang? `git init --ref-format=reftable` buat repo baru dengannya. Tetapan `init.defaultRefFormat` buat begitu untuk setiap repo baru. Dalam skrip, tanya Git (`rev-parse`, `show-ref`). Jangan baca fail `.git`.
+
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git show-ref']} label="git show-ref senaraikan refs/heads/main dan refs/tags/v1.0, setiap satu dengan idnya." />
+</Card>

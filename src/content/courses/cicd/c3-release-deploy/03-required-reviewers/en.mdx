@@ -1,0 +1,79 @@
+---
+id: cicd-c3-l03
+world: 3
+title: "Environments with required reviewers"
+summary: "You will learn: how to make production wait for a person to say yes."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SortCards, YamlBuilder, Choice]
+needs: [cicd-c3-l02]
+scenario: c3-reviewers
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Reviewing deployments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c3-no-gate" label="Midnight: a push to main tests, then deploys at once." />
+
+Midnight. A teammate pushes to main. The van leaves at once. Nobody tasted the food. Run it and watch.
+</Card>
+
+<Card id="see-env" type="see">
+Give production a guard. An **<Term id="environment" course="git">environment</Term>** is a named place you deploy to. It has its own rules. Which of these are environment rules?
+
+<Interactive name="SortCards" buckets={[{ id: 'rule', label: 'An environment rule' }, { id: 'not', label: 'Not an environment rule' }]} items={[{ label: 'A person must approve first', bucket: 'rule', why: 'Required reviewers: the job waits for a yes.' }, { label: 'Wait 10 minutes before deploying', bucket: 'rule', why: 'A wait timer gives you time to stop it.' }, { label: 'Only main may deploy here', bucket: 'rule', why: 'Deployment branches: other branches are turned away.' }, { label: 'Use Node 24', bucket: 'not', why: 'That lives in the workflow steps.' }, { label: 'Its own secrets', bucket: 'rule', why: 'Environment secrets open only for jobs that name it.' }]} success="Sorted! An environment is a door with rules." />
+</Card>
+
+<Card id="try-approve" type="try">
+Production now has a **<Term id="required-reviewer">required reviewer</Term>**: Aina. Run it. The deploy job waits. You are Aina: check it, then approve.
+
+<Interactive name="ConveyorBelt" scenario="c3-reviewers" events={['push-main']} task={{ type: 'approve' }} success="Approved! Only now could the deploy start." />
+
+<Hint>Press Run. When the deploy station waits, press the approve button.</Hint>
+</Card>
+
+<Card id="try-yaml" type="try">
+Now build it. A job joins an environment with one key: `environment`.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'perms', 'job', 'ready', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run when main gets new commits.' },
+  { id: 'pr', kind: 'trigger', label: 'On every pull request', yaml: 'pull_request:', means: 'Run for every pull request.', why: 'Deploy what lands on main, not every pull request.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The token can only read the code.' },
+  { id: 'bare', kind: 'job', label: 'Job: deploy (no environment)', yaml: 'deploy:\n  runs-on: ubuntu-latest', means: 'A runner that deploys.', why: 'No environment means no reviewer and no guard.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment:\n    name: production\n    url: https://shop.example.com', means: 'Deploy to production. Its rules apply first.' },
+  { id: 'ready', kind: 'step', label: 'Get ready', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Copy the code. Install packages.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Ship it with the token from secrets.' }]}
+  success="Your deploy now waits at the production door." />
+
+<Hint>Trigger, permissions, the job with an environment, then the steps.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Someone pushes to the branch `feature`. Production allows only `main`. What happens to the deploy job?
+
+<Interactive name="Choice" options={[{ label: 'It fails before any step runs', correct: true, why: 'The branch rule says no. Nothing is deployed, and nobody is asked.' }, { label: 'It waits for Aina', why: 'The branch rule comes first. Only main may even ask.' }, { label: 'It deploys the feature branch', why: 'The environment turns other branches away.' }]} />
+</Card>
+
+<Card id="check-branch" type="check">
+Check it on the belt. Find the push the guard stops. Read the real message.
+
+<Interactive name="ConveyorBelt" scenario="c3-branch-rule" task={{ type: 'event', job: 'deploy', result: 'failure' }} success="Stopped at the door. Plain words: only main may deploy to production." />
+
+<Hint>Try the push to the feature branch.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now put a human gate in front of production.
+</Card>
+
+<Card id="deeper" type="deeper">
+Up to six people or teams can be reviewers. One approval is enough. Turn on "prevent self-review" so nobody approves their own deploy. A wait timer can pause up to 30 days. On private repos, required reviewers need GitHub Enterprise.
+
+Real rep (optional): in a public test repo, make a `production` environment. Add yourself as its reviewer.
+</Card>

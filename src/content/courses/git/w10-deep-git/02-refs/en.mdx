@@ -1,0 +1,76 @@
+---
+id: git-w10-l02
+world: 10
+title: Refs, the HEAD file and reftable
+summary: "You will learn: what a branch really is inside .git, and where Git 3.0 will keep it."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, Sim, SortCards]
+needs: [git-w10-l01]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitglossary (ref)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git pack-refs", url: "https://git-scm.com/docs/git-pack-refs" }
+  - { label: "git show-ref", url: "https://git-scm.com/docs/git-show-ref" }
+  - { label: "Git 3.0 breaking changes", url: "https://git-scm.com/docs/BreakingChanges" }
+---
+
+<Card id="hook" type="hook">
+You make a branch in a huge project. It appears at once. No copying, no waiting. So what is a branch, inside `.git`?
+
+<Interactive name="Choice" options={[{ label: 'A tiny file that holds one commit id', correct: true, why: 'That is why branches are instant. Git writes just one id.' }, { label: 'A full copy of every file', why: 'That would be slow. A branch copies nothing.' }, { label: 'A folder full of commits', why: 'Commits live with the other objects. A branch only points at one.' }]} />
+</Card>
+
+<Card id="see-ref" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['cat .git/refs/heads/main', 'git rev-parse main']} label="cat .git/refs/heads/main prints one 40-character id. git rev-parse main prints the same id." />
+
+A **<Term id="ref">ref</Term>** is a name for a commit. Branch `main` is a tiny file in `.git/refs/heads`. Inside is one commit id.
+</Card>
+
+<Card id="try-head" type="try">
+`.git/HEAD` says where you are. Read it. Then detach HEAD, and read it again.
+
+<Interactive name="Sim" scenario="w10-objects" panels={['graph']} goal={{ headDetached: true, lastTyped: 'cat \\.git/HEAD' }} hints={['Type cat .git/HEAD', 'Then type git switch --detach HEAD~1', 'Last, type cat .git/HEAD again']} success="On a branch, HEAD names the branch. Detached, it holds a commit id." />
+
+<Hint>`cat .git/HEAD`, then `git switch --detach HEAD~1`, then `cat .git/HEAD` again.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You make a new commit on `main`. What changes in `.git/refs/heads/main`?
+
+<Interactive name="Choice" options={[{ label: 'The id inside it, to the new commit', correct: true, why: 'The branch moves forward. Git writes the new id into that file.' }, { label: 'Nothing. Refs never change', why: 'Branches move with every commit. Tags are the ones that stay put.' }, { label: 'A second id is added below', why: 'A ref holds one id. The old one is replaced.' }]} />
+</Card>
+
+<Card id="try-pack" type="try">
+Thousands of tiny ref files get slow. `git pack-refs --all` puts them in one file: **<Term id="packed-refs">packed-refs</Term>**. Pack them, then read it.
+
+<Interactive name="Sim" scenario="w10-objects" panels={[]} goal={{ packedRefs: ['refs/heads/main', 'refs/tags/v1.0'], lastTyped: 'cat \\.git/packed-refs' }} hints={['Type git pack-refs --all', 'Then type cat .git/packed-refs']} success="One file, every ref. The line with ^ is the commit the tag points to." />
+
+<Hint>Type `git pack-refs --all`, then `cat .git/packed-refs`.</Hint>
+</Card>
+
+<Card id="sort-reftable" type="check">
+**<Term id="reftable">reftable</Term>** is a newer way. Refs live in a few compact tables. Which format fits each fact?
+
+<Interactive name="SortCards" buckets={[{ id: 'files', label: 'files (today)' }, { id: 'reftable', label: 'reftable' }]} items={[{ label: 'One small file per branch', bucket: 'files', why: 'That is the files format you just read.' }, { label: 'Default for new repos in Git 2.56', bucket: 'files', why: 'Today you have to ask for reftable.' }, { label: 'Default for new repos in Git 3.0', bucket: 'reftable', why: 'The Git 3.0 plan switches new repos to reftable.' }, { label: 'Updates many refs as one step, all or nothing', bucket: 'reftable', why: 'Reftable writes many ref changes together, safely.' }]} success="Sorted! Same refs, two ways to store them." />
+</Card>
+
+<Card id="check" type="check">
+Your repo uses reftable. Which command still shows the commit id of `main`?
+
+<Interactive name="Choice" options={[{ label: '`git rev-parse main`', correct: true, why: 'Git commands work with any ref format. That is why scripts should use them.' }, { label: '`cat .git/refs/heads/main`', why: 'With reftable, there is no small file per branch to read.' }, { label: 'Neither. Refs are hidden', why: 'They are only stored another way. Git commands still find them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read refs and the HEAD file, and know reftable.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show-ref` lists every ref with its id. Want reftable today? `git init --ref-format=reftable` makes a new repo with it. The setting `init.defaultRefFormat` does it for every new repo. In scripts, ask Git (`rev-parse`, `show-ref`). Don't read `.git` files.
+
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git show-ref']} label="git show-ref lists refs/heads/main and refs/tags/v1.0, each with its id." />
+</Card>

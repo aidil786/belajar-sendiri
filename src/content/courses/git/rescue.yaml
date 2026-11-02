@@ -1,0 +1,503 @@
+# Rescue Center flows. Each step is a question (answers → next step) or a result (safe commands).
+# group (optional) = page section: commits | branches | remote | secrets | setup. No group → "Other problems".
+# One flow per World 11 lesson. Every Git command in a result is replayed against real Git by a
+# `verify` list in scenarios/w11.ts (except placeholder hashes like a1b2c3d, and ssh commands).
+flows:
+  - id: wrong-branch
+    title: { en: "I committed on the wrong branch", ms: "Saya commit di branch yang salah" }
+    group: branches
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Did you push the commit?", ms: "Dah push commit itu?" }
+        answers:
+          - { label: { en: "No, it's only on my computer", ms: "Belum, hanya dalam komputer saya" }, next: exists }
+          - { label: { en: "Yes, it's on GitHub", ms: "Ya, dah ada di GitHub" }, next: shared }
+      - id: exists
+        question: { en: "Does the right branch exist already?", ms: "Branch yang betul dah wujud?" }
+        answers:
+          - { label: { en: "No, it should be a new branch", ms: "Belum, patut jadi branch baru" }, next: newbranch }
+          - { label: { en: "Yes, it exists", ms: "Ya, dah wujud" }, next: pick }
+      - id: newbranch
+        result:
+          text: { en: "Label the commit with a new branch, then move main back. Commit or stash other changes first.", ms: "Label commit itu dengan branch baru, kemudian undurkan main. Commit atau stash perubahan lain dulu." }
+          commands:
+            - { command: "git branch about", en: "Stick a branch label on your commit (pick your own name).", ms: "Lekatkan label branch pada commit anda (pilih nama sendiri)." }
+            - { command: "git reset --hard HEAD~1", en: "Move main back one commit.", ms: "Undurkan main satu commit." }
+            - { command: "git switch about", en: "Go to the branch with your work.", ms: "Pergi ke branch yang ada kerja anda." }
+          danger: careful
+          lesson: git-w11-l01
+      - id: pick
+        result:
+          text: { en: "Copy the commit to the right branch, then take it off main.", ms: "Salin commit ke branch yang betul, kemudian buang dari main." }
+          commands:
+            - { command: "git switch about", en: "Go to the right branch.", ms: "Pergi ke branch yang betul." }
+            - { command: "git cherry-pick main", en: "Copy main's newest commit here.", ms: "Salin commit terbaru main ke sini." }
+            - { command: "git switch main", en: "Go back to main.", ms: "Kembali ke main." }
+            - { command: "git reset --hard HEAD~1", en: "Take the commit off main.", ms: "Buang commit itu dari main." }
+          danger: careful
+          lesson: git-w11-l01
+      - id: shared
+        result:
+          text: { en: "Don't rewrite shared history. Undo it on main, then copy it to a branch.", ms: "Jangan tulis semula sejarah yang dikongsi. Undur di main, kemudian salin ke branch." }
+          commands:
+            - { command: "git revert HEAD", en: "On main: a new commit undoes the slip.", ms: "Di main: commit baru membatalkan kesilapan itu." }
+            - { command: "git push", en: "Share the undo.", ms: "Kongsi commit undur itu." }
+            - { command: "git switch -c about", en: "Make the right branch.", ms: "Buat branch yang betul." }
+            - { command: "git cherry-pick main~1", en: "Copy your original commit onto it.", ms: "Salin commit asal anda ke situ." }
+          danger: safe
+          lesson: git-w11-l01
+
+  - id: pushed-secret
+    title: { en: "I pushed a password or key", ms: "Saya push kata laluan atau kunci" }
+    group: secrets
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Did the secret reach GitHub?", ms: "Rahsia itu dah sampai ke GitHub?" }
+        answers:
+          - { label: { en: "Yes, I pushed it", ms: "Ya, saya dah push" }, next: rotate }
+          - { label: { en: "No, it's in my last commit only", ms: "Belum, hanya dalam commit terakhir saya" }, next: local }
+      - id: rotate
+        result:
+          text: { en: "Rotate it first: cancel the old secret, make a new one. Old commits still hold it.", ms: "Tukar dulu: batalkan rahsia lama, buat yang baru. Commit lama masih menyimpannya." }
+          commands:
+            - { command: "git rm --cached .env", en: "Stop tracking .env. The file stays on your computer.", ms: "Berhenti jejak .env. Fail kekal dalam komputer anda." }
+            - { command: "echo \".env\" >> .gitignore", en: "Ignore it from now on.", ms: "Abaikan fail itu mulai sekarang." }
+            - { command: "git add .gitignore", en: "Put the ignore rule in the box.", ms: "Masukkan peraturan abai ke dalam kotak." }
+            - { command: "git commit -m \"Stop tracking .env\"", en: "Save the clean-up.", ms: "Simpan kerja kemas itu." }
+            - { command: "git push", en: "Share it. To wipe old commits, see World 8.", ms: "Kongsi. Untuk padam commit lama, lihat Dunia 8." }
+          danger: safe
+          lesson: git-w11-l02
+      - id: local
+        result:
+          text: { en: "Nobody saw it. Take it out of the last commit.", ms: "Tiada siapa nampak. Keluarkan dari commit terakhir." }
+          commands:
+            - { command: "git rm --cached .env", en: "Stop tracking .env. The file stays.", ms: "Berhenti jejak .env. Fail itu kekal." }
+            - { command: "echo \".env\" >> .gitignore", en: "Ignore it from now on.", ms: "Abaikan fail itu mulai sekarang." }
+            - { command: "git add .gitignore", en: "Put the ignore rule in the box.", ms: "Masukkan peraturan abai ke dalam kotak." }
+            - { command: "git commit --amend --no-edit", en: "Rewrite the last commit without it.", ms: "Tulis semula commit terakhir tanpa fail itu." }
+          danger: careful
+          lesson: git-w11-l02
+
+  - id: undo-last-commit
+    title: { en: "Undo my last commit", ms: "Undur commit terakhir saya" }
+    group: commits
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Did you push it to GitHub already?", ms: "Dah push ke GitHub?" }
+        answers:
+          - { label: { en: "No, it's only on my computer", ms: "Belum, hanya dalam komputer saya" }, next: keep }
+          - { label: { en: "Yes, others may have it", ms: "Ya, orang lain mungkin dah ada" }, next: shared }
+          - { label: { en: "I'm not sure", ms: "Tak pasti" }, next: shared }
+      - id: keep
+        question: { en: "Do you want to keep the changes?", ms: "Nak simpan perubahan itu?" }
+        answers:
+          - { label: { en: "Yes, keep them in the box", ms: "Ya, simpan dalam kotak" }, next: soft }
+          - { label: { en: "No, throw them away", ms: "Tak, buang semua" }, next: hard }
+      - id: soft
+        result:
+          text: { en: "The commit is undone. Your changes wait in the box.", ms: "Commit dibatalkan. Perubahan anda tunggu dalam kotak." }
+          commands:
+            - { command: "git reset --soft HEAD~1", en: "Move the branch back one commit.", ms: "Undurkan branch satu commit." }
+            - { command: "git status", en: "Check: your changes are green.", ms: "Semak: perubahan anda hijau." }
+          danger: careful
+          lesson: git-w11-l03
+      - id: hard
+        result:
+          text: { en: "Danger: this wipes the changes. Reflog can still find the commit.", ms: "Bahaya: ini padam perubahan. Reflog masih boleh cari commit itu." }
+          commands:
+            - { command: "git reset --hard HEAD~1", en: "Go back one commit and wipe changes.", ms: "Undur satu commit dan padam perubahan." }
+          danger: lose
+          lesson: git-w11-l03
+      - id: shared
+        result:
+          text: { en: "Don't rewrite shared history. Make an undo commit instead.", ms: "Jangan tulis semula sejarah yang dikongsi. Buat commit undur." }
+          commands:
+            - { command: "git revert HEAD", en: "A new commit undoes the last one.", ms: "Commit baru membatalkan yang terakhir." }
+            - { command: "git push", en: "Share the undo.", ms: "Kongsi commit undur itu." }
+          danger: safe
+          lesson: git-w11-l03
+
+  - id: bad-message
+    title: { en: "Fix a bad commit message", ms: "Baiki mesej commit yang salah" }
+    group: commits
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Is it your last commit, and not pushed yet?", ms: "Ini commit terakhir, dan belum push?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: amend }
+          - { label: { en: "No, it's pushed or older", ms: "Tak, dah push atau lebih lama" }, next: leave }
+      - id: amend
+        result:
+          text: { en: "The last commit gets a new message.", ms: "Commit terakhir dapat mesej baru." }
+          commands:
+            - { command: "git commit --amend -m \"Better message\"", en: "Replace the message.", ms: "Ganti mesej." }
+          danger: careful
+          lesson: git-w11-l04
+      - id: leave
+        result:
+          text: { en: "Leave it. A clear next commit is better than rewriting shared history.", ms: "Biarkan. Commit seterusnya yang jelas lebih baik daripada tulis semula sejarah." }
+          commands:
+            - { command: "git log --oneline", en: "Check which commit it was.", ms: "Semak commit yang mana." }
+          danger: safe
+          lesson: git-w11-l04
+
+  - id: forgot-file
+    title: { en: "I forgot a file in my commit", ms: "Saya terlupa fail dalam commit" }
+    group: commits
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Did you push the commit already?", ms: "Dah push commit itu?" }
+        answers:
+          - { label: { en: "No", ms: "Belum" }, next: amend }
+          - { label: { en: "Yes", ms: "Ya" }, next: newcommit }
+      - id: amend
+        result:
+          text: { en: "Add the file to the last commit. The message stays.", ms: "Tambah fail ke commit terakhir. Mesejnya kekal." }
+          commands:
+            - { command: "git add forgot.txt", en: "Put the missing file in the box.", ms: "Masukkan fail yang tertinggal ke dalam kotak." }
+            - { command: "git commit --amend --no-edit", en: "Fold it into the last commit.", ms: "Masukkan ke commit terakhir." }
+          danger: careful
+          lesson: git-w11-l05
+      - id: newcommit
+        result:
+          text: { en: "Make a small new commit with the file.", ms: "Buat commit baru yang kecil dengan fail itu." }
+          commands:
+            - { command: "git add forgot.txt", en: "Put the file in the box.", ms: "Masukkan fail ke dalam kotak." }
+            - { command: "git commit -m \"Add missing forgot.txt\"", en: "Save it with a clear message.", ms: "Simpan dengan mesej yang jelas." }
+          danger: safe
+          lesson: git-w11-l05
+
+  - id: merge-panic
+    title: { en: "Merge panic: conflicts everywhere", ms: "Panik merge: konflik di mana-mana" }
+    group: branches
+    start: state
+    steps:
+      - id: state
+        question: { en: "Is the merge still going (it said CONFLICT)?", ms: "Merge masih berjalan (ia kata CONFLICT)?" }
+        answers:
+          - { label: { en: "Yes, it stopped with conflicts", ms: "Ya, ia berhenti dengan konflik" }, next: abort }
+          - { label: { en: "No, it finished, but I regret it", ms: "Tak, dah siap, tapi saya menyesal" }, next: done }
+      - id: abort
+        result:
+          text: { en: "Back out. Everything goes back to before the merge.", ms: "Undur diri. Semua kembali seperti sebelum merge." }
+          commands:
+            - { command: "git merge --abort", en: "Cancel the merge.", ms: "Batalkan merge." }
+            - { command: "git status", en: "Check: nothing left to fix.", ms: "Semak: tiada lagi yang perlu dibaiki." }
+          danger: safe
+          lesson: git-w11-l06
+      - id: done
+        question: { en: "Did you push the merge?", ms: "Dah push merge itu?" }
+        answers:
+          - { label: { en: "No", ms: "Belum" }, next: orig }
+          - { label: { en: "Yes", ms: "Ya" }, next: revertmerge }
+      - id: orig
+        result:
+          text: { en: "Jump back to just before the merge. This wipes uncommitted changes.", ms: "Lompat balik ke sebelum merge. Ini padam perubahan yang belum di-commit." }
+          commands:
+            - { command: "git reset --hard ORIG_HEAD", en: "ORIG_HEAD is where you were before the merge.", ms: "ORIG_HEAD ialah tempat anda sebelum merge." }
+          danger: careful
+          lesson: git-w11-l06
+      - id: revertmerge
+        result:
+          text: { en: "Make an undo commit for the merge. Shared history stays whole.", ms: "Buat commit undur untuk merge itu. Sejarah dikongsi kekal utuh." }
+          commands:
+            - { command: "git revert -m 1 HEAD", en: "Undo the merge. -m 1 keeps your branch's side.", ms: "Undur merge. -m 1 kekalkan bahagian branch anda." }
+            - { command: "git push", en: "Share the undo.", ms: "Kongsi commit undur itu." }
+          danger: safe
+          lesson: git-w11-l06
+
+  - id: detached-head
+    title: { en: "I'm in detached HEAD", ms: "Saya dalam HEAD terlerai" }
+    group: branches
+    start: made
+    steps:
+      - id: made
+        question: { en: "Did you make commits while detached?", ms: "Anda buat commit semasa terlerai?" }
+        answers:
+          - { label: { en: "Yes, and I want to keep them", ms: "Ya, dan saya nak simpan" }, next: keep }
+          - { label: { en: "No, I was only looking", ms: "Tak, saya cuma tengok-tengok" }, next: home }
+          - { label: { en: "I left already, and they're gone", ms: "Saya dah keluar, dan ia hilang" }, next: lost }
+      - id: keep
+        result:
+          text: { en: "Give your commits a branch before you leave.", ms: "Beri commit anda satu branch sebelum keluar." }
+          commands:
+            - { command: "git switch -c new-title", en: "Make a branch right here. Your commits are safe on it.", ms: "Buat branch di sini. Commit anda selamat di situ." }
+          danger: safe
+          lesson: git-w11-l07
+      - id: home
+        result:
+          text: { en: "Nothing to keep. Just go home.", ms: "Tiada apa nak disimpan. Balik saja." }
+          commands:
+            - { command: "git switch main", en: "Go back to your branch.", ms: "Kembali ke branch anda." }
+          danger: safe
+          lesson: git-w11-l07
+      - id: lost
+        result:
+          text: { en: "The reflog remembers. Use the line from just before you left.", ms: "Reflog ingat. Guna baris sejurus sebelum anda keluar." }
+          commands:
+            - { command: "git reflog", en: "Find your commit's message.", ms: "Cari mesej commit anda." }
+            - { command: "git branch new-title HEAD@{1}", en: "Put a branch on it. Right after leaving, it's HEAD@{1}.", ms: "Letak branch padanya. Sejurus selepas keluar, ia HEAD@{1}." }
+          danger: safe
+          lesson: git-w11-l07
+
+  - id: deleted-branch
+    title: { en: "I deleted a branch", ms: "Saya terpadam branch" }
+    group: branches
+    start: hash
+    steps:
+      - id: hash
+        question: { en: "Can you still see Git's message: Deleted branch (was a1b2c3d)?", ms: "Masih nampak mesej Git: Deleted branch (was a1b2c3d)?" }
+        answers:
+          - { label: { en: "Yes, I see the hash", ms: "Ya, saya nampak hash itu" }, next: fromhash }
+          - { label: { en: "No, it's gone from my screen", ms: "Tak, dah hilang dari skrin" }, next: reflog }
+      - id: fromhash
+        result:
+          text: { en: "Put the label back on that commit.", ms: "Letak semula label pada commit itu." }
+          commands:
+            - { command: "git branch about a1b2c3d", en: "Use your branch name and the hash after was.", ms: "Guna nama branch anda dan hash selepas was." }
+          danger: safe
+          lesson: git-w11-l08
+      - id: reflog
+        result:
+          text: { en: "The reflog remembers commits you were on.", ms: "Reflog ingat commit yang pernah anda duduki." }
+          commands:
+            - { command: "git reflog", en: "Find the line with your branch's last commit.", ms: "Cari baris dengan commit terakhir branch anda." }
+            - { command: "git branch about HEAD@{1}", en: "Use the HEAD@{n} from that line.", ms: "Guna HEAD@{n} dari baris itu." }
+          danger: safe
+          lesson: git-w11-l08
+
+  - id: lost-commits
+    title: { en: "I lost commits after a reset", ms: "Commit hilang selepas reset" }
+    group: commits
+    start: what
+    steps:
+      - id: what
+        question: { en: "Did you run git reset --hard (or similar)?", ms: "Anda jalankan git reset --hard (atau seumpamanya)?" }
+        answers:
+          - { label: { en: "Yes, just now", ms: "Ya, baru tadi" }, next: recent }
+          - { label: { en: "Yes, a while ago", ms: "Ya, dah lama sikit" }, next: older }
+      - id: recent
+        result:
+          text: { en: "Reflog remembers. Jump back one move.", ms: "Reflog ingat. Lompat balik satu langkah." }
+          commands:
+            - { command: "git reflog", en: "See where HEAD was.", ms: "Tengok di mana HEAD pernah berada." }
+            - { command: "git reset --hard HEAD@{1}", en: "Go back to before the reset.", ms: "Kembali ke sebelum reset." }
+          danger: careful
+          lesson: git-w11-l09
+      - id: older
+        result:
+          text: { en: "Find the right line in reflog, then reset to its hash.", ms: "Cari baris yang betul dalam reflog, kemudian reset ke hash itu." }
+          commands:
+            - { command: "git reflog", en: "Look for the commit message you lost.", ms: "Cari mesej commit yang hilang." }
+            - { command: "git reset --hard a1b2c3d", en: "Use the hash from that line.", ms: "Guna hash dari baris itu." }
+          danger: careful
+          lesson: git-w11-l09
+
+  - id: push-rejected
+    title: { en: "My push was rejected", ms: "Push saya ditolak" }
+    group: remote
+    start: why
+    steps:
+      - id: why
+        question: { en: "What does the error say?", ms: "Apa kata ralat itu?" }
+        answers:
+          - { label: { en: "rejected (fetch first) or (non-fast-forward)", ms: "rejected (fetch first) atau (non-fast-forward)" }, next: pull }
+          - { label: { en: "Something about a protected branch or a rule", ms: "Sesuatu tentang branch dilindungi atau peraturan" }, next: branch }
+          - { label: { en: "Permission denied (publickey)", ms: "Permission denied (publickey)" }, next: https }
+      - id: pull
+        result:
+          text: { en: "GitHub has commits you don't have. Get them, then push. Never --force on a shared branch.", ms: "GitHub ada commit yang anda tiada. Ambil dulu, kemudian push. Jangan --force pada branch dikongsi." }
+          commands:
+            - { command: "git pull --rebase", en: "Put your commits on top of the new ones.", ms: "Letak commit anda di atas commit baru." }
+            - { command: "git push", en: "Send them again.", ms: "Hantar semula." }
+          danger: safe
+          lesson: git-w11-l10
+      - id: branch
+        result:
+          text: { en: "That branch only takes pull requests. Push a branch of your own.", ms: "Branch itu hanya terima pull request. Push branch anda sendiri." }
+          commands:
+            - { command: "git switch -c my-fix", en: "Make a branch at your commit.", ms: "Buat branch pada commit anda." }
+            - { command: "git push -u origin my-fix", en: "Push it, then open a pull request.", ms: "Push, kemudian buka pull request." }
+          danger: safe
+          lesson: git-w11-l15
+      - id: https
+        result:
+          text: { en: "GitHub can't tell who you are. Fix your SSH key, or use HTTPS.", ms: "GitHub tak kenal siapa anda. Baiki kunci SSH, atau guna HTTPS." }
+          commands:
+            - { command: "git remote set-url origin https://github.com/you/diary.git", en: "Use your repo's HTTPS address.", ms: "Guna alamat HTTPS repo anda." }
+            - { command: "git push", en: "Sign in with a token when asked.", ms: "Log masuk dengan token bila diminta." }
+          danger: safe
+          lesson: git-w11-l14
+
+  - id: messy-pull
+    title: { en: "My pull is a mess (conflicts)", ms: "Pull saya bersepah (konflik)" }
+    group: remote
+    start: which
+    steps:
+      - id: which
+        question: { en: "What does git status say?", ms: "Apa kata git status?" }
+        answers:
+          - { label: { en: "interactive rebase in progress", ms: "interactive rebase in progress" }, next: rebase }
+          - { label: { en: "You have unmerged paths (use git merge --abort)", ms: "You have unmerged paths (use git merge --abort)" }, next: merge }
+      - id: rebase
+        result:
+          text: { en: "The pull stopped in a rebase. Back out. Pull again when you're ready.", ms: "Pull berhenti dalam rebase. Undur diri. Pull semula bila dah sedia." }
+          commands:
+            - { command: "git rebase --abort", en: "Cancel it. Your branch goes back to before.", ms: "Batalkan. Branch anda kembali seperti sebelum." }
+            - { command: "git status", en: "Check: no conflicts left.", ms: "Semak: tiada konflik lagi." }
+          danger: safe
+          lesson: git-w11-l11
+      - id: merge
+        result:
+          text: { en: "The pull stopped in a merge. Back out. Pull again when you're ready.", ms: "Pull berhenti dalam merge. Undur diri. Pull semula bila dah sedia." }
+          commands:
+            - { command: "git merge --abort", en: "Cancel it. Your files go back to before.", ms: "Batalkan. Fail anda kembali seperti sebelum." }
+            - { command: "git status", en: "Check: no conflicts left.", ms: "Semak: tiada konflik lagi." }
+          danger: safe
+          lesson: git-w11-l11
+
+  - id: huge-file
+    title: { en: "I committed a huge file", ms: "Saya commit fail yang besar" }
+    group: secrets
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Is the big file on GitHub?", ms: "Fail besar itu dah ada di GitHub?" }
+        answers:
+          - { label: { en: "No, or GitHub refused my push", ms: "Belum, atau GitHub tolak push saya" }, next: where }
+          - { label: { en: "Yes, the push worked", ms: "Ya, push berjaya" }, next: history }
+      - id: where
+        question: { en: "Is it in your last commit?", ms: "Ia dalam commit terakhir anda?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: amend }
+          - { label: { en: "No, an older commit (not pushed)", ms: "Tak, commit lebih lama (belum push)" }, next: squash }
+      - id: amend
+        result:
+          text: { en: "Take it out of the last commit. The file stays on your computer.", ms: "Keluarkan dari commit terakhir. Fail kekal dalam komputer anda." }
+          commands:
+            - { command: "git rm --cached video.mp4", en: "Stop tracking the big file.", ms: "Berhenti jejak fail besar itu." }
+            - { command: "echo \"*.mp4\" >> .gitignore", en: "Ignore files like it.", ms: "Abaikan fail seperti itu." }
+            - { command: "git add .gitignore", en: "Put the ignore rule in the box.", ms: "Masukkan peraturan abai ke dalam kotak." }
+            - { command: "git commit --amend --no-edit", en: "Rewrite the last commit without it.", ms: "Tulis semula commit terakhir tanpa fail itu." }
+          danger: careful
+          lesson: git-w11-l12
+      - id: squash
+        result:
+          text: { en: "Put all your unpushed work back in the box. Commit it again without the file.", ms: "Masukkan semula semua kerja yang belum push ke dalam kotak. Commit semula tanpa fail itu." }
+          commands:
+            - { command: "git reset --soft origin/main", en: "Undo your unpushed commits. Changes stay in the box.", ms: "Undur commit yang belum push. Perubahan kekal dalam kotak." }
+            - { command: "git rm --cached video.mp4", en: "Take the big file out.", ms: "Keluarkan fail besar itu." }
+            - { command: "echo \"*.mp4\" >> .gitignore", en: "Ignore files like it.", ms: "Abaikan fail seperti itu." }
+            - { command: "git add .gitignore", en: "Put the ignore rule in the box.", ms: "Masukkan peraturan abai ke dalam kotak." }
+            - { command: "git commit -m \"Add trip page\"", en: "Save it all as one commit.", ms: "Simpan semua sebagai satu commit." }
+          danger: careful
+          lesson: git-w11-l12
+      - id: history
+        result:
+          text: { en: "It stays in history, so every clone downloads it. Stop tracking it now. Wiping history needs git filter-repo (World 8).", ms: "Ia kekal dalam sejarah, jadi setiap clone muat turun fail itu. Berhenti jejak sekarang. Padam sejarah perlukan git filter-repo (Dunia 8)." }
+          commands:
+            - { command: "git rm --cached video.mp4", en: "Stop tracking the big file.", ms: "Berhenti jejak fail besar itu." }
+            - { command: "echo \"*.mp4\" >> .gitignore", en: "Ignore files like it.", ms: "Abaikan fail seperti itu." }
+            - { command: "git add .gitignore", en: "Put the ignore rule in the box.", ms: "Masukkan peraturan abai ke dalam kotak." }
+            - { command: "git commit -m \"Stop tracking video.mp4\"", en: "Save the clean-up.", ms: "Simpan kerja kemas itu." }
+            - { command: "git push", en: "Share it.", ms: "Kongsi." }
+          danger: safe
+          lesson: git-w11-l12
+
+  - id: line-endings
+    title: { en: "Every line shows as changed (line endings)", ms: "Semua baris nampak berubah (hujung baris)" }
+    group: setup
+    start: attrs
+    steps:
+      - id: attrs
+        question: { en: "Does the repo have a .gitattributes file?", ms: "Repo ada fail .gitattributes?" }
+        answers:
+          - { label: { en: "No, not yet", ms: "Belum ada" }, next: add }
+          - { label: { en: "Yes, but files still look changed", ms: "Ada, tapi fail masih nampak berubah" }, next: renorm }
+          - { label: { en: "I only want to set up my computer", ms: "Saya cuma nak tetapkan komputer saya" }, next: personal }
+      - id: add
+        result:
+          text: { en: "Add one rule for the whole team. Then refresh every file once.", ms: "Tambah satu peraturan untuk seluruh pasukan. Kemudian segarkan semua fail sekali." }
+          commands:
+            - { command: "echo \"* text=auto\" > .gitattributes", en: "The rule: Git handles line endings.", ms: "Peraturannya: Git uruskan hujung baris." }
+            - { command: "git add .gitattributes", en: "Put the rule in the box.", ms: "Masukkan peraturan ke dalam kotak." }
+            - { command: "git add --renormalize .", en: "Re-add every tracked file with the rule.", ms: "Tambah semula semua fail yang dijejak dengan peraturan itu." }
+            - { command: "git commit -m \"Normalize line endings\"", en: "Save the fix once, for everyone.", ms: "Simpan pembaikan sekali, untuk semua." }
+          danger: safe
+          lesson: git-w11-l13
+      - id: renorm
+        result:
+          text: { en: "Old files kept the old endings. Refresh them once.", ms: "Fail lama masih guna hujung baris lama. Segarkan sekali." }
+          commands:
+            - { command: "git add --renormalize .", en: "Re-add every tracked file with the rule.", ms: "Tambah semula semua fail yang dijejak dengan peraturan itu." }
+            - { command: "git status", en: "See which files changed.", ms: "Tengok fail mana yang berubah." }
+            - { command: "git commit -m \"Normalize line endings\"", en: "Save the fix once, for everyone.", ms: "Simpan pembaikan sekali, untuk semua." }
+          danger: safe
+          lesson: git-w11-l13
+      - id: personal
+        result:
+          text: { en: "Pick the one line for your computer.", ms: "Pilih satu baris untuk komputer anda." }
+          commands:
+            - { command: "git config --global core.autocrlf true", en: "On Windows.", ms: "Di Windows." }
+            - { command: "git config --global core.autocrlf input", en: "On Mac or Linux.", ms: "Di Mac atau Linux." }
+          danger: safe
+          lesson: git-w11-l13
+
+  - id: publickey
+    title: { en: "Permission denied (publickey)", ms: "Permission denied (publickey)" }
+    group: setup
+    start: want
+    steps:
+      - id: want
+        question: { en: "Do you want to keep using SSH?", ms: "Nak terus guna SSH?" }
+        answers:
+          - { label: { en: "Yes, fix my SSH key", ms: "Ya, baiki kunci SSH saya" }, next: key }
+          - { label: { en: "No, switch to HTTPS", ms: "Tak, tukar ke HTTPS" }, next: https }
+      - id: key
+        result:
+          text: { en: "Load your key. Add the .pub file to your GitHub account (SSH keys settings). Then test.", ms: "Muat kunci anda. Tambah fail .pub ke akaun GitHub anda (tetapan kunci SSH). Kemudian uji." }
+          commands:
+            - { command: "ssh-add -l", en: "Is a key loaded? No key line means no.", ms: "Ada kunci dimuat? Tiada baris kunci bermaksud tiada." }
+            - { command: "ssh-add ~/.ssh/id_ed25519", en: "Load your key.", ms: "Muat kunci anda." }
+            - { command: "ssh -T git@github.com", en: "Test: GitHub should greet you by name.", ms: "Uji: GitHub patut sapa nama anda." }
+          danger: safe
+          lesson: git-w11-l14
+      - id: https
+        result:
+          text: { en: "Use the HTTPS address. Sign in with a token, not your password.", ms: "Guna alamat HTTPS. Log masuk dengan token, bukan kata laluan." }
+          commands:
+            - { command: "git remote set-url origin https://github.com/you/diary.git", en: "Use your repo's HTTPS address.", ms: "Guna alamat HTTPS repo anda." }
+            - { command: "git push", en: "Push again. Sign in when asked.", ms: "Push semula. Log masuk bila diminta." }
+          danger: safe
+          lesson: git-w11-l14
+
+  - id: protected-branch
+    title: { en: "I pushed to a protected branch", ms: "Saya push ke branch yang dilindungi" }
+    group: remote
+    start: where
+    steps:
+      - id: where
+        question: { en: "Did you commit straight on main?", ms: "Anda commit terus di main?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: branch }
+          - { label: { en: "No, I'm on my own branch", ms: "Tak, saya di branch sendiri" }, next: push }
+      - id: branch
+        result:
+          text: { en: "Give your commit a branch. Push it and open a pull request.", ms: "Beri commit anda satu branch. Push dan buka pull request." }
+          commands:
+            - { command: "git switch -c fix-title", en: "Make a branch at your commit.", ms: "Buat branch pada commit anda." }
+            - { command: "git push -u origin fix-title", en: "Push it. GitHub prints a pull request link.", ms: "Push. GitHub papar pautan pull request." }
+          danger: safe
+          lesson: git-w11-l15
+      - id: push
+        result:
+          text: { en: "Push your branch, not main. Then open a pull request.", ms: "Push branch anda, bukan main. Kemudian buka pull request." }
+          commands:
+            - { command: "git push -u origin my-fix", en: "Use your branch's name.", ms: "Guna nama branch anda." }
+          danger: safe
+          lesson: git-w11-l15

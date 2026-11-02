@@ -1,0 +1,74 @@
+---
+id: git-w10-l03
+world: 10
+title: Plumbing vs porcelain
+summary: "You will learn: Git's two kinds of commands, and how to save a blob by hand."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, SortCards, Sim, CommandBuilder]
+needs: [git-w10-l02]
+scenario: w10-plumbing
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git (high-level and low-level commands)", url: "https://git-scm.com/docs/git" }
+  - { label: "git hash-object", url: "https://git-scm.com/docs/git-hash-object" }
+  - { label: "git cat-file", url: "https://git-scm.com/docs/git-cat-file" }
+  - { label: "git ls-tree", url: "https://git-scm.com/docs/git-ls-tree" }
+---
+
+<Card id="hook" type="hook">
+Your script needs the newest commit id. `git log` prints too much, and its look can change. What should the script use?
+
+<Interactive name="Choice" options={[{ label: 'A command made for scripts: git rev-parse HEAD', correct: true, why: 'It prints just the id, and its output stays steady.' }, { label: 'Copy the id by hand each time', why: 'A script cannot copy by hand. Git has commands for scripts.' }, { label: 'Cut the id out of git status', why: 'git status is made for people. Its words may change.' }]} />
+</Card>
+
+<Card id="see-plumbing" type="see">
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git rev-parse HEAD', 'git ls-tree HEAD']} label="git rev-parse HEAD prints one full id. git ls-tree HEAD lists about.html, the css tree and index.html, each with mode, type and id." />
+
+Low-level commands are **<Term id="plumbing">plumbing</Term>**: the pipes under the sink. They print plain, steady output. Scripts love them.
+</Card>
+
+<Card id="try-sort" type="try">
+The shiny sink on top is **<Term id="porcelain">porcelain</Term>**: commands for people. Sort each command.
+
+<Interactive name="SortCards" buckets={[{ id: 'porcelain', label: 'porcelain (for people)' }, { id: 'plumbing', label: 'plumbing (for scripts)' }]} items={[{ label: 'git status', bucket: 'porcelain', why: 'Friendly words and colours, for you to read.' }, { label: 'git cat-file', bucket: 'plumbing', why: 'It prints raw objects.' }, { label: 'git commit', bucket: 'porcelain', why: 'An everyday command that does many steps for you.' }, { label: 'git hash-object', bucket: 'plumbing', why: 'It prints the id for some content. Nothing more.' }, { label: 'git switch', bucket: 'porcelain', why: 'An everyday command for people.' }, { label: 'git ls-tree', bucket: 'plumbing', why: 'It lists a tree object, line by line.' }]} success="Sorted! Porcelain for people, plumbing for scripts and the curious." />
+</Card>
+
+<Card id="see-hash-object" type="see">
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git hash-object index.html', 'git rev-parse HEAD:index.html']} label="git hash-object index.html and git rev-parse HEAD:index.html print the same id, 6b62adb46423f92b1c925e6fdcc9ec947097a1d4." />
+
+`git hash-object` prints the id Git would give a file. It matches the blob already in the commit. Same content, same id.
+</Card>
+
+<Card id="try-write" type="try">
+`notes.txt` is not in Git yet. Save its content as a blob, with no commit. Then read the blob back.
+
+<Interactive name="Sim" scenario="w10-plumbing" panels={[]} goal={{ objectsWritten: ['17e284d'], lastTyped: 'cat-file -p' }} hints={['Add -w to write it: git hash-object -w notes.txt', 'Then type git cat-file -p and the id it printed']} success="Saved and read back! Git stored the content, with no commit at all." />
+
+<Hint>Type `git hash-object -w notes.txt`. Then `git cat-file -p` with the id it printed.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ben has the same `notes.txt` on his laptop. He runs `git hash-object notes.txt`. What id does he get?
+
+<Interactive name="Choice" options={[{ label: 'The same id as yours', correct: true, why: 'The id comes only from the content. Same bytes, same id, on any computer.' }, { label: 'A different id: it is his laptop', why: 'A blob id ignores who and where. Only content counts.' }, { label: 'A different id: time has passed', why: 'Blobs have no date. Commits do, so commit ids differ.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+Build the command that prints `index.html` as the newest commit saved it.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'cat-file', means: 'open an object' }, { text: '-p', means: 'print it nicely' }, { text: 'HEAD:index.html', means: 'index.html inside the newest commit' }]} decoys={[{ text: '-t', means: 'print only the type' }, { text: 'status', means: 'a porcelain command' }]} success="That's it! It prints the blob of index.html from HEAD." />
+</Card>
+
+<Card id="win" type="win">
+You can now tell plumbing from porcelain and save a blob yourself.
+</Card>
+
+<Card id="deeper" type="deeper">
+Porcelain output may change between Git versions. Plumbing output stays steady. Need status in a script? `git status --porcelain` gives a format that is promised to stay the same. `git ls-tree -r --name-only HEAD` lists every file in a commit.
+
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git ls-tree -r --name-only HEAD']} label="git ls-tree -r --name-only HEAD lists about.html, css/style.css and index.html." />
+</Card>

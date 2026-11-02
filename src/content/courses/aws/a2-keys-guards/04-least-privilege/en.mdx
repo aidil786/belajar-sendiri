@@ -1,0 +1,61 @@
+---
+id: aws-a2-l04
+world: 2
+title: Least privilege
+summary: "You will learn: to give only the keys a job needs, and how to shrink keys that are too big."
+minutes: 4
+xp: 20
+interactives: [Choice, SwipeJudge, IamJudge, OrderList]
+needs: [aws-a2-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM security best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" }
+  - { label: "IAM Access Analyzer policy generation", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html" }
+  - { label: "Refine permissions with last accessed information", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_last-accessed.html" }
+---
+
+<Card id="hook" type="hook">
+The cleaner comes at night to tidy the storeroom. Which key do you give?
+
+<Interactive name="Choice" options={[{ label: 'One key: the storeroom only', correct: true, why: 'The job is the storeroom. The key is the storeroom.' }, { label: 'The master key, to save time', why: 'Then a lost key opens the safe and the till too.' }, { label: 'Every key except the safe', why: 'Still far more than the job needs.' }]} />
+</Card>
+
+<Card id="see-swipe" type="see">
+That idea is **<Term id="iam-least-privilege">least privilege</Term>**: these actions, on these things, nothing more. Fits the idea, or too much?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The menu robot may put files in kedai-menu only.', good: true, why: 'One action, one bucket.' }, { text: 'The menu robot gets s3:* on every bucket.', good: false, why: 'It could delete the orders bucket too.' }, { text: 'The CI robot gets AdministratorAccess, to be safe.', good: false, why: 'Safe for whom? A leak would open everything.' }, { text: 'Start small; add an action when a real error asks.', good: true, why: 'AccessDenied tells you exactly what is missing.' }]} />
+</Card>
+
+<Card id="try-shrink" type="try">
+The menu robot must never delete. Its key allows every S3 action. Shrink the pink line so a delete gets Deny.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/menu-robot', who: 'menu robot', action: 's3:DeleteObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-robot', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} task={{ type: 'edit', policy: 0, line: 6, want: 'Deny', forbid: ['\\*'] }} solution={'"Action": ["s3:GetObject", "s3:PutObject"],'} success="Read and save only. A delete now meets a quiet no." />
+
+<Hint>List only what the robot does: `["s3:GetObject", "s3:PutObject"]`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+AWS ships ready-made managed policies, like `ReadOnlyAccess`. Are they least privilege for your robot?
+
+<Interactive name="Choice" options={[{ label: 'Rarely: they are made for everyone, so they are broad', correct: true, why: 'Fine to start with. Then shrink to what your job uses.' }, { label: 'Always: AWS wrote them', why: 'AWS writes them for many uses, not for your one job.' }, { label: 'Never use them at all', why: 'They are a fair starting point. Just don’t stop there.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Too-big keys shrink in steps. Put them in order.
+
+<Interactive name="OrderList" items={['Write down what the job really does', 'Start with a small policy for that', 'Test it: read any AccessDenied error', 'Check last accessed data for unused rights', 'Remove what is never used']} label="First step at the top" success="Small first, test, then trim. That is least privilege." />
+</Card>
+
+<Card id="win" type="win">
+You can now shrink a policy to just what a job needs.
+</Card>
+
+<Card id="deeper" type="deeper">
+IAM Access Analyzer can read your activity log (CloudTrail). It drafts a policy from what was really used. Treat the draft as a start, then review it.
+
+Real rep (free): in the IAM console, open your admin user’s "Last accessed" tab. Which services has it never touched?
+</Card>

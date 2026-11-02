@@ -1,0 +1,65 @@
+---
+id: aws-a4-l04
+world: 4
+title: "EKS: managed Kubernetes"
+summary: "You will learn: what EKS runs for you, how kubectl reaches it, and when ECS is the simpler pick."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, IdleBill]
+needs: [aws-a4-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon EKS: What is Amazon EKS?", url: "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html" }
+  - { label: "Amazon EKS: Connect kubectl (kubeconfig)", url: "https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html" }
+  - { label: "Amazon EKS: Kubernetes versions", url: "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html" }
+  - { label: "AWS CLI: aws eks update-kubeconfig", url: "https://docs.aws.amazon.com/cli/latest/reference/eks/update-kubeconfig.html" }
+  - { label: "Amazon EKS pricing", url: "https://aws.amazon.com/eks/pricing/" }
+---
+
+<Card id="hook" type="hook">
+You ran a whole food court in [Kubernetes](/en/kubernetes/). The manager's office was the hard part: the API server, etcd, upgrades. Who could run that office for you?
+
+<Interactive name="Choice" options={[{ label: 'AWS, for an hourly fee', correct: true, why: 'Yes. That is EKS. You keep using kubectl as before.' }, { label: 'Nobody, Kubernetes needs no office', why: 'Every cluster needs a control plane. Someone must run it.' }, { label: 'ECS', why: 'ECS is AWS’s own manager. It does not speak Kubernetes.' }]} />
+</Card>
+
+<Card id="see-eks" type="see">
+**<Term id="eks">EKS</Term>** runs the <Term id="control-plane" course="kubernetes">control plane</Term> for you. Some jobs stay yours. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS runs it' }, { id: 'you', label: 'Still yours' }]} items={[{ label: 'The API server and etcd', bucket: 'aws', why: 'The office runs on AWS’s machines, across wings.' }, { label: 'Your Deployments and Services', bucket: 'you', why: 'Same manifests as in the K worlds.' }, { label: 'Choosing when to upgrade Kubernetes', bucket: 'you', why: 'AWS offers versions. You decide when to move.' }, { label: 'Backups of etcd', bucket: 'aws', why: 'The office is theirs, so its records are too.' }]} success="AWS keeps the office. Your apps and choices stay yours." />
+</Card>
+
+<Card id="see-kubectl" type="see">
+One AWS CLI command points kubectl at your EKS cluster. Here is the official example. Tap the line that shows what changed.
+
+<Interactive name="SpotLines" prompt="Tap the line that shows what changed." success="A new kubectl context. Every kubectl command from K1 works now." lines={[{ text: '$ aws eks update-kubeconfig --name my-eks-cluster' }, { text: 'Updated context arn:aws:eks:us-west-2:123456789012:cluster/my-eks-cluster in /Users/xxx/.kube/config', target: true }]} />
+</Card>
+
+<Card id="predict" type="predict">
+You make an EKS cluster for practice. It runs no pods for a week. Does it cost money?
+
+<Interactive name="Choice" options={[{ label: 'Yes: every cluster has an hourly fee', correct: true, why: 'Plus any nodes you added. Delete practice clusters the same day.' }, { label: 'No, empty clusters are free', why: 'The office runs all the time, so it bills all the time.' }, { label: 'Only after a free month', why: 'Check the EKS pricing page. Never assume a cluster is free.' }]} />
+</Card>
+
+<Card id="try-pick" type="try">
+ECS or EKS for each shop? Both run containers. Sort the reasons.
+
+<Interactive name="SortCards" buckets={[{ id: 'ecs', label: 'ECS is the simpler pick' }, { id: 'eks', label: 'EKS fits better' }]} items={[{ label: 'One small app and a small team', bucket: 'ecs', why: 'Fewer moving parts, no cluster fee.' }, { label: 'The team already ships Helm charts', bucket: 'eks', why: 'Keep your Kubernetes skills and tools.' }, { label: 'The same manifests must run on another cloud too', bucket: 'eks', why: 'Kubernetes speaks the same language everywhere.' }, { label: 'You want the smallest bill for a demo', bucket: 'ecs', why: 'ECS itself is free. You pay for the tasks only.' }]} success="Small and simple: ECS. Kubernetes skills or many clouds: EKS." />
+</Card>
+
+<Card id="check-bill" type="check">
+Which managers cost money while nothing runs?
+
+<Interactive name="IdleBill" items={['eksCluster', 'ecsCluster', 'loadBalancer', 'iam']} ordered />
+</Card>
+
+<Card id="win" type="win">
+You can now explain what EKS runs for you, and pick between ECS and EKS.
+</Card>
+
+<Card id="deeper" type="deeper">
+EKS supports each Kubernetes version for a while. Older versions move to extended support, which costs more. Check the EKS versions page before you plan upgrades. Real rep: the [K worlds](/en/kubernetes/) use kind on your laptop. That is free practice.
+</Card>

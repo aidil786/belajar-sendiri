@@ -1,0 +1,75 @@
+---
+id: cicd-c2-l11
+world: 2
+title: SBOM and provenance in CI
+summary: "You will learn: to ship an ingredients list and a signed \"made here\" label."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, ConveyorBelt, CommandBuilder, Mission]
+needs: [cicd-c2-l10]
+scenario: c2-attest
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using artifact attestations", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations" }
+  - { label: "Artifact attestations", url: "https://docs.github.com/en/actions/concepts/security/artifact-attestations" }
+  - { label: "Docker docs: build attestations", url: "https://docs.docker.com/build/metadata/attestations/" }
+  - { label: "SLSA", url: "https://slsa.dev/" }
+---
+
+<Card id="hook" type="hook">
+A customer asks two questions. What is inside this pack? And did your kitchen really make it?
+
+<Interactive name="Choice" options={[{ label: 'An ingredients list, plus a signed "made here" label', correct: true, why: 'One answers what is inside. The other proves where it came from.' }, { label: 'A nice photo of the pack', why: 'Anyone can take a photo. It proves nothing.' }, { label: 'Just trust us', why: 'Trust is good. Proof that a computer can check is better.' }]} />
+</Card>
+
+<Card id="see-sbom" type="see">
+An **<Term id="sbom">SBOM</Term>** is the ingredients list: every package and version. Provenance says where and how the pack was made. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'sbom', label: 'SBOM (what is inside)' }, { id: 'prov', label: 'Provenance (who made it, how)' }]} items={[{ label: 'Every package and its version', bucket: 'sbom', why: 'The ingredients list.' }, { label: 'The commit that was built', bucket: 'prov', why: 'Where the recipe came from.' }, { label: 'The licence of each library', bucket: 'sbom', why: 'It sits next to each ingredient.' }, { label: 'The workflow file that built it', bucket: 'prov', why: 'Which kitchen and which belt.' }]} success="Sorted! Inside versus origin." />
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- id: push' }, { text: '  uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    push: true' }, { text: '    sbom: true' }, { text: '- uses: actions/attest@v4', target: true }, { text: '  with:' }, { text: '    subject-name: ghcr.io/${{ github.repository }}' }, { text: '    subject-digest: ${{ steps.push.outputs.digest }}' }, { text: '    push-to-registry: true' }]} prompt='Tap the line that signs the "made here" label.' success="Yes! actions/attest signs the provenance." />
+
+`sbom: true` packs the ingredients list with the image. `actions/attest` signs a <Term id="provenance">provenance</Term> statement for that exact image. It goes next to the image in GHCR.
+</Card>
+
+<Card id="try-fix" type="try">
+Press Run. Signing fails. Give the job the keys it is missing.
+
+<Interactive name="ConveyorBelt" scenario="c2-attest" task={{ type: 'green' }} fixes={[
+  { label: 'Add id-token and attestations', text: '    permissions:\n      contents: read\n      packages: write\n      id-token: write\n      attestations: write' },
+  { label: 'Add only id-token', text: '    permissions:\n      contents: read\n      packages: write\n      id-token: write', why: 'Signing works now. Saving the attestation still needs attestations: write.' },
+  { label: 'write-all', text: '    permissions: write-all', why: 'Every key for every step. Far more than it needs.', correct: false }]}
+  success="Signed and saved. Your pack has a real label." />
+
+<Hint>Two keys: one gets an ID card, one saves the label.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Why does signing need `id-token: write`?
+
+<Interactive name="Choice" options={[{ label: 'The job asks GitHub for a short-lived ID card to sign with', correct: true, why: 'No stored key to leak. The ID card proves which repo and workflow signed.' }, { label: 'To write the SBOM file', why: 'The SBOM comes from the build. This key is for signing.' }, { label: 'To log in to GHCR', why: 'GITHUB_TOKEN and packages: write handle the login.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Anyone can check the label. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'the GitHub CLI' }, { text: 'attestation', means: 'work with attestations' }, { text: 'verify', means: 'check the signed label' }, { text: 'oci://ghcr.io/you/kedai-kancil:1.2.0', means: 'the image (oci:// means a registry image)' }, { text: '-R', means: 'the repo that should have built it' }, { text: 'you/kedai-kancil', means: 'owner/repo' }]} decoys={[{ text: 'sign', means: 'make a new signature' }, { text: 'docker://ghcr.io/you/kedai-kancil:1.2.0', means: 'the wrong prefix' }]} success="That's how anyone checks your label." />
+</Card>
+
+<Card id="win" type="win">
+You can now ship an SBOM and signed provenance with every image.
+</Card>
+
+<Card id="deeper" type="deeper">
+Attestations alone reach SLSA Build Level 2. Building in a reusable workflow can reach Level 3. Public repos log signatures in Sigstore's public log. Private repos use GitHub's own Sigstore. For an SBOM file, `actions/attest` takes `sbom-path`.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="c2-l11-rep" steps={[{ id: 'perm', text: 'In a public practice repo, add id-token: write and attestations: write.' }, { id: 'attest', text: 'Add actions/attest after the push, with the image digest.' }, { id: 'verify', text: 'Push to main, then check the label.', command: 'gh attestation verify oci://ghcr.io/YOUR-NAME/YOUR-REPO:main -R YOUR-NAME/YOUR-REPO' }]} success="Your image carries proof of where it came from!" />
+</Card>

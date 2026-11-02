@@ -1,0 +1,82 @@
+---
+id: k8s-k9-l01
+world: 9
+title: Apa CKA tambah pada CKAD
+summary: "Anda akan belajar: apa yang CKA tanya selain CKAD, dan cara masuk ke dalam node."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SortCards, Choice, TimelineTap, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k1-l06]
+scenario: k9-kubelet
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Peperiksaan CKA (Linux Foundation)", url: "https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/" }
+  - { label: "Peperiksaan CKAD (Linux Foundation)", url: "https://training.linuxfoundation.org/certification/certified-kubernetes-application-developer-ckad/" }
+  - { label: "Komponen Kubernetes", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kind: mula pantas", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-notready" commands={['kubectl get nodes']} label="kubectl get nodes: dev-worker NotReady. Dua gerai lagi Ready." />
+
+Satu gerai padam: `dev-worker` NotReady. Tiada fail YAML boleh baiki ini. Seseorang mesti masuk ke belakang kaunter, ke dalam mesin itu sendiri.
+</Card>
+
+<Card id="try-sort" type="try">
+CKAD uji tukang masak: aplikasi anda. **<Term id="cka">CKA</Term>** uji pengurus bangunan: kluster itu sendiri. Susun setiap tugas.
+
+<Interactive name="SortCards" buckets={[{ id: 'both', label: 'Kedua-dua peperiksaan: kerja aplikasi' }, { id: 'cka', label: 'CKA: kluster itu sendiri' }]} items={[{ label: 'Rollout image baharu dengan Deployment', bucket: 'both', why: 'Aplikasi dan rollout ada dalam kedua-dua peperiksaan.' }, { label: 'Beri aplikasi satu Service', bucket: 'both', why: 'Service dan rangkaian ialah 20% setiap peperiksaan.' }, { label: 'Bina kluster dengan kubeadm', bucket: 'cka', why: 'Membina medan selera ialah kerja pentadbir.' }, { label: 'Pulihkan node yang NotReady', bucket: 'cka', why: 'Membaiki node ialah sebahagian Troubleshooting CKA.' }, { label: 'Naik taraf kluster satu versi', bucket: 'cka', why: 'Menjaga kluster dari masa ke masa ialah kerja pentadbir.' }, { label: 'Baiki scheduler yang rosak', bucket: 'cka', why: 'Staf pejabat ialah bahagian kluster, bukan aplikasi anda.' }]} success="Medan selera yang sama. CKA tambah pejabat belakang." />
+
+<Hint>Tanya: adakah ini tentang satu aplikasi, atau kluster itu sendiri?</Hint>
+</Card>
+
+<Card id="predict-biggest" type="predict">
+CKA ialah 2 jam tugasan praktikal pada Kubernetes 1.37. Ia ada lima bahagian. Bahagian mana paling berat?
+
+<Interactive name="Choice" options={[{ label: 'Troubleshooting (cari dan baiki masalah)', correct: true, why: 'Ya: 30%. Node rosak, bahagian rosak, rangkaian rosak.' }, { label: 'Storan', why: 'Storan bahagian paling kecil: 10%.' }, { label: 'Service dan rangkaian', why: 'Hampir! Ia 20%. Troubleshooting 30%.' }]} />
+</Card>
+
+<Card id="see-map" type="see">
+K9 ialah peta jalan anda ke pejabat belakang. Tekan setiap hentian.
+
+<Interactive name="TimelineTap" events={[{ when: 'L02–L03', title: 'Cara medan selera dibina', text: 'kubeadm membinanya. Staf pejabat berjalan daripada fail.' }, { when: 'L04–L06', title: 'Bilik belakang gerai', text: 'Penyelia, diarinya, dapur, dan tangga NotReady.' }, { when: 'L07–L08', title: 'Malam penyelenggaraan', text: 'Kosongkan gerai. Naik taraf satu versi setiap kali.' }, { when: 'L09', title: 'Peti besi', text: 'Buat sandaran buku pesanan, etcd, dan pulihkannya.' }, { when: 'L10–L11', title: 'Kunci dan lencana', text: 'Sijil yang luput, dan pengguna baharu dengan kunci sendiri.' }, { when: 'L12', title: 'Talian telefon', text: 'Baiki CoreDNS dan kube-proxy.' }]} />
+</Card>
+
+<Card id="try-inside" type="try">
+Setiap gerai ialah mesin sebenar. Masuk ke bilik belakangnya: **<Term id="node-shell">node shell</Term>**. Taip `ssh dev-worker`, kemudian `hostname`.
+
+<Interactive name="FoodCourtSim" scenario="k9-kubelet" goal={{ typed: '^(ssh dev-worker|docker exec -it dev-worker bash)$', lastTyped: '^hostname$' }} hints={['Taip ssh dev-worker dan tekan Enter.', 'Prompt kini tulis root@dev-worker. Taip hostname.']} success="Anda di dalam dev-worker. Prompt pun tunjuk begitu." />
+
+<Hint>Lihat prompt. Ia berubah bila anda di dalam node.</Hint>
+</Card>
+
+<Card id="see-kind" type="see">
+<Interactive name="KubeReplay" scenario="k9-kubelet" picture={false} commands={['docker exec -it dev-worker bash', 'hostname', 'exit']} label="docker exec -it dev-worker bash buka prompt root di dalam node. hostname cetak dev-worker. exit kembali ke laptop." />
+
+Dalam **<Term id="kind">kind</Term>**, setiap gerai ialah container Docker tanpa server SSH. Jadi anda masuk dengan `docker exec -it dev-worker bash`. Bilik belakang sama, pintu lain.
+</Card>
+
+<Card id="check-safe" type="check">
+K9 rosakkan gerai dengan sengaja. Di mana selamat untuk berlatih? Leret ke kanan untuk selamat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Kluster kind dalam laptop anda sendiri', good: true, why: 'Rosakkan, padam, buat yang baharu dalam seminit.' }, { text: 'Taman permainan CKA percuma di Killercoda', good: true, why: 'Kluster pakai buang dalam pelayar anda.' }, { text: 'Kluster sebenar syarikat anda, lewat malam', good: false, why: 'Pelanggan sebenar makan di sana. Jangan berlatih di situ.' }, { text: 'Kluster pasukan yang dikongsi, sekejap sahaja', good: false, why: 'Rakan sepasukan guna kluster itu. Ujian anda boleh rosakkan kerja mereka.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda tahu apa CKA tambah, dan boleh masuk ke dalam node.
+</Card>
+
+<Card id="deeper" type="deeper">
+Fakta peperiksaan, disemak pada 1 Nov 2026. Harga berubah: semak halaman rasmi.
+
+- Dalam talian, dengan pengawas. 2 jam. Kubernetes 1.37.
+- Troubleshooting 30%. Seni bina dan pemasangan kluster 25%.
+- Service dan rangkaian 20%. Beban kerja 15%. Storan 10%.
+- Termasuk satu cubaan semula dan dua sesi simulator.
+
+<Interactive name="Mission" id="k8s-k9-l01-real" steps={[{ id: 'where', text: 'Pastikan anda di kluster kind pakai buang, bukan kluster kerja.', command: 'kubectl config current-context' }, { id: 'in', text: 'Masuk ke dalam satu gerai.', command: 'docker exec -it dev-worker bash' }, { id: 'name', text: 'Tanya nama mesin itu.', command: 'hostname' }, { id: 'out', text: 'Keluar dari gerai.', command: 'exit' }]} success="Anda berdiri di dalam node sebenar!" />
+</Card>

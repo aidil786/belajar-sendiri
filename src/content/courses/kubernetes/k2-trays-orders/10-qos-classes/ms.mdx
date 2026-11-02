@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l10
+world: 2
+title: "Kelas QoS"
+summary: "Anda akan belajar: tiga kelas QoS, dan pod mana keluar dulu bila node kekurangan sumber."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l09]
+scenario: k2-qos
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pod Quality of Service classes", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/" }
+  - { label: "Kubernetes: Node-pressure eviction", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/" }
+---
+
+<Card id="hook" type="hook">
+Satu gerai kehabisan memori. Seseorang mesti keluar, atau semua susah. Siapa patut keluar dulu?
+
+<Interactive name="Choice" options={[{ label: 'Dulang yang tak tempah apa-apa', correct: true, why: 'Ia tak janji apa-apa dan tak dapat janji balik. Kubernetes fikir begitu juga.' }, { label: 'Dulang yang tempah tepat apa yang ia guna', why: 'Ia tepati janji. Ia patut keluar paling akhir.' }, { label: 'Pilih seorang secara rawak', why: 'Kubernetes ada susunan yang adil. Ia datang dari requests dan limits.' }]} />
+</Card>
+
+<Card id="see-classes" type="see">
+Kubernetes beri setiap pod satu **<Term id="qos-class">kelas QoS</Term>**, dikira daripada requests dan limits. Susun dulang ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'g', label: 'Guaranteed' }, { id: 'b', label: 'Burstable' }, { id: 'e', label: 'BestEffort' }]} items={[{ label: 'gold: request CPU dan memori sama dengan limit', bucket: 'g', why: 'Setiap container tempah tepat had maksimumnya. Itu Guaranteed.' }, { label: 'silver: ada requests, tiada limits', bucket: 'b', why: 'Ia tempah sesuatu, tapi tak semua ditetapkan. Burstable.' }, { label: 'bronze: tiada requests, tiada limits', bucket: 'e', why: 'Langsung tak tempah. BestEffort.' }, { label: 'Hanya limit memori, lain tiada', bucket: 'b', why: 'Ada sebahagian nombor, tapi CPU dan memori tak semua sama. Burstable.' }]} success="Siap! Semua ditetapkan: Guaranteed. Sebahagian: Burstable. Tiada: BestEffort." />
+</Card>
+
+<Card id="see-check" type="see">
+<Interactive name="KubeReplay" scenario="k2-qos" commands={['kubectl apply -f gold.yaml', 'kubectl apply -f silver.yaml', 'kubectl apply -f bronze.yaml', 'kubectl get pod gold -o jsonpath={.status.qosClass}', 'kubectl get pod silver -o jsonpath={.status.qosClass}', 'kubectl get pod bronze -o jsonpath={.status.qosClass}']} label="Tiga pod dicipta. Kelas QoS mereka ialah Guaranteed, Burstable dan BestEffort." />
+
+Anda tak pernah tulis kelas itu. Kubernetes kira dan simpan dalam status pod. `jsonpath` baca satu medan.
+</Card>
+
+<Card id="try-order" type="try">
+Memori tak cukup di satu gerai. Siapa keluar dulu? Susun mereka.
+
+<Interactive name="OrderList" items={['Pod BestEffort', 'Pod Burstable yang guna lebih daripada tempahan', 'Pod Guaranteed, paling akhir']} label="Yang keluar dulu di atas" success="Betul! Jadikan dulang penting anda Guaranteed." />
+
+<Hint>Kurang janji, keluar lebih awal.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Giliran anda. Apply `gold.yaml`. Kemudian baca kelasnya: `kubectl get pod gold -o jsonpath={.status.qosClass}`.
+
+<Interactive name="FoodCourtSim" scenario="k2-qos" goal={{ objectExists: ['pod/gold'], typed: 'qosClass' }} hints={['Taip kubectl apply -f gold.yaml', 'Taip kubectl get pod gold -o jsonpath={.status.qosClass}']} success="Guaranteed: gold keluar paling akhir." />
+
+<Hint>Salin laluan medan dengan tepat, termasuk kurungan dan titik.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Satu container minta `cpu: 100m` dan `memory: 64Mi`. Limit satu-satunya ialah `memory: 64Mi`. Kelas apa?
+
+<Interactive name="Choice" options={[{ label: 'Burstable', correct: true, why: 'Memori sama, tapi CPU tiada limit. Tak semua ditetapkan.' }, { label: 'Guaranteed', why: 'Guaranteed perlukan limit CPU juga, sama dengan request.' }, { label: 'BestEffort', why: 'Ia ada requests, jadi bukan BestEffort.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan tiga kelas QoS dan tahu siapa keluar dulu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kalau container hanya tetapkan limits, requests akan salin limits. Jadi limits CPU dan memori sahaja pun beri Guaranteed. Bila memori tak cukup, kubelet usir dulu pod yang guna lebih daripada request.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, apply tiga pod itu dan jalankan `kubectl describe pod bronze`. Cari baris QoS Class.
+</Card>

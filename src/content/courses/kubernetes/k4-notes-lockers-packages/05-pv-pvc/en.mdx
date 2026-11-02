@@ -1,0 +1,75 @@
+---
+id: k8s-k4-l05
+world: 4
+title: "Lockers: PV and PVC"
+summary: "You will learn: to ask for storage with a PVC, so data outlives the pod that wrote it."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k4-l04]
+scenario: k4-locker
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Persistent Volumes", url: "https://kubernetes.io/docs/concepts/storage/persistent-volumes/" }
+  - { label: "Configure a Pod to use a PersistentVolume", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-plain" commands={["kubectl exec cashier -- sh -c 'echo nasi lemak x2 >> /tmp/orders.txt'", 'kubectl delete pod cashier', 'kubectl apply -f cashier.yaml', 'kubectl wait --for=condition=Ready pod/cashier --timeout=60s', 'kubectl exec cashier -- cat /tmp/orders.txt']} fails={['kubectl exec cashier -- cat /tmp/orders.txt']} label="The cashier writes an order into /tmp inside its box. The pod is replaced. cat says: No such file or directory." />
+
+The cashier kept today's orders inside its box. The pod was replaced. Every order is gone. You need a locker that stays.
+</Card>
+
+<Card id="see-claim" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: PersistentVolumeClaim' }, { text: 'metadata:' }, { text: '  name: orders' }, { text: 'spec:' }, { text: '  accessModes:' }, { text: '    - ReadWriteOnce' }, { text: '  resources:' }, { text: '    requests:' }, { text: '      storage: 1Gi', target: true }]} prompt="Tap the line that says how big the locker is." success="1Gi: one gibibyte of locker space." />
+
+You fill in a locker request slip. That slip is a **<Term id="pvc">PersistentVolumeClaim</Term>** (PVC). It says how big, and how many may use it.
+</Card>
+
+<Card id="predict" type="predict">
+You apply the claim. `kubectl get pvc` says `Pending`. Why?
+
+<Interactive name="Choice" options={[{ label: 'It waits for the first pod that uses it', correct: true, why: 'This cluster builds the locker next to that pod, so it waits.' }, { label: 'The cluster is out of disk', why: 'Almost! Then you would see an error event. Pending here just means waiting.' }, { label: 'The YAML has a mistake', why: 'A broken claim is refused at apply. This one was created.' }]} />
+</Card>
+
+<Card id="try-bind" type="try">
+Apply the claim, then the cashier pod that uses it. Check the claim again.
+
+<Interactive name="FoodCourtSim" scenario="k4-locker" goal={{ podsReady: { selector: 'app=cashier', count: 1 }, lastTyped: 'get pvc' }} hints={['Type kubectl apply -f claim.yaml', 'Then: kubectl apply -f cashier.yaml', 'Last: kubectl get pvc']} success="Bound! The first user arrived, so the locker was built." />
+
+<Hint>`cat cashier.yaml` shows where the pod names the claim.</Hint>
+</Card>
+
+<Card id="see-pv" type="see">
+<Interactive name="KubeReplay" scenario="k4-locker-bound" commands={['kubectl get pvc', 'kubectl get pv']} picture={false} label="get pvc shows orders Bound to a volume named pvc- and a long id. get pv shows that volume, 1Gi, RWO, claimed by default/orders." />
+
+The slip is now `Bound` to a **<Term id="persistent-volume">PersistentVolume</Term>** (PV): the real locker. Nobody built it by hand. The next lesson shows who did.
+</Card>
+
+<Card id="try-survive" type="try">
+The cashier wrote an order into the locker. Replace the pod. Then read the orders.
+
+<Interactive name="FoodCourtSim" scenario="k4-locker-bound" intro={["kubectl exec cashier -- sh -c 'echo nasi lemak x2 >> /data/orders.txt'"]} goal={{ typed: 'delete pod cashier', podsReady: { selector: 'app=cashier', count: 1 }, lastTyped: 'cat /data/orders.txt' }} hints={['Type kubectl delete pod cashier', 'Bring it back: kubectl apply -f cashier.yaml', 'Read: kubectl exec cashier -- cat /data/orders.txt']} success="New pod, same locker. The order survived." />
+</Card>
+
+<Card id="check" type="check">
+PV or PVC? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'pvc', label: 'PVC (the slip)' }, { id: 'pv', label: 'PV (the locker)' }]} items={[{ label: 'Asks for a size and an access mode', bucket: 'pvc', why: 'The slip is the request.' }, { label: 'The real storage, with a capacity', bucket: 'pv', why: 'The locker holds the data.' }, { label: 'Your pod names it in claimName', bucket: 'pvc', why: 'Pods point at the slip, not the locker.' }, { label: 'Belongs to the whole cluster, not a namespace', bucket: 'pv', why: 'PVs are cluster-wide. PVCs live in a namespace.' }]} success="The pod holds the slip. The slip holds the locker." />
+</Card>
+
+<Card id="win" type="win">
+You can now keep data in a locker that outlives its pod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Careful: kind's `standard` class has `reclaimPolicy: Delete`. Delete the claim, and the PV and its data go too. Use `Retain` for data you must keep. While a pod uses the claim, deleting it waits. The claim shows `Terminating` until that pod is gone.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-l05-rep" steps={[{ id: 'copy', text: 'In the practice terminal above, cat claim.yaml and cashier.yaml. Save both on your machine.' }, { id: 'claim', text: 'Ask for a locker.', command: 'kubectl apply -f claim.yaml' }, { id: 'pod', text: 'Start the cashier.', command: 'kubectl apply -f cashier.yaml' }, { id: 'see', text: 'Watch the slip turn Bound.', command: 'kubectl get pvc,pv' }, { id: 'write', text: 'Write an order.', command: "kubectl exec cashier -- sh -c 'echo teh tarik >> /data/orders.txt'" }, { id: 'tidy', text: 'Tidy up. This deletes the data too.', command: 'kubectl delete -f cashier.yaml -f claim.yaml' }]} success="Your first real locker." />
+</Card>

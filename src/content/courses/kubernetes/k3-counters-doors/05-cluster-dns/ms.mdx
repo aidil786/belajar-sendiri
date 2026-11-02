@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l05
+world: 3
+title: DNS kluster
+summary: "Anda akan belajar: panggil Service ikut nama, walaupun dalam namespace lain."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, OrderList, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k3-l04]
+scenario: k3-dns
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: DNS untuk Service dan Pod", url: "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" }
+  - { label: "Kubernetes: nyahpepijat DNS", url: "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-dns" commands={['kubectl exec client -- wget -qO- -T 5 http://menu']} fails={['kubectl exec client -- wget -qO- -T 5 http://menu']} label="Client minta http://menu. wget kata: bad address 'menu'." />
+
+Menu dah pindah ke zon dapur. Sekarang client dapat `bad address 'menu'`. Maksudnya: nama itu tiada makna dalam zon ini.
+</Card>
+
+<Card id="see-name" type="see">
+Setiap Service dapat nama dalam **<Term id="cluster-dns">DNS kluster</Term>**, iaitu direktori medan selera. Susun bahagian nama penuhnya.
+
+<Interactive name="OrderList" items={['menu (Service itu)', 'kitchen (namespace tempatnya)', 'svc (ia sebuah Service)', 'cluster.local (kluster ini)']} label="Kiri ke kanan, atas dulu" success="menu.kitchen.svc.cluster.local: alamat penuh." />
+</Card>
+
+<Card id="see-search" type="see">
+<Interactive name="KubeReplay" scenario="k3-dns" commands={['kubectl exec client -- cat /etc/resolv.conf']} label="resolv.conf client: senarai carian yang bermula dengan default.svc.cluster.local, dan pelayan DNS 10.96.0.10." />
+
+Kenapa `shop` sahaja berfungsi dalam zon anda? Senarai carian pod tambah `default.svc.cluster.local` untuk anda. Zon lain perlukan namanya.
+</Card>
+
+<Card id="try-call" type="try">
+Sampai ke menu dari client. Tambah zonnya pada nama.
+
+<Interactive name="FoodCourtSim" scenario="k3-dns" namespace="all" goal={{ reachable: { url: 'http://menu.kitchen', from: 'client' }, lastTyped: 'menu\\.kitchen' }} hints={['Taip kubectl exec client -- wget -qO- -T 5 http://menu.kitchen']} success="Nasi lemak RM5! Nama Service tambah zon, berjaya." />
+
+<Hint>`http://menu.kitchen` ialah Service `menu` dalam namespace `kitchen`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pod di dalam zon dapur panggil `http://menu`. Adakah ia berfungsi?
+
+<Interactive name="Choice" options={[{ label: 'Ya: senarai cariannya bermula dengan zonnya sendiri', correct: true, why: 'Nama pendek berfungsi dalam namespace yang sama.' }, { label: 'Tidak: anda sentiasa perlukan nama penuh', why: 'Dalam zon yang sama, nama pendek sudah cukup.' }, { label: 'Hanya dari zon default', why: 'Setiap pod cari dalam zonnya sendiri dulu.' }]} />
+</Card>
+
+<Card id="check-names" type="check">
+Client tinggal dalam zon `default`. Nilai setiap alamat yang ia guna.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'http://shop', good: true, why: 'shop dalam zon yang sama. Nama pendek berfungsi.' }, { text: 'http://menu', good: false, why: 'menu tinggal dalam kitchen. Tambah zonnya.' }, { text: 'http://menu.kitchen', good: true, why: 'Service tambah zon. Pendek dan jelas.' }, { text: 'http://menu.kitchen.svc.cluster.local', good: true, why: 'Nama penuh berfungsi dari mana-mana.' }, { text: 'http://10.96.48.12', good: false, why: 'IP Service stabil, tapi Service baharu dapat IP baharu. Guna nama.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panggil mana-mana Service ikut nama, dalam mana-mana namespace.
+</Card>
+
+<Card id="deeper" type="deeper">
+Direktori itu ialah CoreDNS: pod dalam `kube-system` di belakang Service `kube-dns` pada 10.96.0.10. Nama Service headless pulangkan IP setiap pod. Kalau nama gagal di mana-mana, semak CoreDNS dulu.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l05-rep" steps={[{ id: 'dns', text: 'Cari pod direktori.', command: 'kubectl get pods -n kube-system -l k8s-app=kube-dns' }, { id: 'search', text: 'Baca senarai carian client.', command: 'kubectl exec client -- cat /etc/resolv.conf' }, { id: 'full', text: 'Panggil kedai ikut nama penuhnya.', command: 'kubectl exec client -- wget -qO- -T 5 http://shop.default.svc.cluster.local' }]} success="Anda dah baca direktori medan selera!" />
+</Card>

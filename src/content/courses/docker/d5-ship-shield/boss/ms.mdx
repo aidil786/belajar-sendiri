@@ -1,0 +1,83 @@
+---
+id: docker-d5-boss
+world: 5
+title: "Terbit dengan selamat"
+summary: "Anda akan belajar: terbitkan image bukan root dengan SBOM ke GHCR, dengan sifar lubang kritikal."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, SortCards, Transcript, CommandBuilder, Mission, MissionCheck]
+needs: [docker-d5-l09]
+scenario: d5-boss-root
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "GitHub: Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+  - { label: "Attestation binaan", url: "https://docs.docker.com/build/metadata/attestations/" }
+  - { label: "Trivy", url: "https://trivy.dev/" }
+  - { label: "Dockerfile USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-boss-root" commands={["docker run --rm kedai-api:1.0 whoami"]} label="docker run --rm kedai-api:1.0 whoami cetak root." />
+
+Boss: terbitkan API Kedai Kancil ke GHCR. Tiga peraturan: bukan root, ada SBOM, sifar lubang CRITICAL. Bilik 1 dulu: pek itu masih jalan sebagai root.
+</Card>
+
+<Card id="try-root" type="try">
+Bilik 1: tambah `USER node` di hujung resepi. Kemudian bina `kedai-api:1.0` semula.
+
+<Interactive name="KitchenSim" scenario="d5-boss-root" goal={{ imageUser: { 'kedai-api:1.0': 'nonroot' } }} hints={['Tambah satu baris di hujung Dockerfile dengan echo dan >>.', 'Taip echo "USER node" >> Dockerfile, kemudian docker build -t kedai-api:1.0 .']} success="Bilik 1 selesai! Pek itu kini jalan sebagai node." />
+
+<Hint>`echo "USER node" >> Dockerfile`, kemudian `docker build -t kedai-api:1.0 .`</Hint>
+</Card>
+
+<Card id="check-scan" type="check">
+Bilik 2: peraturan anda ialah sifar CRITICAL. Asingkan setiap penemuan daripada imbasan semalam.
+
+<Interactive name="SortCards" buckets={[{ id: 'stop', label: 'Hentikan keluaran' }, { id: 'plan', label: 'Hantar, dan rancang pembaikan' }]} items={[{ label: 'CRITICAL, pembaikan ada', bucket: 'stop', why: 'Naik taraf pakej atau base, kemudian imbas semula.' }, { label: 'CRITICAL, belum ada pembaikan', bucket: 'stop', why: 'Sifar bermaksud sifar. Tukar base, atau buang pakej itu.' }, { label: 'HIGH, pembaikan ada', bucket: 'plan', why: 'Bukan penghalang ikut peraturan anda. Baiki segera.' }, { label: 'LOW, belum ada pembaikan', bucket: 'plan', why: 'Catat. Imbas semula minggu depan.' }]} success="Bilik 2 selesai! Peraturan jelas, keputusan jelas." />
+</Card>
+
+<Card id="see-clean" type="see">
+<Interactive name="Transcript" title="bash" label="Trivy semak kedai-api:1.0 untuk lubang CRITICAL dan keluar dengan 0: tiada yang dijumpai." lines={[{ cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai-api:1.0' }, { out: '…', color: 'dim' }, { cmd: 'echo $?' }, { out: '0', color: 'green' }]} />
+
+Pek API anda, diimbas betul-betul. Kod keluar 0: sifar lubang CRITICAL. Peraturan 3 dipenuhi.
+</Card>
+
+<Card id="try-push" type="try">
+Bilik 3: hantar ke GHCR. Token GitHub anda ada dalam `$CR_PAT`. Log masuk dengannya, kemudian tag dan push.
+
+<Interactive name="KitchenSim" scenario="d5-boss-push" goal={{ pushed: ['ghcr.io/you/kedai-api:1.0'], typed: 'password-stdin' }} hints={['Log masuk: echo $CR_PAT | docker login ghcr.io -u you --password-stdin', 'Kemudian docker tag kedai-api:1.0 ghcr.io/you/kedai-api:1.0, kemudian docker push ghcr.io/you/kedai-api:1.0']} success="Bilik 3 selesai! Pek anda dalam peti sejuk GitHub." />
+
+<Hint>Log masuk dengan token dulu (`--password-stdin`), kemudian `docker tag` dan `docker push`.</Hint>
+</Card>
+
+<Card id="check-sbom" type="check">
+Bilik 4: pek itu mesti bawa senarai bahannya. Bina satu arahan yang bina, labelkan dan push.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker buildx build', means: 'bina dengan BuildKit' }, { text: '--sbom=true', means: 'tambah senarai bahan' }, { text: '-t ghcr.io/you/kedai-api:1.0', means: 'peti sejuk, pemilik, pek, label' }, { text: '--push', means: 'hantar ke GHCR' }, { text: '.', means: 'folder ini' }]} decoys={[{ text: '-t kedai-api:latest', means: 'label yang berpindah, dan tiada peti sejuk' }]} success="Semua bilik boss selesai! Sekarang buat betul-betul." />
+</Card>
+
+<Card id="mission" type="try">
+Bilik terakhir, betul-betul, dengan API Kedai Kancil anda (Misi 1).
+
+<Interactive name="Mission" id="d5-boss-real" steps={[{ id: 'pat', text: 'Buat personal access token (classic) GitHub dengan write:packages. Tampal di sini.', command: 'read -s CR_PAT && export CR_PAT' }, { id: 'login', text: 'Log masuk ke GHCR dengannya.', command: 'echo $CR_PAT | docker login ghcr.io -u YOUR-NAME --password-stdin' }, { id: 'user', text: 'Pastikan Dockerfile API ada USER node (atau pengguna bukan root lain).' }, { id: 'push', text: 'Bina dengan SBOM dan push.', command: 'docker buildx build --sbom=true --provenance=mode=max -t ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0 --push .' }, { id: 'scan', text: 'Imbas. Kemudian echo $? mesti cetak 0.', command: 'trivy image --severity CRITICAL --exit-code 1 ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0' }, { id: 'tag', text: 'Tag versi yang sama dalam Git dan push tag itu.', command: 'git tag v1.0.0 && git push origin v1.0.0' }]} success="Sudah diterbitkan! Sekarang biar GitHub sahkan apa yang ia nampak." />
+</Card>
+
+<Card id="mission-check" type="check">
+API awam GitHub boleh nampak repo dan tag anda. Ia tak nampak pakej tanpa log masuk.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo kedai-kancil anda awam' }, { type: 'tags', repo: 'kedai-kancil', min: 1, label: 'Ia ada tag versi, contohnya v1.0.0' }]} success="GitHub nampak tag keluaran anda!" />
+</Card>
+
+<Card id="self-check" type="check">
+Semak yang selebihnya sendiri.
+
+<Interactive name="Mission" id="d5-boss-self" title="Semak sendiri" steps={[{ id: 'pkg', text: 'Profil GitHub anda senaraikan pakej kedai-kancil-api.' }, { id: 'nonroot', text: 'Arahan ini cetak node, bukan baris kosong.', command: "docker inspect -f '{{.Config.User}}' ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0" }, { id: 'sbom', text: 'Arahan ini tunjuk baris attestation-manifest.', command: 'docker buildx imagetools inspect ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0' }, { id: 'zero', text: 'Imbasan Trivy tamat dengan kod keluar 0.' }]} success="Boss dikalahkan: pek yang selamat dan berlabel di GHCR!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terbitkan image yang selamat dan berlabel ke registry.
+</Card>

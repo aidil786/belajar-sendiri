@@ -1,0 +1,88 @@
+---
+id: cicd-c3-l06
+world: 3
+title: "Deploy to Cloudflare from Actions"
+summary: "You will learn: how this very site ships itself to Cloudflare, and when you need Cloudflare Containers."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, TimelineTap, Transcript, YamlBuilder, ConveyorBelt]
+needs: [cicd-c3-l05]
+scenario: c3-this-site
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Cloudflare Workers: static assets", url: "https://developers.cloudflare.com/workers/static-assets/" }
+  - { label: "Cloudflare Containers", url: "https://developers.cloudflare.com/containers/" }
+  - { label: "Containers: rollouts", url: "https://developers.cloudflare.com/containers/configuration/rollouts/" }
+---
+
+<Card id="hook" type="hook">
+This course has over 150 lessons, in two languages. After each merge, who puts them online?
+
+<Interactive name="Choice" options={[{ label: 'A robot: a deploy job in GitHub Actions', correct: true, why: 'Every push to main runs the checks, then deploys. Nobody uploads by hand.' }, { label: 'Someone, by hand, every night', why: 'People forget, and nights are for sleeping.' }, { label: 'Cloudflare guesses when to update', why: 'Cloudflare only serves what a deploy sends it.' }]} />
+</Card>
+
+<Card id="see-assets" type="see">
+This site is **<Term id="workers-static-assets">Workers static assets</Term>**: built files Cloudflare serves worldwide. Packed food on a shelf, nothing to cook. What fits where?
+
+<Interactive name="SortCards" buckets={[{ id: 'assets', label: 'Static assets' }, { id: 'container', label: 'A container' }]} items={[{ label: 'The diary site: HTML, CSS, pictures', bucket: 'assets', why: 'Plain files. No server code needed.' }, { label: "Kedai Kancil's web front end, after the build", bucket: 'assets', why: 'The build turns it into plain files.' }, { label: "Kedai Kancil's API, packed as a Docker image", bucket: 'container', why: 'It is a running server, so it needs a container.' }, { label: 'A tool that needs a full Linux box', bucket: 'container', why: 'Containers bring their own Linux.' }]} success="Sorted! Files go on the shelf. Servers need a kitchen." />
+</Card>
+
+<Card id="see-containers" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Build', text: 'Wrangler builds your Docker image. Docker must run on the runner; ubuntu-latest has it.' }, { when: '2', title: 'Push', text: "The image goes to Cloudflare's own registry." }, { when: '3', title: 'Worker first', text: 'The new Worker goes live first.' }, { when: '4', title: 'Roll out', text: 'Running containers are swapped by a rollout, not all at once.' }]} />
+
+Need a real server? **<Term id="cloudflare-containers">Cloudflare Containers</Term>** run your image behind a Worker. They are generally available since April 2026, on the Workers Paid plan. Tap how `wrangler deploy` ships one.
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="Transcript" title="bash" label="A dry run reads two files, shows the upload size, finds no bindings and stops without uploading." lines={[{ cmd: 'npx wrangler deploy --dry-run' }, { out: '⛅️ wrangler 4.156.0\n────────────────────', color: 'dim' }, { out: '✨ Read 2 files from the assets directory /home/you/kedai-kancil/dist\nTotal Upload: 0.39 KiB / gzip: 0.27 KiB\nNo bindings found.' }, { out: '--dry-run: exiting now.', color: 'green' }]} />
+
+Safe by default: dry run first. It checks your config and files, then uploads nothing.
+</Card>
+
+<Card id="try-yaml" type="try">
+Now build this site's pipeline, in short. Check everything. Deploy only from main.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'pr', 'perms', 'check', 'ready1', 'test', 'deploy', 'ready2', 'ship'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On every push', yaml: 'push:', means: 'Run for a push to any branch.' },
+  { id: 'pr', kind: 'trigger', label: 'On every pull request', yaml: 'pull_request:', means: 'Run for pull requests too.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The token can only read the code.' },
+  { id: 'check', kind: 'job', label: 'Job: check', yaml: 'check:\n  runs-on: ubuntu-latest', means: 'A runner that tests everything.' },
+  { id: 'ready1', kind: 'step', label: 'Get ready (check job)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Copy the code. Install packages.' },
+  { id: 'test', kind: 'step', label: 'Run the tests', yaml: '- run: npm test', means: 'Every test must pass.' },
+  { id: 'always', kind: 'job', label: 'Job: deploy (every event)', yaml: 'deploy:\n  needs: check\n  runs-on: ubuntu-latest', means: 'Deploy after the checks.', why: 'Then every pull request would go live. Deploy from main only.' },
+  { id: 'deploy', kind: 'job', label: 'Job: deploy (main only, never cut short)', yaml: "deploy:\n  needs: check\n  if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n  runs-on: ubuntu-latest\n  concurrency:\n    group: deploy-production\n    cancel-in-progress: false", means: 'Wait for check. Only pushes to main. Never stop a deploy halfway.' },
+  { id: 'ready2', kind: 'step', label: 'Get ready (deploy job)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'A new runner needs the code again.' },
+  { id: 'ship', kind: 'step', label: 'Build and deploy', yaml: '- run: npm run deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Build, then wrangler deploy, with keys from secrets.' }]}
+  success="That is the shape of this site's real pipeline." />
+
+<Hint>Both triggers, permissions, the check job and its steps. Then the main-only deploy job and its steps.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A pull request runs this workflow. What does the deploy job do?
+
+<Interactive name="Choice" options={[{ label: 'It is skipped', correct: true, why: 'The if says: a push to main only. A pull request is neither.' }, { label: 'It deploys the pull request', why: 'Then every idea would go live before review.' }, { label: 'It fails', why: 'A false if does not fail. The job is skipped.' }]} />
+</Card>
+
+<Card id="check-event" type="check">
+Check it on the belt. Find an event where deploy is skipped.
+
+<Interactive name="ConveyorBelt" scenario="c3-this-site" task={{ type: 'event', job: 'deploy', result: 'skipped' }} success="Skipped! Only a push to main reaches Cloudflare." />
+
+<Hint>Try the pull request, or a push to another branch.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now ship a site to Cloudflare from GitHub Actions.
+</Card>
+
+<Card id="deeper" type="deeper">
+This site's real file is `.github/workflows/ci.yml`. Its deploy job waits for two jobs: check and workflows. Containers can pull from Cloudflare's registry, Docker Hub, Amazon ECR or Google's registry. A GHCR image? Push it to Cloudflare's registry first.
+
+Real rep (optional): run `npx wrangler deploy --dry-run` in a small Worker project.
+</Card>

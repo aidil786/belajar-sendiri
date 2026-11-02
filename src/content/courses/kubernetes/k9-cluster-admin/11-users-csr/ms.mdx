@@ -1,0 +1,81 @@
+---
+id: k8s-k9-l11
+world: 9
+title: "Pengguna: CSR, sijil dan kubeconfig"
+summary: "Anda akan belajar: cara orang baharu dapat kad pengenalan bertandatangan, dan kenapa mereka masih perlukan hak RBAC."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, CommandBuilder, YamlPlayground, FoodCourtSim, SortCards, OrderList, Mission]
+needs: [k8s-k9-l10]
+scenario: k9-users
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: issue a certificate for an API client (CSR)", url: "https://kubernetes.io/docs/tasks/tls/certificate-issue-client-csr/" }
+  - { label: "Kubernetes: certificates and certificate signing requests", url: "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/" }
+  - { label: "Kubernetes: authenticating (X509 client certificates)", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/" }
+  - { label: "kubectl certificate approve", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_certificate/kubectl_certificate_approve/" }
+---
+
+<Card id="hook" type="hook">
+Aina sertai pasukan dapur. Di mana anda tambah dia sebagai pengguna Kubernetes?
+
+<Interactive name="Choice" options={[{ label: 'Tiada tempat: dia tunjuk kad pengenalan bertandatangan dengan namanya', correct: true, why: 'Kubernetes tak simpan objek User. Sijil bertandatangan yang menamakan dia.' }, { label: 'kubectl create user aina', why: 'Arahan itu tiada. Pengguna bukan objek.' }, { label: 'Dalam Secret', why: 'Secret simpan data untuk aplikasi, bukan orang.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Kunci rahsia', text: 'Aina buat kunci di laptopnya. Ia tak pernah keluar dari situ.' }, { when: '2', title: 'Permohonan', text: 'Dari kunci itu dia buat permohonan: CN=aina, O=kitchen.' }, { when: '3', title: 'Objek CSR', text: 'Anda masukkan permohonan itu ke dalam CertificateSigningRequest.' }, { when: '4', title: 'Lulus', text: 'Admin jalankan kubectl certificate approve aina.' }, { when: '5', title: 'Kad', text: 'Pejabat tandatangan. Aina dapat aina.crt.' }, { when: '6', title: 'Hak', text: 'RBAC tentukan apa yang dia boleh buat.' }]} />
+
+Ketik setiap langkah lencana staf baharu. **<Term id="csr">CSR</Term>** ialah borang yang minta pejabat tandatangan lencana itu.
+</Card>
+
+<Card id="try-build" type="try">
+Bina permohonan Aina. CN ialah namanya. O ialah pasukannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'openssl', means: 'alat sijil' }, { text: 'req', means: 'buat permohonan' }, { text: '-new', means: 'yang baharu' }, { text: '-key aina.key', means: 'dari kunci rahsianya' }, { text: '-out aina.csr', means: 'simpan permohonan di sini' }, { text: '-subj "/CN=aina/O=kitchen"', means: 'nama aina, pasukan kitchen' }]} decoys={[{ text: '-x509', means: 'tandatangan sendiri: bukan permohonan' }, { text: '-subj "/CN=kitchen/O=aina"', means: 'nama dan pasukan tertukar' }]} success="Itulah permohonannya. Kunci itu kekal di laptopnya." />
+</Card>
+
+<Card id="try-yaml" type="try">
+CSR ini minta kad untuk server. Aina log masuk sebagai klien. Baiki usage-nya.
+
+<Interactive name="YamlPlayground" file="aina-csr.yaml" initial={'apiVersion: certificates.k8s.io/v1\nkind: CertificateSigningRequest\nmetadata:\n  name: aina\nspec:\n  # base64 of aina.csr (shortened here)\n  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K\n  signerName: kubernetes.io/kube-apiserver-client\n  expirationSeconds: 86400\n  usages:\n    - server auth\n'} expect={[{ path: 'spec.usages', type: 'list', count: 1, includes: 'client auth', hint: 'Tukar server auth kepada client auth.' }, { path: 'spec.signerName', type: 'text', equals: 'kubernetes.io/kube-apiserver-client', hint: 'Kekalkan signerName seperti asal.' }]} solution={'apiVersion: certificates.k8s.io/v1\nkind: CertificateSigningRequest\nmetadata:\n  name: aina\nspec:\n  # base64 of aina.csr (shortened here)\n  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K\n  signerName: kubernetes.io/kube-apiserver-client\n  expirationSeconds: 86400\n  usages:\n    - client auth\n'} hint="Orang yang log masuk ialah klien." success="Betul. Untuk pengguna, usages ialah client auth." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `kubectl certificate approve aina`. Dia log masuk dengan kad baharunya. Bolehkah dia senaraikan dulang?
+
+<Interactive name="Choice" options={[{ label: 'Belum: tiada siapa beri dia hak', correct: true, why: 'Kad itu buktikan siapa dia. RBAC tentukan apa dia boleh buat.' }, { label: 'Boleh, kelulusan beri akses penuh', why: 'Kelulusan cuma tandatangan lencananya. Hak datang dari RBAC.' }, { label: 'Hanya dalam kube-system', why: 'Dia belum ada hak di mana-mana.' }]} />
+</Card>
+
+<Card id="try-rbac" type="try">
+Role cook (baca dulang) sudah ada. Ikat ia kepada pengguna aina. Kemudian tanya sebagai dia.
+
+<Interactive name="FoodCourtSim" scenario="k9-users" intro={['kubectl create role cook --verb=get --verb=list --resource=pods']} goal={{ canI: [{ verb: 'list', resource: 'pods', as: 'aina', allowed: true }, { verb: 'delete', resource: 'pods', as: 'aina', allowed: false }], typed: 'auth can-i .*--as=aina' }} hints={['Taip kubectl create rolebinding cook-aina --role=cook --user=aina', 'Tanya sebagai dia: kubectl auth can-i list pods --as=aina']} success="Aina boleh baca dulang. Dia tak boleh padamnya." />
+
+<Hint>`--user=aina` mesti sama tepat dengan CN dalam kadnya.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Siapa anda, atau apa yang anda boleh buat? Susun ikut kumpulan.
+
+<Interactive name="SortCards" buckets={[{ id: 'who', label: 'Siapa anda? (kad itu)' }, { id: 'may', label: 'Apa anda boleh buat? (RBAC)' }]} items={[{ label: 'CN=aina dalam sijilnya', bucket: 'who', why: 'CN jadi nama penggunanya.' }, { label: 'O=kitchen dalam sijilnya', bucket: 'who', why: 'O jadi kumpulan yang dia sertai.' }, { label: 'Role yang boleh get dan list pod', bucket: 'may', why: 'Senarai tindakan yang dibenarkan.' }, { label: 'RoleBinding untuk kumpulan kitchen', bucket: 'may', why: 'Ia beri Role itu kepada setiap tukang masak serentak.' }]} success="Siap! Kad itu menamakan dia. RBAC tetapkan haknya." />
+</Card>
+
+<Card id="check-kubeconfig" type="check">
+Kad Aina sudah ditandatangan. Susun langkah kubeconfig-nya ikut urutan.
+
+<Interactive name="OrderList" items={['kubectl get csr aina -o jsonpath=\'{.status.certificate}\' | base64 -d > aina.crt', 'kubectl config set-credentials aina --client-key=aina.key --client-certificate=aina.crt --embed-certs=true', 'kubectl config set-context aina --cluster=kind-dev --user=aina', 'kubectl --context aina auth whoami']} label="Langkah pertama di atas" success="Kad dikeluarkan, kad dimasukkan, context dibuat, kemudian semak siapa anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tandatangan kad pengguna baharu dan beri hak yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+`expirationSeconds: 86400` minta kad untuk sehari. Paling singkat 10 minit. Terminal latihan kami tiada objek CSR, jadi buat bahagian ini pada kind. Jangan kongsi atau commit fail `.key`.
+
+<Interactive name="Mission" id="k8s-k9-l11-real" steps={[{ id: 'key', text: 'Di laptop anda, buat kunci.', command: 'openssl genrsa -out aina.key 3072' }, { id: 'req', text: 'Buat permohonan.', command: 'openssl req -new -key aina.key -out aina.csr -subj "/CN=aina/O=kitchen"' }, { id: 'b64', text: 'Tukar jadi satu baris base64 untuk request: dalam YAML anda.', command: 'cat aina.csr | base64 | tr -d "\\n"' }, { id: 'apply', text: 'Apply CSR itu pada kluster kind latihan, kemudian luluskan.', command: 'kubectl apply -f aina-csr.yaml && kubectl certificate approve aina' }, { id: 'look', text: 'Baca lajur CONDITION.', command: 'kubectl get csr aina' }]} success="Kluster sebenar tandatangan kad pengguna sebenar!" />
+</Card>

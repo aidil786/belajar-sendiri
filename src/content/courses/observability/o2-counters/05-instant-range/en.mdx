@@ -1,0 +1,70 @@
+---
+id: obs-o2-l05
+world: 2
+title: Instant and range vectors
+summary: "You will learn: the difference between one value now and a window of values, and which one functions need."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, SortCards, Transcript, Mission]
+needs: [obs-o2-l04]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: querying basics", url: "https://prometheus.io/docs/prometheus/latest/querying/basics/" }
+  - { label: "Prometheus: HTTP API", url: "https://prometheus.io/docs/prometheus/latest/querying/api/" }
+  - { label: "Prometheus 3 migration guide", url: "https://prometheus.io/docs/prometheus/latest/migration/" }
+---
+
+<Card id="hook" type="hook">
+Two questions: “How many customers wait now?” and “What was the most in the last 10 minutes?” Same kind of answer?
+
+<Interactive name="Choice" options={[{ label: 'No. One number now, versus many numbers over time.', correct: true, why: 'Yes. The second question needs a window of values.' }, { label: 'Yes. Both are one number.', why: 'The answer is one number, but you need many values to find it.' }, { label: 'Prometheus cannot answer the second', why: 'It can. It keeps the old values.' }]} />
+</Card>
+
+<Card id="try-range" type="try">
+One value per series, right now, is an **<Term id="instant-vector">instant vector</Term>**. Ask for a window instead.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_customers_waiting']} initial="kedai_customers_waiting" prompt="Add [5m] right after the name, then Run. Count the samples in each row." goal={{ resultType: 'matrix', resultCount: 2 }} hints={['Type [5m] at the end: kedai_customers_waiting[5m]']} solution="kedai_customers_waiting[5m]" success="Each row now holds a list of samples, with their times." />
+</Card>
+
+<Card id="predict" type="predict">
+That window is a **<Term id="range-vector">range vector</Term>**. Prometheus scrapes every 1m here. How many samples are in `[5m]`?
+
+<Interactive name="Choice" options={[{ label: '5', correct: true, why: 'Yes. In Prometheus 3 the window leaves out the sample exactly 5 minutes ago.' }, { label: '6', why: 'Close! Prometheus 3 windows leave out the very first edge, so 5.' }, { label: '300', why: '300 is the seconds. Samples come once a minute.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Run it and read the red message. Then fix it.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_customers_waiting']} initial="max_over_time(kedai_customers_waiting)" prompt="Find the most customers waiting in the last 10 minutes." goal={{ usesFunction: ['max_over_time'], resultType: 'vector', resultCount: 2 }} hints={['The function wants a window. Add [10m] after the name, inside the brackets.']} solution="max_over_time(kedai_customers_waiting[10m])" success="12 at nasi lemak, 4 at roti canai. Range in, one number out." />
+
+<Hint>`expected type range vector` in plain words: give it a window, like `[10m]`.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Instant or range? Sort each query.
+
+<Interactive name="SortCards" buckets={[{ id: 'instant', label: 'Instant vector' }, { id: 'range', label: 'Range vector' }]} items={[{ label: '`kedai_customers_waiting`', bucket: 'instant', why: 'One value per series.' }, { label: '`kedai_customers_waiting[5m]`', bucket: 'range', why: 'A window of samples.' }, { label: '`kedai_orders_total{stall="cendol"}`', bucket: 'instant', why: 'A filter still gives one value each.' }, { label: '`kedai_orders_total{stall="cendol"}[1h]`', bucket: 'range', why: 'An hour of samples.' }, { label: '`max_over_time(kedai_customers_waiting[10m])`', bucket: 'instant', why: 'The function turns the window back into one value.' }]} success="Square brackets make a window. Functions turn it back." />
+</Card>
+
+<Card id="check" type="check">
+Can the graph draw `kedai_customers_waiting[5m]`?
+
+<Interactive name="Choice" options={[{ label: 'No. A graph needs one value per step. The table shows the samples.', correct: true, why: 'Yes. Graphs draw instant vectors, step by step.' }, { label: 'Yes, as five lines', why: 'A graph point needs one value. A window holds many.' }, { label: 'Only on Grafana', why: 'Grafana graphs need instant vectors too.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell instant vectors from range vectors and fix a missing window.
+</Card>
+
+<Card id="deeper" type="deeper">
+An instant query looks back up to 5 minutes for the newest sample. Prometheus 3 made windows left-open: `(now − 5m, now]`. The HTTP API names the type too. This answer is real:
+
+<Interactive name="Transcript" title="bash" label="The query API answers up as JSON. resultType is vector, with one value per target." lines={[{ cmd: "curl -s 'localhost:9090/api/v1/query?query=up'" }, { out: '{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","instance":"node-exporter:9100","job":"node"},"value":[1793537441.393,"1"]},{"metric":{"__name__":"up","instance":"localhost:9090","job":"prometheus"},"value":[1793537441.393,"1"]}]}}' }]} />
+
+<Interactive name="Mission" id="obs-o2-l05-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack.', command: 'docker compose up -d' }, { id: 'api', text: 'Ask the API for up. Find resultType.', command: "curl -s 'localhost:9090/api/v1/query?query=up'" }, { id: 'range', text: 'In the query page, run node_load1[1m] and look at the table. With 15 s scrapes you see about 4 samples.' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="Instant and range, on a real Prometheus." />
+</Card>

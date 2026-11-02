@@ -1,0 +1,78 @@
+---
+id: k8s-k9-l07
+world: 9
+title: Cordon, drain, uncordon
+summary: "You will learn: how an admin empties a stall for repairs, and what drain will not move."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, SpotLines, SortCards, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l06]
+scenario: k9-drain
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: safely drain a node", url: "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/" }
+  - { label: "kubectl drain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/" }
+  - { label: "kubectl cordon", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cordon/" }
+---
+
+<Card id="hook" type="hook">
+Tonight the electrician rewires stall dev-worker. Two shop trays sit there. What do you do before the power goes off?
+
+<Interactive name="Choice" options={[{ label: 'Stop new trays coming, then move the old ones', correct: true, why: 'Yes. The shop keeps serving from the other stalls.' }, { label: 'Switch the stall off and hope', why: 'Its trays vanish at once. Kubernetes waits 5 minutes before it replaces them.' }, { label: 'Delete the shop Deployment', why: 'Then every tray goes, on every stall.' }]} />
+</Card>
+
+<Card id="see-cordon" type="see">
+<Interactive name="KubeReplay" scenario="k9-drain" commands={['kubectl cordon dev-worker', 'kubectl get nodes']} label="kubectl cordon prints node/dev-worker cordoned. kubectl get nodes shows dev-worker as Ready,SchedulingDisabled." />
+
+A **<Term id="cordon">cordon</Term>** is the “no new orders” sign on a stall. New trays go elsewhere. Trays already there keep serving.
+</Card>
+
+<Card id="try-error" type="try">
+**<Term id="drain">Drain</Term>** puts up the sign, then moves every tray away. Without flags, it stops. Tap the line that names the fix.
+
+<Interactive name="SpotLines" prompt="Tap the line that names the fix." lines={[{ text: 'node/dev-worker cordoned' }, { text: 'error: unable to drain node "dev-worker" due to error: cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/kindnet-nbg2q, kube-system/kube-proxy-tlh9j, continuing command...', target: true }, { text: 'There are pending nodes to be drained:' }, { text: ' dev-worker' }]} success="Yes: --ignore-daemonsets. Those trays belong to every stall." />
+
+Plain words: kube-proxy and kindnet live on every stall. They cannot move.
+
+<Hint>Look for the words in brackets: “use … to ignore”.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Drain treats trays differently. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'move', label: 'Moves to another stall' }, { id: 'stay', label: 'Stays: every stall has one' }, { id: 'force', label: 'Needs --force: nobody remakes it' }]} items={[{ label: 'A shop tray (Deployment)', bucket: 'move', why: 'Its ReplicaSet makes a new tray on another stall.' }, { label: 'A CoreDNS tray (Deployment)', bucket: 'move', why: 'Also owned by a Deployment, so it is made again elsewhere.' }, { label: 'kube-proxy (DaemonSet)', bucket: 'stay', why: 'A DaemonSet runs one per stall. --ignore-daemonsets leaves it.' }, { label: 'kindnet (DaemonSet)', bucket: 'stay', why: 'The stall’s own wiring. It stays with the stall.' }, { label: 'A tray from kubectl run', bucket: 'force', why: 'No owner. --force deletes it, and it does not come back.' }]} success="Sorted! Owners decide what happens to a tray." />
+</Card>
+
+<Card id="try-drain" type="try">
+Empty stall dev-worker for the electrician. A drain moves trays, so the danger badge shows.
+
+<Interactive name="FoodCourtSim" scenario="k9-drain" goal={{ typed: '^(kubectl|k) drain dev-worker .*--ignore-daemonsets', nodeCordoned: { name: 'dev-worker', cordoned: true }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Type kubectl drain dev-worker --ignore-daemonsets', 'Let the clock run until 3 shop trays are ready again.', 'kubectl get pods -o wide shows where they went.']} success="Stall empty. The shop still serves with 3 trays." />
+
+<Hint>`kubectl drain dev-worker --ignore-daemonsets`. Then let the clock run.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Repairs done. You type `kubectl uncordon dev-worker`. Where do the two moved trays go?
+
+<Interactive name="Choice" options={[{ label: 'They stay where they are now', correct: true, why: 'Uncordon only takes the sign down. New trays may land there later.' }, { label: 'Back to dev-worker at once', why: 'Kubernetes does not move running trays back by itself.' }, { label: 'They restart', why: 'Nothing restarts. The sign just comes down.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put a stall’s repair night in order.
+
+<Interactive name="OrderList" items={['kubectl get pdb -A (any budgets?)', 'kubectl drain dev-worker --ignore-daemonsets', 'Repair the stall', 'kubectl uncordon dev-worker', 'kubectl get nodes (Ready, no SchedulingDisabled)']} label="First step at the top" success="That is the admin routine. One stall at a time." />
+</Card>
+
+<Card id="win" type="win">
+You can now empty a stall for repairs and open it again.
+</Card>
+
+<Card id="deeper" type="deeper">
+Trays with an `emptyDir` need `--delete-emptydir-data`: that scratch data is lost. A PodDisruptionBudget makes drain wait its turn ([K5](/en/kubernetes/#world-5)). Drain cordons first, even when it then stops.
+
+<Interactive name="Mission" id="k8s-k9-l07-real" steps={[{ id: 'order', text: 'On a throwaway kind cluster with workers, order 3 trays.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'drain', text: 'Drain one worker. Read every line it prints.', command: 'kubectl drain <worker-name> --ignore-daemonsets' }, { id: 'look', text: 'See where the trays went.', command: 'kubectl get pods -o wide' }, { id: 'open', text: 'Open the stall again.', command: 'kubectl uncordon <worker-name>' }]} success="You emptied and reopened a real stall!" />
+</Card>

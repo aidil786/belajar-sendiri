@@ -1,0 +1,445 @@
+# Docker rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Ship It Rescue Center (/<lang>/ship-it/rescue/) lists them under Part 1.
+# Flow ids must be unique across docker, cicd and kubernetes: one page, one #<flow-id> link each.
+# A "command" may be a shell command or a short Dockerfile / YAML snippet (shown as written).
+# Checked 2026-10-31 on Docker Engine 29.9.2: the errors quoted here are the real ones, and the
+# docker commands ran on a real daemon (the main ones are verify lists in scenarios/d6.ts, id d6-rescue).
+# Facts: docs.docker.com (resource constraints, volumes, networking, build secrets, multi-platform,
+# Docker Hub pull limits, pruning).
+flows:
+  - id: docker-exits-right-away
+    title: { en: "My container stops right after it starts", ms: "Container saya berhenti sejurus selepas bermula" }
+    start: code
+    steps:
+      - id: code
+        question: { en: "Run docker ps -a. What does STATUS say?", ms: "Jalankan docker ps -a. Apa tulisan STATUS?" }
+        answers:
+          - { label: { en: "Exited (0)", ms: "Exited (0)" }, next: r-zero }
+          - { label: { en: "Exited (137)", ms: "Exited (137)" }, next: r-137 }
+          - { label: { en: "Exited (1), or another number", ms: "Exited (1), atau nombor lain" }, next: logs }
+      - id: logs
+        question: { en: "Run docker logs with its name. What do the last lines say?", ms: "Jalankan docker logs dengan namanya. Apa kata baris terakhir?" }
+        answers:
+          - { label: { en: "A setting or password is missing", ms: "Ada tetapan atau kata laluan yang tiada" }, next: r-env }
+          - { label: { en: "A file or module can't be found", ms: "Satu fail atau modul tak dijumpai" }, next: r-missing }
+          - { label: { en: "Nothing at all", ms: "Langsung tiada apa-apa" }, next: r-empty }
+      - id: r-zero
+        result:
+          text: { en: "Code 0 means the main program finished its job. A container lives only while its main program runs. A plain image like alpine has nothing to do, so it stops at once.", ms: "Kod 0 maksudnya program utama dah habis kerja. Container hidup selagi program utamanya berjalan. Image kosong seperti alpine tiada kerja, jadi ia terus berhenti." }
+          commands:
+            - { command: "docker ps -a", en: "List every container, stopped ones too, with the exit code.", ms: "Senaraikan semua container, termasuk yang berhenti, dengan kod keluar." }
+            - { command: "docker run -d --name web nginx:1.30-alpine", en: "A server keeps running. Start your app's server, not a one-off command.", ms: "Server terus berjalan. Mulakan server aplikasi anda, bukan arahan sekali jalan." }
+            - { command: "docker run -it --rm alpine:3.22 sh", en: "To look around a plain image, open a shell. Type exit to leave.", ms: "Untuk tengok isi image kosong, buka shell. Taip exit untuk keluar." }
+          danger: safe
+          lesson: docker-d1-l04
+      - id: r-137
+        result:
+          text: { en: "137 means the kernel killed it. Often it went over its memory cap: OOMKilled. Check, then give it more memory or fix the leak.", ms: "137 maksudnya kernel bunuh proses itu. Selalunya ia melebihi had memori: OOMKilled. Semak, kemudian beri lebih memori atau baiki kebocoran." }
+          commands:
+            - { command: "docker inspect -f '{{.State.OOMKilled}}' web", en: "true means it hit its memory cap. Use your container's name.", ms: "true maksudnya ia sampai had memori. Guna nama container anda." }
+            - { command: "docker stats --no-stream", en: "See how much memory each running box uses now.", ms: "Lihat berapa banyak memori setiap bekas guna sekarang." }
+            - { command: "docker run -d --name web2 --memory 512m myapp:1.0", en: "Run it again with a bigger cap. Pick your own number.", ms: "Jalankan semula dengan had lebih besar. Pilih nombor anda sendiri." }
+          danger: safe
+          lesson: docker-d6-l03
+      - id: r-env
+        result:
+          text: { en: "The app needs a setting you didn't pass. The logs usually name it. Remove the stopped box, then run it again with -e.", ms: "Aplikasi perlukan tetapan yang anda tak beri. Log biasanya sebut namanya. Buang bekas yang berhenti, kemudian jalankan semula dengan -e." }
+          commands:
+            - { command: "docker logs db", en: "Read what it says is missing.", ms: "Baca apa yang ia kata tiada." }
+            - { command: "docker rm db", en: "Remove the stopped box, so the name is free.", ms: "Buang bekas yang berhenti, supaya nama itu bebas." }
+            - { command: "docker run -d --name db -e POSTGRES_PASSWORD=change-me postgres:18-alpine", en: "Example: Postgres needs a password. Use your own value.", ms: "Contoh: Postgres perlukan kata laluan. Guna nilai anda sendiri." }
+          danger: safe
+          lesson: docker-d1-l08
+      - id: r-missing
+        result:
+          text: { en: "A file or package is not in the image. Open a shell in the image and look. Then fix the recipe and build again.", ms: "Satu fail atau pakej tiada dalam image. Buka shell dalam image dan tengok. Kemudian baiki resepi dan bina semula." }
+          commands:
+            - { command: "docker run --rm -it --entrypoint sh myapp:1.0", en: "Start a shell instead of the app. Look around with ls.", ms: "Mulakan shell, bukan aplikasi. Tengok dengan ls." }
+            - { command: "docker build -t myapp:1.0 .", en: "Build again after you fix the Dockerfile or .dockerignore.", ms: "Bina semula selepas anda baiki Dockerfile atau .dockerignore." }
+          danger: safe
+          lesson: docker-d2-l05
+      - id: r-empty
+        result:
+          text: { en: "No logs often means it wrote nothing, or Python held its output back. Run it in the front to watch it start.", ms: "Tiada log selalunya bermaksud ia tak tulis apa-apa, atau Python tahan outputnya. Jalankan di depan untuk tengok ia bermula." }
+          commands:
+            - { command: "docker run --rm -it myapp:1.0", en: "Run in the foreground and watch every line.", ms: "Jalankan di depan dan tengok setiap baris." }
+            - { command: "ENV PYTHONUNBUFFERED=1", en: "Python apps: add this line to the Dockerfile, so logs appear at once.", ms: "Aplikasi Python: tambah baris ini dalam Dockerfile, supaya log terus keluar." }
+          danger: safe
+          lesson: docker-d1-l05
+
+  - id: docker-port-allocated
+    title: { en: "\"port is already allocated\"", ms: "\"port is already allocated\" (port sudah dipakai)" }
+    start: error
+    steps:
+      - id: error
+        question: { en: "How does the error end?", ms: "Bagaimana ralat itu berakhir?" }
+        answers:
+          - { label: { en: "port is already allocated", ms: "port is already allocated" }, next: r-container }
+          - { label: { en: "address already in use", ms: "address already in use" }, next: r-program }
+      - id: r-container
+        result:
+          text: { en: "Another container already holds that laptop port. One hatch, one container. The failed box stays behind as Created, so remove it too.", ms: "Container lain dah pegang port laptop itu. Satu tingkap, satu container. Bekas yang gagal tinggal sebagai Created, jadi buang juga." }
+          commands:
+            - { command: "docker ps --filter publish=8080", en: "Which container holds port 8080?", ms: "Container mana yang pegang port 8080?" }
+            - { command: "docker rm web2", en: "Remove the half-made box that failed.", ms: "Buang bekas separuh siap yang gagal." }
+            - { command: "docker run -d --name web2 -p 8081:80 nginx:1.30-alpine", en: "Use another laptop port. The port inside stays 80.", ms: "Guna port laptop lain. Port di dalam kekal 80." }
+          danger: safe
+          lesson: docker-d1-l07
+      - id: r-program
+        result:
+          text: { en: "A program that isn't a container holds the port. Find it and close it, or pick another laptop port.", ms: "Satu program yang bukan container pegang port itu. Cari dan tutupnya, atau pilih port laptop lain." }
+          commands:
+            - { command: "sudo ss -ltnp | grep :8080", en: "Linux: which program listens on 8080?", ms: "Linux: program mana yang dengar port 8080?" }
+            - { command: "lsof -nP -iTCP:8080 -sTCP:LISTEN", en: "Mac: the same question.", ms: "Mac: soalan yang sama." }
+            - { command: "netstat -ano | findstr :8080", en: "Windows: find the PID, then close that app.", ms: "Windows: cari PID, kemudian tutup aplikasi itu." }
+            - { command: "docker run -d --name web -p 8081:80 nginx:1.30-alpine", en: "Or just use a free port.", ms: "Atau guna sahaja port yang bebas." }
+          danger: safe
+          lesson: docker-d1-l07
+
+  - id: docker-localhost-unreachable
+    title: { en: "My app runs, but localhost can't reach it", ms: "Aplikasi berjalan, tapi localhost tak dapat sampai" }
+    start: ports
+    steps:
+      - id: ports
+        question: { en: "Does docker ps show a PORTS entry like 0.0.0.0:8080->3000/tcp?", ms: "Adakah docker ps tunjuk PORTS seperti 0.0.0.0:8080->3000/tcp?" }
+        answers:
+          - { label: { en: "No, PORTS is empty", ms: "Tidak, PORTS kosong" }, next: r-publish }
+          - { label: { en: "Yes", ms: "Ya" }, next: curl }
+      - id: curl
+        question: { en: "What does curl localhost:8080 say?", ms: "Apa kata curl localhost:8080?" }
+        answers:
+          - { label: { en: "Connection reset by peer, or an empty reply", ms: "Connection reset by peer, atau jawapan kosong" }, next: listen }
+          - { label: { en: "Connection refused", ms: "Connection refused" }, next: r-publish }
+      - id: listen
+        question: { en: "Run docker logs. Where does the app say it listens?", ms: "Jalankan docker logs. Di mana aplikasi kata ia mendengar?" }
+        answers:
+          - { label: { en: "On 127.0.0.1 or localhost", ms: "Pada 127.0.0.1 atau localhost" }, next: r-bind }
+          - { label: { en: "On another port than I mapped", ms: "Pada port lain daripada yang saya petakan" }, next: r-port }
+          - { label: { en: "It doesn't say", ms: "Ia tak sebut" }, next: r-check }
+      - id: r-publish
+        result:
+          text: { en: "No hatch is open on that laptop port. EXPOSE alone doesn't open one. Start the box again with -p laptop:inside.", ms: "Tiada tingkap dibuka pada port laptop itu. EXPOSE sahaja tak membukanya. Mulakan semula bekas dengan -p laptop:dalam." }
+          commands:
+            - { command: "docker rm -f web", en: "Remove the box. Its own top layer goes with it.", ms: "Buang bekas itu. Lapisan atasnya hilang bersama." }
+            - { command: "docker run -d --name web -p 8080:3000 myapp:1.0", en: "Laptop port 8080 to the app's port 3000 inside.", ms: "Port laptop 8080 ke port aplikasi 3000 di dalam." }
+            - { command: "docker port web", en: "Check the hatch.", ms: "Semak tingkap itu." }
+          danger: careful
+          lesson: docker-d1-l07
+      - id: r-bind
+        result:
+          text: { en: "Inside a box, 127.0.0.1 means the box itself. The hatch knocks on the box's network card, so nobody answers. Make the app listen on 0.0.0.0.", ms: "Dalam bekas, 127.0.0.1 maksudnya bekas itu sendiri. Tingkap ketuk kad rangkaian bekas, jadi tiada siapa jawab. Buat aplikasi dengar pada 0.0.0.0." }
+          commands:
+            - { command: "python -m http.server 8000 --bind 0.0.0.0", en: "Python's test server.", ms: "Server ujian Python." }
+            - { command: "flask run --host=0.0.0.0", en: "Flask.", ms: "Flask." }
+            - { command: "npx vite --host 0.0.0.0", en: "The Vite dev server.", ms: "Server dev Vite." }
+            - { command: "app.listen(3000, '0.0.0.0')", en: "Node with Express: the line in your code.", ms: "Node dengan Express: baris dalam kod anda." }
+          danger: safe
+          lesson: docker-d3-l07
+      - id: r-port
+        result:
+          text: { en: "The hatch points at the wrong port inside. Map to the port the app really uses.", ms: "Tingkap itu tuju port yang salah di dalam. Petakan ke port yang aplikasi betul-betul guna." }
+          commands:
+            - { command: "docker port web", en: "See where the hatch points now.", ms: "Lihat ke mana tingkap itu tuju sekarang." }
+            - { command: "docker rm -f web", en: "Remove the box.", ms: "Buang bekas itu." }
+            - { command: "docker run -d --name web -p 8080:3000 myapp:1.0", en: "Point at the app's real port (here 3000).", ms: "Tuju ke port sebenar aplikasi (di sini 3000)." }
+          danger: careful
+          lesson: docker-d1-l07
+      - id: r-check
+        result:
+          text: { en: "Ask the app from inside the box first. If that works, the app is fine, and the hatch or address is the problem.", ms: "Tanya aplikasi dari dalam bekas dulu. Jika berjaya, aplikasi okey, dan masalahnya pada tingkap atau alamat." }
+          commands:
+            - { command: "docker exec web wget -qO- localhost:3000", en: "Alpine images: fetch the page from inside. Use your app's port.", ms: "Image Alpine: ambil halaman dari dalam. Guna port aplikasi anda." }
+            - { command: "docker logs web", en: "Many apps print the address they listen on.", ms: "Banyak aplikasi cetak alamat yang mereka dengar." }
+          danger: safe
+          lesson: docker-d1-l06
+
+  - id: docker-exec-format-error
+    title: { en: "\"exec format error\"", ms: "\"exec format error\" (jenis CPU salah)" }
+    start: where
+    steps:
+      - id: where
+        question: { en: "Where was the image built, and where does it run?", ms: "Di mana image itu dibina, dan di mana ia berjalan?" }
+        answers:
+          - { label: { en: "Built on an Apple silicon Mac, runs on a normal PC or server", ms: "Dibina pada Mac Apple silicon, berjalan pada PC atau server biasa" }, next: r-amd64 }
+          - { label: { en: "Built on a PC or server, runs on Apple silicon or a Raspberry Pi", ms: "Dibina pada PC atau server, berjalan pada Apple silicon atau Raspberry Pi" }, next: r-arm64 }
+          - { label: { en: "Not sure", ms: "Tak pasti" }, next: r-check }
+      - id: r-check
+        result:
+          text: { en: "The image was built for another CPU type. Compare the image with the machine.", ms: "Image itu dibina untuk jenis CPU lain. Banding image dengan mesin." }
+          commands:
+            - { command: "docker image inspect -f '{{.Os}}/{{.Architecture}}' myapp:1.0", en: "The image's CPU type, like linux/arm64.", ms: "Jenis CPU image, contohnya linux/arm64." }
+            - { command: "uname -m", en: "The machine's: x86_64 means amd64, aarch64 means arm64.", ms: "Jenis CPU mesin: x86_64 maksudnya amd64, aarch64 maksudnya arm64." }
+          danger: safe
+          lesson: docker-d2-l13
+      - id: r-amd64
+        result:
+          text: { en: "Build for the server's CPU, amd64. Or build both types into one tag.", ms: "Bina untuk CPU server, amd64. Atau bina kedua-dua jenis dalam satu tag." }
+          commands:
+            - { command: "docker buildx build --platform linux/amd64 -t myapp:1.0 .", en: "One image for amd64 machines.", ms: "Satu image untuk mesin amd64." }
+            - { command: "docker buildx build --platform linux/amd64,linux/arm64 -t you/myapp:1.0 --push .", en: "Both types under one tag, pushed to your registry.", ms: "Kedua-dua jenis bawah satu tag, dipush ke registry anda." }
+          danger: safe
+          lesson: docker-d2-l13
+      - id: r-arm64
+        result:
+          text: { en: "Build for the arm64 machine. Or build both types into one tag.", ms: "Bina untuk mesin arm64. Atau bina kedua-dua jenis dalam satu tag." }
+          commands:
+            - { command: "docker buildx build --platform linux/arm64 -t myapp:1.0 .", en: "One image for arm64 machines.", ms: "Satu image untuk mesin arm64." }
+            - { command: "docker buildx build --platform linux/amd64,linux/arm64 -t you/myapp:1.0 --push .", en: "Both types under one tag, pushed to your registry.", ms: "Kedua-dua jenis bawah satu tag, dipush ke registry anda." }
+          danger: safe
+          lesson: docker-d2-l13
+
+  - id: docker-volume-permission-denied
+    title: { en: "Permission denied on a volume", ms: "Permission denied pada volume" }
+    start: kind
+    steps:
+      - id: kind
+        question: { en: "What is mounted on that folder?", ms: "Apa yang dipasang pada folder itu?" }
+        answers:
+          - { label: { en: "A named volume, like -v appdata:/data", ms: "Named volume, contohnya -v appdata:/data" }, next: r-named }
+          - { label: { en: "A folder from my computer, like -v ./data:/data", ms: "Folder dari komputer saya, contohnya -v ./data:/data" }, next: r-bind }
+      - id: r-named
+        result:
+          text: { en: "A new volume belongs to root. Your app runs as an ordinary user, so it can't write. Hand the volume to that user once.", ms: "Volume baharu milik root. Aplikasi anda berjalan sebagai pengguna biasa, jadi ia tak boleh tulis. Serahkan volume itu kepada pengguna itu sekali sahaja." }
+          commands:
+            - { command: "docker run --rm -v appdata:/data alpine:3.22 chown 1000:1000 /data", en: "Give the volume to uid 1000. Use your app's real user id.", ms: "Beri volume itu kepada uid 1000. Guna id pengguna sebenar aplikasi anda." }
+            - command: |-
+                RUN mkdir /data && chown node:node /data
+                USER node
+              en: "Better, in the Dockerfile: a new volume copies this owner."
+              ms: "Lebih baik, dalam Dockerfile: volume baharu salin pemilik ini."
+          danger: safe
+          lesson: docker-d3-l02
+      - id: r-bind
+        result:
+          text: { en: "The user inside doesn't own your folder. Run as your own user id, or hand the folder over.", ms: "Pengguna di dalam bukan pemilik folder anda. Jalankan dengan id pengguna anda sendiri, atau serahkan folder itu." }
+          commands:
+            - { command: "ls -ln ./data", en: "See which user ids own the folder.", ms: "Lihat id pengguna yang memiliki folder itu." }
+            - { command: "docker run --rm --user \"$(id -u):$(id -g)\" -v ./data:/data alpine:3.22 touch /data/x", en: "Run as your own user id.", ms: "Jalankan sebagai id pengguna anda sendiri." }
+            - { command: "sudo chown -R \"$(id -u):$(id -g)\" ./data", en: "Or make the folder yours. Check the path first!", ms: "Atau jadikan folder itu milik anda. Semak laluannya dulu!" }
+          danger: careful
+          lesson: docker-d3-l03
+
+  - id: docker-disk-full
+    title: { en: "Docker filled up my disk", ms: "Docker penuhkan cakera saya" }
+    start: df
+    steps:
+      - id: df
+        question: { en: "Run docker system df. Which line is the biggest?", ms: "Jalankan docker system df. Baris mana paling besar?" }
+        answers:
+          - { label: { en: "Build Cache", ms: "Build Cache" }, next: r-cache }
+          - { label: { en: "Images", ms: "Images" }, next: r-images }
+          - { label: { en: "Containers", ms: "Containers" }, next: r-containers }
+          - { label: { en: "Local Volumes", ms: "Local Volumes" }, next: r-volumes }
+      - id: r-cache
+        result:
+          text: { en: "Old build layers pile up. Clearing them loses no data. The next build is just slower once.", ms: "Lapisan binaan lama bertimbun. Membuangnya tak hilangkan data. Binaan seterusnya cuma lambat sekali." }
+          commands:
+            - { command: "docker builder prune", en: "Remove unused build cache. It asks first.", ms: "Buang cache binaan yang tak dipakai. Ia tanya dulu." }
+            - { command: "docker builder prune --filter until=72h", en: "Only cache nobody used for 3 days.", ms: "Hanya cache yang tak dipakai selama 3 hari." }
+          danger: careful
+          lesson: docker-d1-l11
+      - id: r-images
+        result:
+          text: { en: "Unused images take the room. Start with dangling ones, the ones with no tag.", ms: "Image yang tak dipakai ambil ruang. Mula dengan yang dangling, iaitu tanpa tag." }
+          commands:
+            - { command: "docker image prune", en: "Remove dangling images. It asks first.", ms: "Buang image dangling. Ia tanya dulu." }
+            - { command: "docker image prune -a", en: "Remove every image no container uses. You'll pull or build them again.", ms: "Buang semua image yang tiada container guna. Anda perlu pull atau bina semula." }
+          danger: careful
+          lesson: docker-d1-l11
+      - id: r-containers
+        result:
+          text: { en: "Stopped containers keep their top layer. Remove the ones you don't need.", ms: "Container yang berhenti masih simpan lapisan atasnya. Buang yang anda tak perlukan." }
+          commands:
+            - { command: "docker ps -a --filter status=exited", en: "List the stopped ones first.", ms: "Senaraikan yang berhenti dulu." }
+            - { command: "docker container prune", en: "Remove all stopped containers. It asks first.", ms: "Buang semua container yang berhenti. Ia tanya dulu." }
+          danger: careful
+          lesson: docker-d1-l11
+      - id: r-volumes
+        result:
+          text: { en: "Volumes hold data, like your database. Never prune them blindly. List, check, then remove one at a time.", ms: "Volume simpan data, seperti pangkalan data anda. Jangan prune membuta tuli. Senarai, semak, kemudian buang satu demi satu." }
+          commands:
+            - { command: "docker volume ls -f dangling=true", en: "Volumes no container uses.", ms: "Volume yang tiada container guna." }
+            - { command: "docker volume inspect old-data", en: "Check what it is before you delete it.", ms: "Semak apa isinya sebelum anda padam." }
+            - { command: "docker volume rm old-data", en: "Delete one volume. Its data is gone for good.", ms: "Padam satu volume. Datanya hilang selama-lamanya." }
+          danger: lose
+          lesson: docker-d3-l02
+
+  - id: docker-image-too-big
+    title: { en: "My image is far too big", ms: "Image saya terlalu besar" }
+    start: base
+    steps:
+      - id: base
+        question: { en: "What does the first FROM line use?", ms: "Apa yang baris FROM pertama guna?" }
+        answers:
+          - { label: { en: "A full image, like node:24 or python:3.13", ms: "Image penuh, seperti node:24 atau python:3.13" }, next: r-base }
+          - { label: { en: "Already slim, alpine or distroless", ms: "Dah slim, alpine atau distroless" }, next: tools }
+      - id: tools
+        question: { en: "Do build tools or dev packages end up in the final image?", ms: "Adakah alat binaan atau pakej dev masuk ke image akhir?" }
+        answers:
+          - { label: { en: "Yes, or not sure", ms: "Ya, atau tak pasti" }, next: r-stage }
+          - { label: { en: "No", ms: "Tidak" }, next: r-context }
+      - id: r-base
+        result:
+          text: { en: "A full base carries a whole operating system. Measured on Docker 29: node:24 is 1.22GB, node:24-alpine is 181MB.", ms: "Asas penuh bawa seluruh sistem operasi. Diukur pada Docker 29: node:24 ialah 1.22GB, node:24-alpine ialah 181MB." }
+          commands:
+            - { command: "FROM node:24-alpine", en: "Same Node, a much smaller base.", ms: "Node yang sama, asas jauh lebih kecil." }
+            - { command: "docker images", en: "Compare sizes after you build again.", ms: "Banding saiz selepas anda bina semula." }
+          danger: safe
+          lesson: docker-d2-l09
+      - id: r-stage
+        result:
+          text: { en: "Build in one stage, ship from a clean one. Only the output travels.", ms: "Bina dalam satu peringkat, hantar dari peringkat yang bersih. Hanya hasilnya dibawa." }
+          commands:
+            - command: |-
+                FROM node:24-alpine AS build
+                WORKDIR /app
+                COPY package*.json ./
+                RUN npm ci
+                COPY . .
+                RUN npm run build
+
+                FROM node:24-alpine
+                WORKDIR /app
+                COPY package*.json ./
+                RUN npm ci --omit=dev
+                COPY --from=build /app/dist ./dist
+                CMD ["node", "dist/server.js"]
+              en: "The final stage gets dist and runtime packages only. No dev tools."
+              ms: "Peringkat akhir dapat dist dan pakej runtime sahaja. Tiada alat dev."
+          danger: safe
+          lesson: docker-d2-l08
+      - id: r-context
+        result:
+          text: { en: "Find the fat layer. Often the build context sends node_modules, .git or test data along.", ms: "Cari lapisan yang gemuk. Selalunya konteks binaan bawa sekali node_modules, .git atau data ujian." }
+          commands:
+            - { command: "docker history myapp:1.0", en: "Each layer with its size. Look for the big one.", ms: "Setiap lapisan dengan saiznya. Cari yang besar." }
+            - command: |-
+                node_modules
+                .git
+                *.log
+              en: "A .dockerignore file: keep these out of the build context."
+              ms: "Fail .dockerignore: jauhkan semua ini dari konteks binaan."
+          danger: safe
+          lesson: docker-d2-l05
+
+  - id: docker-secret-in-image
+    title: { en: "A secret got baked into my image", ms: "Rahsia tersimpan dalam image saya" }
+    start: pushed
+    steps:
+      - id: pushed
+        question: { en: "Did the image leave your computer (pushed, or shared)?", ms: "Adakah image itu keluar dari komputer anda (dipush, atau dikongsi)?" }
+        answers:
+          - { label: { en: "Yes, or not sure", ms: "Ya, atau tak pasti" }, next: r-pushed }
+          - { label: { en: "No, never", ms: "Tidak, tak pernah" }, next: r-local }
+      - id: r-pushed
+        result:
+          text: { en: "Treat the secret as stolen. First revoke it where it was made, and make a new one. Deleting the tag doesn't help: someone may have pulled it.", ms: "Anggap rahsia itu dah dicuri. Mula-mula batalkannya di tempat ia dibuat, dan buat yang baharu. Padam tag tak membantu: mungkin ada yang dah pull." }
+          commands:
+            - { command: "docker history --no-trunc you/myapp:1.0", en: "Find the line that holds it, so you know what leaked.", ms: "Cari baris yang menyimpannya, supaya anda tahu apa yang bocor." }
+            - { command: "RUN --mount=type=secret,id=npmtoken NPM_TOKEN=$(cat /run/secrets/npmtoken) npm ci", en: "In the Dockerfile: a build secret never lands in a layer.", ms: "Dalam Dockerfile: rahsia binaan tak pernah masuk ke lapisan." }
+            - { command: "docker build --secret id=npmtoken,env=NPM_TOKEN -t you/myapp:1.1 .", en: "Pass the new secret at build time only.", ms: "Beri rahsia baharu semasa binaan sahaja." }
+          danger: careful
+          lesson: docker-d5-l09
+      - id: r-local
+        result:
+          text: { en: "Good, it never left. Delete the leaky image and build again without the secret. If others can reach your computer, revoke the secret too.", ms: "Bagus, ia tak pernah keluar. Padam image yang bocor dan bina semula tanpa rahsia itu. Jika orang lain boleh capai komputer anda, batalkan rahsia itu juga." }
+          commands:
+            - { command: "docker history --no-trunc myapp:1.0", en: "Find the line that holds it.", ms: "Cari baris yang menyimpannya." }
+            - { command: "docker rmi myapp:1.0", en: "Delete the leaky image.", ms: "Padam image yang bocor." }
+            - { command: "docker build --secret id=npmtoken,env=NPM_TOKEN -t myapp:1.0 .", en: "Build again with a build secret instead.", ms: "Bina semula dengan rahsia binaan." }
+          danger: careful
+          lesson: docker-d3-l09
+
+  - id: docker-hub-429
+    title: { en: "Docker Hub says 429 Too Many Requests", ms: "Docker Hub kata 429 Too Many Requests" }
+    start: login
+    steps:
+      - id: login
+        question: { en: "Are you logged in to Docker Hub where it happens?", ms: "Adakah anda log masuk ke Docker Hub di tempat ia berlaku?" }
+        answers:
+          - { label: { en: "No, or not sure", ms: "Tidak, atau tak pasti" }, next: r-login }
+          - { label: { en: "Yes", ms: "Ya" }, next: where }
+      - id: where
+        question: { en: "Where does it happen?", ms: "Di mana ia berlaku?" }
+        answers:
+          - { label: { en: "In CI, like GitHub Actions", ms: "Dalam CI, seperti GitHub Actions" }, next: r-ci }
+          - { label: { en: "On my own computer", ms: "Pada komputer saya sendiri" }, next: r-wait }
+      - id: r-login
+        result:
+          text: { en: "Without logging in, Docker Hub allows 100 pulls per 6 hours per IP address. A free account gets 200. Log in with a personal access token.", ms: "Tanpa log masuk, Docker Hub benarkan 100 pull setiap 6 jam bagi setiap alamat IP. Akaun percuma dapat 200. Log masuk dengan token akses peribadi." }
+          commands:
+            - { command: "docker login -u yourname", en: "Paste a personal access token as the password, never your real password.", ms: "Tampal token akses peribadi sebagai kata laluan, bukan kata laluan sebenar." }
+            - { command: "docker pull nginx:1.30-alpine", en: "Try the pull again.", ms: "Cuba pull semula." }
+          danger: safe
+          lesson: docker-d5-l02
+      - id: r-ci
+        result:
+          text: { en: "CI often runs many jobs, so the limit runs out fast. Log in at the start of every job that pulls, with a token kept in a secret.", ms: "CI selalunya jalankan banyak kerja, jadi had cepat habis. Log masuk di awal setiap job yang pull, dengan token yang disimpan dalam secret." }
+          commands:
+            - command: |-
+                - uses: docker/login-action@v4
+                  with:
+                    username: ${{ vars.DOCKERHUB_USERNAME }}
+                    password: ${{ secrets.DOCKERHUB_TOKEN }}
+              en: "A step before any pull or build."
+              ms: "Satu langkah sebelum sebarang pull atau build."
+          danger: safe
+          lesson: docker-d5-l05
+      - id: r-wait
+        result:
+          text: { en: "The limit counts pulls over 6 hours. Reuse the images you have, and pull less often.", ms: "Had itu kira pull dalam 6 jam. Guna semula image yang anda ada, dan kurangkan pull." }
+          commands:
+            - { command: "docker images", en: "See what you already have.", ms: "Lihat apa yang anda dah ada." }
+            - { command: "docker run --pull never -d --name web nginx:1.30-alpine", en: "Run without asking Docker Hub at all.", ms: "Jalankan tanpa bertanya Docker Hub langsung." }
+          danger: safe
+          lesson: docker-d5-l05
+
+  - id: docker-name-not-found
+    title: { en: "Containers can't find each other by name", ms: "Container tak jumpa satu sama lain ikut nama" }
+    start: net
+    steps:
+      - id: net
+        question: { en: "Which network are both containers on?", ms: "Kedua-dua container berada dalam rangkaian mana?" }
+        answers:
+          - { label: { en: "The default one (bridge), or not sure", ms: "Yang lalai (bridge), atau tak pasti" }, next: r-bridge }
+          - { label: { en: "Two different networks", ms: "Dua rangkaian berbeza" }, next: r-connect }
+          - { label: { en: "The same network, mine or Compose's", ms: "Rangkaian yang sama, milik saya atau Compose" }, next: addr }
+      - id: addr
+        question: { en: "What address does the app use for the other box?", ms: "Alamat apa yang aplikasi guna untuk bekas yang satu lagi?" }
+        answers:
+          - { label: { en: "localhost", ms: "localhost" }, next: r-localhost }
+          - { label: { en: "Its container or service name", ms: "Nama container atau servisnya" }, next: r-port }
+      - id: r-bridge
+        result:
+          text: { en: "The default bridge has no name lookup, so ping says bad address. Make your own network and join both boxes.", ms: "Bridge lalai tiada carian nama, jadi ping kata bad address. Buat rangkaian sendiri dan sertakan kedua-dua bekas." }
+          commands:
+            - { command: "docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' api", en: "Which networks is api on?", ms: "api berada dalam rangkaian mana?" }
+            - { command: "docker network create shopnet", en: "Make your own phone line.", ms: "Buat talian telefon sendiri." }
+            - { command: "docker network connect shopnet api", en: "Join api to it.", ms: "Sambungkan api kepadanya." }
+            - { command: "docker network connect shopnet db", en: "Join db too. Now api can call db by name.", ms: "Sambungkan db juga. Kini api boleh panggil db ikut nama." }
+          danger: safe
+          lesson: docker-d3-l06
+      - id: r-connect
+        result:
+          text: { en: "A box only sees the networks it is on. Join one box to the other's network too.", ms: "Bekas hanya nampak rangkaian yang ia sertai. Sambungkan satu bekas ke rangkaian yang satu lagi juga." }
+          commands:
+            - { command: "docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' db", en: "Which networks is db on?", ms: "db berada dalam rangkaian mana?" }
+            - { command: "docker network connect shopnet api", en: "Join api to db's network (use its name).", ms: "Sambungkan api ke rangkaian db (guna namanya)." }
+          danger: safe
+          lesson: docker-d3-l05
+      - id: r-localhost
+        result:
+          text: { en: "Inside a box, localhost is that box itself. Use the other box's name and its port inside.", ms: "Dalam bekas, localhost ialah bekas itu sendiri. Guna nama bekas yang satu lagi dan port di dalamnya." }
+          commands:
+            - { command: "postgres://db:5432/shop", en: "db is the name. 5432 is the port inside, not a laptop port.", ms: "db ialah nama. 5432 ialah port di dalam, bukan port laptop." }
+            - { command: "docker run --rm --network shopnet redis:8-alpine redis-cli -h cache ping", en: "Test by name. PONG means it works.", ms: "Uji ikut nama. PONG maksudnya berjaya." }
+          danger: safe
+          lesson: docker-d3-l06
+      - id: r-port
+        result:
+          text: { en: "The name is right. Check the other app is up, and listens on 0.0.0.0 on that port.", ms: "Nama itu betul. Semak aplikasi satu lagi dah hidup, dan dengar pada 0.0.0.0 di port itu." }
+          commands:
+            - { command: "docker exec api ping -c 1 db", en: "Does the name turn into an address?", ms: "Adakah nama itu jadi alamat?" }
+            - { command: "docker logs db", en: "Is db up? Which port does it say?", ms: "Adakah db dah hidup? Port mana yang ia sebut?" }
+          danger: safe
+          lesson: docker-d4-l02

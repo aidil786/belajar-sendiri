@@ -1,0 +1,76 @@
+---
+id: iac-t3-l07
+world: 3
+title: Nilai sensitif dan rahsia dalam state
+summary: "Anda akan belajar: kenapa sensitive cuma sorok rahsia di skrin, dan cara lindungi daftar."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, SwipeJudge, Mission]
+needs: [iac-t3-l06]
+scenario: t3-secret-pin
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: data sensitif dalam state", url: "https://opentofu.org/docs/language/state/sensitive-data/" }
+  - { label: "OpenTofu: nilai output (sensitive)", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "OpenTofu: penyulitan state", url: "https://opentofu.org/docs/language/state/encryption/" }
+  - { label: "OpenTofu: ephemerality", url: "https://opentofu.org/docs/language/ephemerality/" }
+  - { label: "Terraform: urus data sensitif", url: "https://developer.hashicorp.com/terraform/language/manage-sensitive-data" }
+---
+
+<Card id="hook" type="hook">
+Peti besi kedai dapat PIN dari `random_password`. `tofu output` papar `pin = <sensitive>`. Adakah PIN itu selamat sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: daftar simpannya sebagai teks biasa', correct: true, why: 'sensitive sorok di skrin. Fail state masih simpan nilainya.' }, { label: 'Ya: ia tersorok', why: 'Tersorok di skrin sahaja. Sesiapa yang buka daftar boleh baca.' }, { label: 'Ya: OpenTofu sentiasa sulitkannya', why: 'Bukan secara lalai. OpenTofu boleh sulitkan state, tapi hanya bila anda sediakannya.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Jalankan `tofu plan` dan baca ralatnya. Kemudian tambah `sensitive = true` pada output dalam `main.tf`, dan jalankan `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-secret-pin" goal={{ outputExists: ['pin'], resourceInState: ['random_password.pin'] }} hints={['Taip tofu plan dan baca ralatnya.', 'Dalam blok output, di bawah value, tambah: sensitive = true', 'Kemudian tofu apply dan yes.']} success="Output itu ditanda sensitive, jadi skrin sorokkannya." />
+
+<Hint>Maksud mudahnya: output yang simpan rahsia mesti beritahu begitu.</Hint>
+</Card>
+
+<Card id="see-state" type="see">
+<Interactive name="SpotLines" prompt="Ini sebahagian terraform.tfstate. Tekan setiap baris yang tunjuk PIN." lines={[{ text: '  "outputs": {' }, { text: '    "pin": {' }, { text: '      "value": "elVryE",', target: true }, { text: '      "type": "string",' }, { text: '      "sensitive": true' }, { text: '  …' }, { text: '            "content": "pin=elVryE\\n",', target: true }, { text: '            "filename": "safe.txt",' }, { text: '  …' }, { text: '            "result": "elVryE",', target: true }, { text: '            "special": false,' }]} success="Tiga kali, sebagai teks biasa. sensitive cuma sorok dari skrin." />
+
+**<Term id="sensitive-value">Nilai sensitif</Term>** disorok dalam plan dan output. Daftar masih simpannya, sebagai teks biasa.
+</Card>
+
+<Card id="try-raw" type="try">
+Skrin sorokkannya, tapi tanya OpenTofu terus: `tofu output -raw pin`.
+
+<Interactive name="TofuSim" scenario="t3-secret-built" goal={{ lastTyped: '^tofu output -raw pin$' }} hints={['Taip tofu output -raw pin dan tekan Enter.']} success="Itu dia. Sesiapa yang boleh baca daftar boleh baca PIN." />
+</Card>
+
+<Card id="predict" type="predict">
+Repo anda hampir di-push. Susun setiap fail.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Boleh di-commit' }, { id: 'never', label: 'Jangan sekali-kali commit' }]} items={[{ label: 'main.tf dengan variable "db_password" { sensitive = true }', bucket: 'ok', why: 'Ia isytihar variable. Tiada nilai di dalam.' }, { label: 'main.tf dengan password = "hunter2"', bucket: 'never', why: 'Rahsia dalam pelan kekal dalam sejarah Git selamanya.' }, { label: 'terraform.tfvars dengan db_password = "…"', bucket: 'never', why: 'Nilai yang ada rahsia mesti kekal di luar Git.' }, { label: 'terraform.tfstate', bucket: 'never', why: 'Daftar simpan rahsia sebagai teks biasa.' }, { label: '.gitignore yang senaraikan *.tfstate', bucket: 'ok', why: 'Ia jauhkan daftar dari Git.' }]} success="Pelan masuk Git. Rahsia dan daftar tidak sekali-kali." />
+</Card>
+
+<Card id="check" type="check">
+Siapa patut boleh baca daftar?
+
+<Interactive name="Choice" options={[{ label: 'Hanya orang dan pipeline yang jalankan tofu', correct: true, why: 'Anggap ia macam almari kunci: sedikit orang, akses direkod.' }, { label: 'Semua orang dalam syarikat: ia cuma senarai', why: 'Ia simpan kata laluan dan kunci juga.' }, { label: 'Tiada siapa, jadi padam selepas apply', why: 'OpenTofu perlukan daftar untuk tahu apa yang ia bina.' }]} />
+</Card>
+
+<Card id="check-protect" type="check">
+Leret: adakah ini lindungi daftar, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Bucket backend dengan penyulitan dan peraturan akses ketat', good: true, why: 'Disulitkan semasa disimpan, dan hanya sedikit orang boleh baca.' }, { text: 'Hantar fail state melalui e-mel kepada rakan baharu', good: false, why: 'Kini rahsia ada dalam dua peti mel. Beri akses ke backend.' }, { text: 'Penyulitan state OpenTofu, dengan kunci dalam pengurus kunci', good: true, why: 'Fail yang disalin pun tak boleh dibaca tanpa kunci.' }, { text: 'Taip kata laluan dalam main.tf "untuk sekarang je"', good: false, why: 'Ia akan masuk sejarah Git. Guna variable dan pemboleh ubah persekitaran.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda tahu di mana rahsia bersembunyi dalam OpenTofu, dan cara lindungi daftar.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTofu 1.11 tambah ephemeral resource dan atribut write-only. Ia jauhkan rahsia daripada daftar dan plan sepenuhnya. Terraform pun ada (1.10 dan 1.11). Pelajaran T4·7 tunjuk cara pipeline dapat rahsia tanpa fail.
+
+<Interactive name="Mission" id="iac-t3-l07-rep" steps={[{ id: 'build', text: 'Dalam folder latihan, bina random_password dengan output sensitive.', command: 'tofu init && tofu apply' }, { id: 'hidden', text: 'Lihat ia tersorok.', command: 'tofu output' }, { id: 'plain', text: 'Cari ia sebagai teks biasa dalam daftar.', command: 'grep result terraform.tfstate' }, { id: 'ignore', text: 'Jauhkan daftar dari Git.', command: 'printf "*.tfstate\\n*.tfstate.*\\n.terraform/\\n" >> .gitignore' }]} success="Anda nampak rahsia dalam daftar, dan jauhkannya dari Git." />
+</Card>

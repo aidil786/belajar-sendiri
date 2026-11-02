@@ -1,0 +1,145 @@
+# Command pages for the Monitoring & Observability course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/observability/commands/<id>/ and in the cheat sheet /<lang>/observability/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Commands here are CLI tools (promtool, amtool, curl to an HTTP API …). PromQL and LogQL queries
+# are not commands: teach them in lessons and the glossary.
+# Facts: prometheus.io/docs (Prometheus 3, LTS 3.13), grafana.com/docs, opentelemetry.io/docs.
+groups:
+  - { id: check, title: { en: "Check rules and configs", ms: "Semak rule dan konfigurasi" } }
+  - { id: ask, title: { en: "Ask Prometheus", ms: "Tanya Prometheus" } }
+  - { id: alerts, title: { en: "Alerts and silences", ms: "Amaran dan senyap" } }
+  - { id: logs, title: { en: "Logs and traces", ms: "Log dan trace" } }
+
+commands:
+  # --- World O1 commands ---
+  - id: prometheus-ready
+    group: ask
+    syntax: "curl localhost:9090/-/ready"
+    danger: safe
+    lesson: obs-o1-l08
+    docs: "https://prometheus.io/docs/prometheus/latest/management_api/"
+    what: { en: "Asks Prometheus if it is ready to answer queries.", ms: "Tanya Prometheus sama ada ia sedia jawab query." }
+    when: { en: "Right after you start Prometheus, or when a screen shows no data.", ms: "Sejurus selepas anda mulakan Prometheus, atau bila skrin tiada data." }
+    example: { command: "curl localhost:9090/-/ready", en: "It answers: Prometheus Server is Ready.", ms: "Ia jawab: Prometheus Server is Ready." }
+    variants:
+      - { command: "curl localhost:9090/-/healthy", en: "Is the server alive at all?", ms: "Adakah server itu hidup?" }
+  # --- World O2 commands (groups: check, ask) ---
+  - id: curl-metrics
+    group: ask
+    syntax: "curl -s <host>:<port>/metrics"
+    danger: safe
+    lesson: obs-o2-l01
+    docs: "https://prometheus.io/docs/instrumenting/exposition_formats/"
+    what: { en: "Reads a target's numbers as plain text, the same page Prometheus scrapes.", ms: "Baca nombor sesuatu target sebagai teks biasa, laman yang sama Prometheus scrape." }
+    when: { en: "To check that a target really shows the metric you expect.", ms: "Untuk pastikan target betul-betul tunjuk metrik yang anda jangka." }
+    example: { command: "curl -s localhost:9100/metrics | grep 'node_load1 '", en: "Node exporter's 1-minute load, with its help and type lines.", ms: "Beban 1 minit daripada node exporter, dengan baris bantuan dan jenisnya." }
+    variants:
+      - { command: "curl -s localhost:9090/metrics | grep '^# TYPE' | head", en: "The first few metric types Prometheus shows about itself.", ms: "Beberapa jenis metrik pertama yang Prometheus tunjuk tentang dirinya." }
+  - id: promtool-check-config
+    group: check
+    syntax: "promtool check config <prometheus.yml>"
+    danger: safe
+    lesson: obs-o2-l01
+    docs: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/"
+    what: { en: "Checks prometheus.yml, and the rule files it names, before you load them.", ms: "Semak prometheus.yml, dan fail rule yang ia sebut, sebelum anda muatkannya." }
+    when: { en: "Every time you change prometheus.yml.", ms: "Setiap kali anda ubah prometheus.yml." }
+    example: { command: "docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml", en: "promtool lives inside the Prometheus image. SUCCESS means the file is fine.", ms: "promtool ada dalam image Prometheus. SUCCESS bermaksud fail itu okey." }
+  - id: curl-probe
+    group: ask
+    syntax: "curl '<blackbox>:9115/probe?target=<url>&module=http_2xx'"
+    danger: safe
+    lesson: obs-o2-l02
+    docs: "https://prometheus.io/docs/guides/multi-target-exporter/"
+    what: { en: "Asks blackbox exporter to knock on a URL once and report what happened.", ms: "Minta blackbox exporter ketuk satu URL sekali dan lapor apa yang berlaku." }
+    when: { en: "To test a probe by hand before Prometheus scrapes it.", ms: "Untuk uji probe sendiri sebelum Prometheus scrape." }
+    example: { command: "curl -s 'localhost:9115/probe?target=http://prometheus:9090/-/ready&module=http_2xx' | grep -E 'probe_success|probe_http_status_code'", en: "probe_success 1 and status code 200 mean the page answered.", ms: "probe_success 1 dan kod status 200 bermaksud laman itu menjawab." }
+  - id: curl-api-query
+    group: ask
+    syntax: "curl -s '<prometheus>:9090/api/v1/query?query=<PromQL>'"
+    danger: safe
+    lesson: obs-o2-l05
+    docs: "https://prometheus.io/docs/prometheus/latest/querying/api/"
+    what: { en: "Runs a PromQL query through Prometheus's HTTP API and prints the answer as JSON.", ms: "Jalankan query PromQL melalui HTTP API Prometheus dan cetak jawapan sebagai JSON." }
+    when: { en: "From scripts, or when you have no browser.", ms: "Dari skrip, atau bila tiada pelayar." }
+    example: { command: "curl -s 'localhost:9090/api/v1/query?query=up'", en: "An instant vector: one value per target, at this moment.", ms: "Instant vector: satu nilai untuk setiap target, pada saat ini." }
+    variants:
+      - { command: "curl -s localhost:9090/api/v1/query --data-urlencode 'query=rate(prometheus_http_requests_total[1m])'", en: "Let curl encode the brackets and spaces for you.", ms: "Biar curl kodkan kurungan dan ruang untuk anda." }
+  - id: promtool-query-instant
+    group: ask
+    syntax: "promtool query instant <server> '<PromQL>'"
+    danger: safe
+    lesson: obs-o2-l07
+    docs: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/"
+    what: { en: "Runs one PromQL query against a server and prints one line per series.", ms: "Jalankan satu query PromQL pada server dan cetak satu baris untuk setiap siri." }
+    when: { en: "To try a query in the terminal, without the web page.", ms: "Untuk cuba query di terminal, tanpa laman web." }
+    example: { command: "docker compose exec prometheus promtool query instant http://localhost:9090 'up'", en: "Each target, with 1 for up and 0 for down.", ms: "Setiap target, dengan 1 untuk hidup dan 0 untuk mati." }
+  - id: promtool-check-rules
+    group: check
+    syntax: "promtool check rules <rules.yml>"
+    danger: safe
+    lesson: obs-o2-l09
+    docs: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/"
+    what: { en: "Checks a rule file: the YAML, every expr, and every name.", ms: "Semak satu fail rule: YAML, setiap expr, dan setiap nama." }
+    when: { en: "Before you load new recording or alerting rules.", ms: "Sebelum anda muatkan recording rule atau alerting rule baru." }
+    example: { command: "docker compose exec prometheus promtool check rules /etc/prometheus/rules.yml", en: "SUCCESS: 1 rules found. A broken expr shows the parse error and the line.", ms: "SUCCESS: 1 rules found. expr yang rosak tunjuk parse error dan barisnya." }
+  # --- World O3 commands (groups: check, alerts) ---
+  # promtool check rules / check config: see promtool-check-rules and promtool-check-config (O2).
+  - id: amtool-check-config
+    group: check
+    syntax: "amtool check-config <alertmanager.yml>…"
+    danger: safe
+    lesson: obs-o3-l02
+    docs: "https://github.com/prometheus/alertmanager#amtool"
+    what: { en: "Checks an Alertmanager config and lists what it found: routes, receivers, inhibit rules.", ms: "Semak config Alertmanager dan senaraikan apa yang dijumpai: route, receiver, inhibit rule." }
+    when: { en: "Before you reload Alertmanager with a changed file.", ms: "Sebelum anda muat semula Alertmanager dengan fail yang diubah." }
+    example: { command: "amtool check-config alertmanager.yml", en: "Will the dispatcher understand this file?", ms: "Adakah pengagih faham fail ini?" }
+
+  - id: amtool-routes-test
+    group: alerts
+    syntax: "amtool config routes test --config.file=<file> <label=value>…"
+    danger: safe
+    lesson: obs-o3-l02
+    docs: "https://github.com/prometheus/alertmanager#amtool"
+    what: { en: "Says which receiver gets an alert with these labels. Nothing is sent.", ms: "Beritahu penerima mana dapat amaran dengan label ini. Tiada apa dihantar." }
+    when: { en: "When you change routes and want to be sure the page reaches the right person.", ms: "Bila anda ubah route dan mahu pasti panggilan sampai ke orang yang betul." }
+    example: { command: "amtool config routes test --config.file=alertmanager.yml severity=page", en: "Who gets a severity=page alert?", ms: "Siapa dapat amaran severity=page?" }
+    variants:
+      - { command: "amtool config routes show --config.file=alertmanager.yml", en: "Draw the whole routing tree.", ms: "Lukis seluruh pokok route." }
+
+  - id: amtool-silence-add
+    group: alerts
+    syntax: "amtool silence add <label=value>… --duration=<time> --author=<name> --comment=<why> [--alertmanager.url=<url>]"
+    danger: careful
+    lesson: obs-o3-l02
+    docs: "https://github.com/prometheus/alertmanager#amtool"
+    what: { en: "Mutes matching alerts until the time runs out. Prints the silence ID.", ms: "Senyapkan amaran yang padan sehingga masanya tamat. Cetak ID silence itu." }
+    when: { en: "Planned work, or while you are already fixing it. Always give a reason and a short time.", ms: "Kerja yang dirancang, atau semasa anda sedang membaikinya. Sentiasa beri sebab dan masa yang pendek." }
+    example: { command: "amtool --alertmanager.url=http://localhost:9093 silence add alertname=QueueTooLong --duration=2h --author=aina --comment=\"Fixing the queue\"", en: "No calls about the queue for 2 hours: Aina is on it.", ms: "Jangan panggil tentang barisan selama 2 jam: Aina sedang uruskan." }
+    variants:
+      - { command: "amtool --alertmanager.url=http://localhost:9093 silence query", en: "List the silences: who, why, and when they end.", ms: "Senaraikan silence: siapa, kenapa, dan bila tamat." }
+      - { command: "amtool --alertmanager.url=http://localhost:9093 silence expire <id>", en: "End a silence early, when the work is done.", ms: "Tamatkan silence awal, bila kerja dah siap." }
+
+  # --- World O4 commands (group: logs) ---
+  - id: logcli-query
+    group: logs
+    syntax: "logcli query [--quiet] '<LogQL>'"
+    danger: safe
+    lesson: obs-o4-l02
+    docs: "https://grafana.com/docs/loki/latest/query/logcli/"
+    what: { en: "Asks Loki a LogQL question from the terminal and prints the matching diary lines.", ms: "Tanya Loki soalan LogQL dari terminal dan cetak baris diari yang padan." }
+    when: { en: "Searching logs without a browser, or in a script.", ms: "Mencari log tanpa pelayar, atau dalam skrip." }
+    example: { command: "logcli query --quiet '{app=\"kedai-api\"} |= \"timeout\"'", en: "Show kedai-api's lines that mention timeout.", ms: "Tunjuk baris kedai-api yang sebut timeout." }
+    variants:
+      - { command: "logcli labels", en: "Which labels does Loki know?", ms: "Label apa yang Loki tahu?" }
+      - { command: "logcli labels app", en: "Which values does the app label have?", ms: "Nilai apa yang label app ada?" }
+      - { command: "logcli query --quiet '{app=~\"kedai-.*\"} |= \"<trace-id>\"'", en: "Follow one order across every kedai diary.", ms: "Jejak satu pesanan merentas setiap diari kedai." }
+
+  - id: otelcol-validate
+    group: logs
+    syntax: "otelcol-contrib validate --config=<file>"
+    danger: safe
+    lesson: obs-o4-l03
+    docs: "https://opentelemetry.io/docs/collector/configuration/"
+    what: { en: "Checks an OpenTelemetry Collector config without starting it. No output means it is fine.", ms: "Semak config OpenTelemetry Collector tanpa menghidupkannya. Tiada output bermaksud ia elok." }
+    when: { en: "After you change receivers, exporters or pipelines.", ms: "Selepas anda ubah receiver, exporter atau pipeline." }
+    example: { command: "docker run --rm -v \"$PWD:/w\" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/w/config.yaml", en: "Is my Collector config sound? Run it from the official image.", ms: "Config Collector saya elok? Jalankan dari image rasmi." }

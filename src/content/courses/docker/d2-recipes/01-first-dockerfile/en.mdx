@@ -1,0 +1,78 @@
+---
+id: docker-d2-l01
+world: 2
+title: "Your first recipe: FROM, COPY, CMD"
+summary: "You will learn: to write a three-line Dockerfile and bake it into an image."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d1-boss]
+scenario: d2-l01
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Writing a Dockerfile", url: "https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/" }
+  - { label: "Dockerfile reference", url: "https://docs.docker.com/reference/dockerfile/" }
+  - { label: "docker build", url: "https://docs.docker.com/reference/cli/docker/buildx/build/" }
+---
+
+<Card id="hook" type="hook">
+Your hello app works on your laptop. On Aina's laptop it crashes. She has an older Node. What fixes this for good?
+
+<Interactive name="Choice" options={[{ label: 'Pack Node and the app together, from a recipe', correct: true, why: 'Then every laptop runs the same pack. That is what an image is.' }, { label: 'Ask Aina to reinstall Node', why: 'It may work today. Next month someone else has a different Node.' }, { label: 'Send her the code again', why: 'Same code, same old Node. It crashes again.' }]} />
+</Card>
+
+<Card id="see-recipe" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['cat Dockerfile']} label="cat shows a Dockerfile with three lines: FROM node:24-alpine, COPY hello.js /hello.js, CMD node /hello.js." />
+
+A **<Term id="dockerfile">Dockerfile</Term>** is a recipe for an image. `FROM` picks a frozen base pack. `COPY` adds your food. `CMD` says what to do when the box opens.
+</Card>
+
+<Card id="try-order" type="try">
+Put the recipe in order. The top line runs first.
+
+<Interactive name="OrderList" items={['FROM node:24-alpine', 'COPY hello.js /hello.js', 'CMD ["node", "/hello.js"]']} label="First line at the top" success="Base first, then your food, then what to run." />
+
+<Hint>You need a base pack before you can add food to it.</Hint>
+</Card>
+
+<Card id="see-build" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['docker build -t hello:1.0 .', 'docker images hello']} label="docker build bakes two steps: FROM node:24-alpine, then COPY hello.js. docker images now lists hello:1.0." />
+
+`docker build -t hello:1.0 .` bakes the recipe into an image. `-t` gives it a name and a tag. The dot means "use this folder".
+</Card>
+
+<Card id="try-build" type="try">
+Your turn. Build the image, then run it once.
+
+<Interactive name="KitchenSim" scenario="d2-l01" goal={{ imageExists: 'hello:1.0', lastTyped: '^docker run\\b.*hello:1\\.0' }} hints={['Build first: docker build -t hello:1.0 .', 'Then run it: docker run --rm hello:1.0']} success="Your first homemade image says hello!" />
+
+<Hint>Type `docker build -t hello:1.0 .` first. Then `docker run --rm hello:1.0`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You change the message in `hello.js`. Then you run `hello:1.0` again. What prints?
+
+<Interactive name="Choice" options={[{ label: 'The old message', correct: true, why: 'An image is a frozen pack. It keeps the file from when you built it.' }, { label: 'The new message', why: 'The pack was frozen before you changed the file. Build again to pack the change.' }, { label: 'An error', why: 'Nothing is broken. The pack just has the old file inside.' }]} />
+</Card>
+
+<Card id="check-rebuild" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['docker build -t hello:1.0 .', "echo \"console.log('Hai lagi!');\" > hello.js", 'docker run --rm hello:1.0', 'docker build -t hello:1.1 .', 'docker run --rm hello:1.1']} label="After hello.js changes, hello:1.0 still prints Hello from Kedai Kancil. A new build, hello:1.1, prints Hai lagi." />
+
+The old pack still says hello. A new build packs the new file. Change the recipe or the food? Build again.
+</Card>
+
+<Card id="win" type="win">
+You can now write a recipe and bake it into an image.
+</Card>
+
+<Card id="deeper" type="deeper">
+A website on the `nginx` base needs no `CMD`. The base pack already has one. `docker build` reads the file called `Dockerfile` in the folder you name.
+
+Real rep (optional), on your own computer:
+
+<Interactive name="Mission" id="d2-l01-rep" steps={[{ id: 'folder', text: 'Make a folder with a hello.js that prints one line.', command: 'mkdir hello && cd hello' }, { id: 'file', text: 'Add a Dockerfile with the three lines from this lesson.' }, { id: 'build', text: 'Build it.', command: 'docker build -t hello:1.0 .' }, { id: 'run', text: 'Run it once and clean up.', command: 'docker run --rm hello:1.0' }]} success="Your first real recipe works!" />
+</Card>

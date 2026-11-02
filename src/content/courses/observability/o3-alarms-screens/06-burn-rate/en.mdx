@@ -1,0 +1,64 @@
+---
+id: obs-o3-l06
+world: 3
+title: "SLO burn-rate alerts"
+summary: "You will learn: to page only when the error budget burns fast, and stop soon after the fix."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, AlertRuleBuilder, SortCards, Mission]
+needs: [obs-o3-l05]
+scenario: o3-fast-burn
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting on SLOs (Google SRE workbook)", url: "https://sre.google/workbook/alerting-on-slos/" }
+  - { label: "Recording rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/" }
+  - { label: "Grafana SLO", url: "https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/" }
+---
+
+<Card id="hook" type="hook">
+Your SLO: 99.9% of orders work this month. At 20m, 5% of orders fail for 4 minutes. Then it heals. Should someone wake up?
+
+<Interactive name="Choice" options={[{ label: 'No. It used a sliver of the month.', correct: true, why: 'Yes. Four bad minutes spend very little of the error budget.' }, { label: 'Yes. Any error above 0.1% is bad.', why: 'Then the pager rings for every blip. People stop listening.' }]} />
+</Card>
+
+<Card id="see-burn" type="see">
+Divide the error ratio by the budget (0.001). That is the burn rate.
+
+<Interactive name="PromQLPlayground" scenario="o3-fast-burn" at="80m" initial="job:shop_error_ratio:rate1h" goal={{ resultCount: 1, typed: '/\\s*0\\.001' }} hints={['Add / 0.001 at the end.']} solution="job:shop_error_ratio:rate1h / 0.001" success="About 19 at 80m: the month's budget would be gone in about a day and a half." />
+
+**<Term id="burn-rate">Burn rate</Term>** 1 means the budget lasts exactly the month. Bigger burns faster.
+</Card>
+
+<Card id="predict" type="predict">
+The burn rate stays at 14.4 for one hour. How much of the month's budget is gone?
+
+<Interactive name="Choice" options={[{ label: 'About 2%', correct: true, why: 'Yes. 14.4 × 1 hour ÷ 720 hours in 30 days = 2%.' }, { label: 'About 14%', why: '14.4 is a speed, not a share. One hour is short.' }, { label: 'All of it', why: 'At 14.4 the whole budget lasts about two days.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Page for the big burn from 61m. Stay quiet for the 4-minute spike. Stop soon after the fix at 91m.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-fast-burn" alert="FastBurn" exprs={[{ label: 'Over the SLO, 5m window', expr: 'job:shop_error_ratio:rate5m > 0.001', why: 'Any small bump rings it, like the spike at 20m.' }, { label: 'Burn 14.4, 1h window only', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001)', why: 'The hour remembers the bad part. It rings long after the fix.' }, { label: 'Burn 14.4, 5m window only', expr: 'job:shop_error_ratio:rate5m > (14.4 * 0.001)', why: 'Five minutes is too short. The 20m spike rings it.' }, { label: 'Burn 14.4 in the 1h AND the 5m window', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001) and job:shop_error_ratio:rate5m > (14.4 * 0.001)', graph: 'job:shop_error_ratio:rate1h', threshold: 0.0144 }]} fors={['2m']} labels={[{ labels: { severity: 'page' } }]} goal={{ firingAt: ['80m'], quietAt: ['25m', '50m', '100m'], noFlap: true }} solution={{ expr: 3 }} hints={['The long window proves it matters. The short window proves it is still happening.']} success="It pages for the real burn and goes quiet minutes after the fix." />
+
+<Hint>Look at 25m and 100m on the timeline. Which rule is quiet at both?</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Page someone now' }, { id: 'ticket', label: 'Ticket for working hours' }]} items={[{ label: 'Burn 14.4 over 1h, and over 5m', bucket: 'page', why: '2% of the month gone in an hour. Act now.' }, { label: 'Burn 6 over 6h, and over 30m', bucket: 'page', why: '5% gone in six hours. Still fast enough to page.' }, { label: 'Burn 1 over 3 days, and over 6h', bucket: 'ticket', why: 'A slow leak. Fix it this week.' }]} success="Fast burns page. Slow burns become tickets." />
+
+Fast burns wake someone. Slow burns wait for the morning.
+</Card>
+
+<Card id="win" type="win">
+You can now write burn-rate alerts with a long and a short window.
+</Card>
+
+<Card id="deeper" type="deeper">
+These numbers come from Google's SRE workbook, for a 99.9% SLO over 30 days. Save each window's error ratio with a recording rule, like `job:shop_error_ratio:rate1h`. Then the alert stays short and fast.
+
+<Interactive name="Mission" id="obs-o3-l06-real" steps={[{ id: 'rules', text: 'Write two recording rules (5m and 1h error ratio) and the FastBurn alert in one rules.yml.' }, { id: 'check', text: 'Check the file with promtool.', command: 'docker run --rm --entrypoint promtool -v "$PWD:/w" -w /w quay.io/prometheus/prometheus:v3.13.5 check rules rules.yml' }]} success="Your burn-rate rules pass promtool!" />
+</Card>

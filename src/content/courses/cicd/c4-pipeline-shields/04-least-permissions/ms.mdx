@@ -1,0 +1,84 @@
+---
+id: cicd-c4-l04
+world: 4
+title: Hak paling sedikit dengan permissions
+summary: "Anda akan belajar: cara beri setiap job kunci yang ia perlukan sahaja dengan permissions."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, ConveyorBelt, YamlBuilder]
+needs: [cicd-c4-l03]
+scenario: c4-release-perms
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Job release anda jadi merah dengan ralat ini:
+
+`HTTP 403: Resource not accessible by integration`
+
+Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Kunci job itu tak boleh buka pintu ini', correct: true, why: 'Token berfungsi, tapi ia kurang satu permission.' }, { label: 'GitHub rosak', why: '403 bermaksud "tak dibenarkan", bukan "rosak".' }, { label: 'Repo itu dipadam', why: 'Job jumpa repo itu. Ia cuma tak boleh mengubahnya.' }]} />
+</Card>
+
+<Card id="see-least" type="see">
+Setiap job dapat kad kunci: <Term id="github-token" course="git">GITHUB_TOKEN</Term>. `permissions:` pilih pintunya. Buka hanya yang job perlukan. Itulah **<Term id="least-privilege">least privilege</Term>** (hak paling sedikit).
+
+<Interactive name="SortCards" buckets={[{ id: 'contents', label: 'contents: write' }, { id: 'prs', label: 'pull-requests: write' }, { id: 'packages', label: 'packages: write' }]} items={[{ label: 'Buat release', bucket: 'contents', why: 'Release dan tag tinggal bersama kod anda.' }, { label: 'Komen pada PR', bucket: 'prs', why: 'Komen milik pull request.' }, { label: 'Tambah label pada PR', bucket: 'prs', why: 'Label pada PR perlukan kunci PR.' }, { label: 'Push image ke GHCR', bucket: 'packages', why: 'Image ialah pakej.' }]} success="Siap! Satu pintu untuk setiap tugas." />
+</Card>
+
+<Card id="see-levels" type="see">
+`permissions: {}` di atas tak beri sebarang kunci. Kemudian setiap job minta kuncinya sendiri. Senaraikan sesetengah kunci, dan kunci lain jadi `none`.
+
+<Interactive name="SpotLines" lines={[{ text: 'permissions: {}' }, { text: 'jobs:' }, { text: '  test:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    permissions:' }, { text: '      contents: read' }, { text: '  release:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    permissions:' }, { text: '      contents: write', target: true }]} prompt="Tekan baris yang benarkan job buat release." success="Hanya job release boleh tulis. Job test hanya boleh baca." />
+</Card>
+
+<Card id="try-fix" type="try">
+Push tag v1.4.0. Langkah release ditolak. Pilih pembaikan paling kecil yang jadikannya hijau.
+
+<Interactive name="ConveyorBelt" scenario="c4-release-perms" task={{ type: 'green' }} fixes={[
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Release tinggal bersama kod anda. Satu kunci, satu pintu.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'Ia berjaya, tapi setiap langkah dapat setiap kunci.', correct: false },
+  { label: 'contents: read + packages: write', text: 'permissions:\n  contents: read\n  packages: write', why: 'Pakej ialah image. Release perlukan contents.' }]} success="Hijau, dengan satu kunci tambahan sahaja." />
+
+<Hint>Release tinggal bersama kod anda: contents.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Job PR anda ada `pull-requests: write`. Orang asing buka PR dari fork. Ia jalan pada `pull_request`. Boleh ia komen?
+
+<Interactive name="Choice" options={[{ label: 'Tak: PR dari fork dapat kunci baca sahaja', correct: true, why: 'Itu melindungi anda. Pelajaran 5 tunjuk perangkap di sekitarnya.' }, { label: 'Boleh: anda beri write', why: 'PR dari fork dapat kunci baca sahaja, apa pun isi fail.' }, { label: 'Hanya jika PR itu kecil', why: 'Saiz tak penting. Fork dapat kunci baca sahaja.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina ia. Fail hanya baca kod. Job tambah satu pintu: komen PR. Kunci job ganti kunci fail, jadi senaraikan kedua-duanya.
+
+<Interactive name="YamlBuilder" workflow="PR report" goal={{ order: ['pr', 'read', 'job', 'prw', 'checkout', 'test', 'comment'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'Pada pull request', yaml: 'pull_request:', means: 'Jalan pada setiap pull request.' },
+  { id: 'read', kind: 'permissions', label: 'Seluruh fail: baca kod', yaml: 'contents: read', means: 'Setiap job mula dengan kunci baca sahaja.' },
+  { id: 'all', kind: 'permissions', label: 'Seluruh fail: tulis banyak', yaml: 'contents: write\npull-requests: write\npackages: write', means: 'Setiap job boleh ubah kod, PR dan pakej.', why: 'Tiada job di sini ubah kod atau pakej. Baca sudah cukup.' },
+  { id: 'job', kind: 'job', label: 'Job: report', yaml: 'report:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baharu.' },
+  { id: 'prw', kind: 'permissions', label: 'Job ini: baca kod, tulis PR', yaml: 'contents: read\npull-requests: write', means: 'Kunci job ganti kunci fail, jadi senaraikan kedua-duanya.' },
+  { id: 'checkout', kind: 'step', label: 'Check out kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod anda ke runner.' },
+  { id: 'test', kind: 'step', label: 'Pasang dan uji', yaml: '- run: npm ci && npm test', means: 'Pasang pakej, kemudian jalankan ujian.' },
+  { id: 'comment', kind: 'step', label: 'Komen pada PR', yaml: '- run: gh pr comment "$PR" --body "Tests passed"\n  env:\n    GH_TOKEN: ${{ github.token }}\n    PR: ${{ github.event.pull_request.number }}', means: 'Hantar komen dengan kunci job.' }]}
+  success="Least privilege! Baca untuk fail, satu pintu tambahan untuk job." />
+
+<Hint>Pencetus, kunci fail, job, kunci job, kemudian langkah.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri setiap job kunci yang ia perlukan sahaja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tetapan repo juga pilih kunci lalai: baca sahaja, atau baca dan tulis. Jangan percaya nilai lalai. Tulis `permissions:` dalam setiap workflow. Tip: pecahkan release kepada job test dan job release. Hanya job release dapat `contents: write`. Latihan sebenar: tambah `permissions:` dengan `contents: read` pada satu workflow anda.
+</Card>

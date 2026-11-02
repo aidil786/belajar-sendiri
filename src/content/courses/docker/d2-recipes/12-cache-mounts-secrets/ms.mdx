@@ -1,0 +1,75 @@
+---
+id: docker-d2-l12
+world: 2
+title: "Cache mount BuildKit dan rahsia binaan"
+summary: "Anda akan belajar: pinjamkan kunci kepada satu langkah build, dan simpan muat turun di rak antara build."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, SpotLines, KitchenSim, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [docker-d2-l11]
+scenario: d2-l12
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Build secrets", url: "https://docs.docker.com/build/building/secrets/" }
+  - { label: "Docker docs: Optimize cache usage (cache mounts)", url: "https://docs.docker.com/build/cache/optimize/#use-cache-mounts" }
+  - { label: "Dockerfile reference: RUN --mount", url: "https://docs.docker.com/reference/dockerfile/#run---mount" }
+  - { label: "Build check: SecretsUsedInArgOrEnv", url: "https://docs.docker.com/reference/build-checks/secrets-used-in-arg-or-env/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l12" commands={['cat leak/Dockerfile', 'docker build --build-arg NPM_TOKEN=test-token-123 -t leaky:1.0 leak', 'docker history leaky:1.0']} label="Token diberi melalui ARG. Build beri amaran SecretsUsedInArgOrEnv. docker history kemudian tunjuk NPM_TOKEN=test-token-123 pada dua baris." />
+
+Anda beri token npm melalui ARG. Build pun sudah beri amaran: `SecretsUsedInArgOrEnv`. Sekarang tengok `docker history`: sesiapa yang ada image boleh baca token itu!
+</Card>
+
+<Card id="see-secret" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine' }, { text: 'WORKDIR /app' }, { text: 'COPY package.json package-lock.json .npmrc ./' }, { text: 'RUN --mount=type=secret,id=npm_token,env=NPM_TOKEN,required=true npm ci', target: true }]} prompt="Ketik baris yang meminjam kunci." success="Ya! Kunci itu dipinjamkan kepada npm ci sahaja." />
+
+**<Term id="build-secret">Rahsia binaan</Term>** ialah kunci yang dipinjamkan kepada satu langkah RUN. Bila langkah itu tamat, kunci itu dipulangkan. Tiada layer (lapisan) yang menyimpannya.
+</Card>
+
+<Card id="try-secret" type="try">
+Bina resepi selamat ini sebagai `api:1.0`. Cuba cara biasa dulu dan baca ralatnya. Kemudian pinjamkan kunci dari `token.txt`.
+
+<Interactive name="KitchenSim" scenario="d2-l12" goal={{ imageExists: 'api:1.0', typed: '--secret id=npm_token' }} hints={['Ralat itu kata: secret npm_token: not found. Pinjamkan dengan --secret.', 'Taip docker build --secret id=npm_token,src=token.txt -t api:1.0 .']} success="Siap dibina, dan kunci sudah kembali ke kotaknya." />
+
+<Hint>`--secret id=npm_token,src=token.txt` pinjamkan isi fail itu sebagai rahsia.</Hint>
+</Card>
+
+<Card id="try-cache" type="try">
+Muat turun pun lambat. **<Term id="cache-mount">Cache mount</Term>** ialah rak dapur yang BuildKit simpan antara build. Ia tiada dalam image. Bina baris RUN yang menggunakannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'RUN', means: 'masak semasa membakar' }, { text: '--mount=type=cache,target=/root/.npm', means: 'simpan muat turun npm di rak' }, { text: 'npm ci', means: 'pasang pakej' }]} decoys={[{ text: '--no-cache', means: 'pilihan docker build: bakar semua semula' }]} success="Lain kali package.json berubah, npm jumpa kebanyakan muat turun di rak." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda bina `api:1.0` dengan rahsia itu. Adakah `docker history api:1.0` tunjuk `test-token-123`?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Rahsia itu tak pernah masuk ke layer', correct: true, why: 'Ia wujud hanya semasa npm ci berjalan.' }, { label: 'Ya, dalam baris RUN', why: 'Baris RUN tunjuk arahan sahaja, bukan rahsia.' }, { label: 'Huruf-huruf awalnya sahaja', why: 'Satu huruf pun tiada. Rahsia itu langsung tak disimpan.' }]} />
+</Card>
+
+<Card id="check-history" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l12" commands={['docker build --secret id=npm_token,src=token.txt -t api:1.0 .', 'docker history --format "{{.CreatedBy}}" api:1.0']} label="Build guna secret mount. docker history senaraikan RUN /bin/sh -c npm ci tanpa token di mana-mana." />
+
+Tiada token di mana-mana. Layer RUN cuma tulis `npm ci`. `token.txt` ada dalam `.dockerignore` juga, jadi ia tak pernah sampai ke dapur.
+</Card>
+
+<Card id="check-swipe" type="check">
+Selamat? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Beri token npm melalui --build-arg', good: false, why: 'docker history tunjuk nilai ARG.' }, { text: 'Pinjamkan dengan --secret dan RUN --mount=type=secret', good: true, why: 'Dipinjam untuk satu langkah, tiada dalam mana-mana layer.' }, { text: 'Letak token.txt dalam .dockerignore', good: true, why: 'COPY . . tak akan boleh ambilnya.' }, { text: 'COPY fail .npmrc yang ada token sebenar di dalamnya', good: false, why: 'Fail itu dan tokennya kekal dalam layer.' }, { text: 'Guna cache mount untuk muat turun npm', good: true, why: 'Build semula lebih laju, dan tiada benda tambahan dalam image.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pinjamkan rahsia dan simpan muat turun di rak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tanpa `env=`, rahsia itu jadi fail di `/run/secrets/<id>`. Tanpa `required=true`, rahsia yang tiada cuma tak muncul. Rahsia tak ubah cache: token baharu tak bakar semula. Guna token ujian sahaja semasa berlatih.
+
+<Interactive name="Mission" id="d2-l12-rep" steps={[{ id: 'file', text: 'Letak token palsu dalam token.txt dan senaraikannya dalam .dockerignore.' }, { id: 'mount', text: 'Tambah baris RUN --mount=type=secret yang cuma semak rahsia itu wujud.', command: 'RUN --mount=type=secret,id=demo test -f /run/secrets/demo' }, { id: 'build', text: 'Bina dengan rahsia itu.', command: 'docker build --secret id=demo,src=token.txt -t demo:1.0 .' }, { id: 'history', text: 'Semak docker history. Tiada token!' }]} success="Anda pinjamkan kunci dan dapat ia kembali." />
+</Card>

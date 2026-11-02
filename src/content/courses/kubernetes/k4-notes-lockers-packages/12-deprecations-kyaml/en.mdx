@@ -1,0 +1,74 @@
+---
+id: k8s-k4-l12
+world: 4
+title: "API deprecations and kyaml"
+summary: "You will learn: to fix YAML that uses a retired API, and to read KYAML."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, TimelineTap, YamlDoctor, Choice, Transcript, SwipeJudge, Mission]
+needs: [k8s-k4-l11]
+scenario: k4-old
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deprecated API Migration Guide", url: "https://kubernetes.io/docs/reference/using-api/deprecation-guide/" }
+  - { label: "Kubernetes Deprecation Policy", url: "https://kubernetes.io/docs/reference/using-api/deprecation-policy/" }
+  - { label: "KYAML", url: "https://kubernetes.io/docs/reference/encodings/kyaml/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-old" commands={['kubectl apply -f old-shop.yaml']} fails={['kubectl apply -f old-shop.yaml']} picture={false} label="kubectl apply fails: resource mapping not found, no matches for kind Deployment in version extensions/v1beta1." />
+
+You copied a Deployment from an old blog. kubectl says `no matches for kind "Deployment" in version "extensions/v1beta1"`. Plain words: nobody takes that form anymore.
+</Card>
+
+<Card id="see-timeline" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Kubernetes 1.16', title: 'Deployment: old form gone', text: 'extensions/v1beta1 stopped. Use apps/v1.' }, { when: 'Kubernetes 1.22', title: 'Ingress: v1beta1 gone', text: 'Use networking.k8s.io/v1.' }, { when: 'Kubernetes 1.25', title: 'CronJob: v1beta1 gone', text: 'batch/v1beta1 stopped. Use batch/v1. PodSecurityPolicy was removed too.' }, { when: 'Kubernetes 1.26', title: 'HPA: v2beta2 gone', text: 'autoscaling/v2beta2 stopped. Use autoscaling/v2.' }]} />
+
+An **<Term id="api-deprecation">API deprecation</Term>** is an old form the office will stop taking. First comes a warning. A few releases later, the form is gone.
+</Card>
+
+<Card id="try-fix" type="try">
+Bring the old Deployment up to date.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} keep={['kind: Deployment', 'replicas: 3']} keepHint="Keep the Deployment and its 3 trays. Only the form version changes." hint="Deployments live in apps/v1 now." success="Applied! Same order, on today's form." />
+</Card>
+
+<Card id="predict" type="predict">
+A file uses an API that is deprecated, but still served. What happens on `kubectl apply`?
+
+<Interactive name="Choice" options={[{ label: 'It works, and kubectl prints a Warning line', correct: true, why: 'The API server warns you early. Read it, then move on.' }, { label: 'It fails at once', why: 'Almost! It fails only after the removal release.' }, { label: 'kubectl fixes the file for you', why: 'kubectl never rewrites your files.' }]} />
+</Card>
+
+<Card id="see-kyaml" type="see">
+<Interactive name="Transcript" title="bash" label="kubectl create configmap with dry run and -o kyaml prints the ConfigMap with braces, and every string in double quotes." lines={[{ cmd: 'kubectl create configmap settings --from-literal=GREETING=Selamat --from-literal=SPICY=3 --dry-run=client -o kyaml' }, { out: '---\n{\n  kind: "ConfigMap",\n  apiVersion: "v1",\n  metadata: {\n    name: "settings",\n  },\n  data: {\n    GREETING: "Selamat",\n    SPICY: "3",\n  },\n}', color: 'green' }]} />
+
+kubectl 1.37 can print **<Term id="kyaml">KYAML</Term>**: YAML written strictly. Every string sits in double quotes. Braces wrap each map, so spaces never change the meaning.
+</Card>
+
+<Card id="predict-yes" type="predict">
+Plain YAML. A ConfigMap says `SPICY: yes`. What does the API server get?
+
+<Interactive name="Choice" options={[{ label: 'true, a yes/no value, so apply fails', correct: true, why: 'Plain YAML turns yes into true. ConfigMap data must be text. KYAML writes "yes".' }, { label: 'The text yes', why: 'Almost! Only with quotes: SPICY: "yes".' }, { label: 'The number 1', why: 'YAML reads yes as true, not as a number.' }]} />
+</Card>
+
+<Card id="check" type="check">
+True or not? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'An old tutorial says extensions/v1beta1. Switch the Deployment to apps/v1.', good: true, why: 'apps/v1 is the served version.' }, { text: 'Warning: lines from kubectl apply are safe to ignore.', good: false, why: 'They tell you what breaks in a future release.' }, { text: 'Any YAML reader can still read a KYAML file.', good: true, why: 'KYAML is a stricter subset of YAML.' }, { text: 'Plain YAML always keeps yes as text.', good: false, why: 'Without quotes, yes becomes true.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now update retired APIs and read KYAML.
+</Card>
+
+<Card id="deeper" type="deeper">
+The `kubectl convert` plugin rewrites old files, but check its defaults. Where the story breaks: kind's lockers sit on one stall. If that stall's disk dies, the locker dies too. And notes on the wall are readable by anyone allowed to read ConfigMaps.
+
+Real rep (optional), on a practice cluster:
+
+<Interactive name="Mission" id="k8s-k4-l12-rep" steps={[{ id: 'kinds', text: 'See every kind and its served API group.', command: 'kubectl api-resources' }, { id: 'explain', text: 'Ask which version a Deployment uses.', command: 'kubectl explain deployment' }, { id: 'kyaml', text: 'Print some YAML as KYAML.', command: 'kubectl create deployment x --image=nginx:1.29-alpine --dry-run=client -o kyaml' }]} success="You read the cluster's own list of forms." />
+</Card>

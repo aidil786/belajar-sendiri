@@ -1,0 +1,73 @@
+---
+id: linux-l3-l02
+world: 3
+title: "Subnets and CIDR"
+summary: "You will learn: what /24 means, and when a call goes through the gateway."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SortCards, OrderList, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l01]
+scenario: linux-l3-ip
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ip-route(8)", url: "https://man7.org/linux/man-pages/man8/ip-route.8.html" }
+  - { label: "RFC 4632: CIDR", url: "https://www.rfc-editor.org/rfc/rfc4632" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ip" intro={['ip -br addr', 'ip route']} network />
+
+kedai is `10.0.0.5/24`. What does the `/24` mean? It decides who kedai can call directly.
+</Card>
+
+<Card id="try-street" type="try">
+Think of a street. The first three numbers name the street. The last number is the house. That street is a <Term id="subnet">subnet</Term>. Which houses are on kedai's street?
+
+<Interactive name="SortCards" buckets={[{ id: 'same', label: 'Same street (10.0.0.x)' }, { id: 'other', label: 'Another street' }]} items={[{ label: '10.0.0.20', bucket: 'same', why: '10.0.0, then house 20.' }, { label: '10.0.0.250', bucket: 'same', why: '10.0.0, then house 250.' }, { label: '10.0.1.5', bucket: 'other', why: 'The third number differs: 10.0.1 is the next street.' }, { label: '203.0.113.10', bucket: 'other', why: 'A whole other part of town.' }]} success="Same first three numbers: same street." />
+</Card>
+
+<Card id="see-size" type="see">
+The slash number is **CIDR**. It counts how much of the address names the street. A bigger slash number means a shorter street. Put them from fewest houses to most.
+
+<Interactive name="OrderList" items={['/32: one house', '/28: 16 houses', '/24: 256 houses', '/16: 65,536 houses']} label="Fewest houses at the top" success="Bigger slash number, smaller street." />
+</Card>
+
+<Card id="check-count" type="check">
+A /24 street has 256 numbers. Two are kept: `.0` names the street and `.255` calls every house at once. How many computers fit?
+
+<Interactive name="Choice" options={[{ label: '254', correct: true, why: '256 minus the two kept numbers.' }, { label: '256', why: '.0 and .255 are kept for the street itself.' }, { label: '24', why: '/24 counts the street part, not the houses.' }]} />
+</Card>
+
+<Card id="try-route" type="try">
+Calls to other streets go to the <Term id="gateway">gateway</Term>: the telephone exchange. Find its number with `ip route`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ip" goal={{ lastTyped: '^ip r' }} hints={['Type ip route and press Enter.', 'Read the line that starts with default.']} solution={['ip route']} success="default via 10.0.0.1: every other street goes through 10.0.0.1." />
+</Card>
+
+<Card id="predict" type="predict">
+kedai calls 10.0.0.20. Does that call go through the exchange at 10.0.0.1?
+
+<Interactive name="Choice" options={[{ label: 'No, it goes straight there', correct: true, why: 'Same street. The line 10.0.0.0/24 dev eth0 covers it.' }, { label: 'Yes, every call does', why: 'Only calls to other streets use the default route.' }, { label: 'It cannot call it', why: 'Same street, so a direct call works.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+True or not? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '10.0.0.77 is on the street 10.0.0.0/24.', good: true, why: 'Same first three numbers.' }, { text: 'A /16 street is smaller than a /24 street.', good: false, why: 'Smaller slash number, bigger street: 65,536 numbers.' }, { text: 'kedai.example (203.0.113.10) is reached through the gateway.', good: true, why: 'Another street, so the default route.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read /24 and tell when a call goes through the gateway.
+</Card>
+
+<Card id="deeper" type="deeper">
+Under the hood, /24 means the first 24 bits of 32. The old way to write it is a mask: `255.255.255.0`. Cloud networks use the same idea. In World A3, you plan subnets for a mall.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="linux-l3-l02-rep" steps={[{ id: 'route', text: 'Linux or WSL: show your routes. Find the default line.', command: 'ip route' }, { id: 'street', text: 'Write down your street, like 192.168.1.0/24.' }]} success="You found your home street and its exchange." />
+</Card>

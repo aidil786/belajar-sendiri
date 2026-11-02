@@ -1,0 +1,69 @@
+---
+id: docker-d2-l08
+world: 2
+title: "Binaan berbilang peringkat"
+summary: "Anda akan belajar: masak di satu peringkat dan bungkus hidangan yang siap sahaja."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d2-l07]
+scenario: d2-l08
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Multi-stage builds", url: "https://docs.docker.com/build/building/multi-stage/" }
+  - { label: "Docker docs: Multi-stage builds (concepts)", url: "https://docs.docker.com/get-started/docker-concepts/building-images/multi-stage-builds/" }
+---
+
+<Card id="hook" type="hook">
+Laman Kedai Kancil anda dibina dengan Node. Image satu peringkat anda 244MB, untuk satu laman HTML! Apa yang ambil ruang itu?
+
+<Interactive name="Choice" options={[{ label: 'Node dan npm, yang dipakai untuk membina sahaja', correct: true, why: 'Pelanggan tak pernah perlukan alat memasak.' }, { label: 'Laman HTML itu', why: 'Laman itu kecil, bawah 1kB.' }, { label: 'Docker tambah 200MB pada setiap image', why: 'Docker tak tambah apa-apa. Saiz datang dari asas dan layer anda.' }]} />
+</Card>
+
+<Card id="see-stages" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l08" commands={['cat Dockerfile', 'docker build -t kedai:1.0 .']} label="Resepi ada dua baris FROM. Langkah bertanda build jalan dalam node:24-alpine. Peringkat akhir mula dari nginx dan salin /src/dist dari peringkat build." />
+
+**<Term id="multi-stage-build">Binaan berbilang peringkat</Term>** ada dua dapur. Peringkat `build` memasak dengan Node. Peringkat akhir mula baru dari nginx. `COPY --from=build` bawa hidangan sahaja: `dist/`.
+</Card>
+
+<Card id="try-order" type="try">
+Susun resepi dua peringkat ini.
+
+<Interactive name="OrderList" items={['FROM node:24-alpine AS build', 'RUN npm ci', 'RUN npm run build', 'FROM nginx:1.30-alpine', 'COPY --from=build /src/dist/ /usr/share/nginx/html/']} label="Baris pertama di atas" success="Masak dulu, kemudian peringkat baru ambil hidangan sahaja." />
+
+<Hint>Setiap peringkat mula dengan FROM sendiri. Masak sebelum hidang.</Hint>
+</Card>
+
+<Card id="try-target" type="try">
+Bina peringkat memasak sahaja sebagai `kedai:build`. Kemudian bina resepi penuh sebagai `kedai:1.0`. Bandingkan saiznya.
+
+<Interactive name="KitchenSim" scenario="d2-l08" goal={{ imageExists: ['kedai:build', 'kedai:1.0'], lastTyped: '^docker images' }} hints={['Taip docker build --target build -t kedai:build .', 'Kemudian docker build -t kedai:1.0 .', 'Kemudian docker images kedai']} success="Resepi sama. Pek yang dihidang jauh lebih kecil dari dapur." />
+
+<Hint>`--target build` berhenti selepas peringkat bernama `build`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Adakah `npm` di dalam `kedai:1.0`?
+
+<Interactive name="Choice" options={[{ label: 'Tiada. Ia kekal di peringkat build', correct: true, why: 'Peringkat akhir mula dari nginx. Hanya dist/ disalin masuk.' }, { label: 'Ada. Setiap peringkat masuk ke image', why: 'Hanya peringkat akhir jadi image. Yang lain ditinggalkan.' }, { label: 'npm sahaja, tanpa Node', why: 'Kedua-duanya tiada. Peringkat akhir tak pernah ada mereka.' }]} />
+</Card>
+
+<Card id="check-npm" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l08" commands={['docker build -t kedai:1.0 .', 'docker run --rm kedai:1.0 which npm', 'docker build --target build -t kedai:build .', 'docker run --rm kedai:build which npm']} fails={['docker run --rm kedai:1.0 which npm']} label="which npm tak cetak apa-apa dalam kedai:1.0 dan keluar dengan kod 1. Dalam kedai:build ia cetak /usr/local/bin/npm." />
+
+`which npm` tak jumpa apa-apa dalam `kedai:1.0`. Di peringkat build, npm ada. Pelanggan tak pernah nampak dapur.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh masak di satu peringkat dan hantar hidangan sahaja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peringkat tanpa nama dipanggil ikut nombor: `COPY --from=0`. Nama lebih jelas. `COPY --from` juga boleh salin dari mana-mana image, contohnya `--from=nginx:1.30-alpine`. Kurang alat dalam image akhir juga bermaksud kurang lubang keselamatan.
+
+<Interactive name="Mission" id="d2-l08-rep" steps={[{ id: 'stage', text: 'Ambil projek yang ada langkah build. Tambah peringkat bernama build.' }, { id: 'final', text: 'Mula peringkat kedua dari nginx dan COPY --from=build folder hasilnya.' }, { id: 'compare', text: 'Bina kedua-dua peringkat dan bandingkan saiz.', command: 'docker images' }]} success="Image yang dihidang sudah buang dapurnya!" />
+</Card>

@@ -1,0 +1,32 @@
+---
+// A glossary word with a small tooltip (native popover, opens only on tap).
+// The glossary is the course in the URL (/en/docker/… → docker.yaml). Pass `course` to use
+// another course's word, e.g. <Term id="workflow" course="git">.
+import { getCollection, getEntry } from 'astro:content';
+import { isLang } from '~/i18n';
+import { placeOfPath, ROOT_COURSE } from '~/lib/catalog';
+interface Props {
+  id: string;
+  course?: string;
+}
+const seg = Astro.url.pathname.split('/')[1];
+const lang = isLang(seg) ? seg : 'en';
+const courseIds = (await getCollection('courses')).map((c) => c.data.id);
+const { id, course = placeOfPath(Astro.url.pathname, courseIds).course ?? ROOT_COURSE } = Astro.props;
+const glossary = await getEntry('glossary', course);
+const term = glossary?.data.terms.find((x) => x.id === id);
+if (!term) throw new Error(`Unknown glossary term: ${id} (course ${course})`);
+const local = term[lang];
+const english = term.en.term;
+const popId = `term-${id}-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<span class="term-wrap"
+  ><button type="button" class="term-btn" popovertarget={popId} aria-describedby={popId}><slot /></button><span
+    popover
+    id={popId}
+    class="term-pop"
+    role="tooltip"
+    ><strong>{local.term}</strong>{lang === 'ms' && local.term !== english ? ` (${english})` : ''}: {local.meaning}</span
+  ></span
+>

@@ -1,0 +1,65 @@
+---
+id: iac-t1-l04
+world: 1
+title: "Baca plan: + ~ - -/+"
+summary: "Anda akan belajar: baca setiap simbol dalam plan sebelum apa-apa dibina."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, PlanReader, TofuSim, SwipeJudge]
+needs: [iac-t1-l03]
+scenario: t1-plan-reader
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: resource behaviour", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+Pemeriksa tapak semak pelan sebelum tukang mula kerja. Laporan tunjuk `-/+` di sebelah papan tanda. Adakah itu perubahan kecil?
+
+<Interactive name="Choice" options={[{ label: 'Bukan. Papan lama dimusnahkan, kemudian yang baru dibuat.', correct: true, why: '-/+ bermaksud ganti: tolak dulu, kemudian tambah.' }, { label: 'Ya. Kemas sikit di tempatnya.', why: 'Kemas sikit ialah ~. Di sini yang lama hilang.' }, { label: 'Ia bermaksud tiada apa akan berlaku', why: 'Setiap simbol ialah tindakan. Tiada simbol, tiada perubahan.' }]} />
+</Card>
+
+<Card id="see-symbols" type="see">
+**<Term id="plan">Plan (rancangan)</Term>** tanda setiap resource dengan simbol. Yang mana padam sesuatu?
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'Tiada apa dipadam' }, { id: 'lose', label: 'Ada yang dipadam' }]} items={[{ label: '`+` cipta', bucket: 'keep', why: 'Cuma tambah benda baru.' }, { label: '`~` ubah di tempatnya', bucket: 'keep', why: 'Benda yang sama, diubah. Ia kekal.' }, { label: '`-` musnah', bucket: 'lose', why: 'Ia hilang.' }, { label: '`-/+` ganti', bucket: 'lose', why: 'Yang lama dimusnahkan, kemudian yang baru dibuat.' }]} success="Awas - dan -/+. Ia padam benda sebenar." />
+</Card>
+
+<Card id="try-read" type="try">
+Arkitek ubah pelan. Baca plan itu. Apa jadi pada setiap resource?
+
+<Interactive name="PlanReader" scenario="t1-plan-reader" commands={['cp .next/main.tf main.tf']} />
+</Card>
+
+<Card id="predict" type="predict">
+Anda tukar `filename` sebuah `local_file`. Fail tak boleh ditukar nama di tempatnya. Simbol mana plan akan tunjuk?
+
+<Interactive name="Choice" compact options={[{ label: '`-/+`', correct: true, why: 'Nama baru perlu fail baru: musnah, kemudian cipta.' }, { label: '`~`', why: '~ untuk tetapan yang boleh diubah di tempatnya. Nama fail tak boleh.' }, { label: '`+`', why: '+ sahaja akan tinggalkan fail lama.' }]} />
+</Card>
+
+<Card id="try-tilde" type="try">
+Buat plan tunjuk `~`. Tukar waktu buka dalam `main.tf`. Kemudian taip `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t1-hours" goal={{ planSummary: { add: 0, change: 1, destroy: 0 } }} hints={['Cari input = "8am to 10pm" dalam blok hours.', 'Tukar, contohnya jadi "7am to 11pm".', 'Kemudian taip tofu plan.']} success="1 to change. Benda yang sama, diubah di tempatnya: ~." />
+
+<Hint>Edit perkataan dalam `input = "…"`, kemudian jalankan `tofu plan`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Baca baris terakhir. Selamat untuk taip `yes`?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Anda tambah fail menu. Plan: 1 to add, 0 to change, 0 to destroy.', good: true, why: 'Cuma tambah, seperti yang anda mahu.' }, { text: 'Anda baiki salah taip dalam komen. Plan: 0 to add, 0 to change, 3 to destroy.', good: false, why: 'Komen tak bina apa-apa. Berhenti dan cari kenapa 3 benda hilang.' }, { text: 'Anda tukar nama fail dengan sengaja. Plan: 1 to add, 0 to change, 1 to destroy.', good: true, why: 'Tukar nama ialah ganti. Anda sudah jangka.' }, { text: 'Pangkalan data kedai tunjuk -/+ dan tiada siapa tahu kenapa.', good: false, why: 'Ganti bermaksud data mungkin hilang. Tanya dulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca simbol plan sebelum membina.
+</Card>
+
+<Card id="deeper" type="deeper">
+`# forces replacement` tanda tetapan yang menyebabkan `-/+`. `+/-` bermaksud yang baru dibuat dulu, kemudian yang lama hilang. `tofu plan -out tfplan` simpan plan, dan `tofu apply tfplan` bina tepat seperti itu sahaja. Baris ringkasan sentiasa tamatkan plan: `Plan: 1 to add, 0 to change, 1 to destroy.`
+</Card>

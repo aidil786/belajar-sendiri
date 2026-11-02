@@ -1,0 +1,83 @@
+---
+id: k8s-k2-l09
+world: 2
+title: "Requests and limits"
+summary: "You will learn: how requests book room on a node, and how limits cap what a container uses."
+minutes: 4
+xp: 20
+interactives: [Choice, SchedulerTetris, FoodCourtSim, YamlDoctor, SortCards]
+needs: [k8s-k2-l08]
+scenario: k2-limits
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Resource management for pods and containers", url: "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" }
+  - { label: "kubectl set resources", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_resources/" }
+---
+
+<Card id="hook" type="hook">
+One greedy tray eats all of a stall's memory. The trays beside it starve and crash. How do you stop that?
+
+<Interactive name="Choice" options={[{ label: 'Give every tray a size: what it books, and a maximum', correct: true, why: 'Then the stall knows who fits, and nobody can take everything.' }, { label: 'Hope every app behaves', why: 'One bug or one leak is enough. Hope is not a plan.' }, { label: 'Put only one tray on each stall', why: 'Safe, but very wasteful. Stalls cost money.' }]} />
+</Card>
+
+<Card id="see-requests" type="see">
+A **<Term id="resource-request">request</Term>** is the shelf space a tray books. The scheduler puts a tray only where its request fits. Fit these trays on the stalls.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'stall-b', cpu: '2', memory: '4Gi' }]} pods={[{ name: 'tray-1', cpu: '1500m', memory: '1Gi' }, { name: 'tray-2', cpu: '1', memory: '2Gi' }, { name: 'tray-3', cpu: '500m', memory: '1Gi' }, { name: 'giant', cpu: '3', memory: '1Gi' }]} task={{ type: 'placeAll', pending: ['giant'] }} success="Every tray that fits has a stall. giant asks for 3 CPUs, so it waits in Pending." />
+</Card>
+
+<Card id="see-yaml" type="see">
+Requests and a **<Term id="resource-limit">limit</Term>** sit in each container.
+
+```yaml
+resources:
+  requests:
+    cpu: 100m
+  limits:
+    memory: 128Mi
+```
+
+Which does the scheduler use to pick a stall?
+
+<Interactive name="Choice" options={[{ label: 'The requests', correct: true, why: 'It books room by request. Limits only matter once the tray runs.' }, { label: 'The limits', why: 'Limits cap use later. Placing a tray uses its requests.' }, { label: 'What the app uses right now', why: 'The scheduler books by request, not by live use.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+`big` asks for 64 CPUs. Real error: `Insufficient cpu`. Plain words: no stall is that big, so it waits in Pending forever. Ask for a tenth of a CPU.
+
+<Interactive name="FoodCourtSim" scenario="k2-limits" goal={{ podsReady: { selector: 'app=big', count: 1 }, rolloutComplete: { name: 'big' } }} hints={['Type kubectl get pods to see big waiting', 'Type kubectl set resources deployment big --requests=cpu=100m']} success="big found a stall. A sensible request gets a seat." />
+
+<Hint>`kubectl set resources deployment big --requests=cpu=100m` changes the request.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A tray reaches its CPU limit. What happens to it?
+
+<Interactive name="Choice" options={[{ label: 'It is slowed down', correct: true, why: 'CPU is shared in time. Over the limit, the tray simply waits its turn.' }, { label: 'It is killed', why: 'That is memory. Over the memory limit means OOMKilled.' }, { label: 'It moves to a bigger stall', why: 'Kubernetes never moves a running tray.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+A request bigger than its limit makes no sense. Kubernetes refuses it. Fix one number.
+
+<Interactive name="YamlDoctor" file="web.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: web\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 500m\n        limits:\n          cpu: 250m\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: web\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 250m\n        limits:\n          cpu: 250m\n'} keep={['requests:\\n\\s+cpu:', 'limits:\\n\\s+cpu:']} hint="The request must be the same as the limit, or smaller." success="Fixed! The booking fits under the maximum." />
+</Card>
+
+<Card id="check" type="check">
+True or not? Sort each sentence.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'True' }, { id: 'no', label: 'Not true' }]} items={[{ label: 'Requests decide where a tray can sit', bucket: 'yes', why: 'The scheduler fits trays by their requests.' }, { label: 'Going over the memory limit only slows the app', bucket: 'no', why: 'Over the memory limit, the container is OOMKilled.' }, { label: 'With no requests, the tray books no room', bucket: 'yes', why: 'It may land on a crowded stall and starve.' }, { label: 'A limit may be smaller than its request', bucket: 'no', why: 'Kubernetes refuses it, as you just saw.' }]} success="All sorted! Requests book, limits cap." />
+</Card>
+
+<Card id="win" type="win">
+You can now book room with requests and cap use with limits.
+</Card>
+
+<Card id="deeper" type="deeper">
+CPU is counted in cores: `1000m` is 1 CPU. Memory uses `Mi` and `Gi` (1Gi is 1024Mi). `kubectl top pods` (World K5) shows live use, so you can pick fair numbers.
+
+Real rep (optional): on a throwaway cluster, ask for 64 CPUs. Then read the Events.
+</Card>

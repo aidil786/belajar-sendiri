@@ -1,0 +1,61 @@
+---
+id: git-w07-l06
+world: 7
+title: Matrix, cache, artifacts
+summary: "You will learn: how to test many setups at once, save time, and keep files from a run."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, TimelineTap, SortCards]
+needs: [git-w07-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Running variations of jobs (matrix)", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations" }
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+  - { label: "Workflow artifacts", url: "https://docs.github.com/en/actions/tutorials/store-and-share-data" }
+---
+
+<Card id="hook" type="hook">
+Your site must work on Node 22 and Node 24. Copy the whole test job twice? Then fix every bug twice? What's the best plan?
+
+<Interactive name="Choice" options={[{ label: 'Copy the job and change one number', why: 'It works, but now you fix everything twice.' }, { label: 'Write one job and list both versions', correct: true, why: 'One recipe, two runs. You will see how next.' }, { label: 'Test only on Node 24', why: 'Then Node 22 users find the bugs.' }]} />
+</Card>
+
+<Card id="see-matrix" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'test:' }, { text: '  runs-on: ubuntu-latest' }, { text: '  strategy:' }, { text: '    matrix:' }, { text: '      node: [22, 24]', target: true }, { text: '  steps:' }, { text: '    - uses: actions/setup-node@v7' }, { text: '      with:' }, { text: '        node-version: ${{ matrix.node }}' }]} prompt="Tap the line that lists the versions." success="Yes! Two items, so two copies of the job." />
+
+A **<Term id="matrix">matrix</Term>** is one job recipe plus a list. GitHub runs one copy per item. `${{ matrix.node }}` is that copy's item.
+</Card>
+
+<Card id="predict" type="predict">
+You add a second list, `os:`, with Linux and Windows. How many jobs run?
+
+<Interactive name="Choice" compact options={[{ label: '2', why: 'Each version runs on each system: 2 × 2.' }, { label: '3', why: "Matrices multiply. They don't add: 2 × 2." }, { label: '4', correct: true, why: 'Every pair runs: 2 versions × 2 systems = 4 jobs.' }]} />
+</Card>
+
+<Card id="see-cache" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Run 1', title: 'Shopping', text: 'npm downloads every package. Slow. The downloads get saved.' }, { when: 'Run 2', title: 'From the shelf', text: 'Same lock file, so the saved downloads come back. Fast!' }, { when: 'Run 3', title: 'New package', text: 'The lock file changed. npm downloads again and saves a fresh copy.' }]} />
+
+A **<Term id="cache">cache</Term>** is a pantry. The first run shops and stores. Later runs grab from the shelf. `cache: npm` in setup-node turns it on.
+</Card>
+
+<Card id="see-artifact" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: actions/upload-artifact@v7' }, { text: '  with:' }, { text: '    name: site' }, { text: '    path: dist/', target: true }]} prompt="Tap the line that says which folder to save." success="Right! Everything in dist/ goes in the box." />
+
+An **<Term id="artifact">artifact</Term>** is a takeaway box. A job packs files into it. After the run, you can download them. By default, GitHub keeps them 90 days.
+</Card>
+
+<Card id="try-sort" type="try">
+Pantry or takeaway box? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'cache', label: 'Cache (speed)' }, { id: 'artifact', label: 'Artifact (keep)' }]} items={[{ label: 'npm downloads, for a faster next run', bucket: 'cache', why: 'It only exists to save time.' }, { label: 'The built site, to download and check', bucket: 'artifact', why: 'You want the files themselves. Pack them.' }, { label: 'A test report, to read after a failure', bucket: 'artifact', why: 'This course saves one when its own tests fail.' }, { label: 'Saved downloads, keyed on package-lock.json', bucket: 'cache', why: 'A new lock file means a new key, so a fresh cache.' }]} success="Sorted! Cache saves time. Artifacts save files." />
+</Card>
+
+<Card id="win" type="win">
+You can now run a matrix, cache downloads and save artifacts.
+</Card>
+
+<Card id="deeper" type="deeper">
+When one matrix job fails, GitHub cancels the others. Set `fail-fast: false` to see every result. For other folders, `actions/cache@v6` takes a `path` and a `key`. GitHub removes cache entries nobody used for 7 days.
+</Card>

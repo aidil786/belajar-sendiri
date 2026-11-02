@@ -1,0 +1,65 @@
+---
+id: linux-l3-l04
+world: 3
+title: "localhost atau 0.0.0.0?"
+summary: "Anda akan belajar: kenapa aplikasi boleh jalan untuk anda tetapi tidak untuk orang lain."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, SortCards, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l03]
+scenario: linux-l3-intercom
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "ip(7): addresses", url: "https://man7.org/linux/man-pages/man7/ip.7.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-intercom" intro={['curl -s localhost:3000', 'curl -sS 10.0.0.5:3000; echo $?']} network />
+
+Aplikasi pesanan jawab anda di server. Melalui nombor jalan, ia menolak. Pelanggan tak boleh memesan. Kenapa?
+</Card>
+
+<Card id="see-ss" type="see">
+`ss -tln` beritahu anda. Tekan baris yang hanya jawab interkom.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:80        0.0.0.0:*' }, { text: 'LISTEN 0      5          127.0.0.1:3000      0.0.0.0:*', target: true }]} prompt="Tekan baris yang mendengar di 127.0.0.1." success="Port 3000 mendengar di 127.0.0.1: interkom sahaja." />
+</Card>
+
+<Card id="try-sort" type="try">
+`0.0.0.0` dalam `ss` bermaksud **setiap talian**: interkom dan jalan. `127.0.0.1` bermaksud interkom sahaja. Siapa boleh hubungi setiap satu?
+
+<Interactive name="SortCards" buckets={[{ id: 'inside', label: 'Hanya dari dalam server' }, { id: 'all', label: 'Sesiapa yang boleh sampai' }]} items={[{ label: '127.0.0.1:3000', bucket: 'inside', why: 'Interkom. Hanya program di kedai boleh hubungi.' }, { label: '0.0.0.0:80', bucket: 'all', why: 'Setiap talian. Pelanggan boleh hubungi.' }, { label: '0.0.0.0:22', bucket: 'all', why: 'SSH mendengar di setiap talian.' }, { label: '127.0.0.1:5432', bucket: 'inside', why: 'Pangkalan data untuk server ini sahaja. Pilihan yang selamat.' }]} success="Interkom sahaja, atau setiap talian." />
+</Card>
+
+<Card id="try-prove" type="try">
+Buktikan. Hubungi port 3000 melalui nombor jalan, seperti pelanggan.
+
+<Interactive name="LinuxSim" scenario="linux-l3-intercom" goal={{ lastTyped: '^curl .*10\\.0\\.0\\.5:3000' }} hints={['Taip curl -sS 10.0.0.5:3000', 'Kemudian bandingkan dengan curl -s localhost:3000']} solution={['curl -sS 10.0.0.5:3000']} success="Ditolak melalui nombor jalan. Aplikasi itu hanya mendengar di interkom." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu pangkalan data hanya diguna oleh aplikasi di server yang sama. Di mana ia patut mendengar?
+
+<Interactive name="Choice" options={[{ label: '127.0.0.1', correct: true, why: 'Orang luar langsung tak boleh mengetuk. Lebih selamat.' }, { label: '0.0.0.0', why: 'Nanti setiap talian boleh sampai. Buka apa yang pelanggan perlukan sahaja.' }, { label: 'Tak penting', why: 'Sangat penting. Kurang pintu terbuka, kurang pecah masuk.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Cara baiki aplikasi pesanan ada dalam tetapannya sendiri, bukan dalam Linux. Idea bagus atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tetapkan aplikasi mendengar di 0.0.0.0, kemudian semak dengan ss -tln.', good: true, why: 'Nanti 0.0.0.0:3000 muncul, dan jalan boleh hubungi.' }, { text: 'Buka semua port supaya pelanggan dapat masuk.', good: false, why: 'Buka satu port yang mereka perlukan sahaja.' }, { text: 'Biarkan di 127.0.0.1 dan letak nginx di depan.', good: true, why: 'Kaunter depan hantar pesanan ke dalam. Anda jumpa nginx dalam Dunia L4.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan aplikasi interkom sahaja dengan yang jawab setiap talian.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker ada idea yang sama: `-p 127.0.0.1:8080:80` simpan tingkap container untuk mesin ini sahaja. Banyak aplikasi baca tetapan seperti `HOST=0.0.0.0` atau `--bind`. Firewall masih boleh halang pemanggil (pelajaran 8).
+
+<Interactive name="Mission" id="linux-l3-l04-rep" steps={[{ id: 'one', text: 'Di Linux atau WSL anda: web server kecil di interkom sahaja.', command: 'python3 -m http.server --bind 127.0.0.1 8000' }, { id: 'look', text: 'Di terminal kedua: lihat 127.0.0.1:8000.', command: 'ss -tln' }, { id: 'stop', text: 'Hentikan dengan Ctrl+C. Jalankan semula dengan --bind 0.0.0.0 dan tengok lagi.' }]} success="Aplikasi sama, talian berbeza." />
+</Card>

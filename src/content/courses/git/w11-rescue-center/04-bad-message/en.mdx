@@ -1,0 +1,64 @@
+---
+id: git-w11-l04
+world: 11
+title: Fix a bad commit message
+summary: "You will learn: how to fix a commit message, and when to leave it alone."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim, SwipeJudge]
+needs: [git-w02-l03]
+scenario: w11-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git commit --amend", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git push --force-with-lease", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l04" commands={['git log --oneline']} label="git log --oneline: the newest commit says only: stuff." />
+
+Your last commit says `stuff`. Stuff? Next week, nobody will know what it was. Not even you! This happens to everyone.
+</Card>
+
+<Card id="decide" type="try">
+You haven't pushed yet. What's the quickest fix?
+
+<Interactive name="Choice" options={[{ label: 'git commit --amend -m "Add day 2 entry"', correct: true, why: 'Amend swaps the last commit for one with a better message.' }, { label: 'A new commit called "fix message"', why: 'That adds noise. Amend fixes it in place.' }, { label: 'git revert HEAD', why: 'Revert undoes the change itself, not just the message.' }]} />
+</Card>
+
+<Card id="see-amend" type="see">
+<Interactive name="GraphScene" scenario="w11-l04" commands={['git commit --amend -m "Add day 2 entry"']} label="The stuff commit is swapped for a new commit, Add day 2 entry. main now points at the new one." />
+
+**<Term id="amend">Amend</Term>** swaps your last commit for a fresh copy. Same changes, new message, new hash.
+</Card>
+
+<Card id="try-amend" type="try">
+Give the last commit a clear message.
+
+<Interactive name="Sim" scenario="w11-l04" panels={['graph']} goal={{ commits: 4, cleanMessages: 4 }} hints={['Type git commit --amend -m "Add day 2 entry"']} success="Much better! Future you says thanks." />
+
+<Hint>Type `git commit --amend -m "Add day 2 entry"`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+New story: it's pushed, and teammates pulled it. Now what?
+
+<Interactive name="Choice" options={[{ label: 'Leave it. Write clear messages from now on', correct: true, why: 'A messy message is annoying, not dangerous. Rewriting shared history is.' }, { label: 'Amend it and force push', why: "Teammates' copies would clash. Keep that for a branch only you use." }, { label: 'Delete the commit', why: 'That loses real work. Keep it.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Clear message, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'Add day 2 entry', good: true, why: 'Short and clear: you know what changed.' }, { text: 'stuff', good: false, why: 'What stuff? Say what changed.' }, { text: 'fix: correct typo on about page', good: true, why: 'Clear, and it uses a Conventional Commits prefix.' }, { text: 'asdf', good: false, why: 'Keyboard mash tells nobody anything.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fix a bad commit message, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bad message on an older commit? Before you push, `git rebase -i` can reword it (World 3). Already pushed, but on a branch only you use? Amend, then `git push --force-with-lease` replaces it safely (World 4). Never do that on a shared branch like main.
+</Card>

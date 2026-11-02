@@ -1,0 +1,77 @@
+---
+id: linux-l1-l03
+world: 1
+title: "Read files: cat, less, head, tail"
+summary: "You will learn: to read a whole file, its first lines, its newest lines, and to watch it grow."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-l02]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "cat (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cat.1.en.html" }
+  - { label: "head (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/head.1.en.html" }
+  - { label: "tail (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/tail.1.en.html" }
+  - { label: "less (Debian 13 man page)", url: "https://manpages.debian.org/trixie/less/less.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+The counter keeps an order book, `orders.log`. It grows all day. You only need the newest orders. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Read only the last few lines', correct: true, why: 'New orders land at the bottom. Read just the end.' }, { label: 'Print the whole book and scroll', why: 'Fine for 15 lines. Painful for 9,000.' }, { label: 'Delete the old orders first', why: 'Never delete to read! There is no undo on a server.' }]} />
+</Card>
+
+<Card id="see-cat" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['cat orders.log']} />
+
+`cat orders.log` prints the whole file at once. Great for short files. A long one flies past your eyes.
+</Card>
+
+<Card id="sort-tools" type="check">
+Pick the right tool for each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'head', label: 'head: the first lines' }, { id: 'tail', label: 'tail: the last lines' }, { id: 'less', label: 'less: page by page' }]} items={[{ label: 'The first 3 orders of the day', bucket: 'head', why: 'The oldest lines sit at the top.' }, { label: 'The newest orders', bucket: 'tail', why: 'New lines are added at the bottom.' }, { label: 'Scroll a 9,000-line log slowly', bucket: 'less', why: 'less shows one screen at a time.' }, { label: 'The last line written', bucket: 'tail', why: 'tail -n 1 shows only the very end.' }]} success="Top: head. Bottom: tail. Long: less." />
+</Card>
+
+<Card id="try-tail" type="try">
+Show only the last 3 orders: `tail -n 3 orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^tail (-n ?3|-3) orders\\.log$' }} hints={['Type tail -n 3 orders.log']} solution={['tail -n 3 orders.log']} success="Three lines: the newest orders, up to 08:44." />
+
+<Hint>`-n 3` means "3 lines".</Hint>
+</Card>
+
+<Card id="predict-head" type="predict">
+What does `head -n 1 orders.log` print?
+
+<Interactive name="Choice" options={[{ label: '08:01 T1 nasi-lemak 5 paid', correct: true, why: 'head starts at the top. The first order came at 08:01.' }, { label: '08:44 T3 roti-canai 2 paid', why: 'That is the last line. tail would show it.' }, { label: 'All 15 orders', why: '-n 1 asks for one line only.' }]} />
+</Card>
+
+<Card id="try-follow" type="try">
+Watch the book grow with `tail -f orders.log`. It holds the terminal. Stop it with **Ctrl+C**.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ typed: '^tail (.* )?-f', noForeground: true }} hints={['Type tail -f orders.log', 'Press the Ctrl+C button to stop watching.']} solution={['tail -f orders.log', '^C']} success="You watched, then stopped. Ctrl+C ends most programs that hold the terminal." />
+
+<Hint>`-f` means "follow": keep watching for new lines.</Hint>
+</Card>
+
+<Card id="check-less" type="check">
+You opened a long log with `less orders.log`. You read enough. How do you leave?
+
+<Interactive name="Choice" options={[{ label: 'Press q', correct: true, why: 'q quits less. You are back at the prompt.' }, { label: 'Press Ctrl+Z', why: 'That only pauses less in the background. q leaves it.' }, { label: 'Close the terminal window', why: 'That works, but it ends your whole session. q is gentler.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read the top, the end, or a whole file.
+</Card>
+
+<Card id="deeper" type="deeper">
+In `less`, Space shows the next page and `q` quits. `/sambal` searches, and `G` jumps to the end. `head` and `tail` show 10 lines unless you say `-n`. `cat -n` numbers the lines. `wc -l` counts them.
+
+Real rep (optional): on Linux, try `tail -n 5 /var/log/dpkg.log`, then `less /etc/os-release` and press q.
+</Card>

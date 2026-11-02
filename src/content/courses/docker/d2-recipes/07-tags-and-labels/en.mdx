@@ -1,0 +1,75 @@
+---
+id: docker-d2-l07
+world: 2
+title: "Tags with SemVer, Git SHA and labels"
+summary: "You will learn: to name every image so anyone can tell exactly what is inside."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, CommandBuilder, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l06]
+scenario: d2-l07
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "Dockerfile reference: LABEL", url: "https://docs.docker.com/reference/dockerfile/#label" }
+  - { label: "OCI image annotations (standard label names)", url: "https://github.com/opencontainers/image-spec/blob/main/annotations.md" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+The live site runs `diary:latest`. It breaks at lunch. Which version is it?
+
+<Interactive name="Choice" options={[{ label: 'Nobody can tell from that tag', correct: true, why: 'latest is just a name. It can point at any build, old or new.' }, { label: 'The newest build, always', why: 'latest is only the default name. Nothing keeps it fresh.' }, { label: 'Version 1.0', why: 'Maybe! The tag does not say.' }]} />
+</Card>
+
+<Card id="see-tags" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l07" commands={['docker build -t diary:1.2.0 -t diary:sha-3f2a9c1 .', 'docker images diary']} label="One build gets two tags, diary:1.2.0 and diary:sha-3f2a9c1. docker images shows the same IMAGE ID for both." />
+
+One pack, two stickers. `1.2.0` is a <Term id="semantic-versioning" course="git">SemVer</Term> tag for people. `sha-3f2a9c1` names the exact Git commit. Same ID: nothing was copied.
+</Card>
+
+<Card id="predict-semver" type="predict">
+SemVer is MAJOR.MINOR.PATCH. You fix a typo on the diary page. What does `1.2.0` become?
+
+<Interactive name="Choice" options={[{ label: '1.2.1', correct: true, why: 'PATCH: a small fix that changes nothing else.' }, { label: '1.3.0', why: 'MINOR is for a new feature, like a new page.' }, { label: '2.0.0', why: 'MAJOR is for a change that breaks old ways of using it.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build the command for version 1.2.1. Tag it with your commit's short id too.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker build', means: 'bake an image' }, { text: '-t diary:1.2.1', means: 'the version for people' }, { text: '-t diary:sha-$(git rev-parse --short HEAD)', means: 'the commit id for machines' }, { text: '.', means: 'this folder' }]} decoys={[{ text: '-t diary:final', means: 'final tells nobody which build it is' }]} success="Two clear names, one image." />
+
+<Hint>`git rev-parse --short HEAD` prints your current commit's short id.</Hint>
+</Card>
+
+<Card id="try-tag" type="try">
+Now for real. Build `diary` with two tags: `1.2.0` and `sha-3f2a9c1`.
+
+<Interactive name="KitchenSim" scenario="d2-l07" goal={{ imageExists: ['diary:1.2.0', 'diary:sha-3f2a9c1'] }} hints={['Use -t twice in one build.', 'Type docker build -t diary:1.2.0 -t diary:sha-3f2a9c1 .']} success="Both stickers are on the same pack." />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l07" commands={['cat Dockerfile', 'docker build --label org.opencontainers.image.version=1.2.0 -t diary:1.2.0 .', 'docker inspect --format "{{json .Config.Labels}}" diary:1.2.0']} label="The recipe has a LABEL line with the title. The build adds a version label. docker inspect prints all labels, the nginx maintainer label too." />
+
+A **<Term id="image-label">label</Term>** is a fact stuck on the pack. The standard names start with `org.opencontainers.image.`, like title, version and source. `docker inspect` reads them.
+</Card>
+
+<Card id="check-sort" type="check">
+Would you run this tag on the live site?
+
+<Interactive name="SortCards" buckets={[{ id: 'clear', label: 'Clear' }, { id: 'risky', label: 'Risky' }]} items={[{ label: '1.2.0', bucket: 'clear', why: 'An exact version.' }, { label: 'sha-3f2a9c1', bucket: 'clear', why: 'Points to one exact commit.' }, { label: 'latest', bucket: 'risky', why: 'It can mean any build.' }, { label: 'new', bucket: 'risky', why: 'New compared to what?' }, { label: 'final-v2', bucket: 'risky', why: 'There is always a final-v3.' }]} success="Exact names make problems easy to trace." />
+</Card>
+
+<Card id="win" type="win">
+You can now tag and label images clearly.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker tag diary:1.2.0 diary:1.2` adds a third sticker that you can move to 1.2.1 later. In World C2, a pipeline makes these tags for you. Labels from `--label` and `LABEL` end up in the same list.
+
+<Interactive name="Mission" id="d2-l07-rep" steps={[{ id: 'sha', text: 'In a Git project, print your short commit id.', command: 'git rev-parse --short HEAD' }, { id: 'build', text: 'Build with a version tag and a sha- tag.' }, { id: 'check', text: 'Check both tags share one IMAGE ID.', command: 'docker images' }]} success="Your images now say what they are." />
+</Card>

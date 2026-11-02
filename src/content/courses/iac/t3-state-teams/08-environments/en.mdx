@@ -1,0 +1,74 @@
+---
+id: iac-t3-l08
+world: 3
+title: Workspaces or folders per environment?
+summary: "You will learn: when a second register (a workspace) is enough, and when each environment needs its own folder."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, TofuSim, SortCards, SpotLines, CommandBuilder, Mission]
+needs: [iac-t3-l07]
+scenario: t3-workspace
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: workspaces (language)", url: "https://opentofu.org/docs/language/state/workspaces/" }
+  - { label: "OpenTofu: workspaces (CLI)", url: "https://opentofu.org/docs/cli/workspaces/" }
+  - { label: "Terraform: workspaces", url: "https://developer.hashicorp.com/terraform/cli/workspaces" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil wants a test copy of the shop, next to the real one. Same blueprint. How many registers do you need?
+
+<Interactive name="Choice" options={[{ label: 'Two: one for each copy', correct: true, why: 'Each building needs its own register, or they mix up.' }, { label: 'One, shared by both', why: 'Then the test copy would overwrite what the real shop has.' }, { label: 'None: the blueprint is enough', why: 'The blueprint says what to build. The register says what was built.' }]} />
+</Card>
+
+<Card id="see-ws" type="see">
+<Interactive name="Transcript" title="bash" label="Real OpenTofu: workspace list shows only default. workspace new test creates and switches to test. workspace list then shows default and test, with a star on test." lines={[{ cmd: 'tofu workspace list' }, { out: '* default' }, { cmd: 'tofu workspace new test' }, { out: 'Created and switched to workspace "test"!', color: 'green' }, { out: '\nYou\'re now on a new, empty workspace. Workspaces isolate their state,\nso if you run "tofu plan" OpenTofu will not see any existing state\nfor this configuration.', color: 'green' }, { cmd: 'tofu workspace list' }, { out: '  default\n* test' }]} />
+
+A **<Term id="workspace">workspace</Term>** is a second register for the same blueprint, in the same backend. The star shows the one you are in.
+</Card>
+
+<Card id="try-name" type="try">
+This blueprint puts `terraform.workspace` in the file name. Run `tofu apply`. Which sign appears?
+
+<Interactive name="TofuSim" scenario="t3-workspace" goal={{ filesExist: ['default-sign.txt'] }} hints={['Type tofu apply and press Enter, then yes.', 'Then ls to see the file.']} success="default-sign.txt: you are in the workspace called default." />
+
+<Hint>Everyone starts in the workspace called `default`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now someone switches to the workspace `test` and applies. What is the new file called?
+
+<Interactive name="Choice" options={[{ label: 'test-sign.txt', correct: true, why: 'terraform.workspace is now "test". A real run printed kedai-test the same way.' }, { label: 'default-sign.txt, again', why: 'The name follows the workspace you are in.' }, { label: 'Nothing: test has no blueprint', why: 'Every workspace uses the same blueprint. Only the register differs.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Workspace or separate folder? Sort each need.
+
+<Interactive name="SortCards" buckets={[{ id: 'ws', label: 'A workspace is enough' }, { id: 'folder', label: 'Its own folder' }]} items={[{ label: 'A quick test copy for one feature branch', bucket: 'ws', why: 'Short-lived, same setup. A workspace is made for this.' }, { label: 'Production, with its own keys and approvals', bucket: 'folder', why: 'Workspaces share one backend, so they share its access rules.' }, { label: 'Staging and production in different cloud accounts', bucket: 'folder', why: 'Different credentials need different backends.' }, { label: 'Try a change, then throw it all away', bucket: 'ws', why: 'Destroy, then delete the workspace.' }]} success="Short-lived copies: workspaces. Real environments: their own folders." />
+</Card>
+
+<Card id="see-folders" type="see">
+<Interactive name="SpotLines" prompt="Tap the folder that both environments share." lines={[{ text: 'kedai-infra/' }, { text: '  modules/' }, { text: '    shop/              the design, written once', target: true }, { text: '  envs/' }, { text: '    staging/' }, { text: '      main.tf          uses modules/shop, staging backend' }, { text: '    production/' }, { text: '      main.tf          uses modules/shop, production backend' }]} success="One design, two folders, two backends, two sets of keys." />
+
+Folders per environment: each one has its own backend, keys and reviewers. A module keeps them alike. That is World T4.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that switches to `test`, and makes it if it is missing.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'talk to OpenTofu' }, { text: 'workspace', means: 'manage registers' }, { text: 'select', means: 'switch to one' }, { text: '-or-create', means: 'make it if it does not exist' }, { text: 'test', means: 'its name' }]} decoys={[{ text: 'delete', means: 'remove a workspace' }, { text: '-force', means: 'even if it is not empty' }]} success="tofu workspace select -or-create test. Real OpenTofu answered: Created and switched to workspace." />
+</Card>
+
+<Card id="win" type="win">
+You can now choose between a workspace and a folder per environment.
+</Card>
+
+<Card id="deeper" type="deeper">
+With the local backend, workspace registers live in `terraform.tfstate.d/<name>/`. The practice terminal has one workspace only, so try the rest at home. Where the story breaks: a real building can't be copied in a second. A register can, so guard it.
+
+<Interactive name="Mission" id="iac-t3-l08-rep" steps={[{ id: 'make', text: 'In a practice folder with this lesson\'s blueprint, make a test workspace.', command: 'tofu init && tofu workspace new test' }, { id: 'apply', text: 'Build in test. The file says test.', command: 'tofu apply' }, { id: 'back', text: 'Go back to default. Its register is empty.', command: 'tofu workspace select default && tofu state list' }, { id: 'clean', text: 'Clean up: destroy in test, then delete it.', command: 'tofu workspace select test && tofu destroy && tofu workspace select default && tofu workspace delete test' }]} success="Two registers, one blueprint, and a tidy finish." />
+</Card>

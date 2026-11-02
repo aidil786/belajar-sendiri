@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l09
+world: 4
+title: "Helm 4: install, upgrade, rollback"
+summary: "Anda akan belajar: pasang aplikasi berpakej dengan Helm, ubahnya, dan rollback."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SortCards, FoodCourtSim, Transcript, Choice, OrderList, CommandBuilder, Mission]
+needs: [k8s-k4-l08]
+scenario: k4-helm
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Helm: Using Helm", url: "https://helm.sh/docs/intro/using_helm/" }
+  - { label: "helm install", url: "https://helm.sh/docs/helm/helm_install/" }
+  - { label: "helm rollback", url: "https://helm.sh/docs/helm/helm_rollback/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-helm" commands={['helm template shop ./kedai']} picture={false} label="helm template shop ./kedai cetak dua objek: satu Service dan satu Deployment, kedua-duanya bernama shop-kedai, dengan 2 replika." />
+
+Kedai anda perlukan Deployment dan Service. Seseorang sudah bungkus kedua-duanya sebagai satu set. Satu arahan sudah isi semua YAML itu.
+</Card>
+
+<Card id="see-kit" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'kit', label: 'Dalam set hidangan (chart)' }, { id: 'order', label: 'Dalam pesanan anda' }]} items={[{ label: 'Templat dengan ruang kosong untuk diisi', bucket: 'kit', why: 'Chart bawa bentuk YAML.' }, { label: 'Nilai lalai, contohnya replicaCount: 2', bucket: 'kit', why: 'values.yaml datang dalam chart.' }, { label: 'Nama release, shop', bucket: 'order', why: 'Anda namakan setiap pemasangan.' }, { label: '--set replicaCount=3', bucket: 'order', why: 'Perubahan anda menang atas nilai lalai.' }]} success="Set itu bawa templat dan nilai lalai. Anda bawa pesanan." />
+
+**<Term id="helm">Helm</Term>** ialah pengurus pakej Kubernetes. <Term id="chart">Chart</Term> ialah set hidangan siap: templat dan nilai lalai.
+</Card>
+
+<Card id="try-template" type="try">
+Pesan 3 dulang daripada set itu. Lihat YAML sebelum apa-apa dipasang.
+
+<Interactive name="FoodCourtSim" scenario="k4-helm" goal={{ lastTyped: '^helm template .*replicaCount=3' }} hints={['Taip helm template shop ./kedai --set replicaCount=3']} success="replicas: 3 dalam YAML. Belum ada yang dipasang." />
+
+<Hint>`--set` tukar satu nilai untuk kali ini sahaja.</Hint>
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="Transcript" title="bash" label="Empat arahan Helm: pasang shop, upgrade kepada 3 replika, tunjuk sejarahnya, dan rollback ke revision 1." lines={[{ cmd: 'helm install shop ./kedai' }, { cmd: 'helm upgrade shop ./kedai --set replicaCount=3' }, { cmd: 'helm history shop' }, { cmd: 'helm rollback shop 1' }]} />
+
+`install` buat **<Term id="helm-release">release</Term>** bernama shop, pada revision 1. Setiap `upgrade` tambah satu revision. `rollback` bawa balik yang lama.
+</Card>
+
+<Card id="predict" type="predict">
+Revision 1: install. Revision 2: upgrade dengan image rosak. Anda jalankan `helm rollback shop 1`. Apa revision terbaharu sekarang?
+
+<Interactive name="Choice" options={[{ label: '3, salinan revision 1', correct: true, why: 'Rollback ialah revision baharu. Sejarah tak pernah dipadam.' }, { label: '1', why: 'Hampir! Helm tak putar balik sejarah. Ia tulis revision 3 dengan tetapan lama.' }, { label: '2', why: 'Revision 2 ialah yang rosak, yang anda tinggalkan.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun hayat satu release, yang pertama di atas.
+
+<Interactive name="OrderList" items={['helm install shop ./kedai', 'helm upgrade shop ./kedai --set image.tag=1.30-alpine', 'helm history shop', 'helm rollback shop 1', 'helm uninstall shop']} label="Langkah pertama di atas" success="Pasang, ubah, tengok, batal, dan akhirnya kemas." />
+</Card>
+
+<Card id="check-build" type="check">
+shop sudah dipasang. Bina arahan yang pindahkannya ke nginx 1.30.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'helm', means: 'Cakap dengan Helm' }, { text: 'upgrade', means: 'ubah release yang sudah ada' }, { text: 'shop', means: 'nama release' }, { text: './kedai', means: 'chart itu' }, { text: '--set image.tag=1.30-alpine', means: 'perubahan pada pesanan anda' }]} decoys={[{ text: 'install', means: 'shop sudah dipasang. Guna upgrade.' }, { text: '--image=nginx:1.30', means: 'Bukan flag Helm. Nilai masuk melalui --set.' }]} success="Itu tulis revision 2, dengan nginx 1.30." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pasang, upgrade dan rollback aplikasi dengan Helm.
+</Card>
+
+<Card id="deeper" type="deeper">
+Belajar Helm 4: ia keluar pada November 2025. Helm 3 dapat pembaikan keselamatan hanya sehingga 11 November 2026. Chart datang dari repo chart atau registry OCI. `helm uninstall shop` padam release itu dan semua yang ia buat.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l09-rep" steps={[{ id: 'install-helm', text: 'Pasang Helm 4 dari helm.sh. Ikut halaman pemasangan rasmi sahaja.' }, { id: 'version', text: 'Pastikan ia sebut v4.', command: 'helm version' }, { id: 'create', text: 'Buat chart permulaan.', command: 'helm create kedai' }, { id: 'install', text: 'Pasang sebagai shop.', command: 'helm install shop ./kedai' }, { id: 'upgrade', text: 'Pesan 3 dulang.', command: 'helm upgrade shop ./kedai --set replicaCount=3' }, { id: 'history', text: 'Baca revision.', command: 'helm history shop' }, { id: 'rollback', text: 'Balik ke revision 1.', command: 'helm rollback shop 1' }, { id: 'tidy', text: 'Kemas.', command: 'helm uninstall shop' }]} success="Release sebenar, di-upgrade dan di-rollback." />
+</Card>

@@ -1,0 +1,78 @@
+---
+id: linux-l1-l05
+world: 1
+title: "Padam dengan cermat: rm tiada undo"
+summary: "Anda akan belajar: padam fail dan folder dengan selamat, sebab tiada tong sampah."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SwipeJudge, OrderList, Mission]
+needs: [linux-l1-l04]
+scenario: linux-l1-delete
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "rm (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rm.1.en.html" }
+  - { label: "rmdir (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rmdir.1.en.html" }
+  - { label: "GNU coreutils: rm invocation", url: "https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+Di laptop anda, fail yang dipadam menunggu dalam tong sampah. Di server Linux, ke mana `rm` hantar fail?
+
+<Interactive name="Choice" options={[{ label: 'Tiada ke mana. Ia hilang terus.', correct: true, why: 'rm tiada tong sampah dan tiada undo. Hanya sandaran boleh pulihkan fail.' }, { label: 'Ke folder sampah', why: 'Shell tiada folder sampah. rm terus padam.' }, { label: 'Ke sandaran, secara ajaib', why: 'Cuma kalau anda sendiri buat sandaran.' }]} />
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-delete" intro={['ls', 'rm a.tmp', 'ls']} />
+
+`rm a.tmp` sudah padam fail itu. Tiada soalan, tiada tong sampah. **rm** maksudnya "remove" (buang). Cuba `rm b.tmp`: nota Hati-hati akan muncul.
+</Card>
+
+<Card id="predict-dir" type="predict">
+`old` ialah folder penuh menu lama. Anda taip `rm old`. Apa server kata?
+
+<Interactive name="Choice" options={[{ label: "rm: cannot remove 'old': Is a directory", correct: true, why: 'Maksudnya: rm jaga folder. Folder perlukan rm -r.' }, { label: 'Tiada apa. old sudah hilang.', why: 'rm biasa tolak folder. Itu satu jaring keselamatan kecil.' }, { label: 'Ia padam fail di dalamnya sahaja', why: 'rm tak buat apa-apa di sini. Ia berhenti dan terangkan.' }]} />
+</Card>
+
+<Card id="try-tmp" type="try">
+Padam dua fail sementara yang kosong, `a.tmp` dan `b.tmp`. Simpan yang lain.
+
+<Interactive name="LinuxSim" scenario="linux-l1-delete" goal={{ fileMissing: ['~/kedai/a.tmp', '~/kedai/b.tmp'], fileExists: ['~/kedai/menu/today.txt'], dirExists: ['~/kedai/old'] }} hints={['Tengok dulu: ls', 'Kemudian: rm a.tmp b.tmp']} solution={['rm a.tmp b.tmp']} success="Kedua-dua fail sementara sudah tiada. Menu dan old selamat." />
+
+<Hint>`rm` boleh terima beberapa nama: `rm a.tmp b.tmp`.</Hint>
+</Card>
+
+<Card id="judge-habits" type="check">
+Tabiat selamat, atau berisiko?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jalankan ls dulu. Kemudian rm tepat apa yang anda nampak.', good: true, why: 'Tengok sebelum padam. Salah taip suka bersembunyi dalam nama.' }, { text: 'Guna sudo rm -rf supaya cepat.', good: false, why: 'sudo dengan -rf padam apa saja, tanpa soalan. Risiko besar.' }, { text: 'Tak pasti? Salin ke tempat lain dulu.', good: true, why: 'Sandaran ialah satu-satunya undo anda.' }, { text: 'Padam tergesa-gesa sebelum kedai tutup.', good: false, why: 'Bila penat dan kelam-kabut, fail mudah hilang. Perlahankan.' }]} />
+</Card>
+
+<Card id="try-old" type="try">
+Menu 2025 sudah tak perlu. Padam folder `old` dan semua isinya: `rm -r old`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-delete" goal={{ fileMissing: ['~/kedai/old'], dirExists: ['~/kedai/menu'] }} hints={['Intai isinya dulu: ls old', 'Kemudian: rm -r old']} solution={['ls old', 'rm -r old']} success="old sudah tiada, dengan kedua-dua failnya. Perasan nota Hati-hati: -r padam seluruh bilik." />
+
+<Hint>`-r` maksudnya "folder ini dan semua isinya".</Hint>
+</Card>
+
+<Card id="order-routine" type="check">
+Susun rutin padam yang selamat.
+
+<Interactive name="OrderList" items={['pwd: betulkah bilik saya?', 'ls old: apa di dalamnya?', 'cp -r old ~/old-backup: kalau tak pasti sahaja', 'rm -r old: padam', 'ls: semak ia sudah tiada']} label="Langkah pertama di atas" success="Di mana, apa, sandaran, padam, semak. Rutin yang tenang." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh padam fail dan folder dengan cermat, tanpa undo.
+</Card>
+
+<Card id="deeper" type="deeper">
+`rmdir old` padam folder hanya bila ia kosong: pilihan yang lembut. Di mesin sebenar, `rm -i` tanya sebelum setiap fail. `-f` tak pernah tanya dan sorok ralat, jadi anggap ia pisau tajam.
+
+Latihan sebenar (pilihan), dalam folder latihan:
+
+<Interactive name="Mission" id="linux-l1-l05-rep" steps={[{ id: 'make', text: 'Buat folder dengan dua fail.', command: 'mkdir -p trash-test && touch trash-test/a.tmp trash-test/b.tmp' }, { id: 'ask', text: 'Padam satu, dengan soalan dulu. Jawab y.', command: 'rm -i trash-test/a.tmp' }, { id: 'look', text: 'Tengok sebelum padam besar.', command: 'ls trash-test' }, { id: 'all', text: 'Padam folder itu.', command: 'rm -r trash-test' }]} success="Berhati-hati dan sebenar!" />
+</Card>

@@ -1,0 +1,63 @@
+---
+id: k8s-k5-l12
+world: 5
+title: Managed Kubernetes and cost
+summary: "You will learn: what a managed cluster does for you, and what makes the bill grow."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Mission]
+needs: [k8s-k5-l11]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: production environment", url: "https://kubernetes.io/docs/setup/production-environment/" }
+  - { label: "Kubernetes: resource management for pods", url: "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" }
+  - { label: "Kubernetes: node autoscaling", url: "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" }
+---
+
+<Card id="hook" type="hook">
+A food court needs an office too: the control plane. Someone must keep it running, patched and backed up. Do you want that job on day one?
+
+<Interactive name="Choice" options={[{ label: 'Rent a food court where the landlord runs the office', correct: true, why: 'That is managed Kubernetes. You focus on your stalls and trays.' }, { label: 'Build every part myself, today', why: 'You can, and you learn a lot. It is a big job to keep safe.' }, { label: 'Skip the office', why: 'No control plane, no Kubernetes. Something must run it.' }]} />
+</Card>
+
+<Card id="see-managed" type="see">
+With **<Term id="managed-kubernetes">managed Kubernetes</Term>**, a cloud runs the control plane. Examples: Amazon EKS, Google GKE, Azure AKS and DigitalOcean DOKS. Who looks after what?
+
+<Interactive name="SortCards" buckets={[{ id: 'cloud', label: 'The cloud (landlord)' }, { id: 'you', label: 'You (the stall owner)' }]} items={[{ label: 'Running the API server and etcd', bucket: 'cloud', why: 'That is the office. The landlord runs it.' }, { label: 'Your Deployments, Services and YAML', bucket: 'you', why: 'Your menu is still your job.' }, { label: 'Who may do what (RBAC)', bucket: 'you', why: 'The landlord gives you the keys. You decide who gets copies.' }, { label: 'How big each stall is', bucket: 'you', why: 'You choose node sizes and how many.' }]} success="Sorted! The office is rented. The cooking is yours." />
+</Card>
+
+<Card id="check-pick" type="check">
+Your team already runs everything on Microsoft Azure. Which managed Kubernetes is the natural first look?
+
+<Interactive name="Choice" compact options={[{ label: 'AKS', correct: true, why: 'Azure Kubernetes Service fits next to your other Azure things.' }, { label: 'EKS', why: 'That is Amazon’s. Fine, but your team lives on Azure.' }, { label: 'GKE', why: 'That is Google’s. Same idea, different cloud.' }]} />
+</Card>
+
+<Card id="see-bill" type="see">
+A kind cluster on your laptop is free. Cloud clusters bill by the hour. Sort each item.
+
+<Interactive name="SortCards" buckets={[{ id: 'bill', label: 'Adds to the bill' }, { id: 'save', label: 'Saves money' }]} items={[{ label: 'Nodes left running all weekend', bucket: 'bill', why: 'Stalls cost money every hour they are open.' }, { label: 'A forgotten LoadBalancer Service', bucket: 'bill', why: 'It rents a cloud load balancer until you delete it.' }, { label: 'A disk kept after the app is gone', bucket: 'bill', why: 'Storage bills even with no tray using it.' }, { label: 'Honest requests, so fewer nodes', bucket: 'save', why: 'Autoscalers size the food court from requests.' }, { label: 'Deleting the practice cluster when done', bucket: 'save', why: 'The cheapest cluster is the one that is gone.' }]} success="Sorted! Open stalls cost money. Closed ones do not." />
+</Card>
+
+<Card id="predict" type="predict">
+Every tray requests 2 CPU but really uses 0.1. A node autoscaler is on. What happens to the bill?
+
+<Interactive name="Choice" options={[{ label: 'It grows: stalls are added to fit the requests', correct: true, why: 'The scheduler and autoscaler trust requests, not real use.' }, { label: 'Nothing: you pay for real use only', why: 'You pay for the machines. They are sized to the requests.' }, { label: 'It shrinks, because use is low', why: 'Low use does not free space that requests keep.' }]} />
+</Card>
+
+<Card id="try-safety" type="try">
+Before any real cloud cluster, tick off your safety list. It stays saved here.
+
+<Interactive name="Mission" id="k5-l12-cloud" steps={[{ id: 'kind', text: 'Practise on kind first. It is free.', command: 'kind create cluster --name practice' }, { id: 'budget', text: 'In your cloud account, set a budget alert before you make anything.' }, { id: 'small', text: 'Start with the smallest node size and 1 or 2 nodes.' }, { id: 'delete', text: 'Delete the cluster when you finish, the same day.' }, { id: 'leftovers', text: 'Then check for leftover load balancers and disks.' }]} success="Safe and cheap. Your bill will thank you." />
+</Card>
+
+<Card id="win" type="win">
+You can now choose a managed cluster and keep its bill small.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: in our food court, time jumps ahead and stalls are free. Real HPAs check every 15 seconds and wait 5 minutes to shrink. Real schedulers weigh many more scores. Real stalls are machines that bill by the hour. Prices change often, so read your provider's pricing page.
+</Card>

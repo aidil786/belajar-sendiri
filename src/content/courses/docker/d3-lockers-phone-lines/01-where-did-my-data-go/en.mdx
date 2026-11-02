@@ -1,0 +1,71 @@
+---
+id: docker-d3-l01
+world: 3
+title: Where did my data go?
+summary: "You will learn: why files saved inside a container vanish."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, TimelineTap, KitchenSim, LockerTest, SortCards, Choice, Transcript, Mission]
+needs: [docker-d2-l13]
+scenario: d3-kedai
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Storage", url: "https://docs.docker.com/engine/storage/" }
+  - { label: "Docker docs: docker container diff", url: "https://docs.docker.com/reference/cli/docker/container/diff/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-kedai" commands={['docker exec kedai cat /orders.txt', 'docker rm -f kedai', 'docker run -d --name kedai nginx:1.30-alpine', 'docker exec kedai ls /orders.txt']} fails={['docker exec kedai ls /orders.txt']} label="orders.txt says nasi lemak. Aina removes the container kedai and starts a new one. Now ls says No such file or directory." />
+
+Aina kept today's orders inside her container. Then she swapped it for a fresh one. The orders vanished. Where did they go?
+</Card>
+
+<Card id="see-layer" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'docker run', title: 'A fresh lunchbox', text: 'Docker lays a thin, empty layer on top of the image. The app writes there.' }, { when: 'docker exec … echo', title: 'You save orders.txt', text: 'The file lands in that top layer. The image never changes.' }, { when: 'docker restart', title: 'Same lunchbox', text: 'Stop and start keep the same container. The file stays.' }, { when: 'docker rm', title: 'Lunchbox thrown away', text: 'The top layer goes with it. A new container starts clean.' }]} />
+
+Every container gets its own thin top layer. This is the **<Term id="writable-layer">writable layer</Term>**. Tap each step to follow orders.txt.
+</Card>
+
+<Card id="try-restart" type="try">
+Restart kedai. Then check that orders.txt is still there.
+
+<Interactive name="KitchenSim" scenario="d3-kedai" goal={{ running: ['kedai'], typed: '^docker (container )?restart', lastTyped: 'orders\\.txt', lastExit: 0 }} hints={['Type docker restart kedai', 'Then type docker exec kedai cat /orders.txt']} success="Still there! A restart keeps the same lunchbox and its layer." />
+
+<Hint>`docker restart kedai`, then `docker exec kedai cat /orders.txt`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Guess first, then run it. Does the file survive?
+
+<Interactive name="LockerTest" mounts={[{ kind: 'writable', target: '/app', file: 'orders.txt' }]} ask={['restart', 'recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="check-gone" type="check">
+After `docker rm`, what is gone and what stays?
+
+<Interactive name="SortCards" buckets={[{ id: 'gone', label: 'Gone with the lunchbox' }, { id: 'stays', label: 'Still there' }]} items={[{ label: 'orders.txt you wrote inside', bucket: 'gone', why: 'It lived in the writable layer.' }, { label: 'The image nginx:1.30-alpine', bucket: 'stays', why: 'A container never changes its image.' }, { label: "The container's logs", bucket: 'gone', why: 'Logs belong to the container. docker rm deletes them too.' }, { label: 'Files that came with the image', bucket: 'stays', why: 'A new container gets them again from the image.' }]} success="Sorted! Only the lunchbox's own layer is lost." />
+</Card>
+
+<Card id="check-plan" type="check">
+Your shop app saves photo uploads in /app/uploads. How do you keep them safe?
+
+<Interactive name="Choice" options={[{ label: 'Keep them in a locker outside the lunchbox', correct: true, why: 'Yes! That locker is a volume. It is the next lesson.' }, { label: 'Never remove the container', why: 'Updates need a new container. The data must live outside.' }, { label: 'Save them into the image', why: 'An image is a frozen meal pack, not storage. Every build would grow.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why files inside a container vanish.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker diff` lists what changed in the writable layer. `A` means added, `C` changed, `D` deleted.
+
+<Interactive name="Transcript" title="bash" label="docker diff on a fresh alpine container shows one added file: A /orders.txt." lines={[{ cmd: 'docker run -d --name box alpine:3.22 sleep 600' }, { cmd: 'docker exec box sh -c "echo nasi lemak > /orders.txt"' }, { cmd: 'docker diff box' }, { out: 'A /orders.txt', color: 'green' }]} />
+
+Real rep (optional), on your own Docker or in Codespaces:
+
+<Interactive name="Mission" id="d3-l01-rep" steps={[{ id: 'run', text: 'Start a practice box.', command: 'docker run -d --name box alpine:3.22 sleep 600' }, { id: 'write', text: 'Write a file inside it.', command: 'docker exec box sh -c "echo hi > /note.txt"' }, { id: 'rm', text: 'Throw the box away. Careful: only your practice box!', command: 'docker rm -f box' }, { id: 'look', text: 'Look in a new box. The note is gone.', command: 'docker run --rm alpine:3.22 cat /note.txt' }]} success="You watched a writable layer disappear for real." />
+</Card>

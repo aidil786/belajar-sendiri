@@ -1,0 +1,71 @@
+---
+id: git-w04-l08
+world: 4
+title: Pull with merge or rebase
+summary: "You will learn: what to do when you and GitHub both have new commits."
+minutes: 4
+xp: 20
+interactives: [Courier, GraphScene, Choice, CommandBuilder, Sim, SwipeJudge]
+needs: [git-w04-l07]
+scenario: w04-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git config", url: "https://git-scm.com/docs/git-config" }
+---
+
+<Card id="hook" type="hook">
+You made titles teal. Aisyah pushed her day. Both of you have a new commit. Tap Pull. What does Git say?
+
+<Interactive name="Courier" scenario="w04-l08" actions={['pull']} />
+</Card>
+
+<Card id="see-merge" type="see">
+<Interactive name="GraphScene" scenario="w04-l08" commands={['git pull --no-rebase']} label="git pull --no-rebase makes a merge commit. Your commit and Aisyah's commit both lead into it, like the letter Y." />
+
+`git pull --no-rebase` joins the two with a merge commit. History keeps both paths, like the letter Y.
+</Card>
+
+<Card id="predict" type="predict">
+Which pull gives one straight line of history?
+
+<Interactive name="Choice" options={[{ label: '`git pull --rebase`', correct: true, why: 'Rebase puts your commit on top of Aisyah’s. One straight line.' }, { label: '`git pull --no-rebase`', why: 'That one makes a merge commit: a Y shape.' }, { label: '`git pull --ff-only`', why: 'It stops here, because both sides have new commits.' }]} />
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="GraphScene" scenario="w04-l08" commands={['git pull --rebase']} label="git pull --rebase lifts your teal commit and puts it on top of Aisyah's commit. The history is one straight line." />
+
+`git pull --rebase` lifts your commit and puts it on top of Aisyah's. One straight line. Your commit gets a new **hash**, because it has a new parent.
+</Card>
+
+<Card id="try-build" type="try">
+Tired of choosing every time? Build the command that makes rebase your usual way.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'config', means: 'change a setting' }, { text: '--global', means: 'for all your projects' }, { text: 'pull.rebase', means: 'how pull joins work' }, { text: 'true', means: 'rebase every time' }]} decoys={[{ text: 'false', means: 'merge instead' }, { text: 'push', means: 'this is about pull' }]} success="Done once, remembered forever. Teams often pick one way together." />
+
+<Hint>A setting, for all projects, named pull.rebase, set to true.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Pull Aisyah's commit your way. Then push both commits.
+
+<Interactive name="Sim" scenario="w04-l08" panels={['graph']} goal={{ pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }} hints={['Try git pull --rebase', 'Then git push']} success="GitHub has both commits now. Teamwork!" />
+
+<Hint>Plain `git pull` asks you to choose. Add `--rebase` or `--no-rebase`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rebase your own commits that you have not pushed yet', good: true, why: 'Nobody else has them, so new hashes hurt nobody.' }, { text: 'Rebase commits your team already pulled', good: false, why: 'They would get copies with new hashes. Messy!' }, { text: 'Agree on one pull style as a team', good: true, why: 'Then everyone’s history looks the same.' }, { text: 'Pull before you start new work', good: true, why: 'Fewer surprises later.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pull with merge or rebase, and pick your way.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git config --global pull.ff only` makes pull refuse anything but a fast-forward. A rebase can stop on a conflict, like a merge. Fix the file, `git add` it, then `git rebase --continue`. Or run `git rebase --abort` to go back.
+</Card>

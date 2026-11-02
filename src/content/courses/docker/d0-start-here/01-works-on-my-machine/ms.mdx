@@ -1,0 +1,64 @@
+---
+id: docker-d0-l01
+world: 0
+title: Jalan di komputer saya
+summary: "Anda akan belajar: kenapa aplikasi yang jalan di laptop anda rosak di laptop lain, dan cara container selesaikannya."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, KitchenReplay, SwipeJudge]
+needs: []
+scenario: d0-rooms
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "Docker overview", url: "https://docs.docker.com/get-started/docker-overview/" }
+---
+
+<Card id="hook" type="hook">
+Aplikasi kedai anda jalan lancar di laptop anda. Mei jalankan kod yang sama. Ia crash! Anda kata: “Tapi di komputer saya jalan!” Kenapa ia rosak?
+
+<Interactive name="Choice" options={[{ label: 'Laptop Mei ada alatan dan tetapan yang lain', correct: true, why: 'Kod sama, dapur lain. Itulah masalah sebenar.' }, { label: 'Mei tersalah taip', why: 'Dia jalankan kod yang sama. Laptop di sekelilingnya yang berbeza.' }, { label: 'Kod berubah sendiri', why: 'Kod tak pernah berubah sendiri. Laptop di sekelilingnya yang berbeza.' }]} />
+</Card>
+
+<Card id="see-kitchens" type="see">
+Setiap dapur berbeza. Satu dapur gas, satu dapur elektrik. Satu lagi tiada sambal. Resepi sama, rasa lain. Git salin kod anda. Apa yang Git tinggalkan?
+
+<Interactive name="SortCards" buckets={[{ id: 'git', label: 'Git salin' }, { id: 'laptop', label: 'Lain di setiap laptop' }]} items={[{ label: 'Fail kod anda', bucket: 'git', why: 'Kod anda ada dalam repo. Semua orang dapat fail yang sama.' }, { label: 'Node versi 24', bucket: 'laptop', why: 'Mei mungkin ada Node 20. Git tak pasang Node.' }, { label: 'Library yang dipasang', bucket: 'laptop', why: 'Library dipasang di setiap laptop, selalunya versi lain.' }, { label: 'Windows, Mac atau Linux', bucket: 'laptop', why: 'Setiap laptop ada sistemnya sendiri.' }, { label: 'Tetapan macam PORT=3000', bucket: 'laptop', why: 'Tetapan duduk di setiap laptop, bukan dalam repo.' }, { label: 'README anda', bucket: 'git', why: 'Ia satu fail dalam repo, jadi Git salin.' }]} success="Git salin resepi. Dapur di sekelilingnya lain-lain." />
+</Card>
+
+<Card id="see-lunchbox" type="see">
+<Interactive name="KitchenReplay" scenario="d0-rooms" commands={['docker run -d --name shop -p 8080:80 nginx:1.30-alpine']} label="docker run mulakan aplikasi kedai di dalam container. Gambar tunjuk satu bekas hijau, terbuka di tingkap 8080." />
+
+Bungkus hidangan dengan semua keperluannya dalam bekas bertutup. Itulah **<Term id="container">container</Term>** (bekas bertutup). `docker run` buka bekas baru dan mulakan aplikasi di dalamnya.
+</Card>
+
+<Card id="try-pack" type="try">
+Apa yang masuk dalam bekas? Leret ke kanan untuk bungkus. Leret ke kiri untuk tinggalkan.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Kod aplikasi', good: true, why: 'Mestilah. Itulah hidangannya.' }, { text: 'Node 24, versi yang tepat', good: true, why: 'Versi sama di setiap laptop. Tiada kejutan.' }, { text: 'Library yang aplikasi guna', good: true, why: 'Ia ikut sekali dengan aplikasi, jadi tiada yang hilang.' }, { text: 'Gambar cuti anda', good: false, why: 'Aplikasi tak perlukannya. Biar bekas kekal kecil.' }, { text: 'Seluruh pelayar web anda', good: false, why: 'Aplikasi jalan tanpa pelayar. Tinggalkan saja.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Mei pasang Docker. Dia jalankan bekas anda di laptopnya. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia jalan sama macam di laptop anda', correct: true, why: 'Bekas bawa Node dan library sendiri. Dapur Mei dah tak penting.' }, { label: 'Ia crash macam tadi', why: 'Bekas kini bawa alatannya sendiri. Hanya Docker yang perlu.' }, { label: 'Dia kena pasang Node 24 dulu', why: 'Node 24 dah ada di dalam bekas.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Container baiki dapur, bukan resepi. Masalah mana yang ia selesaikan?
+
+<Interactive name="SortCards" buckets={[{ id: 'fixed', label: 'Bekas selesaikan' }, { id: 'not', label: 'Masih kerja anda' }]} items={[{ label: 'Mei ada versi Node lain', bucket: 'fixed', why: 'Bekas bawa Node sendiri.' }, { label: 'Satu library tiada', bucket: 'fixed', why: 'Library ikut sekali di dalam bekas.' }, { label: 'Salah taip dalam kod anda', bucket: 'not', why: 'Bug pun ikut masuk bekas. Betulkan resepinya.' }, { label: 'Langkah setup yang semua orang lupa', bucket: 'fixed', why: 'Setup dibuat sekali, di dalam bekas.' }, { label: 'Wi-Fi perlahan', bucket: 'not', why: 'Bekas tak boleh baiki rangkaian.' }]} success="Betul! Bekas sama, rasa sama. Tapi bug tetap bug." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa container wujud.
+</Card>
+
+<Card id="deeper" type="deeper">
+Container bantu seluruh pasukan. Rakan baru boleh jalankan aplikasi dalam beberapa minit. Server jalankan bekas yang sama yang anda dah uji.
+
+Latihan sebenar (pilihan): minta kawan taip `node --version`. Bandingkan dengan versi anda. Lain? Sekarang anda tahu kenapa container wujud.
+</Card>

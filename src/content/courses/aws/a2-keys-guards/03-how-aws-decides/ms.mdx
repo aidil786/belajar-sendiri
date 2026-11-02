@@ -1,0 +1,61 @@
+---
+id: aws-a2-l03
+world: 2
+title: "Cara AWS buat keputusan: deny menang"
+summary: "Anda akan belajar: tiga peraturan AWS untuk kata ya atau tidak, dan kenapa Deny sentiasa menang."
+minutes: 5
+xp: 25
+interactives: [IamJudge, SortCards, Choice]
+needs: [aws-a2-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+  - { label: "Explicit and implicit denies", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic_AccessPolicyLanguage_Interplay.html" }
+  - { label: "Condition element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html" }
+---
+
+<Card id="hook" type="hook">
+Aina ada kunci yang benarkan simpan menu. Polisi lain kata tidak untuk sambungan biasa yang tak disulitkan. Muat naiknya guna sambungan itu. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json', context: { 'aws:SecureTransport': 'false' } }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }, { name: 'tls-only', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: 's3:*', Resource: '*', Condition: { Bool: { 'aws:SecureTransport': 'false' } } }] } }]} success="Ditolak. Satu Deny bertulis kalahkan Allow." />
+</Card>
+
+<Card id="see-rules" type="see">
+AWS ikut tiga peraturan. Deny bertulis yang padan sentiasa menang: **<Term id="explicit-deny">explicit deny</Term>**. Jika tiada, Allow yang padan menang. Jika tiada juga, jawapannya tidak. Susun kes-kes ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'allow', label: 'Jawapan akhir: Allow' }, { id: 'deny', label: 'Jawapan akhir: Deny' }]} items={[{ label: 'Allow dan Deny kedua-dua padan', bucket: 'deny', why: 'Peraturan 1: Deny yang padan menang, sentiasa.' }, { label: 'Hanya Allow yang padan', bucket: 'allow', why: 'Peraturan 2: tiada Deny, dan Allow padan.' }, { label: 'Tiada apa yang padan langsung', bucket: 'deny', why: 'Peraturan 3: tiada Allow bermakna tidak. Itu implicit deny.' }, { label: 'Sepuluh Allow dan satu Deny padan', bucket: 'deny', why: 'Mengira tak membantu. Satu Deny sudah cukup.' }]} success="Deny kalahkan Allow. Allow kalahkan senyap." />
+</Card>
+
+<Card id="try-silent" type="try">
+Aina cuba padam fail menu. Satu-satunya polisinya benarkan simpan. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:DeleteObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Ditolak, secara senyap. Tiada apa yang benarkan padam." />
+</Card>
+
+<Card id="predict" type="predict">
+Rakan sepasukan tambah polisi dengan lima puluh Allow untuk Aina. Satu polisi lama masih ada Deny yang padan. Mana menang?
+
+<Interactive name="Choice" options={[{ label: 'Deny itu, setiap kali', correct: true, why: 'Berapa banyak Allow pun tak kalahkan satu Deny yang padan.' }, { label: 'Allow: lebih banyak', why: 'AWS tak mengira. Deny tamatkan undian.' }, { label: 'Polisi yang paling baru', why: 'Umur tak penting. Hanya Deny, kemudian Allow, kemudian tidak.' }]} />
+</Card>
+
+<Card id="check-fix" type="check">
+Polisi `no-deletes` sepatutnya halang padam sahaja. Ia halang semua. Betulkan baris merah jambunya supaya Aina boleh simpan semula.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }, { name: 'no-deletes', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: 's3:*', Resource: '*' }] } }]} task={{ type: 'edit', policy: 1, line: 6, want: 'Allow', forbid: ['s3:\\*"'] }} solution={'"Action": "s3:DeleteObject",'} success="Deny kini meliputi padam sahaja. Simpan berfungsi semula." />
+
+<Hint>Namakan tindakan padam sahaja: `"s3:DeleteObject"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh ramal jawapan AWS: Deny dahulu, kemudian Allow, jika tiada, tidak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Semakan penuh juga tengok pagar: SCP, resource policy dan permissions boundary. Pelajaran 8 tunjukkannya. Deny di mana-mana tetap menang.
+
+Latihan sebenar (percuma): dalam konsol IAM, buka policy simulator. Pilih pengguna anda, satu tindakan, dan tengok Allow atau Deny sebelum ubah apa-apa.
+</Card>

@@ -1,0 +1,73 @@
+---
+id: docker-d5-l01
+world: 5
+title: "Peti sejuk kedai: registry"
+summary: "Anda akan belajar: cara registry kongsi image anda dengan sesiapa, di mana-mana."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SortCards, OrderList, KitchenSim, Choice, Mission]
+needs: [docker-d4-l10]
+scenario: d5-freezer
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Repositori Docker Hub", url: "https://docs.docker.com/docker-hub/repos/" }
+  - { label: "docker push", url: "https://docs.docker.com/reference/cli/docker/image/push/" }
+  - { label: "docker pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "GitHub: Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-mei-empty" commands={["docker run you/kedai-api:1.0"]} fails={["docker run you/kedai-api:1.0"]} label="Di laptop Mei, docker run you/kedai-api:1.0 tak jumpa image itu di mana-mana: pull access denied." />
+
+Image API anda jalan di laptop anda. Mei taip namanya di laptop dia: `pull access denied`. Maksudnya: belum ada peti sejuk kedai yang simpan pek itu.
+</Card>
+
+<Card id="see-freezer" type="see">
+**<Term id="registry">Registry</Term>** ialah peti sejuk kedai untuk pek image. Anda push pek masuk. Sesiapa yang dibenarkan boleh pull keluar. Yang mana peti sejuk?
+
+<Interactive name="SortCards" buckets={[{ id: 'freezer', label: 'Registry (peti sejuk kedai)' }, { id: 'not', label: 'Bukan registry' }]} items={[{ label: 'Docker Hub (docker.io)', bucket: 'freezer', why: 'Peti sejuk lalai. Docker cari di sini dulu.' }, { label: 'GitHub Container Registry (ghcr.io)', bucket: 'freezer', why: 'Peti sejuk GitHub, betul-betul sebelah kod anda.' }, { label: 'Amazon ECR atau Google Artifact Registry', bucket: 'freezer', why: 'Penyedia awan besar ada peti sejuk sendiri.' }, { label: 'Senarai image di laptop anda', bucket: 'not', why: 'Hanya anda boleh guna pek itu.' }, { label: 'Dockerfile anda', bucket: 'not', why: 'Itu resepi, bukan pek.' }]} success="Siap! Peti sejuk berkongsi pek. Laptop anda cuma simpan salinan." />
+</Card>
+
+<Card id="see-name" type="see">
+Nama penuh image ialah alamat. Peti sejuk mana, rak siapa, pek apa, label apa? Susun bahagiannya.
+
+<Interactive name="OrderList" items={['ghcr.io', '/you', '/kedai-api', ':1.0']} label="Dari kiri ke kanan" success="ghcr.io/you/kedai-api:1.0: peti sejuk, pemilik, pek, label." />
+
+Tiada nama peti sejuk di depan? Docker guna Docker Hub.
+</Card>
+
+<Card id="try-push" type="try">
+Anda sudah log masuk ke Docker Hub sebagai `you`. `docker tag` beri pek itu nama anda. `docker push` letak ia dalam peti sejuk. Cuba kedua-duanya.
+
+<Interactive name="KitchenSim" scenario="d5-freezer" goal={{ pushed: ['you/kedai-api:1.0'] }} hints={['Docker Hub mahu nama anda di depan. Taip docker tag kedai-api:1.0 you/kedai-api:1.0', 'Sekarang taip docker push you/kedai-api:1.0']} success="Pek anda dalam peti sejuk. Mei boleh pull sekarang." />
+
+<Hint>Mula-mula `docker tag kedai-api:1.0 you/kedai-api:1.0`, kemudian `docker push you/kedai-api:1.0`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda taip `docker pull nginx:1.30-alpine`. Tiada nama peti sejuk. Dari mana ia datang?
+
+<Interactive name="Choice" options={[{ label: 'Docker Hub: `docker.io/library/nginx`', correct: true, why: 'Tiada nama peti sejuk bermakna Docker Hub. Image rasmi duduk bawah library/.' }, { label: 'GitHub (ghcr.io)', why: 'Hanya nama yang bermula dengan ghcr.io pergi ke sana.' }, { label: 'Peti sejuk laptop anda sendiri', why: 'Pull sentiasa tanya registry. Laptop anda cuma simpan salinan.' }]} />
+</Card>
+
+<Card id="check-mei" type="check">
+<Interactive name="KitchenReplay" scenario="d5-mei" commands={["docker pull you/kedai-api:1.0", "docker images"]} label="Di laptop Mei, docker pull you/kedai-api:1.0 muat turun pek itu. docker images kini senaraikannya." />
+
+Kembali ke laptop Mei, selepas anda push. `docker pull` dia jumpa pek anda. Image sama, dapur baru.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi image melalui registry.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pek peribadi pun perlu log masuk untuk pull. Awan pun ada peti sejuk: Amazon ECR, Google Artifact Registry, Azure Container Registry. Arahannya sama sahaja: `docker tag`, `docker push`, `docker pull`.
+
+Latihan sebenar (pilihan), dengan akaun Docker Hub percuma. Repositori baru boleh jadi awam, jadi jangan push rahsia.
+
+<Interactive name="Mission" id="d5-l01-rep" steps={[{ id: 'account', text: 'Buat akaun Docker Hub percuma. Ingat nama pengguna anda.' }, { id: 'login', text: 'Log masuk. Tampal token akses bila ia minta kata laluan (pelajaran seterusnya).', command: 'docker login -u YOUR-NAME' }, { id: 'tag', text: 'Beri image kecil nama anda.', command: 'docker tag alpine:3.22 YOUR-NAME/first-pack:1.0' }, { id: 'push', text: 'Push. Kemudian cari ia di hub.docker.com.', command: 'docker push YOUR-NAME/first-pack:1.0' }]} success="Pek pertama anda dalam peti sejuk sebenar!" />
+</Card>

@@ -1,0 +1,72 @@
+---
+id: linux-l3-l09
+world: 3
+title: "ping dan traceroute"
+summary: "Anda akan belajar: menyemak sama ada mesin menjawab, dan ibu sawat mana yang dilalui panggilan."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, Transcript, Choice, SortCards, Mission]
+needs: [linux-l3-l08]
+scenario: linux-l3-ping
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ping(8)", url: "https://man7.org/linux/man-pages/man8/ping.8.html" }
+  - { label: "Debian: traceroute(1)", url: "https://manpages.debian.org/trixie/traceroute/traceroute.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ping" intro={['ping -c 2 tutup.kedai.example; echo $?']} network />
+
+Dua salam, tiada balasan: `100% packet loss`. Kedai itu tutup? Atau jalannya putus di tengah?
+</Card>
+
+<Card id="see-ping" type="see">
+<Term id="ping">ping</Term> hantar salam kecil dan ukur masa gemanya. `-c 3` hantar tiga, kemudian berhenti. Tekan baris yang kata berapa yang kembali.
+
+<Interactive name="SpotLines" lines={[{ text: 'PING pasar.example (198.51.100.7) 56(84) bytes of data.' }, { text: '64 bytes from 198.51.100.7: icmp_seq=1 ttl=57 time=33.1 ms' }, { text: '64 bytes from 198.51.100.7: icmp_seq=2 ttl=57 time=34.7 ms' }, { text: '64 bytes from 198.51.100.7: icmp_seq=3 ttl=57 time=32.3 ms' }, { text: '--- pasar.example ping statistics ---' }, { text: '3 packets transmitted, 3 received, 0% packet loss, time 2004ms', target: true }]} prompt="Tekan baris ringkasan." success="3 dihantar, 3 kembali, 0% hilang. Lebih kurang 33 ms pergi dan balik." />
+</Card>
+
+<Card id="try-ping" type="try">
+Ping pasar.example tiga kali. Tanpa `-c`, ping tak pernah berhenti: tekan Ctrl+C.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ping" goal={{ lastTyped: '^ping -c ?\\d+ pasar\\.example$' }} hints={['Taip ping -c 3 pasar.example']} solution={['ping -c 3 pasar.example']} success="pasar.example menjawab. Talian itu okey." />
+</Card>
+
+<Card id="see-trace" type="see">
+<Interactive name="Transcript" title="kedai (makmal)" label="traceroute kedai.example tunjuk tiga hop: gateway.kedai 10.0.0.1, exchange.example 198.51.100.1, kemudian kedai.example 203.0.113.10."
+  lines={[{ cmd: 'traceroute kedai.example' }, { out: 'traceroute to kedai.example (203.0.113.10), 30 hops max, 60 byte packets\n 1  gateway.kedai (10.0.0.1)  0.026 ms  0.003 ms  0.002 ms\n 2  exchange.example (198.51.100.1)  0.012 ms  0.004 ms  0.003 ms\n 3  kedai.example (203.0.113.10)  0.024 ms  0.004 ms  0.005 ms' }]} />
+
+<Term id="traceroute">traceroute</Term> senaraikan setiap ibu sawat dalam perjalanan. Setiap baris ialah satu **hop**. Makmal ini dalam satu mesin, jadi masanya sangat kecil.
+</Card>
+
+<Card id="predict" type="predict">
+Hari lain, traceroute yang sama tunjuk ini. Adakah jalannya putus di hop 2?
+
+```
+ 1  gateway.kedai (10.0.0.1)  0.040 ms  0.004 ms  0.004 ms
+ 2  * * *
+ 3  kedai.example (203.0.113.10)  0.015 ms  0.007 ms  0.007 ms
+```
+
+<Interactive name="Choice" options={[{ label: 'Tidak: hop 2 cuma diam', correct: true, why: 'Hop 3 menjawab, jadi panggilan itu sudah lepas hop 2.' }, { label: 'Ya: panggilan berhenti di hop 2', why: 'Kalau begitu hop 3 takkan menjawab.' }, { label: 'Kedai itu mati', why: 'Kedai menjawab di hop 3.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Apa yang setiap keputusan ping beritahu anda?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Talian berfungsi' }, { id: 'name', label: 'Masalah nama' }, { id: 'quiet', label: 'Tiada balasan: siasat lagi' }]} items={[{ label: '64 bytes from 198.51.100.7: time=33.1 ms', bucket: 'ok', why: 'Ada gema yang kembali.' }, { label: 'ping: nope.example: Name or service not known', bucket: 'name', why: 'Tiada nombor untuk nama itu. Semak DNS.' }, { label: '2 packets transmitted, 0 received, 100% packet loss', bucket: 'quiet', why: 'Mati, atau pengawal sekat ping. Cuba port sebenar dengan curl.' }, { label: 'From exchange.example (198.51.100.1) icmp_seq=1 Destination Host Unreachable', bucket: 'quiet', why: 'Satu ibu sawat kata ia tak jumpa kedai itu.' }]} success="Ada gema, masalah nama, atau senyap yang perlu disiasat." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh ping sesebuah mesin dan jejak jalan ke sana.
+</Card>
+
+<Card id="deeper" type="deeper">
+Banyak server sengaja sekat ping. Tiada balasan tak semestinya mati: uji port sebenar dengan curl. `mtr` gabungkan ping dan traceroute dalam satu jadual hidup. Output traceroute kita datang dari makmal Debian 13 sebenar.
+
+<Interactive name="Mission" id="linux-l3-l09-rep" steps={[{ id: 'ping', text: 'Beri salam kepada laman sebenar.', command: 'ping -c 3 example.com' }, { id: 'install', text: 'Pasang traceroute.', command: 'sudo apt install traceroute' }, { id: 'trace', text: 'Kira hop dari rumah anda.', command: 'traceroute example.com' }]} success="Anda jejak jalan sebenar merentasi internet." />
+</Card>

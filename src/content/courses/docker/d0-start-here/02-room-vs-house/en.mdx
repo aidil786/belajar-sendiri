@@ -1,0 +1,72 @@
+---
+id: docker-d0-l02
+world: 0
+title: Containers vs virtual machines
+summary: "You will learn: how a container (a room) differs from a virtual machine (a whole house)."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KitchenReplay, SortCards, KitchenSim, SwipeJudge]
+needs: [docker-d0-l01]
+scenario: d0-rooms
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "Docker architecture", url: "https://docs.docker.com/get-started/docker-overview/#docker-architecture" }
+---
+
+<Card id="hook" type="hook">
+Ali tests his app in five virtual computers. His laptop crawls like a tortoise. Each one is a whole computer inside his computer. Is there a lighter way?
+
+<Interactive name="Choice" options={[{ label: 'Yes: share one system, give each app its own room', correct: true, why: 'That is the container idea. You will see it now.' }, { label: 'No: buy five laptops', why: 'That costs a lot. There is a much lighter way.' }, { label: 'Run all five apps with no walls', why: 'Then they bump into each other. Each app still needs its own space.' }]} />
+</Card>
+
+<Card id="see-house" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'VM', title: 'A whole house', text: 'Own walls, own kitchen, own power line. It boots a full operating system.' }, { when: 'Container', title: 'One room', text: 'Own door and own things inside. It shares the house power with the other rooms.' }]} />
+
+A **<Term id="virtual-machine">virtual machine</Term>** (VM) is a whole house. A container is one room in a house. Tap each one to compare.
+</Card>
+
+<Card id="see-kernel" type="see">
+<Interactive name="KitchenReplay" scenario="d0-rooms" commands={['cat /etc/os-release', 'docker run --rm alpine:3.22 cat /etc/os-release', 'uname -a', 'docker run --rm alpine:3.22 uname -a']} label="The laptop says Ubuntu, the container says Alpine Linux. Then uname shows the same kernel, 6.18.44, on both." />
+
+The room has its own files: Alpine inside, Ubuntu outside. But both show the same **<Term id="kernel">kernel</Term>**. The kernel is the house power. It runs every program, in every room.
+</Card>
+
+<Card id="try-sort" type="try">
+House or room? Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'vm', label: 'Virtual machine' }, { id: 'container', label: 'Container' }]} items={[{ label: 'Starts in about a second', bucket: 'container', why: 'Nothing to boot. The house power is already on.' }, { label: 'Boots a full operating system', bucket: 'vm', why: 'A whole house needs its own power line.' }, { label: 'Shares the laptop’s kernel', bucket: 'container', why: 'Rooms share the house power.' }, { label: 'Needs gigabytes of disk', bucket: 'vm', why: 'A full system takes a lot of space.' }, { label: 'Can run Windows on a Mac', bucket: 'vm', why: 'A VM brings its own kernel, so any system fits.' }, { label: 'Often just a few megabytes', bucket: 'container', why: 'alpine:3.22 is about 13MB on disk.' }]} success="Sorted! A house is heavy. A room is light." />
+</Card>
+
+<Card id="try-run" type="try">
+Start a room yourself. Type `docker run --rm alpine:3.22 echo hi`. It says hi, and `--rm` cleans the room away.
+
+<Interactive name="KitchenSim" scenario="d0-rooms" goal={{ lastTyped: '^docker\\s+run\\b.*alpine', lastExit: 0 }} hints={['Type docker run --rm alpine:3.22 echo hi and press Enter.']} success="Hi! A room opened, did its job and was cleaned away in a blink." />
+
+<Hint>Copy it exactly: `docker run --rm alpine:3.22 echo hi`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Linux containers need a Linux kernel. Your laptop is a Mac. What does Docker Desktop do?
+
+<Interactive name="Choice" options={[{ label: 'It runs a small Linux VM, with the rooms inside', correct: true, why: 'Yes! One small Linux house, many rooms inside it.' }, { label: 'It turns macOS into Linux', why: 'macOS stays macOS. Docker adds a small Linux house beside it.' }, { label: 'Nothing: containers cannot run on a Mac', why: 'They can. Docker Desktop brings a small Linux VM along.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Pick the right tool. Is each plan a good idea?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Use containers to ship a small web app', good: true, why: 'Light and fast. A perfect fit.' }, { text: 'Use containers for 5 test copies of your app', good: true, why: 'Five rooms are far lighter than five houses.' }, { text: 'Use a container to run a Windows-only app on a Linux laptop', good: false, why: 'Rooms share the Linux kernel. Windows needs its own house: a VM.' }, { text: 'Use a VM to try a whole new operating system', good: true, why: 'A new system needs its own kernel. A VM brings one.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how a container differs from a virtual machine.
+</Card>
+
+<Card id="deeper" type="deeper">
+A VM has stronger walls, because each house has its own kernel. Rooms are lighter, but they share one kernel. So many clouds run containers inside VMs: rooms inside houses.
+
+Real rep (optional): once Docker is installed, run `docker run --rm alpine:3.22 uname -a` and `uname -a`. Same kernel? On a Mac or Windows, you see the small Linux VM's kernel.
+</Card>

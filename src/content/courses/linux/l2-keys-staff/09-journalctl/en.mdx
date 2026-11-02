@@ -1,0 +1,72 @@
+---
+id: linux-l2-l09
+world: 2
+title: Logs with journalctl
+summary: "You will learn: to read a service's diary and find the one line that says what went wrong."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l2-l08]
+scenario: linux-l2-journal
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "journalctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/journalctl.1.en.html" }
+  - { label: "nginx: core module (root, listen …)", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html" }
+  - { label: "Debian Reference: system logs", url: "https://www.debian.org/doc/manuals/debian-reference/ch03.en.html" }
+---
+
+<Card id="hook" type="hook">
+`systemctl is-active nginx` says `failed`. The web server tried to start this morning and gave up. Where did it say why?
+
+<Interactive name="Choice" options={[{ label: "In the journal: systemd's diary", correct: true, why: 'systemd writes down what every service says. You just read it.' }, { label: 'Nowhere. It just failed.', why: 'Services nearly always leave a reason. Look before guessing.' }, { label: 'In an email to root', why: 'Not on this server. The diary is the place.' }]} />
+</Card>
+
+<Card id="see-journal" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-journal" intro={['sudo journalctl -u nginx -n 5 --no-pager']} />
+
+The <Term id="journal">journal</Term> is the shift manager's diary. `-u nginx` keeps nginx's lines. `-n 5` shows the last five. Find the **[emerg]** line.
+</Card>
+
+<Card id="predict-sudo" type="predict">
+Without sudo, `journalctl -u nginx` shows a Hint and no nginx lines. Why?
+
+<Interactive name="Choice" options={[{ label: "The diary is private to root and the adm and systemd-journal teams", correct: true, why: 'The Hint even names those groups. You are not in them, so use sudo.' }, { label: 'nginx wrote nothing', why: 'It wrote plenty. You just may not read it yet.' }, { label: 'journalctl is broken', why: 'It works fine. It protects the diary.' }]} />
+</Card>
+
+<Card id="spot-emerg" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'Nov 01 08:55:04 kedai nginx[1244]: 2026/11/01 08:55:04 [emerg] 1244#1244: invalid number of arguments in "root" directive in /etc/nginx/sites-enabled/default:44', target: true }, { text: 'Nov 01 08:55:04 kedai nginx[1244]: nginx: configuration file /etc/nginx/nginx.conf test failed' }, { text: "Nov 01 08:55:04 kedai systemd[1]: nginx.service: Failed with result 'exit-code'." }, { text: 'Nov 01 08:55:04 kedai systemd[1]: Failed to start nginx.service - A high performance web server and a reverse proxy server.' }]} prompt="Tap the line that says what actually broke." success="The [emerg] line names the file, the line and the problem." />
+</Card>
+
+<Card id="try-search" type="try">
+Long diaries hide the one line you need. Search it: `sudo journalctl -u nginx -g emerg`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-journal" goal={{ lastTyped: '^sudo journalctl (.* )?-g ' }} hints={['Type sudo journalctl -u nginx -g emerg']} solution={['sudo journalctl -u nginx -g emerg']} success="One line, straight to the problem. -g works like grep." />
+
+<Hint>`-g` means "grep": keep only matching lines.</Hint>
+</Card>
+
+<Card id="sort-flags" type="check">
+Which switch do you need?
+
+<Interactive name="SortCards" buckets={[{ id: 'u', label: '-u nginx' }, { id: 'n', label: '-n 20' }, { id: 'f', label: '-f' }]} items={[{ label: "Only the web server's lines", bucket: 'u', why: '-u picks one service (a unit).' }, { label: 'Just the latest 20 lines', bucket: 'n', why: '-n counts lines from the end.' }, { label: 'Watch new lines arrive live', bucket: 'f', why: '-f follows, like tail -f. Ctrl+C stops it.' }, { label: 'Nothing from cron or ssh', bucket: 'u', why: 'Name the unit and the rest stays out.' }]} success="-u who, -n how many, -f keep watching." />
+</Card>
+
+<Card id="check-fix" type="check">
+The diary blames line 44, but line 41 reads `root /var/www/html` with no `;`. What fixes it?
+
+<Interactive name="Choice" options={[{ label: 'Add the missing ; at the end of line 41', correct: true, why: 'Without ;, nginx reads on into line 44. The real slip is one line up.' }, { label: 'Delete line 44', why: 'Line 44 is fine. nginx only noticed the trouble there.' }, { label: 'Reinstall nginx', why: 'The program is fine. One settings line needs a semicolon.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a service's diary and find the line that matters.
+</Card>
+
+<Card id="deeper" type="deeper">
+systemd's own error message suggests `journalctl -xeu nginx.service`: `-x` adds help text and `-e` jumps to the end. Errors often point one line late, as here. The boss fixes a broken nginx with all of this.
+
+Real rep (optional): on a Debian or Ubuntu VM, `sudo journalctl -u ssh -n 10` shows recent logins.
+</Card>

@@ -1,0 +1,68 @@
+---
+id: aws-a3-l03
+world: 3
+title: "Internet and NAT gateways"
+summary: "You will learn: how public rows reach the street, and how back rooms go out without letting anyone in."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, IdleBill, Transcript]
+needs: [aws-a3-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: Internet gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html" }
+  - { label: "Amazon VPC: NAT gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" }
+  - { label: "Amazon VPC: Pricing for NAT gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html" }
+  - { label: "AWS CLI: aws ec2 create-route", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-route.html" }
+---
+
+<Card id="hook" type="hook">
+Your app server lives in a back room. It needs a security update from the internet. But nobody outside may walk in. What do you add?
+
+<Interactive name="Choice" options={[{ label: 'A one-way staff door to the street', correct: true, why: 'Yes. It can go out and come back. Strangers cannot start a visit.' }, { label: 'A public IP on the server', why: 'The back room has no road to the street. And a public IP invites strangers.' }, { label: 'Move the server to the public row', why: 'That works, but then strangers can knock. Keep it in back.' }]} />
+</Card>
+
+<Card id="see-igw" type="see">
+The **<Term id="internet-gateway">internet gateway</Term>** is the mall's main entrance. Traffic goes both ways. Put the steps to open a public row in order.
+
+<Interactive name="OrderList" items={['Create an internet gateway', 'Attach it to your VPC', 'Add the road sign 0.0.0.0/0 → the gateway', 'Give the server a public IP']} label="First step at the top" success="Gateway, attach, road sign, public IP. Now the street can reach it." />
+</Card>
+
+<Card id="see-nat" type="see">
+A **<Term id="nat-gateway">NAT gateway</Term>** is a one-way staff door. Back rooms may go out. Nobody outside may start a visit. Which of these work?
+
+<Interactive name="SortCards" buckets={[{ id: 'works', label: 'Works through the NAT gateway' }, { id: 'blocked', label: 'Blocked' }]} items={[{ label: 'The app server downloads an update', bucket: 'works', why: 'The back room starts the trip, so the reply comes back.' }, { label: 'A stranger connects to the app server', bucket: 'blocked', why: 'Nobody outside can start a visit through NAT.' }, { label: 'The database calls a payment website', bucket: 'works', why: 'It starts the call, so it is allowed out.' }, { label: 'A scanner tries port 22 on the database', bucket: 'blocked', why: 'NAT never lets a visit start from outside.' }]} success="Out and back: yes. In from outside: never." />
+</Card>
+
+<Card id="try-route" type="try">
+Point the private row's road sign at the NAT gateway. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ec2 create-route', means: 'add a road sign' }, { text: '--route-table-id rtb-22574640', means: 'on the private row’s route table' }, { text: '--destination-cidr-block 0.0.0.0/0', means: 'for every other address' }, { text: '--nat-gateway-id nat-0c61bf8a12EXAMPLE', means: 'go through the one-way staff door' }]} decoys={[{ text: '--gateway-id igw-c0a643a9', means: 'go through the main entrance' }]} success="Back rooms can now go out, and still nobody can walk in." />
+
+<Hint>The private row uses the NAT gateway, not the internet gateway.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your NAT gateway sits idle all night. No traffic at all. Does it cost money?
+
+<Interactive name="Choice" options={[{ label: 'Yes, every hour it exists', correct: true, why: 'AWS bills each hour it is there, plus each GB it passes on.' }, { label: 'No, only when data flows', why: 'Data adds more. But every hour costs too, even idle.' }, { label: 'Only on weekdays', why: 'The clock never stops. Delete it when you are done.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Some road parts cost money while idle. Some are free. Judge each one.
+
+<Interactive name="IdleBill" items={['natGateway', 'internetGateway', 'elasticIpIdle', 'vpc']} ordered />
+</Card>
+
+<Card id="win" type="win">
+You can now give public rows a street door, and back rooms a one-way exit.
+</Card>
+
+<Card id="deeper" type="deeper">
+A public NAT gateway sits in a public row and needs an Elastic IP. Here is the official example's answer, cut short. Practising? Skip NAT: the default VPC needs none. Made one? Delete it, then release its Elastic IP.
+
+<Interactive name="Transcript" title="bash" label="aws ec2 create-nat-gateway in a public subnet with an Elastic IP. State pending, connectivity public." lines={[{ cmd: 'aws ec2 create-nat-gateway --subnet-id subnet-0250c25a1fEXAMPLE --allocation-id eipalloc-09ad461b0dEXAMPLE' }, { out: '{\n    "NatGateway": {\n        "NatGatewayId": "nat-0c61bf8a12EXAMPLE",\n        "State": "pending",\n        "SubnetId": "subnet-0250c25a1fEXAMPLE",\n        "ConnectivityType": "public"\n        ...' }]} />
+</Card>

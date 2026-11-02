@@ -1,0 +1,83 @@
+---
+id: k8s-k1-l01
+world: 1
+title: What you already know
+summary: "You will learn: what Kubernetes is for, and which K1 lessons you can skip."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, SortCards, Placement, SwipeJudge, Mission]
+needs: []
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes overview", url: "https://kubernetes.io/docs/concepts/overview/" }
+  - { label: "Kubernetes components", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+---
+
+<Card id="hook" type="hook">
+Welcome to the food court! Your shop app runs in one lunchbox. Then 500 hungry people arrive at noon. What do you need?
+
+<Interactive name="Choice" options={[{ label: 'Many copies, and a manager who watches them', correct: true, why: 'Yes! That manager is Kubernetes. It keeps the copies running for you.' }, { label: 'One giant lunchbox', why: 'One box, however big, can still drop. Then everyone waits.' }, { label: 'You, refilling boxes by hand all day', why: 'You need to sleep sometime. A manager never does.' }]} />
+</Card>
+
+<Card id="see-court" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods']} label="kubectl get pods lists three shop trays, all Running. The picture shows them on two stalls." />
+
+Kubernetes runs a whole food court, called a **<Term id="cluster">cluster</Term>**. Stalls are machines. Trays carry your containers. `kubectl get pods` lists your trays.
+</Card>
+
+<Card id="try-sort" type="try">
+You know the kitchen already. Where did you meet each word?
+
+<Interactive name="SortCards" buckets={[{ id: 'kitchen', label: 'Met in the Docker kitchen' }, { id: 'court', label: 'New in the food court' }]} items={[{ label: 'Lunchbox (container)', bucket: 'kitchen', why: 'Part 1: one sealed box with your app inside.' }, { label: 'Frozen meal pack (image)', bucket: 'kitchen', why: 'The template every lunchbox is made from.' }, { label: 'Recipe (Dockerfile)', bucket: 'kitchen', why: 'It tells Docker how to build the image.' }, { label: 'Stall (node)', bucket: 'court', why: 'One machine in the cluster.' }, { label: 'Tray (pod)', bucket: 'court', why: 'Kubernetes carries containers on trays.' }, { label: 'Order board (desired state)', bucket: 'court', why: 'What you want, written down. Kubernetes chases it.' }]} success="Sorted! The kitchen packs the food. The food court serves it." />
+
+<Hint>Lunchboxes, meal packs and recipes came from Part 1.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A tray falls on the floor at noon. The manager sees it. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'A new tray is made, right away', correct: true, why: 'Right. Kubernetes replaces what is missing. Lesson 4 shows how.' }, { label: 'Nothing, until someone calls you', why: 'That is life without a manager. Kubernetes acts by itself.' }, { label: 'The whole food court closes', why: 'The other stalls keep serving. Only one tray is replaced.' }]} />
+</Card>
+
+<Card id="try-placement" type="try">
+Now the quick test. Each right answer ticks a lesson you can skip. Not sure? Tap “I don't know yet”. There is no timer.
+
+<Interactive name="Placement" questions={[
+  { q: 'You run 200 containers on 10 machines. One machine dies at night. What helps most?', options: [{ label: 'An orchestrator that moves them by itself', correct: true }, { label: 'A bigger machine' }, { label: 'An alarm that wakes you up' }], marks: ['k8s-k1-l02'] },
+  { q: 'A bakery site gets 30 visits a day. Where should it live?', options: [{ label: 'A three-node Kubernetes cluster' }, { label: 'A simple static host', correct: true }, { label: 'Ten servers, just in case' }], marks: ['k8s-k1-l03'] },
+  { q: 'You asked for 3 copies. One pod dies. What does Kubernetes do?', options: [{ label: 'Makes a new pod, to get back to 3', correct: true }, { label: 'Lowers the order to 2' }, { label: 'Waits for you' }], marks: ['k8s-k1-l04'] },
+  { q: 'What is the smallest thing Kubernetes runs?', options: [{ label: 'A container on its own' }, { label: 'A pod', correct: true }, { label: 'A node' }], marks: ['k8s-k1-l05'] },
+  { q: 'Which part picks a node for a new pod?', options: [{ label: 'The kubelet' }, { label: 'etcd' }, { label: 'The scheduler', correct: true }], marks: ['k8s-k1-l06'] },
+  { q: 'Which tool runs a whole cluster in Docker containers on your laptop?', options: [{ label: 'kind', correct: true }, { label: 'kubectl' }, { label: 'Helm' }], marks: ['k8s-k1-l07'] },
+  { q: 'A pod is stuck. Which command shows its events?', options: [{ label: '`kubectl describe pod tray`', correct: true }, { label: '`kubectl delete pod tray`' }, { label: '`kubectl apply -f tray.yaml`' }], marks: ['k8s-k1-l08'] },
+  { q: 'Which command names the cluster your commands go to?', options: [{ label: '`kubectl get nodes`' }, { label: '`kubectl config current-context`', correct: true }, { label: '`kubectl version --client`' }], marks: ['k8s-k1-l09'] },
+  { q: 'How do you list the pods in the namespace food?', options: [{ label: '`kubectl get food`' }, { label: '`kubectl get pods --all`' }, { label: '`kubectl get pods -n food`', correct: true }], marks: ['k8s-k1-l10'] },
+  { q: 'Which part of a manifest does Kubernetes write, not you?', options: [{ label: '`spec`' }, { label: '`metadata`' }, { label: '`status`', correct: true }], marks: ['k8s-k1-l11'] },
+  { q: 'How does a Service find its pods?', options: [{ label: 'By a label selector', correct: true }, { label: 'By pod name' }, { label: 'By IP address' }], marks: ['k8s-k1-l12'] },
+  { q: 'Which flags print YAML and create nothing?', options: [{ label: '`--force -o wide`' }, { label: '`--dry-run=client -o yaml`', correct: true }, { label: '`--watch`' }], marks: ['k8s-k1-l13'] }
+]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Last round. Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Practise on a throwaway cluster on your laptop', good: true, why: 'Mistakes there cost nothing. Break it, delete it, make another.' }, { text: 'Try new commands on the company’s live cluster', good: false, why: 'Real customers use it. Practise somewhere safe first.' }, { text: 'Read the pink “you are here” bar before you delete', good: true, why: 'It names the cluster and namespace your command will hit.' }, { text: 'Delete things first, look later', good: false, why: 'Look first with get and describe. Delete only when you are sure.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now say what Kubernetes does, and skip what you know.
+</Card>
+
+<Card id="deeper" type="deeper">
+Missed a few? No problem. Every lesson stays open, ticked or not. Kubernetes runs containers, so the [Docker part](/en/docker/) helps too.
+
+Real rep (optional): meet a real cluster in your browser.
+
+<Interactive name="Mission" id="k8s-k1-l01-real" steps={[{ id: 'lab', text: 'Open a free Kubernetes playground in your browser, like the ones on Killercoda. Use a throwaway one, never a work cluster.' }, { id: 'nodes', text: 'List the stalls (nodes).', command: 'kubectl get nodes' }, { id: 'pods', text: 'List every tray (pod) in every zone.', command: 'kubectl get pods -A' }]} success="You talked to a real cluster!" />
+</Card>

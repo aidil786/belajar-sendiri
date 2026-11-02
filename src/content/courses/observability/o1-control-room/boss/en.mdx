@@ -1,0 +1,76 @@
+---
+id: obs-o1-boss
+world: 1
+title: Pick the signals
+summary: "You will learn: to choose SLIs, set an SLO and check the error budget for Kedai Kancil’s checkout."
+minutes: 6
+xp: 50
+interactives: [Choice, SwipeJudge, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l08]
+scenario: o1-checkout-slo
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Google SRE book: service level objectives", url: "https://sre.google/sre-book/service-level-objectives/" }
+  - { label: "Google SRE book: embracing risk", url: "https://sre.google/sre-book/embracing-risk/" }
+  - { label: "Prometheus: alerting practices", url: "https://prometheus.io/docs/practices/alerting/" }
+---
+
+<Card id="hook" type="hook">
+Boss: the owner of Kedai Kancil wants a promise for checkout, by today. Where do you start?
+
+<Interactive name="Choice" options={[{ label: 'With what customers feel: checkouts that work, and work fast', correct: true, why: 'Yes. Start from the user, then pick the numbers.' }, { label: 'With the CPU graph', why: 'Customers never see CPU. Start with what they feel.' }, { label: 'With a 100% promise', why: '100% is impossible. You learned that in lesson 5.' }]} />
+</Card>
+
+<Card id="try-sli" type="try">
+Room 1: pick the SLIs for checkout. Swipe right for good ones.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Share of checkouts that succeed', good: true, why: 'The core promise.' }, { text: 'Share of checkouts done in under 1 second', good: true, why: 'Slow feels broken.' }, { text: 'Memory used by the payment server', good: false, why: 'A cause, not a symptom. Keep it on a dashboard.' }, { text: 'Number of staff on shift', good: false, why: 'It does not show what customers feel.' }, { text: 'Share of order pages that load', good: true, why: 'Customers need the page before they can pay.' }]} />
+</Card>
+
+<Card id="try-measure" type="try">
+Room 2: measure the first SLI. Good checkouts divided by all, at 30m.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" prompt="Write good checkouts ÷ all checkouts, then Run." goal={{ resultEquals: [{ labels: {}, value: 0.9995 }] }} hints={['Tap kedai_checkout_good_total, type / then tap kedai_checkout_total.']} solution="kedai_checkout_good_total / kedai_checkout_total" success="Room 2 cleared! 99.95% of checkouts worked." />
+
+<Hint>Good on top, all below.</Hint>
+</Card>
+
+<Card id="try-target" type="try">
+Room 3: pick the SLO for successful checkouts.
+
+<Interactive name="Choice" options={[{ label: '99.9% over 30 days', correct: true, why: 'Yes. Ambitious, honest, and it leaves a 43-minute budget.' }, { label: '100% every day', why: 'Impossible. Every small blip would break the promise.' }, { label: '90% over 30 days', why: 'Too loose. 1 in 10 checkouts could fail and still pass.' }]} />
+</Card>
+
+<Card id="try-screens" type="try">
+Room 4: what calls a person, and what stays on a screen?
+
+<Interactive name="SortCards" buckets={[{ id: 'alert', label: 'Alert' }, { id: 'dash', label: 'Dashboard' }]} items={[{ label: 'The SLI drops fast: the budget will be gone in hours', bucket: 'alert', why: 'Customers hurt now. Act.' }, { label: 'Checkout fully down for 5 minutes', bucket: 'alert', why: 'Act now.' }, { label: 'Payment server memory at 80%', bucket: 'dash', why: 'A cause to watch, not a page.' }, { label: 'Orders per minute today', bucket: 'dash', why: 'Nice to see. Nobody must act.' }, { label: 'Budget used this month: 30%', bucket: 'dash', why: 'Plan with it. No need to wake anyone.' }]} success="Room 4 cleared! Pages only for real pain." />
+</Card>
+
+<Card id="try-failed" type="try">
+Room 5: an outage started at 40m. How many checkouts failed by 60m?
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_total" at="60m" prompt="Subtract the good checkouts from all checkouts. Run it at 60m." goal={{ at: '60m', typed: '-', resultEquals: [{ labels: {}, value: 440 }] }} hints={['Add a minus and the good counter: kedai_checkout_total - kedai_checkout_good_total']} solution="kedai_checkout_total - kedai_checkout_good_total" success="440 failed checkouts by 60m." />
+
+<Hint>All minus good leaves the failed ones.</Hint>
+</Card>
+
+<Card id="check-budget" type="check">
+120,000 checkouts by 60m. A 99.9% SLO allows 0.1% to fail: 120. You had 440. How much budget is used?
+
+<Interactive name="Choice" options={[{ label: 'More than all of it: about 3.7 times', correct: true, why: '440 ÷ 120 ≈ 3.7. Freeze risky changes and fix reliability first.' }, { label: 'About a third', why: 'That would be 40 failures. You had 440.' }, { label: 'None. 440 is a small number.', why: 'Small next to 120,000, but big next to a budget of 120.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Final room, for real: write the promise down for an app you know.
+
+<Interactive name="Mission" id="obs-o1-boss-real" steps={[{ id: 'user', text: 'Name the one thing users do most, like “check out”.' }, { id: 'sli', text: 'Write two SLIs for it: one for success, one for speed.' }, { id: 'slo', text: 'Set a target and a window for each, like 99.9% over 30 days.' }, { id: 'budget', text: 'Work out each budget in minutes or in failed requests.' }, { id: 'alert', text: 'Write the one situation that should page someone.' }]} success="Signals picked, promise written. Boss beaten!" />
+</Card>
+
+<Card id="win" type="win">
+You can now pick SLIs, set an SLO and check the error budget.
+</Card>

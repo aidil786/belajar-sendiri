@@ -1,0 +1,78 @@
+---
+id: iac-t3-l01
+world: 3
+title: Remote state backends
+summary: "You will learn: where a team keeps one shared register, and how to move it there."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Transcript, OrderList, Mission]
+needs: [iac-t2-boss]
+scenario: t3-register
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state", url: "https://opentofu.org/docs/language/state/" }
+  - { label: "OpenTofu: remote state", url: "https://opentofu.org/docs/language/state/remote/" }
+  - { label: "OpenTofu: backend configuration", url: "https://opentofu.org/docs/language/settings/backends/configuration/" }
+  - { label: "OpenTofu: the s3 backend", url: "https://opentofu.org/docs/language/settings/backends/s3/" }
+  - { label: "Terraform: the s3 backend", url: "https://developer.hashicorp.com/terraform/language/backend/s3" }
+---
+
+<Card id="hook" type="hook">
+Aina built Kedai Kancil from her laptop. Today Ben runs `tofu apply` with the same blueprint, on his laptop. His folder has no state file. What does his plan want?
+
+<Interactive name="Choice" options={[{ label: 'Build everything again, as new', correct: true, why: "Ben's register is empty, so OpenTofu thinks nothing is built yet." }, { label: 'Nothing: it is already built', why: 'OpenTofu only trusts its own register. Ben has an empty one.' }, { label: "Read Aina's register over Wi-Fi", why: "A local state file never leaves Aina's laptop." }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Where is the register now? Type `ls`. Then read it: `cat terraform.tfstate`.
+
+<Interactive name="TofuSim" scenario="t3-register" goal={{ typed: '^ls', lastTyped: '^cat terraform\\.tfstate' }} hints={['Type ls and press Enter.', 'Then type cat terraform.tfstate']} success="There it is: one JSON file, on one laptop only." />
+
+<Hint>`ls` lists the files. `cat` prints one.</Hint>
+</Card>
+
+<Card id="see-backend" type="see">
+<Interactive name="SpotLines" prompt="Tap the two lines that say where the register goes." lines={[{ text: 'terraform {' }, { text: '  backend "s3" {' }, { text: '    bucket       = "kedai-kancil-state"', target: true }, { text: '    key          = "shop/terraform.tfstate"', target: true }, { text: '    region       = "ap-southeast-5"' }, { text: '    use_lockfile = true' }, { text: '    encrypt      = true' }, { text: '  }' }, { text: '}' }]} success="The bucket is the shelf. The key is the file name on it." />
+
+A **<Term id="backend">backend</Term>** is where the register lives. A shared one sits online, so the whole team reads the same register.
+</Card>
+
+<Card id="try-sort" type="try">
+Sort each fact: a file on one laptop, or a shared backend?
+
+<Interactive name="SortCards" buckets={[{ id: 'laptop', label: 'File on a laptop' }, { id: 'shared', label: 'Shared backend' }]} items={[{ label: 'Only one person can see it', bucket: 'laptop', why: 'It sits in one folder on one machine.' }, { label: 'The whole team reads the same register', bucket: 'shared', why: 'Everyone points their blueprint at the same place.' }, { label: 'Gone if the laptop breaks', bucket: 'laptop', why: 'No copy anywhere else.' }, { label: 'Can keep old versions, if you turn that on', bucket: 'shared', why: 'Bucket versioning keeps earlier copies.' }, { label: 'Easy to commit to Git by mistake', bucket: 'laptop', why: 'It sits right next to your .tf files.' }, { label: 'Needs an account and access rules', bucket: 'shared', why: 'Only the team and the pipeline should reach it.' }]} success="A shared backend: one register, safe, for the whole team." />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="Transcript" title="bash" label="A real tofu init after adding a backend block. OpenTofu asks to copy the existing state, the answer is yes, and the backend is configured. tofu state list then shows terraform_data.bell." lines={[{ cmd: 'tofu init' }, { out: 'Initializing the backend...\nDo you want to copy existing state to the new backend?\n  Pre-existing state was found while migrating the previous "local" backend to the\n  newly configured "local" backend. No existing state was found in the newly\n  configured "local" backend. Do you want to copy this state to the new "local"\n  backend? Enter "yes" to copy and "no" to start with an empty state.\n\n  Enter a value: yes' }, { out: 'Successfully configured the backend "local"! OpenTofu will automatically\nuse this backend unless the backend configuration changes.', color: 'green' }, { cmd: 'tofu state list' }, { out: 'terraform_data.bell' }]} />
+
+Moving day. Add the backend block, then run `tofu init`. It asks before it copies the register. This real run moved it to a new folder.
+</Card>
+
+<Card id="predict" type="predict">
+Put the moving steps in order.
+
+<Interactive name="OrderList" items={['Make the shared place first (a bucket)', 'Add the backend block to the blueprint', 'Run tofu init and answer yes', 'Run tofu plan: "No changes" means it worked', 'Commit the backend block, never the state file']} label="First step at the top" success="Shelf first, then the sign that points to it." />
+</Card>
+
+<Card id="check" type="check">
+Could you share `terraform.tfstate` through Git instead?
+
+<Interactive name="Choice" options={[{ label: 'No. Share it with a backend.', correct: true, why: 'Git has no lock, and the file can hold passwords (lesson 7).' }, { label: 'Yes, Git keeps every version', why: 'Two people would push two different registers. Git cannot stop that.' }, { label: 'Yes, in a private repo', why: 'Secrets would stay in the history forever. Use a backend.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain where a team keeps its register, and how to move it.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other backends: `gcs`, `azurerm`, `pg`, `kubernetes`, `http` and more. Terraform also offers HCP Terraform (the `cloud` block). OpenTofu can also encrypt the state itself. After a move, OpenTofu empties the old local file and keeps a `.backup` copy.
+
+Real rep (optional): move a register on your own machine. No cloud, no cost.
+
+<Interactive name="Mission" id="iac-t3-l01-rep" steps={[{ id: 'folder', text: 'Make an empty folder. Add main.tf with one terraform_data resource.' }, { id: 'build', text: 'Build it, with the register in this folder.', command: 'tofu init && tofu apply' }, { id: 'block', text: 'Add backend.tf: a terraform block with backend "local" and path = "register/kedai.tfstate".' }, { id: 'move', text: 'Move the register. Answer yes.', command: 'tofu init' }, { id: 'check', text: 'Check it moved.', command: 'tofu state list && ls register' }]} success="You moved a register. A cloud backend works the same way." />
+</Card>

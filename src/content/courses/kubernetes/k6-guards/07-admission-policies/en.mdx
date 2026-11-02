@@ -1,0 +1,76 @@
+---
+id: k8s-k6-l07
+world: 6
+title: "Policies: CEL, Kyverno, Gatekeeper"
+summary: "You will learn: to write a house rule for gate 3, roll it out safely, and pick a rule keeper."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k6-l06]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Validating Admission Policy", url: "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/" }
+  - { label: "CEL in Kubernetes", url: "https://kubernetes.io/docs/reference/using-api/cel/" }
+  - { label: "Kyverno docs", url: "https://kyverno.io/docs/" }
+  - { label: "Gatekeeper docs", url: "https://open-policy-agent.github.io/gatekeeper/website/docs/" }
+---
+
+<Card id="hook" type="hook">
+Your team agreed: no `:latest` tags. On Friday, someone ships `nginx:latest` anyway. How do you stop it every time?
+
+<Interactive name="Choice" options={[{ label: 'Write the rule into gate 3', correct: true, why: 'A rule at the gate never forgets, even on Friday.' }, { label: 'Put it in the README', why: 'People skim READMEs. The gate reads every request.' }, { label: 'Check every YAML by hand', why: 'Slow, and humans get tired.' }]} />
+</Card>
+
+<Card id="see-vap" type="see">
+A **<Term id="validating-admission-policy">ValidatingAdmissionPolicy</Term>** is a house rule, built into Kubernetes. The rule itself is one line of CEL. Tap it.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: admissionregistration.k8s.io/v1' }, { text: 'kind: ValidatingAdmissionPolicy' }, { text: 'metadata:' }, { text: '  name: no-latest' }, { text: 'spec:' }, { text: '  matchConstraints:' }, { text: '    resourceRules:' }, { text: '      - apiGroups: [""]' }, { text: '        apiVersions: ["v1"]' }, { text: '        operations: ["CREATE", "UPDATE"]' }, { text: '        resources: ["pods"]' }, { text: '  validations:' }, { text: "    - expression: \"object.spec.containers.all(c, !c.image.endsWith(':latest'))\"", target: true }, { text: '      message: "Pin a version tag, not latest."' }]} prompt="Tap the line that holds the rule." success="Yes! Every container's image must not end in :latest." />
+</Card>
+
+<Card id="predict" type="predict">
+`image: nginx` has no tag at all. Does this rule stop it?
+
+<Interactive name="Choice" options={[{ label: 'No. No tag means latest, but the text has no :latest', correct: true, why: 'A rule only sees text. Make it ask for a version tag instead.' }, { label: 'Yes. Kubernetes adds :latest first', why: 'Kubernetes does not rewrite your image. The rule sees plain nginx.' }, { label: 'Yes. CEL knows what latest means', why: 'CEL compares text. It knows nothing about tags.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+A policy does nothing alone. A **binding** says where it runs, and what to do: Deny, Warn or Audit. Put a safe rollout in order.
+
+<Interactive name="OrderList" items={['Write the policy (the rule)', 'Bind it with validationActions: [Warn]', 'Read the warnings. Fix the old YAML.', 'Switch the binding to [Deny]']} label="First step at the top" success="Warn first, then Deny. Nobody gets locked out by surprise." />
+</Card>
+
+<Card id="see-denied" type="see">
+Mei ships `nginx:latest` after the switch to Deny. Her error ends like this:
+
+```
+ValidatingAdmissionPolicy 'no-latest' with binding 'no-latest-kedai' denied request: Pin a version tag, not latest.
+```
+
+<Interactive name="Choice" options={[{ label: 'Use a version tag, like nginx:1.29-alpine', correct: true, why: 'The house rule said no, and told her why.' }, { label: 'Ask for cluster-admin', why: 'Gate 3 checks the tray, not her rights. Admins get refused too.' }, { label: 'Try again in an hour', why: 'The rule does not sleep. Fix the tag.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Add-ons called **<Term id="policy-engine">policy engines</Term>** do more. Sort the three rule keepers.
+
+<Interactive name="SortCards" buckets={[{ id: 'vap', label: 'ValidatingAdmissionPolicy' }, { id: 'kyverno', label: 'Kyverno' }, { id: 'gk', label: 'Gatekeeper' }]} items={[{ label: 'Built in since Kubernetes 1.30. Nothing to install.', bucket: 'vap', why: 'It is part of the API server.' }, { label: 'Rules in CEL, inside the API server', bucket: 'vap', why: 'No extra pods to run.' }, { label: 'Can also change objects, make new ones and check image seals', bucket: 'kyverno', why: 'Kyverno validates, mutates, generates and verifies images.' }, { label: 'Policies are Kubernetes resources in YAML', bucket: 'kyverno', why: 'No new language to learn.' }, { label: 'Rules written in Rego', bucket: 'gk', why: 'Rego comes from the OPA project.' }, { label: 'ConstraintTemplates and Constraints', bucket: 'gk', why: 'A template holds the Rego. A constraint uses it.' }]} success="Sorted! Built in, YAML add-on, Rego add-on." />
+</Card>
+
+<Card id="check" type="check">
+Good rule habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Start new rules with Warn, then switch to Deny', good: true, why: 'You see what would break first.' }, { text: 'Test a rule with kubectl apply --dry-run=server', good: true, why: 'Admission runs on a server dry run. Nothing is saved.' }, { text: 'Deny with no message', good: false, why: 'Always say why. A good message saves an hour.' }, { text: 'Turn on Deny everywhere on day one', good: false, why: 'Old YAML breaks at once. Roll out zone by zone.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now write a house rule for gate 3.
+</Card>
+
+<Card id="deeper" type="deeper">
+Since Kubernetes 1.36, MutatingAdmissionPolicy is stable too: it changes objects with CEL. `failurePolicy: Fail` refuses requests when the rule itself breaks. A binding's `matchResources` picks zones by label. Kyverno and Gatekeeper run as webhooks: extra pods you keep healthy.
+
+<Interactive name="Mission" id="k6-l07-rep" steps={[{ id: 'policy', text: 'On a throwaway cluster, save the no-latest policy from this lesson as policy.yaml and apply it.', command: 'kubectl apply -f policy.yaml' }, { id: 'zone', text: 'Make a test zone.', command: 'kubectl create namespace policy-test' }, { id: 'bind', text: 'Write a binding with validationActions: [Warn] for that zone, and apply it.' }, { id: 'try', text: 'Run a pod with a latest tag in that zone. Read the warning.', command: 'kubectl run test -n policy-test --image=nginx:latest' }, { id: 'deny', text: 'Switch the binding to [Deny]. Try again: refused.' }]} success="Your house rule guards gate 3!" />
+</Card>

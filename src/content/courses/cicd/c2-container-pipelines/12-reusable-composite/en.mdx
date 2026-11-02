@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l12
+world: 2
+title: Reusable workflows and composite actions
+summary: "You will learn: to write a pipeline once and share it across your apps."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l11]
+scenario: c2-reusable
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Reuse workflows", url: "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows" }
+  - { label: "Creating a composite action", url: "https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action" }
+  - { label: "Reusing workflow configurations", url: "https://docs.github.com/en/actions/concepts/workflows-and-actions/reusing-workflow-configurations" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil has a web image and an API image. Both workflows hold the same 30 build lines. You fix a bug in one. What about the other?
+
+<Interactive name="Choice" options={[{ label: 'Still broken: you must copy the fix by hand', correct: true, why: 'Copies drift apart. Write it once instead.' }, { label: 'GitHub fixes both for you', why: 'GitHub runs what you wrote. Two copies stay two copies.' }, { label: 'Copies always stay the same', why: 'Not for long. Someone always edits only one.' }]} />
+</Card>
+
+<Card id="see-callee" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: Build image' }, { text: 'on:' }, { text: '  workflow_call:' }, { text: '    inputs:' }, { text: '      folder:', target: true }, { text: '        required: true' }, { text: '        type: string' }, { text: 'jobs:' }, { text: '  build:' }, { text: '    runs-on: ubuntu-latest' }]} prompt="Tap the line that names the blank to fill in." success="Yes! Each caller fills in folder." />
+
+Recap from [World 7](/en/git/#world-7). A <Term id="reusable-workflow" course="git">reusable workflow</Term> is head office's standard recipe. `workflow_call` lets others call it. Inputs are the blanks.
+</Card>
+
+<Card id="see-caller" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-reusable" label="Two jobs, web and api, each call build-image.yml with their own folder. Both run side by side and turn green." />
+
+Two jobs call one recipe, each with its own folder. Press Run. Fix the recipe once, and both apps get the fix.
+</Card>
+
+<Card id="see-composite" type="see">
+<Interactive name="SpotLines" lines={[{ text: '# .github/actions/setup-shop/action.yml' }, { text: 'name: Set up shop' }, { text: 'runs:' }, { text: '  using: composite', target: true }, { text: '  steps:' }, { text: '    - uses: actions/setup-node@v7' }, { text: '      with:' }, { text: '        node-version: 24' }, { text: '    - run: npm ci' }, { text: '      shell: bash' }]} prompt="Tap the line that makes this a composite action." success="Yes! using: composite bundles the steps." />
+
+A **<Term id="composite-action">composite action</Term>** is a pre-mixed spice blend: steps in one jar. In a job, `uses: ./.github/actions/setup-shop` runs it as one step.
+</Card>
+
+<Card id="try-sort" type="try">
+Which one is it?
+
+<Interactive name="SortCards" buckets={[{ id: 'rw', label: 'Reusable workflow' }, { id: 'ca', label: 'Composite action' }]} items={[{ label: 'Brings its own jobs and runners', bucket: 'rw', why: 'It is a whole workflow.' }, { label: 'Runs as one step inside your job', bucket: 'ca', why: 'It shares your job and its runner.' }, { label: 'Called with uses: on a job', bucket: 'rw', why: 'jobs.<id>.uses calls a workflow.' }, { label: 'Called with uses: on a step', bucket: 'ca', why: 'steps[].uses calls an action.' }, { label: 'Every run: needs a shell:', bucket: 'ca', why: 'Composite actions must say which shell.' }, { label: 'Can take secrets: inherit', bucket: 'rw', why: 'The caller can pass all its secrets along.' }]} success="Sorted! Whole recipe versus spice blend." />
+</Card>
+
+<Card id="predict" type="predict">
+The caller's token has `packages: read`. The called workflow asks for `packages: write`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The run fails: a called workflow can only keep or lower the keys', correct: true, why: 'The caller decides the most it gets. Give packages: write in the caller.' }, { label: 'It gets packages: write anyway', why: 'Then any shared recipe could grab more power. GitHub blocks that.' }, { label: 'GitHub asks you to approve it', why: 'There is no prompt. The run just fails with an error.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now share one pipeline across many apps.
+</Card>
+
+<Card id="deeper" type="deeper">
+Call a reusable workflow from another repo like an action: `owner/repo/.github/workflows/build.yml@ref`. Pin that ref to a full SHA, as World C4 explains. In the log, a composite action is one step. Open it to see inside.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="c2-l12-rep" steps={[{ id: 'callee', text: 'In a public practice repo, move your build job into .github/workflows/build-image.yml with on: workflow_call.' }, { id: 'caller', text: 'Call it from ci.yml with uses: ./.github/workflows/build-image.yml.' }, { id: 'push', text: 'Push, and find the called jobs in the run.' }]} success="One recipe, many kitchens!" />
+</Card>

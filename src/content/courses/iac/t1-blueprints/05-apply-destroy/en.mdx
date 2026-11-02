@@ -1,0 +1,67 @@
+---
+id: iac-t1-l05
+world: 1
+title: apply and destroy
+summary: "You will learn: to build with apply, and to tear down safely with destroy."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, OrderList, SwipeJudge]
+needs: [iac-t1-l04]
+scenario: t1-ready
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu apply", url: "https://opentofu.org/docs/cli/commands/apply/" }
+  - { label: "tofu destroy", url: "https://opentofu.org/docs/cli/commands/destroy/" }
+---
+
+<Card id="hook" type="hook">
+You built a test stall to try an idea. The test is over. In the cloud, a stall costs money every hour. What now?
+
+<Interactive name="Choice" options={[{ label: 'Tear down everything the blueprint built', correct: true, why: 'One command removes it all. Nothing is left running.' }, { label: 'Delete the .tf files', why: 'The building stays. Only the drawings go.' }, { label: 'Leave it. It is only a test.', why: 'Forgotten tests still cost money.' }]} />
+</Card>
+
+<Card id="try-apply" type="try">
+Build the stall first. Type `tofu apply`. Read the plan it shows. Then type `yes`.
+
+<Interactive name="TofuSim" scenario="t1-ready" goal={{ resourceInState: ['random_pet.stall', 'local_file.sign'] }} hints={['Type tofu apply.', 'It shows the plan, then waits. Type yes.']} success="Built. The picture shows both things in the register." />
+
+<Hint>`tofu apply`, read, then `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+At the question you type `y`, not `yes`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Nothing is built. Only yes counts.', correct: true, why: 'OpenTofu says it: Only yes will be accepted. Anything else cancels.' }, { label: 'It builds, because y means yes', why: 'Not here. A typo should never build by accident.' }, { label: 'It asks again', why: 'It stops at once and changes nothing.' }]} />
+</Card>
+
+<Card id="try-destroy" type="try">
+Now tear it down. Type `tofu destroy`. Read the red note, then answer `yes`.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ stateCount: 0, filesMissing: ['sign.txt'] }} hints={['Type tofu destroy.', 'Read the list of what goes. Then type yes.']} success="Gone. The register is empty, and sign.txt is deleted." />
+
+**<Term id="destroy">destroy</Term>** deletes real things. Careful: always read its list first.
+</Card>
+
+<Card id="check-order" type="check">
+Put the safe building loop in order.
+
+<Interactive name="OrderList" items={['Change the blueprint (.tf files)', 'tofu plan: read what will happen', 'tofu apply: type yes only if the plan looks right', 'tofu destroy: when the test is over']} label="First step at the top" success="Draw, inspect, build, tidy up." />
+</Card>
+
+<Card id="check-swipe" type="check">
+`-auto-approve` skips the question. Good idea or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'apply -auto-approve on your practice laptop', good: true, why: 'Practice files only. Nothing important can break.' }, { text: 'apply -auto-approve on the real shop, with no plan read', good: false, why: 'Nobody checked what it deletes. Read a plan first.' }, { text: 'Type yes after reading the whole plan', good: true, why: 'That is the habit.' }, { text: 'Type yes because the plan is long and boring', good: false, why: 'Long plans hide surprises. Read the summary line at least.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now build with apply and tear down with destroy, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu plan -destroy` shows what destroy would delete, and deletes nothing. `tofu destroy` is the same as `tofu apply -destroy`. Careful: `-auto-approve` skips the question. Use it only in practice, or in a pipeline that showed a plan first.
+</Card>

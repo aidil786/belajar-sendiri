@@ -1,0 +1,74 @@
+---
+id: docker-d3-l02
+world: 3
+title: "Lockers: named volumes"
+summary: "You will learn: to keep data in a volume, a locker outside the container."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, LockerTest, Choice, Mission]
+needs: [docker-d3-l01]
+scenario: d3-pg-orders
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Volumes", url: "https://docs.docker.com/engine/storage/volumes/" }
+  - { label: "Docker docs: docker volume", url: "https://docs.docker.com/reference/cli/docker/volume/" }
+  - { label: "Postgres image on Docker Hub", url: "https://hub.docker.com/_/postgres" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-pg-novolume" commands={['docker exec db psql -U postgres -c "select * from orders;"', 'docker rm -f db', 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine', 'docker exec db psql -U postgres -c "select * from orders"']} fails={['docker exec db psql -U postgres -c "select * from orders"']} label="The orders table shows one order, nasi lemak. db is removed and started again. Now psql says: relation orders does not exist." />
+
+Kancil swaps the database box for a fresh one. Then: `ERROR: relation "orders" does not exist`. Plain words: the new database has no orders table.
+</Card>
+
+<Card id="see-volume" type="see">
+A **<Term id="volume">volume</Term>** is a locker outside the lunchbox. Docker keeps it until you delete it. Tap the pieces to build a database with a locker.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d', means: 'Start a box in the background' }, { text: '--name db', means: 'Call it db' }, { text: '-e POSTGRES_PASSWORD=secret', means: 'Postgres needs a password' }, { text: '-v pgdata:/var/lib/postgresql', means: 'Locker pgdata, opened at the data folder' }, { text: 'postgres:18-alpine', means: 'The meal pack to use' }]} decoys={[{ text: '-v pgdata:/var/lib/postgresql/data', means: 'The folder older Postgres used. Postgres 18 refuses it.' }]} success="That's it! -v name:folder gives the box a locker." />
+</Card>
+
+<Card id="try-volume" type="try">
+Start db with the pgdata locker. Then make an orders table.
+
+<Interactive name="KitchenSim" scenario="d3-fresh" goal={{ running: ['db'], volumeExists: ['pgdata'], tableInVolume: { pgdata: 'orders' } }} hints={['Type docker run -d --name db -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Then type docker exec db psql -U postgres -c "create table orders (id int, dish text)"']} success="The orders table lives in the pgdata locker now." />
+
+<Hint>`-v pgdata:/var/lib/postgresql` makes the locker if it isn't there yet.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Guess first, then run it. Which file is still there?
+
+<Interactive name="LockerTest" mounts={['writable', { kind: 'volume', name: 'kedai-data', target: '/data', file: 'orders.db' }]} ask={['recreate', 'volumeRm']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="try-survive" type="try">
+Throw db away. Start it again with the same locker. Then look at the orders.
+
+<Interactive name="KitchenSim" scenario="d3-pg-orders" goal={{ running: ['db'], tableInVolume: { pgdata: 'orders' }, typed: '^docker (container )?rm ', lastTyped: 'select', lastExit: 0 }} hints={['Type docker rm -f db', 'Type docker run -d --name db -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Type docker exec db psql -U postgres -c "select * from orders"']} success="Nasi lemak is still there. The locker kept it!" />
+
+<Hint>Same `-v pgdata:/var/lib/postgresql` as before.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Which command deletes the orders for good?
+
+<Interactive name="Choice" options={[{ label: '`docker rm -f db`', why: 'The lunchbox goes. The pgdata locker stays.' }, { label: '`docker volume rm pgdata`', correct: true, why: 'Yes. It empties the locker for good. Docker refuses while a box still uses it.' }, { label: '`docker restart db`', why: 'Same box, same locker. Nothing is lost.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep data in a locker that outlives the container.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real error: `volume is in use`. Plain words: remove the box first. Without `-v`, Postgres gets a nameless locker. A new box gets a new one, so `docker volume ls` collects leftovers.
+
+<Interactive name="KitchenReplay" scenario="d3-pg-orders" commands={['docker volume ls', 'docker volume rm pgdata']} fails={['docker volume rm pgdata']} label="docker volume ls lists pgdata. docker volume rm pgdata is refused: the volume is in use by the db container." />
+
+Real rep (optional), on your own Docker:
+
+<Interactive name="Mission" id="d3-l02-rep" steps={[{ id: 'make', text: 'Make a locker.', command: 'docker volume create practice-data' }, { id: 'write', text: 'Write into it from a box that is thrown away.', command: 'docker run --rm -v practice-data:/data alpine:3.22 sh -c "echo hi > /data/note.txt"' }, { id: 'read', text: 'Read it from a brand-new box.', command: 'docker run --rm -v practice-data:/data alpine:3.22 cat /data/note.txt' }, { id: 'clean', text: 'Clean up. Careful: this deletes the data!', command: 'docker volume rm practice-data' }]} success="Your locker kept the note between boxes." />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: docker-d5-l08
+world: 5
+title: "Container dengan hak paling sedikit"
+summary: "Anda akan belajar: jalankan container bukan sebagai root, dengan sistem fail baca sahaja dan tanpa kuasa lebih."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SortCards, KitchenSim, Choice, Transcript, Mission]
+needs: [docker-d5-l07]
+scenario: d5-shield
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Keistimewaan runtime dan capability Linux", url: "https://docs.docker.com/engine/containers/run/" }
+  - { label: "docker container run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Keselamatan Docker Engine", url: "https://docs.docker.com/engine/security/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-shield" commands={["docker run --rm alpine:3.22 id"]} label="Dalam container alpine biasa, id cetak uid=0(root)." />
+
+Dalam bekas makanan itu, aplikasi anda jalan sebagai root: ketua cef, pegang semua kunci. Kalau ada orang menceroboh, dia pun pegang semua kunci.
+</Card>
+
+<Card id="see-shields" type="see">
+**<Term id="least-privilege" course="cicd">Least privilege</Term>** (hak paling sedikit) bermaksud bekas cuma dapat kunci yang ia perlu. Docker ada tiga perisai. Padankan setiap satu dengan kerjanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: '--user (atau USER)' }, { id: 'ro', label: '--read-only' }, { id: 'caps', label: '--cap-drop ALL' }]} items={[{ label: 'Bukan ketua cef: tiada root di dalam', bucket: 'user', why: 'Aplikasi jalan sebagai pengguna biasa, contohnya node.' }, { label: 'Penutup dimeterai: tiada fail baru dalam bekas', bucket: 'ro', why: 'Tiada siapa boleh selit alat ke dalam bekas.' }, { label: 'Simpan pisau-pisau khas', bucket: 'caps', why: 'Kuasa root, contohnya tukar pemilik fail.' }]} success="Tiga perisai, tiga kerja berbeza." />
+</Card>
+
+<Card id="see-errors" type="see">
+<Interactive name="KitchenReplay" scenario="d5-shield" commands={["docker run --rm --read-only alpine:3.22 touch /hello", "docker run --rm --cap-drop ALL alpine:3.22 chown nobody /tmp"]} fails={["docker run --rm --read-only alpine:3.22 touch /hello", "docker run --rm --cap-drop ALL alpine:3.22 chown nobody /tmp"]} label="Dengan --read-only, touch gagal: Read-only file system. Dengan --cap-drop ALL, chown gagal: Operation not permitted." />
+
+Ralat sebenar, maksud mudah. `Read-only file system`: penutupnya dimeterai. `Operation not permitted`: pisau itu, satu <Term id="capability">capability</Term> (kuasa khas), sudah disimpan.
+</Card>
+
+<Card id="try-shields" type="try">
+Jalankan API dengan ketiga-tiga perisai. Image-nya sudah ada `USER node`. Tambah dua lagi.
+
+<Interactive name="KitchenSim" scenario="d5-shield" goal={{ running: ['api'], readOnly: ['api'], containerUser: { api: 'nonroot' }, reachable: 'localhost:3000', typed: 'cap-drop[ =]ALL' }} hints={['Tambah --read-only dan --cap-drop ALL pada docker run.', 'Taip docker run -d --name api --read-only --cap-drop ALL -p 3000:3000 kedai-api:1.0']} success="Perisai dipasang! API masih terima pesanan." />
+
+<Hint>`docker run -d --name api --read-only --cap-drop ALL -p 3000:3000 kedai-api:1.0`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+nginx mula sebagai root dan tulis fail cache dulu. Anda jalankannya dengan `--read-only`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia terus berhenti, dengan ralat', correct: true, why: 'nginx perlu tulis beberapa fail. Penutup yang dimeterai kata tidak.' }, { label: 'Ia jalan seperti biasa', why: 'nginx buat folder cache dulu. Ia tak boleh.' }, { label: 'Docker buka meterai untuknya', why: 'Docker tak pernah ubah flag anda.' }]} />
+</Card>
+
+<Card id="check-nginx" type="check">
+<Interactive name="Transcript" title="bash" label="nginx dengan --read-only berhenti: mkdir /var/cache/nginx/client_temp gagal, Read-only file system. Dengan dua folder tmpfs ia jalan: Up 2 seconds." lines={[{ cmd: 'docker run --rm --read-only nginx:1.30-alpine' }, { out: '…', color: 'dim' }, { out: 'nginx: [emerg] mkdir() "/var/cache/nginx/client_temp" failed (30: Read-only file system)', color: 'red' }, { cmd: 'docker run -d --name web --read-only --tmpfs /var/cache/nginx --tmpfs /run nginx:1.30-alpine' }, { out: '…', color: 'dim' }, { cmd: "docker ps --filter name=web --format '{{.Status}}'" }, { out: 'Up 2 seconds', color: 'green' }]} />
+
+Pembaikannya: dua folder sementara yang kecil dalam memori, dengan `--tmpfs`. Yang lain kekal dimeterai.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci container: bukan root, baca sahaja, tanpa kuasa lebih.
+</Card>
+
+<Card id="deeper" type="deeper">
+Secara lalai Docker kekalkan 14 capability, contohnya `CHOWN` dan `NET_BIND_SERVICE`. Tambah semula yang perlu sahaja: `--cap-add CHOWN`. `--security-opt no-new-privileges` halang program dapat kuasa lebih. Jangan guna `--privileged`, dan jangan mount soket Docker: kedua-duanya serahkan seluruh host. Compose ada `user`, `read_only` dan `cap_drop`.
+
+Latihan sebenar (pilihan), di komputer anda:
+
+<Interactive name="Mission" id="d5-l08-rep" steps={[{ id: 'root', text: 'Tengok siapa anda dalam container biasa.', command: 'docker run --rm alpine:3.22 id' }, { id: 'shield', text: 'Sekarang dengan ketiga-tiga perisai.', command: 'docker run --rm --user 1000 --read-only --cap-drop ALL alpine:3.22 id' }, { id: 'yours', text: 'Cuba perisai pada image anda sendiri. Baiki yang rosak dengan --tmpfs.' }]} success="Bekas makanan anda sudah dikunci!" />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: iac-t1-l07
+world: 1
+title: fmt and validate
+summary: "You will learn: to catch mistakes with validate and tidy the layout with fmt."
+minutes: 3
+xp: 15
+interactives: [TofuSim, SpotLines, Choice, SortCards]
+needs: [iac-t1-l06]
+scenario: t1-fix-me
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu validate", url: "https://opentofu.org/docs/cli/commands/validate/" }
+  - { label: "tofu fmt", url: "https://opentofu.org/docs/cli/commands/fmt/" }
+  - { label: "OpenTofu: style conventions", url: "https://opentofu.org/docs/language/syntax/style/" }
+---
+
+<Card id="hook" type="hook">
+A tired architect drew this blueprint. Type `tofu validate` to check it.
+
+<Interactive name="TofuSim" scenario="t1-fix-me" goal={{ lastTyped: '^tofu validate' }} hints={['Type tofu validate and press Enter.']} success="Two mistakes found before anything was built." />
+
+`Error: Reference to undeclared resource`. Plain words: `stal` is not a name in this blueprint.
+</Card>
+
+<Card id="see-where" type="see">
+Errors say where to look. Tap the line that names the file and the line number.
+
+<Interactive name="SpotLines" lines={[{ text: 'Error: Reference to undeclared resource' }, { text: '' }, { text: '  on main.tf line 7, in resource "local_file" "sign":', target: true }, { text: '   7:   content  = "Welcome to ${random_pet.stal.id}\\n"' }, { text: '' }, { text: 'There is no managed resource "random_pet" "stal" definition in the root' }, { text: 'module.' }]} success="main.tf, line 7. The next line even shows it." />
+</Card>
+
+<Card id="try-fix" type="try">
+Fix the blueprint until `tofu apply` works. Run `tofu validate` after each fix.
+
+<Interactive name="TofuSim" scenario="t1-fix-me" goal={{ resourceInState: ['local_file.sign'] }} hints={['random_pet has no colour. Delete the line colour = "red".', 'Change random_pet.stal.id into random_pet.stall.id.', 'All valid? Type tofu apply, then yes.']} success="Valid and built. Both mistakes caught before building." />
+
+<Hint>Fix one error, then `tofu validate` again. A new one may appear.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`tofu fmt` lines up the `=` signs and fixes the spaces. Does it change what gets built?
+
+<Interactive name="Choice" options={[{ label: 'No. Same meaning, neater layout.', correct: true, why: 'fmt only moves spaces. The plan stays the same.' }, { label: 'Yes. It fixes mistakes too.', why: 'Mistakes are validate\'s job. fmt only tidies.' }, { label: 'Yes. It builds the tidy version.', why: 'fmt never builds. Only apply does.' }]} />
+</Card>
+
+<Card id="try-fmt" type="try">
+This blueprint works but looks messy. Type `tofu fmt`. Then open `main.tf` again.
+
+<Interactive name="TofuSim" scenario="t1-messy" goal={{ formatted: true }} hints={['Type tofu fmt and press Enter.']} success="Tidy. fmt listed the files it changed." />
+
+<Hint>Type `tofu fmt`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Whose job is it?
+
+<Interactive name="SortCards" buckets={[{ id: 'fmt', label: 'tofu fmt' }, { id: 'validate', label: 'tofu validate' }, { id: 'neither', label: 'Neither' }]} items={[{ label: 'Line up the = signs', bucket: 'fmt', why: 'Layout is fmt.' }, { label: 'Find a reference to a name that does not exist', bucket: 'validate', why: 'Misspelt names are mistakes. validate finds them.' }, { label: 'Fix the indents', bucket: 'fmt', why: 'Spaces are fmt.' }, { label: 'Find a missing required argument', bucket: 'validate', why: 'A missing setting is a mistake.' }, { label: 'Check that sign.txt still exists', bucket: 'neither', why: 'Only plan looks at the real things.' }]} success="fmt tidies. validate checks. plan compares with the real world." />
+</Card>
+
+<Card id="win" type="win">
+You can now check a blueprint with validate and tidy it with fmt.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu fmt -check` changes nothing. It lists messy files and fails, so CI can stop untidy code. `-diff` shows the changes; `-recursive` tidies sub-folders too. validate needs `tofu init` first, but never reads the state or the real things. Many editors run fmt each time you save.
+</Card>

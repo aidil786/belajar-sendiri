@@ -1,0 +1,68 @@
+---
+id: git-w03-l03
+world: 3
+title: "The old way: git checkout"
+summary: "You will learn: to read old guides that use git checkout for branches."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, CommandBuilder, Sim, SortCards, Choice]
+needs: [git-w03-l02]
+scenario: w03-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "Git 3.0 breaking changes", url: "https://git-scm.com/docs/BreakingChanges" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l03" commands={['git checkout -b fix-typo']} label="git checkout -b fix-typo prints: Switched to a new branch 'fix-typo'." />
+
+An old guide says `git checkout -b`. Your friend says `git switch -c`. Who is right?
+</Card>
+
+<Card id="see-same" type="see">
+<Interactive name="GraphScene" scenario="w03-l03" commands={['git checkout dark-mode']} label="HEAD jumps from main onto the dark-mode note, just like with git switch." />
+
+Both are right! `git checkout dark-mode` works like `git switch dark-mode`. And `git checkout -b` works like `git switch -c`.
+</Card>
+
+<Card id="try-build" type="try">
+Build the old way to make `fix-typo` and hop onto it.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'checkout', means: 'the old way to switch' }, { text: '-b', means: 'make a new branch first' }, { text: 'fix-typo', means: 'its name' }]} decoys={[{ text: '-c', means: 'that flag belongs to git switch' }, { text: '--detach', means: 'visits a commit, with no branch' }]} success="That's the old way to make a branch and hop on." />
+
+<Hint>checkout makes a branch with `-b`.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+You are on dark-mode. Go back to main, the old way.
+
+<Interactive name="Sim" scenario="w03-l03b" panels={['graph']} goal={{ currentBranch: 'main', typed: '^git checkout ' }} hints={['Type git checkout main and press Enter.']} success="Back on main, with the old command." />
+
+<Hint>Type `git checkout main`, then press Enter.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Old `git checkout` did two jobs. Which new command does each job now?
+
+<Interactive name="SortCards" buckets={[{ id: 'switch', label: 'git switch' }, { id: 'restore', label: 'git restore' }]} items={[{ label: '`git checkout main`', bucket: 'switch', why: 'Moving to a branch is a switch job.' }, { label: '`git checkout -b fix-typo`', bucket: 'switch', why: 'Make and hop: git switch -c.' }, { label: '`git checkout -- index.html`', bucket: 'restore', why: 'Throwing away file changes is a restore job.' }, { label: '`git checkout HEAD~1 -- style.css`', bucket: 'restore', why: 'An old version of a file: git restore --source.' }]} success="Sorted! One job each: switch for branches, restore for files." />
+</Card>
+
+<Card id="predict" type="predict">
+Git 3.0 is coming. Will it remove `git checkout`?
+
+<Interactive name="Choice" options={[{ label: 'No. It stays, next to switch and restore.', correct: true, why: 'So many people use it. All three commands stay.' }, { label: 'Yes, it is gone in Git 3.0', why: 'The Git team says checkout, switch and restore all stay.' }, { label: 'It only works on Windows', why: 'It works everywhere, like every Git command.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read old guides that use git checkout.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git checkout` does two jobs: branches and files. That mix confused people. So Git 2.23 added `git switch` for branches and `git restore` for files. Careful: `git checkout -- file` throws away your changes, like `git restore`. Prefer the new commands. They say what they do.
+</Card>

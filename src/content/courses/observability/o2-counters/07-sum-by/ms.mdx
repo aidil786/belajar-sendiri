@@ -1,0 +1,67 @@
+---
+id: obs-o2-l07
+world: 2
+title: "Jumlahkan: sum by"
+summary: "Anda akan belajar: cara gabungkan banyak siri jadi sedikit, kekalkan label yang anda mahu, dan kenapa rate datang dulu."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, OrderList, SwipeJudge, Transcript, Mission]
+needs: [obs-o2-l06]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL: aggregation operators", url: "https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+`rate()` beri lima baris: setiap gerai di setiap cawangan. Bos mahu satu baris untuk setiap gerai. Sekarang macam mana?
+
+<Interactive name="Choice" options={[{ label: 'Jumlahkan cawangan untuk setiap gerai', correct: true, why: 'Ya. Kekalkan label gerai, jumlahkan yang lain.' }, { label: 'Baca kelima-lima dan campur dalam kepala', why: 'Okey untuk lima baris. Bukan untuk lima ratus.' }, { label: 'Buang label outlet daripada aplikasi', why: 'Anda hilang pandangan cawangan selamanya. Jumlahkan dalam query.' }]} />
+</Card>
+
+<Card id="try-sum" type="try">
+**<Term id="aggregation">sum</Term>** jumlahkan siri. Mula dengan satu jumlah untuk seluruh kedai.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="rate(kedai_orders_total[5m])" prompt="Balut semuanya dengan sum( ), kemudian Run." goal={{ usesFunction: ['sum'], labelNames: [], resultEquals: [{ labels: {}, value: 2 }] }} hints={['Taip sum( di awal dan ) di hujung.']} solution="sum(rate(kedai_orders_total[5m]))" success="2 pesanan sesaat, seluruh kedai." />
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang `sum by (stall) (…)`. Ia simpan label stall sahaja. Berapa baris keluar?
+
+<Interactive name="Choice" options={[{ label: '3: nasi lemak, roti canai, cendol', correct: true, why: 'Ya. Satu baris untuk setiap gerai.' }, { label: '5', why: 'by (stall) jumlahkan cawangan setiap gerai.' }, { label: '1', why: 'Itu sum() biasa. by (stall) simpan satu baris setiap gerai.' }]} />
+</Card>
+
+<Card id="try-by" type="try">
+Satu baris untuk setiap gerai, ya.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="sum(rate(kedai_orders_total[5m]))" prompt="Tambah by (stall) terus selepas sum, kemudian Run." goal={{ usesFunction: ['sum'], labelNames: ['stall'], resultCount: 3, resultIncludes: [{ labels: { stall: 'roti-canai' }, value: 1 }] }} hints={['Taip sum by (stall) (rate(kedai_orders_total[5m]))']} solution="sum by (stall) (rate(kedai_orders_total[5m]))" success="Roti canai menang: 1 pesanan sesaat." />
+</Card>
+
+<Card id="try-order" type="try">
+Bina “ralat sesaat, ikut kod status” langkah demi langkah. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Pilih counter: http_requests_total', 'Tambah tetingkap: [5m]', 'Balut dengan rate( )', 'Jumlahkan dengan sum by (code)']} label="Langkah pertama di atas" success="sum by (code) (rate(http_requests_total[5m])). Rate dulu, kemudian sum." />
+</Card>
+
+<Card id="check" type="check">
+Query yang baik? Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'sum(rate(kedai_orders_total[5m]))', good: true, why: 'rate dulu, kemudian sum.' }, { text: 'sum by (outlet) (rate(kedai_orders_total[5m]))', good: true, why: 'Satu baris untuk setiap cawangan.' }, { text: 'sum without (outlet) (rate(kedai_orders_total[5m]))', good: true, why: 'Buang outlet, simpan yang lain. Di sini sama dengan by stall.' }, { text: 'sum by stall (rate(kedai_orders_total[5m]))', good: false, why: 'by perlukan kurungan: by (stall).' }, { text: 'sum by (stall) (kedai_orders_total[5m])', good: false, why: 'sum tak boleh jumlahkan tetingkap. Letak rate() di dalam dulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jumlahkan siri dengan `sum by` dan kekalkan label yang perlu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Aggregation lain berfungsi sama: `avg`, `max`, `min`, `count`, dan `topk(3, …)` untuk tiga teratas. promtool pun boleh jalankan query dari terminal. Output ini sebenar:
+
+<Interactive name="Transcript" title="bash" label="promtool query instant cetak up untuk tiga target, setiap satu dengan 1 dan cap masa." lines={[{ cmd: "docker compose exec prometheus promtool query instant http://localhost:9090 'up'" }, { out: 'up{instance="localhost:9090", job="prometheus"} => 1 @[1793538329.647]\nup{instance="node-exporter:9100", job="node"} => 1 @[1793538329.647]\nup{instance="http://prometheus:9090/-/ready", job="blackbox"} => 1 @[1793538329.647]' }]} />
+
+<Interactive name="Mission" id="obs-o2-l07-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'cpu', text: 'Berapa sibuk setiap mod CPU? Tanya dari terminal.', command: "docker compose exec prometheus promtool query instant http://localhost:9090 'sum by (mode) (rate(node_cpu_seconds_total[1m]))'" }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="sum by, pada mesin sebenar." />
+</Card>

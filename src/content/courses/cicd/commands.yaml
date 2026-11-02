@@ -1,0 +1,110 @@
+# Command pages for the CI/CD course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/cicd/commands/<id>/ and in the cheat sheet /<lang>/cicd/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# Commands here can be CLI tools used in pipelines (gh, actionlint, hadolint, wrangler …).
+groups:
+  # --- World C3 groups ---
+  - { id: deploy, title: { en: "Deploy and roll back (Cloudflare Wrangler)", ms: "Deploy dan rollback (Cloudflare Wrangler)" } }
+  # --- World C2 groups ---
+  - { id: image-checks, title: { en: "Check images and workflows", ms: "Semak image dan workflow" } }
+
+commands:
+  # --- World C3 commands (Wrangler 4; checked 2026-10-31 against developers.cloudflare.com and `wrangler --help`) ---
+  - id: wrangler-deploy
+    group: deploy
+    syntax: "npx wrangler deploy [--env <name>] [--dry-run]"
+    danger: careful
+    lesson: cicd-c3-l06
+    docs: "https://developers.cloudflare.com/workers/wrangler/commands/workers/#deploy"
+    what: { en: "Uploads your Worker and sends all traffic to the new version.", ms: "Muat naik Worker anda dan hantar semua trafik ke versi baharu." }
+    when: { en: "In the deploy job, after every check passed.", ms: "Dalam job deploy, selepas semua semakan lulus." }
+    example: { command: "npx wrangler deploy --dry-run", en: "Check the config and files. Upload nothing.", ms: "Semak tetapan dan fail. Tiada apa dimuat naik." }
+    variants:
+      - { command: "npx wrangler deploy --env staging", en: "Ship to the staging copy (a Worker named <name>-staging).", ms: "Hantar ke salinan staging (Worker bernama <name>-staging)." }
+
+  - id: wrangler-versions-upload
+    group: deploy
+    syntax: "npx wrangler versions upload"
+    danger: safe
+    lesson: cicd-c3-l01
+    docs: "https://developers.cloudflare.com/workers/wrangler/commands/workers/#versions-upload"
+    what: { en: "Uploads a new version of your Worker without sending it any traffic.", ms: "Muat naik versi baharu Worker anda tanpa hantar sebarang trafik kepadanya." }
+    when: { en: "First step of a canary (gradual deployment).", ms: "Langkah pertama canary (gradual deployment)." }
+    example: { command: "npx wrangler versions upload", en: "The new version waits. Users still get the old one.", ms: "Versi baharu menunggu. Pengguna masih dapat yang lama." }
+
+  - id: wrangler-versions-deploy
+    group: deploy
+    syntax: "npx wrangler versions deploy [<version-id>@<percent> ...]"
+    danger: careful
+    lesson: cicd-c3-l01
+    docs: "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/"
+    what: { en: "Splits traffic between versions, like 5% new and 95% old.", ms: "Bahagikan trafik antara versi, contohnya 5% baharu dan 95% lama." }
+    when: { en: "To run a canary: move users to the new version step by step.", ms: "Untuk buat canary: alih pengguna ke versi baharu langkah demi langkah." }
+    example: { command: "npx wrangler versions deploy", en: "Asks which versions get which share of traffic.", ms: "Tanya versi mana dapat bahagian trafik yang mana." }
+
+  - id: wrangler-rollback
+    group: deploy
+    syntax: "npx wrangler rollback [<version-id>] [--message <text>]"
+    danger: careful
+    lesson: cicd-c3-l10
+    docs: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/"
+    what: { en: "Sends all traffic back to an older version. Code only: data and bindings stay as they are.", ms: "Hantar semua trafik balik ke versi lama. Kod sahaja: data dan binding kekal." }
+    when: { en: "When a smoke test or the error graph says the new version is bad.", ms: "Bila smoke test atau graf ralat kata versi baharu teruk." }
+    example: { command: "npx wrangler rollback --message \"Smoke test failed\"", en: "Go back to the version before the latest, with a note why.", ms: "Kembali ke versi sebelum yang terbaru, dengan nota sebabnya." }
+    variants:
+      - { command: "npx wrangler rollback --env staging", en: "Roll back the staging copy only.", ms: "Rollback salinan staging sahaja." }
+
+  - id: wrangler-preview
+    group: deploy
+    syntax: "npx wrangler preview [--name <name>]"
+    danger: safe
+    lesson: cicd-c3-l05
+    docs: "https://developers.cloudflare.com/workers/previews/"
+    what: { en: "Uploads a preview of your Worker with its own link. Production is not touched.", ms: "Muat naik pratonton Worker anda dengan pautan sendiri. Production tak disentuh." }
+    when: { en: "On every pull request, so reviewers can try the change.", ms: "Pada setiap pull request, supaya penyemak boleh cuba perubahan itu." }
+    example: { command: "npx wrangler preview --name \"pr-7\"", en: "Make or update the preview for pull request 7.", ms: "Buat atau kemas kini pratonton untuk pull request 7." }
+    variants:
+      - { command: "npx wrangler preview delete --name \"pr-7\" --skip-confirmation", en: "Delete it when the pull request closes.", ms: "Padam bila pull request ditutup." }
+
+  # --- World C2 commands (add new C2 commands below this line) ---
+  - id: hadolint
+    group: image-checks
+    syntax: "hadolint [--failure-threshold <level>] <Dockerfile>"
+    danger: safe
+    lesson: cicd-c2-l09
+    docs: "https://github.com/hadolint/hadolint"
+    what: { en: "Proofreads a Dockerfile and lists risky lines, like a latest base image.", ms: "Semak Dockerfile dan senaraikan baris berisiko, contohnya base image latest." }
+    when: { en: "Before every build, on every pull request.", ms: "Sebelum setiap build, pada setiap pull request." }
+    example: { command: "hadolint Dockerfile", en: "Check the recipe. A finding exits with code 1.", ms: "Semak resepi. Kalau ada penemuan, ia keluar dengan kod 1." }
+    variants:
+      - { command: "hadolint --failure-threshold error Dockerfile", en: "Only errors fail; warnings are just printed.", ms: "Hanya error yang gagal; amaran cuma dicetak." }
+
+  - id: actionlint
+    group: image-checks
+    syntax: "actionlint [workflow files]"
+    danger: safe
+    lesson: cicd-c2-l09
+    docs: "https://github.com/rhysd/actionlint"
+    what: { en: "Proofreads GitHub Actions workflow files: typos, bad expressions, missing jobs.", ms: "Semak fail workflow GitHub Actions: salah taip, ungkapan salah, job yang tiada." }
+    when: { en: "Before you push a workflow change, and in CI.", ms: "Sebelum anda push perubahan workflow, dan dalam CI." }
+    example: { command: "docker run --rm -v \"$PWD:/repo\" -w /repo rhysd/actionlint:1.7.12", en: "Run the official image on this repo. No install needed.", ms: "Jalankan image rasmi pada repo ini. Tak perlu pasang apa-apa." }
+
+  - id: trivy-image
+    group: image-checks
+    syntax: "trivy image [--severity <list>] [--exit-code <n>] <image>"
+    danger: safe
+    lesson: cicd-c2-l10
+    docs: "https://trivy.dev/docs/latest/guide/target/container_image/"
+    what: { en: "Scans an image for known holes (CVEs) in its packages.", ms: "Imbas image untuk lubang yang diketahui (CVE) dalam pakejnya." }
+    when: { en: "After every build, before you push or deploy.", ms: "Selepas setiap build, sebelum anda push atau deploy." }
+    example: { command: "trivy image --severity CRITICAL --exit-code 1 kedai-kancil:scan", en: "Fail (exit code 1) if any critical hole is found.", ms: "Gagal (kod keluar 1) kalau ada lubang kritikal." }
+
+  - id: gh-attestation-verify
+    group: image-checks
+    syntax: "gh attestation verify oci://<image> -R <owner/repo>"
+    danger: safe
+    lesson: cicd-c2-l11
+    docs: "https://cli.github.com/manual/gh_attestation_verify"
+    what: { en: "Checks the signed provenance of an image: which repo and workflow built it.", ms: "Semak provenance image yang ditandatangani: repo dan workflow mana yang bina." }
+    when: { en: "Before you run an image you didn't build yourself.", ms: "Sebelum anda jalankan image yang anda tak bina sendiri." }
+    example: { command: "gh attestation verify oci://ghcr.io/you/kedai-kancil:1.2.0 -R you/kedai-kancil", en: "Was this image built by my repo's workflow?", ms: "Adakah image ini dibina oleh workflow repo saya?" }

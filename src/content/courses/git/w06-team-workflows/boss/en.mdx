@@ -1,0 +1,78 @@
+---
+id: git-w06-boss
+world: 6
+title: Pick the workflow
+summary: "You will learn: to match three real-life teams to the workflow that fits each one."
+minutes: 5
+xp: 50
+interactives: [TimelineTap, Choice, SortCards]
+needs: [git-w06-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "gitworkflows", url: "https://git-scm.com/docs/gitworkflows" }
+  - { label: "GitHub flow", url: "https://docs.github.com/en/get-started/using-github/github-flow" }
+  - { label: "A successful Git branching model (Git Flow)", url: "https://nvie.com/posts/a-successful-git-branching-model/" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9 am', title: 'Kopi Kita', text: 'A coffee shop website. Four developers. They want to ship every day.' }, { when: '11 am', title: 'Kancil Games', text: 'A phone game. A new version every two months. Players hate crashes.' }, { when: '2 pm', title: 'Pasar Besar', text: 'A huge online market. 150 developers. They merge all day long.' }]} />
+
+Three companies ask you the same thing: how should our team work? Tap to meet them. Then pick a workflow for each.
+</Card>
+
+<Card id="kopi-pick" type="check">
+Kopi Kita: four developers, one website. A merged PR can go live the same day. There is only one live version. Which workflow fits?
+
+<Interactive name="Choice" options={[{ label: 'GitHub Flow', correct: true, why: 'Short branches, PRs, deploy after merge. Simple and quick for a small web team.' }, { label: 'Git Flow', why: 'Too heavy here. They have one live version and no release schedule.' }, { label: 'One shared branch, no reviews', why: 'Then half-done work goes live. They still need PRs.' }]} />
+</Card>
+
+<Card id="kopi-steps" type="try">
+Set up Kopi Kita's GitHub Flow. Which steps do they need?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'They need it' }, { id: 'no', label: 'Skip it' }]} items={[{ label: 'A short branch for each change', bucket: 'yes', why: 'Each change stays apart until it is ready.' }, { label: 'A pull request and a review', bucket: 'yes', why: 'A teammate checks it before main changes.' }, { label: 'Merge, then deploy', bucket: 'yes', why: 'Main is always ready, so it can go live.' }, { label: 'A develop branch that lives forever', bucket: 'no', why: 'One live version needs only main.' }, { label: 'A release branch every two months', bucket: 'no', why: 'They ship every day. No need to wait.' }]} success="Kopi Kita is all set. Short, simple, safe." />
+</Card>
+
+<Card id="kancil-pick" type="check">
+Kancil Games ships its phone game every two months. Testers check each version first. Players on 3.1 need fixes while 3.2 is built. Which workflow fits?
+
+<Interactive name="Choice" options={[{ label: 'Git Flow', correct: true, why: 'Release branches give testers time. Hotfix branches fix the live 3.1.' }, { label: 'GitHub Flow', why: 'Close! But they ship on a schedule, with testers. Git Flow has a release branch for that.' }, { label: 'One shared branch, no reviews', why: 'Players hate crashes. This team needs reviews and testing.' }]} />
+</Card>
+
+<Card id="kancil-branches" type="try">
+Kancil Games now uses Git Flow. Where does each branch start?
+
+<Interactive name="SortCards" buckets={[{ id: 'develop', label: 'From develop' }, { id: 'main', label: 'From main' }]} items={[{ label: '`feature/boss-level`', bucket: 'develop', why: 'New features start from develop.' }, { label: '`release/3.2.0`', bucket: 'develop', why: 'The release collects the work on develop.' }, { label: '`hotfix/3.1.1`', bucket: 'main', why: 'The fix is for the live 3.1, so it starts from main.' }, { label: '`feature/new-skins`', bucket: 'develop', why: 'Another feature, so develop.' }]} success="Right! And 3.1.0 plus a fix becomes 3.1.1: a PATCH." />
+
+<Hint>Only fixes for the live version start from main.</Hint>
+</Card>
+
+<Card id="pasar-pick" type="check">
+Pasar Besar has 150 developers. They merge into main many times a day. Strong automatic tests guard main. Big features take months. Which workflow fits?
+
+<Interactive name="Choice" options={[{ label: 'Trunk-based, with feature flags', correct: true, why: 'Tiny daily merges avoid huge conflicts. Flags hide big features until they are ready.' }, { label: 'Git Flow', why: 'With 150 people, long-lived branches clash badly. They need tiny merges.' }, { label: 'Month-long feature branches', why: 'Months apart, 150 people would face huge merge conflicts.' }]} />
+</Card>
+
+<Card id="pasar-flags" type="try">
+Pasar Besar merges all of this today. Ship it on, or hide it behind a flag?
+
+<Interactive name="SortCards" buckets={[{ id: 'on', label: 'Ship it on' }, { id: 'flag', label: 'Hide behind a flag' }]} items={[{ label: 'First part of a new payment page', bucket: 'flag', why: 'Not finished. Merge it, switched off.' }, { label: 'Fix for a broken search filter', bucket: 'on', why: 'Finished and needed. Ship it on.' }, { label: 'Half of a new seller dashboard', bucket: 'flag', why: 'Half done. Keep it hidden.' }, { label: 'A spelling fix in the footer', bucket: 'on', why: 'Small and done. Ship it.' }]} success="Pasar Besar stays fast and safe!" />
+</Card>
+
+<Card id="check-common" type="check">
+Last one. What do all three companies have in common?
+
+<Interactive name="Choice" options={[{ label: 'Main must always work', correct: true, why: 'Every workflow protects main. Only the road to main changes.' }, { label: 'Everyone needs Git Flow', why: 'Git Flow fits planned releases. Not every team.' }, { label: 'Long branches are safest', why: 'Long branches drift and clash. Keep them short.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick the right workflow for a team.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real teams mix and match. Many web teams use GitHub Flow with feature flags. Some app teams merge to main daily. Then they cut a release branch from it. Pick what fits your team. Then write it down, so everyone works the same way.
+</Card>

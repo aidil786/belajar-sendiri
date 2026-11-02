@@ -1,0 +1,79 @@
+---
+id: k8s-k9-l08
+world: 9
+title: Upgrade with kubeadm, one minor at a time
+summary: "You will learn: the safe order of a kubeadm upgrade, office first, then one stall at a time."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, OrderList, CommandBuilder, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k9-l07]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: upgrading kubeadm clusters", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/" }
+  - { label: "Kubernetes: upgrading Linux nodes", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/" }
+  - { label: "kubeadm upgrade", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/" }
+  - { label: "Kubernetes: version skew policy", url: "https://kubernetes.io/releases/version-skew-policy/" }
+---
+
+<Card id="hook" type="hook">
+Your kubeadm cluster runs 1.36. Kubernetes 1.37 is out. Which part do you upgrade first?
+
+<Interactive name="Choice" options={[{ label: 'The control plane (the office)', correct: true, why: 'The API server leads. Kubelets may trail behind it, never run ahead.' }, { label: 'The kubelets on the stalls', why: 'A kubelet must never be newer than the API server.' }, { label: 'Everything at once', why: 'Then every tray moves at the same time. The shop goes dark.' }]} />
+</Card>
+
+<Card id="see-versions" type="see">
+<Interactive name="KubeReplay" scenario="k9-certs" picture={false} commands={['docker exec -it dev-control-plane bash', 'kubeadm version -o short', 'grep image: /etc/kubernetes/manifests/kube-apiserver.yaml', 'exit']} label="Inside dev-control-plane: kubeadm version -o short prints v1.37.0. The kube-apiserver manifest uses the image registry.k8s.io/kube-apiserver:v1.37.0." />
+
+The office’s version lives in its static pod files. A **<Term id="kubeadm-upgrade">kubeadm upgrade</Term>** writes new image tags there. One minor version per step.
+</Card>
+
+<Card id="try-order" type="try">
+Put the office’s upgrade in order, like the official kubeadm steps.
+
+<Interactive name="OrderList" items={['Install the new kubeadm (1.37.x)', 'sudo kubeadm upgrade plan', 'sudo kubeadm upgrade apply v1.37.x', 'kubectl drain the control-plane node', 'Install the new kubelet and kubectl, restart the kubelet', 'kubectl uncordon the control-plane node']} label="First step at the top" success="That is the office routine. New tool first, then look, then change." />
+
+<Hint>kubeadm upgrades the office. The kubelet is a separate package, so it comes after.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Look before you change. What does `sudo kubeadm upgrade plan` do?
+
+<Interactive name="Choice" options={[{ label: 'Checks the cluster, and lists the versions you can go to', correct: true, why: 'Yes. It changes nothing. Read it before apply.' }, { label: 'Upgrades the API server', why: 'That is apply. plan only looks.' }, { label: 'Drains every stall', why: 'plan touches no trays at all.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Your practice office runs v1.37.0. Build the command that moves it to the patch v1.37.2.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sudo', means: 'as root' }, { text: 'kubeadm', means: 'the tool that built the cluster' }, { text: 'upgrade', means: 'renovate' }, { text: 'apply', means: 'do it now, on the first control-plane node' }, { text: 'v1.37.2', means: 'the target version' }]} decoys={[{ text: 'v1.39.0', means: 'two minors ahead: not allowed' }, { text: 'node', means: 'for the other nodes, after the first one' }]} success="That is the command. It changes the whole office, so back up etcd first." />
+
+`apply` rewrites the office. Danger: take an etcd snapshot before it.
+</Card>
+
+<Card id="try-stall" type="try">
+Now one stall. Drain dev-worker, restart its kubelet, then open it. Pretend the new packages are in.
+
+<Interactive name="FoodCourtSim" scenario="k9-drain" goal={{ typed: 'systemctl restart kubelet', lastTyped: '^(kubectl|k) uncordon dev-worker', nodeCordoned: { name: 'dev-worker', cordoned: false }, nodeReady: { name: 'dev-worker' } }} hints={['Type kubectl drain dev-worker --ignore-daemonsets', 'Then ssh dev-worker, and systemctl restart kubelet', 'Type exit, then kubectl uncordon dev-worker']} success="One stall renovated and open again. Next stall, same routine." />
+
+<Hint>Drain, then `ssh dev-worker`. Restart the kubelet, `exit`, then uncordon.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Upgrade night habits. Good idea, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Take an etcd snapshot before the upgrade', good: true, why: 'If it goes wrong, you can bring the order book back.' }, { text: 'Jump from 1.35 straight to 1.37', good: false, why: 'Skipping minor versions is not supported. Do 1.36 first.' }, { text: 'Upgrade the stalls’ kubelets before the office', good: false, why: 'A kubelet must never be newer than the API server.' }, { text: 'Read the release notes for removed APIs', good: true, why: 'Old YAML may stop applying after an API is removed.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now plan a kubeadm upgrade, one stall at a time.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other control-plane nodes and the workers run `sudo kubeadm upgrade node` instead of apply. kubeadm also renews its certificates on upgrade. It keeps backups under `/etc/kubernetes/tmp`. Our practice terminal shows a real `kubeadm upgrade plan` on dev-control-plane. It was recorded on a kind cluster. It can’t run apply.
+
+<Interactive name="Mission" id="k8s-k9-l08-real" steps={[{ id: 'where', text: 'Use a throwaway kubeadm cluster only, like a free Killercoda CKA playground.', command: 'kubectl get nodes' }, { id: 'version', text: 'See which kubeadm is installed.', command: 'kubeadm version -o short' }, { id: 'plan', text: 'Look only. Read which versions it offers.', command: 'sudo kubeadm upgrade plan' }]} success="You read a real upgrade plan, and changed nothing." />
+</Card>

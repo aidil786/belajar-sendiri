@@ -1,0 +1,72 @@
+---
+id: aws-a3-boss
+world: 3
+title: "Lukis jalan pusat beli-belah"
+summary: "Anda akan belajar: rancang seluruh VPC untuk Kedai Kancil, dengan baris awam dan peribadi, dan benarkan web sahaja masuk."
+minutes: 6
+xp: 50
+interactives: [Choice, SubnetPlanner, SortCards, SecurityGroupGate, IdleBill]
+needs: [aws-a3-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon VPC: Example: VPC with servers in private subnets and NAT", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html" }
+  - { label: "Amazon VPC: Security group rules", url: "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html" }
+  - { label: "Amazon VPC: Subnet CIDR blocks", url: "https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html" }
+  - { label: "Amazon VPC pricing", url: "https://aws.amazon.com/vpc/pricing/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil pindah ke pusat beli-belah. Ada depan web, server aplikasi dan pangkalan data pesanan. Peraturan anda: hanya web menghadap jalan, dan setiap sayap ada ganti. Sedia?
+
+<Interactive name="Choice" options={[{ label: 'Rancang tanah dahulu, kemudian pintu', correct: true, why: 'Ya. Baris dahulu, papan tanda kemudian, pengawal terakhir.' }, { label: 'Lancar server dahulu, rancang kemudian', why: 'Alih server antara baris nanti sangat menyusahkan. Rancang dahulu.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Bilik 1: tiga sayap. Satu baris awam dan satu baris peribadi di setiap sayap. Baris awam perlu 20 alamat. Baris peribadi perlu 200.
+
+<Interactive name="SubnetPlanner" vpc="10.20.0.0/16" azs={['ap-southeast-5a', 'ap-southeast-5b', 'ap-southeast-5c']} need={{ public: 20, private: 200 }} success="Bilik 1 selesai! Enam baris, tiada tindih, ada ruang untuk berkembang." />
+
+<Hint>Pilih /27 untuk baris awam dan /24 untuk baris peribadi. Perancang cari blok yang kosong.</Hint>
+</Card>
+
+<Card id="try-roads" type="try">
+Bilik 2: papan tanda dan penghuni. Susun setiap satu ke dalam barisnya.
+
+<Interactive name="SortCards" buckets={[{ id: 'public', label: 'Baris awam' }, { id: 'private', label: 'Baris peribadi' }]} items={[{ label: 'Laluan 0.0.0.0/0 → internet gateway', bucket: 'public', why: 'Papan tanda itulah yang jadikan baris itu awam.' }, { label: 'Laluan 0.0.0.0/0 → NAT gateway', bucket: 'private', why: 'Bilik belakang keluar melalui pintu sehala.' }, { label: 'Load balancer', bucket: 'public', why: 'Pembeli mesti capai ia dari jalan.' }, { label: 'Pangkalan data pesanan', bucket: 'private', why: 'Hanya aplikasi bercakap dengannya.' }, { label: 'NAT gateway itu sendiri', bucket: 'public', why: 'Ia perlukan jalan untuk ambil barang.' }]} success="Bilik 2 selesai! Setiap papan tanda tunjuk arah yang betul." />
+</Card>
+
+<Card id="try-web" type="try">
+Bilik 3: pintu load balancer. Pembeli masuk guna HTTPS dari mana-mana. Tiada SSH untuk sesiapa.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Pembeli', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'phone', label: 'Pembeli guna telefon', ip: '203.0.113.77', client: 'linux', protocol: 'tcp', port: 443, want: 'in' }, { id: 'ssh', label: 'Orang asing (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="Bilik 3 selesai! Jalan boleh masuk di 443 sahaja." />
+
+<Hint>Satu peraturan: TCP 443 dari 0.0.0.0/0.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Bilik 4: pangkalan data perlukan tampung keselamatan dari internet. Bagaimana ia dapat?
+
+<Interactive name="Choice" options={[{ label: 'Keluar melalui NAT gateway', correct: true, why: 'Ia mulakan perjalanan, jadi jawapan boleh balik. Tiada siapa boleh mula dari luar.' }, { label: 'Beri ia IP awam', why: 'Barisnya tiada jalan ke luar. Dan ia akan jemput orang asing.' }, { label: 'Buka port 5432 kepada dunia', why: 'Itu benarkan orang asing masuk. Tampung keluar ambil, bukan masuk.' }]} />
+</Card>
+
+<Card id="try-db" type="try">
+Bilik 5: pintu pangkalan data. Hanya server dalam kumpulan aplikasi, `sg-app`, boleh guna port 5432. Load balancer pun tidak.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-app', 'sg-lb']} visitors={[{ id: 'app', label: 'Server aplikasi', ip: '10.20.1.15', groups: ['sg-app'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'lb', label: 'Load balancer', ip: '10.20.0.5', groups: ['sg-lb'], protocol: 'tcp', port: 5432, want: 'out' }, { id: 'stranger', label: 'Orang asing', ip: '192.0.2.77', protocol: 'tcp', port: 5432, want: 'out' }]} success="Bilik 5 selesai! Hanya aplikasi boleh bercakap dengan pesanan." />
+
+<Hint>Satu peraturan: TCP 5432 dari `sg-app`.</Hint>
+</Card>
+
+<Card id="check-bill" type="check">
+Bilik terakhir: bil. Bahagian mana dalam pelan anda makan duit semasa kedai tidur?
+
+<Interactive name="IdleBill" items={['natGateway', 'loadBalancer', 'vpc', 'securityGroup', 'networkAcl', 'internetGateway']} ordered success="Boss selesai! Anda tahu jalan, pengawal dan bil anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh rancang seluruh VPC Kedai Kancil: baris, papan tanda, pengawal dan bil.
+</Card>

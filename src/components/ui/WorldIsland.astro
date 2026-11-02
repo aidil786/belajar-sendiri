@@ -1,0 +1,312 @@
+---
+// One world "island" on the map: icon, title, summary, lessons and boss.
+import { t, type Lang } from '~/i18n';
+import { itemUrl, readyCount, worldLabel, type World } from '~/lib/course';
+import { worldCode } from '~/lib/catalog';
+import Icon from './Icon.astro';
+interface Props {
+  lang: Lang;
+  courseId: string;
+  world: World;
+  compact?: boolean;
+  /** Home page preview: islands outside the preview start hidden. */
+  hidden?: boolean;
+  /** Prefix for the anchor id when several courses share a page ("docker-" → #docker-world-1). */
+  idPrefix?: string;
+  /** Position in a .pop-in list (1, 2, …): staggers the entrance in older browsers. */
+  index?: number | undefined;
+}
+const { lang, courseId, world, compact = false, hidden = false, idPrefix = '', index } = Astro.props;
+const ready = readyCount(world);
+const firstReady = world.lessons.findIndex((l) => l.status === 'ready');
+// Capstone missions are extra: "10 lessons" plus an M1 tag.
+const total = world.lessons.filter((l) => !l.mission).length;
+const missions = world.lessons.filter((l) => l.mission).map((l) => l.mission!);
+const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l.id);
+---
+
+<article
+  class="island"
+  data-color={world.color}
+  id={`${idPrefix}world-${world.id}`}
+  data-island
+  data-course={courseId}
+  data-lessons={lessonIds.join(',')}
+  hidden={hidden}
+  style={index ? `--sibling-index: ${index}` : undefined}
+>
+  <header class="island-top">
+    <span class="island-icon"><Icon name={world.icon} size={28} /></span>
+    <div>
+      <p class="island-num">{worldLabel(lang, world)}{world.openAnyTime && ` · ${t(lang, 'map.rescueAnyTime')}`}</p>
+      <h2 class="island-title">{world.title[lang]}</h2>
+    </div>
+    {
+      world.extra && (
+        <span class="extra-tag" data-extra-pack title={t(lang, 'map.extraPackWhy')}>
+          {t(lang, 'map.extraPack')}
+          <span class="visually-hidden">: {t(lang, 'map.extraPackWhy')}</span>
+        </span>
+      )
+    }
+    {
+      missions.map((n) => (
+        <span class="mission-tag" title={t(lang, 'map.missionAfter', { n })}>
+          <span aria-hidden="true">{t(lang, 'map.missionTag', { n })}</span>
+          <span class="visually-hidden">{t(lang, 'map.missionAfter', { n })}</span>
+        </span>
+      ))
+    }
+    <span class="island-done calm-hide" data-island-done hidden aria-hidden="true">★</span>
+  </header>
+  <p class="island-summary">{world.summary[lang]}</p>
+  <p class="island-meta">
+    {t(lang, 'map.lessons', { n: total })}
+    {ready === 0 ? ` · ${t(lang, 'map.soon')}` : <span data-island-progress> · {t(lang, 'map.progress', { done: 0, total: ready })}</span>}
+  </p>
+  {
+    !compact && (
+      <details class="island-lessons" open={ready > 0 && world.id <= 2}>
+        <summary>{ready === 0 ? t(lang, 'map.lessonPlan', { n: total }) : t(lang, 'map.lessons', { n: total })}</summary>
+        <ol class:list={{ 'all-soon': ready === 0 }}>
+          {world.lessons.map((l) => (
+            <li class:list={['lesson-row', { 'lesson-mission': l.mission }]} data-lesson-row={l.id}>
+              {l.status === 'ready' ? (
+                <a href={itemUrl(lang, courseId, { world, slug: l.slug })}>{l.title[lang]}</a>
+              ) : (
+                <span class="lesson-soon">{l.title[lang]}</span>
+              )}
+              <span class="lesson-tags">
+                {l.mission && <span class="tag tag-mission">{t(lang, 'map.mission', { n: l.mission })}</span>}
+                {l.status === 'soon' ? (
+                  // A world with nothing ready says "Coming soon" once, at the top.
+                  ready > 0 && <span class="tag tag-soon">{t(lang, 'map.soon')}</span>
+                ) : (
+                  <>
+                    <span class="tag">{t(lang, 'map.minutes', { n: l.minutes })}</span>
+                    <span class="tag tag-done" data-done-tag hidden>
+                      ✓ {t(lang, 'map.done')}
+                    </span>
+                    <span class="tag tag-known" data-known-tag hidden>
+                      ✓ {t(lang, 'map.known')}
+                    </span>
+                  </>
+                )}
+              </span>
+            </li>
+          ))}
+          {world.boss && world.boss.status !== 'none' && (
+            <li class="lesson-row lesson-boss" data-lesson-row={world.boss.id}>
+              {world.boss.status === 'ready' ? (
+                <a href={itemUrl(lang, courseId, { world, slug: 'boss' })}>
+                  {t(lang, 'map.bossLabel', { title: world.boss.title[lang] })}
+                </a>
+              ) : (
+                <span class="lesson-soon">{t(lang, 'map.bossLabel', { title: world.boss.title[lang] })}</span>
+              )}
+              <span class="lesson-tags">
+                {world.boss.status === 'soon' ? (
+                  ready > 0 && <span class="tag tag-soon">{t(lang, 'map.soon')}</span>
+                ) : (
+                  <span class="tag tag-done" data-done-tag hidden>
+                    ✓ {t(lang, 'map.done')}
+                  </span>
+                )}
+              </span>
+            </li>
+          )}
+        </ol>
+      </details>
+    )
+  }
+  {
+    compact && ready > 0 && (
+      <a class="island-go" href={itemUrl(lang, courseId, { world, slug: world.lessons[firstReady]!.slug })}>
+        {t(lang, 'map.openWorld', { n: worldCode(world) })} →
+      </a>
+    )
+  }
+  {
+    world.topics && !compact && ready === 0 && (
+      <p class="island-topics">{world.topics[lang]}</p>
+    )
+  }
+</article>
+
+<style>
+  .island {
+    --isl: var(--deco-working);
+    --isl-soft: var(--c-working-soft);
+    --isl-ink: var(--c-working-ink);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 6px solid var(--isl);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+    box-shadow: var(--color-shadow);
+    scroll-margin-top: calc(var(--topbar-h) + var(--space-4));
+  }
+  .island[data-color='staging'] {
+    --isl: var(--deco-staging);
+    --isl-soft: var(--c-staging-soft);
+    --isl-ink: var(--c-staging-ink);
+  }
+  .island[data-color='repo'] {
+    --isl: var(--deco-repo);
+    --isl-soft: var(--c-repo-soft);
+    --isl-ink: var(--c-repo-ink);
+  }
+  .island[data-color='remote'] {
+    --isl: var(--deco-remote);
+    --isl-soft: var(--c-remote-soft);
+    --isl-ink: var(--c-remote-ink);
+  }
+  .island[data-color='head'] {
+    --isl: var(--deco-head);
+    --isl-soft: var(--c-head-soft);
+    --isl-ink: var(--c-head-ink);
+  }
+  .island[data-color='danger'] {
+    --isl: var(--deco-danger);
+    --isl-soft: var(--c-danger-soft);
+    --isl-ink: var(--c-danger-ink);
+  }
+  .island-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .island-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-m);
+    background: var(--isl-soft);
+    color: var(--isl-ink);
+    flex: none;
+  }
+  .island-num {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .island-title {
+    margin: 0;
+    font-size: var(--text-l);
+  }
+  .island-done {
+    margin-left: auto;
+    font-size: var(--text-xl);
+    color: var(--deco-staging);
+  }
+  .mission-tag {
+    margin-left: auto;
+    flex: none;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+    background: var(--c-head-soft);
+    color: var(--c-head-ink);
+    border: 1px solid var(--deco-head);
+  }
+  .mission-tag + .island-done,
+  .extra-tag + .island-done {
+    margin-left: var(--space-1);
+  }
+  /* An optional extra pack (K9): a calm label, never a lock. */
+  .extra-tag {
+    margin-left: auto;
+    flex: none;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+    background: var(--c-remote-soft);
+    color: var(--c-remote-ink);
+    border: 1px dashed var(--deco-remote);
+  }
+  .tag-mission {
+    background: var(--c-head-soft);
+    border-color: var(--deco-head);
+    color: var(--c-head-ink);
+  }
+  .all-soon .lesson-row {
+    min-height: calc(var(--tap) * 0.75);
+  }
+  .island-summary {
+    margin-bottom: var(--space-1);
+  }
+  .island-meta {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+  .island-topics {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .island-lessons summary {
+    cursor: pointer;
+    font-weight: var(--weight-bold);
+    min-height: var(--tap);
+    display: flex;
+    align-items: center;
+  }
+  .island-lessons ol {
+    margin: 0;
+    padding-left: var(--space-5);
+    display: grid;
+    gap: var(--space-1);
+  }
+  .lesson-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-2);
+    min-height: var(--tap);
+  }
+  .lesson-row a {
+    font-weight: var(--weight-bold);
+  }
+  .lesson-soon {
+    color: var(--color-text-muted);
+  }
+  .lesson-boss {
+    font-style: italic;
+  }
+  .lesson-tags {
+    display: inline-flex;
+    gap: var(--space-1);
+  }
+  .tag {
+    font-size: var(--text-xs);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    padding: 0 var(--space-2);
+    white-space: nowrap;
+  }
+  .tag-soon {
+    border-style: dashed;
+    color: var(--color-text-muted);
+  }
+  .tag-done {
+    background: var(--color-success-soft);
+    border-color: var(--color-success);
+  }
+  .tag-known {
+    background: var(--c-head-soft);
+    border-color: var(--deco-head);
+    color: var(--c-head-ink);
+  }
+  .island-go {
+    font-weight: var(--weight-bold);
+    display: inline-flex;
+    min-height: var(--tap);
+    align-items: center;
+  }
+</style>

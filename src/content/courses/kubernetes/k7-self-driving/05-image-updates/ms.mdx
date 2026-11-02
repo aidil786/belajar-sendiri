@@ -1,0 +1,64 @@
+---
+id: k8s-k7-l05
+world: 7
+title: Kemas kini image automatik
+summary: "Anda akan belajar: cara robot kesan tag image baharu dan commit ke Git untuk anda."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, GitOpsMirror, SpotLines, SwipeJudge]
+needs: [k8s-k7-l04]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Flux: automate image updates to Git", url: "https://fluxcd.io/flux/guides/image-update/" }
+  - { label: "Argo CD Image Updater", url: "https://argocd-image-updater.readthedocs.io/en/stable/" }
+---
+
+<Card id="hook" type="hook">
+Pipeline anda hantar image baharu setiap kali merge: 1.5.0, 1.5.1, 1.5.2. Setiap kali, seseorang edit baris image dalam Git secara manual. Siapa patut buat kerja bosan ini?
+
+<Interactive name="Choice" options={[{ label: 'Robot yang pantau registry', correct: true, why: 'Bosan, tepat dan berulang: kerja yang sempurna untuk robot.' }, { label: 'Ahli pasukan paling baharu', why: 'Manusia boleh lupa dan tersalah taip. Robot tidak.' }, { label: 'Tiada siapa. Guna tag latest sahaja', why: 'latest sorokkan versi yang berjalan, dan Git tak pernah berubah.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Robot ini dipanggil **<Term id="image-automation">image automation</Term>** (automasi image). Susun gelungnya.
+
+<Interactive name="OrderList" items={['CI push shop:1.5.0 ke registry', 'Robot nampak tag baharu', 'Robot commit tag baharu ke Git', 'Argo CD atau Flux sync commit itu', 'Pod baharu jalankan 1.5.0']} label="Langkah pertama di atas" success="Ya! Robot tulis ke Git. Pembantu GitOps buat selebihnya." />
+</Card>
+
+<Card id="try-robot" type="try">
+Jadilah robot itu. Tag baharu dah sampai di registry. Pilih tag itu, kemudian commit.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.5.0' }} images={['ghcr.io/kedai-kancil/shop:1.5.0', 'ghcr.io/kedai-kancil/shop:1.5.1']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.1' }} success="Tag baharu dalam Git, pod baharu dalam kluster. Commit itu tunjuk dengan tepat apa yang berubah." />
+
+<Hint>Pilih shop:1.5.1 dalam senarai image, kemudian Commit ke Git.</Hint>
+</Card>
+
+<Card id="see-marker" type="see">
+Flux cari baris yang perlu ditukar melalui komen penanda. Tekan baris yang robot tulis semula.
+
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: web' }, { text: '    image: ghcr.io/kedai-kancil/shop:1.5.1 # {"$imagepolicy": "flux-system:shop"}', target: true }, { text: '    ports:' }, { text: '      - containerPort: 80' }]} prompt="Tekan baris yang ada penanda." success="Betul. Penanda itu namakan polisi yang pilih tag." />
+</Card>
+
+<Card id="check-tags" type="check">
+Polisi itu benarkan `>=1.5.0 <2.0.0`. Leret ke kanan untuk tag yang robot boleh pilih.
+
+<Interactive name="SwipeJudge" cards={[{ text: '1.5.2', good: true, why: 'Dalam julat.' }, { text: '2.0.0', good: false, why: 'Versi major baharu. Julat itu berhenti sebelum 2.0.0.' }, { text: 'latest', good: false, why: 'Bukan nombor versi langsung.' }, { text: '1.6.0', good: true, why: 'Masih di bawah 2.0.0.' }, { text: '1.6.0-rc.1', good: false, why: 'Ini pre-release. Julat biasa langkau yang ini.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Kenapa robot patut commit ke Git, bukan ubah kluster terus?
+
+<Interactive name="Choice" options={[{ label: 'Git simpan sejarah, jadi anda boleh lihat dan undur setiap kemas kini', correct: true, why: 'Setiap tag baharu ialah satu commit. Revert untuk kembali.' }, { label: 'Ubah kluster terus lebih pantas, jadi lebih bagus', why: 'Nanti Git dan kluster jadi tak sama.' }, { label: 'Tiada bezanya', why: 'Ada beza: tanpa commit, Git tak lagi beritahu kebenaran.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar robot hantar tag image baharu melalui Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Flux guna tiga objek: `ImageRepository` (imbas), `ImagePolicy` (pilih) dan `ImageUpdateAutomation` (commit). Argo CD Image Updater juga boleh commit ke Git. Dokumennya kata ia masih dalam pembangunan aktif, jadi uji dulu. Alat seperti Renovate buka pull request pula. Latihan sebenar (pilihan): baca panduan kemas kini image Flux.
+</Card>

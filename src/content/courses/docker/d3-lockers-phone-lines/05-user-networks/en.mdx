@@ -1,0 +1,70 @@
+---
+id: docker-d3-l05
+world: 3
+title: "Phone lines: your own network"
+summary: "You will learn: to put containers on your own network, so they can call each other."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d3-l04]
+scenario: d3-bridge
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Networking overview", url: "https://docs.docker.com/engine/network/" }
+  - { label: "Docker docs: Bridge network driver", url: "https://docs.docker.com/engine/network/drivers/bridge/" }
+  - { label: "Docker docs: docker network", url: "https://docs.docker.com/reference/cli/docker/network/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-bridge" commands={['docker exec web ping -c 1 db']} fails={['docker exec web ping -c 1 db']} label="web and db both run. web pings db by name and gets: ping: bad address 'db'." />
+
+web needs to call db. Both run on your laptop. Yet: `ping: bad address 'db'`. Plain words: web has no phone book with db in it.
+</Card>
+
+<Card id="see-line" type="see">
+<Interactive name="SpotLines" prompt="Tap the phone line you made." success="Yes! shopnet is your own line." lines={[{ text: 'NETWORK ID     NAME      DRIVER    SCOPE' }, { text: '72ac1ad45372   bridge    bridge    local' }, { text: '174817a41ab4   host      host      local' }, { text: '83438c27b07a   none      null      local' }, { text: '6cd5ddbfe8f4   shopnet   bridge    local', target: true }]} />
+
+A **<Term id="user-network">network</Term>** is a phone line between lunchboxes. `docker network create shopnet` makes your own line. Docker made the other three for you.
+</Card>
+
+<Card id="try-network" type="try">
+Make the shopnet line. Plug web and db into it.
+
+<Interactive name="KitchenSim" scenario="d3-bridge" goal={{ networkHas: { shopnet: ['web', 'db'] } }} hints={['Type docker network create shopnet', 'Type docker network connect shopnet web', 'Type docker network connect shopnet db']} success="Both boxes are on one line. Try docker exec web ping -c 1 db now!" />
+
+<Hint>`docker network connect shopnet web` plugs in a box that is already running.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+cache starts with a plain `docker run`, no `--network`. Can it call menu, which is on shopnet?
+
+<Interactive name="Choice" options={[{ label: 'No: cache is on the default line', correct: true, why: 'Each network is its own line. cache is not on shopnet.' }, { label: 'Yes: all boxes share one line', why: 'Only boxes on the same network can talk.' }, { label: 'Only after a restart', why: 'A restart keeps the same lines. network connect adds one.' }]} />
+</Card>
+
+<Card id="see-connect" type="see">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker exec cache wget -qO- http://menu', 'docker network connect shopnet cache', 'docker exec cache sh -c "wget -qO- http://menu | grep title"']} fails={['docker exec cache wget -qO- http://menu']} label="cache can't find menu. After docker network connect shopnet cache, the menu page title comes back." />
+
+`docker network connect` plugs a running box into a line. No restart needed. Now cache can call menu.
+</Card>
+
+<Card id="check" type="check">
+db is on shopnet. Which boxes can call it by name?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Can call db' }, { id: 'no', label: "Can't call db" }]} items={[{ label: 'Started with --network shopnet', bucket: 'yes', why: 'Same line, same phone book.' }, { label: 'Started with a plain docker run', bucket: 'no', why: 'It sits on the default bridge, without names.' }, { label: 'Plugged in later with network connect', bucket: 'yes', why: 'Plugging in later works too.' }, { label: 'Started with --network none', bucket: 'no', why: 'none means no line at all.' }]} success="Same line, same phone book." />
+</Card>
+
+<Card id="win" type="win">
+You can now give your containers their own phone line.
+</Card>
+
+<Card id="deeper" type="deeper">
+The default bridge has no names, and every box lands on it. Your own network has names, and only invited boxes. `docker network inspect shopnet` lists who is plugged in. `docker network disconnect` unplugs a box.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d3-l05-rep" steps={[{ id: 'net', text: 'Make a line.', command: 'docker network create practice-net' }, { id: 'web', text: 'Put a web box on it.', command: 'docker run -d --name menu --network practice-net nginx:1.30-alpine' }, { id: 'call', text: 'Call it by name from another box.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://menu' }, { id: 'clean', text: 'Clean up.', command: 'docker rm -f menu && docker network rm practice-net' }]} success="Two boxes talked on your own line." />
+</Card>

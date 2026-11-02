@@ -1,0 +1,75 @@
+---
+id: docker-d1-l06
+world: 1
+title: Masuk ke dalam dengan exec
+summary: "Anda akan belajar: jalankan arahan dalam container yang berjalan, dan masuk dengan shell."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, CommandBuilder, SwipeJudge, Mission]
+needs: [docker-d1-l05]
+scenario: d1-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker exec", url: "https://docs.docker.com/reference/cli/docker/container/exec/" }
+  - { label: "docker cp", url: "https://docs.docker.com/reference/cli/docker/container/cp/" }
+---
+
+<Card id="hook" type="hook">
+web hidangkan halaman selamat datang. Anda mahu tengok fail di sebaliknya. Tapi bekas itu bertutup. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Jalankan arahan dalam web', correct: true, why: 'Docker boleh capai ke dalam bekas yang berjalan. Lihat kad seterusnya!' }, { label: 'Cari dalam folder di laptop anda', why: 'Fail itu ada dalam bekas, bukan di laptop anda.' }, { label: 'Padam web dan mula semula', why: 'Tak perlu rosakkannya. Anda boleh intai ke dalam.' }]} />
+</Card>
+
+<Card id="see-exec" type="see">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker exec web ls /usr/share/nginx/html', 'docker exec web cat /etc/os-release']} label="docker exec web ls senaraikan dua halaman: 50x.html dan index.html. docker exec web cat /etc/os-release tunjuk bekas itu guna Alpine Linux." />
+
+**docker exec** jalankan satu arahan dalam bekas yang berjalan. Macam capai melalui pintu tepi. Kemudian anda kembali ke laptop.
+</Card>
+
+<Card id="try-exec" type="try">
+Senaraikan fail dalam folder halaman web, `/usr/share/nginx/html`.
+
+<Interactive name="KitchenSim" scenario="d1-web" goal={{ lastTyped: '^docker (container )?exec (-\\w+ )*web ls( -\\w+)* /usr/share/nginx/html/?$' }} hints={['Taip docker exec web ls /usr/share/nginx/html']} success="Ada dua halaman di situ: 50x.html dan index.html." />
+
+<Hint>`docker exec web ls /usr/share/nginx/html`</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Mahu tengok-tengok lebih lama? Bina arahan untuk shell di dalam. **-it** beri anda papan kekunci dan skrin di situ.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Cakap dengan Docker' }, { text: 'exec', means: 'jalankan sesuatu dalam bekas yang berjalan' }, { text: '-it', means: 'dengan papan kekunci dan skrin' }, { text: 'web', means: 'bekas ini' }, { text: 'sh', means: 'baris arahan bekas itu sendiri' }]} decoys={[{ text: 'run', means: 'isi bekas yang baru' }]} success="Itu buka shell dalam web." />
+</Card>
+
+<Card id="try-shell" type="try">
+Masuk ke dalam web. Tengok-tengok dengan `ls`. Taip `exit` untuk kembali.
+
+<Interactive name="KitchenSim" scenario="d1-web" goal={{ typed: '^docker (container )?exec -(it|ti) web (/bin/)?sh$', lastTyped: '^exit$' }} hints={['Taip docker exec -it web sh', 'Di dalam, taip ls. Kemudian taip exit.']} success="Masuk dan keluar semula. web masih berjalan." />
+</Card>
+
+<Card id="predict" type="predict">
+Di dalam web anda taip `exit`. Adakah web masih berjalan?
+
+<Interactive name="Choice" options={[{ label: 'Ya. exit tutup shell anda, bukan bekas.', correct: true, why: 'web jalankan nginx. Shell anda cuma pelawat.' }, { label: 'Tidak. exit hentikan bekas.', why: 'exit tamatkan lawatan anda. nginx terus memasak.' }, { label: 'Tidak. Bekas selalu berhenti selepas exec.', why: 'exec tak pernah hentikan bekas. docker ps masih kata Up.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Cara guna exec yang bagus, atau belum tepat? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Intai satu fail untuk semak', good: true, why: 'Tepat: tengok, kemudian keluar.' }, { text: 'Tengok Linux apa yang bekas guna', good: true, why: 'cat /etc/os-release beritahu anda.' }, { text: 'Baiki aplikasi dengan ubah fail dalam bekas', good: false, why: 'Perubahan hilang bila bekas diganti. Baiki image (Dunia D2).' }, { text: 'exec ke dalam bekas yang berhenti', good: false, why: 'exec perlukan bekas yang berjalan. Mulakan dulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tengok ke dalam container yang sedang berjalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+exec ke dalam bekas yang berhenti gagal dengan `container ... is not running`. Sesetengah image kecil tiada shell langsung, jadi `sh` tak dijumpai (Dunia D2). `docker cp` salin fail keluar dari bekas: `docker cp web:/etc/nginx/nginx.conf .`
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l06-rep" steps={[{ id: 'web', text: 'Mulakan web di belakang.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'in', text: 'Masuk ke dalam.', command: 'docker exec -it web sh' }, { id: 'look', text: 'Tengok-tengok, kemudian keluar.', command: 'ls /usr/share/nginx/html' }, { id: 'out', text: 'Taip exit, kemudian kemas.', command: 'docker rm -f web' }]} success="Anda sudah masuk ke dalam container sebenar." />
+</Card>

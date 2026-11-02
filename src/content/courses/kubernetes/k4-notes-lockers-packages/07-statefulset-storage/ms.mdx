@@ -1,0 +1,75 @@
+---
+id: k8s-k4-l07
+world: 4
+title: "Storan untuk StatefulSet"
+summary: "Anda akan belajar: cara StatefulSet beri setiap pod loker sendiri, dan menyimpannya."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, Mission]
+needs: [k8s-k4-l06]
+scenario: k4-ledger
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: StatefulSets", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/" }
+  - { label: "StatefulSet: PVC retention", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl get pods -l app=ledger']} label="kubectl get pods tunjuk ledger-0 dan ledger-1, kedua-duanya Running." />
+
+Dua dulang lejar, `ledger-0` dan `ledger-1`. Setiap satu simpan buku pesanan sendiri. Satu loker kongsi akan campur buku-buku itu. Macam mana setiap satu dapat loker sendiri?
+</Card>
+
+<Card id="see-template" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'kind: StatefulSet' }, { text: 'spec:' }, { text: '  replicas: 2' }, { text: '  template:' }, { text: '    # ...dulang, yang mount "data" di /data' }, { text: '  volumeClaimTemplates:', target: true }, { text: '    - metadata:' }, { text: '        name: data' }, { text: '      spec:' }, { text: '        accessModes: ["ReadWriteOnce"]' }, { text: '        resources:' }, { text: '          requests:' }, { text: '            storage: 1Gi' }]} prompt="Tekan baris tempat borang loker bermula." success="Satu borang, diisi sekali untuk setiap dulang." />
+
+StatefulSet bawa borang loker: **<Term id="volumeclaimtemplate">volumeClaimTemplates</Term>**. Untuk setiap dulang, ia isi satu claim, dinamakan sempena dulang itu.
+</Card>
+
+<Card id="try-open" type="try">
+Buka lejar. Kemudian senaraikan claim yang ia buat.
+
+<Interactive name="FoodCourtSim" scenario="k4-ledger" goal={{ objectExists: ['pvc/data-ledger-0', 'pvc/data-ledger-1'], podsReady: { selector: 'app=ledger', count: 2 }, lastTyped: 'get pvc' }} hints={['Taip kubectl apply -f ledger.yaml', 'Tunggu kedua-dua dulang, kemudian: kubectl get pvc']} success="data-ledger-0 dan data-ledger-1: satu loker untuk setiap dulang." />
+
+<Hint>Nama claim = nama borang + nama dulang.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda skala lejar kepada 3 dulang. Apa nama claim dulang baharu?
+
+<Interactive name="Choice" options={[{ label: 'data-ledger-2', correct: true, why: 'Borangnya data, dulang baharu ialah ledger-2.' }, { label: 'data-ledger-0 sekali lagi', why: 'Hampir! Yang itu milik ledger-0. Setiap dulang dapat sendiri.' }, { label: 'ledger-2 tak kongsi apa-apa, jadi tiada claim', why: 'Setiap dulang dapat claim daripada borang.' }]} />
+</Card>
+
+<Card id="check-scale" type="check">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl scale statefulset ledger --replicas=3', 'kubectl rollout status statefulset/ledger --timeout=180s', 'kubectl get pvc']} label="Lejar diskala kepada 3. get pvc kini senaraikan data-ledger-0, data-ledger-1 dan data-ledger-2, semua Bound." />
+
+`data-ledger-2` muncul, Bound kepada PV baharu. Dulang naik ikut urutan: 0, kemudian 1, kemudian 2.
+</Card>
+
+<Card id="predict-delete" type="predict">
+`ledger-0` sudah tulis `page 1` dalam bukunya. Sekarang anda padam seluruh StatefulSet. Apa jadi pada claim?
+
+<Interactive name="Choice" options={[{ label: 'Ia kekal, bersama data', correct: true, why: 'Secara lalai, StatefulSet tak pernah padam claim-nya.' }, { label: 'Ia dipadam bersama', why: 'Hampir! Itu hanya berlaku jika anda minta dalam retention policy.' }, { label: 'Ia pindah ke namespace lain', why: 'Claim kekal di tempatnya.' }]} />
+</Card>
+
+<Card id="check-delete" type="check">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl delete statefulset ledger', 'kubectl get pvc', 'kubectl apply -f ledger.yaml', 'kubectl rollout status statefulset/ledger --timeout=180s', 'kubectl exec ledger-0 -- cat /data/book.txt']} label="StatefulSet dipadam. get pvc masih senaraikan kedua-dua claim. Bila di-apply semula, ledger-0 baca page 1 daripada loker lamanya." />
+
+Claim itu menunggu. `ledger-0` yang baharu dapat semula loker lamanya, dan baca `page 1`.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri setiap pod StatefulSet loker sendiri yang kekal.
+</Card>
+
+<Card id="deeper" type="deeper">
+Mahu claim dibersihkan? Tetapkan `persistentVolumeClaimRetentionPolicy`. `whenDeleted` dan `whenScaled` masing-masing terima `Retain` (lalai) atau `Delete`. Ia stabil sejak Kubernetes 1.32. Padam claim bermakna padam data, jadi fikir dua kali.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l07-rep" steps={[{ id: 'copy', text: 'Dalam terminal latihan di atas, cat ledger.yaml. Simpan di mesin anda.' }, { id: 'apply', text: 'Buka lejar.', command: 'kubectl apply -f ledger.yaml' }, { id: 'claims', text: 'Lihat satu claim untuk setiap dulang.', command: 'kubectl get pvc' }, { id: 'delete', text: 'Padam StatefulSet. Claim kekal.', command: 'kubectl delete statefulset ledger' }, { id: 'tidy', text: 'Padam claim juga, bersama datanya.', command: 'kubectl delete pvc data-ledger-0 data-ledger-1' }]} success="Dulang sebenar, loker sebenar." />
+</Card>

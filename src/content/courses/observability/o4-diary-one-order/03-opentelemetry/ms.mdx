@@ -1,0 +1,67 @@
+---
+id: obs-o4-l03
+world: 4
+title: "OpenTelemetry: SDK, collector, OTLP"
+summary: "Anda akan belajar: cara satu standard bersama bawa metrik, log dan trace dari aplikasi anda ke mana-mana alat."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, Transcript, YamlPlayground, SortCards, Mission]
+needs: [obs-o4-l02]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry concepts", url: "https://opentelemetry.io/docs/concepts/" }
+  - { label: "Collector configuration", url: "https://opentelemetry.io/docs/collector/configuration/" }
+  - { label: "OTLP specification", url: "https://opentelemetry.io/docs/specs/otlp/" }
+---
+
+<Card id="hook" type="hook">
+Tiga servis, ditulis dalam tiga bahasa. Anda mahu stor trace baharu. Tanpa standard bersama, apa yang perlu berubah?
+
+<Interactive name="Choice" options={[{ label: 'Kod setiap servis', correct: true, why: 'Betul. Kecuali semuanya bercakap satu bahasa yang sama. Itulah OpenTelemetry.' }, { label: 'Stor trace sahaja', why: 'Setiap servis bercakap dengannya dengan cara sendiri, jadi setiap satu perlu berubah.' }, { label: 'Tiada apa-apa', why: 'Setiap servis masih hantar data cara lama.' }]} />
+</Card>
+
+<Card id="see-flow" type="see">
+<Interactive name="OrderList" items={['Kod anda tanda satu langkah: "pesanan bermula"', 'SDK dalam aplikasi kumpulkannya', 'OTLP bawanya keluar dari aplikasi', 'Collector sortir dan hantarnya ke depan', 'Stor menyimpannya: Prometheus, Loki atau stor trace']} label="Dari kod anda di atas, ke stor" success="Aplikasi, SDK, OTLP, Collector, stor." />
+
+**<Term id="otel-sdk">OpenTelemetry SDK</Term>** tinggal dalam aplikasi anda. Ia catat dan hantar keluar.
+</Card>
+
+<Card id="see-collector" type="see">
+<Interactive name="Transcript" title="bash" label="otelcol-contrib validate pada config yang pipeline traces sebut exporter otlp: Error, references exporter otlp which is not configured." lines={[{ cmd: 'otelcol-contrib validate --config=config.yaml' }, { out: 'Error: service::pipelines::traces: references exporter "otlp" which is not configured', color: 'red' }]} />
+
+Pipeline itu sebut exporter yang tak disediakan di atas. **<Term id="otel-collector">Collector</Term>** ialah pejabat sortir: receiver masuk, exporter keluar, pipeline sambungkannya.
+</Card>
+
+<Card id="try-fix" type="try">
+Baiki pipeline itu. Ia patut hantar trace ke exporter `debug` yang disediakan di atas.
+
+<Interactive name="YamlPlayground" file="config.yaml" initial={'receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nexporters:\n  debug:\n    verbosity: detailed\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      exporters: [otlp]\n'} expect={[{ path: 'service.pipelines.traces.exporters', type: 'list', includes: 'debug', hint: 'Baris terakhir patut sebut debug, exporter pada baris 9.' }, { path: 'service.pipelines.traces.receivers', type: 'list', includes: 'otlp', hint: 'Kekalkan otlp sebagai receiver: ia disediakan pada baris 2.' }, { path: 'exporters.debug', type: 'map', hint: 'Kekalkan blok exporter debug.' }]} solution={'receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nexporters:\n  debug:\n    verbosity: detailed\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      exporters: [debug]\n'} hint="Receiver dan exporter ialah senarai berbeza. Cuma baris terakhir yang salah." success="Fail itu lulus validate Collector sebenar." />
+
+<Hint>`otlp` ialah receiver di sini. Exporter itu bernama `debug`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Aplikasi anda hantar <Term id="otlp">OTLP</Term> melalui HTTP ke Collector. Port mana, secara asal?
+
+<Interactive name="Choice" compact options={[{ label: '4318', correct: true, why: 'Betul. OTLP melalui HTTP guna 4318 secara asal.' }, { label: '4317', why: 'Itu OTLP melalui gRPC.' }, { label: '9090', why: 'Itu port Prometheus sendiri.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'sdk', label: 'SDK (dalam aplikasi)' }, { id: 'collector', label: 'Collector' }]} items={[{ label: 'Mulakan span bila pesanan bermula', bucket: 'sdk', why: 'Hanya aplikasi tahu bila langkahnya sendiri bermula.' }, { label: 'Tambah service.name pada semua yang aplikasi hantar', bucket: 'sdk', why: 'Aplikasi tahu namanya sendiri.' }, { label: 'Terima OTLP dari banyak aplikasi serentak', bucket: 'collector', why: 'Satu pejabat sortir untuk semua.' }, { label: 'Hantar trace ke stor trace', bucket: 'collector', why: 'Tukar stor di sini, bukan dalam setiap aplikasi.' }]} success="Aplikasi mencatat. Collector menghantar." />
+
+Siapa buat kerja yang mana?
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan SDK, OTLP dan Collector, dan baiki pipeline Collector.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTelemetry juga setuju tentang nama, dipanggil semantic conventions: `http.request.method`, `http.route`, `service.name`. Gunakannya, supaya setiap alat faham data anda. Latihan sebenar: semak config anda sendiri.
+
+<Interactive name="Mission" id="obs-o4-l03-real" steps={[{ id: 'file', text: 'Simpan config.yaml yang dah dibaiki dari kad cuba.' }, { id: 'check', text: 'Semak dengan image Collector rasmi. Tiada output bermaksud ia elok.', command: 'docker run --rm -v "$PWD:/w" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/w/config.yaml' }]} success="Config Collector anda lulus!" />
+</Card>

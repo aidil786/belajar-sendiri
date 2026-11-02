@@ -1,0 +1,84 @@
+---
+id: k8s-k9-boss
+world: 9
+title: Night of the broken node
+summary: "You will learn: to fix a NotReady node and bring a lost Deployment back from an etcd snapshot, under pressure."
+minutes: 6
+xp: 50
+interactives: [Choice, SpotLines, FoodCourtSim, OrderList, SwipeJudge, Mission]
+needs: [k8s-k9-l12]
+scenario: k9-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Kubernetes: troubleshooting clusters", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "Kubernetes: operating etcd clusters (backup and restore)", url: "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/" }
+  - { label: "etcd 3.7: disaster recovery", url: "https://etcd.io/docs/v3.7/op-guide/recovery/" }
+---
+
+<Card id="hook" type="hook">
+2 a.m. The pager says stall dev-worker2 is NotReady. And the shop’s order is gone. Boss mission: fix both. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Look: kubectl get nodes and kubectl get deployments', correct: true, why: 'Look before you change. Two faults may have two causes.' }, { label: 'Restore etcd right away', why: 'A restore loses newer objects. Look first, then choose.' }, { label: 'Remove dev-worker2 from the cluster', why: 'Its kubelet may only need a start. Don’t throw the stall away.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+You looked. Tap both problems.
+
+<Interactive name="SpotLines" prompt="Tap both problems." lines={[{ text: '$ kubectl get nodes' }, { text: 'NAME                STATUS     ROLES           AGE     VERSION' }, { text: 'dev-control-plane   Ready      control-plane   6m34s   v1.37.0' }, { text: 'dev-worker          Ready      <none>          6m34s   v1.37.0' }, { text: 'dev-worker2         NotReady   <none>          6m34s   v1.37.0', target: true }, { text: '$ kubectl get deployments' }, { text: 'No resources found in default namespace.', target: true }]} success="Two problems: a quiet stall, and a missing order." />
+
+<Hint>One line says NotReady. Another says nothing was found.</Hint>
+</Card>
+
+<Card id="try-node" type="try">
+Room 1: bring dev-worker2 back. Look inside it first.
+
+<Interactive name="FoodCourtSim" scenario="k9-boss" goal={{ nodeReady: { name: 'dev-worker2' } }} hints={['Type ssh dev-worker2', 'systemctl status kubelet says inactive (dead).', 'systemctl start kubelet, then exit and kubectl get nodes']} success="Room 1 cleared! dev-worker2 reports again." />
+
+<Hint>The supervisor on that stall stopped. `systemctl` starts it.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A snapshot waits in `/opt/backup.db`. It was taken before the delete. After a restore, what happens to objects made after it?
+
+<Interactive name="Choice" options={[{ label: 'They are gone too', correct: true, why: 'etcd goes back to that moment. Anything newer is lost.' }, { label: 'They stay', why: 'A restore replaces the whole order book with the old copy.' }, { label: 'They are merged with the old ones', why: 'etcd does not merge. It goes back in time.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Room 2: plan the restore before you touch anything.
+
+<Interactive name="OrderList" items={['ssh dev-control-plane', 'etcdutl --write-out=table snapshot status /opt/backup.db', 'etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', 'Point etcd.yaml at /var/lib/etcd-restore (sed -i)', 'exit, wait about 30 s, kubectl get deployments']} label="First step at the top" success="Plan ready. Check, restore, repoint, wait, look." />
+</Card>
+
+<Card id="try-all" type="try">
+Final room: both faults are back. Fix the stall, and bring the shop back from the snapshot. Danger: the restore rewrites etcd.
+
+<Interactive name="FoodCourtSim" scenario="k9-boss" goal={{ nodeReady: { name: 'dev-worker2' }, deploymentRestored: { name: 'shop' } }} hints={['Room 1 again: ssh dev-worker2, systemctl start kubelet, exit.', 'ssh dev-control-plane, then etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', "sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml, then exit and wait"]} success="Boss cleared! The stall is Ready and the shop is back with 3 trays." />
+
+<Hint>Two jobs, any order. A restore alone leaves one tray waiting on the quiet stall.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+A teammate restored first. The shop shows 2/3 ready. Why?
+
+<Interactive name="Choice" options={[{ label: 'One tray sits on dev-worker2, whose kubelet is still stopped', correct: true, why: 'Start the kubelet. The third tray reports ready soon after.' }, { label: 'The snapshot was broken', why: 'The shop came back with all 3 trays. One just waits.' }, { label: 'etcd restores only two thirds', why: 'A snapshot holds every object, all at once.' }]} />
+</Card>
+
+<Card id="check-next" type="check">
+Tomorrow’s plan. Good idea, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Save etcd snapshots on a schedule, and copy them off the node', good: true, why: 'Fresh copies, kept away from the machine that may break.' }, { text: 'Keep the only snapshot on the control-plane node', good: false, why: 'If that node dies, the copy dies with it.' }, { text: 'Keep every YAML in Git as well', good: true, why: 'Re-applying from Git is often faster than a restore.' }, { text: 'Restore etcd for every small mistake', good: false, why: 'A restore loses newer work. It is the last resort.' }, { text: 'Alert when a node is NotReady', good: true, why: 'Then you hear about it before the customers do.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fix a NotReady node and restore a lost Deployment.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: our order book is one paper book. Real clusters often run 3 or 5 etcd members. Then every member is restored from the same snapshot. Also, our clock skips ahead; a real restart takes longer.
+
+<Interactive name="Mission" id="k8s-k9-boss-real" steps={[{ id: 'where', text: 'Open a free Killercoda CKA playground. Never practise this on a work cluster.', command: 'kubectl get nodes' }, { id: 'save', text: 'On the control-plane node, save a snapshot with the certificate flags (lesson 9).', command: 'sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db' }, { id: 'check', text: 'If the node has etcdutl, check the copy before you trust it.', command: 'sudo etcdutl --write-out=table snapshot status /opt/backup.db' }]} success="You took and checked a real etcd backup!" />
+</Card>

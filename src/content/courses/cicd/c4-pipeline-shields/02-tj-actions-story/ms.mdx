@@ -1,0 +1,71 @@
+---
+id: cicd-c4-l02
+world: 4
+title: Kisah tj-actions
+summary: "Anda akan belajar: bagaimana tag yang dialihkan membocorkan secret dari beribu pipeline pada Mac 2025."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, OrderList, SwipeJudge]
+needs: [cicd-c4-l01]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GitHub advisory GHSA-mrrh-fwg8-r2c3 (CVE-2025-30066)", url: "https://github.com/advisories/GHSA-mrrh-fwg8-r2c3" }
+  - { label: "Semgrep: tj-actions/changed-files is compromised", url: "https://semgrep.dev/blog/2025/popular-github-action-tj-actionschanged-files-is-compromised" }
+  - { label: "Secure use: using third-party actions", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Anda guna action popular pada `@v45`. Anda tak pernah sentuh baris itu. Boleh kod yang ia jalankan masih berubah?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: sesiapa yang kawal repo itu boleh alih tag', correct: true, why: 'Tag ialah nota lekat. Ia boleh dialih ke mana-mana commit.' }, { label: 'Tak: v45 sentiasa bermaksud kod yang sama', why: 'Hanya SHA commit penuh sentiasa bermaksud kod yang sama.' }, { label: 'Hanya jika anda tekan butang kemas kini', why: 'Tiada apa berubah di pihak anda. Tag dialih di pihak mereka.' }]} />
+</Card>
+
+<Card id="see-story" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Sebelum', title: 'Pembantu popular', text: '`tj-actions/changed-files` senaraikan fail yang diubah oleh push. Lebih 23,000 repo gunanya.' }, { when: '14 Mac 2025', title: 'Tag dialih', text: 'Penyerang halakan tag versinya ke satu commit jahat. Jadi `@v45` kini bermaksud commit itu.' }, { when: 'Hari sama', title: 'Secret dicetak', text: 'Kod jahat baca secret dari memori runner. Ia cetak secret itu ke dalam log job.' }, { when: '15 Mac 2025', title: 'Dikesan', text: 'Sebuah syarikat keselamatan nampak panggilan rangkaian pelik. Tag dibersihkan, dan v46.0.1 dikeluarkan.' }]} />
+
+Tekan setiap titik serangan sebenar ini. Beribu pipeline jalankan kod jahat. Tiada siapa ubah fail workflow mereka sendiri.
+</Card>
+
+<Card id="see-log" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'Run tj-actions/changed-files@v45' }, { text: 'Using token ***' }, { text: 'Wm1GclpWOXVjRzFmZEc5clpXNWZNVEl6', target: true }, { text: 'any_changed=true' }]} prompt="Tekan baris log yang masih bocorkan secret." success="Jumpa! Dikod dua kali, jadi topeng terlepas." />
+
+GitHub sembunyikan secret yang tepat sebagai `***`. Kod jahat ubah setiap secret dulu: dikod dua kali. Teks yang berubah terlepas. Dalam repo awam, sesiapa boleh baca log ini. (Log ini contoh.)
+</Card>
+
+<Card id="try-order" type="try">
+Susun serangan ini ikut urutan. Langkah pertama di atas.
+
+<Interactive name="OrderList" items={['Penyerang dapat akses tulis ke repo action itu', 'Mereka alih tag versi ke commit jahat', 'Pipeline jalankan `@v45` dan dapat commit jahat', 'Kod jahat cetak secret ke dalam log', 'Sesiapa sahaja baca log awam itu']} label="Langkah pertama di atas" success="Itulah rantaiannya. Putuskan satu, dan serangan gagal." />
+</Card>
+
+<Card id="try-spot" type="try">
+Tag ikut sesiapa yang mengalihnya. SHA commit penuh tak boleh dialih.
+
+<Interactive name="SpotLines" lines={[{ text: '- uses: tj-actions/changed-files@v45', target: true }, { text: '- uses: tj-actions/changed-files@v44.5.1', target: true }, { text: '- uses: tj-actions/changed-files@0123456789abcdef0123456789abcdef01234567 # v44.5.1 (example SHA)' }, { text: '- uses: actions/checkout@v7' }]} prompt="Tekan setiap baris yang jalankan kod jahat pada 14 Mac." success="Kedua-dua tag ikut penyerang. Pin SHA kekal pada commit yang baik." />
+
+<Hint>Tag yang nampak tepat tetap tag.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Repo awam anda jalankannya pada 14 Mac. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tukar setiap secret yang job itu boleh nampak', correct: true, why: 'Anggap semuanya dicuri. Kunci baharu jadikan salinan lama tak berguna.' }, { label: 'Padam log itu dan bertenang', why: 'Mungkin ada orang dah salin. Tukar secret dulu.' }, { label: 'Tunggu dan lihat jika ada yang rosak', why: 'Kunci curi berfungsi secara senyap. Tukar sekarang.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Apa setiap pasukan patut belajar daripada ini? Leret setiap pengajaran.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pin action pihak ketiga pada SHA commit penuh', good: true, why: 'Tag yang dialih tak boleh capai pin SHA.' }, { text: 'Tag seperti `v44.5.1` nampak tepat, jadi ia selamat', good: false, why: 'Ia tetap tag. Tag yang nampak tepat pun dialih.' }, { text: 'Selepas bocor, tukar secret dulu', good: true, why: 'Kemudian bersihkan log dan workflow.' }, { text: 'Buang action jahat dari main sahaja', good: false, why: 'Branch lain masih boleh jalankannya. Buang di semua tempat.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan bagaimana tag yang dialih membocorkan secret dari beribu pipeline.
+</Card>
+
+<Card id="deeper" type="deeper">
+Beberapa hari sebelum itu, `reviewdog/action-setup` juga digodam. Penyelidik rasa dua serangan ini berkait. Ingat: pin SHA hanya membantu jika ia tunjuk ke commit yang baik. Pin pada commit jahat itu sendiri tak membantu. Baca nasihat GitHub dan tulisan Semgrep (pautan di bawah).
+</Card>

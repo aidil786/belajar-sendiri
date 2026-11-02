@@ -1,0 +1,68 @@
+---
+id: cicd-c3-l11
+world: 3
+title: "Makluman senyap tapi berguna"
+summary: "Anda akan belajar: acara pipeline mana yang patut dimaklumkan, dan apa isi makluman yang berguna."
+minutes: 3
+xp: 15
+interactives: [SwipeJudge, Choice, SpotLines, ConveyorBelt, SortCards]
+needs: [cicd-c3-l10]
+scenario: c3-notify
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing GitHub Actions notifications", url: "https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications" }
+  - { label: "gh issue create", url: "https://cli.github.com/manual/gh_issue_create" }
+  - { label: "Status check functions: failure()", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+---
+
+<Card id="hook" type="hook">
+Telefon anda bergetar 80 kali sehari: "Build passed!" Mesej mana yang patut dimaklumkan? Leret kanan untuk "maklumkan saya".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Deploy production gagal.', good: true, why: 'Seseorang mesti bertindak sekarang.' }, { text: 'Lint lulus pada satu branch.', good: false, why: 'Tiada siapa perlu bertindak. Biar dalam log larian.' }, { text: 'Pipeline rollback production.', good: true, why: 'Orang patut tahu, walaupun ia baiki sendiri.' }, { text: 'Semua ujian lulus, lagi.', good: false, why: 'Hijau itu biasa. Senyap bermaksud hijau.' }]} />
+</Card>
+
+<Card id="see-fatigue" type="see">
+Terlalu banyak makluman menyebabkan **<Term id="alert-fatigue">alert fatigue</Term>** (letih makluman): orang berhenti membacanya. Apa jadi seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Satu amaran yang betul terlepas', correct: true, why: 'Ia tenggelam antara 79 makluman yang tak penting.' }, { label: 'Orang tetap baca semuanya, cuma lebih lambat', why: 'Hakikatnya, orang senyapkan saluran itu.' }, { label: 'Tiada apa berubah', why: 'Saluran yang disenyapkan tak tangkap apa-apa.' }]} />
+</Card>
+
+<Card id="see-good" type="see">
+Makluman berguna sebut apa yang rosak, di mana, dan cara lihat butiran. Tekan baris yang bawa anda kepada butirannya.
+
+<Interactive name="SpotLines" prompt="Tekan baris yang bawa anda kepada butirannya." success="Ya! Satu tekan dari makluman ke larian yang gagal." lines={[{ text: 'Deploy failed: shop v2.3.0' }, { text: 'Where: production, smoke test step' }, { text: 'Run: https://github.com/you/shop/actions/runs/1234567890', target: true }, { text: 'Who: whoever is on call today' }]} />
+</Card>
+
+<Card id="try-run" type="try">
+Workflow ini buka satu issue GitHub, hanya bila deploy gagal. Issue itu ada pautan ke larian. Run, kemudian tekan stesen notify.
+
+<Interactive name="ConveyorBelt" scenario="c3-notify" label="Smoke test gagal, jadi job notify buka satu issue dengan pautan larian." />
+
+<Hint>Tekan Run. Deploy gagal, kemudian notify berjalan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Esok deploy sihat. Apa job notify buat?
+
+<Interactive name="Choice" options={[{ label: 'Ia dilangkau. Tiada bising.', correct: true, why: 'if: failure() palsu, jadi tiada siapa dimaklumkan.' }, { label: 'Ia buka issue yang kata semua okey', why: 'Hijau tak perlu makluman.' }, { label: 'Ia gagal', why: 'Ia cuma tak bermula.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Ke mana setiap mesej patut pergi?
+
+<Interactive name="SortCards" buckets={[{ id: 'ping', label: 'Maklumkan seseorang' }, { id: 'log', label: 'Log larian sahaja' }]} items={[{ label: 'Rollback berlaku di production', bucket: 'ping', why: 'Orang perlu tahu release itu dah diundur.' }, { label: 'Cache hit jimat 40 saat', bucket: 'log', why: 'Bagus, tapi tiada siapa perlu bertindak.' }, { label: 'Production sihat semula selepas gagal', bucket: 'ping', why: 'Tutup gelung, supaya orang boleh berhenti risau.' }, { label: 'Ujian lulus pada branch feature', bucket: 'log', why: 'Tanda hijau pada pull request dah cukup.' }]} success="Siap! Maklumkan bila perlu bertindak. Log yang lain." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar makluman yang orang betul-betul baca.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: van tak boleh tarik balik makanan yang dihantar. Tapi kod boleh rollback dalam beberapa saat. Namun rollback bawa balik kod lama, bukan data lama. Pesanan yang versi teruk simpan tetap ada.
+
+Latihan sebenar (pilihan): hidupkan "Only notify for failed workflows" dalam tetapan GitHub.
+</Card>

@@ -1,0 +1,75 @@
+---
+id: k8s-k4-l05
+world: 4
+title: "Loker: PV dan PVC"
+summary: "Anda akan belajar: minta storan dengan PVC, supaya data kekal walaupun pod yang menulisnya hilang."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k4-l04]
+scenario: k4-locker
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Persistent Volumes", url: "https://kubernetes.io/docs/concepts/storage/persistent-volumes/" }
+  - { label: "Configure a Pod to use a PersistentVolume", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-plain" commands={["kubectl exec cashier -- sh -c 'echo nasi lemak x2 >> /tmp/orders.txt'", 'kubectl delete pod cashier', 'kubectl apply -f cashier.yaml', 'kubectl wait --for=condition=Ready pod/cashier --timeout=60s', 'kubectl exec cashier -- cat /tmp/orders.txt']} fails={['kubectl exec cashier -- cat /tmp/orders.txt']} label="Juruwang tulis satu pesanan dalam /tmp di dalam bekasnya. Pod diganti. cat kata: No such file or directory." />
+
+Juruwang simpan pesanan hari ini di dalam bekasnya. Pod itu diganti. Semua pesanan hilang. Anda perlukan loker yang kekal.
+</Card>
+
+<Card id="see-claim" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: PersistentVolumeClaim' }, { text: 'metadata:' }, { text: '  name: orders' }, { text: 'spec:' }, { text: '  accessModes:' }, { text: '    - ReadWriteOnce' }, { text: '  resources:' }, { text: '    requests:' }, { text: '      storage: 1Gi', target: true }]} prompt="Tekan baris yang sebut saiz loker." success="1Gi: satu gibibait ruang loker." />
+
+Anda isi slip minta loker. Slip itu ialah **<Term id="pvc">PersistentVolumeClaim</Term>** (PVC). Ia sebut saiz, dan berapa ramai boleh guna.
+</Card>
+
+<Card id="predict" type="predict">
+Anda apply claim itu. `kubectl get pvc` kata `Pending`. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Ia tunggu pod pertama yang guna', correct: true, why: 'Kluster ini bina loker di sebelah pod itu, jadi ia tunggu.' }, { label: 'Kluster kehabisan cakera', why: 'Hampir! Jika begitu, anda nampak event ralat. Pending di sini cuma menunggu.' }, { label: 'YAML ada silap', why: 'Claim yang rosak ditolak semasa apply. Yang ini berjaya dicipta.' }]} />
+</Card>
+
+<Card id="try-bind" type="try">
+Apply claim, kemudian pod juruwang yang guna claim itu. Semak claim sekali lagi.
+
+<Interactive name="FoodCourtSim" scenario="k4-locker" goal={{ podsReady: { selector: 'app=cashier', count: 1 }, lastTyped: 'get pvc' }} hints={['Taip kubectl apply -f claim.yaml', 'Kemudian: kubectl apply -f cashier.yaml', 'Akhir sekali: kubectl get pvc']} success="Bound! Pengguna pertama sampai, jadi loker pun dibina." />
+
+<Hint>`cat cashier.yaml` tunjuk di mana pod sebut nama claim.</Hint>
+</Card>
+
+<Card id="see-pv" type="see">
+<Interactive name="KubeReplay" scenario="k4-locker-bound" commands={['kubectl get pvc', 'kubectl get pv']} picture={false} label="get pvc tunjuk orders Bound kepada volume bernama pvc- dan id panjang. get pv tunjuk volume itu, 1Gi, RWO, dituntut oleh default/orders." />
+
+Slip itu kini `Bound` kepada **<Term id="persistent-volume">PersistentVolume</Term>** (PV): loker sebenar. Tiada siapa bina dengan tangan. Pelajaran seterusnya tunjuk siapa yang bina.
+</Card>
+
+<Card id="try-survive" type="try">
+Juruwang sudah tulis pesanan dalam loker. Ganti pod itu. Kemudian baca pesanan.
+
+<Interactive name="FoodCourtSim" scenario="k4-locker-bound" intro={["kubectl exec cashier -- sh -c 'echo nasi lemak x2 >> /data/orders.txt'"]} goal={{ typed: 'delete pod cashier', podsReady: { selector: 'app=cashier', count: 1 }, lastTyped: 'cat /data/orders.txt' }} hints={['Taip kubectl delete pod cashier', 'Bawa balik: kubectl apply -f cashier.yaml', 'Baca: kubectl exec cashier -- cat /data/orders.txt']} success="Pod baharu, loker sama. Pesanan selamat." />
+</Card>
+
+<Card id="check" type="check">
+PV atau PVC? Asingkan setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'pvc', label: 'PVC (slip)' }, { id: 'pv', label: 'PV (loker)' }]} items={[{ label: 'Minta saiz dan mod akses', bucket: 'pvc', why: 'Slip ialah permintaan.' }, { label: 'Storan sebenar, dengan kapasiti', bucket: 'pv', why: 'Loker yang simpan data.' }, { label: 'Pod anda sebut namanya dalam claimName', bucket: 'pvc', why: 'Pod tunjuk kepada slip, bukan loker.' }, { label: 'Milik seluruh kluster, bukan namespace', bucket: 'pv', why: 'PV untuk seluruh kluster. PVC tinggal dalam namespace.' }]} success="Pod pegang slip. Slip pegang loker." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan data dalam loker yang kekal walaupun pod hilang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Hati-hati: class `standard` dalam kind ada `reclaimPolicy: Delete`. Padam claim, dan PV serta datanya turut hilang. Guna `Retain` untuk data yang mesti disimpan. Selagi pod guna claim itu, pemadaman akan menunggu. Claim tunjuk `Terminating` sehingga pod itu hilang.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l05-rep" steps={[{ id: 'copy', text: 'Dalam terminal latihan di atas, cat claim.yaml dan cashier.yaml. Simpan kedua-duanya di mesin anda.' }, { id: 'claim', text: 'Minta loker.', command: 'kubectl apply -f claim.yaml' }, { id: 'pod', text: 'Mulakan juruwang.', command: 'kubectl apply -f cashier.yaml' }, { id: 'see', text: 'Tengok slip jadi Bound.', command: 'kubectl get pvc,pv' }, { id: 'write', text: 'Tulis satu pesanan.', command: "kubectl exec cashier -- sh -c 'echo teh tarik >> /data/orders.txt'" }, { id: 'tidy', text: 'Kemas. Ini padam data juga.', command: 'kubectl delete -f cashier.yaml -f claim.yaml' }]} success="Loker sebenar pertama anda." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: docker-d0-l05
+world: 0
+title: "Sapa Docker: docker version"
+summary: "Anda akan belajar: cara semak kedua-dua bahagian Docker, iaitu client dan enjin, sudah sedia."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenSim, SpotLines, KitchenReplay, SortCards]
+needs: [docker-d0-l04]
+scenario: d0-hello
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "docker version", url: "https://docs.docker.com/reference/cli/docker/version/" }
+  - { label: "docker info", url: "https://docs.docker.com/reference/cli/docker/system/info/" }
+  - { label: "Docker architecture", url: "https://docs.docker.com/get-started/docker-overview/#docker-architecture" }
+---
+
+<Card id="hook" type="hook">
+Anda dah pasang Docker. Tapi betul ke ia dah bangun? Macam mana nak semak?
+
+<Interactive name="Choice" options={[{ label: 'Taip `docker version`', correct: true, why: 'Kedua-dua bahagian Docker akan jawab. Anda cuba sekarang.' }, { label: 'Restart laptop dan harap', why: 'Harapan bukan ujian. Satu arahan beri jawapan pasti.' }, { label: 'Cari ikon baru di skrin', why: 'Ikon tak boleh beritahu sama ada enjin berjalan.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Taip `docker version`. Ia minta Docker bersalam dengan anda.
+
+<Interactive name="KitchenSim" scenario="d0-hello" goal={{ lastTyped: '^docker\\s+version\\b', lastExit: 0 }} hints={['Taip docker version dan tekan Enter.']} success="Docker dah bersalam. Kedua-dua bahagian dah bangun!" />
+
+<Hint>Dua perkataan, satu ruang: `docker version`.</Hint>
+</Card>
+
+<Card id="see-two" type="see">
+Docker ada dua bahagian. **<Term id="docker-client">Client</Term>** ialah arahan `docker`: pelayan yang ambil pesanan anda. Server ialah enjin: tukang masak. Tekan kedua-dua bahagian.
+
+<Interactive name="SpotLines" lines={[{ text: 'Client: Docker Engine - Community', target: true }, { text: ' Version:           29.9.2' }, { text: ' API version:       1.56' }, { text: ' OS/Arch:           linux/amd64' }, { text: 'Server: Docker Engine - Community', target: true }, { text: ' Engine:' }, { text: '  Version:          29.9.2' }, { text: '  API version:      1.56 (minimum version 1.40)' }]} prompt="Tekan baris yang memulakan setiap bahagian." success="Client ambil pesanan. Server masak." />
+</Card>
+
+<Card id="see-daemon" type="see">
+<Interactive name="KitchenReplay" scenario="d0-down" commands={['docker version']} fails={['docker version']} label="Bila enjin berhenti, docker version cetak bahagian Client, kemudian: Cannot connect to the Docker daemon." />
+
+Enjin menunggu di belakang sebagai **<Term id="daemon">daemon</Term>** bernama dockerd. Tiada daemon, tiada masakan. Di sini client menjawab, tapi bahagian server gagal.
+</Card>
+
+<Card id="predict" type="predict">
+Bahagian Client menjawab. Bahagian Server kata `Cannot connect to the Docker daemon`. Docker dah dipasang ke?
+
+<Interactive name="Choice" options={[{ label: 'Ya. Enjin cuma belum berjalan.', correct: true, why: 'Client menjawab, jadi Docker dah dipasang. Hidupkan enjin.' }, { label: 'Tidak, tiada apa dipasang', why: 'Client menjawab, jadi ia dah dipasang.' }, { label: 'Internet terputus', why: 'Perbualan ini berlaku dalam komputer anda. Tak perlu internet.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Client atau server? Susun setiap tugas.
+
+<Interactive name="SortCards" buckets={[{ id: 'client', label: 'Client (pelayan)' }, { id: 'server', label: 'Server (tukang masak)' }]} items={[{ label: 'Arahan docker yang anda taip', bucket: 'client', why: 'Anda menaip kepada client.' }, { label: 'Jalankan container anda', bucket: 'server', why: 'Enjin yang memasak.' }, { label: 'Daemon bernama dockerd', bucket: 'server', why: 'dockerd ialah enjin di belakang.' }, { label: 'Tukar taipan anda jadi pesanan', bucket: 'client', why: 'Client hantar pesanan anda kepada enjin.' }, { label: 'Tarik image dan simpan', bucket: 'server', why: 'Enjin jaga peti sejuk.' }]} success="Pelayan ambil pesanan. Tukang masak buat kerja." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak client dan enjin Docker kedua-duanya sedia.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker info` tunjuk lebih banyak: berapa container dan image yang anda ada. `docker --version` cetak versi client sahaja dalam satu baris. Client juga boleh hantar pesanan kepada enjin di komputer lain.
+
+Latihan sebenar (pilihan): jalankan `docker version` di komputer anda. Kedua-dua bahagian tunjuk nombor versi yang sama?
+</Card>

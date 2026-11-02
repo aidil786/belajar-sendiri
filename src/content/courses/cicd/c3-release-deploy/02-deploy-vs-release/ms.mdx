@@ -1,0 +1,64 @@
+---
+id: cicd-c3-l02
+world: 3
+title: "Deploy lawan release: feature flag"
+summary: "Anda akan belajar: cara hantar kod hari ini dan hidupkan untuk pengguna kemudian."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, SpotLines, SortCards, SwipeJudge]
+needs: [cicd-c3-l01]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenFeature: feature flag standard", url: "https://openfeature.dev/docs/reference/intro" }
+  - { label: "Cloudflare Flagship (feature flags)", url: "https://developers.cloudflare.com/flagship/" }
+---
+
+<Card id="hook" type="hook">
+Checkout baharu anda baru separuh siap. Tapi main mesti dihantar hari ini. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Hantar, tersorok di sebalik suis tutup', correct: true, why: 'Kod jadi live, tapi belum ada pengguna yang nampak.' }, { label: 'Tunggu sampai semua siap', why: 'Merge besar yang lambat itu berisiko. Merge kecil setiap hari lebih selamat.' }, { label: 'Langkau ujian supaya lebih laju', why: 'Ujian ialah pintu pagar. Jangan sesekali langkau.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Selasa', title: 'Deploy', text: 'Kod checkout baharu jadi live, dalam keadaan tutup. Tiada siapa nampak.' }, { when: 'Khamis', title: 'Cuba secara live', text: 'Hidupkan untuk pasukan anda sahaja. Cari bug dengan selamat.' }, { when: 'Jumaat', title: 'Release', text: 'Hidupkan untuk 10% pengguna. Kemudian untuk semua.' }]} />
+
+Dua detik, bukan satu. **<Term id="deploy">Deploy</Term>** bermaksud letak kod pada server. Release bermaksud biar pengguna nampak.
+</Card>
+
+<Card id="see-flag" type="see">
+Suis tutup itu ialah **<Term id="feature-flag" course="git">feature flag</Term>** (suis ciri): satu if, dua laluan. Tekan baris yang semak suis itu.
+
+<Interactive name="SpotLines" prompt="Tekan baris yang semak suis itu." success="Ya! Flag hidup: checkout baharu. Flag tutup: checkout lama." lines={[{ text: 'function checkoutPage(user, flags) {' }, { text: "  if (flags.isOn('new-checkout', user)) {", target: true }, { text: '    return newCheckout(user);' }, { text: '  }' }, { text: '  return oldCheckout(user);' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Deploy atau release? Susun setiap detik.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deploy (kod sampai ke server)' }, { id: 'release', label: 'Release (pengguna nampak)' }]} items={[{ label: '`npx wrangler deploy` muat naik versi 2', bucket: 'deploy', why: 'Kod baharu sampai ke server. Flag masih boleh tutup.' }, { label: 'Hidupkan flag untuk 10% pengguna', bucket: 'release', why: 'Tiada kod baharu. Pengguna mula nampak ciri itu.' }, { label: 'Job deploy selesai di main', bucket: 'deploy', why: 'Pipeline hantar kod. Hantar bukan bermaksud tunjuk.' }, { label: 'Kedai beritahu pelanggan tentangnya', bucket: 'release', why: 'Itulah detik pengguna berjumpa ciri itu.' }]} success="Siap! Deploy hantar kod. Release tunjukkannya." />
+</Card>
+
+<Card id="predict" type="predict">
+Checkout baharu rosak untuk sesetengah pengguna. Apa cara paling pantas untuk baiki?
+
+<Interactive name="Choice" options={[{ label: 'Tutup flag itu', correct: true, why: 'Satu suis. Tiada build, tiada deploy. Beberapa saat, bukan minit.' }, { label: 'Revert, kemudian tunggu deploy baharu', why: 'Boleh, tapi satu larian pipeline penuh ambil masa beberapa minit.' }, { label: 'Tunggu release seterusnya', why: 'Pengguna akan terus kena bug sampai masa itu.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat flag yang bagus, atau perlu diperbaiki? Leret.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Buang flag bila semua orang dah dapat ciri itu.', good: true, why: 'Flag lama bertimbun dan mengelirukan orang.' }, { text: 'Simpan semua flag selama-lamanya, manalah tahu.', good: false, why: 'Setiap flag gandakan laluan yang perlu diuji. Kemas.' }, { text: 'Uji kedua-dua laluan: flag hidup dan flag tutup.', good: true, why: 'Mana-mana laluan boleh berjalan dalam production.' }, { text: 'Letak kata laluan dalam nilai flag.', good: false, why: 'Flag ialah tetapan, bukan rahsia. Simpan kata laluan dalam secret.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar kod hari ini dan hidupkannya kemudian.
+</Card>
+
+<Card id="deeper" type="deeper">
+Flag perlukan tempat simpanan dan suis. OpenFeature ialah standard terbuka yang dikongsi banyak alat flag. Cloudflare pun ada, namanya Flagship. Flag juga suis kecemasan untuk ciri yang rosak.
+
+Latihan sebenar (pilihan): tambah satu flag sebagai tetapan aplikasi anda. Deploy dalam keadaan tutup, kemudian hidupkan.
+</Card>

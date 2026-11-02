@@ -1,0 +1,68 @@
+---
+id: obs-o3-l04
+world: 3
+title: "Dashboard dan panel Grafana"
+summary: "Anda akan belajar: bina skrin yang jawab \"kedai OK tak?\" dalam satu pandangan."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, SortCards, SpotLines, OrderList, Mission]
+needs: [obs-o3-l03]
+scenario: o2-shop-requests
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana dashboards", url: "https://grafana.com/docs/grafana/latest/dashboards/" }
+  - { label: "Panels and visualizations", url: "https://grafana.com/docs/grafana/latest/panels-visualizations/" }
+  - { label: "Dashboard best practices", url: "https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+Dinding bilik kawalan ada 40 graf. Pelanggan telefon: pesanan gagal! Skrin mana bantu anda dulu?
+
+<Interactive name="Choice" options={[{ label: 'Nombor besar "pesanan gagal" di atas kiri', correct: true, why: 'Betul. Benda pertama yang anda nampak patut jawab: kedai OK tak?' }, { label: 'Graf nombor 27, CPU server 4', why: 'Mungkin nanti. Dulu lihat sama ada pelanggan sakit.' }, { label: 'Kesemua 40, satu demi satu', why: 'Terlalu lambat pada pukul 3 pagi. Letak jawapan di atas.' }]} />
+</Card>
+
+<Card id="see-panel" type="see">
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial={'sum by (instance) (rate(http_requests_total{job="shop"}[5m]))'} prompt="Ini query untuk satu panel. Tekan Run dan lihat graf." />
+
+**<Term id="grafana-panel">Panel</Term>** Grafana ialah satu skrin di dinding. Ia jalankan satu query dan lukisnya.
+</Card>
+
+<Card id="try-type" type="try">
+Pilih jenis panel yang betul untuk setiap soalan.
+
+<Interactive name="SortCards" buckets={[{ id: 'series', label: 'Time series' }, { id: 'stat', label: 'Stat (satu nombor)' }, { id: 'table', label: 'Table' }]} items={[{ label: 'Permintaan sesaat sepanjang sejam lalu', bucket: 'series', why: 'Garis mengikut masa tunjuk arah alirannya.' }, { label: 'Pesanan gagal sekarang: 2.1%', bucket: 'stat', why: 'Satu nombor besar, dibaca dalam sesaat.' }, { label: 'Setiap target, dan sama ada ia up', bucket: 'table', why: 'Banyak baris, beberapa lajur.' }, { label: 'CPU sepanjang hari', bucket: 'series', why: 'Naik turun sehari: satu garis.' }]} success="Setiap soalan dapat gambar terbaiknya." />
+</Card>
+
+<Card id="try-query" type="try">
+Tulis query untuk panel Stat: satu nombor, semua permintaan kedai sesaat.
+
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial={'rate(http_requests_total{job="shop"}[5m])'} goal={{ resultCount: 1, labelNames: [], usesFunction: ['sum', 'rate'], typed: 'job="shop"' }} hints={['Balut semuanya dengan sum( … ).']} solution={'sum(rate(http_requests_total{job="shop"}[5m]))'} success="Satu nombor untuk satu panel Stat yang besar." />
+
+<Hint>`sum( … )` tanpa `by` jumlahkan setiap baris jadi satu.</Hint>
+</Card>
+
+<Card id="check-json" type="check">
+<Interactive name="SpotLines" prompt="Ketik baris yang simpan query panel itu." lines={[{ text: '{' }, { text: '  "type": "stat",' }, { text: '  "title": "Targets up",' }, { text: '  "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },' }, { text: '  "targets": [{ "refId": "A", "expr": "sum(up)" }]', target: true }, { text: '}' }]} success="Betul: expr simpan PromQL. Grafana hantarnya ke Prometheus." />
+
+Grafana simpan setiap dashboard sebagai JSON. Simpan fail itu dalam Git, macam kod.
+</Card>
+
+<Card id="predict-order" type="predict">
+<Interactive name="OrderList" items={['Kedai OK tak? Ralat, kelajuan, trafik', 'Servis mana yang sakit? Satu baris setiap servis', 'Kenapa? CPU, memori, cakera']} label="Bahagian atas dashboard dulu" success="Dari kesakitan pelanggan turun ke bahagian mesin." />
+
+Susun baris dashboard yang baik, yang atas dulu.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh rancang dashboard yang jawab "kedai OK tak?" dahulu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tetapkan unit pada setiap panel (peratus, saat, bait), supaya 0.021 dibaca 2.1%. Warna ambang membantu, tapi tambah perkataan atau ikon juga. Cuba Grafana di laptop anda, percuma:
+
+<Interactive name="Mission" id="obs-o3-l04-real" steps={[{ id: 'run', text: 'Mulakan Grafana dalam container pada port 3000.', command: 'docker run -d --name grafana-try -p 3000:3000 grafana/grafana:13.2.5' }, { id: 'login', text: 'Buka http://localhost:3000. Log masuk sebagai admin dengan kata laluan admin, kemudian pilih kata laluan baharu.' }, { id: 'panel', text: 'Buat dashboard baharu. Tambah satu panel. Lihat jenis-jenis panel.' }, { id: 'clean', text: 'Kemas bila dah siap.', command: 'docker rm -f grafana-try' }]} success="Anda dah bina panel sebenar pertama anda!" />
+</Card>

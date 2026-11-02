@@ -1,0 +1,80 @@
+---
+id: git-w10-l06
+world: 10
+title: Cari dalam sejarah
+summary: "Anda akan belajar: cara cari bila teks berubah, di mana ia sekarang, dan siapa sentuh setiap baris."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, Sim, SpotLines, SortCards]
+needs: [git-w10-l05]
+scenario: w10-search
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git log (-S, -G, --author, --grep)", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git grep", url: "https://git-scm.com/docs/git-grep" }
+  - { label: "git blame", url: "https://git-scm.com/docs/git-blame" }
+  - { label: "git shortlog", url: "https://git-scm.com/docs/git-shortlog" }
+---
+
+<Card id="hook" type="hook">
+Pelanggan tanya: "Bila harga RM10 mula muncul?" Lima commit (titik simpan), tiga orang. Baca setiap perubahan ambil masa lama. Apa cara lebih pantas?
+
+<Interactive name="Choice" options={[{ label: 'Minta Git cari dalam sejarah', correct: true, why: 'Git boleh jumpa commit yang tepat dalam sesaat. Jom tengok caranya.' }, { label: 'Baca setiap commit satu per satu', why: 'Boleh untuk lima commit. Tapi bukan untuk lima ribu.' }, { label: 'Teka daripada tarikh', why: 'Meneka lambat dan tak pasti. Git boleh cari untuk anda.' }]} />
+</Card>
+
+<Card id="see-pickaxe" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git log -S "TODO" --oneline']} label="git log -S TODO senaraikan dua commit: Fix the footer phone, yang buang TODO, dan Add a footer, yang tambah TODO." />
+
+`git log -S "TODO"` cari commit yang tambah atau buang teks itu. Orang panggil ia **<Term id="pickaxe">pickaxe</Term>** (beliung). Di sini, satu commit tambah TODO dan satu lagi buang.
+</Card>
+
+<Card id="try-price" type="try">
+Giliran anda. Commit mana yang tambah "RM10"?
+
+<Interactive name="Sim" scenario="w10-search" panels={[]} goal={{ typed: '-S\\s*"?RM10' }} hints={['Guna pickaxe: git log -S', 'Taip git log -S "RM10" --oneline']} success="Jumpa! Add the price yang bawa masuk RM10." />
+
+<Hint>Taip `git log -S "RM10" --oneline`.</Hint>
+</Card>
+
+<Card id="see-grep" type="see">
+`git grep` cari dalam fail yang Git jejak, seperti keadaannya sekarang. `-n` tambah nombor baris.
+
+<Interactive name="SpotLines" scenario="w10-search" commands={['git grep -n footer']} targets="^style\.css" prompt="Ketik padanan dalam fail gaya (stylesheet)." success="Ya! style.css baris 1 sebut footer." />
+</Card>
+
+<Card id="see-blame" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git blame index.html']} label="git blame index.html: baris 1 daripada You, baris 2 daripada Aisyah, baris 3 daripada Aisyah. Setiap baris ada id commit dan tarikh." />
+
+`git blame` tunjuk siapa ubah setiap baris kali terakhir, dan dalam commit mana. Ia untuk cari konteks, bukan untuk salahkan orang!
+</Card>
+
+<Card id="predict" type="predict">
+<Term id="blame">Blame</Term> kata Aisyah yang terakhir ubah baris footer. Adakah Aisyah yang tambah footer itu?
+
+<Interactive name="Choice" options={[{ label: 'Belum pasti. Blame tunjuk perubahan terakhir sahaja', correct: true, why: 'Ben tambah footer. Aisyah baiki nombor telefonnya kemudian. Guna log -S untuk tengok yang pertama.' }, { label: 'Ya, blame tunjuk siapa tulis dulu', why: 'Blame tunjuk perubahan terbaru setiap baris, bukan yang pertama.' }, { label: 'Tidak, blame sentiasa tunjuk pengarang paling lama', why: 'Sebaliknya: blame tunjuk perubahan yang terkini.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Alat mana paling sesuai untuk setiap soalan?
+
+<Interactive name="SortCards" buckets={[{ id: 'pickaxe', label: 'git log -S' }, { id: 'grep', label: 'git grep' }, { id: 'blame', label: 'git blame' }]} items={[{ label: 'Commit mana yang buang TODO?', bucket: 'pickaxe', why: 'Pickaxe cari commit yang tambah atau buang teks.' }, { label: 'Fail mana yang sebut Kancil hari ini?', bucket: 'grep', why: 'git grep cari dalam fail seperti sekarang.' }, { label: 'Siapa yang terakhir ubah baris 2?', bucket: 'blame', why: 'Blame namakan perubahan terakhir setiap baris.' }, { label: 'Bila RM10 mula muncul?', bucket: 'pickaxe', why: 'Commit paling lama dalam senarai itu yang tambahnya.' }, { label: 'Di mana perkataan footer digunakan?', bucket: 'grep', why: 'Cari dalam fail semasa dengan git grep.' }]} success="Tersusun! Bila: log -S. Di mana: grep. Siapa terakhir: blame." />
+</Card>
+
+<Card id="see-shortlog" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git shortlog -sn HEAD']} label="git shortlog -sn HEAD kira commit setiap orang: Aisyah 2, Ben 2, You 1." />
+
+`git shortlog -sn` kira commit setiap orang, yang paling banyak dulu. Berguna untuk nota terima kasih dalam keluaran anda.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari bila, di mana dan siapa dalam sejarah.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git log -G "regex"` padankan mana-mana baris yang berubah, bukan sekadar teks yang ditambah atau dibuang. `git log --author=Ben` tunjuk commit seorang sahaja. `git log --grep=footer` cari dalam mesej. Tambah `-p` untuk tengok setiap perubahan. `git blame -L 2,3 fail` tengok baris 2 hingga 3 sahaja.
+
+<Interactive name="TermReplay" scenario="w10-search" commands={['git log --author=Ben --oneline', 'git log --grep=footer --oneline']} label="Ben buat Style the footer dan Add a footer. Tiga mesej commit sebut footer." />
+</Card>

@@ -1,0 +1,75 @@
+---
+id: linux-l3-l07
+world: 3
+title: "HTTPS dan sijil"
+summary: "Anda akan belajar: apa itu sijil, cara baca tarikhnya, dan maksud ralatnya."
+minutes: 4
+xp: 20
+interactives: [Transcript, SpotLines, OrderList, LinuxSim, Choice, SortCards, Mission]
+needs: [linux-l3-l06]
+scenario: linux-l3-https
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSL: s_client", url: "https://docs.openssl.org/3.5/man1/openssl-s_client/" }
+  - { label: "OpenSSL: x509", url: "https://docs.openssl.org/3.5/man1/openssl-x509/" }
+  - { label: "curl: SSL certificate checks", url: "https://curl.se/docs/sslcerts.html" }
+  - { label: "Let's Encrypt: how it works", url: "https://letsencrypt.org/how-it-works/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop" label="curl ke https://kedai.example gagal: curl: (60) SSL certificate problem: certificate has expired."
+  lines={[{ cmd: 'curl -sS https://kedai.example' }, { out: 'curl: (60) SSL certificate problem: certificate has expired\nMore details here: https://curl.se/docs/sslcerts.html', color: 'red' }]} />
+
+Pagi Isnin. Pelanggan nampak amaran yang menakutkan. Ralat sebenar kata `certificate has expired`. Maksudnya: kad pengenalan kedai sudah luput.
+</Card>
+
+<Card id="see-card" type="see">
+<Term id="certificate">Sijil</Term> ialah kad pengenalan server: namanya, siapa yang tandatangan, dan tarikhnya. `curl -v` menunjukkannya. Tekan tarikh tamat.
+
+<Interactive name="SpotLines" lines={[{ text: '* Server certificate:' }, { text: '*  subject: CN=kedai.example' }, { text: '*  start date: Nov  1 12:47:46 2026 GMT' }, { text: '*  expire date: Jan 30 12:47:46 2027 GMT', target: true }, { text: '*  subjectAltName: host "kedai.example" matched cert\'s "kedai.example"' }, { text: '*  issuer: CN=Kancil Practice CA' }, { text: '*  SSL certificate verify ok.' }]} prompt="Tekan baris dengan tarikh tamat." success="Kad ini sah hingga 30 Januari 2027." />
+</Card>
+
+<Card id="see-ca" type="see">
+<Term id="https">HTTPS</Term> ialah HTTP dalam sampul bermeterai. Pejabat dipercayai, iaitu **certificate authority** (CA), tandatangan kad pengenalan. Susun semakan ini.
+
+<Interactive name="OrderList" items={['curl beri salam dan minta kad pengenalan', 'Kedai tunjuk sijilnya', 'curl semak penandatangan, nama dan tarikh', 'Kedua-duanya setuju satu kunci rahsia', 'Pesanan bergerak bermeterai']} label="Langkah pertama di atas" success="Semak kad dahulu, kemudian bercakap secara rahsia." />
+</Card>
+
+<Card id="try-443" type="try">
+kedai belum ada talian bermeterai. Buktikan: hubungi `https://localhost`, kemudian tengok `ss -tln`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-https" goal={{ lastTyped: '^curl .*https://localhost' }} hints={['Taip curl -sS https://localhost', 'Kemudian ss -tln: tiada 443 dalam senarai.']} solution={['curl -sS https://localhost']} success="Tiada yang mendengar di 443. HTTPS perlukan kaunter sendiri dan sijil." />
+</Card>
+
+<Card id="see-dates" type="see">
+<Interactive name="Transcript" title="laptop" label="openssl baca sijil kedai.example: subject CN=kedai.example, issuer Kancil Practice CA, notAfter Jan 30 2027. checkend 2592000 kata Certificate will not expire."
+  lines={[{ cmd: 'openssl s_client -connect kedai.example:443 < /dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates' }, { out: 'subject=CN=kedai.example\nissuer=CN=Kancil Practice CA\nnotBefore=Nov  1 12:47:46 2026 GMT\nnotAfter=Jan 30 12:47:46 2027 GMT' }, { cmd: 'openssl s_client -connect kedai.example:443 < /dev/null 2>/dev/null | openssl x509 -noout -checkend 2592000' }, { out: 'Certificate will not expire', color: 'green' }]} />
+
+`openssl s_client` ambil kad pengenalan seperti pelayar. `x509` membacanya. `-checkend 2592000` bertanya: masih sah dalam 30 hari?
+</Card>
+
+<Card id="predict" type="predict">
+`curl https://203.0.113.10` kata `no alternative certificate subject name matches`. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Kad itu senaraikan nama, bukan nombor itu', correct: true, why: 'Ia tulis kedai.example. Panggil kedai dengan namanya.' }, { label: 'Kad itu sudah luput', why: 'Ralat itu berbunyi certificate has expired.' }, { label: 'Kedai itu mati', why: 'Ia menjawab dan tunjuk kad. Namanya yang tak sepadan.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Ralat sebenar, cara baiki yang mudah. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'renew', label: 'Baharui kad' }, { id: 'signer', label: 'Penandatangan tak dikenali' }, { id: 'name', label: 'Nama salah' }]} items={[{ label: 'certificate has expired', bucket: 'renew', why: 'Dapatkan sijil baharu. Kemudian tetapkan pembaharuan automatik.' }, { label: 'unable to get local issuer certificate', bucket: 'signer', why: 'curl tak percaya siapa yang tandatangan. Selalunya CA buatan sendiri.' }, { label: 'no alternative certificate subject name matches', bucket: 'name', why: 'Anda panggil nama atau nombor yang tiada dalam kad.' }, { label: 'Verify return code: 10 (certificate has expired)', bucket: 'renew', why: 'openssl kata benda yang sama: sudah luput.' }]} success="Baca hujung ralat. Ia namakan cara membaikinya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca tarikh sijil dan namakan ralatnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Output ini datang dari makmal latihan kita sendiri. Ia ada CA buatan sendiri, jadi kami suruh laptop mempercayainya. Kedai sebenar dapat sijil percuma daripada Let's Encrypt dan membaharuinya secara automatik. `curl -k` langkau semua semakan: guna untuk melihat sahaja, jangan dalam skrip.
+
+<Interactive name="Mission" id="linux-l3-l07-rep" steps={[{ id: 'dates', text: 'Baca tarikh sijil sebenar.', command: 'openssl s_client -connect example.com:443 < /dev/null 2>/dev/null | openssl x509 -noout -dates' }, { id: 'v', text: 'Tengok curl semak kad sebenar.', command: 'curl -sv -o /dev/null https://example.com' }]} success="Anda semak kad pengenalan sebenar." />
+</Card>

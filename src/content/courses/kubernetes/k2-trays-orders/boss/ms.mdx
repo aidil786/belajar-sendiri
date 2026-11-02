@@ -1,0 +1,77 @@
+---
+id: k8s-k2-boss
+world: 2
+title: "Naik taraf waktu puncak"
+summary: "Anda akan belajar: skala naik, hantar versi baharu tanpa henti, dan rollback image rosak dalam keadaan tertekan."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, FoodCourtSim, Choice, KubeReplay, OrderList]
+needs: [k8s-k2-l14]
+scenario: k2-boss-start
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Kubernetes: Deployments", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+  - { label: "kubectl rollout", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '11:30', title: 'Satu dulang', text: 'Kedai jalan 1 dulang nginx 1.29. Waktu puncak bermula tengah hari.' }, { when: '11:45', title: 'Skala naik', text: 'Anda perlukan 3 dulang sebelum barisan sampai.' }, { when: '12:00', title: 'Menu baharu', text: 'Versi 1.30 mesti keluar tanpa henti.' }, { when: '12:10', title: 'Alamak', text: 'Rakan sepasukan hantar salah taip. Anda rollback.' }]} />
+
+Misi boss: pastikan Kedai Kancil terus melayan sepanjang waktu puncak. Tekan setiap langkah rancangan.
+</Card>
+
+<Card id="try-scale" type="try">
+Bilik 1: satu dulang takkan tahan waktu puncak. Pesan 3, dan tunggu sehingga ketiga-tiganya sedia.
+
+<Interactive name="FoodCourtSim" scenario="k2-boss-start" board="shop" goal={{ replicas: { name: 'shop', count: 3 }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Tukar arahan tetap: kubectl scale', 'Taip kubectl scale deployment shop --replicas=3']} success="Mahu 3, nampak 3. Barisan boleh datang." />
+
+<Hint>Pelajaran 4: `kubectl scale deployment … --replicas=…`.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+Seterusnya anda hantar 1.30 ke 3 dulang. Kenapa tiada pelanggan akan jumpa gerai tertutup?
+
+<Interactive name="Choice" options={[{ label: 'Dulang baharu mesti sedia sebelum dulang lama keluar', correct: true, why: 'Dengan 3 dulang, tetapan lalai benarkan 1 lebih masuk dan 0 keluar. Readiness probe beritahu bila dulang sedia.' }, { label: 'Kubernetes tahan pelanggan sekejap', why: 'Pelanggan terus datang. Dulang yang sedia layan mereka sepanjang masa.' }, { label: 'Ketiga-tiga dulang bertukar dalam saat yang sama', why: 'Itu akan buat lompang. Rollout pergi satu dulang demi satu.' }]} />
+</Card>
+
+<Card id="try-update" type="try">
+Bilik 2: hantar `nginx:1.30-alpine` tanpa henti. Perhati papan, kemudian sahkan rollout sudah tamat.
+
+<Interactive name="FoodCourtSim" scenario="k2-boss-scaled" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop', revision: 2 }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Pelajaran 5: kubectl set image, kemudian kubectl rollout status', 'Taip kubectl set image deployment/shop web=nginx:1.30-alpine']} success="Revision 2 sudah keluar. Tak sesaat pun tanpa dulang yang sedia." />
+
+<Hint>Container itu bernama `web`.</Hint>
+</Card>
+
+<Card id="see-typo" type="see">
+<Interactive name="KubeReplay" scenario="k2-boss-updated" commands={['kubectl set image deployment/shop web=nginx:1.300-alpine', 'sleep 20', 'kubectl get pods', 'kubectl get deployment shop']} label="Tag 1.300-alpine tak wujud. Satu pod baharu tersangkut cuba mengambilnya. 3 pod 1.30 terus berjalan: READY 3/3, UP-TO-DATE 1." />
+
+12:10. Rakan sepasukan taip `1.300`. Ralat sebenar: `ErrImagePull`, kemudian `ImagePullBackOff`. Maksudnya: image itu tak wujud. Dulang lama masih melayan.
+</Card>
+
+<Card id="try-undo" type="try">
+Bilik 3: salah taip itu sudah hidup. Kembalikan setiap dulang ke versi yang baik sebelum pelanggan perasan.
+
+<Interactive name="FoodCourtSim" scenario="k2-boss-updated" board="shop" intro={['kubectl set image deployment/shop web=nginx:1.300-alpine']} goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop', minRevision: 4 }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Pelajaran 5: satu arahan rollout untuk kembali', 'Taip kubectl rollout undo deployment/shop']} success="Sudah rollback. Dulang yang tersangkut hilang, dan 3 dulang hidang 1.30." />
+
+<Hint>`kubectl rollout history deployment/shop` tunjuk revision dulu, kalau anda mahu tengok.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Tulis panduan untuk waktu puncak akan datang. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Skala naik sebelum barisan sampai', 'Hantar image baharu dengan set image', 'Tunggu rollout status tamat', 'Ada yang rosak: rollout undo', 'Baiki fail dalam Git, supaya apply seterusnya betul']} label="Langkah pertama di atas" success="Itulah waktu puncak yang anda boleh tidur lena selepasnya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh skala, kemas kini tanpa henti, dan rollback dalam keadaan tertekan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Selepas undur, `kubectl rollout history` senaraikan revision 1, 3 dan 4. Revision 2 kembali sebagai 4, sebab undo guna semula templat lama. Pipeline selalu jalankan `kubectl rollout status` dengan `--timeout`. Kalau tamat masa, ia undur sendiri.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, ulang boss ini dengan `shop.yaml` anda sendiri.
+</Card>

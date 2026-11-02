@@ -1,0 +1,107 @@
+---
+id: cicd-c3-m3
+world: 3
+title: "Misi capstone 3: Lancarkan"
+summary: "Anda akan belajar: beri Kedai Kancil staging, production, langkah canary dan job rollback, kemudian buktikan dengan release yang teruk."
+minutes: 5
+xp: 100
+interactives: [ConveyorBelt, Mission, YamlBuilder, MissionCheck]
+needs: [cicd-c3-l11]
+scenario: c3-mission-bad
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare: Wrangler environments", url: "https://developers.cloudflare.com/workers/wrangler/environments/" }
+  - { label: "Cloudflare: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "gh secret set", url: "https://cli.github.com/manual/gh_secret_set" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c3-mission-bad" label="Tag v1.0.1: canary gagal smoke test, production dilangkau, dan rollback berjalan." />
+
+Misi 3: Lancarkan. Kedai Kancil dah uji dan build dirinya sendiri. Sekarang jadikan release selamat. Matlamat anda: release teruk yang ditangkap dan diundur oleh pipeline. Run untuk lihat matlamatnya.
+</Card>
+
+<Card id="try-setup" type="try">
+Langkah 1: dua dapur. Bahagian depan web kedai anda masuk ke pelan Workers percuma Cloudflare. Tambah ini dalam `wrangler.jsonc`:
+
+```jsonc
+"account_id": "YOUR_ACCOUNT_ID",
+"env": { "staging": {}, "production": {} }
+```
+
+<Interactive name="Mission" id="cicd-m3-setup" steps={[
+  { id: 'token', text: 'Buat token API Cloudflare daripada templat "Edit Cloudflare Workers". Hadkan kepada satu akaun anda.' },
+  { id: 'health', text: 'Pastikan laman yang dibina menjawab /health dengan ok. Fail health.html dalam folder build pun boleh.' },
+  { id: 'staging', text: 'Buat environment staging dalam repo anda.', command: 'gh api --method PUT "repos/{owner}/{repo}/environments/staging"' },
+  { id: 'production', text: 'Buat production juga. Kemudian, dalam tetapannya, tambah diri anda sebagai penyemak wajib.', command: 'gh api --method PUT "repos/{owner}/{repo}/environments/production"' },
+  { id: 'secret-staging', text: 'Simpan token dalam staging. Ia minta anda tampal nilainya.', command: 'gh secret set CLOUDFLARE_API_TOKEN --env staging' },
+  { id: 'secret-production', text: 'Simpan token dalam production juga.', command: 'gh secret set CLOUDFLARE_API_TOKEN --env production' },
+  { id: 'vars', text: 'Simpan alamat staging anda sebagai pemboleh ubah repo. Buat yang sama untuk SITE_URL.', command: 'gh variable set STAGING_URL --body "https://kedai-kancil-staging.YOUR-SUBDOMAIN.workers.dev"' }]}
+  success="Kedua-dua dapur dah sedia, masing-masing dengan kotak rempah berkunci sendiri." />
+</Card>
+
+<Card id="try-build" type="try">
+Langkah 2: bina `release.yml`. Canary dulu. Production selepasnya, dengan kelulusan anda. Rollback hanya kalau canary gagal.
+
+<Interactive name="YamlBuilder" workflow="Release" goal={{ order: ['tag', 'perms', 'canary', 'ready1', 'stage', 'smoke', 'prod', 'ready2', 'ship', 'rollback', 'ready3', 'undo'] }} blocks={[
+  { id: 'tag', kind: 'trigger', label: 'Bila ada tag versi', yaml: "push:\n  tags: ['v*']", means: 'Jalan bila anda push tag seperti v1.0.0.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Token hanya boleh baca kod.' },
+  { id: 'canary', kind: 'job', label: 'Job: canary (staging)', yaml: 'canary:\n  runs-on: ubuntu-latest\n  environment: staging', means: 'Cuba versi baharu pada staging dulu.' },
+  { id: 'ready1', kind: 'step', label: 'Bersedia (canary)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Salin kod. Pasang pakej.' },
+  { id: 'stage', kind: 'step', label: 'Deploy ke staging', yaml: '- run: npx wrangler deploy --env staging\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Muat naik ke Worker kedai-kancil-staging.' },
+  { id: 'smoke', kind: 'step', label: 'Smoke test staging', yaml: '- run: curl --fail --silent "$STAGING_URL/health"\n  env:\n    STAGING_URL: ${{ vars.STAGING_URL }}', means: 'Satu rasa pantas. Halaman ralat hentikan talian.' },
+  { id: 'loose', kind: 'job', label: 'Job: production (tanpa needs)', yaml: 'production:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Deploy ke production.', why: 'Tanpa needs: canary, production tak tunggu canary.' },
+  { id: 'prod', kind: 'job', label: 'Job: production (selepas canary)', yaml: 'production:\n  needs: canary\n  runs-on: ubuntu-latest\n  environment:\n    name: production\n    url: ${{ vars.SITE_URL }}', means: 'Hanya selepas canary hijau, dan kelulusan anda.' },
+  { id: 'ready2', kind: 'step', label: 'Bersedia (production)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Runner baharu perlukan kod sekali lagi.' },
+  { id: 'ship', kind: 'step', label: 'Deploy ke production', yaml: '- run: npx wrangler deploy --env production\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Muat naik ke Worker kedai-kancil-production.' },
+  { id: 'rollback', kind: 'job', label: 'Job: rollback (canary gagal)', yaml: 'rollback:\n  needs: canary\n  if: failure()\n  runs-on: ubuntu-latest\n  environment: staging', means: 'Jalan hanya bila canary gagal.' },
+  { id: 'ready3', kind: 'step', label: 'Bersedia (rollback)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Wrangler dan tetapannya, sekali lagi.' },
+  { id: 'undo', kind: 'step', label: 'Rollback staging', yaml: '- run: npx wrangler rollback --env staging --message "Canary failed"\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Kembalikan versi elok yang terakhir pada staging.' }]}
+  success="Itulah release.yml anda. Simpan dalam .github/workflows/." />
+
+<Hint>Tiga job, setiap satu dengan langkahnya: canary, kemudian production, kemudian rollback.</Hint>
+</Card>
+
+<Card id="try-ship" type="try">
+Langkah 3: hantar satu release yang elok, kemudian satu yang teruk dengan sengaja.
+
+<Interactive name="Mission" id="cicd-m3-ship" steps={[
+  { id: 'save', text: 'Commit workflow itu dan push.', command: 'git add .github/workflows/release.yml && git commit -m "ci: add release workflow" && git push' },
+  { id: 'good', text: 'Hantar release yang elok: buat tag v1.0.0 dan push.', command: 'git tag v1.0.0 && git push origin v1.0.0' },
+  { id: 'approve', text: 'Canary lulus. Production menunggu. Buka larian itu dan luluskan.' },
+  { id: 'break', text: 'Rosakkan dengan sengaja: padam halaman health, kemudian commit dan push.' },
+  { id: 'bad', text: 'Tag release yang teruk dan push tag itu.', command: 'git tag v1.0.1 && git push origin v1.0.1' },
+  { id: 'watch', text: 'Perhati larian: canary merah, production dilangkau, rollback hijau.' },
+  { id: 'fix', text: 'Pulangkan halaman health, kemudian hantar v1.0.2 dengan cara sama.' }]}
+  success="Pipeline tangkap release teruk dan undurkannya. Itu betul-betul berlaku!" />
+</Card>
+
+<Card id="check-api" type="check">
+Biar API awam GitHub sahkan. Taip nama pengguna anda, kemudian semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo Kedai Kancil anda awam' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 3, label: 'Workflow berjalan sekurang-kurangnya 3 kali' }, { type: 'tags', repo: 'kedai-kancil', min: 2, label: 'Ada sekurang-kurangnya 2 tag release' }]} success="GitHub nampak release anda!" />
+</Card>
+
+<Card id="check-self" type="check">
+API tak boleh tengok dalam larian. Semak yang ini sendiri.
+
+<Interactive name="Mission" id="cicd-m3-self" steps={[
+  { id: 'run', text: 'Larian v1.0.1 tunjuk: canary gagal, production dilangkau, rollback lulus.' },
+  { id: 'staging', text: 'Halaman /health staging anda kata ok semula.' },
+  { id: 'prod', text: 'Production tak pernah dapat v1.0.1.' },
+  { id: 'gate', text: 'Production tunggu kelulusan anda untuk v1.0.0.' }]}
+  success="Misi 3 selesai: Kedai Kancil ada butang undur." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lancarkan Kedai Kancil dengan selamat, dengan butang undur.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keselamatan: pelan Workers percuma dah cukup di sini. Containers untuk API perlukan Workers Paid. Tetapkan amaran bajet dulu. Guna token ujian dan padam bila selesai. Canary ini ialah salinan staging. Canary sebenar hantar sebahagian pengguna sebenar. Di Cloudflare, itu gradual deployment.
+</Card>

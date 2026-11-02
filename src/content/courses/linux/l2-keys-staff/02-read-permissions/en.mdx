@@ -1,0 +1,72 @@
+---
+id: linux-l2-l02
+world: 2
+title: Read rwx permissions
+summary: "You will learn: to read the nine keys in ls -l, for the owner, the group and everyone else."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, SpotLines]
+needs: [linux-l2-l01]
+scenario: linux-l2-perms
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ls (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/ls.1.en.html" }
+  - { label: "GNU coreutils: file permissions", url: "https://www.gnu.org/software/coreutils/manual/html_node/File-permissions.html" }
+  - { label: "Debian Reference: GNU/Linux tutorials", url: "https://www.debian.org/doc/manuals/debian-reference/ch01.en.html" }
+---
+
+<Card id="hook" type="hook">
+You wrote `open.sh` yourself. You type `./open.sh`. The server says `-bash: ./open.sh: Permission denied`. It is your file! Why?
+
+<Interactive name="Choice" options={[{ label: 'The file has no "run" key yet', correct: true, why: 'Owning a file is not enough. It also needs the x key to run.' }, { label: 'Only root may run scripts', why: 'Anyone may run a script that has the run key.' }, { label: 'The script is broken', why: 'The shell never even opened it. The key was missing.' }]} />
+</Card>
+
+<Card id="see-ls" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-perms" intro={['ls -l']} />
+
+`ls -l` shows each file's keys, its **permissions**. `-rw-r--r--` is three key rings: the owner, the group, then everyone else.
+</Card>
+
+<Card id="sort-rwx" type="check">
+Each ring has three keys: `r` read, `w` write, `x` run. Which key does each job need?
+
+<Interactive name="SortCards" buckets={[{ id: 'r', label: 'r: read' }, { id: 'w', label: 'w: write' }, { id: 'x', label: 'x: run / enter' }]} items={[{ label: 'Look at the price list', bucket: 'r', why: 'Reading needs r.' }, { label: 'Change a price', bucket: 'w', why: 'Changing a file needs w.' }, { label: 'Run open.sh', bucket: 'x', why: 'A program needs x to run.' }, { label: 'Walk into the staff room', bucket: 'x', why: 'On a folder, x means you may go in.' }]} success="r reads, w changes, x runs (or lets you into a folder)." />
+</Card>
+
+<Card id="predict-secret" type="predict">
+`secret.txt` shows `-rw-------`. Aina is not you and not in your group. Can she read it?
+
+<Interactive name="Choice" options={[{ label: 'No. Group and others have ---.', correct: true, why: 'Only the first ring, the owner, has rw. The other rings are empty.' }, { label: 'Yes. Everyone can read text files.', why: 'Text or not, the keys decide.' }, { label: 'Only on weekdays', why: 'Keys do not change with the calendar.' }]} />
+</Card>
+
+<Card id="try-shadow" type="try">
+Remember the locked password drawer? Read its keys: `ls -l /etc/shadow`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-perms" goal={{ lastTyped: '^ls -l /etc/shadow$' }} hints={['Type ls -l /etc/shadow']} solution={['ls -l /etc/shadow']} success="rw for root, r for the shadow group, nothing for everyone else. That is why cat said Permission denied." />
+
+<Hint>The owner is `root`. The group is `shadow`. You are neither.</Hint>
+</Card>
+
+<Card id="spot-others" type="check">
+<Interactive name="SpotLines" lines={[{ text: '-rw-r--r-- 1 you you   33 Nov  1 08:55 open.sh', target: true }, { text: '-rw-r--r-- 1 you you   21 Nov  1 08:55 prices.txt', target: true }, { text: '-rw------- 1 you you   15 Nov  1 08:55 secret.txt' }, { text: 'drwxr-x--- 2 you you 4096 Nov  1 08:55 staff' }]} prompt="Tap every line where everyone else may read. Look at the last three letters." success="open.sh and prices.txt end in r--. The others end in ---." />
+</Card>
+
+<Card id="check-dir" type="check">
+The staff room shows `drwxr-x---`. The `d` means it is a folder. Can a stranger walk in?
+
+<Interactive name="Choice" options={[{ label: 'No. The last ring is ---: no x, no entry.', correct: true, why: 'Owner rwx, group r-x, others nothing. Strangers stay out.' }, { label: 'Yes. Folders are always open.', why: 'A folder needs x on your ring to enter.' }, { label: 'Only to read the file names', why: 'That would need r on the last ring. It has none.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read who may read, write or run any file.
+</Card>
+
+<Card id="deeper" type="deeper">
+The first letter is the kind: `-` a file, `d` a folder, `l` a link. Then come the owner and the group names. root ignores most keys, so be extra careful as root.
+
+Real rep (optional): on Linux, compare `ls -l /etc/passwd /etc/shadow`, then `ls -ld ~`.
+</Card>

@@ -1,0 +1,78 @@
+---
+id: linux-l2-l01
+world: 2
+title: Users, groups and sudo
+summary: "You will learn: who is who on a server, what teams are for, and how sudo borrows the master key."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-boss]
+scenario: linux-l2-users
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "sudo (Debian 13 man page)", url: "https://manpages.debian.org/trixie/sudo/sudo.8.en.html" }
+  - { label: "useradd (Debian 13 man page)", url: "https://manpages.debian.org/trixie/passwd/useradd.8.en.html" }
+  - { label: "usermod (Debian 13 man page)", url: "https://manpages.debian.org/trixie/passwd/usermod.8.en.html" }
+  - { label: "id (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/id.1.en.html" }
+  - { label: "Debian Reference: user accounts", url: "https://www.debian.org/doc/manuals/debian-reference/ch04.en.html" }
+---
+
+<Card id="hook" type="hook">
+Aina joins the kitchen tomorrow. She needs to use the server too. Should she log in as you?
+
+<Interactive name="Choice" options={[{ label: 'No. She gets her own user.', correct: true, why: 'Each person gets their own key. Then the shop knows who did what.' }, { label: 'Yes. Share the password.', why: 'Shared keys get lost and copied. Nobody knows who changed what.' }, { label: 'She can use root', why: 'root holds every key. One slip could break the whole shop.' }]} />
+</Card>
+
+<Card id="see-id" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-users" intro={['whoami', 'id']} />
+
+You are the <Term id="user">user</Term> `you`, staff number 1000. You belong to two teams, called **groups**: `you` and `sudo`.
+</Card>
+
+<Card id="predict-shadow" type="predict">
+`/etc/shadow` holds every password, scrambled. You type `cat /etc/shadow`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'cat: /etc/shadow: Permission denied', correct: true, why: 'Plain words: your key does not open that drawer. Only root may read it.' }, { label: 'It prints every password', why: 'Then anyone could read them. Linux keeps that drawer locked.' }, { label: 'No such file or directory', why: 'The file is there. You just have no key for it.' }]} />
+</Card>
+
+<Card id="try-sudo" type="try">
+Team `sudo` may borrow the master key for one command. Try it: `sudo whoami`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-users" goal={{ lastTyped: '^sudo whoami$' }} hints={['Type sudo whoami']} solution={['sudo whoami']} success="root! sudo ran one command as root, then gave the key back. See the Careful note." />
+
+<Hint>`sudo` goes in front of the command.</Hint>
+</Card>
+
+<Card id="sort-who" type="check">
+Most jobs need no master key. Which ones do?
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'Just you' }, { id: 'sudo', label: 'Needs sudo' }]} items={[{ label: 'Read the menu in your home', bucket: 'you', why: 'Your own room, your own key.' }, { label: 'Add a new staff user', bucket: 'sudo', why: 'Only root changes who works here.' }, { label: 'Install a program for everyone', bucket: 'sudo', why: 'System folders belong to root.' }, { label: 'Make a folder in your home', bucket: 'you', why: 'Your home is yours. No sudo needed.' }]} success="Use sudo only when the job truly needs root." />
+</Card>
+
+<Card id="try-aina" type="try">
+Give Aina her own user with a home: `sudo useradd -m -s /bin/bash aina`. Then add her to the kitchen team: `sudo usermod -aG kitchen aina`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-users" goal={{ userExists: ['aina'], inGroup: { aina: 'kitchen' } }} hints={['First: sudo useradd -m -s /bin/bash aina', 'Then: sudo usermod -aG kitchen aina', 'Check: groups aina']} solution={['sudo useradd -m -s /bin/bash aina', 'sudo usermod -aG kitchen aina']} success="Aina has her own key and joined the kitchen team." />
+
+<Hint>`-m` makes her home folder. `-aG` adds a group.</Hint>
+</Card>
+
+<Card id="check-append" type="check">
+Why `usermod -aG kitchen`, and not just `-G kitchen`?
+
+<Interactive name="Choice" options={[{ label: '-G alone replaces her other teams. -a adds instead.', correct: true, why: 'Forget the -a and she quietly drops out of her other groups.' }, { label: 'They do the same thing', why: 'Not quite. Without -a, -G sets the full list of her extra groups.' }, { label: '-a means admin', why: '-a means append: add to the list.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell users from groups, and use sudo with care.
+</Card>
+
+<Card id="deeper" type="deeper">
+`sudo -i` opens a root shell: the prompt ends in `#` and a root badge shows. Type `exit` to give the key back. Without sudo, `useradd` says `command not found`: admin tools live in `/usr/sbin`, outside your PATH.
+
+Real rep (optional): on your own Linux, run `id` and `groups`. Then `sudo -l` shows what sudo lets you do.
+</Card>

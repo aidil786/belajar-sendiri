@@ -1,0 +1,73 @@
+---
+id: git-w03-l08
+world: 3
+title: Clean up branches
+summary: "You will learn: which branches are safe to delete, and how."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l07]
+scenario: w03-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch (-d, -D, --merged)", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch']} label="git branch lists about, dark-mode, main with a star, and old-idea." />
+
+Your list of branches keeps growing. Old notes everywhere! Which ones can you throw away safely?
+</Card>
+
+<Card id="see-delete" type="see">
+<Interactive name="GraphScene" scenario="w03-l08" commands={['git branch -d about']} label="The about label disappears. The commit Add about page stays, safe inside main." />
+
+`git branch -d about` peels off the note. The commits stay safe, because main already has them.
+</Card>
+
+<Card id="try-spot" type="try">
+`git branch --merged` lists notes whose work is already in your branch. Tap the ones you can delete.
+
+<Interactive name="SpotLines" scenario="w03-l08" commands={['git branch --merged']} targets="^\s+(about|dark-mode)$" prompt="Tap each merged note you can delete. Not the one you are on!" success="Right! about and dark-mode are merged. main is where you are." />
+
+<Hint>The star marks your own branch. Leave that one.</Hint>
+</Card>
+
+<Card id="try-delete" type="try">
+Delete the merged notes `about` and `dark-mode`. Keep `old-idea`.
+
+<Interactive name="Sim" scenario="w03-l08" panels={['graph']} goal={{ branchesMissing: ['about', 'dark-mode'], branches: ['old-idea'] }} hints={['Type git branch -d about. Then git branch -d dark-mode.']} success="Tidy! The commits are all still in main." />
+
+<Hint>One note at a time: `git branch -d about`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`old-idea` was never merged. You run `git branch -d old-idea`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Git refuses and warns you', correct: true, why: 'Its commit would lose its only note. Git asks you to be sure.' }, { label: 'It is deleted', why: 'Small -d only deletes merged branches. That keeps work safe.' }, { label: 'Git merges it first', why: 'Git never merges by itself.' }]} />
+</Card>
+
+<Card id="see-force" type="see">
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch -D old-idea', 'git branch']} label="git branch -D old-idea prints: Deleted branch old-idea. git branch now lists about, dark-mode and main." />
+
+Sure you don't need it? `git branch -D` (capital D) deletes it anyway. Careful: its commit loses its last note.
+</Card>
+
+<Card id="check-sort" type="check">
+What does `git branch -d` say?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Deleted' }, { id: 'no', label: 'Git says no' }]} items={[{ label: 'about, merged into main', bucket: 'ok', why: 'Its work is safe in main.' }, { label: 'dark-mode, merged into main', bucket: 'ok', why: 'Its work is safe in main.' }, { label: 'A branch with work nobody merged', bucket: 'no', why: 'Use -D only if you are sure.' }, { label: 'main, while you are on it', bucket: 'no', why: 'You can never delete the branch you are on.' }]} success="Sorted! -d keeps your work safe." />
+</Card>
+
+<Card id="win" type="win">
+You can now tidy your branches without losing work.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git branch --no-merged` lists notes with work still waiting. Deleted a note by mistake? `git reflog` still knows the commit. Then `git branch old-idea <hash>` sticks the note back on.
+
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch --no-merged']} label="git branch --no-merged lists old-idea." />
+</Card>

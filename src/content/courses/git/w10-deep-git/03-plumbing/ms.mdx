@@ -1,0 +1,74 @@
+---
+id: git-w10-l03
+world: 10
+title: Plumbing lawan porcelain
+summary: "Anda akan belajar: dua jenis arahan Git, dan cara simpan blob sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, SortCards, Sim, CommandBuilder]
+needs: [git-w10-l02]
+scenario: w10-plumbing
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git (high-level and low-level commands)", url: "https://git-scm.com/docs/git" }
+  - { label: "git hash-object", url: "https://git-scm.com/docs/git-hash-object" }
+  - { label: "git cat-file", url: "https://git-scm.com/docs/git-cat-file" }
+  - { label: "git ls-tree", url: "https://git-scm.com/docs/git-ls-tree" }
+---
+
+<Card id="hook" type="hook">
+Skrip anda perlukan id commit terbaru. `git log` cetak terlalu banyak, dan rupanya boleh berubah. Apa yang skrip patut guna?
+
+<Interactive name="Choice" options={[{ label: 'Arahan khas untuk skrip: git rev-parse HEAD', correct: true, why: 'Ia cetak id sahaja, dan outputnya kekal stabil.' }, { label: 'Salin id dengan tangan setiap kali', why: 'Skrip tak boleh salin dengan tangan. Git ada arahan untuk skrip.' }, { label: 'Potong id daripada git status', why: 'git status dibuat untuk manusia. Perkataannya mungkin berubah.' }]} />
+</Card>
+
+<Card id="see-plumbing" type="see">
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git rev-parse HEAD', 'git ls-tree HEAD']} label="git rev-parse HEAD cetak satu id penuh. git ls-tree HEAD senaraikan about.html, tree css dan index.html, setiap satu dengan mod, jenis dan id." />
+
+Arahan peringkat rendah dipanggil **<Term id="plumbing">plumbing</Term>** (paip): paip di bawah sinki. Outputnya ringkas dan stabil. Skrip suka arahan ini.
+</Card>
+
+<Card id="try-sort" type="try">
+Sinki berkilat di atas pula ialah **<Term id="porcelain">porcelain</Term>** (porselin): arahan untuk manusia. Susun setiap arahan.
+
+<Interactive name="SortCards" buckets={[{ id: 'porcelain', label: 'porcelain (untuk manusia)' }, { id: 'plumbing', label: 'plumbing (untuk skrip)' }]} items={[{ label: 'git status', bucket: 'porcelain', why: 'Perkataan dan warna mesra, untuk anda baca.' }, { label: 'git cat-file', bucket: 'plumbing', why: 'Ia cetak objek mentah.' }, { label: 'git commit', bucket: 'porcelain', why: 'Arahan harian yang buat banyak langkah untuk anda.' }, { label: 'git hash-object', bucket: 'plumbing', why: 'Ia cetak id untuk sesuatu isi. Itu sahaja.' }, { label: 'git switch', bucket: 'porcelain', why: 'Arahan harian untuk manusia.' }, { label: 'git ls-tree', bucket: 'plumbing', why: 'Ia senaraikan objek tree, baris demi baris.' }]} success="Tersusun! Porcelain untuk manusia, plumbing untuk skrip dan yang ingin tahu." />
+</Card>
+
+<Card id="see-hash-object" type="see">
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git hash-object index.html', 'git rev-parse HEAD:index.html']} label="git hash-object index.html dan git rev-parse HEAD:index.html cetak id yang sama, 6b62adb46423f92b1c925e6fdcc9ec947097a1d4." />
+
+`git hash-object` cetak id yang Git akan beri kepada sesuatu fail. Ia sama dengan blob yang dah ada dalam commit. Isi sama, id sama.
+</Card>
+
+<Card id="try-write" type="try">
+`notes.txt` belum ada dalam Git. Simpan isinya sebagai blob, tanpa commit. Kemudian baca semula blob itu.
+
+<Interactive name="Sim" scenario="w10-plumbing" panels={[]} goal={{ objectsWritten: ['17e284d'], lastTyped: 'cat-file -p' }} hints={['Tambah -w untuk simpan: git hash-object -w notes.txt', 'Kemudian taip git cat-file -p dan id yang dicetak']} success="Disimpan dan dibaca semula! Git simpan isi itu tanpa sebarang commit." />
+
+<Hint>Taip `git hash-object -w notes.txt`. Kemudian `git cat-file -p` dengan id yang dicetak.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ben ada `notes.txt` yang sama dalam laptopnya. Dia jalankan `git hash-object notes.txt`. Id apa yang dia dapat?
+
+<Interactive name="Choice" options={[{ label: 'Id yang sama dengan anda', correct: true, why: 'Id datang daripada isi sahaja. Bait sama, id sama, di mana-mana komputer.' }, { label: 'Id lain: itu laptop dia', why: 'Id blob tak kisah siapa atau di mana. Hanya isi yang dikira.' }, { label: 'Id lain: masa dah berlalu', why: 'Blob tiada tarikh. Commit ada, jadi id commit berbeza.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+Bina arahan yang cetak `index.html` seperti yang disimpan oleh commit terbaru.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'cat-file', means: 'buka satu objek' }, { text: '-p', means: 'cetak dengan kemas' }, { text: 'HEAD:index.html', means: 'index.html dalam commit terbaru' }]} decoys={[{ text: '-t', means: 'cetak jenisnya sahaja' }, { text: 'status', means: 'arahan porcelain' }]} success="Betul! Ia cetak blob index.html daripada HEAD." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan plumbing dan porcelain, dan simpan blob sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Output porcelain mungkin berubah antara versi Git. Output plumbing kekal stabil. Perlukan status dalam skrip? `git status --porcelain` beri format yang dijanji kekal sama. `git ls-tree -r --name-only HEAD` senaraikan setiap fail dalam satu commit.
+
+<Interactive name="TermReplay" scenario="w10-plumbing" commands={['git ls-tree -r --name-only HEAD']} label="git ls-tree -r --name-only HEAD senaraikan about.html, css/style.css dan index.html." />
+</Card>

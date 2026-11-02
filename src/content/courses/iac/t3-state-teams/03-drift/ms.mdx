@@ -1,0 +1,76 @@
+---
+id: iac-t3-l03
+world: 3
+title: "Drift: ada orang klik"
+summary: "Anda akan belajar: cara plan kesan perubahan tangan, dan cara baikinya dari dua arah."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t3-l02]
+scenario: t3-drift-menu
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu plan (-refresh-only, -detailed-exitcode)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "tofu refresh", url: "https://opentofu.org/docs/cli/commands/refresh/" }
+  - { label: "OpenTofu: lifecycle (ignore_changes)", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+Semalam Ben tambah "Maggi goreng" dalam `menu.txt` dengan tangan. Pelan masih senaraikan dua hidangan. Apa kata `tofu plan`?
+
+<Interactive name="Choice" options={[{ label: 'Ia mahu tulis menu semula, ikut pelan', correct: true, why: 'Plan semak benda sebenar dahulu. Menu sudah tak sepadan.' }, { label: 'Tiada apa-apa: plan cuma baca fail .tf', why: 'Plan juga tengok benda sebenar. Langkah itu dipanggil refresh.' }, { label: 'Ia salin Maggi goreng ke dalam main.tf', why: 'OpenTofu tak pernah ubah pelan anda. Hanya anda yang ubah.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Mari semak. Taip `tofu plan` dan baca baris `+`.
+
+<Interactive name="TofuSim" scenario="t3-drift-menu" goal={{ planSummary: { add: 1, change: 0, destroy: 0 }, lastTyped: '^tofu plan' }} hints={['Taip tofu plan dan tekan Enter.']} success="Plan semak menu sebenar. Ia sudah berubah, jadi OpenTofu mahu tulis semula." />
+
+<Hint>Plan cuma tunjuk. Ia tak ubah apa-apa.</Hint>
+</Card>
+
+<Card id="see-drift" type="see">
+<Interactive name="SpotLines" prompt="Tekan dua baris yang lapor perubahan di luar OpenTofu." lines={[{ text: 'local_file.menu: Refreshing state... [id=091a5af7a28db92db1af2d90307baa4d12ab7c54]' }, { text: 'random_pet.stall: Refreshing state... [id=lucky-civet]' }, { text: '' }, { text: 'Note: Objects have changed outside of OpenTofu', target: true }, { text: '' }, { text: 'OpenTofu detected the following changes made outside of OpenTofu since the' }, { text: 'last "tofu apply" which may have affected this plan:' }, { text: '' }, { text: '  # local_file.menu has been deleted', target: true }, { text: '  - resource "local_file" "menu" {' }, { text: '      - filename             = "menu.txt" -> null' }, { text: '      … (baris lain)' }]} success="Itulah drift, seperti yang dilapor tofu plan -refresh-only." />
+
+**<Term id="drift">Drift</Term>** (hanyut): bangunan sebenar sudah tak sepadan dengan daftar. Provider local panggil fail yang berubah "deleted". Provider cloud tunjuk perubahannya dengan `~`.
+</Card>
+
+<Card id="predict" type="predict">
+Drift boleh dibaiki dua arah. Susun setiap kes.
+
+<Interactive name="SortCards" buckets={[{ id: 'blueprint', label: 'Batalkan: apply pelan' }, { id: 'keep', label: 'Simpan: ubah pelan' }]} items={[{ label: 'Ben tersilap tambah hidangan', bucket: 'blueprint', why: 'Pelan itu betul. Apply pulihkannya.' }, { label: 'Baikan kecemasan yang mesti kekal', bucket: 'keep', why: 'Tulis dalam fail .tf, supaya plan tunjuk tiada perubahan.' }, { label: 'Ujian yang orang lupa kemas', bucket: 'blueprint', why: 'Apply buang sisanya.' }, { label: 'Bos lulus hidangan baharu semalam', bucket: 'keep', why: 'Tambah dalam pelan. Kemudian semak seperti perubahan lain.' }]} success="Mana-mana arah, akhirnya pelan bercakap benar." />
+</Card>
+
+<Card id="try-apply" type="try">
+Hidangan Ben itu silap. Pulihkan menu: `tofu apply`, kemudian taip `yes`.
+
+<Interactive name="TofuSim" scenario="t3-drift-menu" open="main.tf" goal={{ fileNotContains: { 'menu.txt': 'Maggi' }, filesExist: ['menu.txt'] }} hints={['Taip tofu apply dan tekan Enter.', 'Baca plan, kemudian taip yes.']} success="Menu sepadan dengan pelan semula. Cuba cat menu.txt." />
+
+<Hint>`tofu apply` tunjuk plan dahulu dan tunggu `yes`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Apa yang `tofu apply -refresh-only` buat?
+
+<Interactive name="Choice" options={[{ label: 'Kemas kini daftar ikut benda sebenar. Benda sebenar tak berubah.', correct: true, why: 'Ia terima apa yang ada di luar, dalam daftar sahaja.' }, { label: 'Pulihkan setiap benda sebenar ikut pelan', why: 'Itu tofu apply biasa.' }, { label: 'Padam benda yang hanyut', why: 'Refresh-only tak pernah padam atau bina apa-apa.' }]} />
+</Card>
+
+<Card id="check-nightly" type="check">
+Satu kerja malam jalankan `tofu plan -detailed-exitcode`. Susun maksud setiap kod keluar.
+
+<Interactive name="SortCards" buckets={[{ id: 'zero', label: '0: tiada perubahan' }, { id: 'one', label: '1: ralat' }, { id: 'two', label: '2: ada perubahan' }]} items={[{ label: 'Tiada siapa sentuh apa-apa', bucket: 'zero', why: 'Benda sebenar sepadan dengan pelan.' }, { label: 'Ben ubah menu.txt dengan tangan', bucket: 'two', why: 'Drift: plan ada kerja untuk dibuat.' }, { label: 'Salah taip dalam main.tf', bucket: 'one', why: 'Plan tak dapat habis.' }, { label: 'Gerai baharu di-merge tapi belum di-apply', bucket: 'two', why: 'Pelan sudah ke depan, bangunan belum.' }]} success="Kod 2 waktu malam? Seseorang patut semak pagi esok." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari drift dengan plan dan baikinya dari mana-mana arah.
+</Card>
+
+<Card id="deeper" type="deeper">
+`lifecycle { ignore_changes = [tags] }` suruh OpenTofu abaikan satu argumen yang orang lain ubah dengan sengaja. Semakan drift selalu dijadualkan dalam CI. `tofu refresh` ialah kembar lama yang sudah lapuk bagi `tofu apply -refresh-only -auto-approve`. Guna `tofu apply -refresh-only`: ia tanya dahulu sebelum menulis.
+
+<Interactive name="Mission" id="iac-t3-l03-rep" steps={[{ id: 'build', text: 'Dalam folder latihan dengan resource local_file, bina ia.', command: 'tofu init && tofu apply' }, { id: 'edit', text: 'Ubah fail itu dengan tangan, macam Ben.' }, { id: 'see', text: 'Lihat drift, tanpa ubah apa-apa.', command: 'tofu plan -refresh-only' }, { id: 'fix', text: 'Pulihkan dari pelan.', command: 'tofu apply' }]} success="Anda jumpa dan baiki drift sebenar." />
+</Card>

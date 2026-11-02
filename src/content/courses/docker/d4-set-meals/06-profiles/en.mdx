@@ -1,0 +1,67 @@
+---
+id: docker-d4-l06
+world: 4
+title: "Optional extras: profiles"
+summary: "You will learn: to keep extra dishes off until you ask for them."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SortCards, KitchenSim, Choice, Mission]
+needs: [docker-d4-l05]
+scenario: d4-profiles
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using profiles with Compose", url: "https://docs.docker.com/compose/how-tos/profiles/" }
+  - { label: "Compose file reference: profiles", url: "https://docs.docker.com/reference/compose-file/services/#profiles" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-profiles" commands={['docker compose up -d', 'docker compose ps']} label="web, api and db start. The cache in the same file does not." />
+
+The cache is right there in `compose.yaml`. You ran `docker compose up -d`. So why is it not running?
+</Card>
+
+<Card id="see-profile" type="see">
+```yaml
+  cache:
+    image: redis:8-alpine
+    profiles: [cache]
+```
+
+A side dish comes only when you ask for it. That is a **<Term id="compose-profile">profile</Term>**. A dish with a profile stays off. You turn it on when you need it. Sort the dishes.
+
+<Interactive name="SortCards" buckets={[{ id: 'plain', label: 'Starts with plain up -d' }, { id: 'side', label: 'Only with --profile cache' }]} items={[{ label: 'web', bucket: 'plain', why: 'No profiles line: always on.' }, { label: 'api', bucket: 'plain', why: 'No profiles line: always on.' }, { label: 'db', bucket: 'plain', why: 'No profiles line: always on.' }, { label: 'cache', bucket: 'side', why: 'profiles: [cache] keeps it off by default.' }]} success="Only cache waits to be asked for." />
+</Card>
+
+<Card id="try-profile" type="try">
+Order the side dish too. Turn on the cache profile.
+
+<Interactive name="KitchenSim" scenario="d4-profiles" keys="compose" intro={['docker compose up -d']} goal={{ composeUp: { project: 'kedai-kancil', services: ['web', 'api', 'db', 'cache'] } }} hints={['--profile goes before up.', 'Type docker compose --profile cache up -d']} success="Four dishes now: the cache joined the table." />
+
+<Hint>`docker compose --profile cache up -d`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+No `--profile` at all. You type `docker compose up -d cache`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The cache starts', correct: true, why: 'Naming a dish turns its profile on, just for that command.' }, { label: 'Nothing: the profile is off', why: 'Naming the dish is enough to order it.' }, { label: 'Every profile starts', why: 'Only the dish you named (and what it depends on) starts.' }]} />
+</Card>
+
+<Card id="check-down" type="check">
+<Interactive name="KitchenReplay" scenario="d4-profiles" commands={['docker compose --profile cache up -d', 'docker compose down', 'docker compose ps']} label="Plain down removes web, api and db. The cache keeps running, and so does its phone line." />
+
+Careful at closing time. Plain `down` only clears dishes without a profile. Add `--profile cache` to clear the side dish too.
+</Card>
+
+<Card id="win" type="win">
+You can now keep extra dishes off until you ask for them.
+</Card>
+
+<Card id="deeper" type="deeper">
+`COMPOSE_PROFILES=cache docker compose up -d` does the same as the flag. Turn on two with `--profile cache --profile debug`. Good side dishes: debug tools, an admin page, a job that loads test data. Profile names use letters, digits, `_`, `.` and `-`.
+
+<Interactive name="Mission" id="d4-l06-rep" steps={[{ id: 'add', text: 'Add profiles: [cache] to an extra service in your compose.yaml.' }, { id: 'list', text: 'See which services would start.', command: 'docker compose config --services' }, { id: 'on', text: 'List them again with the profile on.', command: 'docker compose --profile cache config --services' }]} success="Side dishes, on request." />
+</Card>

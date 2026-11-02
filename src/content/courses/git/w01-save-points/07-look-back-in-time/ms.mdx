@@ -1,0 +1,73 @@
+---
+id: git-w01-l07
+world: 1
+title: Lihat kembali masa lalu
+summary: "Anda akan belajar: cara baca sejarah projek dengan git log dan git show."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, TimeMachine, Sim, Choice]
+needs: [git-w01-l06]
+scenario: w01-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git show", url: "https://git-scm.com/docs/git-show" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html bergoyang dengan tanda berubah. Tajuknya kini My Git Diary." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+Tajuk diari anda kini "My Git Diary". Bila ia berubah? Dan macam mana rupa laman itu sebelum ini?
+</Card>
+
+<Card id="see-oneline" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline']} label="git log --oneline senaraikan lima commit, satu baris setiap satu, dari Change title to My Git Diary hingga Add home page." />
+
+`git log --oneline` letak setiap commit (titik simpan) pada **satu baris**: hash pendek, kemudian mesej. Yang terbaru di atas.
+</Card>
+
+<Card id="try-slide" type="try">
+Gerakkan peluncur ke commit yang paling awal. Tengok `index.html` berubah.
+
+<Interactive name="TimeMachine" scenario="w01-l07" file="index.html" label="index.html pada setiap commit" />
+
+<Hint>Seret peluncur sampai ke kiri, kemudian balik ke kanan.</Hint>
+</Card>
+
+<Card id="see-graph" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline --graph --all']} label="Lima commit yang sama, setiap satu ada bintang di depan, bersambung dalam satu garis lurus." />
+
+`--graph` lukis **garis masa** anda dengan bintang dan garis. `--all` tambah setiap <Term id="branch">branch</Term> (cabang). Anda ada satu sahaja, jadi garisnya lurus.
+</Card>
+
+<Card id="see-show" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git show bc602fc']} label="git show bc602fc: commit Add day 2 entry, kemudian satu baris hijau baru, Day 2: I learned the box." />
+
+`git show` dengan hash buka **satu commit**: siapa, bila, dan apa sebenarnya yang berubah. Baris hijau `+` ialah yang ditambah.
+</Card>
+
+<Card id="try-show" type="try">
+Cari hash untuk "Add day 2 entry". Kemudian buka dengan `git show`.
+
+<Interactive name="Sim" scenario="w01-l07" panels={['graph']} goal={{ typed: '^git show bc60' }} hints={['Taip git log --oneline untuk tengok hash.', 'Cari Add day 2 entry. Taip git show dan hashnya: git show bc602fc']} success="Anda dah buka titik simpan lama. Itulah mengembara masa!" />
+
+<Hint>Mula dengan `git log --oneline`. Salin kod di sebelah "Add day 2 entry".</Hint>
+</Card>
+
+<Card id="check" type="check">
+Anda nak tengok apa sebenarnya yang satu commit ubah. Arahan mana?
+
+<Interactive name="Choice" options={[{ label: '`git show` dengan hash', correct: true, why: 'git show papar commit itu dan perubahannya.' }, { label: '`git log --oneline`', why: 'Itu senaraikan commit, tapi bukan apa yang berubah.' }, { label: '`git status`', why: 'Itu tunjuk perubahan yang belum disimpan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh mengembara dalam sejarah projek dan nampak setiap perubahan.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git log -n 2` tunjuk dua commit terbaru sahaja. Log yang panjang dibuka dalam pager. Tekan Space untuk lagi, `q` untuk keluar. `git show` tanpa hash tunjuk commit terbaru anda.
+
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline -n 2']} label="git log --oneline -n 2 tunjuk dua commit terbaru sahaja." />
+</Card>

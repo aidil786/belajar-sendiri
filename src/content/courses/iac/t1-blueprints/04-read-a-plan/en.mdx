@@ -1,0 +1,65 @@
+---
+id: iac-t1-l04
+world: 1
+title: "Read a plan: + ~ - -/+"
+summary: "You will learn: to read every symbol in a plan before anything is built."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, PlanReader, TofuSim, SwipeJudge]
+needs: [iac-t1-l03]
+scenario: t1-plan-reader
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: resource behaviour", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+The site inspector checks the blueprint before any builder starts. The report shows `-/+` next to the sign. Is that a small change?
+
+<Interactive name="Choice" options={[{ label: 'No. The old sign is destroyed, then a new one is made.', correct: true, why: '-/+ means replace: minus first, then plus.' }, { label: 'Yes. A quick touch-up in place.', why: 'A touch-up is ~. Here the old one goes away.' }, { label: 'It means nothing will happen', why: 'Every symbol is an action. No symbol, no change.' }]} />
+</Card>
+
+<Card id="see-symbols" type="see">
+A **<Term id="plan">plan</Term>** marks each resource with a symbol. Which ones delete something?
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'Nothing is deleted' }, { id: 'lose', label: 'Something is deleted' }]} items={[{ label: '`+` create', bucket: 'keep', why: 'Only adds a new thing.' }, { label: '`~` update in place', bucket: 'keep', why: 'The same thing, changed. It stays.' }, { label: '`-` destroy', bucket: 'lose', why: 'It goes away.' }, { label: '`-/+` replace', bucket: 'lose', why: 'The old one is destroyed, then a new one is made.' }]} success="Watch for - and -/+. They delete real things." />
+</Card>
+
+<Card id="try-read" type="try">
+The architect changed the blueprint. Read the plan. What happens to each resource?
+
+<Interactive name="PlanReader" scenario="t1-plan-reader" commands={['cp .next/main.tf main.tf']} />
+</Card>
+
+<Card id="predict" type="predict">
+You change the `filename` of a `local_file`. A file can't be renamed in place. Which symbol will the plan show?
+
+<Interactive name="Choice" compact options={[{ label: '`-/+`', correct: true, why: 'A new name needs a new file: destroy, then create.' }, { label: '`~`', why: '~ is for settings that can change in place. A file name can not.' }, { label: '`+`', why: 'A plain + would leave the old file behind.' }]} />
+</Card>
+
+<Card id="try-tilde" type="try">
+Make the plan show `~`. Change the opening hours in `main.tf`. Then type `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t1-hours" goal={{ planSummary: { add: 0, change: 1, destroy: 0 } }} hints={['Find input = "8am to 10pm" in the hours block.', 'Change it, for example to "7am to 11pm".', 'Then type tofu plan.']} success="1 to change. The same thing, updated in place: ~." />
+
+<Hint>Edit the words inside `input = "…"`, then run `tofu plan`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Read the last line. Is it safe to type `yes`?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'You added a menu file. Plan: 1 to add, 0 to change, 0 to destroy.', good: true, why: 'Only adds, as you meant.' }, { text: 'You fixed a typo in a comment. Plan: 0 to add, 0 to change, 3 to destroy.', good: false, why: 'A comment builds nothing. Stop and find out why 3 things go.' }, { text: 'You renamed a file on purpose. Plan: 1 to add, 0 to change, 1 to destroy.', good: true, why: 'A rename is a replace. You expected it.' }, { text: 'The shop database shows -/+ and nobody knows why.', good: false, why: 'Replace means the data could be lost. Ask first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a plan's symbols before you build.
+</Card>
+
+<Card id="deeper" type="deeper">
+`# forces replacement` marks the setting that causes a `-/+`. A `+/-` means the new one is made first, then the old one goes. `tofu plan -out tfplan` saves a plan, and `tofu apply tfplan` builds exactly that, nothing else. The summary line always ends the plan: `Plan: 1 to add, 0 to change, 1 to destroy.`
+</Card>

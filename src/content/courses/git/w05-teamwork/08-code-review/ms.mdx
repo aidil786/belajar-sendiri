@@ -1,0 +1,65 @@
+---
+id: git-w05-l08
+world: 5
+title: Semakan kod yang baik dan berguna
+summary: "Anda akan belajar: cara komen, cadang, luluskan atau minta perubahan, dengan baik."
+minutes: 5
+xp: 25
+interactives: [SwipeJudge, SortCards, PracticeRepo, Choice, OrderList]
+needs: [git-w05-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+  - { label: "Commenting on a pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/commenting-on-a-pull-request" }
+  - { label: "Incorporating feedback in your pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request" }
+---
+
+<Card id="hook" type="hook">
+Mei minta anda review kodnya. Anda nampak satu masalah. Macam mana nak cakap tanpa sakitkan hati dia? Baik dan berguna, atau perlu baiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ini salah. Buat semula.', good: false, why: 'Ia pedih, dan tak beritahu apa yang perlu dibaiki.' }, { text: 'Halaman yang cantik! Satu idea: butang itu boleh tulis "Sertai kami".', good: true, why: 'Baik, dan beri satu idea yang jelas.' }, { text: 'Kenapa ada orang tulis kod macam ini?', good: false, why: 'Cakap tentang kod, jangan tentang orangnya.' }, { text: 'Baris ini rosak di telefon kecil. Mungkin guna max-width?', good: true, why: 'Ia namakan masalah dan cadang cara baiki.' }]} />
+</Card>
+
+<Card id="see-kinds" type="see">
+**<Term id="code-review">Code review</Term>** (semakan kod) ada tiga pengakhiran: komen, luluskan atau minta perubahan. Susun setiap review.
+
+<Interactive name="SortCards" buckets={[{ id: 'comment', label: 'Komen' }, { id: 'approve', label: 'Luluskan' }, { id: 'changes', label: 'Minta perubahan' }]} items={[{ label: 'Nampak hebat, teruskan!', bucket: 'approve', why: 'Sedia untuk merge: luluskan.' }, { label: 'Soalan cepat: kenapa 600 px?', bucket: 'comment', why: 'Sekadar bertanya. Tiada yang sekat merge.' }, { label: 'Pautan daftar rosak. Tolong baiki dulu.', bucket: 'changes', why: 'Ia mesti dibaiki sebelum merge.' }, { label: 'Ujian lulus dan ia jalan di telefon saya. Bagus!', bucket: 'approve', why: 'Dah semak dan puas hati: luluskan.' }, { label: 'Sekadar terfikir: mungkin biru?', bucket: 'comment', why: 'Satu idea, bukan wajib.' }, { label: 'Ini padam halaman utama. Tolong letak semula.', bucket: 'changes', why: 'Masalah yang wajib dibaiki: minta perubahan.' }]} success="Tiga jenis review, dah tersusun!" />
+</Card>
+
+<Card id="try-suggest" type="try">
+Mei tertaip "Wellcome". **<Term id="suggested-change">Cadangan perubahan</Term>** (suggested change) tunjuk pembaikan yang tepat. Mei boleh terima dengan satu klik. Cadangkan pembaikan pada baris itu.
+
+<Interactive name="PracticeRepo" screen="pull-files" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} pulls={[{ number: 31, title: 'Tambah sepanduk alu-aluan', body: 'Tambah baris alu-aluan yang besar di halaman utama.', author: 'mei', from: 'banner', to: 'main', state: 'open', checks: [{ name: 'test', status: 'running' }], files: [{ path: 'index.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Wellcome to Code Club</h1>', '+<p>New members are always welcome.</p>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }, { id: 'requireChecks', label: 'Perlu semua semakan lulus', on: true }] }} task={{ type: 'suggest', pr: 31 }} success="Cadangan dihantar! Mei boleh terima sekali gus." />
+
+<Hint>Tekan baris "Wellcome". Tekan "Cadang perubahan". Betulkan perkataan dalam kotak, kemudian tambah komen.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda minta perubahan. Peraturan branch (cabang) perlukan satu kelulusan. Bolehkah Mei merge (cantum) sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tak boleh. Dia baiki dulu, kemudian reviewer luluskan', correct: true, why: 'Permintaan perubahan sekat merge sampai ia selesai.' }, { label: 'Boleh. Review tak pernah sekat apa-apa', why: 'Bila peraturan review hidup, permintaan perubahan yang terbuka sekat merge.' }, { label: 'Boleh, kalau dia luluskan PR sendiri', why: 'Penulis tak boleh luluskan pull request sendiri. Rakan sepasukan kena buat.' }]} />
+</Card>
+
+<Card id="try-approve" type="try">
+Mei dah guna cadangan anda. Semak Fail yang berubah. Puas hati? Kemudian **luluskan** (approve).
+
+<Interactive name="PracticeRepo" screen="pull" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} pulls={[{ number: 31, title: 'Tambah sepanduk alu-aluan', body: 'Tambah baris alu-aluan yang besar di halaman utama.', author: 'mei', from: 'banner', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Welcome to Code Club</h1>', '+<p>New members are always welcome.</p>'] }], reviews: [{ author: 'anda', state: 'changes', body: 'Ada salah taip kecil dalam tajuk. Tengok cadangan saya.' }], comments: [{ author: 'mei', body: 'Dah baiki guna cadangan anda. Terima kasih!' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }] }} task={{ type: 'approve', pr: 31 }} success="Diluluskan! Sekarang butang merge terbuka." />
+
+<Hint>Dalam "Review anda", pilih Luluskan, kemudian tekan Hantar review.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah review yang baik. Langkah pertama di atas.
+
+<Interactive name="OrderList" items={['Baca penerangan PR', 'Semak Fail yang berubah', 'Tinggalkan komen pada baris', 'Hantar: komen, luluskan atau minta perubahan']} label="Langkah pertama di atas" success="Baca, semak, komen, putuskan. Itulah review!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri code review yang baik dan berguna.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di laman sebenar, anda boleh mula satu review dan tambah banyak komen baris. Semuanya dihantar serentak bila anda hantar review. Selepas membaiki, penulis boleh minta anda review semula. Sesetengah repo buang kelulusan lama bila commit baru masuk. Peraturan emas: semak kod, jangan serang orangnya.
+</Card>

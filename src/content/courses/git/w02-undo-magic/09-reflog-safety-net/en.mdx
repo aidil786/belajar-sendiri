@@ -1,0 +1,68 @@
+---
+id: git-w02-l09
+world: 2
+title: Reflog, your safety net
+summary: 'You will learn: how to find and bring back "lost" commits.'
+minutes: 4
+xp: 25
+interactives: [GraphScene, TermReplay, SpotLines, Sim, Choice]
+needs: [git-w02-l08]
+scenario: w02-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD@{1})", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w02-l09a" commands={['git reset --hard HEAD~1']} showLost label="main and HEAD jump back one commit. Add day 3 entry turns into a dashed, lost dot." />
+
+Oops. You typed `git reset --hard HEAD~1`. Your day 3 entry vanished. Panic?
+</Card>
+
+<Card id="see-reflog" type="see">
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reflog']} label="git reflog lists every move of HEAD, newest first. The second line says: commit: Add day 3 entry." />
+
+No panic. Git keeps a diary of every place HEAD has been. This is the **<Term id="reflog">reflog</Term>**. Your lost commit is still listed.
+</Card>
+
+<Card id="try-spot" type="try">
+Find your lost commit in the reflog.
+
+<Interactive name="SpotLines" scenario="w02-l09" commands={['git reflog']} targets="commit: Add day 3 entry" prompt="Tap the line with Add day 3 entry." success="Found it! Its name is HEAD@{1}." />
+
+<Hint>Look for the words "Add day 3 entry".</Hint>
+</Card>
+
+<Card id="see-name" type="see">
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reflog -n 2']} label="The two newest reflog lines: HEAD@{0} is the reset, HEAD@{1} is the Add day 3 entry commit." />
+
+`HEAD@{1}` means "where HEAD was one move ago". You can use that name in commands.
+</Card>
+
+<Card id="try-rescue" type="try">
+Bring the day 3 commit back.
+
+<Interactive name="Sim" scenario="w02-l09" panels={['graph']} showLost goal={{ headAtMessage: '^Add day 3 entry$', headDetached: false, commits: 5 }} hints={['Type git reflog. The lost commit is HEAD@{1}.', 'Then type git reset --hard HEAD@{1}']} success="Day 3 is back! The dashed dot is solid again." />
+
+<Hint>Type `git reset --hard HEAD@{1}`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+What can the reflog bring back?
+
+<Interactive name="Choice" options={[{ label: 'Commits you made', correct: true, why: 'The reflog lists every commit HEAD has been on.' }, { label: 'Changes you never committed', why: 'Sadly, no. Uncommitted work wiped by --hard is gone.' }, { label: 'Files deleted by git clean', why: 'No. Git never saved untracked files.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now bring back "lost" commits with the reflog.
+</Card>
+
+<Card id="deeper" type="deeper">
+The reflog lives only on your computer. It is never pushed. Old lines expire, after 90 days by default. Lines for lost commits go after 30. You can also reset to a hash from the reflog list.
+
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reset --hard HEAD@{1}', 'git log --oneline']} label="After git reset --hard HEAD@{1}, git log shows Add day 3 entry on top again." />
+</Card>

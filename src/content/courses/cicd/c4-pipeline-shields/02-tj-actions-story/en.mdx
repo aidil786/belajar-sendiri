@@ -1,0 +1,71 @@
+---
+id: cicd-c4-l02
+world: 4
+title: The tj-actions story
+summary: "You will learn: how moved tags leaked secrets from thousands of pipelines in March 2025."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, OrderList, SwipeJudge]
+needs: [cicd-c4-l01]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GitHub advisory GHSA-mrrh-fwg8-r2c3 (CVE-2025-30066)", url: "https://github.com/advisories/GHSA-mrrh-fwg8-r2c3" }
+  - { label: "Semgrep: tj-actions/changed-files is compromised", url: "https://semgrep.dev/blog/2025/popular-github-action-tj-actionschanged-files-is-compromised" }
+  - { label: "Secure use: using third-party actions", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+You use a popular action at `@v45`. You never touch that line. Can the code it runs still change?
+
+<Interactive name="Choice" options={[{ label: 'Yes: whoever controls its repo can move the tag', correct: true, why: 'A tag is a sticky note. It can be moved to any commit.' }, { label: 'No: v45 always means the same code', why: 'Only a full commit SHA always means the same code.' }, { label: 'Only if you press an update button', why: 'Nothing changes on your side. The tag moves on their side.' }]} />
+</Card>
+
+<Card id="see-story" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Before', title: 'A popular helper', text: '`tj-actions/changed-files` lists the files a push changed. Over 23,000 repos used it.' }, { when: '14 Mar 2025', title: 'Tags moved', text: 'Attackers pointed its version tags at one bad commit. So `@v45` now meant that commit.' }, { when: 'Same day', title: 'Secrets printed', text: "The bad code read secrets from the runner's memory. It printed them into the job log." }, { when: '15 Mar 2025', title: 'Caught', text: 'A security company spotted a strange network call. The tags were cleaned, and v46.0.1 came out.' }]} />
+
+Tap through a real attack. Thousands of pipelines ran bad code. Nobody had changed their own workflow file.
+</Card>
+
+<Card id="see-log" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'Run tj-actions/changed-files@v45' }, { text: 'Using token ***' }, { text: 'Wm1GclpWOXVjRzFmZEc5clpXNWZNVEl6', target: true }, { text: 'any_changed=true' }]} prompt="Tap the log line that still leaks a secret." success="Found it! Encoded twice, so the mask missed it." />
+
+GitHub hides an exact secret as `***`. The bad code changed each secret first: encoded twice. Changed text slips past. On public repos, anyone could read these logs. (This log is an example.)
+</Card>
+
+<Card id="try-order" type="try">
+Put the attack in order. First step at the top.
+
+<Interactive name="OrderList" items={["The attacker gets write access to the action's repo", 'They move the version tags to a bad commit', 'Pipelines run `@v45` and get the bad commit', 'The bad code prints secrets into the log', 'Anyone reads the public logs']} label="First step at the top" success="That's the chain. Break one link, and it fails." />
+</Card>
+
+<Card id="try-spot" type="try">
+Tags follow whoever moves them. A full commit SHA cannot move.
+
+<Interactive name="SpotLines" lines={[{ text: '- uses: tj-actions/changed-files@v45', target: true }, { text: '- uses: tj-actions/changed-files@v44.5.1', target: true }, { text: '- uses: tj-actions/changed-files@0123456789abcdef0123456789abcdef01234567 # v44.5.1 (example SHA)' }, { text: '- uses: actions/checkout@v7' }]} prompt="Tap every line that ran the bad code on 14 March." success="Both tags followed the attacker. The SHA pin stayed on the good commit." />
+
+<Hint>Exact-looking tags are still tags.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your public repo ran it on 14 March. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Rotate every secret that job could see', correct: true, why: 'Treat them as stolen. New keys make the old copies useless.' }, { label: 'Delete the log and relax', why: 'Someone may have copied it already. Rotate first.' }, { label: 'Wait and see if anything breaks', why: 'Stolen keys work quietly. Rotate now.' }]} />
+</Card>
+
+<Card id="check" type="check">
+What should every team learn from this? Swipe each lesson.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pin third-party actions to a full commit SHA', good: true, why: 'A moved tag cannot reach a SHA pin.' }, { text: 'A tag like `v44.5.1` looks exact, so it is safe', good: false, why: 'It is still a tag. Exact-looking tags were moved too.' }, { text: 'After a leak, rotate the secrets first', good: true, why: 'Then clean up logs and workflows.' }, { text: 'Remove the bad action from main only', good: false, why: 'Other branches can still run it. Remove it everywhere.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how moved tags leaked secrets from thousands of pipelines.
+</Card>
+
+<Card id="deeper" type="deeper">
+A few days before, `reviewdog/action-setup` was hacked too. Researchers think the two attacks are linked. Note: a SHA pin only helps if it points at a good commit. Pinning the bad commit itself would not help. Read the GitHub advisory and Semgrep's write-up (links below).
+</Card>

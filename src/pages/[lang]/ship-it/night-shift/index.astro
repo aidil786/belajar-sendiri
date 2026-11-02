@@ -1,0 +1,231 @@
+---
+// Night shift: optional 5-minute fix-it drills (docs/SHIP-IT-PLAN.md §12). "This week's drill" is
+// picked in the browser from the ISO week number (the same for everyone that week), rotating through
+// the levels; the full list, grouped by level (★, ★★, ★★★), is always open below it. Nothing is locked.
+// Fixed drills are remembered in their own small key (fahamlah:nightshift:v1).
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/ui/Icon.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { getFamily, partLabel } from '~/lib/course';
+import { SHIP_IT } from '~/lib/catalog';
+import { DRILL_LEVELS, drills } from '~/content/courses/nightshift';
+import { DRILL_SECONDS } from '~/lib/nightShift';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const parts = await getFamily(SHIP_IT);
+const groups = DRILL_LEVELS.map((level) => ({ level, drills: drills.filter((d) => d.level === level) })).filter((g) => g.drills.length > 0);
+const stars = (n: number) => '★'.repeat(n);
+const href = (id: string) => `/${lang}/ship-it/night-shift/${id}/`;
+const label = (part: string) => {
+  const c = parts.find((x) => x.id === part);
+  return c ? partLabel(lang, c) : '';
+};
+const minutes = t(lang, 'nightshift.minutes', { n: DRILL_SECONDS / 60 });
+---
+
+<Base lang={lang} title={t(lang, 'nightshift.title')} description={t(lang, 'nightshift.summary')} altPath={`/${other}/ship-it/night-shift/`}>
+  <div class="container night" data-night-shift>
+    <p class="crumb"><a href={`/${lang}/ship-it/`}>{t(lang, 'shipit.title')}</a></p>
+    <header class="night-head">
+      <h1>{t(lang, 'nightshift.title')}</h1>
+      <p class="night-summary">{t(lang, 'nightshift.summary')}</p>
+      <p>{t(lang, 'nightshift.intro')} {t(lang, 'nightshift.calm')}</p>
+    </header>
+
+    <section class="week" aria-labelledby="week-h">
+      <h2 id="week-h"><span class="week-icon"><Icon name="star" size={22} /></span> {t(lang, 'nightshift.thisWeek')}</h2>
+      {
+        drills.map((d) => (
+          <a class="week-card" href={href(d.id)} data-week-card={d.id} data-level={d.level} hidden>
+            <span class="week-part">
+              <span class="stars" aria-hidden="true">{stars(d.level)}</span>
+              <span class="visually-hidden">{t(lang, 'nightshift.level.label', { n: d.level })}</span> {label(d.part)} · {minutes}
+            </span>
+            <span class="week-title">{d.title[lang]}</span>
+            <span class="week-story">{d.story[lang]}</span>
+            <span class="week-go">{t(lang, 'nightshift.start')} →</span>
+          </a>
+        ))
+      }
+      <p class="week-note">{t(lang, 'nightshift.thisWeekNote')}</p>
+    </section>
+
+    <section class="all" aria-labelledby="all-h">
+      <h2 id="all-h">{t(lang, 'nightshift.all')}</h2>
+      <p class="levels-intro">{t(lang, 'nightshift.level.intro')}</p>
+      {
+        groups.map((g) => (
+          <section class="group" aria-labelledby={`group-${g.level}`} data-drill-group={g.level}>
+            <h3 id={`group-${g.level}`}>
+              <span class="stars" aria-hidden="true">
+                {stars(g.level)}
+              </span>{' '}
+              {t(lang, `nightshift.level.title${g.level}`)}
+            </h3>
+            <p class="group-text">{t(lang, `nightshift.level.text${g.level}`)}</p>
+            <ul class="drills">
+              {g.drills.map((d) => (
+                <li class="drill" data-drill-row={d.id} data-level={d.level}>
+                  <a href={href(d.id)}>{d.title[lang]}</a>
+                  <span class="drill-part-tag">{label(d.part)}</span>
+                  <span class="drill-done" data-drill-done-tag hidden>
+                    <Icon name="check" size={16} /> {t(lang, 'nightshift.done')}
+                  </span>
+                  <span class="drill-story">{d.story[lang]}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </section>
+
+    <p class="exam-hint">
+      <a href={`/${lang}/settings/#exam`}>{t(lang, 'nightshift.examHint')}</a>
+    </p>
+  </div>
+</Base>
+
+<script>
+  import { loadNightShift, weeklyPick } from '~/lib/nightShift';
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-week-card]')];
+  const pick = cards[weeklyPick(new Date(), cards.map((c) => Number(c.dataset.level ?? 1)))];
+  if (pick) pick.hidden = false;
+  const done = loadNightShift().done;
+  for (const row of document.querySelectorAll<HTMLElement>('[data-drill-row]')) {
+    const tag = row.querySelector<HTMLElement>('[data-drill-done-tag]');
+    if (tag) tag.hidden = !done[row.dataset.drillRow ?? ''];
+  }
+</script>
+
+<style>
+  .night {
+    padding-block: var(--space-5);
+    max-width: 48rem;
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .night-summary {
+    font-size: var(--text-l);
+  }
+  .week {
+    margin-bottom: var(--space-6);
+  }
+  .week h2,
+  .all h2 {
+    font-size: var(--text-xl);
+  }
+  .week-icon {
+    color: var(--c-staging-ink);
+    display: inline-flex;
+    vertical-align: -3px;
+  }
+  .week-card {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-left: 6px solid var(--deco-head);
+    border-radius: var(--radius-l);
+    background: var(--color-surface);
+    box-shadow: var(--color-shadow);
+    text-decoration: none;
+    color: var(--color-text);
+  }
+  .week-card[hidden] {
+    display: none;
+  }
+  .week-card:hover {
+    background: var(--color-surface-2);
+  }
+  .week-part {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .week-title {
+    font-size: var(--text-l);
+    font-weight: var(--weight-bold);
+  }
+  .week-go {
+    font-weight: var(--weight-bold);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+  .week-note {
+    margin-top: var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .group h3 {
+    font-size: var(--text-m);
+    margin: var(--space-4) 0 var(--space-1);
+  }
+  .stars {
+    color: var(--c-staging-ink);
+    letter-spacing: 0.1em;
+  }
+  .levels-intro,
+  .group-text {
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+    margin: 0 0 var(--space-2);
+  }
+  .drill-part-tag {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .drills {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .drill {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    background: var(--color-bg);
+  }
+  .drill a {
+    font-weight: var(--weight-bold);
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+  .drill-done {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--c-repo-ink);
+    background: var(--c-repo-soft);
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+  }
+  .drill-done[hidden] {
+    display: none;
+  }
+  .drill-story {
+    flex-basis: 100%;
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .exam-hint {
+    margin-top: var(--space-6);
+    font-size: var(--text-s);
+  }
+</style>

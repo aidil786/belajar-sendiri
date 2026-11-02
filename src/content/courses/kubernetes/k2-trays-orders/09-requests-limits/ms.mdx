@@ -1,0 +1,83 @@
+---
+id: k8s-k2-l09
+world: 2
+title: "Requests dan limits"
+summary: "Anda akan belajar: cara requests tempah ruang di node, dan cara limits hadkan apa yang container guna."
+minutes: 4
+xp: 20
+interactives: [Choice, SchedulerTetris, FoodCourtSim, YamlDoctor, SortCards]
+needs: [k8s-k2-l08]
+scenario: k2-limits
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Resource management for pods and containers", url: "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" }
+  - { label: "kubectl set resources", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_resources/" }
+---
+
+<Card id="hook" type="hook">
+Satu dulang yang tamak makan semua memori gerai. Dulang di sebelahnya kelaparan dan crash. Bagaimana nak halang?
+
+<Interactive name="Choice" options={[{ label: 'Beri setiap dulang saiz: apa yang ditempah, dan had maksimum', correct: true, why: 'Gerai tahu siapa yang muat, dan tiada siapa boleh ambil semua.' }, { label: 'Harap setiap aplikasi berkelakuan baik', why: 'Satu bug atau satu kebocoran sudah cukup. Harapan bukan rancangan.' }, { label: 'Letak satu dulang sahaja setiap gerai', why: 'Selamat, tapi sangat membazir. Gerai ada kosnya.' }]} />
+</Card>
+
+<Card id="see-requests" type="see">
+**<Term id="resource-request">Request</Term>** (tempahan) ialah ruang rak yang dulang tempah. Scheduler letak dulang hanya di tempat request itu muat. Muatkan dulang ini di gerai.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'stall-b', cpu: '2', memory: '4Gi' }]} pods={[{ name: 'tray-1', cpu: '1500m', memory: '1Gi' }, { name: 'tray-2', cpu: '1', memory: '2Gi' }, { name: 'tray-3', cpu: '500m', memory: '1Gi' }, { name: 'giant', cpu: '3', memory: '1Gi' }]} task={{ type: 'placeAll', pending: ['giant'] }} success="Setiap dulang yang muat sudah ada gerai. giant minta 3 CPU, jadi ia tunggu dalam Pending." />
+</Card>
+
+<Card id="see-yaml" type="see">
+Requests dan **<Term id="resource-limit">limit</Term>** (had) duduk dalam setiap container.
+
+```yaml
+resources:
+  requests:
+    cpu: 100m
+  limits:
+    memory: 128Mi
+```
+
+Yang mana scheduler guna untuk pilih gerai?
+
+<Interactive name="Choice" options={[{ label: 'Requests', correct: true, why: 'Ia tempah ruang ikut request. Limits hanya penting bila dulang berjalan.' }, { label: 'Limits', why: 'Limits hadkan penggunaan kemudian. Meletak dulang guna requests.' }, { label: 'Apa yang aplikasi guna sekarang', why: 'Scheduler tempah ikut request, bukan ikut penggunaan semasa.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+`big` minta 64 CPU. Ralat sebenar: `Insufficient cpu`. Maksudnya: tiada gerai sebesar itu, jadi ia tunggu dalam Pending selamanya. Minta satu persepuluh CPU.
+
+<Interactive name="FoodCourtSim" scenario="k2-limits" goal={{ podsReady: { selector: 'app=big', count: 1 }, rolloutComplete: { name: 'big' } }} hints={['Taip kubectl get pods untuk lihat big menunggu', 'Taip kubectl set resources deployment big --requests=cpu=100m']} success="big dapat gerai. Request yang munasabah dapat tempat duduk." />
+
+<Hint>`kubectl set resources deployment big --requests=cpu=100m` tukar request.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu dulang capai had CPUnya. Apa jadi padanya?
+
+<Interactive name="Choice" options={[{ label: 'Ia diperlahankan', correct: true, why: 'CPU dikongsi ikut masa. Lebih had, dulang itu cuma tunggu giliran.' }, { label: 'Ia dibunuh', why: 'Itu memori. Lebih had memori bermakna OOMKilled.' }, { label: 'Ia pindah ke gerai lebih besar', why: 'Kubernetes tak pernah pindahkan dulang yang sedang berjalan.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+Request yang lebih besar daripada limit tak masuk akal. Kubernetes tolak. Baiki satu nombor.
+
+<Interactive name="YamlDoctor" file="web.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: web\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 500m\n        limits:\n          cpu: 250m\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: web\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 250m\n        limits:\n          cpu: 250m\n'} keep={['requests:\\n\\s+cpu:', 'limits:\\n\\s+cpu:']} hint="Request mesti sama dengan limit, atau lebih kecil." success="Siap! Tempahan muat bawah had maksimum." />
+</Card>
+
+<Card id="check" type="check">
+Betul atau tidak? Susun setiap ayat.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Betul' }, { id: 'no', label: 'Tidak betul' }]} items={[{ label: 'Requests tentukan di mana dulang boleh duduk', bucket: 'yes', why: 'Scheduler muatkan dulang ikut request.' }, { label: 'Lebih had memori cuma buat aplikasi perlahan', bucket: 'no', why: 'Lebih had memori, container kena OOMKilled.' }, { label: 'Tanpa request, dulang tak tempah apa-apa ruang', bucket: 'yes', why: 'Ia mungkin mendarat di gerai yang sesak dan kelaparan.' }, { label: 'Limit boleh lebih kecil daripada request', bucket: 'no', why: 'Kubernetes tolak, macam yang anda baru lihat.' }]} success="Semua tersusun! Requests tempah, limits hadkan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tempah ruang dengan requests dan hadkan penggunaan dengan limits.
+</Card>
+
+<Card id="deeper" type="deeper">
+CPU dikira dalam teras: `1000m` ialah 1 CPU. Memori guna `Mi` dan `Gi` (1Gi ialah 1024Mi). `kubectl top pods` (Dunia K5) tunjuk penggunaan semasa, supaya anda boleh pilih nombor yang adil.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, minta 64 CPU. Kemudian baca Events.
+</Card>

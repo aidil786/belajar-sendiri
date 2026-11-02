@@ -1,0 +1,70 @@
+---
+id: docker-d4-l07
+world: 4
+title: "Dev lawan prod: fail override"
+summary: "Anda akan belajar: jalankan satu aplikasi dua cara, dengan satu fail kongsi dan tambahan kecil."
+minutes: 4
+xp: 20
+interactives: [SortCards, KitchenReplay, Choice, KitchenSim, Mission]
+needs: [docker-d4-l06]
+scenario: d4-override
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Merge Compose files", url: "https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/" }
+  - { label: "Use Compose in production", url: "https://docs.docker.com/compose/how-tos/production/" }
+  - { label: "docker compose -f", url: "https://docs.docker.com/reference/cli/docker/compose/" }
+---
+
+<Card id="hook" type="hook">
+Laptop anda mahu suntingan cepat. Server kedai mahu terus hidup sendiri. Satu fail tak boleh kata kedua-duanya. Susun setiap hajat.
+
+<Interactive name="SortCards" buckets={[{ id: 'dev', label: 'Laptop (dev)' }, { id: 'prod', label: 'Server (prod)' }, { id: 'both', label: 'Kedua-dua' }]} items={[{ label: 'Nampak suntingan laman serta-merta, tanpa bina semula', bucket: 'dev', why: 'Berguna semasa memasak. Berisiko di server.' }, { label: 'Hidup semula sendiri selepas crash', bucket: 'prod', why: 'Tiada siapa jaga server pukul 3 pagi.' }, { label: 'Bakar laman ke dalam image', bucket: 'prod', why: 'Server jalankan tepat apa yang anda uji.' }, { label: 'Image db postgres:18-alpine', bucket: 'both', why: 'Pangkalan data sama di mana-mana.' }, { label: 'Tingkap 8080 untuk laman web', bucket: 'both', why: 'Tingkap sama di kedua-dua tempat di sini.' }]} success="Ada hajat yang dikongsi. Ada yang milik satu dapur sahaja." />
+</Card>
+
+<Card id="see-override" type="see">
+```yaml
+# compose.override.yaml
+services:
+  web:
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+```
+
+<Interactive name="KitchenReplay" scenario="d4-override" commands={['docker compose up -d', 'echo "<h1>Kedai Kancil: new menu</h1>" > web/index.html', 'curl -s localhost:8080']} label="Folder web di laptop dipasang ke dalam web, jadi menu baru terus nampak." />
+
+Benda yang dikongsi kekal dalam `compose.yaml`. Tambahan laptop masuk ke `compose.override.yaml`. Compose baca **<Term id="compose-override">fail override</Term>** ini sendiri dan letak di atas.
+</Card>
+
+<Card id="predict" type="predict">
+Dua fail tetapkan kunci yang sama. Fail pertama kata satu nilai, fail kemudian kata nilai lain. Mana yang menang?
+
+<Interactive name="Choice" options={[{ label: 'Fail yang kemudian', correct: true, why: 'Fail bertindan ikut urutan. Untuk nilai tunggal seperti image atau restart, yang paling atas menang.' }, { label: 'Fail yang pertama', why: 'Fail pertama ialah asas. Fail kemudian mengubahnya.' }, { label: 'Compose berhenti dengan ralat', why: 'Tukar nilai memang tujuannya. Compose gabungkan fail-fail itu.' }]} />
+</Card>
+
+<Card id="try-prod" type="try">
+Hidupkan versi server: `compose.yaml` dengan `compose.prod.yaml`. Namakan kedua-dua fail dengan `-f`, asas dulu.
+
+<Interactive name="KitchenSim" scenario="d4-override" keys="compose" goal={{ composeUp: 'kedai-kancil', restartPolicy: { 'kedai-kancil-web-1': 'unless-stopped' }, typed: '-f compose\\.prod\\.yaml' }} hints={['Dua pilihan -f: mula-mula compose.yaml, kemudian compose.prod.yaml.', 'Taip docker compose -f compose.yaml -f compose.prod.yaml up -d']} success="Campuran prod sedang berjalan. Setiap hidangan kini hidup semula sendiri." />
+
+<Hint>`docker compose -f compose.yaml -f compose.prod.yaml up -d`</Hint>
+</Card>
+
+<Card id="check-prod" type="check">
+<Interactive name="KitchenReplay" scenario="d4-override" commands={['docker compose -f compose.yaml -f compose.prod.yaml up -d', 'echo "<h1>Kedai Kancil: new menu</h1>" > web/index.html', 'curl -s localhost:8080']} label="Dengan -f, override dev dilangkau. Suntingan laptop tak sampai ke server: laman lama yang keluar." />
+
+Kenapa laman lama? Dengan `-f`, Compose baca fail yang anda namakan sahaja. Tiada pasangan folder dev, jadi laman datang dari image.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan satu aplikasi dua cara: dev dan prod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cara fail bergabung: satu nilai (seperti `image`) diganti. Senarai seperti `ports` ditambah bersama. `environment` bergabung ikut nama. `volumes` bergabung ikut laluan di dalam bekas. Buat larian kering dulu: `docker compose -f compose.yaml -f compose.prod.yaml config`.
+
+<Interactive name="Mission" id="d4-l07-rep" steps={[{ id: 'override', text: 'Pindahkan satu tetapan khas dev ke compose.override.yaml.' }, { id: 'dev', text: 'Semak campuran dev.', command: 'docker compose config' }, { id: 'prod', text: 'Semak campuran prod.', command: 'docker compose -f compose.yaml -f compose.prod.yaml config' }]} success="Dua dapur, satu buku resepi yang dikongsi." />
+</Card>

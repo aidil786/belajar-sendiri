@@ -1,0 +1,68 @@
+---
+id: docker-d5-l06
+world: 5
+title: "Imbas lubang: Scout dan Trivy"
+summary: "Anda akan belajar: imbas image untuk lubang yang diketahui, baca laporannya dan baiki yang paling teruk."
+minutes: 4
+xp: 20
+interactives: [Transcript, SpotLines, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [docker-d5-l05]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Scout", url: "https://docs.docker.com/scout/" }
+  - { label: "docker scout cves", url: "https://docs.docker.com/reference/cli/docker/scout/cves/" }
+  - { label: "Trivy", url: "https://trivy.dev/" }
+  - { label: "Bina semula image anda selalu", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Trivy imbas image nginx:1.29-alpine. Baris terakhir: Total 232, dengan 1 CRITICAL dan 47 HIGH." lines={[{ cmd: 'trivy image nginx:1.29-alpine' }, { out: '…', color: 'dim' }, { out: 'Total: 232 (UNKNOWN: 4, LOW: 96, MEDIUM: 84, HIGH: 47, CRITICAL: 1)', color: 'yellow' }]} />
+
+Image nginx yang lebih lama. Pemeriksa makanan jumpa 232 lubang yang diketahui. Satu CRITICAL. Nak mula dari mana?
+</Card>
+
+<Card id="see-scanner" type="see">
+**<Term id="vulnerability-scanner">Pengimbas</Term>** baca setiap pakej dalam pek. Ia semak setiap satu dengan senarai awam lubang yang diketahui, dipanggil <Term id="cve" course="cicd">CVE</Term>. Ini yang CRITICAL.
+
+<Interactive name="SpotLines" lines={[{ text: 'Library:            brotli-libs' }, { text: 'Vulnerability:      CVE-2026-111497' }, { text: 'Severity:           CRITICAL' }, { text: 'Installed Version:  1.2.0-r0' }, { text: 'Fixed Version:      1.2.1-r0', target: true }]} prompt="Tekan baris yang beritahu cara membaikinya." success="Ya! Versi 1.2.1-r0 tutup lubang itu." />
+</Card>
+
+<Card id="try-scout" type="try">
+Pemeriksa milik Docker sendiri ialah Docker Scout. Ia perlu log masuk Docker yang percuma. Bina arahan yang senaraikan lubang paling teruk sahaja.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'cakap dengan Docker' }, { text: 'scout', means: 'si pemeriksa' }, { text: 'cves', means: 'senaraikan lubang yang diketahui' }, { text: '--only-severity critical,high', means: 'dua jenis paling teruk sahaja' }, { text: 'kedai:1.0', means: 'pek yang hendak disemak' }]} decoys={[{ text: '--severity CRITICAL', means: 'itu flag Trivy' }]} success="Scout dan Trivy, dua pemeriksa, satu kerja." />
+</Card>
+
+<Card id="predict" type="predict">
+Lubang CRITICAL itu dalam `brotli-libs`, yang datang bersama base image. Apa cara terbaik membaikinya?
+
+<Interactive name="Choice" options={[{ label: 'Guna base lebih baru, atau naik taraf pakej itu. Kemudian imbas semula.', correct: true, why: 'Pembaikan sudah ada: 1.2.1-r0. Bina semula dengannya, kemudian semak.' }, { label: 'Matikan pengimbas', why: 'Lubang itu masih dalam pek.' }, { label: 'Hantar sahaja. Cuma satu.', why: 'Satu lubang CRITICAL mungkin cukup untuk menceroboh.' }]} />
+</Card>
+
+<Card id="see-fixed" type="see">
+<Interactive name="Transcript" title="bash" label="kedai:1.0 ada 1 lubang CRITICAL, jadi Trivy keluar dengan 1. kedai:1.1 naik taraf brotli-libs dan Trivy keluar dengan 0." lines={[{ cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai:1.0' }, { out: '…', color: 'dim' }, { out: 'Total: 1 (CRITICAL: 1)', color: 'red' }, { cmd: 'echo $?' }, { out: '1', color: 'red' }, { cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai:1.1' }, { out: '…', color: 'dim' }, { cmd: 'echo $?' }, { out: '0', color: 'green' }]} />
+
+`kedai:1.0` dibina atas `nginx:1.30-alpine`, dengan lubang yang sama. `--exit-code 1` jadikan CRITICAL satu kegagalan. Versi 1.1 tambah satu baris resepi: `RUN apk upgrade --no-cache brotli-libs`. Kini ia lulus.
+</Card>
+
+<Card id="check" type="check">
+Tabiat imbas yang bagus? Leret ke kanan untuk ya.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Imbas pek sebelum anda push', good: true, why: 'Tangkap lubang sebelum sesiapa pull.' }, { text: 'Sudah imbas bulan Jun, jadi selamat selamanya', good: false, why: 'Lubang baru dijumpai setiap hari. Imbas semula selalu.' }, { text: 'Baiki CRITICAL dulu, kemudian rancang untuk HIGH', good: true, why: 'Paling teruk dulu. Peraturan jelas untuk pasukan.' }, { text: 'Sorok laporan supaya binaan kekal hijau', good: false, why: 'Lubang masih ada. Baiki pakej atau base.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh imbas image dan baiki lubang paling teruknya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Scout perlu akaun Docker dan semak image di komputer anda. Trivy ialah sumber terbuka dan tak perlu akaun. Kedua-duanya baca pakej dalam image, jadi tiada yang jumpa pepijat dalam kod anda sendiri. `docker scout cves --exit-code` pulangkan 2 bila jumpa lubang. `--ignore-unfixed` Trivy sorok lubang yang belum ada pembaikan.
+
+Latihan sebenar (pilihan), dengan Trivy dipasang ikut dokumen rasminya:
+
+<Interactive name="Mission" id="d5-l06-rep" steps={[{ id: 'install', text: 'Pasang Trivy ikut dokumen rasmi di trivy.dev.' }, { id: 'scan', text: 'Imbas image kecil untuk dua jenis paling teruk.', command: 'trivy image --severity HIGH,CRITICAL alpine:3.22' }, { id: 'mine', text: 'Imbas satu image anda sendiri. Kira lubang CRITICAL.' }, { id: 'scout', text: 'Pilihan, selepas docker login: cuba Scout juga.', command: 'docker scout quickview alpine:3.22' }]} success="Anda baca laporan imbasan macam pemeriksa makanan!" />
+</Card>

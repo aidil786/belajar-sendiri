@@ -1,0 +1,65 @@
+---
+id: aws-a4-l02
+world: 4
+title: "ECS: task dan service"
+summary: "Anda akan belajar: cara ECS jalankan container dari kad resepi, dan pastikan ia terus berjalan."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, OrderList, SpotLines, SortCards, Choice]
+needs: [aws-a4-l01]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon ECS: What is Amazon ECS?", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" }
+  - { label: "Amazon ECS: Task definitions", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html" }
+  - { label: "Amazon ECS: Services", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html" }
+  - { label: "AWS CLI: aws ecs list-tasks", url: "https://docs.aws.amazon.com/cli/latest/reference/ecs/list-tasks.html" }
+  - { label: "Amazon ECS pricing", url: "https://aws.amazon.com/ecs/pricing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '02:00', title: 'Rosak', text: 'Container Kedai Kancil berhenti di satu-satunya server.' }, { when: '02:01', title: 'Sunyi', text: 'Tiada siapa berjaga untuk mulakannya semula.' }, { when: '08:00', title: 'Tutup', text: 'Pembeli pagi jumpa halaman ralat.' }]} />
+
+Container boleh rosak. Seseorang mesti perasan dan mulakan yang baru, setiap kali. Ketik cerita itu. Siapa boleh buat pada pukul 2 pagi?
+</Card>
+
+<Card id="see-ecs" type="see">
+**<Term id="ecs">ECS</Term>** (pengurus container) ialah pengurus pusat beli-belah untuk container. Anda beri satu pelan. Ia pastikan pelan itu benar, siang dan malam. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Tulis kad resepi (task definition)', 'Daftarkan ia dengan ECS', 'Cipta service: kekalkan 2 berjalan', 'ECS mulakan 2 task dari kad itu']} label="Langkah pertama di atas" success="Kad, daftar, service, task. Kemudian ECS jaga mereka untuk anda." />
+</Card>
+
+<Card id="see-card" type="see">
+Kad resepi itu ialah **<Term id="task-definition">task definition</Term>**. Ia dalam JSON. Ketik baris yang sebut image mana untuk dijalankan.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang pilih image." success="Itulah alamat rak ECR anda, dengan tag versi." lines={[{ text: '{' }, { text: '  "family": "kedai-web",' }, { text: '  "requiresCompatibilities": ["FARGATE"],' }, { text: '  "cpu": "256",' }, { text: '  "memory": "512",' }, { text: '  "containerDefinitions": [{' }, { text: '    "name": "web",' }, { text: '    "image": "111122223333.dkr.ecr.ap-southeast-5.amazonaws.com/kedai-kancil:1.0",', target: true }, { text: '    "portMappings": [{ "containerPort": 80 }]' }, { text: '  }]' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Salinan kad yang sedang berjalan ialah task. **<Term id="ecs-service">Service</Term>** kekalkan N task hidup. Yang mana pegang setiap tetapan?
+
+<Interactive name="SortCards" buckets={[{ id: 'card', label: 'Task definition (kad resepi)' }, { id: 'service', label: 'Service (janji)' }]} items={[{ label: 'Image dan tag mana', bucket: 'card', why: 'Kad sebut apa yang perlu dimasak.' }, { label: 'CPU dan memori untuk setiap task', bucket: 'card', why: 'Setiap salinan dapat saiz pada kad.' }, { label: 'Kekalkan 2 task berjalan', bucket: 'service', why: 'Service yang kira dan ganti.' }, { label: 'Load balancer mana yang hantar pembeli', bucket: 'service', why: 'Service sambungkan task ke kaunter penyambut.' }]} success="Kad sebut apa. Service sebut berapa banyak, dan kekalkannya." />
+</Card>
+
+<Card id="predict" type="predict">
+Service mahu 2 task. Pukul 2 pagi, satu rosak. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'ECS mulakan task baru sendiri', correct: true, why: 'Mahu 2, nampak 1: ia mulakan satu. Macam Deployment dalam Kubernetes.' }, { label: 'Kedai jalan dengan 1 sehingga anda bangun', why: 'Itu cara lama. Service yang baiki.' }, { label: 'ECS hentikan yang satu lagi juga', why: 'Tak sekali-kali. Ia hanya naikkan semula bilangannya.' }]} />
+</Card>
+
+<Card id="check-cli" type="check">
+CLI senaraikan task yang berjalan. Ini jawapan contoh rasmi. Ketik setiap task.
+
+<Interactive name="SpotLines" prompt="Ketik setiap task yang berjalan." success="Dua task, masing-masing dengan idnya sendiri." lines={[{ text: '$ aws ecs list-tasks --cluster default' }, { text: '{' }, { text: '    "taskArns": [' }, { text: '        "arn:aws:ecs:us-west-2:123456789012:task/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111",', target: true }, { text: '        "arn:aws:ecs:us-west-2:123456789012:task/a1b2c3d4-5678-90ab-cdef-EXAMPLE22222"', target: true }, { text: '    ]' }, { text: '}' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan aplikasi sebagai task definition, dan biar service kekalkannya berjalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+ECS sendiri tiada caj tambahan. Anda bayar tempat task berjalan: Fargate (pelajaran seterusnya) atau server EC2 anda sendiri. Versi kad baru ialah revision: `kedai-web:2`. Halakan service kepadanya, dan ECS masukkan task baru, keluarkan yang lama.
+</Card>

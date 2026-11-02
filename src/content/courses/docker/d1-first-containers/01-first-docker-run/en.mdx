@@ -1,0 +1,72 @@
+---
+id: docker-d1-l01
+world: 1
+title: Your first docker run
+summary: "You will learn: what docker run does, one step at a time."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d0-l10]
+scenario: d1-hello
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+---
+
+<Card id="hook" type="hook">
+You want to run an app. No install, no setup, just one line: `docker run hello-world`. Your laptop has never seen this app. What does Docker do first?
+
+<Interactive name="Choice" options={[{ label: 'Fetch it from the shop freezer online', correct: true, why: 'Your kitchen has no copy yet, so Docker downloads one first.' }, { label: 'Stop with a "not found" error', why: 'When your laptop has no copy, Docker looks online first.' }, { label: 'Install it like a normal app', why: 'Nothing gets installed. The app runs in a sealed box.' }]} />
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="KitchenReplay" scenario="d1-hello" commands={['docker run hello-world']} label="docker run hello-world. Docker can't find the image, so it pulls it from Docker Hub. Then a container runs, prints Hello from Docker!, and stops. The picture shows one image and one grey, finished lunchbox." />
+
+Read the top lines. Docker had no meal pack. So it **<Term id="pull">pulled</Term>** one from Docker Hub, the shop freezer. Then a lunchbox ran and said hello.
+</Card>
+
+<Card id="try-order" type="try">
+`docker run` does three jobs in a row. Put them in order.
+
+<Interactive name="OrderList" items={['Pull: fetch the meal pack (the image)', 'Create: fill a lunchbox (the container) from it', 'Start: switch on the app inside the box']} label="First job at the top" success="Pull, create, start. That is docker run!" />
+</Card>
+
+<Card id="try-run" type="try">
+Your turn. Type `docker run hello-world`. Watch the picture: a meal pack lands, then a lunchbox appears.
+
+<Interactive name="KitchenSim" scenario="d1-hello" goal={{ imageExists: 'hello-world:latest', typed: '^docker (container )?run (.* )?hello-world' }} hints={['Type docker run hello-world and press Enter.']} success="Your first container! The meal pack is now in your freezer." />
+
+<Hint>Type `docker run hello-world`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You type `docker run hello-world` a second time. What happens?
+
+<Interactive name="Choice" options={[{ label: 'No download. A second lunchbox runs.', correct: true, why: 'The meal pack is in your freezer now. Every run fills a new box.' }, { label: 'It downloads the pack again', why: 'The pack is already in your freezer. Docker reuses it.' }, { label: 'The first lunchbox runs again', why: 'docker run always makes a new box. The old one stays.' }]} />
+</Card>
+
+<Card id="check-ps" type="check">
+Run it once more. Then type `docker ps -a`: it lists every <Term id="container">container</Term>, even finished ones. How many lunchboxes now?
+
+<Interactive name="KitchenSim" scenario="d1-hello" intro={['docker run hello-world']} goal={{ count: { containers: 2 }, lastTyped: '^docker (ps|container ls) (-a|--all)$' }} hints={['Type docker run hello-world first.', 'Then type docker ps -a']} success="Two boxes, both Exited (0). Each run made a new one." />
+
+<Hint>First `docker run hello-world`, then `docker ps -a`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now run a container and explain what happened.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run` is three commands in one: `docker pull`, `docker create` and `docker start`. Each run makes a new box, with a random name like `vibrant_ritchie`. Lesson 3 shows how to pick your own.
+
+Real rep (optional). On your own machine, with Docker installed:
+
+<Interactive name="Mission" id="docker-d1-l01-rep" steps={[{ id: 'run', text: 'Run your first container.', command: 'docker run hello-world' }, { id: 'list', text: 'List every box, even finished ones.', command: 'docker ps -a' }, { id: 'read', text: 'Read the hello message. Can you spot the four steps it lists?' }]} success="That was real Docker!" />
+</Card>

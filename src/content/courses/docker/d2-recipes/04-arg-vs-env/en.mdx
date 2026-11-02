@@ -1,0 +1,70 @@
+---
+id: docker-d2-l04
+world: 2
+title: "ARG vs ENV"
+summary: "You will learn: settings for baking time (ARG) and settings that stay in the pack (ENV)."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, CommandBuilder, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l03]
+scenario: d2-l04
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Build variables", url: "https://docs.docker.com/build/building/variables/" }
+  - { label: "Dockerfile reference: ARG", url: "https://docs.docker.com/reference/dockerfile/#arg" }
+  - { label: "Dockerfile reference: ENV", url: "https://docs.docker.com/reference/dockerfile/#env" }
+---
+
+<Card id="hook" type="hook">
+You bake the same menu for two shops: Kancil and Pasar. Only the shop name changes. Do you need two recipes?
+
+<Interactive name="Choice" options={[{ label: 'No. Pass the shop name when you build', correct: true, why: 'One recipe, a blank to fill in at build time.' }, { label: 'Yes, one recipe per shop', why: 'That works, but every fix must be done twice.' }, { label: 'Yes, and two folders too', why: 'No need. A build setting can fill the gap.' }]} />
+</Card>
+
+<Card id="see-arg" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l04" commands={['cat Dockerfile', 'docker build --build-arg SHOP=pasar -t menu:pasar .', 'docker run --rm menu:pasar']} label="The recipe has ARG SHOP=kancil and ENV GREETING. Built with --build-arg SHOP=pasar, the image prints Menu for pasar." />
+
+**<Term id="build-arg">ARG</Term>** is a blank for baking time. `--build-arg SHOP=pasar` fills it in. Without it, the default `kancil` is used.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that bakes a menu for Pasar.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker build', means: 'bake an image' }, { text: '--build-arg SHOP=pasar', means: 'fill the SHOP blank' }, { text: '-t menu:pasar', means: 'name and tag' }, { text: '.', means: 'this folder' }]} decoys={[{ text: '-e SHOP=pasar', means: '-e is for docker run, not build' }]} success="That bakes the Pasar menu." />
+</Card>
+
+<Card id="predict" type="predict">
+The container from `menu:pasar` runs `printenv SHOP`. What prints?
+
+<Interactive name="Choice" options={[{ label: 'Nothing. ARG is gone after the build', correct: true, why: 'ARG only exists while baking. The running box never sees it.' }, { label: 'pasar', why: 'That was the build value. It was not packed.' }, { label: 'kancil', why: 'The default is also a build-time value. Gone too.' }]} />
+</Card>
+
+<Card id="try-env" type="try">
+`ENV GREETING` does stay in the pack. Print it. Then change it with `-e` and print it again.
+
+<Interactive name="KitchenSim" scenario="d2-l04" intro={['docker build -t menu:1.0 .']} goal={{ typed: '-e GREETING=', lastTyped: 'printenv GREETING' }} hints={['Type docker run --rm menu:1.0 printenv GREETING', 'Now: docker run --rm -e GREETING=Hai menu:1.0 printenv GREETING']} success="ENV gives the default. -e changes it for one box." />
+
+<Hint>`-e` goes before the image name.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+ARG or ENV?
+
+<Interactive name="SortCards" buckets={[{ id: 'arg', label: 'ARG (baking time)' }, { id: 'env', label: 'ENV (stays in the pack)' }]} items={[{ label: 'Which Node version to download while baking', bucket: 'arg', why: 'Only the build needs it.' }, { label: 'The port the app reads when it starts', bucket: 'env', why: 'The running app needs it.' }, { label: 'docker run -e can change it', bucket: 'env', why: '-e sets ENV values for one box.' }, { label: 'Gone when the build ends', bucket: 'arg', why: 'ARG is a baking blank only.' }]} success="Baking blanks: ARG. Settings in the pack: ENV." />
+</Card>
+
+<Card id="win" type="win">
+You can now pick ARG for baking and ENV for running.
+</Card>
+
+<Card id="deeper" type="deeper">
+Never pass a password with ARG or ENV. `docker history` shows ARG values, and ENV stays in every container. Lesson 12 shows the safe way: build secrets.
+
+An `ARG` before `FROM` can pick the base itself: `ARG BASE=nginx:latest`, then `FROM ${BASE}`. Lesson 9 uses this trick.
+
+<Interactive name="Mission" id="d2-l04-rep" steps={[{ id: 'arg', text: 'Add ARG SHOP=kancil and a RUN line that uses $SHOP to a small recipe.' }, { id: 'build', text: 'Build it twice: once plain, once with your own value.', command: 'docker build --build-arg SHOP=pasar -t menu:pasar .' }, { id: 'check', text: 'Check that SHOP is gone at run time.', command: 'docker run --rm menu:pasar printenv SHOP' }]} success="ARG did its job and left." />
+</Card>

@@ -1,0 +1,69 @@
+---
+id: obs-o1-l04
+world: 1
+title: RED dan USE
+summary: "Anda akan belajar: satu senarai semak pendek untuk servis (RED) dan satu untuk bahagian mesin (USE)."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l03]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana: the RED and USE methods", url: "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" }
+  - { label: "Google SRE book: monitoring distributed systems", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+---
+
+<Card id="hook" type="hook">
+Dua masalah serentak. Servis bayaran lambat. Dapur masak terlalu panas. Guna satu senarai semak untuk kedua-duanya?
+
+<Interactive name="Choice" options={[{ label: 'Dua senarai: satu untuk servis, satu untuk bahagian mesin', correct: true, why: 'Ya. Servis layan permintaan. Dapur buat kerja. Tanya soalan yang sesuai untuk setiap satu.' }, { label: 'Satu senarai untuk semua', why: 'Anda tak boleh tanya dapur berapa permintaan yang gagal.' }, { label: 'Tiada senarai: teka sahaja', why: 'Senarai pendek lebih baik daripada meneka pukul 3 pagi.' }]} />
+</Card>
+
+<Card id="see-red" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'R', title: 'Rate', text: 'Berapa permintaan sesaat?' }, { when: 'E', title: 'Errors', text: 'Berapa banyak yang gagal?' }, { when: 'D', title: 'Duration', text: 'Berapa lama setiap satu ambil?' }]} />
+
+Untuk setiap servis, tanya **<Term id="red-method">RED</Term>**: Rate, Errors, Duration. Tekan setiap huruf.
+</Card>
+
+<Card id="try-use" type="try">
+Untuk bahagian mesin, tanya USE: Utilization, Saturation, Errors. Tunjuk utilization dapur.
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" metrics={['kedai_stove_busy_ratio', 'kedai_queue_orders', 'kedai_checkout_seconds']} prompt="Tunjuk berapa sibuk dapur: 1 bermaksud sibuk sepanjang masa." goal={{ typed: 'kedai_stove_busy_ratio', resultCount: 1 }} hints={['Utilization bermaksud berapa sibuk. Cip mana yang kata sibuk?', 'Tekan kedai_stove_busy_ratio, kemudian tekan Run.']} solution="kedai_stove_busy_ratio" success="Dapur sibuk 100% masa pada 25m." />
+
+<Hint><Term id="use-method">USE</Term> untuk bahagian yang buat kerja: dapur, CPU, cakera.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Tengok graf dapur. Bila ia sampai 1, sibuk sepanjang masa?
+
+<Interactive name="Choice" options={[{ label: 'Pada 14m', correct: true, why: 'Ya. Dari 14m dapur tak pernah rehat.' }, { label: 'Pada 0m', why: 'Ia mula pada 0.5: sibuk separuh masa.' }, { label: 'Pada 25m', why: 'Ia dah sampai 1 lama sebelum 25m.' }]} />
+
+<Hint>Gerakkan peluncur masa, atau baca garisan graf.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+RED untuk servis, USE untuk bahagian. Susun setiap soalan.
+
+<Interactive name="SortCards" buckets={[{ id: 'red', label: 'RED (servis)' }, { id: 'use', label: 'USE (bahagian)' }]} items={[{ label: 'Permintaan bayaran sesaat', bucket: 'red', why: 'Rate, untuk servis bayaran.' }, { label: 'Peratus permintaan menu yang gagal', bucket: 'red', why: 'Errors, untuk servis menu.' }, { label: 'Berapa lama permintaan pesanan ambil', bucket: 'red', why: 'Duration, untuk servis pesanan.' }, { label: 'CPU sibuk 90% masa', bucket: 'use', why: 'Utilization sebuah CPU.' }, { label: 'Kerja yang menunggu cakera', bucket: 'use', why: 'Saturation sebuah cakera.' }, { label: 'Ralat kad rangkaian', bucket: 'use', why: 'Errors satu bahagian.' }]} success="Servis dapat RED. Bahagian dapat USE." />
+</Card>
+
+<Card id="check" type="check">
+RED ada tiga huruf. Isyarat emas mana yang ia tinggalkan?
+
+<Interactive name="Choice" options={[{ label: 'Saturation', correct: true, why: 'Ya. RED tak tanya berapa penuh. USE tanya untuk bahagian mesin.' }, { label: 'Latency', why: 'Duration ialah latency.' }, { label: 'Traffic', why: 'Rate ialah traffic.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak servis dengan RED dan bahagian mesin dengan USE.
+</Card>
+
+<Card id="deeper" type="deeper">
+USE datang daripada Brendan Gregg, untuk cari kenapa mesin lambat. RED datang daripada Tom Wilkie, untuk servis. Dokumen Grafana kata dashboard RED yang baik mewakili apa pengguna rasa. RED tunjuk simptom; USE selalunya jumpa punca.
+
+<Interactive name="Mission" id="obs-o1-l04-real" steps={[{ id: 'svc', text: 'Pilih satu servis yang anda kenal. Tulis R, E dan D-nya.' }, { id: 'part', text: 'Pilih satu bahagian mesin di bawahnya. Tulis U, S dan E-nya.' }]} success="Dua senarai semak, sedia untuk insiden seterusnya." />
+</Card>

@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l12
+world: 2
+title: "StatefulSet: nama yang kekal"
+summary: "Anda akan belajar: cara StatefulSet beri pod nama yang kekal, dimulakan ikut giliran."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim, SortCards]
+needs: [k8s-k2-l11]
+scenario: k2-statefulset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: StatefulSets", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/" }
+  - { label: "Kubernetes: StatefulSet basics (tutorial)", url: "https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/" }
+---
+
+<Card id="hook" type="hook">
+Pangkalan data anda ada 3 salinan. Salinan 0 ialah ketua; yang lain ikut. Selepas crash, ketua mesti kembali sebagai ketua. Nama rawak buat ini susah. Apa yang anda perlukan?
+
+<Interactive name="Choice" options={[{ label: 'Nama yang kekal: web-0, web-1, web-2', correct: true, why: 'Nombor tetap beritahu semua orang siapa siapa, walaupun selepas restart.' }, { label: 'Lebih banyak salinan', why: 'Lebih banyak salinan tak beritahu yang mana ketua.' }, { label: 'Nama rawak baharu setiap kali', why: 'Itu yang Deployment buat. Okey untuk kedai, bukan untuk pangkalan data.' }]} />
+</Card>
+
+<Card id="see-sts" type="see">
+<Interactive name="KubeReplay" scenario="k2-statefulset" commands={['kubectl apply -f web.yaml', 'kubectl rollout status statefulset/web --timeout=180s', 'kubectl get pods']} label="StatefulSet web buat pod web-0, web-1 dan web-2, satu demi satu." />
+
+**<Term id="statefulset">StatefulSet</Term>** beri setiap dulang nombor yang kekal. Dulang bermula ikut giliran: web-0 dulu, kemudian web-1, kemudian web-2.
+</Card>
+
+<Card id="try-order" type="try">
+Bagaimana `web` bermula? Susun langkahnya.
+
+<Interactive name="OrderList" items={['web-0 mula', 'web-0 Ready', 'web-1 mula', 'web-1 Ready', 'web-2 mula']} label="Langkah pertama di atas" success="Ya! Setiap dulang tunggu dulang sebelumnya Ready." />
+
+<Hint>Nombor kecil dulu. Setiap satu tunggu Ready sebelum yang seterusnya mula.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam `web-1`. Apa yang kembali?
+
+<Interactive name="Choice" options={[{ label: 'Pod baharu, masih bernama web-1', correct: true, why: 'Dulangnya baharu, tapi nombornya kekal. Semua orang masih kenal siapa ia.' }, { label: 'Pod bernama web-3', why: 'StatefulSet isi tempat kosong dengan nombor yang sama.' }, { label: 'Tiada apa kembali', why: 'StatefulSet masih mahu 3, jadi ia buat satu.' }]} />
+</Card>
+
+<Card id="check-delete" type="check">
+<Interactive name="KubeReplay" scenario="k2-statefulset-up" commands={['kubectl delete pod web-1', 'kubectl wait --for=condition=Ready pod/web-1 --timeout=90s', 'kubectl get pods']} label="web-1 dipadam. web-1 baharu bermula; AGE-nya lebih muda daripada web-0 dan web-2." />
+
+Lihat AGE. `web-1` baru sahaja dibuat, tapi namanya kekal. Tempat duduk sama, dulang baharu.
+</Card>
+
+<Card id="try-scale" type="try">
+Giliran anda. Tambah salinan keempat. Teka namanya sebelum anda lihat.
+
+<Interactive name="FoodCourtSim" scenario="k2-statefulset-up" goal={{ replicas: { name: 'web', count: 4, kind: 'StatefulSet' }, podsReady: { selector: 'app=web', count: 4 } }} hints={['Taip kubectl scale statefulset web --replicas=4', 'Kemudian kubectl get pods']} success="web-3 sertai, betul-betul selepas web-2." />
+
+<Hint>`kubectl scale statefulset web --replicas=4`, kemudian `kubectl get pods`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Deployment atau StatefulSet? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'sts', label: 'StatefulSet' }]} items={[{ label: 'Kedai web yang tak simpan data', bucket: 'deploy', why: 'Mana-mana dulang boleh melayan. Nama rawak tak apa.' }, { label: 'Pangkalan data dengan seorang ketua', bucket: 'sts', why: 'Ketua perlukan nama yang kekal.' }, { label: 'Pod bernama web-0 dan web-1', bucket: 'sts', why: 'Nama bernombor datang dari StatefulSet.' }, { label: 'Pod bernama shop-747bf9cf8-9wfbg', bucket: 'deploy', why: 'Hujung rawak bermakna Deployment yang buat.' }]} success="Siap! Nama yang kekal: StatefulSet." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan pod dengan nama yang kekal, ikut giliran.
+</Card>
+
+<Card id="deeper" type="deeper">
+StatefulSet perlukan headless Service untuk alamat tetap seperti `web-0.web` (Dunia K3). Ia boleh beri setiap dulang storan sendiri dengan `volumeClaimTemplates` (Dunia K4). Jalankan pangkalan data sendiri ialah kerja besar. Ramai pasukan guna yang terurus.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, skala `web` turun ke 1. Perhati pod mana keluar dulu.
+</Card>

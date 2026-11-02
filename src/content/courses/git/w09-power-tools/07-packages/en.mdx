@@ -1,0 +1,61 @@
+---
+id: git-w09-l07
+world: 9
+title: Packages
+summary: "You will learn: how to share your code as a package that other projects install."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, SortCards, CommandBuilder, SwipeJudge]
+needs: [git-w09-l06]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Introduction to GitHub Packages", url: "https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages" }
+  - { label: "Working with the npm registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry" }
+  - { label: "Working with the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+Three of your projects use the same date helper. You fixed a bug in one copy. The other two still break.
+
+<Interactive name="Choice" options={[{ label: 'Publish the helper once. Projects install it', correct: true, why: 'One home, one fix. Every project can update.' }, { label: 'Copy-paste the fix two more times', why: 'And again next time. Copies drift apart.' }, { label: 'Email the file to yourself', why: 'Still copies. Still drifting apart.' }]} />
+</Card>
+
+<Card id="see-package" type="see">
+<Interactive name="Transcript" title="bash" label="Two commands. npm publish uploads the date helper. In another project, npm install @aina-codes/date-helper downloads it." lines={[{ cmd: 'npm publish' }, { cmd: 'npm install @aina-codes/date-helper' }]} />
+
+A **<Term id="package">package</Term>** is code with a name and a version. It sits on a <Term id="registry">registry</Term>, like a shop shelf. GitHub Packages is a shelf on GitHub, right next to your code.
+</Card>
+
+<Card id="try-sort" type="try">
+GitHub Packages has shelves for many kinds of package. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'npm', label: 'npm registry' }, { id: 'container', label: 'Container registry' }, { id: 'never', label: 'Never publish' }]} items={[{ label: 'A JavaScript library', bucket: 'npm', why: 'npm is the shelf for JavaScript.' }, { label: 'A Docker image of your app', bucket: 'container', why: 'Images go on the Container registry.' }, { label: 'Your .env file', bucket: 'never', why: 'Secrets never go in a package.' }, { label: 'A kit of React buttons', bucket: 'npm', why: 'React code is JavaScript.' }, { label: 'A ready-to-run image for a server', bucket: 'container', why: 'A container image runs the same anywhere.' }]} success="Sorted! The right shelf for each, and secrets on none." />
+</Card>
+
+<Card id="try-build" type="try">
+In another project, build the command that installs the date helper.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'npm', means: 'the JavaScript package tool' }, { text: 'install', means: 'download it and add it' }, { text: '@aina-codes/date-helper', means: 'owner and package name' }]} decoys={[{ text: 'publish', means: 'upload, not download' }, { text: 'git', means: 'Git does not install packages' }]} success="That's it! The helper lands in your project." />
+</Card>
+
+<Card id="predict" type="predict">
+You publish version 1.2.1 with the fix. What do your three projects get?
+
+<Interactive name="Choice" options={[{ label: 'The fix, when each one updates', correct: true, why: 'Each project picks its version. Dependabot can nudge them.' }, { label: 'Nothing, ever', why: 'They can update any time they like.' }, { label: 'The fix, instantly, all by itself', why: 'Projects stay on their version until they update.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good package habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Give every release a new version number', good: true, why: 'People can tell versions apart, and pick one.' }, { text: 'Publish from a GitHub Actions workflow', good: true, why: 'Same steps every time, with the built-in GITHUB_TOKEN.' }, { text: 'Change a published version in place', good: false, why: 'Others rely on it. Publish a new version instead.' }, { text: 'Ship a package with your API key inside', good: false, why: 'Everyone who installs it gets your key.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now share code as a package on GitHub.
+</Card>
+
+<Card id="deeper" type="deeper">
+On GitHub Packages, npm names need your scope, like `@aina-codes`. You also tell npm to use GitHub's registry. Container images live at `ghcr.io`. Publishing from your laptop needs a personal access token (classic). In Actions, `GITHUB_TOKEN` works. Public packages are free.
+</Card>

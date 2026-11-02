@@ -1,0 +1,56 @@
+---
+id: iac-t4-l08
+world: 4
+title: When not to use IaC
+summary: "You will learn: what belongs in a blueprint, what doesn't, and what to do after an emergency click."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, OrderList, SwipeJudge]
+needs: [iac-t4-l07]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: the core workflow", url: "https://opentofu.org/docs/intro/core-workflow/" }
+  - { label: "OpenTofu: import blocks", url: "https://opentofu.org/docs/language/import/" }
+---
+
+<Card id="hook" type="hook">
+You need one test bucket for ten minutes. Then you delete it. Do you write a blueprint first?
+
+<Interactive name="Choice" options={[{ label: 'Not needed. A click is fine, if you clean up after.', correct: true, why: 'Blueprints pay off for things that last, or repeat.' }, { label: 'Always: never click anything', why: 'That rule wastes time on throwaway things.' }, { label: 'Yes, and keep the bucket forever', why: 'Leftovers cost money and get forgotten.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Does each one belong in a blueprint?
+
+<Interactive name="SortCards" buckets={[{ id: 'iac', label: 'In the blueprint' }, { id: 'other', label: 'Somewhere else' }]} items={[{ label: "The shop's database server", bucket: 'iac', why: 'It lasts, and rebuilding it by hand would hurt.' }, { label: 'The orders inside the database', bucket: 'other', why: 'That is data. The app and backups look after it.' }, { label: 'A new app release, many times a day', bucket: 'other', why: 'The CI/CD pipeline ships the app. IaC builds where it runs.' }, { label: 'The same setup in three regions', bucket: 'iac', why: 'One module, three copies, no typos.' }, { label: "A password's value", bucket: 'other', why: 'A secret manager keeps it. The blueprint only points to it.' }]} success="Lasting places in the blueprint. Data, releases and secrets elsewhere." />
+</Card>
+
+<Card id="predict" type="predict">
+Outage at 3am. You fix it by clicking in the cloud console. What should happen the next morning?
+
+<Interactive name="Choice" options={[{ label: 'Put the fix in the blueprint, then plan shows No changes', correct: true, why: 'Otherwise the next apply quietly undoes your fix.' }, { label: 'Nothing: it works now', why: 'The blueprint still says the old thing. The next apply puts it back.' }, { label: 'Delete the blueprint, clicking was faster', why: 'One night does not undo all the reasons for a blueprint.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the after-emergency steps in order.
+
+<Interactive name="OrderList" items={['Fix the outage first', 'Write down what you clicked', 'Put it in the blueprint, or adopt it with an import block', 'Plan: it should say No changes', 'Merge it, with a review']} label="First step at the top" success="Clicking is fine in a fire. Writing it down keeps it." />
+</Card>
+
+<Card id="check" type="check">
+Swipe: a good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Blueprint the things you would hate to rebuild by hand', good: true, why: 'That is where IaC pays off most.' }, { text: 'Manage one database from two tools at once', good: false, why: 'They undo each other. Pick one owner.' }, { text: 'Click in an emergency, then write it down the next day', good: true, why: 'Safe now, tidy later.' }, { text: 'Put every database row into OpenTofu', good: false, why: 'Rows change all day. IaC is for the building, not the stock.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose when a blueprint helps, and when it gets in the way.
+</Card>
+
+<Card id="deeper" type="deeper">
+IaC is great for things that last, repeat or need review. It is weak for data and very short experiments. It also clashes with things another tool owns, like a Deployment managed by Argo CD. One owner per thing is the rule.
+</Card>

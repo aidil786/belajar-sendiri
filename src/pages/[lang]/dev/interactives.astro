@@ -1,0 +1,742 @@
+---
+// Hidden test page: one of each newer interactive, for Playwright + axe.
+// Not linked from any menu; noindex. Each demo marks itself data-done="true"
+// when its interactive reports fl:done (like a lesson card does).
+import Base from '~/layouts/Base.astro';
+import Interactive from '~/components/lesson/Interactive.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { KEDAI_GOAL, KEDAI_PALETTE } from '~/lib/composeSamples';
+import dockerSizes from '~/lib/docker-sizes.json';
+import '~/components/lesson/lesson.css';
+import { doctorDemo, doctorTypoDemo, labelsDemo, mirrorApp, rbacDemo, rbacPredictDemo, schedDemo, templateDemo, traceDemo } from '~/lib/k8sDemos';
+import { gateNaclDemo, gateSgDemo, iamEditDemo, iamPredictDemo, iamRoleDemo, idleDemo, subnetDemo, subnetVpcDemo } from '~/lib/aws/demos';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+
+const repo = {
+  owner: 'aina-codes',
+  name: 'diary',
+  description: 'My little diary website.',
+  files: [
+    { path: 'README.md', content: '# Diary\n\nA tiny diary site.\n\n> [!TIP]\n> Read the [guide](CONTRIBUTING.md) first.\n\n- [x] Home page\n- [ ] Contact page\n' },
+    { path: 'CONTRIBUTING.md', content: '# How to help\n\n1. Open an issue.\n2. Make a branch.\n3. Open a pull request.\n' },
+    { path: 'index.html', content: '<h1>My diary</h1>\n<p>Day 1: I learned Git.</p>\n' },
+  ],
+};
+const issues = [
+  { number: 3, title: 'Add a contact page', body: 'Visitors cannot reach me. Please add a **contact** page.', state: 'open', author: 'mei', labels: ['enhancement'] },
+  { number: 4, title: 'Typo on the home page', body: 'It says "Dairy" in one place.', state: 'open', author: 'sam' },
+];
+const pull = {
+  number: 7,
+  title: 'Add contact page',
+  body: 'Adds a simple contact page.\n\nCloses #3',
+  author: 'mei',
+  from: 'contact-page',
+  to: 'main',
+  state: 'open',
+  checks: [{ name: 'test', status: 'pass' }],
+  files: [{ path: 'contact.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Contact</h1>', '+<p>Email me any time.</p>'] }],
+};
+const run = {
+  id: 12,
+  workflow: 'CI',
+  event: 'push',
+  branch: 'main',
+  status: 'fail',
+  jobs: [
+    {
+      name: 'test',
+      steps: [
+        { name: 'Check out code', status: 'pass', log: ['Fetching the repository', 'Done'] },
+        { name: 'Run tests', status: 'fail', log: ['FAIL home.test.js', 'Expected "Diary" but got "Dairy"', 'Error: Process completed with exit code 1.'] },
+        { name: 'Deploy', status: 'skipped' },
+      ],
+    },
+  ],
+};
+const blocks = [
+  { id: 'push', kind: 'trigger', label: 'On push', yaml: 'push:\n  branches: [main]', means: 'Run when someone pushes to main.' },
+  { id: 'job', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest', means: 'Get a fresh Linux computer.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto it.' },
+  { id: 'node', kind: 'step', label: 'Set up Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Install Node.' },
+  { id: 'test', kind: 'step', label: 'Run tests', yaml: '- run: npm test', means: 'Run the tests.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Publish the site.', why: 'This workflow only tests. Deploying comes later.' },
+];
+
+// Ship It Docker games (tests/e2e/docker-games.spec.ts). Layer sizes are the measured ones.
+const kek = Object.fromEntries(dockerSizes.kekLapis.good.map((l) => [l.line.split(' ')[0] === 'COPY' ? l.line : l.line.split(' ')[0], l.size]));
+const kekSlow = [
+  { id: 'from', text: 'FROM node:24-alpine', size: dockerSizes.kekLapis.base.bytes },
+  { id: 'workdir', text: 'WORKDIR /app', size: kek.WORKDIR },
+  { id: 'copy-all', text: 'COPY . .', size: kek['COPY . .'] },
+  { id: 'copy-pkg', text: 'COPY package.json package-lock.json ./', size: kek['COPY package.json package-lock.json ./'] },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: kek.RUN },
+  { id: 'cmd', text: 'CMD ["node", "server.js"]' },
+];
+const kekPick = [
+  { id: 'from', text: 'FROM node:24-alpine', size: dockerSizes.kekLapis.base.bytes },
+  { id: 'workdir', text: 'WORKDIR /app', size: kek.WORKDIR },
+  { id: 'first', text: 'COPY . .', size: kek['COPY . .'], changes: [{ text: 'COPY package.json package-lock.json ./', size: kek['COPY package.json package-lock.json ./'] }] },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: kek.RUN },
+  { id: 'rest', text: 'COPY . .', size: kek['COPY . .'] },
+  { id: 'cmd', text: 'CMD ["node", "server.js"]' },
+];
+---
+
+<Base lang={lang} title={t(lang, 'dev.title')} altPath={`/${other}/dev/interactives/`} noindex>
+  <div class="container dev-page">
+    <h1>{t(lang, 'dev.title')}</h1>
+    <p>{t(lang, 'dev.note')}</p>
+
+    <section class="dev-demo card-content" data-demo="transcript" aria-labelledby="demo-transcript">
+      <h2 id="demo-transcript">Transcript</h2>
+      <Interactive
+        name="Transcript"
+        title="bash"
+        label="Make a folder, write a note, then show it: the note says hi."
+        lines={[{ cmd: 'mkdir demo && cd demo' }, { cmd: 'echo "hi" > note.txt' }, { cmd: 'cat note.txt' }, { out: 'hi', color: 'green' }]}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="repo-merge" aria-labelledby="demo-repo-merge">
+      <h2 id="demo-repo-merge">PracticeRepo: review and merge</h2>
+      <Interactive
+        name="PracticeRepo"
+        screen="pull"
+        repo={repo}
+        issues={issues}
+        pulls={[pull]}
+        settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }}
+        task={{ type: 'merge', pr: 7 }}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="repo-run" aria-labelledby="demo-repo-run">
+      <h2 id="demo-repo-run">PracticeRepo: find the failing step</h2>
+      <Interactive name="PracticeRepo" screen="run" at={12} repo={repo} runs={[run]} task={{ type: 'findFailingStep', run: 12 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="repo-suggest" aria-labelledby="demo-repo-suggest">
+      <h2 id="demo-repo-suggest">PracticeRepo: suggest a change</h2>
+      <Interactive name="PracticeRepo" screen="pull-files" repo={repo} pulls={[pull]} task={{ type: 'suggest', pr: 7 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="repo-label" aria-labelledby="demo-repo-label">
+      <h2 id="demo-repo-label">PracticeRepo: label an issue</h2>
+      <Interactive name="PracticeRepo" screen="issues" repo={repo} issues={issues} task={{ type: 'label', issue: 4, label: 'bug' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="markdown" aria-labelledby="demo-markdown">
+      <h2 id="demo-markdown">MarkdownPlayground</h2>
+      <Interactive
+        name="MarkdownPlayground"
+        initial={'# My project\n\nA short line about it.\n'}
+        prompt="Add a heading called Install and a task list item."
+        goal={{ mustMatch: ['^##\\s+Install', '^- \\[ \\] '], hint: ['Start a line with ## Install', 'Start a line with - [ ] '] }}
+        success="Your README has a section and a to-do list."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="yaml" aria-labelledby="demo-yaml">
+      <h2 id="demo-yaml">YamlBuilder</h2>
+      <Interactive name="YamlBuilder" workflow="CI" blocks={blocks} goal={{ order: ['push', 'job', 'checkout', 'node', 'test'] }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="mission" aria-labelledby="demo-mission">
+      <h2 id="demo-mission">MissionCheck</h2>
+      <Interactive
+        name="MissionCheck"
+        checks={[
+          { type: 'repo', repo: 'diary', label: 'Your diary repo is public' },
+          { type: 'commits', repo: 'diary', min: 3, label: 'It has 3 or more commits' },
+          { type: 'file', repo: 'diary', path: 'README.md', label: 'It has a README.md' },
+        ]}
+        success="GitHub can see your diary!"
+      />
+    </section>
+
+    <!-- World 3: branches, conflicts, interactive rebase -->
+    <section class="dev-demo card-content" data-demo="universe" aria-labelledby="demo-universe">
+      <h2 id="demo-universe">UniverseSplitter: visit both universes</h2>
+      <Interactive name="UniverseSplitter" scenario="w03-l02-split" file="index.html" task={{ type: 'visitAll' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="universe-create" aria-labelledby="demo-universe-create">
+      <h2 id="demo-universe-create">UniverseSplitter: make a branch at a commit</h2>
+      <Interactive name="UniverseSplitter" scenario="w03-l01" task={{ type: 'create', at: '^Add day 1 page$', name: 'idea' }} prompt="Stick a note called idea on the commit “Add day 1 page”." />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conflict" aria-labelledby="demo-conflict">
+      <h2 id="demo-conflict">ConflictResolver: one conflict, editor look</h2>
+      <Interactive name="ConflictResolver" scenario="w03-l06" commands={['git merge cake']} look="editor" graph expect={['learned branches', 'baked a cake']} why="Keep both day 2 lines." />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conflict-three" aria-labelledby="demo-conflict-three">
+      <h2 id="demo-conflict-three">ConflictResolver: three conflicts in two files</h2>
+      <Interactive
+        name="ConflictResolver"
+        scenario="w03-boss-merge"
+        commands={['git merge party']}
+        expect={{ 'index.html': ['My Git Diary', 'I fixed conflicts', 'Party time'], 'style.css': 'hotpink' }}
+        avoid={{ 'index.html': 'Party Diary' }}
+        prompt="Title: keep yours. Day 5: keep both. Colour: keep theirs."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="rebase" aria-labelledby="demo-rebase">
+      <h2 id="demo-rebase">RebaseDeck: move, fixup, drop</h2>
+      <Interactive
+        name="RebaseDeck"
+        scenario="w03-l11b"
+        upstream="main"
+        goal={{ messages: ['^Add photo captions$', '^Add gallery page$', '^Add style$'], commits: 5, filesMissing: ['debug.txt'] }}
+        commitFiles={[{ message: '^Add gallery page$', file: 'gallery.html', contains: 'My Gallery' }]}
+        hints={['Move “fix typo” right under “Add gallery page”.']}
+      />
+    </section>
+
+    <!-- World 4: push/pull courier (tests/e2e/courier.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="courier-fix" aria-labelledby="demo-courier-fix">
+      <h2 id="demo-courier-fix">Courier: push rejected, pull, push</h2>
+      <Interactive
+        name="Courier"
+        scenario="w04-l09"
+        actions={['push', 'fetch', { cmd: 'git pull --rebase', label: 'Pull (rebase)' }]}
+        goal={{ pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'Aisyah' } }}
+        hints={['Bring in Aisyah’s commit first: tap Pull (rebase).', 'Then tap Push again.']}
+        success="Both commits are on GitHub now."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="courier-team" aria-labelledby="demo-courier-team">
+      <h2 id="demo-courier-team">Courier: a teammate pushes; fetch, then pull</h2>
+      <Interactive
+        name="Courier"
+        scenario="w04-team"
+        actions={['commit', 'push', 'teammate', 'fetch', 'pull']}
+        teammate={{ name: 'Aisyah', dir: '/home/aisyah/diary', commits: [{ file: 'index.html', append: '<p>Day 3: Aisyah again</p>\n', message: 'Add Aisyah’s day 3' }] }}
+        mine={[{ file: 'about.html', content: '<h1>About me</h1>\n', message: 'Add about page' }]}
+        goal={{ branchAt: { main: 'Aisyah' }, aheadBehind: { ahead: 0, behind: 0 } }}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="courier-demo" aria-labelledby="demo-courier-demo">
+      <h2 id="demo-courier-demo">Courier: demo</h2>
+      <Interactive
+        name="Courier"
+        scenario="w04-l05"
+        commands={['git push -u origin main']}
+        label="The courier carries three commits from your laptop to the empty GitHub repo. Now main follows origin/main."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="xray" aria-labelledby="demo-xray">
+      <h2 id="demo-xray">ObjectXray</h2>
+      <Interactive name="ObjectXray" scenario="w10-objects" task={{ type: 'findBlob', path: 'css/style.css' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="detective" aria-labelledby="demo-detective">
+      <h2 id="demo-detective">BisectDetective</h2>
+      <Interactive
+        name="BisectDetective"
+        scenario="w10-bisect"
+        test={{ file: 'index.html', bad: 'RM0', label: 'The test: the price in index.html must not be RM0.' }}
+      />
+    </section>
+
+    <!-- Ship It: the kitchen engine (tests/e2e/kitchen.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="kitchen-sim" aria-labelledby="demo-kitchen-sim">
+      <h2 id="demo-kitchen-sim">KitchenSim: run nginx and open a hatch</h2>
+      <Interactive
+        name="KitchenSim"
+        course="docker"
+        scenario="d1-nginx"
+        goal={{ running: ['web'], reachable: 'localhost:8080', lastTyped: '^curl' }}
+        hints={['Type docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'Then curl localhost:8080 to see the page.']}
+        success="Your lunchbox serves the page through hatch 8080."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="kitchen-replay" aria-labelledby="demo-kitchen-replay">
+      <h2 id="demo-kitchen-replay">KitchenReplay: build and run the diary</h2>
+      <Interactive
+        name="KitchenReplay"
+        course="docker"
+        scenario="d2-diary-dockerfile"
+        commands={['docker build -t diary:1.0 .', 'docker run -d --name diary -p 8080:80 diary:1.0', 'curl -s localhost:8080']}
+        label="The recipe becomes the image diary:1.0. A container from it serves the diary page on port 8080."
+      />
+    </section>
+
+    <!-- Level Up · Linux: the practice server (tests/e2e/linux.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="linux-sim" aria-labelledby="demo-linux-sim">
+      <h2 id="demo-linux-sim">LinuxSim: make the script runnable, then run it</h2>
+      <Interactive
+        name="LinuxSim"
+        scenario="linux-perms"
+        goal={{ fileMode: { '~/shop/open.sh': 'x' }, lastTyped: '^(\\./|bash )open\\.sh' }}
+        hints={['Type chmod +x open.sh', 'Then run it: ./open.sh']}
+        solution={['chmod +x open.sh', './open.sh']}
+        success="The script can run now, and it opened the shop."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="linux-net" aria-labelledby="demo-linux-net">
+      <h2 id="demo-linux-net">LinuxSim: a web server that won't start</h2>
+      <Interactive
+        name="LinuxSim"
+        scenario="linux-nginx-down"
+        network
+        goal={{ serviceActive: ['nginx'], portListening: [80] }}
+        hints={['Ask nginx to check its settings: sudo nginx -t', "Fix the typo: sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'Then: sudo systemctl start nginx']}
+        solution={["sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'sudo systemctl start nginx']}
+        success="nginx is running and port 80 answers again."
+      />
+    </section>
+
+    <!-- Ship It · Docker D0: YAML basics (tests/e2e/yaml-playground.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="yaml-list" aria-labelledby="demo-yaml-list">
+      <h2 id="demo-yaml-list">YamlPlayground: add a list item</h2>
+      <Interactive
+        name="YamlPlayground"
+        file="order.yaml"
+        initial={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n'}
+        prompt="Add cucumber as a third side."
+        expect={[{ path: 'sides', type: 'list', count: 3, includes: 'cucumber', hint: 'Add a new line under egg: two spaces, a dash, a space, then cucumber.' }]}
+        solution={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n  - cucumber\n'}
+        hint="Copy the egg line, then change the word."
+        success="Three sides!"
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="yaml-indent" aria-labelledby="demo-yaml-indent">
+      <h2 id="demo-yaml-indent">YamlPlayground: fix an indent</h2>
+      <Interactive
+        name="YamlPlayground"
+        file="tiffin.yaml"
+        initial={'tiffin:\n  top: rice\n middle: chicken curry\n  bottom: sambal\n'}
+        prompt="Put middle back inside the tiffin."
+        expect={[{ path: 'tiffin', type: 'map', count: 3, hint: 'middle needs the same two spaces as top.' }, { path: 'tiffin.middle', equals: 'chicken curry' }]}
+        solution={'tiffin:\n  top: rice\n  middle: chicken curry\n  bottom: sambal\n'}
+      />
+    </section>
+
+    <!-- Ship It · Kubernetes games (tests/e2e/k8s-games.spec.ts). Props come from src/lib/k8sDemos.ts. -->
+    <section class="dev-demo card-content" data-demo="k8s-sched" aria-labelledby="demo-k8s-sched">
+      <h2 id="demo-k8s-sched">SchedulerTetris</h2>
+      <Interactive name="SchedulerTetris" nodes={schedDemo.nodes} pods={schedDemo.pods} keys={schedDemo.keys} task={schedDemo.task} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-labels" aria-labelledby="demo-k8s-labels">
+      <h2 id="demo-k8s-labels">LabelMatchmaker: Service</h2>
+      <Interactive name="LabelMatchmaker" pods={labelsDemo.pods} labels={labelsDemo.labels} selector={labelsDemo.selector} task={labelsDemo.task} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-template" aria-labelledby="demo-k8s-template">
+      <h2 id="demo-k8s-template">LabelMatchmaker: Deployment template</h2>
+      <Interactive name="LabelMatchmaker" pods={templateDemo.pods} labels={templateDemo.labels} selector={templateDemo.selector} templateLabels={templateDemo.templateLabels} task={templateDemo.task} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-trace" aria-labelledby="demo-k8s-trace">
+      <h2 id="demo-k8s-trace">RequestTracer: make it 503</h2>
+      <Interactive name="RequestTracer" route={traceDemo} breaks={['path', 'listener', 'serviceName', 'selector', 'targetPort', 'ready', 'policy']} task={{ type: 'outcome', want: '503' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-trace-fix" aria-labelledby="demo-k8s-trace-fix">
+      <h2 id="demo-k8s-trace-fix">RequestTracer: fix it</h2>
+      <Interactive name="RequestTracer" route={traceDemo} breaks={['targetPort', 'policy']} broken={['targetPort']} task={{ type: 'deliver' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-doctor" aria-labelledby="demo-k8s-doctor">
+      <h2 id="demo-k8s-doctor">YamlDoctor: indentation</h2>
+      <Interactive name="YamlDoctor" manifest={doctorDemo.broken} solution={doctorDemo.fixed} file={doctorDemo.file} hint={doctorDemo.hint} keep={doctorDemo.keep} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-doctor-typo" aria-labelledby="demo-k8s-doctor-typo">
+      <h2 id="demo-k8s-doctor-typo">YamlDoctor: misspelt field</h2>
+      <Interactive name="YamlDoctor" manifest={doctorTypoDemo.broken} solution={doctorTypoDemo.fixed} file={doctorTypoDemo.file} hint={doctorTypoDemo.hint} keep={doctorTypoDemo.keep} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-rbac" aria-labelledby="demo-k8s-rbac">
+      <h2 id="demo-k8s-rbac">RbacSwitchboard: least privilege for the CI bot</h2>
+      <Interactive name="RbacSwitchboard" subjects={rbacDemo.subjects} roles={rbacDemo.roles} bindings={rbacDemo.bindings} questions={rbacDemo.questions} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-rbac-predict" aria-labelledby="demo-k8s-rbac-predict">
+      <h2 id="demo-k8s-rbac-predict">RbacSwitchboard: predict</h2>
+      <Interactive name="RbacSwitchboard" subjects={rbacPredictDemo.subjects} roles={rbacPredictDemo.roles} bindings={rbacPredictDemo.bindings} questions={rbacPredictDemo.questions} task={{ type: 'predict' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-mirror" aria-labelledby="demo-k8s-mirror">
+      <h2 id="demo-k8s-mirror">GitOpsMirror: change Git</h2>
+      <Interactive name="GitOpsMirror" app={mirrorApp} task={{ type: 'gitChange', field: 'replicas', to: 5 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k8s-mirror-drift" aria-labelledby="demo-k8s-mirror-drift">
+      <h2 id="demo-k8s-mirror-drift">GitOpsMirror: drift without self-heal</h2>
+      <Interactive name="GitOpsMirror" app={mirrorApp} selfHeal={false} task={{ type: 'drift' }} />
+    </section>
+
+    <!-- Ship It part 2 (CI/CD): conveyor engine games (tests/e2e/conveyor.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="conveyor-predict" aria-labelledby="demo-conveyor-predict">
+      <h2 id="demo-conveyor-predict">ConveyorBelt: predict the red station</h2>
+      <Interactive name="ConveyorBelt" course="cicd" scenario="c1-broken-test" task={{ type: 'predict' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conveyor-fix" aria-labelledby="demo-conveyor-fix">
+      <h2 id="demo-conveyor-fix">ConveyorBelt: pick a fix</h2>
+      <Interactive
+        name="ConveyorBelt"
+        course="cicd"
+        scenario="c2-fix-permissions"
+        task={{ type: 'green' }}
+        fixes={[
+          { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Writing code is not the same as writing packages.' },
+          { label: 'write-all', text: 'permissions: write-all', why: 'Every step would get every key.', correct: false },
+          { label: 'contents: read and packages: write', text: 'permissions:\n  contents: read\n  packages: write' },
+        ]}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conveyor-edit" aria-labelledby="demo-conveyor-edit">
+      <h2 id="demo-conveyor-edit">ConveyorBelt: type the fix</h2>
+      <Interactive name="ConveyorBelt" course="cicd" scenario="c2-fix-permissions" editable task={{ type: 'green', forbid: ['write-all'] }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conveyor-matrix" aria-labelledby="demo-conveyor-matrix">
+      <h2 id="demo-conveyor-matrix">ConveyorBelt: a container pipeline with a matrix</h2>
+      <Interactive name="ConveyorBelt" course="cicd" scenario="c2-container-pipeline" event="pr" label="Test on Node 22 and 24, then build the image. Pushes publish it; pull requests only build it." />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conveyor-approve" aria-labelledby="demo-conveyor-approve">
+      <h2 id="demo-conveyor-approve">ConveyorBelt: approve production</h2>
+      <Interactive name="ConveyorBelt" course="cicd" scenario="c3-release" task={{ type: 'approve' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="conveyor-cache" aria-labelledby="demo-conveyor-cache">
+      <h2 id="demo-conveyor-cache">ConveyorBelt: run twice, hit the cache</h2>
+      <Interactive name="ConveyorBelt" course="cicd" scenario="c1-first-pipeline" events={['push-main', 'pr']} task={{ type: 'cacheHit' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="holes" aria-labelledby="demo-holes">
+      <h2 id="demo-holes">SpotTheHole: a vulnerable workflow</h2>
+      <Interactive name="SpotTheHole" course="cicd" scenario="c4-vulnerable" />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="holes-lines" aria-labelledby="demo-holes-lines">
+      <h2 id="demo-holes-lines">SpotTheHole: lines in the lesson</h2>
+      <Interactive
+        name="SpotTheHole"
+        file=".github/workflows/hello.yml"
+        workflow={[
+          'name: Hello',
+          'on: issues',
+          'permissions:',
+          '  issues: write',
+          'jobs:',
+          '  hello:',
+          '    runs-on: ubuntu-latest',
+          '    steps:',
+          { text: '      - run: echo "Hi ${{ github.event.issue.title }}"', hole: { kind: 'injection', fixCode: '      - run: echo "Hi $TITLE"\n        env:\n          TITLE: ${{ github.event.issue.title }}' } },
+        ]}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="traffic-canary" aria-labelledby="demo-traffic-canary">
+      <h2 id="demo-traffic-canary">TrafficDial: canary, roll back the bad release</h2>
+      <Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="traffic-bluegreen" aria-labelledby="demo-traffic-bluegreen">
+      <h2 id="demo-traffic-bluegreen">TrafficDial: blue/green</h2>
+      <Interactive name="TrafficDial" mode="bluegreen" newErrorRate={0.1} task={{ type: 'rollback' }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="traffic-rollout" aria-labelledby="demo-traffic-rollout">
+      <h2 id="demo-traffic-rollout">TrafficDial: a safe rollout</h2>
+      <Interactive name="TrafficDial" course="cicd" scenario="c3-release" task={{ type: 'rollout' }} />
+    </section>
+
+    <!-- Ship It: Docker games (tests/e2e/docker-games.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="kek-order" aria-labelledby="demo-kek-order">
+      <h2 id="demo-kek-order">KekLapisBuilder: reorder</h2>
+      <Interactive name="KekLapisBuilder" lines={kekSlow} edit="index.html" goal={{ cached: ['install'], cachedAfterEdit: 3 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="kek-pick" aria-labelledby="demo-kek-pick">
+      <h2 id="demo-kek-pick">KekLapisBuilder: pick a line</h2>
+      <Interactive name="KekLapisBuilder" lines={kekPick} edit={{ file: 'server.js' }} goal={{ cached: ['install'] }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="hatch-map" aria-labelledby="demo-hatch-map">
+      <h2 id="demo-hatch-map">OrderHatch: map a port</h2>
+      <Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80] }, { name: 'api', ports: [3000], image: 'node:24-alpine' }]} task={{ type: 'map', host: 8080, container: 'web', port: 80 }} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="hatch-conflict" aria-labelledby="demo-hatch-conflict">
+      <h2 id="demo-hatch-conflict">OrderHatch: fix a conflict</h2>
+      <Interactive
+        name="OrderHatch"
+        containers={[{ name: 'web', ports: [80] }, { name: 'api', ports: [3000], image: 'node:24-alpine' }]}
+        start={[{ host: 8080, container: 'web', port: 80 }]}
+        hostPorts={[8080, 8081]}
+        task={{ type: 'map', maps: [{ container: 'api', port: 3000 }] }}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="locker" aria-labelledby="demo-locker">
+      <h2 id="demo-locker">LockerTest</h2>
+      <Interactive name="LockerTest" ask={['restart', 'recreate', 'volumeRm']} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="compose" aria-labelledby="demo-compose">
+      <h2 id="demo-compose">ComposeCanvas</h2>
+      <Interactive name="ComposeCanvas" palette={KEDAI_PALETTE} goal={KEDAI_GOAL} start={['web']} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="shrink" aria-labelledby="demo-shrink">
+      <h2 id="demo-shrink">ShrinkRay: node API</h2>
+      <Interactive name="ShrinkRay" target={200} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="shrink-site" aria-labelledby="demo-shrink-site">
+      <h2 id="demo-shrink-site">ShrinkRay: static site</h2>
+      <Interactive name="ShrinkRay" app="static-site" target={80} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="nsx-find" aria-labelledby="demo-nsx-find">
+      <h2 id="demo-nsx-find">NamespaceXray: find the switch</h2>
+      <Interactive name="NamespaceXray" task={{ type: 'find', what: 'hideProcesses' }} switches={['pid', 'mnt', 'net', 'uts', 'ipc', 'user']} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="nsx-all" aria-labelledby="demo-nsx-all">
+      <h2 id="demo-nsx-all">NamespaceXray: all switches</h2>
+      <Interactive name="NamespaceXray" task={{ type: 'all' }} />
+    </section>
+
+    <!-- Ship It · Kubernetes: the food-court engine (tests/e2e/foodcourt.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="kube-here" aria-labelledby="demo-kube-here">
+      <h2 id="demo-kube-here">YouAreHere</h2>
+      <Interactive name="YouAreHere" context="prod-like" namespace="shop" prodLike />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="kube-sim" aria-labelledby="demo-kube-sim">
+      <h2 id="demo-kube-sim">FoodCourtSim: want 5</h2>
+      <Interactive
+        name="FoodCourtSim"
+        scenario="k1-want3"
+        board="shop"
+        faults={['deletePod', 'killNode']}
+        goal={{ replicas: { name: 'shop', count: 5 }, podsReady: { selector: 'app=shop', count: 5 } }}
+        hints={['Type kubectl scale deployment shop --replicas=5']}
+        success="The order says 5, and 5 trays are ready."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="kube-board" aria-labelledby="demo-kube-board">
+      <h2 id="demo-kube-board">ManagersBoard</h2>
+      <Interactive
+        name="ManagersBoard"
+        scenario="k1-want3"
+        target="shop"
+        actions={['deletePod', { cmd: 'kubectl scale deployment shop --replicas=5', label: 'Order 5 trays' }]}
+        goal={{ healed: 1 }}
+        label="The board shows Want 3, See 3. Delete a pod: See 2, Make 1 more."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="kube-replay" aria-labelledby="demo-kube-replay">
+      <h2 id="demo-kube-replay">KubeReplay</h2>
+      <Interactive
+        name="KubeReplay"
+        scenario="k2-crashloop"
+        commands={['kubectl get pods', 'kubectl logs {pod:app=oops} --previous']}
+        label="The oops pod keeps crashing. Its last run printed: oh no, no gas."
+      />
+    </section>
+
+    <!-- Level Up · Observability: the PromQL engine (tests/e2e/promql.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="promql-rate" aria-labelledby="demo-promql-rate">
+      <h2 id="demo-promql-rate">PromQLPlayground: requests per second by code</h2>
+      <Interactive
+        name="PromQLPlayground"
+        scenario="o2-shop-requests"
+        initial="http_requests_total"
+        prompt="Show requests per second for each status code, with the instances added up."
+        goal={{ usesFunction: ['rate', 'sum'], labelNames: ['code'], resultCount: 3 }}
+        hints={['Start with rate(http_requests_total[5m]).', 'Wrap it: sum by (code) (rate(http_requests_total[5m])).']}
+        solution="sum by (code) (rate(http_requests_total[5m]))"
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="promql-latency" aria-labelledby="demo-promql-latency">
+      <h2 id="demo-promql-latency">PromQLPlayground: p95 latency</h2>
+      <Interactive
+        name="PromQLPlayground"
+        scenario="o2-latency"
+        initial="http_request_duration_seconds_bucket"
+        prompt="How slow are the slowest 5% of requests, all instances together?"
+        goal={{ at: '18m', usesFunction: ['histogram_quantile', 'rate'], resultCount: 1, labelNames: [] }}
+        hints={['histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))']}
+        solution="histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))"
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="alert-down" aria-labelledby="demo-alert-down">
+      <h2 id="demo-alert-down">AlertRuleBuilder: page when a target is down</h2>
+      <Interactive
+        name="AlertRuleBuilder"
+        scenario="o3-target-down"
+        alert="InstanceDown"
+        prompt="Page someone when a target is really down, not for a short blip."
+        exprs={[
+          { expr: 'up == 0' },
+          { expr: 'up == 1', why: 'up == 1 is true when the target is fine.' },
+        ]}
+        fors={['0s', '1m', '5m']}
+        labels={[{ labels: {} }, { labels: { severity: 'page' } }]}
+        annotations={[{ annotations: { summary: 'Something is down' } }, { annotations: { summary: '{{ $labels.instance }} is down' } }]}
+        goal={{ firingAt: ['20m'], quietAt: ['7m'], noFlap: true, firingLabels: { instance: 'shop-1' }, labels: { severity: 'page' }, annotationUses: ['$labels.instance'] }}
+        solution={{ expr: 0, for: 2, labels: 1, annotations: 1 }}
+        hints={['The db-1 blip lasts 3 minutes. Wait longer than that.']}
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="alert-flappy" aria-labelledby="demo-alert-flappy">
+      <h2 id="demo-alert-flappy">AlertRuleBuilder: stop the flapping</h2>
+      <Interactive
+        name="AlertRuleBuilder"
+        scenario="o3-flappy"
+        alert="QueueLong"
+        exprs={[{ expr: 'kedai_queue_length > 25' }, { expr: 'avg_over_time(kedai_queue_length[5m]) > 25' }]}
+        fors={['0s', '3m']}
+        keepFiringFor={['0s', '5m']}
+        goal={{ noFlap: true, firingAt: ['13m'], quietAt: ['4m'] }}
+        solution={{ expr: 0, for: 1 }}
+      />
+    </section>
+
+    <!-- Level Up · Terraform & OpenTofu (tests/e2e/tofu.spec.ts) -->
+    <section class="dev-demo card-content" data-demo="tofu-sim" aria-labelledby="demo-tofu-sim">
+      <h2 id="demo-tofu-sim">TofuSim: init, plan, apply</h2>
+      <Interactive
+        name="TofuSim"
+        scenario="t1-first-blueprint"
+        goal={{ resourceInState: ['random_pet.stall', 'local_file.sign'], outputExists: ['stall_name'] }}
+        hints={['Type tofu init first.', 'Then tofu apply, and answer yes.']}
+        success="Built from the blueprint: a stall name and its sign."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="tofu-reader" aria-labelledby="demo-tofu-reader">
+      <h2 id="demo-tofu-reader">PlanReader: read the symbols</h2>
+      <Interactive name="PlanReader" scenario="t1-plan-reader" commands={['cp .next/main.tf main.tf']} />
+    </section>
+
+    <!-- Level Up · AWS games (tests/e2e/aws-games.spec.ts). Props come from src/lib/aws/demos.ts. -->
+    <section class="dev-demo card-content" data-demo="aws-iam-predict" aria-labelledby="demo-aws-iam-predict">
+      <h2 id="demo-aws-iam-predict">IamJudge: predict</h2>
+      <Interactive name="IamJudge" request={iamPredictDemo.request} policies={iamPredictDemo.policies} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-iam-role" aria-labelledby="demo-aws-iam-role">
+      <h2 id="demo-aws-iam-role">IamJudge: role and boundary</h2>
+      <Interactive name="IamJudge" request={iamRoleDemo.request} policies={iamRoleDemo.policies} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-iam-edit" aria-labelledby="demo-aws-iam-edit">
+      <h2 id="demo-aws-iam-edit">IamJudge: edit one line</h2>
+      <Interactive name="IamJudge" request={iamEditDemo.request} policies={iamEditDemo.policies} task={iamEditDemo.task} solution={iamEditDemo.solution} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-subnets" aria-labelledby="demo-aws-subnets">
+      <h2 id="demo-aws-subnets">SubnetPlanner</h2>
+      <Interactive name="SubnetPlanner" vpc={subnetDemo.vpc} azs={subnetDemo.azs} need={subnetDemo.need} start={subnetDemo.start} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-subnets-vpc" aria-labelledby="demo-aws-subnets-vpc">
+      <h2 id="demo-aws-subnets-vpc">SubnetPlanner: fix the VPC first</h2>
+      <Interactive name="SubnetPlanner" vpc={subnetVpcDemo.vpc} editVpc tiers={subnetVpcDemo.tiers} azs={subnetVpcDemo.azs} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-gate-sg" aria-labelledby="demo-aws-gate-sg">
+      <h2 id="demo-aws-gate-sg">SecurityGroupGate: the door</h2>
+      <Interactive name="SecurityGroupGate" visitors={gateSgDemo.visitors} edit={gateSgDemo.edit} forbidOpen={gateSgDemo.forbidOpen} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-gate-nacl" aria-labelledby="demo-aws-gate-nacl">
+      <h2 id="demo-aws-gate-nacl">SecurityGroupGate: the row gate</h2>
+      <Interactive name="SecurityGroupGate" visitors={gateNaclDemo.visitors} edit={gateNaclDemo.edit} nacl={gateNaclDemo.nacl} sg={gateNaclDemo.sg} />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="aws-idle" aria-labelledby="demo-aws-idle">
+      <h2 id="demo-aws-idle">IdleBill</h2>
+      <Interactive name="IdleBill" items={idleDemo.items} ordered={idleDemo.ordered} />
+    </section>
+
+    <!-- Level Up · K9 node shell (tests/e2e/k9.spec.ts): ssh / docker exec into a kind node -->
+    <section class="dev-demo card-content" data-demo="k9-shell" aria-labelledby="demo-k9-shell">
+      <h2 id="demo-k9-shell">FoodCourtSim: a NotReady node</h2>
+      <Interactive
+        name="FoodCourtSim"
+        scenario="k9-notready"
+        faults={['stopKubelet']}
+        goal={{ nodeReady: { name: 'dev-worker' } }}
+        hints={['Type ssh dev-worker', 'Then systemctl start kubelet']}
+        success="The kubelet runs again, so dev-worker is Ready."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k9-restore" aria-labelledby="demo-k9-restore">
+      <h2 id="demo-k9-restore">FoodCourtSim: restore etcd</h2>
+      <Interactive
+        name="FoodCourtSim"
+        scenario="k9-etcd-restore"
+        goal={{ deploymentRestored: { name: 'shop' } }}
+        hints={['ssh dev-control-plane, then etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', "Then point etcd at it: sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml"]}
+        success="etcd runs on the restored data, and the shop is back."
+      />
+    </section>
+
+    <section class="dev-demo card-content" data-demo="k9-replay" aria-labelledby="demo-k9-replay">
+      <h2 id="demo-k9-replay">KubeReplay: inside the control-plane node</h2>
+      <Interactive
+        name="KubeReplay"
+        scenario="k9-certs"
+        commands={['docker exec -it dev-control-plane bash', 'ls /etc/kubernetes/manifests', 'kubeadm certs check-expiration', 'exit']}
+        label="Inside dev-control-plane: four static pod manifests, and certificates that last one year."
+        picture={false}
+      />
+    </section>
+  </div>
+</Base>
+
+<script>
+  // Mark a demo as done when its interactive says so (lesson cards do the same).
+  for (const type of ['fl:done', 'fl:wrong'] as const) {
+    document.addEventListener(type, (e) => {
+      const demo = (e.target as HTMLElement).closest<HTMLElement>('[data-demo]');
+      if (!demo) return;
+      if (type === 'fl:done') demo.dataset.done = 'true';
+      else demo.dataset.wrong = String(Number(demo.dataset.wrong ?? 0) + 1);
+    });
+  }
+</script>
+
+<style>
+  .dev-page {
+    max-width: var(--card-max);
+    padding-block: var(--space-5);
+  }
+  .dev-demo {
+    margin-block: var(--space-6);
+  }
+  .dev-demo[data-done='true'] h2::after {
+    content: ' ✓';
+  }
+</style>

@@ -1,0 +1,66 @@
+---
+id: git-w01-l04
+world: 1
+title: Read git status
+summary: "You will learn: how to read git status, long and short."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, SpotLines, Choice]
+needs: [git-w01-l03]
+scenario: w01-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'staging']} effect="wobble" label="Five files wobble. index.html and about.html sit in the box. style.css, notes.txt and todo.txt sit in the working folder." frames={[{ working: [{ name: 'style.css', tag: 'changed' }, { name: 'notes.txt', tag: 'new' }, { name: 'todo.txt', tag: 'new' }], staging: ['index.html', 'about.html'] }]} />
+
+Five files changed. Some are in the box. Some are not. Which ones will your next commit save?
+</Card>
+
+<Card id="see-colors" type="see">
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status']} pulse label="git status: about.html and index.html are green under Changes to be committed. style.css, notes.txt and todo.txt are red." />
+
+`git status` sorts your changes into groups. **Green** lines are in the box. Red lines are not in the box yet.
+</Card>
+
+<Card id="try-green" type="try">
+Tap every green line: the files in the box.
+
+<Interactive name="SpotLines" scenario="w01-l04" commands={['git status']} targets="\.html$" prompt="Tap every line that is in the box." success="Yes! about.html and index.html are in the box." />
+
+<Hint>Look under "Changes to be committed".</Hint>
+</Card>
+
+<Card id="see-short" type="see">
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status -s']} pulse label="git status -s prints one short line per file. Green letters on the left, red letters on the right, and ?? for new files." />
+
+`git status -s` gives the **short** version. Each line starts with two letters. Left letter: the box. Right letter: your folder.
+</Card>
+
+<Card id="try-untracked" type="try">
+Find the **untracked** files: new files Git isn't watching yet. They start with `??`.
+
+<Interactive name="SpotLines" scenario="w01-l04" commands={['git status -s']} targets="^\?\?" prompt="Tap every untracked line." success="Right! ?? means Git is not watching these files yet." />
+
+<Hint>Look for two question marks at the start.</Hint>
+</Card>
+
+<Card id="check" type="check">
+You run `git add style.css`. How does its short line change?
+
+<Interactive name="Choice" options={[{ label: 'The M moves to the left, and turns green', correct: true, why: 'Left letter means the box. The change is in the box now.' }, { label: 'The M stays on the right, in red', why: 'Right letter means the folder. After git add, the change is in the box.' }, { label: 'It turns into ??', why: '?? is only for new files Git has never tracked.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read git status, long and short.
+</Card>
+
+<Card id="deeper" type="deeper">
+Letters you will see: `A` added, `M` modified, `D` deleted, `R` renamed. `MM`: part is in the box, part is still in the folder. `git status -sb` adds your <Term id="branch">branch</Term> name on top.
+
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status -sb']} label="git status -sb: a line saying ## main, then the short status lines." />
+</Card>

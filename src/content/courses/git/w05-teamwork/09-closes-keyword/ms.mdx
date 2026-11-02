@@ -1,0 +1,63 @@
+---
+id: git-w05-l09
+world: 5
+title: Pautkan PR ke issue
+summary: "Anda akan belajar: cara \"Closes #12\" tutup issue dengan sendiri bila PR di-merge."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, SpotLines, Choice, SwipeJudge]
+needs: [git-w05-l08]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Linking a pull request to an issue", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue" }
+---
+
+<Card id="hook" type="hook">
+Halaman acara Mei dah di-merge (dicantum) minggu lepas. Tapi issue #9 masih terbuka! Seseorang kena tutup secara manual. Buat sekarang.
+
+<Interactive name="PracticeRepo" screen="issue" at={9} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 9, title: 'Tambah halaman acara kelab', body: 'Senaraikan acara akan datang dengan tarikh.', state: 'open', author: 'aina', labels: ['enhancement'], comments: [{ author: 'aina', body: 'Halaman acara dah siap. Issue ini dah selesai?' }] }]} pulls={[{ number: 12, title: 'Tambah halaman acara', body: 'Tambah halaman acara.', author: 'mei', from: 'events-page', to: 'main', state: 'merged' }]} task={{ type: 'close', issue: 9 }} success="Dah tutup. Tapi nak ingat setiap kali memang leceh. Ada helahnya!" />
+
+<Hint>Tekan "Tutup issue" di bawah kotak komen.</Hint>
+</Card>
+
+<Card id="see-keyword" type="see">
+**<Term id="closing-keyword">Kata kunci penutup</Term>** (closing keyword) ditulis dalam penerangan PR. Bila PR di-merge ke main, issue itu tutup sendiri. Tekan baris ajaib itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'Tambah halaman galeri gambar.' }, { text: 'Closes #16', target: true }, { text: 'Terima kasih @mei untuk gambar-gambar!' }]} prompt="Tekan baris yang akan tutup satu issue." success="Closes #16 akan tutup issue 16 bila PR ini di-merge." />
+</Card>
+
+<Card id="try-link" type="try">
+PR galeri anda selesaikan issue #16. Ubah penerangan, supaya merge akan tutup #16.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 16, title: 'Tambah galeri gambar', body: 'Tunjuk gambar dari acara lepas.', state: 'open', author: 'mei', labels: ['enhancement'] }]} pulls={[{ number: 18, title: 'Tambah galeri gambar', body: 'Tambah halaman galeri dengan 6 gambar.', author: 'anda', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1 @@', '+<h1>Gallery</h1>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }] }} task={{ type: 'linkIssue', pr: 18, issue: 16 }} success="Dah dipautkan! Kotak merge kini kata merge akan tutup #16." />
+
+<Hint>Tekan "Ubah penerangan". Tambah baris baru: Closes #16. Kemudian Simpan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+PR Ravi tulis "Fixes #20". Ia di-merge ke branch bernama `test`, bukan main. Apa jadi pada issue #20?
+
+<Interactive name="Choice" options={[{ label: 'Ia kekal terbuka', correct: true, why: 'Kata kunci hanya berfungsi bila PR di-merge ke branch utama (default), biasanya main.' }, { label: 'Ia ditutup', why: 'Hanya merge ke branch utama yang tutup issue.' }, { label: 'Ia dipadam', why: 'Merge tak pernah padam issue. Ia cuma boleh tutup.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Adakah baris ini tutup issue #9 bila di-merge? Leret kanan untuk ya, kiri untuk tidak.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'Fixes #9', good: true, why: 'fix, fixes dan fixed semua berfungsi.' }, { text: 'Related to #9', good: false, why: 'Ini cuma pautan ke issue. Ia tak akan tutup.' }, { text: 'resolves #9', good: true, why: 'Huruf kecil pun berfungsi.' }, { text: 'Closes 9', good: false, why: 'Ia perlukan tanda #: Closes #9.' }]} />
+</Card>
+
+<Card id="try-merge" type="try">
+Masa untuk merge PR galeri anda. Kemudian intai tab Issues.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} issues={[{ number: 16, title: 'Tambah galeri gambar', body: 'Tunjuk gambar dari acara lepas.', state: 'open', author: 'mei', labels: ['enhancement'] }]} pulls={[{ number: 18, title: 'Tambah galeri gambar', body: 'Tambah halaman galeri dengan 6 gambar.\n\nCloses #16', author: 'anda', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1 @@', '+<h1>Gallery</h1>'] }], reviews: [{ author: 'mei', state: 'approved', body: 'Suka gambar-gambar ini!' }] }]} task={{ type: 'merge', pr: 18 }} success="Dah merge! Buka Issues: #16 tutup dengan sendiri." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pautkan PR ke issue, supaya ia tutup dengan sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kesemua sembilan kata kunci: close, closes, closed, fix, fixes, fixed, resolve, resolves, resolved. Untuk issue dalam repo lain, tulis `Fixes owner/repo#100`. Untuk beberapa issue, ulang kata kunci: `Closes #10, closes #11`. Kata kunci dalam mesej commit pun berfungsi, bila commit itu sampai ke branch utama.
+</Card>

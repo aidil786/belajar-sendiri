@@ -1,0 +1,70 @@
+---
+id: docker-d5-l05
+world: 5
+title: "Had tarikan dan peraturan lesen"
+summary: "Anda akan belajar: kenapa Docker Hub kata 429, dan siapa boleh guna Docker Desktop secara percuma."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, OrderList, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d5-l04]
+scenario: d5-pull-limit
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Penggunaan dan had Docker Hub", url: "https://docs.docker.com/docker-hub/usage/" }
+  - { label: "Penggunaan pull Docker Hub", url: "https://docs.docker.com/docker-hub/usage/pulls/" }
+  - { label: "Perjanjian lesen Docker Desktop", url: "https://docs.docker.com/subscription/desktop-license/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-pull-limit" commands={["docker pull redis:8-alpine"]} fails={["docker pull redis:8-alpine"]} label="docker pull redis:8-alpine gagal dengan 429 Too Many Requests." />
+
+Ralat sebenar: `429 Too Many Requests`. Maksudnya: Docker Hub kira pull anda, dan anda sudah guna semuanya.
+</Card>
+
+<Card id="see-limits" type="see">
+Docker Hub ada **<Term id="pull-limit">had tarikan</Term>**: sekian banyak pull setiap 6 jam. Pull tanpa log masuk kongsi satu kiraan bagi setiap alamat internet. Susun, paling sedikit dulu.
+
+<Interactive name="OrderList" items={['Tanpa log masuk: 100 setiap alamat', 'Akaun percuma, sudah log masuk: 200', 'Pelan berbayar: tiada had']} label="Paling sedikit di atas" success="Log masuk gandakan had anda, percuma." />
+</Card>
+
+<Card id="try-login" type="try">
+Token anda dalam `$DOCKER_TOKEN`. Log masuk, kemudian pull `redis:8-alpine` sekali lagi.
+
+<Interactive name="KitchenSim" scenario="d5-pull-limit" goal={{ loggedIn: 'you', imageExists: 'redis:8-alpine' }} hints={['Log masuk dulu: echo $DOCKER_TOKEN | docker login -u you --password-stdin', 'Kemudian taip docker pull redis:8-alpine']} success="Sudah log masuk, dan peti sejuk dibuka semula." />
+
+<Hint>Log masuk selamat dari pelajaran 2, kemudian `docker pull redis:8-alpine`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pejabat anda kongsi satu alamat internet. 40 robot ujian masing-masing pull 3 image, tanpa log masuk. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Sebahagian robot gagal dengan 429', correct: true, why: '40 × 3 = 120 pull. Tanpa log masuk, hadnya 100 setiap 6 jam.' }, { label: 'Semuanya lulus', why: '120 lebih daripada 100. Pull terakhir ditolak.' }, { label: 'Docker Hub sekat pejabat itu selamanya', why: 'Ia tolak pull untuk seketika. Nanti ia jalan semula.' }]} />
+</Card>
+
+<Card id="see-licence" type="see">
+Docker Desktop ialah aplikasi untuk Mac dan Windows. **Lesen** aplikasi ini percuma untuk sesetengah orang, berbayar untuk yang lain. Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'free', label: 'Docker Desktop percuma' }, { id: 'paid', label: 'Perlu pelan berbayar' }]} items={[{ label: 'Anda, belajar di rumah', bucket: 'free', why: 'Guna peribadi adalah percuma.' }, { label: 'Satu kelas sekolah', bucket: 'free', why: 'Pendidikan adalah percuma.' }, { label: 'Kedai Kancil: 12 pekerja, pendapatan kecil', bucket: 'free', why: 'Bawah 250 pekerja DAN bawah USD 10 juta setahun.' }, { label: 'Bank dengan 5,000 pekerja', bucket: 'paid', why: 'Lebih daripada 250 pekerja.' }, { label: 'Syarikat dengan 100 pekerja dan USD 40 juta setahun', bucket: 'paid', why: 'Kedua-dua syarat mesti dipenuhi. Yang ini untung terlalu banyak.' }, { label: 'Pejabat kerajaan', bucket: 'paid', why: 'Kegunaan kerajaan perlu pelan berbayar.' }]} success="Kecil dan peribadi percuma. Besar atau kerajaan perlu bayar." />
+</Card>
+
+<Card id="check" type="check">
+Bank itu jalankan Docker Engine di server Linux. Tiada Docker Desktop. Perlukah pelan berbayar itu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: peraturan itu untuk aplikasi Docker Desktop', correct: true, why: 'Docker Engine ialah sumber terbuka. Peraturan bayar meliputi Docker Desktop.' }, { label: 'Ya: setiap Docker perlukannya', why: 'Peraturan bayar hanya untuk Docker Desktop.' }, { label: 'Ya, sebab bank itu besar', why: 'Saiz hanya penting untuk Docker Desktop.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh elak had tarikan dan pilih lesen Docker yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pakej percuma boleh berubah, jadi semak docs.docker.com sebelum merancang. Satu pull dikira bila anda ambil manifest image. Permintaan HEAD, yang cuma mengintai, tak dikira. Dalam CI, log masuk, atau simpan salinan dalam registry sendiri. Podman, dan Docker Engine di Linux, juga pilihan percuma.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d5-l05-rep" steps={[{ id: 'login', text: 'Log masuk ke Docker Hub di komputer anda (pelajaran 2).' }, { id: 'usage', text: 'Buka halaman Usage dalam akaun Docker Hub. Tengok pull anda.' }, { id: 'ask', text: 'Di tempat kerja? Tanya jika syarikat ada langganan Docker.' }]} success="Tiada 429 mengejut untuk anda." />
+</Card>

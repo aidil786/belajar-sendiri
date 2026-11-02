@@ -1,0 +1,72 @@
+---
+id: git-w06-l02
+world: 6
+title: Git Flow
+summary: "You will learn: the five Git Flow branches, and when a team needs them."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TimelineTap, SortCards, Choice, OrderList, SwipeJudge]
+needs: [git-w06-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitworkflows", url: "https://git-scm.com/docs/gitworkflows" }
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "A successful Git branching model (Git Flow)", url: "https://nvie.com/posts/a-successful-git-branching-model/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} effect="wobble" label="main holds Release 2.0, then two half-built commits: map screen and login. They all wobble." frames={[{ repo: [{ name: 'Release 2.0', kind: 'commit' }, { name: 'Half-built map screen', kind: 'commit', tag: 'notReady' }, { name: 'Half-built login', kind: 'commit', tag: 'notReady' }] }]} />
+
+Your phone game ships every two months. Version 2.0 is live. Main already holds half-built 2.1 work. Now 2.0 crashes. How do you fix it?
+</Card>
+
+<Card id="see-life" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'feature/…', title: 'Build a feature', text: 'Each feature gets a branch from develop. It merges back into develop.' }, { when: 'develop', title: 'Gather the work', text: 'Finished features wait here for the next version.' }, { when: 'release/…', title: 'Get ready to ship', text: 'Branch from develop. Now only tests and small fixes.' }, { when: 'main', title: 'Ship it', text: 'The release merges into main and gets a tag, like v2.1.0. It also goes back into develop.' }, { when: 'hotfix/…', title: 'Fix it fast', text: 'A bug in the live version? Branch from main. Merge into main and develop.' }]} />
+
+**<Term id="git-flow">Git Flow</Term>** spreads work over five kinds of branch. Two live forever: main and develop. The rest come and go. Tap to follow version 2.1.
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="AreasScene" zoneLabels={{ working: 'develop', staging: 'release/2.1.0', repo: 'main' }} label="Two features, Add map screen and Add login, move from develop into release/2.1.0 for testing. Then version v2.1.0 lands on main next to v2.0.0." frames={[{ working: [{ name: 'Add map screen', kind: 'commit' }, { name: 'Add login', kind: 'commit' }], repo: [{ name: 'v2.0.0', kind: 'commit' }] }, { staging: [{ name: 'Add map screen', kind: 'commit' }, { name: 'Add login', kind: 'commit' }], repo: [{ name: 'v2.0.0', kind: 'commit' }] }, { repo: [{ name: 'v2.0.0', kind: 'commit' }, { name: 'v2.1.0', kind: 'commit' }] }]} />
+
+Features done? Start a **<Term id="release-branch">release branch</Term>** from develop. Testers check it there. Then it merges into main, with a version tag.
+</Card>
+
+<Card id="try-sort" type="try">
+Where does each branch start? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'develop', label: 'From develop' }, { id: 'main', label: 'From main' }]} items={[{ label: '`feature/map-screen`', bucket: 'develop', why: 'Features start from develop.' }, { label: '`release/2.1.0`', bucket: 'develop', why: 'A release collects the work on develop.' }, { label: '`hotfix/2.0.1`', bucket: 'main', why: 'Hotfixes start from the live code on main.' }, { label: '`feature/dark-mode`', bucket: 'develop', why: 'New work always starts from develop.' }, { label: '`hotfix/login-crash`', bucket: 'main', why: 'The crash is live, so start from main.' }]} success="All sorted! Only hotfixes start from main." />
+
+<Hint>Ask: is it new work, or a fix for the live version?</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Back to the crash. 2.0 is live and 2.1 is half built. Where do you start the fix?
+
+<Interactive name="Choice" options={[{ label: 'A hotfix branch from main', correct: true, why: 'main holds the live 2.0. The fix ships without half-built work.' }, { label: 'Straight on develop', why: 'develop has half-built 2.1 work. You cannot ship that yet.' }, { label: 'A feature branch', why: 'Features wait for the next release. Players need the fix now.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the whole hotfix in order.
+
+<Interactive name="OrderList" items={['Branch hotfix/2.0.1 from main', 'Fix the crash and commit', 'Merge into main', 'Tag it v2.0.1', 'Merge into develop too', 'Delete the hotfix branch']} label="First step at the top" success="Perfect! And develop gets the fix too." />
+
+<Hint>Two merges: main first, then develop.</Hint>
+</Card>
+
+<Card id="check-fit" type="check">
+Is Git Flow a good fit? Swipe right if yes, left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A phone game, released every two months', good: true, why: 'Planned releases fit Git Flow well.' }, { text: 'A website that deploys 10 times a day', good: false, why: 'Too heavy. GitHub Flow is simpler here.' }, { text: 'Users run several versions that all need fixes', good: true, why: 'Git Flow suits software with numbered versions out there.' }, { text: 'A two-person blog', good: false, why: 'Five kinds of branch is too much. Keep it simple.' }, { text: 'A desktop app with testers before each release', good: true, why: 'The release branch gives testers a calm place.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain Git Flow and when it fits.
+</Card>
+
+<Card id="deeper" type="deeper">
+The author of Git Flow added a note in 2020. Web apps that ship all the time may not need it. He suggests something simpler, like GitHub Flow. Git Flow still suits software with numbered versions. Git's own project uses a different model. Read gitworkflows to see it.
+</Card>

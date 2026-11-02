@@ -1,0 +1,761 @@
+{
+ "_note": "Real kubectl v1.37.2 output (server dry run against kube-apiserver v1.37.2 with Gateway API v1.6.1 CRDs, namespaces shop and ci present), captured 2026-10-31. Used by k8sSchema.test.ts.",
+ "cases": [
+  {
+   "file": "capname.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: Tray_1\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Pod \"Tray_1\" is invalid: metadata.name: Invalid value: \"Tray_1\": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"
+  },
+  {
+   "file": "cmint.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu\ndata:\n  PORT: 8080\n  DEBUG: true\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"cmint.yaml\": ConfigMap in version \"v1\" cannot be handled as a ConfigMap: json: cannot unmarshal bool into Go struct field ConfigMap.data of type string"
+  },
+  {
+   "file": "cronbad.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: clean\nspec:\n  schedule: \"every day\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: clean\n              image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The CronJob \"clean\" is invalid: spec.schedule: Invalid value: \"every day\": expected exactly 5 fields, found 2: [every day]"
+  },
+  {
+   "file": "dupkey.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  name: tray2\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 0,
+   "output": "pod/tray2 created"
+  },
+  {
+   "file": "hpa.yaml",
+   "yaml": "apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 2\n  maxReplicas: 1\n  metrics:\n    - type: Resource\n      resource:\n        name: cpu\n        target:\n          type: Utilization\n          averageUtilization: 70\n",
+   "exit": 1,
+   "output": "The HorizontalPodAutoscaler \"shop\" is invalid: spec.maxReplicas: Invalid value: 1: must be greater than or equal to `minReplicas`"
+  },
+  {
+   "file": "hpav1beta.yaml",
+   "yaml": "apiVersion: autoscaling/v2beta2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 2\n  maxReplicas: 5\n",
+   "exit": 1,
+   "output": "error: resource mapping not found for name: \"shop\" namespace: \"\" from \"hpav1beta.yaml\": no matches for kind \"HorizontalPodAutoscaler\" in version \"autoscaling/v2beta2\"\nensure CRDs are installed first"
+  },
+  {
+   "file": "httproute.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: shop\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n",
+   "exit": 0,
+   "output": "httproute.gateway.networking.k8s.io/shop created"
+  },
+  {
+   "file": "indent.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n     ports:\n        - containerPort: 80\n",
+   "exit": 1,
+   "output": "error: error parsing indent.yaml: error converting YAML to JSON: yaml: line 8: did not find expected '-' indicator"
+  },
+  {
+   "file": "indent2.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n labels:\n    app: shop\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing indent2.yaml: error converting YAML to JSON: yaml: line 4: did not find expected key"
+  },
+  {
+   "file": "jobrestart.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: count\nspec:\n  template:\n    spec:\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: [\"sh\", \"-c\", \"echo 1 2 3\"]\n",
+   "exit": 1,
+   "output": "The Job \"count\" is invalid: spec.template.spec.restartPolicy: Required value: valid values: \"OnFailure\", \"Never\""
+  },
+  {
+   "file": "kindcase.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: deployment\nmetadata:\n  name: shop\nspec:\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"kindcase.yaml\": deployment in version \"v1\" cannot be handled as a Deployment: no kind \"deployment\" is registered for version \"apps/v1\" in scheme \"pkg/api/legacyscheme/scheme.go:30\""
+  },
+  {
+   "file": "listnotmap.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    name: web\n    image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"listnotmap.yaml\": Pod in version \"v1\" cannot be handled as a Pod: json: cannot unmarshal object into Go struct field PodSpec.spec.containers of type []v1.Container"
+  },
+  {
+   "file": "memformat.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          memory: 128mb\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"memformat.yaml\": Pod in version \"v1\" cannot be handled as a Pod: quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'"
+  },
+  {
+   "file": "mismatch.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.template.metadata.labels: Invalid value: {\"app\":\"web\"}: `selector` does not match template `labels`"
+  },
+  {
+   "file": "netpol.yaml",
+   "yaml": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-lock\nspec:\n  podSelector:\n    matchLabels:\n      app: db\n  policyTypes:\n    - Ingress\n    - Inbound\n",
+   "exit": 1,
+   "output": "The NetworkPolicy \"db-lock\" is invalid: spec.policyTypes[1]: Unsupported value: \"Inbound\": supported values: \"Ingress\", \"Egress\""
+  },
+  {
+   "file": "noapi.yaml",
+   "yaml": "kind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error validating \"noapi.yaml\": error validating data: apiVersion not set; if you choose to ignore these errors, turn validation off with --validate=false"
+  },
+  {
+   "file": "noimage.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.template.spec.containers[0].image: Required value"
+  },
+  {
+   "file": "nokind.yaml",
+   "yaml": "apiVersion: v1\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error validating \"nokind.yaml\": error validating data: kind not set; if you choose to ignore these errors, turn validation off with --validate=false"
+  },
+  {
+   "file": "noselector.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: \n* spec.selector: Required value\n* spec.template.metadata.labels: Invalid value: {\"app\":\"shop\"}: `selector` does not match template `labels`"
+  },
+  {
+   "file": "oldapi.yaml",
+   "yaml": "apiVersion: extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: resource mapping not found for name: \"shop\" namespace: \"\" from \"oldapi.yaml\": no matches for kind \"Deployment\" in version \"extensions/v1beta1\"\nensure CRDs are installed first"
+  },
+  {
+   "file": "podrestart.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  restartPolicy: Sometimes\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.restartPolicy: Unsupported value: \"Sometimes\": supported values: \"Always\", \"OnFailure\", \"Never\""
+  },
+  {
+   "file": "rb.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: ci-deployer\nsubjects:\n  - kind: ServiceAccount\n    name: ci-bot\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: Role\n  name: deployer\n",
+   "exit": 0,
+   "output": "rolebinding.rbac.authorization.k8s.io/ci-deployer created"
+  },
+  {
+   "file": "role.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: deployer\nrules:\n  - apiGroups: [\"apps\"]\n    resources: [\"deployments\"]\n",
+   "exit": 1,
+   "output": "The Role \"deployer\" is invalid: rules[0].verbs: Required value"
+  },
+  {
+   "file": "secretbad.yaml",
+   "yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice\ntype: Opaque\ndata:\n  password: hunter2!\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"secretbad.yaml\": Secret in version \"v1\" cannot be handled as a Secret: illegal base64 data at input byte 7"
+  },
+  {
+   "file": "strport.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      ports:\n        - containerPort: \"80\"\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"strport.yaml\": Pod in version \"v1\" cannot be handled as a Pod: json: cannot unmarshal string into Go struct field ContainerPort.spec.containers.ports.containerPort of type int32"
+  },
+  {
+   "file": "strreplicas.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: \"3\"\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"strreplicas.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal string into Go struct field DeploymentSpec.spec.replicas of type int32"
+  },
+  {
+   "file": "svcnoport.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.ports: Required value"
+  },
+  {
+   "file": "svcport.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n      targetPort: 8080\n      protocol: tcp\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.ports[0].protocol: Unsupported value: \"tcp\": supported values: \"SCTP\", \"TCP\", \"UDP\""
+  },
+  {
+   "file": "tab.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n\tname: tray\n",
+   "exit": 1,
+   "output": "error: error parsing tab.yaml: error converting YAML to JSON: yaml: line 4: found character that cannot start any token"
+  },
+  {
+   "file": "typo.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      contianers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"typo.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: strict decoding error: unknown field \"spec.template.spec.contianers\""
+  },
+  {
+   "file": "a-capital.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  Replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"a-capital.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: strict decoding error: unknown field \"spec.Replicas\""
+  },
+  {
+   "file": "b-two-unknown.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replica: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      contianers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"b-two-unknown.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: strict decoding error: unknown field \"spec.replica\", unknown field \"spec.template.spec.contianers\""
+  },
+  {
+   "file": "c-type-and-unknown.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: three\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      contianers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"c-type-and-unknown.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal string into Go struct field DeploymentSpec.spec.replicas of type int32"
+  },
+  {
+   "file": "d-label-number.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n        version: 2\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"d-label-number.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal number into Go struct field ObjectMeta.spec.template.metadata.labels of type string"
+  },
+  {
+   "file": "e-noapi-nokind.yaml",
+   "yaml": "metadata:\n  name: tray\n",
+   "exit": 1,
+   "output": "error: error validating \"e-noapi-nokind.yaml\": error validating data: [apiVersion not set, kind not set]; if you choose to ignore these errors, turn validation off with --validate=false"
+  },
+  {
+   "file": "f-multidoc.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu\ndata:\n  SIZE: big\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n",
+   "exit": 1,
+   "output": "configmap/menu created\nThe Service \"shop\" is invalid: spec.ports: Required value"
+  },
+  {
+   "file": "g-svc-name.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: 1shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n",
+   "exit": 0,
+   "output": "service/1shop created"
+  },
+  {
+   "file": "h-port-range.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      ports:\n        - containerPort: 70000\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].ports[0].containerPort: Invalid value: 70000: must be between 1 and 65535, inclusive"
+  },
+  {
+   "file": "i-replicas-neg.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: -1\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.replicas: Invalid value: -1: must be greater than or equal to 0"
+  },
+  {
+   "file": "j-env-number.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n          env:\n            - name: PORT\n              value: 8080\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"j-env-number.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal number into Go struct field EnvVar.spec.template.spec.containers.env.value of type string"
+  },
+  {
+   "file": "k-container-upper.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: Web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.template.spec.containers[0].name: Invalid value: \"Web\": a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')"
+  },
+  {
+   "file": "l-no-containers.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers: []\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers: Required value"
+  },
+  {
+   "file": "m-indent-item.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n    image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing m-indent-item.yaml: error converting YAML to JSON: yaml: line 7: did not find expected '-' indicator"
+  },
+  {
+   "file": "n-nospace.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image:nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing n-nospace.yaml: error converting YAML to JSON: yaml: line 9: could not find expected ':'"
+  },
+  {
+   "file": "o-two-colons.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      command: echo: hi\n",
+   "exit": 1,
+   "output": "error: error parsing o-two-colons.yaml: error converting YAML to JSON: yaml: line 9: mapping values are not allowed in this context"
+  },
+  {
+   "file": "p-svc-apps.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n",
+   "exit": 1,
+   "output": "error: resource mapping not found for name: \"shop\" namespace: \"\" from \"p-svc-apps.yaml\": no matches for kind \"Service\" in version \"apps/v1\"\nensure CRDs are installed first"
+  },
+  {
+   "file": "q-httproute-ok.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: shop\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n",
+   "exit": 0,
+   "output": "httproute.gateway.networking.k8s.io/shop created"
+  },
+  {
+   "file": "r-httproute-typo.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: shop\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matchs:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"r-httproute-typo.yaml\": HTTPRoute in version \"v1\" cannot be handled as a HTTPRoute: strict decoding error: unknown field \"spec.rules[0].matchs\""
+  },
+  {
+   "file": "s-httproute-type.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: shop\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: Prefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: \"80\"\n",
+   "exit": 1,
+   "output": "The HTTPRoute \"shop\" is invalid: \n* spec.rules[0].backendRefs[0].port: Invalid value: \"string\": spec.rules[0].backendRefs[0].port in body must be of type integer: \"string\"\n* spec.rules[0].matches[0].path.type: Unsupported value: \"Prefix\": supported values: \"Exact\", \"PathPrefix\", \"RegularExpression\"\n* <nil>: Invalid value: null: some validation rules were not checked because the object was invalid; correct the existing errors to complete validation"
+  },
+  {
+   "file": "t-httproute-noport.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: shop\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: api\n      backendRefs:\n        - name: api\n",
+   "exit": 1,
+   "output": "The HTTPRoute \"shop\" is invalid: \n* spec.rules[0].backendRefs[0]: Invalid value: Must have port for Service reference\n* spec.rules[0].matches[0].path: Invalid value: value must be an absolute path and start with '/' when type one of ['Exact', 'PathPrefix']"
+  },
+  {
+   "file": "u-gateway.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: example\n  listeners:\n    - name: http\n      protocol: HTTP\n      port: 80\n",
+   "exit": 0,
+   "output": "gateway.gateway.networking.k8s.io/entrance created"
+  },
+  {
+   "file": "v-gateway-bad.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  listeners:\n    - name: http\n      protocol: http\n      port: 80\n",
+   "exit": 1,
+   "output": "The Gateway \"entrance\" is invalid: \n* spec.gatewayClassName: Required value\n* <nil>: Invalid value: null: some validation rules were not checked because the object was invalid; correct the existing errors to complete validation"
+  },
+  {
+   "file": "w-gateway-beta.yaml",
+   "yaml": "apiVersion: gateway.networking.k8s.io/v1beta1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: example\n  listeners:\n    - name: http\n      protocol: HTTP\n      port: 80\n",
+   "exit": 0,
+   "output": "gateway.gateway.networking.k8s.io/entrance created"
+  },
+  {
+   "file": "x-ingress-old.yaml",
+   "yaml": "apiVersion: extensions/v1beta1\nkind: Ingress\nmetadata:\n  name: shop\nspec:\n  backend:\n    serviceName: shop\n    servicePort: 80\n",
+   "exit": 1,
+   "output": "error: resource mapping not found for name: \"shop\" namespace: \"\" from \"x-ingress-old.yaml\": no matches for kind \"Ingress\" in version \"extensions/v1beta1\"\nensure CRDs are installed first"
+  },
+  {
+   "file": "y-cron-old.yaml",
+   "yaml": "apiVersion: batch/v1beta1\nkind: CronJob\nmetadata:\n  name: clean\nspec:\n  schedule: \"0 3 * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: clean\n              image: busybox:1.37\n",
+   "exit": 1,
+   "output": "error: resource mapping not found for name: \"clean\" namespace: \"\" from \"y-cron-old.yaml\": no matches for kind \"CronJob\" in version \"batch/v1beta1\"\nensure CRDs are installed first"
+  },
+  {
+   "file": "z-rb-missing-roleref.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: ci\nsubjects:\n  - kind: ServiceAccount\n    name: ci-bot\n    namespace: default\n",
+   "exit": 1,
+   "output": "The RoleBinding \"ci\" is invalid: \n* roleRef.kind: Unsupported value: \"\": supported values: \"Role\", \"ClusterRole\"\n* roleRef.name: Required value"
+  },
+  {
+   "file": "za-role-ok.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: deployer\nrules:\n  - apiGroups: [\"apps\"]\n    resources: [\"deployments\"]\n    verbs: [\"get\", \"list\", \"patch\"]\n",
+   "exit": 0,
+   "output": "role.rbac.authorization.k8s.io/deployer created"
+  },
+  {
+   "file": "zb-secret-stringdata.yaml",
+   "yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice\ntype: Opaque\nstringData:\n  password: hunter2!\n",
+   "exit": 0,
+   "output": "secret/spice created"
+  },
+  {
+   "file": "zc-job-ok.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: count\nspec:\n  backoffLimit: 2\n  template:\n    spec:\n      restartPolicy: Never\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: [\"sh\", \"-c\", \"echo 1 2 3\"]\n",
+   "exit": 0,
+   "output": "job.batch/count created"
+  },
+  {
+   "file": "zd-requests-bigger.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          memory: 512Mi\n        limits:\n          memory: 256Mi\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].resources.requests: Invalid value: \"512Mi\": must be less than or equal to memory limit of 256Mi"
+  },
+  {
+   "file": "ze-image-number.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: 42\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"ze-image-number.yaml\": Pod in version \"v1\" cannot be handled as a Pod: json: cannot unmarshal number into Go struct field Container.spec.containers.image of type string"
+  },
+  {
+   "file": "zf-selector-string.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"zf-selector-string.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: strict decoding error: unknown field \"spec.selector.app\""
+  },
+  {
+   "file": "zg-svc-targetport-name.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n      targetPort: Http_Port\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.ports[0].targetPort: Invalid value: \"Http_Port\": must contain only alpha-numeric characters (a-z, 0-9), and hyphens (-)"
+  },
+  {
+   "file": "zh-hpa-v1-metrics.yaml",
+   "yaml": "apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  maxReplicas: 5\n  targetCPUUtilizationPercentage: 70\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"zh-hpa-v1-metrics.yaml\": HorizontalPodAutoscaler in version \"v2\" cannot be handled as a HorizontalPodAutoscaler: strict decoding error: unknown field \"spec.targetCPUUtilizationPercentage\""
+  },
+  {
+   "file": "zi-np-ok.yaml",
+   "yaml": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-lock\nspec:\n  podSelector:\n    matchLabels:\n      app: db\n  policyTypes:\n    - Ingress\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n      ports:\n        - port: 5432\n",
+   "exit": 0,
+   "output": "networkpolicy.networking.k8s.io/db-lock created"
+  },
+  {
+   "file": "zj-dup-container.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n    - name: web\n      image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[1].name: Duplicate value: \"web\""
+  },
+  {
+   "file": "zk-bool-word.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu\ndata:\n  SPICY: yes\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"zk-bool-word.yaml\": ConfigMap in version \"v1\" cannot be handled as a ConfigMap: json: cannot unmarshal bool into Go struct field ConfigMap.data of type string"
+  },
+  {
+   "file": "zl-label-value-bad.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n        team: kedai kancil\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.template.labels: Invalid value: \"kedai kancil\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')"
+  },
+  {
+   "file": "a-unknown-in-list.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      imagePullPolice: Always\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"a-unknown-in-list.yaml\": Pod in version \"v1\" cannot be handled as a Pod: strict decoding error: unknown field \"spec.containers[0].imagePullPolice\""
+  },
+  {
+   "file": "b-unknown-top.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\nstatus2: {}\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"b-unknown-top.yaml\": Pod in version \"v1\" cannot be handled as a Pod: strict decoding error: unknown field \"status2\""
+  },
+  {
+   "file": "c-metadata-string.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: unable to decode \"c-metadata-string.yaml\": json: cannot unmarshal string into Go struct field metadataOnlyObject.metadata of type v1.ObjectMeta"
+  },
+  {
+   "file": "d-port-string-item.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      ports:\n        - 80\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"d-port-string-item.yaml\": Pod in version \"v1\" cannot be handled as a Pod: json: cannot unmarshal number into Go struct field Container.spec.containers.ports of type v1.ContainerPort"
+  },
+  {
+   "file": "e-cpu-cores.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 2 cores\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"e-cpu-cores.yaml\": Pod in version \"v1\" cannot be handled as a Pod: quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'"
+  },
+  {
+   "file": "f-svc-type.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  type: Loadbalancer\n  selector:\n    app: shop\n  ports:\n    - port: 80\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.type: Unsupported value: \"Loadbalancer\": supported values: \"ClusterIP\", \"ExternalName\", \"LoadBalancer\", \"NodePort\""
+  },
+  {
+   "file": "g-svc-upper.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: Shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n",
+   "exit": 1,
+   "output": "The Service \"Shop\" is invalid: metadata.name: Invalid value: \"Shop\": a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')"
+  },
+  {
+   "file": "h-no-name.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    app: shop\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error when retrieving current configuration of:\nResource: \"/v1, Resource=pods\", GroupVersionKind: \"/v1, Kind=Pod\"\nName: \"\", Namespace: \"default\"\nfrom server for: \"h-no-name.yaml\": resource name may not be empty"
+  },
+  {
+   "file": "i-no-metadata.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error when retrieving current configuration of:\nResource: \"/v1, Resource=pods\", GroupVersionKind: \"/v1, Kind=Pod\"\nName: \"\", Namespace: \"default\"\nfrom server for: \"i-no-metadata.yaml\": resource name may not be empty"
+  },
+  {
+   "file": "j-containers-null.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers: Required value"
+  },
+  {
+   "file": "k-two-type-errors.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: three\n  minReadySeconds: soon\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"k-two-type-errors.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal string into Go struct field DeploymentSpec.spec.minReadySeconds of type int32"
+  },
+  {
+   "file": "l-deploy-many.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n        - name: web\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: \n* spec.template.metadata.labels: Invalid value: {\"app\":\"web\"}: `selector` does not match template `labels`\n* spec.template.spec.containers[0].image: Required value"
+  },
+  {
+   "file": "m-svc-port-string.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: \"80\"\n      targetPort: 8080\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"m-svc-port-string.yaml\": Service in version \"v1\" cannot be handled as a Service: json: cannot unmarshal string into Go struct field ServicePort.spec.ports.port of type int32"
+  },
+  {
+   "file": "n-svc-port-zero.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - targetPort: 8080\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.ports[0].port: Invalid value: 0: must be between 1 and 65535, inclusive"
+  },
+  {
+   "file": "o-cron-noschedule.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: clean\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: clean\n              image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The CronJob \"clean\" is invalid: spec.schedule: Required value"
+  },
+  {
+   "file": "p-crb-role.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: ci\nsubjects:\n  - kind: ServiceAccount\n    name: ci-bot\n    namespace: default\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: Role\n  name: deployer\n",
+   "exit": 1,
+   "output": "The ClusterRoleBinding \"ci\" is invalid: roleRef.kind: Unsupported value: \"Role\": supported values: \"ClusterRole\""
+  },
+  {
+   "file": "q-rb-sa-nons.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: ci2\nsubjects:\n  - kind: ServiceAccount\n    name: ci-bot\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: view\n",
+   "exit": 1,
+   "output": "The ClusterRoleBinding \"ci2\" is invalid: subjects[0].namespace: Required value"
+  },
+  {
+   "file": "r-hpa-no-max.yaml",
+   "yaml": "apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 2\n",
+   "exit": 1,
+   "output": "The HorizontalPodAutoscaler \"shop\" is invalid: \n* spec.maxReplicas: Invalid value: 0: must be greater than or equal to `minReplicas`\n* spec.maxReplicas: Required value"
+  },
+  {
+   "file": "s-indent-deeper.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n        image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing s-indent-deeper.yaml: error converting YAML to JSON: yaml: line 8: mapping values are not allowed in this context"
+  },
+  {
+   "file": "t-indent-top.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\n metadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing t-indent-top.yaml: error converting YAML to JSON: yaml: line 3: mapping values are not allowed in this context"
+  },
+  {
+   "file": "u-dash-nospace.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    -name: web\n     image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing u-dash-nospace.yaml: error converting YAML to JSON: yaml: line 8: mapping values are not allowed in this context"
+  },
+  {
+   "file": "v-quote-unclosed.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: \"tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: error parsing v-quote-unclosed.yaml: error converting YAML to JSON: yaml: line 9: found unexpected end of stream"
+  },
+  {
+   "file": "w-flow-list.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      command: [\"sh\", \"-c\"\n",
+   "exit": 1,
+   "output": "error: error parsing w-flow-list.yaml: error converting YAML to JSON: yaml: line 9: did not find expected ',' or ']'"
+  },
+  {
+   "file": "x-labels-list.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    - app: shop\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "error: unable to decode \"x-labels-list.yaml\": json: cannot unmarshal array into Go struct field ObjectMeta.metadata.labels of type map[string]string"
+  },
+  {
+   "file": "y-cm-number-key.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu\ndata:\n  PORT: \"8080\"\n  bad key: x\n",
+   "exit": 1,
+   "output": "The ConfigMap \"menu\" is invalid: data[bad key]: Invalid value: \"bad key\": a valid config key must consist of alphanumeric characters, '-', '_' or '.' (e.g. 'key.name',  or 'KEY_NAME',  or 'key-name', regex used for validation is '[-._a-zA-Z0-9]+')"
+  },
+  {
+   "file": "z-ns-bad.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  namespace: Food_Court\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (NotFound): error when creating \"z-ns-bad.yaml\": namespaces \"Food_Court\" not found"
+  },
+  {
+   "file": "za-deploy-strategy.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  strategy:\n    type: Rolling\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.strategy: Unsupported value: {\"Type\":\"Rolling\",\"RollingUpdate\":null}: supported values: \"Recreate\", \"RollingUpdate\""
+  },
+  {
+   "file": "zb-image-pull.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      imagePullPolicy: always\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].imagePullPolicy: Unsupported value: \"always\": supported values: \"Always\", \"IfNotPresent\", \"Never\""
+  },
+  {
+   "file": "zc-cpu-limit.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 500m\n        limits:\n          cpu: 250m\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].resources.requests: Invalid value: \"500m\": must be less than or equal to cpu limit of 250m"
+  },
+  {
+   "file": "zd-probe.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      readinessProbe:\n        httpGet:\n          path: /healthz\n          port: 8080\n        periodSeconds: 0\n",
+   "exit": 0,
+   "output": "pod/tray created"
+  },
+  {
+   "file": "a-port-missing.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      ports:\n        - name: http\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].ports[0].containerPort: Required value"
+  },
+  {
+   "file": "b-pod-label-bad.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    team: kedai kancil\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: metadata.labels: Invalid value: \"kedai kancil\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')"
+  },
+  {
+   "file": "c-dep-never.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n      restartPolicy: Never\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.template.spec.restartPolicy: Unsupported value: \"Never\": supported values: \"Always\""
+  },
+  {
+   "file": "d-job-always.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: count\nspec:\n  template:\n    spec:\n      restartPolicy: Always\n      containers:\n        - name: count\n          image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The Job \"count\" is invalid: spec.template.spec.restartPolicy: Required value: valid values: \"OnFailure\", \"Never\""
+  },
+  {
+   "file": "e-svc-two-ports.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n    - port: 443\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: \n* spec.ports[0].name: Required value\n* spec.ports[1].name: Required value"
+  },
+  {
+   "file": "f-role-noapigroups.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: r\nrules:\n  - verbs: [\"get\"]\n",
+   "exit": 1,
+   "output": "The Role \"r\" is invalid: \n* rules[0].apiGroups: Required value: resource rules must supply at least one api group\n* rules[0].resources: Required value: resource rules must supply at least one resource"
+  },
+  {
+   "file": "g-hpa-min0.yaml",
+   "yaml": "apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 0\n  maxReplicas: 3\n",
+   "exit": 1,
+   "output": "The HorizontalPodAutoscaler \"shop\" is invalid: spec.metrics: Forbidden: must specify at least one Object or External metric to support scaling to zero replicas"
+  },
+  {
+   "file": "h-b64-abc.yaml",
+   "yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: s1\ndata:\n  k: abc\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"h-b64-abc.yaml\": Secret in version \"v1\" cannot be handled as a Secret: illegal base64 data at input byte 0"
+  },
+  {
+   "file": "i-b64-abcde.yaml",
+   "yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: s2\ndata:\n  k: abcde\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"i-b64-abcde.yaml\": Secret in version \"v1\" cannot be handled as a Secret: illegal base64 data at input byte 4"
+  },
+  {
+   "file": "j-b64-plain.yaml",
+   "yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: s3\ndata:\n  password: kancil123\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"j-b64-plain.yaml\": Secret in version \"v1\" cannot be handled as a Secret: illegal base64 data at input byte 8"
+  },
+  {
+   "file": "k-env-noname.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      env:\n        - value: x\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].env[0].name: Required value"
+  },
+  {
+   "file": "l-svc-targetport-big.yaml",
+   "yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n      targetPort: 70000\n",
+   "exit": 1,
+   "output": "The Service \"shop\" is invalid: spec.ports[0].targetPort: Invalid value: 70000: must be between 1 and 65535, inclusive"
+  },
+  {
+   "file": "m-dep-name-bad.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: Shop_1\nspec:\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"Shop_1\" is invalid: metadata.name: Invalid value: \"Shop_1\": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"
+  },
+  {
+   "file": "n-pod-label-key-bad.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    my app: shop\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: metadata.labels: Invalid value: \"my app\": name part must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]')"
+  },
+  {
+   "file": "o-container-noname.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Pod \"tray\" is invalid: spec.containers[0].name: Required value"
+  },
+  {
+   "file": "p-sel-empty.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  selector:\n    matchLabels: {}\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "The Deployment \"shop\" is invalid: spec.selector: Invalid value: {}: empty selector is invalid for deployment"
+  },
+  {
+   "file": "q-cron-6.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: clean\nspec:\n  schedule: \"0 0 3 * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: clean\n              image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The CronJob \"clean\" is invalid: spec.schedule: Invalid value: \"0 0 3 * * *\": expected exactly 5 fields, found 6: [0 0 3 * * *]"
+  },
+  {
+   "file": "r-cron-bad-field.yaml",
+   "yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: clean\nspec:\n  schedule: \"0 25 * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: clean\n              image: busybox:1.37\n",
+   "exit": 1,
+   "output": "The CronJob \"clean\" is invalid: spec.schedule: Invalid value: \"0 25 * * *\": end of range (25) above maximum (23): 25"
+  },
+  {
+   "file": "s-np-bad-port.yaml",
+   "yaml": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: np\nspec:\n  podSelector: {}\n  ingress:\n    - ports:\n        - port: 70000\n",
+   "exit": 1,
+   "output": "The NetworkPolicy \"np\" is invalid: spec.ingress[0].ports[0].port: Invalid value: 70000: must be between 1 and 65535, inclusive"
+  },
+  {
+   "file": "t-rb-roleref-apigroup.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: rb\nsubjects:\n  - kind: User\n    name: mei\nroleRef:\n  kind: Role\n  name: deployer\n",
+   "exit": 0,
+   "output": "rolebinding.rbac.authorization.k8s.io/rb created"
+  },
+  {
+   "file": "u-rb-subject-kind.yaml",
+   "yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: rb2\nsubjects:\n  - kind: Robot\n    name: mei\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: Role\n  name: deployer\n",
+   "exit": 1,
+   "output": "The RoleBinding \"rb2\" is invalid: subjects[0].kind: Unsupported value: \"Robot\": supported values: \"ServiceAccount\", \"User\", \"Group\""
+  },
+  {
+   "file": "v-dep-replicas-float.yaml",
+   "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 2.5\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n",
+   "exit": 1,
+   "output": "Error from server (BadRequest): error when creating \"v-dep-replicas-float.yaml\": Deployment in version \"v1\" cannot be handled as a Deployment: json: cannot unmarshal number 2.5 into Go struct field DeploymentSpec.spec.replicas of type int32"
+  },
+  {
+   "file": "w-pod-cpu-num.yaml",
+   "yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      resources:\n        requests:\n          cpu: 0.5\n          memory: 128Mi\n",
+   "exit": 0,
+   "output": "pod/tray created"
+  },
+  {
+   "file": "a-multi-parse.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-a\ndata:\n  SIZE: big\n---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-b\n data:\n  SIZE: small\n",
+   "exit": 1,
+   "output": "configmap/menu-a created\nerror: error parsing a-multi-parse.yaml: error converting YAML to JSON: yaml: line 4: did not find expected key"
+  },
+  {
+   "file": "b-comment-blank.yaml",
+   "yaml": "# The shop's menu\n\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-c   # the name\n  labels:\n    app: shop\ndata:\n  SIZE: big\n  NOTE: |\n    first line\n    second: line\n  LIST: \"a: b\"\n---\n# second doc\napiVersion: v1\nkind: Pod\nmetadata:\n  name: tray-z\nspec:\n  containers:\n  - name: web\n    image: nginx:1.29-alpine\n    command: [\"sh\", \"-c\", \"echo hi\"]\n    ports:\n    - containerPort: 80\n      protocol: TCP\n",
+   "exit": 0,
+   "output": "configmap/menu-c created\npod/tray-z created"
+  },
+  {
+   "file": "c-multi-decode.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-d\ndata:\n  SIZE: big\n---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-e\ndata:\n  SIZE: 3\n---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-f\ndata:\n  SIZE: small\n",
+   "exit": 1,
+   "output": "configmap/menu-d created\nconfigmap/menu-f created\nError from server (BadRequest): error when creating \"c-multi-decode.yaml\": ConfigMap in version \"v1\" cannot be handled as a ConfigMap: json: cannot unmarshal number into Go struct field ConfigMap.data of type string"
+  },
+  {
+   "file": "d-multi-mapping.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-g\ndata:\n  SIZE: big\n---\napiVersion: extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: shop\n---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-h\ndata:\n  SIZE: small\n---\nkind: ConfigMap\nmetadata:\n  name: menu-i\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: x\nspec:\n  ports: []\n",
+   "exit": 1,
+   "output": "configmap/menu-g created\nconfigmap/menu-h created\nresource mapping not found for name: \"shop\" namespace: \"\" from \"d-multi-mapping.yaml\": no matches for kind \"Deployment\" in version \"extensions/v1beta1\"\nensure CRDs are installed first\nerror validating \"d-multi-mapping.yaml\": error validating data: apiVersion not set; if you choose to ignore these errors, turn validation off with --validate=false"
+  },
+  {
+   "file": "e-multi-server.yaml",
+   "yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: menu-j\ndata:\n  SIZE: 3\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: y\nspec:\n  selector:\n    app: shop\n---\napiVersion: extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: shop\n",
+   "exit": 1,
+   "output": "[unable to decode \"e-multi-server.yaml\": json: cannot unmarshal bool into Go struct field ObjectMeta.metadata.name of type string, resource mapping not found for name: \"shop\" namespace: \"\" from \"e-multi-server.yaml\": no matches for kind \"Deployment\" in version \"extensions/v1beta1\"\nensure CRDs are installed first]\nError from server (BadRequest): error when creating \"e-multi-server.yaml\": ConfigMap in version \"v1\" cannot be handled as a ConfigMap: json: cannot unmarshal number into Go struct field ConfigMap.data of type string"
+  }
+ ]
+}

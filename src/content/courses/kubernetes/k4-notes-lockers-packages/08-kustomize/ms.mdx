@@ -1,0 +1,77 @@
+---
+id: k8s-k4-l08
+world: 4
+title: "Base dan overlay Kustomize"
+summary: "Anda akan belajar: jalankan satu aplikasi di dua dapur dengan base dan overlay, guna kubectl apply -k."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, CommandBuilder, Mission]
+needs: [k8s-k4-l07]
+scenario: k4-kz
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "kubectl kustomize", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_kustomize/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kz" commands={['ls', 'ls overlays', 'ls overlays/prod']} picture={false} label="ls tunjuk dua folder, base dan overlays. overlays ada dev dan prod. prod ada kustomization.yaml, namespace.yaml dan settings-patch.yaml." />
+
+Kedai sama, dua dapur. Dev mahu 1 dulang dan log yang banyak cakap. Prod mahu 3 dulang dan log yang senyap. Salin semua YAML dua kali? Nanti setiap pepijat perlu dibaiki dua kali.
+</Card>
+
+<Card id="see-overlay" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: kustomize.config.k8s.io/v1beta1' }, { text: 'kind: Kustomization' }, { text: 'namespace: prod', target: true }, { text: 'resources:' }, { text: '  - ../../base' }, { text: '  - namespace.yaml' }, { text: 'replicas:' }, { text: '  - name: shop' }, { text: '    count: 3', target: true }, { text: 'patches:' }, { text: '  - path: settings-patch.yaml', target: true }]} prompt="Ini overlays/prod/kustomization.yaml. Tekan tiga baris yang buat prod berbeza." success="Zon sendiri, 3 dulang, dan patch untuk nota." />
+
+**<Term id="kustomize">Kustomize</Term>** simpan satu resepi asas (base). Setiap <Term id="overlay">overlay</Term> ialah nota lekat di atasnya, untuk satu dapur. Base tak pernah berubah.
+</Card>
+
+<Card id="try-build" type="try">
+Pratonton prod dahulu. Ini cuma cetak YAML. Tiada apa sampai ke kluster.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" goal={{ lastTyped: 'kustomize overlays/prod/?$' }} hints={['Taip kubectl kustomize overlays/prod']} success="Itulah YAML yang prod akan dapat: namespace prod, replicas 3, LOG_LEVEL warn." />
+
+<Hint>`kubectl kustomize <folder>` bina overlay dan cetaknya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda baru jalankan `kubectl kustomize overlays/prod`. Berapa dulang prod sedang berjalan sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tiada', correct: true, why: 'Ia cuma cetak YAML. Tinjauan yang selamat.' }, { label: 'Tiga', why: 'Hampir! Cetak bukan apply. Anda perlu apply -k.' }, { label: 'Satu, daripada base', why: 'Tiada apa-apa dihantar ke kluster.' }]} />
+</Card>
+
+<Card id="try-apply" type="try">
+Sekarang buka dapur prod betul-betul.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" namespace="prod" goal={{ replicas: { name: 'shop', count: 3, namespace: 'prod' }, podsReady: { selector: 'app=shop', count: 3, namespace: 'prod' } }} hints={['Taip kubectl apply -k overlays/prod', 'Tengok: kubectl get pods -n prod']} success="Prod sudah dibuka: zon sendiri, 3 dulang." />
+
+<Hint>`-k` bermaksud: bina folder ini dengan Kustomize, kemudian apply.</Hint>
+</Card>
+
+<Card id="check-logs" type="check">
+<Interactive name="KubeReplay" scenario="k4-kz" namespace="prod" commands={['kubectl apply -k overlays/dev', 'kubectl apply -k overlays/prod', 'kubectl rollout status deployment/shop -n prod --timeout=120s', 'kubectl exec -n dev deploy/shop -- printenv LOG_LEVEL', 'kubectl exec -n prod deploy/shop -- printenv LOG_LEVEL']} label="Kedua-dua overlay di-apply. Dulang dev cetak debug. Dulang prod cetak warn." />
+
+Satu base, dua dapur. Dev kata `debug`, prod kata `warn`. Patch itu cuma ubah satu baris nota.
+</Card>
+
+<Card id="check-build" type="check">
+Bina arahan yang buka dapur dev.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Cakap dengan kluster' }, { text: 'apply', means: 'jadikan ia sama' }, { text: '-k', means: 'bina folder Kustomize dahulu' }, { text: 'overlays/dev', means: 'nota lekat dev' }]} decoys={[{ text: '-f', means: '-f ambil fail YAML biasa, bukan overlay' }, { text: 'base', means: 'Base sahaja tiada perubahan dev' }]} success="Itu buka dev, dibina daripada base dan notanya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan satu aplikasi di banyak dapur dengan Kustomize.
+</Card>
+
+<Card id="deeper" type="deeper">
+Overlay boleh buat lebih: `images:` tukar tag, `namePrefix:` tukar nama, `labels:` tambah label. `configMapGenerator` tambah hash pada nama nota, jadi perubahan akan gulung semula dulang. `kubectl diff -k overlays/prod` tunjuk perubahan dahulu.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l08-rep" steps={[{ id: 'copy', text: 'Dalam terminal latihan di atas, cat setiap fail dalam base dan overlays. Buat folder yang sama di mesin anda.' }, { id: 'preview', text: 'Pratonton prod.', command: 'kubectl kustomize overlays/prod' }, { id: 'apply', text: 'Buka prod.', command: 'kubectl apply -k overlays/prod' }, { id: 'diff', text: 'Tukar count kepada 2 dalam overlay prod. Lihat perubahan sebelum apply.', command: 'kubectl diff -k overlays/prod' }, { id: 'tidy', text: 'Tutup. Ini padam zon prod.', command: 'kubectl delete -k overlays/prod' }]} success="Dua dapur, satu resepi." />
+</Card>

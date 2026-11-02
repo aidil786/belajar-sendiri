@@ -1,0 +1,68 @@
+---
+id: aws-a3-l04
+world: 3
+title: "Security group dan NACL"
+summary: "Anda akan belajar: dua pengawal, pintu unit dan pagar baris, dan cara benarkan pelawat yang betul sahaja."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, SecurityGroupGate, Choice, SpotLines, SortCards]
+needs: [aws-a3-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: Security groups", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" }
+  - { label: "Amazon VPC: Network ACLs", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html" }
+  - { label: "Amazon VPC: Custom network ACLs (ephemeral ports)", url: "https://docs.aws.amazon.com/vpc/latest/userguide/custom-network-acl.html" }
+  - { label: "AWS CLI: aws ec2 authorize-security-group-ingress", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/authorize-security-group-ingress.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9:00', title: 'Untuk ujian sahaja', text: 'Aina buka SSH, port 22, kepada seluruh internet.' }, { when: '9:05', title: 'Tok tok', text: 'Robot yang mengimbas internet jumpa pintu yang terbuka.' }, { when: '9:30', title: 'Meneka', text: 'Mereka cuba kata laluan satu demi satu. Sepanjang hari.' }]} />
+
+Satu peraturan longgar, dan seluruh jalan datang mengetuk. Ketik cerita itu. Siapa patut jaga pintu?
+</Card>
+
+<Card id="see-sg" type="see">
+**<Term id="security-group">Security group</Term>** (pengawal pintu) ialah pengawal di pintu unit anda. Ia ada peraturan benarkan sahaja. Benarkan pembeli masuk di 443. Benarkan laptop anda sahaja guna SSH.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Pembeli', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'laptop', label: 'Laptop anda (SSH)', ip: '203.0.113.9', client: 'linux', protocol: 'tcp', port: 22, want: 'in' }, { id: 'stranger', label: 'Orang asing (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} />
+
+<Hint>Port 443 dari 0.0.0.0/0. Port 22 dari 203.0.113.9/32 sahaja.</Hint>
+</Card>
+
+<Card id="see-nacl" type="see">
+**<Term id="network-acl">Network ACL</Term>** (pagar baris) ialah pagar untuk seluruh baris. Ia tak ingat apa-apa. Pembeli masuk di 443. Jawapan mereka keluar ke port 50000. Siapa perlukan peraturan untuknya?
+
+<Interactive name="Choice" options={[{ label: 'Pagar baris (network ACL), peraturan Out', correct: true, why: 'Ia lupa siapa yang masuk. Jadi jawapan perlukan peraturan Out sendiri.' }, { label: 'Pengawal pintu (security group)', why: 'Pintu ingat lawatan itu, jadi jawapan sentiasa boleh keluar.' }, { label: 'Tiada siapa, jawapan percuma', why: 'Di pagar, tiada yang percuma. Ia periksa setiap paket.' }]} />
+</Card>
+
+<Card id="try-nacl" type="try">
+Baris ini ada pagar khas yang baru. Ia tolak semua. Benarkan pembeli masuk di 443, dan benarkan jawapan mereka keluar.
+
+<Interactive name="SecurityGroupGate" edit="nacl" nacl="custom" sg={[{ protocol: 'tcp', ports: '443', source: '0.0.0.0/0' }]} visitors={[{ id: 'win', label: 'Pembeli guna Windows', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'linux', label: 'Pembeli guna Linux', ip: '203.0.113.50', client: 'linux', protocol: 'tcp', port: 443, want: 'in' }, { id: 'scan', label: 'Pengimbas port', ip: '192.0.2.66', protocol: 'tcp', port: 3389, want: 'out' }]} />
+
+<Hint>In: TCP 443 dari 0.0.0.0/0. Out: TCP 1024-65535 ke 0.0.0.0/0.</Hint>
+</Card>
+
+<Card id="check-cli" type="check">
+CLI pun boleh tambah peraturan pintu. Ini jawapan contoh rasmi, dipendekkan. Ketik baris yang sebut siapa boleh masuk.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang sebut siapa boleh masuk." success="Hanya alamat dalam 203.0.113.0/24 boleh guna port 22." lines={[{ text: '$ aws ec2 authorize-security-group-ingress --group-id sg-1234567890abcdef0 --protocol tcp --port 22 --cidr 203.0.113.0/24' }, { text: '"IsEgress": false,' }, { text: '"IpProtocol": "tcp",' }, { text: '"FromPort": 22,' }, { text: '"ToPort": 22,' }, { text: '"CidrIpv4": "203.0.113.0/24"', target: true }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Pengawal pintu atau pagar baris? Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'sg', label: 'Security group (pintu)' }, { id: 'nacl', label: 'Network ACL (pagar baris)' }]} items={[{ label: 'Peraturan benarkan sahaja', bucket: 'sg', why: 'Anda tak boleh tulis Deny dalam security group.' }, { label: 'Peraturan bernombor, paling rendah dahulu', bucket: 'nacl', why: 'Peraturan pertama yang sepadan yang putuskan.' }, { label: 'Ingat lawatan, jadi jawapan boleh keluar', bucket: 'sg', why: 'Itu dipanggil stateful.' }, { label: 'Boleh tolak satu alamat jahat', bucket: 'nacl', why: 'Peraturan Deny bernombor rendah sekat ia untuk seluruh baris.' }]} success="Pintu: benarkan sahaja dan ingat. Pagar: bernombor, pelupa, boleh tolak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tetapkan kedua-dua pengawal, supaya hanya pelawat yang betul masuk.
+</Card>
+
+<Card id="deeper" type="deeper">
+Network ACL lalai benarkan semua, jadi kebanyakan orang hanya ubah security group. Security group baru tak benarkan apa-apa masuk, dan benarkan semua keluar. Daripada SSH, cuba Session Manager: ia tak perlukan port masuk terbuka langsung.
+</Card>

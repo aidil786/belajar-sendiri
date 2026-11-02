@@ -1,0 +1,70 @@
+---
+id: linux-l3-l01
+world: 3
+title: "Alamat IP: nombor kedai"
+summary: "Anda akan belajar: apa itu alamat IP, dan cara cari alamat server anda."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SwipeJudge, Choice, SortCards, Mission]
+needs: [linux-l2-boss]
+scenario: linux-l3-ip
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ip-address(8)", url: "https://man7.org/linux/man-pages/man8/ip-address.8.html" }
+  - { label: "RFC 1918: private addresses", url: "https://www.rfc-editor.org/rfc/rfc1918" }
+  - { label: "Debian Reference: network setup", url: "https://www.debian.org/doc/manuals/debian-reference/ch05.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ip" intro={['ip -br addr']} network />
+
+Aina perlukan nombor server kedai untuk menghubunginya. `ip -br addr` cetak dua baris. Nombor yang mana satu?
+</Card>
+
+<Card id="try-valid" type="try">
+<Term id="ip-address">Alamat IP</Term> ialah nombor telefon sesebuah komputer. Ada empat nombor, setiap satu 0 hingga 255, disambung dengan titik. Alamat sebenar atau tidak?
+
+<Interactive name="SwipeJudge" cards={[{ text: '10.0.0.5', good: true, why: 'Empat nombor, semuanya antara 0 dan 255.' }, { text: '10.0.5', good: false, why: 'Tiga nombor sahaja. Alamat perlukan empat.' }, { text: '192.168.1.20', good: true, why: 'Empat nombor. Banyak router rumah guna 192.168.' }, { text: '300.1.2.3', good: false, why: '300 terlalu besar. Setiap nombor berhenti di 255.' }, { text: '127.0.0.1', good: true, why: 'Alamat sebenar: mesin yang anda sedang guna.' }]} />
+</Card>
+
+<Card id="see-two" type="see">
+kedai ada dua talian. `lo` ialah 127.0.0.1, iaitu **loopback**: interkom kedai. `eth0` ialah 10.0.0.5: talian ke jalan. Yang mana boleh dihubungi dari laptop Aina?
+
+<Interactive name="Choice" options={[{ label: '10.0.0.5', correct: true, why: 'Talian ke jalan. Komputer lain boleh sampai.' }, { label: '127.0.0.1', why: 'Itu interkom. Di laptopnya, ia hubungi laptopnya sendiri.' }, { label: 'Kedua-duanya', why: 'Interkom tak pernah keluar dari kedai.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Giliran anda. Tunjukkan alamat kedai dengan `ip -br addr` (atau `hostname -I`).
+
+<Interactive name="LinuxSim" scenario="linux-l3-ip" goal={{ lastTyped: '^(ip (-br )?a|hostname -I)' }} hints={['Taip ip -br addr dan tekan Enter.', 'Tengok baris eth0.']} solution={['ip -br addr']} success="eth0 ada 10.0.0.5. Itulah nombor kedai di jalan." />
+
+<Hint>`-br` maksudnya ringkas: satu baris untuk setiap kad rangkaian.</Hint>
+</Card>
+
+<Card id="see-private" type="see">
+Sesetengah nombor hanya berfungsi dalam satu bangunan. Inilah <Term id="private-address">alamat persendirian</Term>: 10.x, 192.168.x dan 172.16–31.x. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'private', label: 'Persendirian (dalam bangunan)' }, { id: 'public', label: 'Awam (internet latihan kita)' }]} items={[{ label: '10.0.0.5', bucket: 'private', why: 'Bermula dengan 10. Persendirian.' }, { label: '192.168.1.20', bucket: 'private', why: 'Bermula dengan 192.168. Persendirian.' }, { label: '172.16.0.9', bucket: 'private', why: '172.16 hingga 172.31 ialah persendirian.' }, { label: '203.0.113.10', bucket: 'public', why: 'kedai.example tinggal di sini dalam internet latihan kita.' }, { label: '198.51.100.7', bucket: 'public', why: 'pasar.example tinggal di sini dalam internet latihan kita.' }]} success="Nombor persendirian berulang di setiap bangunan. Nombor awam hanya ada satu." />
+</Card>
+
+<Card id="predict" type="predict">
+Di laptop anda, anda buka `http://127.0.0.1`. Halaman siapa yang mungkin menjawab?
+
+<Interactive name="Choice" options={[{ label: 'Laptop anda sendiri', correct: true, why: 'Loopback sentiasa hubungi mesin yang anda guna.' }, { label: 'kedai', why: '127.0.0.1 tak pernah keluar dari mesin anda.' }, { label: 'Internet', why: 'Interkom kekal dalam mesin anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari alamat server dan bezakan alamat persendirian dengan awam.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alamat IPv6 yang lebih baharu nampak begini: `2001:db8::5`. Server latihan kita tiada IPv6. Nombor seperti 203.0.113.x disimpan untuk contoh, macam nombor telefon palsu dalam filem.
+
+Latihan sebenar (pilihan): cari nombor komputer anda sendiri.
+
+<Interactive name="Mission" id="linux-l3-l01-rep" steps={[{ id: 'linux', text: 'Linux atau WSL: senaraikan alamat anda.', command: 'ip -br addr' }, { id: 'mac', text: 'macOS: alamat Wi-Fi.', command: 'ipconfig getifaddr en0' }, { id: 'win', text: 'Windows: cari IPv4 Address.', command: 'ipconfig' }, { id: 'private', text: 'Adakah nombor anda persendirian? Besar kemungkinan ya.' }]} success="Itulah nombor komputer anda di rumah." />
+</Card>

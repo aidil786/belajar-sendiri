@@ -1,0 +1,78 @@
+---
+id: docker-d2-boss
+world: 2
+title: "Sinar pengecut"
+summary: "Anda akan belajar: bungkus laman sebenar dengan nginx: kecil, bukan root dan boleh dicapai."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, ShrinkRay, Mission]
+needs: [docker-d2-l13]
+scenario: d2-boss-pack
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: Best practices", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "Docker docs: Build context", url: "https://docs.docker.com/build/concepts/context/" }
+  - { label: "Dockerfile reference: USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-boss-pack" commands={['ls', 'cat Dockerfile']} label="Folder diari ada index.html, style.css, notes.txt dan Dockerfile. Resepi pilih asasnya dengan ARG BASE=nginx:latest." />
+
+Boss: Sinar pengecut! Bungkus laman diari anda dengan nginx. Garisan penamat: bawah 100MB, tiada nota rahsia di dalam, dan tidak berjalan sebagai root.
+</Card>
+
+<Card id="try-pack" type="try">
+Peringkat 1: buat ia berfungsi. Bina `diary:1.0` dan hidangkan di port laptop 8080.
+
+<Interactive name="KitchenSim" scenario="d2-boss-pack" goal={{ imageExists: 'diary:1.0', reachable: 'localhost:8080' }} hints={['Taip docker build -t diary:1.0 .', 'Kemudian docker run -d --name web -p 8080:80 diary:1.0']} success="Diari sudah dalam talian. Sekarang tengok saiznya: docker images diary." />
+
+<Hint>Bina dulu, kemudian jalankan dengan `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="check-size" type="check">
+`docker images` kata `diary:1.0` ialah 241MB. Sasarannya bawah 100MB. Langkah mana paling membantu?
+
+<Interactive name="Choice" options={[{ label: 'Tukar ke asas nginx Alpine', correct: true, why: 'Asas ialah sebahagian besar saiznya. nginx Alpine jauh lebih kecil.' }, { label: 'Padam style.css', why: 'Ia cuma beberapa bait. Asas itulah gergasinya.' }, { label: 'Guna tag yang lebih pendek', why: 'Tag cuma pelekat. Ia tiada berat.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Peringkat 2: rancang pengecutan. Kecilkan pek makanan ke 70MB atau kurang.
+
+<Interactive name="ShrinkRay" app="static-site" target={70} />
+</Card>
+
+<Card id="try-shrink" type="try">
+Peringkat 3: kecilkan betul-betul. Tinggalkan `notes.txt` di rumah, dan bina `diary:2.0` atas `nginx:1.30-alpine`.
+
+<Interactive name="KitchenSim" scenario="d2-boss-pack" goal={{ fileContains: { 'diary/.dockerignore': 'notes.txt' }, imageExists: 'diary:2.0', imageMaxSize: { 'diary:2.0': '100MB' } }} hints={['Dulu: echo "notes.txt" > .dockerignore', 'Kemudian pilih asas dengan argumen build: docker build --build-arg BASE=nginx:1.30-alpine -t diary:2.0 .']} success="Bawah 100MB, dan nota kekal di rumah." />
+
+<Hint>Resepi bermula dengan `ARG BASE`. `--build-arg BASE=...` tukar asasnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda tambah `USER nginx` sahaja pada resepi. Apa jadi bila bekas itu mula?
+
+<Interactive name="Choice" options={[{ label: 'nginx berhenti: ia tak boleh tulis folder cache', correct: true, why: 'Log sebenar: mkdir() "/var/cache/nginx/client_temp" failed (13: Permission denied). root yang memiliki folder itu.' }, { label: 'Ia jalan sama macam biasa', why: 'nginx perlu tulis di beberapa tempat. Sebagai pengguna biasa, ia tak dibenarkan.' }, { label: 'Ia tak boleh buka port 80', why: 'Docker benarkan pengguna biasa buka port 80 di dalam bekas. Masalahnya folder cache.' }]} />
+</Card>
+
+<Card id="try-nonroot" type="try">
+Peringkat 4: tanpa root. Resepi ini sudah serahkan folder kepada nginx. Tambah `USER nginx`, bina `diary:3.0`, jalankan di 8080, dan ketuk.
+
+<Interactive name="KitchenSim" scenario="d2-boss-nonroot" intro={['cat Dockerfile']} goal={{ imageExists: 'diary:3.0', imageMaxSize: { 'diary:3.0': '100MB' }, imageUser: { 'diary:3.0': 'nonroot' }, reachable: 'localhost:8080', lastTyped: '^curl' }} hints={['Taip echo "USER nginx" >> Dockerfile', 'Kemudian docker build -t diary:3.0 .', 'Kemudian docker run -d --name web -p 8080:80 diary:3.0', 'Akhir sekali curl localhost:8080']} success="Kecil, bukan root dan dalam talian. Sinar pengecut selesai!" />
+
+<Hint>Tersangkut? `docker logs web` tunjuk kenapa bekas berhenti.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bungkus laman sebenar: kecil, selamat dan bukan root.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kenapa ada baris `chown`? nginx tulis cache ke `/var/cache/nginx` dan id prosesnya ke `/run/nginx.pid`. Sebagai root, boleh. Sebagai `nginx`, hanya jika ia pemiliknya. Sesetengah platform halang port rendah untuk pengguna biasa. Ramai pasukan guna 8080.
+
+<Interactive name="Mission" id="d2-boss-rep" steps={[{ id: 'site', text: 'Ambil laman diari anda sendiri (atau mana-mana laman statik).' }, { id: 'recipe', text: 'Tulis resepi atas nginx:1.30-alpine dengan .dockerignore.' }, { id: 'user', text: 'Tambah baris chown dan USER nginx, macam peringkat 4.' }, { id: 'check', text: 'Bina, jalankan di 8080 dan semak saiznya.', command: 'docker images' }]} success="Laman anda sendiri, kecil dan selamat!" />
+</Card>

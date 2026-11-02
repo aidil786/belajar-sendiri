@@ -1,0 +1,142 @@
+---
+id: obs-o4-m9
+world: 4
+title: "Misi capstone 9: Pantau Kedai Kancil"
+summary: "Anda akan belajar: jalankan bilik kawalan sendiri untuk Kedai Kancil: Prometheus, Grafana, node-exporter, satu amaran dan satu dashboard."
+minutes: 5
+xp: 100
+interactives: [SortCards, Choice, PromQLPlayground, YamlPlayground, AlertRuleBuilder, Mission, MissionCheck]
+needs: [obs-o4-l08]
+scenario: o3-target-down
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/" }
+  - { label: "Prometheus configuration", url: "https://prometheus.io/docs/prometheus/latest/configuration/configuration/" }
+  - { label: "Node exporter guide", url: "https://prometheus.io/docs/guides/node-exporter/" }
+  - { label: "Grafana provisioning", url: "https://grafana.com/docs/grafana/latest/administration/provisioning/" }
+---
+
+<Card id="hook" type="hook">
+Misi 9: pantau Kedai Kancil! Anda akan bina bilik kawalan kecil dalam folder `monitoring/`. Mula-mula, letak setiap fail di tempatnya.
+
+<Interactive name="SortCards" buckets={[{ id: 'top', label: 'monitoring/' }, { id: 'prom', label: 'prometheus/' }, { id: 'graf', label: 'grafana/' }]} items={[{ label: 'compose.yaml', bucket: 'top', why: 'Set hidangan duduk di atas dan mulakan ketiga-tiganya.' }, { label: 'prometheus.yml', bucket: 'prom', why: 'Apa nak di-scrape, dan rule mana nak dimuatkan.' }, { label: 'rules.yml', bucket: 'prom', why: 'Alert rule, di sebelah config Prometheus.' }, { label: 'datasource prometheus.yaml', bucket: 'graf', why: 'Beritahu Grafana di mana Prometheus tinggal.' }, { label: 'dashboard kedai.json', bucket: 'graf', why: 'Skrin itu sendiri, disimpan sebagai JSON.' }]} success="Tiga folder, lima fail, satu bilik kawalan." />
+</Card>
+
+<Card id="see-compose" type="see">
+node-exporter tiada baris `ports`. Macam mana Prometheus sampai kepadanya?
+
+<Interactive name="Choice" options={[{ label: 'Melalui rangkaian Compose, ikut nama: node-exporter:9100', correct: true, why: 'Betul. Servis dalam satu fail Compose kongsi rangkaian dan cari satu sama lain ikut nama.' }, { label: 'Melalui laptop anda pada port 9100', why: 'Hanya port yang diterbitkan sampai ke laptop. Yang ini kekal di dalam.' }, { label: 'Tak boleh', why: 'Boleh: Compose beri mereka rangkaian bersama.' }]} />
+
+```yaml
+services:
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.13.5
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+    ports: ["9090:9090"]
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+  grafana:
+    image: grafana/grafana:13.2.5
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+```
+</Card>
+
+<Card id="see-dashboard" type="see">
+Uji query panel "Targets up" dulu. Jadikan ia satu nombor.
+
+<Interactive name="PromQLPlayground" scenario="o3-target-down" initial="up" goal={{ resultCount: 1, labelNames: [], usesFunction: ['sum'] }} hints={['Balut: sum(up).']} solution="sum(up)" success="Satu nombor: berapa target yang menjawab. Sekarang simpan dashboard di bawah." />
+
+```json
+{
+  "uid": "kedai",
+  "title": "Kedai Kancil",
+  "panels": [
+    { "type": "stat", "title": "Targets up",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+      "targets": [{ "refId": "A", "expr": "sum(up)" }] },
+    { "type": "timeseries", "title": "CPU busy (%)",
+      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 6 },
+      "targets": [{ "refId": "A", "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])))" }] }
+  ]
+}
+```
+</Card>
+
+<Card id="see-grafana" type="see">
+Grafana berjalan dalam container sendiri. Kenapa sumber data tulis `http://prometheus:9090`, bukan `localhost`?
+
+<Interactive name="Choice" options={[{ label: 'Dalam container Grafana, localhost ialah Grafana sendiri', correct: true, why: 'Betul. Guna nama servis: Compose tukarnya kepada alamat yang betul.' }, { label: 'localhost tak dibenarkan dalam YAML', why: 'Ia dibenarkan. Cuma ia tunjuk ke tempat yang salah di sini.' }, { label: 'Port 9090 hanya berfungsi dengan nama', why: 'Port itu elok. Hos itulah masalahnya.' }]} />
+
+```yaml
+# grafana/provisioning/datasources/prometheus.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+```
+
+```yaml
+# grafana/provisioning/dashboards/kedai.yaml
+apiVersion: 1
+providers:
+  - name: kedai
+    folder: Kedai Kancil
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+```
+</Card>
+
+<Card id="try-prom" type="try">
+`prometheus.yml` ini scrape `localhost:9100`. Dalam container Prometheus, tiada apa mendengar di situ. Halakan job node ke node-exporter.
+
+<Interactive name="YamlPlayground" file="prometheus.yml" initial={'global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\nrule_files:\n  - rules.yml\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["localhost:9100"]\n'} expect={[{ path: 'scrape_configs.1.static_configs.0.targets', type: 'list', includes: 'node-exporter:9100', hint: 'Pada baris terakhir, tukar localhost kepada node-exporter.' }, { path: 'scrape_configs.0.static_configs.0.targets', type: 'list', includes: 'localhost:9090', hint: 'Kekalkan localhost:9090: Prometheus scrape dirinya di situ.' }, { path: 'rule_files', type: 'list', includes: 'rules.yml', hint: 'Kekalkan rules.yml di bawah rule_files.' }]} solution={'global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\nrule_files:\n  - rules.yml\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["node-exporter:9100"]\n'} hint="Hanya baris terakhir yang berubah." success="Itulah prometheus.yml anda. Pilih dan salinnya." />
+
+<Hint>Untuk Prometheus sendiri, localhost betul. Untuk node-exporter, guna nama servisnya.</Hint>
+</Card>
+
+<Card id="try-alert" type="try">
+Sekarang amaran. Panggil bila mana-mana target mati selama seminit, dan sebut job serta instance.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-target-down" alert="KedaiTargetDown" exprs={[{ expr: 'up == 0' }, { expr: 'up == 1', why: 'up == 1 benar bila target itu sihat.' }]} fors={['0s', '1m']} labels={[{ labels: {} }, { labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: 'Target down' } }, { annotations: { summary: '{{ $labels.job }} on {{ $labels.instance }} is down' } }]} goal={{ firingAt: ['20m'], labels: { severity: 'page' }, annotationUses: ['$labels.job', '$labels.instance'] }} solution={{ expr: 0, for: 1, labels: 1, annotations: 1 }} success="YAML itu ialah seluruh rules.yml anda. Pilih dan salinnya." />
+
+<Hint>Tunggu 1 minit, supaya restart sekejap tak panggil sesiapa.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang bina betul-betul, langkah demi langkah. Tanda anda disimpan.
+
+<Interactive name="Mission" id="obs-o4-m9-build" steps={[{ id: 'folders', text: 'Buat folder-folder itu, kemudian bekerja dalam monitoring/.', command: 'mkdir -p monitoring && cd monitoring && mkdir -p prometheus grafana/dashboards grafana/provisioning/datasources grafana/provisioning/dashboards' }, { id: 'files', text: 'Simpan enam fail dari kad di atas dalam folder masing-masing.' }, { id: 'dry', text: 'Larian kering. Tiada output bermaksud compose.yaml elok.', command: 'docker compose config --quiet' }, { id: 'promtool', text: 'Semak prometheus.yml dan fail rule yang dimuatkannya.', command: 'docker run --rm --entrypoint promtool -v "$PWD/prometheus:/etc/prometheus:ro" quay.io/prometheus/prometheus:v3.13.5 check config /etc/prometheus/prometheus.yml' }, { id: 'up', text: 'Hidupkan bilik kawalan.', command: 'docker compose up -d' }, { id: 'targets', text: 'Buka halaman targets. Kedua-dua target patut tulis UP.', command: 'http://localhost:9090/targets' }, { id: 'grafana', text: 'Buka Grafana. Log masuk sebagai admin, kata laluan admin, kemudian pilih yang baharu. Buka dashboard Kedai Kancil.', command: 'http://localhost:3000' }, { id: 'fire', text: 'Uji loceng: hentikan node-exporter.', command: 'docker compose stop node-exporter' }, { id: 'alerts', text: 'Tunggu 2 minit, kemudian buka halaman alerts. KedaiTargetDown patut firing.', command: 'http://localhost:9090/alerts' }, { id: 'heal', text: 'Hidupkan semula dan lihat amaran itu hilang.', command: 'docker compose start node-exporter' }, { id: 'push', text: 'Letak monitoring/ dalam repo kedai-kancil awam anda, kemudian commit dan push.', command: 'git add monitoring && git commit -m "Watch the shop" && git push' }, { id: 'down', text: 'Tutup bilik kawalan bila dah siap.', command: 'docker compose down' }]} success="Langkah misi selesai! Sekarang biar GitHub sahkan fail-fail itu." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub boleh nampak fail anda. Taip nama pengguna anda dan tekan Semak sekarang.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo kedai-kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/compose.yaml', label: 'Ia ada monitoring/compose.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/prometheus/prometheus.yml', label: 'Ia ada config Prometheus' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/prometheus/rules.yml', label: 'Ia ada alert rule' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/grafana/dashboards/kedai.json', label: 'Ia ada dashboard' }]} success="GitHub nampak bilik kawalan anda!" />
+</Card>
+
+<Card id="self-check" type="check">
+Selebihnya hanya anda boleh nampak. Tanda yang benar.
+
+<Interactive name="Mission" id="obs-o4-m9-self" title="Semakan diri" steps={[{ id: 'up', text: 'Halaman targets tunjuk prometheus dan node sebagai UP.' }, { id: 'stat', text: 'Panel Targets up tunjuk 2.' }, { id: 'fired', text: 'Bila node-exporter dihentikan, KedaiTargetDown jadi pending, kemudian firing.' }, { id: 'cleared', text: 'Selepas start, amaran itu hilang sendiri.' }, { id: 'secret', text: 'Anda dah tukar kata laluan admin, dan tiada kata laluan dalam repo.' }]} success="Misi 9 selesai: anda pantau Kedai Kancil!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan bilik kawalan kecil: metrik, dashboard dan amaran.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat. Bilik kawalan sebenar memantau dari luar. Bilik kita berjalan di mesin yang dipantaunya. Jika mesin itu mati, loceng pun mati. Dalam container, node-exporter nampak cakera dan rangkaian container sendiri. README-nya tunjuk mount hos untuk mesin sebenar. Seterusnya: tambah Alertmanager, supaya loceng sampai ke telefon.
+</Card>

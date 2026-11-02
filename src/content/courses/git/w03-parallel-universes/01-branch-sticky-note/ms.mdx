@@ -1,0 +1,74 @@
+---
+id: git-w03-l01
+world: 3
+title: Branch ialah nota pelekat
+summary: "Anda akan belajar: apa sebenarnya branch, dan cara membuatnya."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, Sim, TermReplay, UniverseSplitter, Choice]
+needs: [git-w02-l09]
+scenario: w03-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "Branches in a nutshell (Pro Git)", url: "https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} effect="wobble" label="Tiga commit di main: Add README, Add day 1 page dan Add style. Yang paling baru bercahaya dan bergoyang." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit', glow: true }] }]} />
+
+Anda nak cuba tema gelap untuk diari anda. Tapi main mesti terus berfungsi. Di mana anda boleh cuba dengan selamat?
+</Card>
+
+<Card id="see-note" type="see">
+<Interactive name="GraphScene" scenario="w03-l01" commands={['git branch dark-mode']} label="Label hijau baru, dark-mode, muncul pada commit terbaru, di sebelah main. HEAD kekal di main." />
+
+**<Term id="branch">Branch</Term>** (cabang) ialah nota pelekat pada commit. `git branch dark-mode` lekatkan nota baru di sini. Anda kekal di tempat sama.
+</Card>
+
+<Card id="try-type" type="try">
+Buat branch bernama `dark-mode`.
+
+<Interactive name="Sim" scenario="w03-l01" panels={['graph']} goal={{ branches: ['dark-mode'], currentBranch: 'main' }} hints={['Taip git branch dark-mode dan tekan Enter.', 'Dah pindah ke situ? Taip git switch main untuk kembali.']} success="Nota pelekat baru! Anda masih di main." />
+
+<Hint>Taip `git branch dark-mode`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="TermReplay" scenario="w03-l01" commands={['git branch dark-mode', 'git branch']} label="git branch senaraikan dark-mode dan main. Ada bintang di sebelah main." />
+
+`git branch` tanpa nama senaraikan nota anda. Bintang menanda nota tempat anda berada.
+</Card>
+
+<Card id="try-place" type="try">
+Nota boleh dilekat pada commit lama juga. Lekatkan nota bernama `idea` pada “Add day 1 page”.
+
+<Interactive name="UniverseSplitter" scenario="w03-l01" task={{ type: 'create', at: '^Add day 1 page$', name: 'idea' }} success="Nota idea kini di atas Add day 1 page. Nota boleh dilekat pada mana-mana commit." />
+
+<Hint>Ketik commit di tengah. Kemudian ketik “Lekat di sini”.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda di main. Anda buat commit baru. Nota mana yang bergerak ke depan?
+
+<Interactive name="Choice" options={[{ label: '`main`', correct: true, why: 'HEAD duduk di main, jadi main ikut commit baru anda.' }, { label: '`dark-mode`', why: 'dark-mode kekal di situ. Hanya nota tempat HEAD duduk yang bergerak.' }, { label: 'Kedua-dua nota', why: 'Hanya nota tempat HEAD duduk yang bergerak.' }]} />
+</Card>
+
+<Card id="check-move" type="check">
+<Interactive name="GraphScene" scenario="w03-l01" commands={['git branch dark-mode', 'echo "<p>Day 2: I made a branch.</p>" >> index.html', 'git commit -am "Add day 2 entry"']} label="Selepas commit baru, main dan HEAD bergerak ke Add day 2 entry. dark-mode kekal di Add style." />
+
+Nampak? Hanya main yang bergerak. HEAD menumpang di atas main. dark-mode tunggu di commit lama.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat branch dan faham apa sebenarnya branch.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git branch -v` tunjuk commit di bawah setiap nota. `git branch -m dark-mode night-mode` tukar namanya. Nama branch tak boleh ada ruang kosong. Pasukan guna `-` dan `/`, contohnya `feature/dark-mode`. Kenapa branch murah sangat? Dalam Git, branch cuma nama yang memegang satu id commit.
+
+<Interactive name="TermReplay" scenario="w03-l01" commands={['git branch dark-mode', 'git branch -v']} label="git branch -v tunjuk dark-mode dan main, masing-masing dengan hash pendek dan mesej Add style." />
+</Card>

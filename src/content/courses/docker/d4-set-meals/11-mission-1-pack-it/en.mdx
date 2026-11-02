@@ -1,0 +1,119 @@
+---
+id: docker-d4-m1
+world: 4
+title: "Capstone mission 1: Pack it"
+summary: "You will learn: to pack Kedai Kancil so one command starts it on any machine."
+minutes: 5
+xp: 100
+interactives: [SortCards, KitchenReplay, Choice, ComposeCanvas, Mission, MissionCheck]
+needs: [docker-d4-l10]
+scenario: d4-mission
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Compose quickstart", url: "https://docs.docker.com/compose/gettingstarted/" }
+  - { label: "Dockerfile reference", url: "https://docs.docker.com/reference/dockerfile/" }
+  - { label: "Compose file reference", url: "https://docs.docker.com/reference/compose-file/" }
+---
+
+<Card id="hook" type="hook">
+Mission 1: pack it! Kedai Kancil gets its own repo, `kedai-kancil`. First, put each file in its folder.
+
+<Interactive name="SortCards" buckets={[{ id: 'top', label: 'kedai-kancil/ (top)' }, { id: 'web', label: 'web/' }, { id: 'api', label: 'api/' }]} items={[{ label: 'index.html', bucket: 'web', why: 'The page nginx serves.' }, { label: 'Dockerfile (FROM nginx)', bucket: 'web', why: 'The web recipe sits next to its page.' }, { label: 'server.js', bucket: 'api', why: 'The API program.' }, { label: 'package.json', bucket: 'api', why: 'The API name and its scripts.' }, { label: 'Dockerfile (FROM node)', bucket: 'api', why: 'The API recipe sits next to its code.' }, { label: 'compose.yaml', bucket: 'top', why: 'The set meal menu sits above both folders.' }]} success="Two folders, two recipes, one menu on top." />
+</Card>
+
+<Card id="see-web" type="see">
+```html
+<h1>Kedai Kancil</h1>
+```
+
+```dockerfile
+FROM nginx:1.30-alpine
+COPY index.html /usr/share/nginx/html/
+```
+
+<Interactive name="KitchenReplay" scenario="d4-mission" commands={['docker build -t web-check ./web', 'docker run -d --name webcheck -p 8080:80 web-check', 'curl -s localhost:8080']} label="The web recipe bakes, runs on hatch 8080 and serves the page." />
+
+Top: `web/index.html`. Below: `web/Dockerfile`. Two lines: start from nginx, copy your page in.
+</Card>
+
+<Card id="see-api-code" type="see">
+The API code is below: `api/server.js`, then `api/package.json`. Its recipe will have no `npm ci` step. Why is that fine?
+
+<Interactive name="Choice" options={[{ label: 'There are no packages to install', correct: true, why: 'server.js only uses node:http, which comes with Node.' }, { label: 'npm ci runs by itself', why: 'Nothing runs unless the recipe says so.' }, { label: 'Compose installs packages', why: 'Compose only builds what the Dockerfile says.' }]} />
+
+```js
+const http = require('node:http');
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ ok: true, shop: 'Kedai Kancil' }));
+}).listen(port, () => console.log(`API listening on port ${port}`));
+```
+
+```json
+{
+  "name": "kedai-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}
+```
+</Card>
+
+<Card id="see-api-recipe" type="see">
+```dockerfile
+FROM node:24-alpine
+WORKDIR /app
+COPY package.json server.js ./
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+<Interactive name="KitchenReplay" scenario="d4-mission" commands={['docker build -t api-check ./api', 'docker run -d --name apicheck -p 3000:3000 api-check', 'curl -s localhost:3000']} label="The API recipe bakes, runs on hatch 3000 and answers with JSON." />
+
+This is `api/Dockerfile`. `USER node` runs the API as a normal user, not root.
+</Card>
+
+<Card id="try-compose" type="try">
+Now the set meal. Add web, api and db. Give db the locker `db-data`. Make api wait until db is healthy. The cache is optional.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'nginx serves the shop page.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'The small Node API.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: '${DB_PASSWORD:-devpass}' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '5s', retries: 10 }, means: 'Postgres keeps the orders. A dev password by default.' }, { id: 'cache', image: 'redis:8-alpine', volumeTarget: '/data', healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: '5s' }, means: 'Optional: Redis remembers hot menu items.' }]} volumes={['db-data', 'cache-data']} goal={{ services: ['web', 'api', 'db'], volumes: { db: 'db-data' }, dependsOn: { api: { db: 'service_healthy' } } }} success="That is your compose.yaml. Select the YAML and copy it." />
+
+<Hint>Three dishes on the table. db gets db-data. api waits for db: healthy.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Now do it for real, step by step. Your ticks are saved.
+
+<Interactive name="Mission" id="d4-m1-pack" steps={[{ id: 'repo', text: 'Make the repo folder with web/ and api/ inside, and start Git.', command: 'mkdir -p kedai-kancil/web kedai-kancil/api && cd kedai-kancil && git init' }, { id: 'files', text: 'Save the five files from the cards above in their folders.' }, { id: 'compose', text: 'Save your set meal as compose.yaml, at the top.' }, { id: 'dry', text: 'Dry run. No output means the file is fine.', command: 'docker compose config --quiet' }, { id: 'up', text: 'Bake and start the whole shop.', command: 'docker compose up -d --build' }, { id: 'ps', text: 'Check every dish. db should say (healthy).', command: 'docker compose ps' }, { id: 'curl', text: 'Knock on the hatch.', command: 'curl localhost:8080' }, { id: 'remote', text: 'Make a public GitHub repo called kedai-kancil. Add it as origin, with your own username.', command: 'git remote add origin https://github.com/YOUR-NAME/kedai-kancil.git' }, { id: 'push', text: 'Commit and push.', command: 'git add . && git commit -m "Pack the shop" && git branch -M main && git push -u origin main' }, { id: 'clear', text: 'Fresh machine test. First clear the table and the test data.', command: 'docker compose down -v' }, { id: 'fresh', text: 'Clone into a new folder and start it there. A Codespace works too.', command: 'git clone https://github.com/YOUR-NAME/kedai-kancil.git fresh && cd fresh && docker compose up -d' }]} success="Mission steps done! Now let GitHub confirm it." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub can confirm part of it. Type your username and press Check now.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your kedai-kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: 'compose.yaml', label: 'It has compose.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'web/Dockerfile', label: 'It has web/Dockerfile' }, { type: 'file', repo: 'kedai-kancil', path: 'api/Dockerfile', label: 'It has api/Dockerfile' }]} success="GitHub sees your packed shop!" />
+</Card>
+
+<Card id="self-check" type="check">
+The rest only you can see. Tick what is true.
+
+<Interactive name="Mission" id="d4-m1-self" title="Self-check" steps={[{ id: 'fresh', text: 'On the fresh clone, docker compose up -d started web, api and db.' }, { id: 'healthy', text: 'docker compose ps showed db as (healthy).' }, { id: 'page', text: 'curl localhost:8080 showed the Kedai Kancil page.' }, { id: 'locker', text: 'After docker compose down and up -d, the db-data locker was still there.' }, { id: 'secret', text: 'No real passwords in the repo: only the dev default.' }]} success="Mission 1 complete: Kedai Kancil is packed!" />
+</Card>
+
+<Card id="win" type="win">
+You can now pack a whole app so one command starts it anywhere.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks. A real set meal comes on one tray. Compose dishes are separate boxes. They share only phone lines and lockers. A meal is eaten once; a box can stop and serve again. Compose also cooks in one kitchen only. Many machines need the food court: Part 3.
+
+Mission 2 (World C2) adds a green line.
+</Card>

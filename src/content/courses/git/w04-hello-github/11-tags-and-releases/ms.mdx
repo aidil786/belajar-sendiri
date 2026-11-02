@@ -1,0 +1,72 @@
+---
+id: git-w04-l11
+world: 4
+title: Tag, SemVer dan Release
+summary: "Anda akan belajar: cara namakan versi dengan tag, nomborkan dengan SemVer dan kongsi sebagai release."
+minutes: 4
+xp: 20
+interactives: [Choice, GraphScene, SortCards, Sim, Courier, SwipeJudge]
+needs: [git-w04-l10]
+scenario: w04-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git tag", url: "https://git-scm.com/docs/git-tag" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+---
+
+<Card id="hook" type="hook">
+Laman diari anda berfungsi hari ini. Bulan depan, ada yang rosak. Macam mana nak cari versi hari ini dengan cepat?
+
+<Interactive name="Choice" options={[{ label: 'Lekatkan nama pada commit hari ini', correct: true, why: 'Nama itu ialah tag. Jom kenal di kad seterusnya.' }, { label: 'Ingat hash-nya', why: 'a1b2c3d? Mudah lupa, susah nak sebut.' }, { label: 'Salin folder jadi diary-final', why: 'Begitulah final_v3_REAL terjadi!' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="GraphScene" scenario="w04-l11" commands={['git tag -a v1.0.0 -m "First release"']} label="Label v1.0.0 bergaris putus muncul pada commit terbaru, di sebelah main. Tag itu kekal di situ walaupun main bergerak." />
+
+**<Term id="tag">Tag</Term>** (label) ialah pelekat yang tak pernah bergerak. `git tag -a v1.0.0 -m "First release"` lekat versi 1.0.0 pada commit ini, dengan nota.
+</Card>
+
+<Card id="try-semver" type="try">
+Nombor **<Term id="semantic-versioning">SemVer</Term>** ada tiga bahagian: MAJOR.MINOR.PATCH. Bahagian mana yang naik?
+
+<Interactive name="SortCards" buckets={[{ id: 'major', label: 'MAJOR (2.0.0)' }, { id: 'minor', label: 'MINOR (1.1.0)' }, { id: 'patch', label: 'PATCH (1.0.1)' }]} items={[{ label: 'Baiki salah ejaan di halaman utama', bucket: 'patch', why: 'Pembaikan kecil. Tiada yang baru, tiada yang rosak.' }, { label: 'Tambah halaman hubungi', bucket: 'minor', why: 'Ada benda baru, dan yang lama masih berfungsi.' }, { label: 'Buang halaman lama yang orang pautkan', bucket: 'major', why: 'Pautan lama rosak. Itu perubahan besar.' }, { label: 'Baiki pautan yang rosak', bucket: 'patch', why: 'Satu lagi pembaikan kecil.' }, { label: 'Tambah mod gelap pilihan', bucket: 'minor', why: 'Baru, dan tiada yang rosak.' }]} success="Rosakkan benda: MAJOR. Benda baru: MINOR. Pembaikan: PATCH." />
+
+<Hint>Adakah ia rosakkan benda lama? Tambah benda baru? Atau baiki sahaja?</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Tag diari anda sebagai versi 1.0.0, dengan nota.
+
+<Interactive name="Sim" scenario="w04-l11" panels={['graph']} goal={{ tags: ['v1.0.0'] }} hints={['Taip git tag -a v1.0.0 -m "First release"']} success="Dah tag! v1.0.0 ada pada commit terbaru anda." />
+
+<Hint>`-a` buat tag dengan nota. `-m` pegang notanya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Tag anda ada dalam laptop. Tekan Push. Adakah tag itu sampai ke GitHub?
+
+<Interactive name="Courier" scenario="w04-l11-tagged" actions={['push', { cmd: 'git push --tags' }]} goal={{ serverTags: ['v1.0.0'] }} hints={['Push biasa langkau tag. Cuba git push --tags.']} success="Tag hanya dihantar bila anda minta. Kini GitHub ada v1.0.0." />
+</Card>
+
+<Card id="see-release" type="see">
+Di GitHub, **<Term id="release">release</Term>** (keluaran) jadikan tag satu halaman. GitHub boleh tolong draf notanya. Apa yang release tambah di atas tag?
+
+<Interactive name="Choice" options={[{ label: 'Nota dan fail untuk dimuat turun', correct: true, why: 'Pelawat nampak apa yang berubah, dan boleh ambil failnya.' }, { label: 'Branch baru', why: 'Release duduk pada tag, bukan pada branch.' }, { label: 'Salinan kedua repo', why: 'Bukan salinan. Ia tunjuk ke commit yang ditag.' }]} />
+</Card>
+
+<Card id="check-names" type="check">
+Nama tag: jelas, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'v1.0.0', good: true, why: 'Jelas, dan ikut SemVer.' }, { text: 'final', good: false, why: 'Final sehingga yang seterusnya!' }, { text: 'v1.0.1', good: true, why: 'Pembaikan kecil selepas 1.0.0.' }, { text: 'new-version', good: false, why: 'Lebih baru daripada apa? Guna nombor.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tag satu versi, nomborkan dengan SemVer dan kongsikannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git tag v1.0.0` tanpa `-a` buat tag ringan: nama sahaja, tiada nota. `git push origin v1.0.0` hantar satu tag. `git push --follow-tags` hantar tag beranotasi bersama commit. Versi macam 0.3.0 bermaksud "masih awal: mungkin berubah".
+</Card>

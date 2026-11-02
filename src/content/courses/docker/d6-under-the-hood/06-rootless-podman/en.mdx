@@ -1,0 +1,66 @@
+---
+id: docker-d6-l06
+world: 6
+title: "Rootless mode and Podman"
+summary: "You will learn: why root in a container can be root on your laptop, and how rootless Docker and Podman shrink that risk."
+minutes: 3
+xp: 15
+interactives: [Choice, NamespaceXray, Transcript, SortCards, SwipeJudge, Mission]
+needs: [docker-d6-l05]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Rootless mode", url: "https://docs.docker.com/engine/security/rootless/" }
+  - { label: "Rootless mode: tips", url: "https://docs.docker.com/engine/security/rootless/tips/" }
+  - { label: "Isolate containers with a user namespace", url: "https://docs.docker.com/engine/security/userns-remap/" }
+  - { label: "Podman documentation", url: "https://docs.podman.io/en/latest/" }
+---
+
+<Card id="hook" type="hook">
+By default, root inside a container is root on the laptop too. A bug lets an app break out of its box. What can it do?
+
+<Interactive name="Choice" options={[{ label: 'Anything root can do on the laptop', correct: true, why: 'Without a user namespace, root inside is the real root.' }, { label: 'Only touch files inside its box', why: 'It broke out, so the box no longer holds it.' }, { label: 'Nothing. Containers are virtual machines.', why: 'They are processes on the laptop’s own kernel.' }]} />
+</Card>
+
+<Card id="see-userns" type="see">
+<Interactive name="NamespaceXray" switches={['user']} task={{ type: 'turnOn', switches: ['user'] }} prompt="Flip the User switch. Watch the uid on the laptop." success="Root inside, an ordinary user outside." />
+
+Root inside now maps to uid 100000 outside. That is a **<Term id="user-namespace">user namespace</Term>**. Docker leaves it off unless you ask.
+</Card>
+
+<Card id="see-rootless" type="see">
+<Interactive name="Transcript" title="bash" label="From the Docker docs: the rootless setup tool, run as a normal user, creates a CLI context called rootless and switches to it." lines={[{ cmd: 'dockerd-rootless-setuptool.sh install' }, { out: '[INFO] Creating CLI context "rootless"\nSuccessfully created context "rootless"\n[INFO] Using CLI context "rootless"\nCurrent context is now "rootless"', color: 'green' }]} />
+
+**<Term id="rootless-mode">Rootless mode</Term>** goes further. The Docker daemon itself runs as you, inside a user namespace. A break-out gets only your rights.
+</Card>
+
+<Card id="predict" type="predict">
+In rootless mode, you type `docker run -d -p 80:80 nginx:1.30-alpine`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It fails. Ports below 1024 need extra setup.', correct: true, why: 'An ordinary user can’t open low ports. Use -p 8080:80 instead.' }, { label: 'It works like before', why: 'Rootless Docker has only your rights, and low ports need more.' }, { label: 'Docker switches to root for a moment', why: 'It never does. That is the whole point.' }]} />
+</Card>
+
+<Card id="try-podman" type="try">
+**Podman** runs the same images with no daemon at all. Run it as yourself, and it is rootless. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'docker', label: 'Docker' }, { id: 'podman', label: 'Podman' }, { id: 'both', label: 'Both' }]} items={[{ label: 'Has a daemon called dockerd', bucket: 'docker', why: 'dockerd is the front counter that takes your orders.' }, { label: 'Starts containers with no daemon', bucket: 'podman', why: 'Each container is started straight from your command.' }, { label: 'Runs OCI images from Docker Hub', bucket: 'both', why: 'Shared rules: both run the same packs.' }, { label: 'Groups containers into pods', bucket: 'podman', why: 'Podman borrowed the pod idea from Kubernetes.' }, { label: 'Can run rootless', bucket: 'both', why: 'Docker with rootless mode. Podman when you run it as yourself.' }]} success="Sorted! Same packs, different kitchens." />
+</Card>
+
+<Card id="check-habits" type="check">
+Safe habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Run your app as a non-root USER inside the image.', good: true, why: 'Even without a user namespace, the app is not root.' }, { text: 'Add every teammate to the docker group on a shared server.', good: false, why: 'The docker group controls a daemon that runs as root. It works like a root key.' }, { text: 'Try rootless mode on a shared Linux machine.', good: true, why: 'A break-out only gets that user’s rights.' }, { text: 'Mount /var/run/docker.sock into a web app.', good: false, why: 'Then the app can start any container, with root power.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how rootless Docker and Podman keep root out of reach.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rootless needs `newuidmap` and `newgidmap` (the `uidmap` package) and 65,536 spare ids in `/etc/subuid` and `/etc/subgid`. Limits like `--memory` need cgroup v2 with systemd. Low ports need the tips page. For Podman, `alias docker=podman` covers most commands.
+
+<Interactive name="Mission" id="d6-l06-rootless" steps={[{ id: 'vm', text: 'Use a throwaway Linux VM, not your work machine.' }, { id: 'ids', text: 'Check you have spare user ids.', command: 'grep ^$(whoami): /etc/subuid' }, { id: 'install', text: 'Set up rootless mode as a normal user.', command: 'dockerd-rootless-setuptool.sh install' }, { id: 'info', text: 'Look for rootless under Security Options.', command: 'docker info' }, { id: 'hello', text: 'Run a first rootless container.', command: 'docker run --rm hello-world' }]} success="Docker now runs with your rights, not root's." />
+</Card>

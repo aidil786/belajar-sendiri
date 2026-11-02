@@ -1,0 +1,66 @@
+---
+id: git-w07-l04
+world: 7
+title: Action Marketplace dan pinning
+summary: "Anda akan belajar: cara pinjam action dengan selamat dan sematkannya supaya tak berubah."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, SwipeJudge, TimelineTap, SortCards]
+needs: [git-w07-l03]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using pre-written building blocks", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/find-and-customize-actions" }
+  - { label: "Secure use: pin actions to a full SHA", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Job anda perlukan Node pada runner. Anda boleh tulis 30 baris skrip pemasangan. Ribuan orang perlukan benda yang sama. Apa langkah yang bijak?
+
+<Interactive name="Choice" options={[{ label: 'Tulis skrip pemasangan sendiri', why: 'Ia jalan, tapi anda kena jaga skrip itu selamanya.' }, { label: 'Pinjam `actions/setup-node`, yang dah siap dan diuji', correct: true, why: 'Beribu-ribu repo guna action ini. Anda tulis tiga baris sahaja.' }, { label: 'Langkau Node dan harap semuanya okey', why: 'npm perlukan Node. Larian itu akan gagal.' }]} />
+</Card>
+
+<Card id="see-action" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'steps:' }, { text: '  - uses: actions/checkout@v7', target: true }, { text: '  - uses: actions/setup-node@v7', target: true }, { text: '  - run: npm ci' }, { text: '  - run: npm test' }]} prompt="Ketik setiap baris yang pinjam action." success="Dua-dua jumpa! uses maksudnya: pinjam action ini." />
+
+**<Term id="action">Action</Term>** ialah langkah siap pakai, macam blok Lego. `uses: owner/nama@versi` pinjam satu action.
+</Card>
+
+<Card id="see-marketplace" type="see">
+**<Term id="marketplace">GitHub Marketplace</Term>** ialah kedai action yang dikongsi. Sesiapa pun boleh terbitkan di situ. Jadi semak dulu sebelum pinjam. Boleh percaya? Leret setiap petunjuk.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pembuatnya disahkan GitHub, dan ribuan orang guna', good: true, why: 'Pembuat yang dikenali dan ramai pengguna ialah tanda baik.' }, { text: 'Kemas kini terakhir enam tahun lalu, banyak laporan pepijat terbuka', good: false, why: 'Tiada siapa jaga. Pepijat dan lubang kekal.' }, { text: 'Minta token deploy anda, tapi cuma format teks', good: false, why: 'Alat teks tiada sebab nak rahsia anda.' }, { text: 'Sumber terbuka: anda boleh baca setiap baris', good: true, why: 'Anda, dan orang lain, boleh semak apa yang ia betul-betul buat.' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Hari 1', title: 'v7 elok', text: 'Anda tulis `uses: some-dev/tool@v7`. Ia jalan.' }, { when: 'Hari 30', title: 'Tag dialih', text: 'Penyerang ceroboh repo alat itu. Mereka alihkan tag v7 ke kod jahat.' }, { when: 'Hari 31', title: 'Larian seterusnya', text: 'Workflow anda ambil v7 sekali lagi. Kini ia jalankan kod jahat itu.' }]} />
+
+`@v7` ialah **tag**: nota pelekat pada satu commit. Nota pelekat boleh dialih. Ketik sepanjang cerita ini.
+</Card>
+
+<Card id="see-pin" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: some-dev/tool@main' }, { text: '- uses: some-dev/tool@v7' }, { text: '- uses: some-dev/tool@a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0 # v7.0.1', target: true }]} prompt="Ketik baris yang tak boleh berubah senyap-senyap." success="Ya! SHA penuh sentiasa bermaksud kod yang sama." />
+
+SHA commit penuh tak boleh tunjuk ke kod lain. Guna SHA dipanggil **<Term id="pinning">pinning</Term>** (sematkan). Tambah versi sebagai komen, untuk manusia. (SHA itu contoh rekaan.)
+</Card>
+
+<Card id="try-sort" type="try">
+Boleh beralih, atau tidak sama sekali? Susun setiap versi.
+
+<Interactive name="SortCards" buckets={[{ id: 'moves', label: 'Boleh beralih' }, { id: 'fixed', label: 'Tak pernah beralih' }]} items={[{ label: '`@main` (branch)', bucket: 'moves', why: 'Branch bergerak dengan setiap commit baru.' }, { label: '`@v7` (tag)', bucket: 'moves', why: 'Tag ialah nota pelekat. Ia boleh dialih.' }, { label: '`@v7.0.1` (tag juga)', bucket: 'moves', why: 'Nampak tepat, tapi masih tag.' }, { label: 'SHA commit penuh, 40 aksara', bucket: 'fixed', why: 'SHA ialah cap jari kod. Kod baru bermaksud SHA baru.' }]} success="Hanya SHA yang kekal di tempatnya." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda sematkan action pada satu SHA. Kemudian versi 7.0.2 baiki satu pepijat. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa, sampai anda tukar SHA itu', correct: true, why: 'Pin tak pernah beralih sendiri. Pelajaran 10 tunjuk robot yang tolong kemas kini.' }, { label: 'Workflow anda dapat 7.0.2 sendiri', why: 'SHA tak pernah beralih. Anda mesti tukar.' }, { label: 'Workflow anda rosak', why: 'Ia terus jalankan 7.0.1, dengan selamat.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih action yang selamat dan sematkannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Action di bawah `actions/` dibuat oleh GitHub. Nasihat GitHub sendiri: sematkan action pihak ketiga pada SHA penuh. Salin SHA dari repo asal action itu, bukan dari fork. Branch seperti `@main` paling berisiko. Anda jalankan apa sahaja yang masuk ke situ nanti.
+</Card>

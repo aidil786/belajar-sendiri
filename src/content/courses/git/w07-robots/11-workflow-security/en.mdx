@@ -1,0 +1,69 @@
+---
+id: git-w07-l11
+world: 7
+title: Keep workflows safe
+summary: "You will learn: how to give your robot only the power it needs."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, SpotLines, SwipeJudge]
+needs: [git-w07-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+Your workflow can read secrets and change your repo. Any code it runs gets those powers too. Who could misuse them?
+
+<Interactive name="Choice" options={[{ label: 'A tricked or hacked third-party action', correct: true, why: 'Any code your workflow runs can use its powers.' }, { label: 'Nobody. Robots are always safe.', why: 'Robots run whatever code they are given.' }, { label: 'Only people with your password', why: 'Attackers can aim at the code your workflow runs instead.' }]} />
+</Card>
+
+<Card id="see-token" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Start', title: 'Key made', text: 'The job starts. GitHub makes a fresh key for this repo only.' }, { when: 'Run', title: 'Key used', text: 'Steps use it to read code, comment or deploy.' }, { when: 'End', title: 'Key expires', text: 'The job ends. The key stops working.' }]} />
+
+Each job gets a fresh key: the **<Term id="github-token">GITHUB_TOKEN</Term>**. It only works in this repo. It stops working when the job ends.
+</Card>
+
+<Card id="see-permissions" type="see">
+**<Term id="permissions">permissions:</Term>** says what that key may do. Give only what the job needs. List some, and the rest become `none`. Which one does each job need?
+
+<Interactive name="SortCards" buckets={[{ id: 'read', label: 'contents: read' }, { id: 'write', label: 'contents: write' }, { id: 'pages', label: 'pages: write' }]} items={[{ label: 'Run the tests', bucket: 'read', why: 'Tests only read your code.' }, { label: 'Build the site', bucket: 'read', why: 'Building only reads your code.' }, { label: 'Create a new release', bucket: 'write', why: 'A release adds to the repo, so it needs write.' }, { label: 'Publish to GitHub Pages', bucket: 'pages', why: 'Pages has its own permission.' }]} success="Sorted! Least power, least risk." />
+</Card>
+
+<Card id="predict" type="predict">
+A job has only `contents: read`. A bad step tries to push code. What happens?
+
+<Interactive name="Choice" options={[{ label: 'GitHub says no. The key can only read.', correct: true, why: 'Least privilege in action. The attack hits a locked door.' }, { label: 'The push works', why: 'The key has no write power. GitHub refuses.' }, { label: 'The whole repo gets deleted', why: 'Read-only means it cannot change anything.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Spot the risks. Tap every risky line.
+
+<Interactive name="SpotLines" lines={[{ text: 'on: pull_request' }, { text: 'permissions: write-all', target: true }, { text: 'jobs:' }, { text: '  build:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - uses: random-dev/helper@main', target: true }, { text: '      - run: echo "${{ secrets.DEPLOY_TOKEN }}"', target: true }, { text: '      - run: npm test' }]} prompt="Tap every risky line." success="All three! Too much power, an unpinned stranger, a printed secret." />
+
+<Hint>Find too much power, a moving version and a secret on show.</Hint>
+</Card>
+
+<Card id="see-prt" type="see">
+`pull_request_target` runs with your secrets and a write key. Even on a stranger's PR! So never run their code there. Which trigger should test a stranger's PR code?
+
+<Interactive name="Choice" compact options={[{ label: '`pull_request`', correct: true, why: 'Fork code runs with no secrets and a read-only key.' }, { label: '`pull_request_target`', why: "It holds your secrets. Running a stranger's code there is dangerous." }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Safe habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Start every workflow with `contents: read`', good: true, why: 'Then add only the extra power a job needs.' }, { text: 'Pin third-party actions to a full SHA', good: true, why: 'Nobody can swap the code under you.' }, { text: 'Print a secret, to check it works', good: false, why: 'Logs can leak. Test it by using it, not printing it.' }, { text: 'Drop the PR title right into a `run:` script', good: false, why: 'A sneaky title can turn into a command. Pass it through env: first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now lock down a workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Text from strangers, like a PR title, can sneak commands into `run:`. Put it in `env:` first, then use `"$TITLE"` in the script. `persist-credentials: false` on checkout keeps the key out of the repo's Git config. This course's own workflow does that.
+</Card>

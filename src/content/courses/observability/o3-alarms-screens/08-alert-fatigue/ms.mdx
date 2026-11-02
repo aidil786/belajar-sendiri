@@ -1,0 +1,59 @@
+---
+id: obs-o3-l08
+world: 3
+title: "Letih amaran"
+summary: "Anda akan belajar: kurangkan amaran bising supaya loceng sebenar masih didengar."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, SortCards, AlertRuleBuilder, Choice, SpotLines]
+needs: [obs-o3-l07]
+scenario: o3-flappy
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alerting rules: for and keep_firing_for", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '01:02', title: 'CPU melebihi 80%', text: 'Hilang sendiri pada 01:05.' }, { when: '01:40', title: 'CPU melebihi 80%', text: 'Hilang lagi pada 01:43.' }, { when: '02:15', title: 'Barisan melebihi 25', text: 'Kembali bawah 25 seminit kemudian.' }, { when: '02:16', title: 'Barisan melebihi 25', text: 'Bawah lagi. Dan atas. Dan bawah.' }, { when: '03:30', title: 'Pesanan gagal: 6%', text: 'Satu-satunya yang sebenar. Masih adakah yang tengok?' }]} />
+
+Semalam pager bergetar berkali-kali. Ketik setiap getaran. Berapa yang perlukan manusia?
+</Card>
+
+<Card id="see-sort" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Panggil' }, { id: 'ticket', label: 'Tiket' }, { id: 'delete', label: 'Padam (atau skrin)' }]} items={[{ label: 'Pesanan gagal melebihi 5% selama 2 minit', bucket: 'page', why: 'Pelanggan sakit sekarang.' }, { label: 'Cakera penuh dalam 4 jam', bucket: 'ticket', why: 'Baiki semasa berjaga, hari ini.' }, { label: 'Sijil tamat dalam 14 hari', bucket: 'ticket', why: 'Masa masih banyak. Tiket dah cukup.' }, { label: 'CPU melebihi 80%', bucket: 'delete', why: 'Sibuk bukan rosak. Tunjuk di skrin.' }, { label: 'Satu pod restart', bucket: 'delete', why: 'Ia pulih sendiri. Kira di dashboard.' }]} success="Kurang loceng, setiap satu berbaloi untuk bangun." />
+
+Terlalu banyak loceng, orang berhenti mendengarnya. Itulah **<Term id="alert-fatigue" course="cicd">alert fatigue</Term>** (letih amaran).
+</Card>
+
+<Card id="try-flap" type="try">
+Barisan itu melantun sekitar 25. Loceng berkelip hidup, mati, hidup. Jadikan ia berbunyi sekali, dalam satu tempoh.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-flappy" alert="QueueLong" exprs={[{ expr: 'kedai_queue_length > 25' }, { expr: 'avg_over_time(kedai_queue_length[5m]) > 25' }]} fors={['0s', '3m']} keepFiringFor={['0s', '5m']} goal={{ noFlap: true, firingAt: ['13m'], quietAt: ['4m'] }} solution={{ expr: 0, for: 1 }} hints={['Lantunan pendek tak patut berbunyi. Tunggu beberapa minit dulu.']} success="Satu tempoh loceng untuk barisan panjang sebenar. Tiada berkelip." />
+
+<Hint>`for` abaikan lantunan pendek. `keep_firing_for` halang loceng padam terlalu awal.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu amaran berbunyi 40 kali bulan lepas. Setiap kali, tiada siapa buat apa-apa. Sekarang bagaimana?
+
+<Interactive name="Choice" options={[{ label: 'Padam, atau jadikan tiket', correct: true, why: 'Betul. Loceng yang tiada siapa bertindak cuma ajar orang abaikan loceng.' }, { label: 'Simpan, manalah tahu', why: '"Manalah tahu" itulah sebab loceng sebenar terlepas.' }, { label: 'Kuatkan bunyinya', why: 'Bunyi bising yang lebih kuat tetap bising.' }]} />
+</Card>
+
+<Card id="check-report" type="check">
+<Interactive name="SpotLines" prompt="Laporan amaran minggu ini. Ketik setiap amaran yang perlu ditala." lines={[{ text: 'ALERT            FIRED  SOMEONE ACTED' }, { text: 'QueueLong           42              0', target: true }, { text: 'OrdersFailing        1              1' }, { text: 'CpuBusy             17              0', target: true }, { text: 'DiskFillsIn4h        2              2' }, { text: 'PodRestarted        23              0', target: true }]} success="Banyak berbunyi, tiada tindakan: tala atau padam." />
+
+Cari loceng yang kerap berbunyi tapi tak mengubah apa-apa.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kurangkan bising amaran supaya loceng sebenar didengar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat. Bilik kawalan sebenar ada satu loceng yang kuat. Kita ada banyak loceng senyap, dengan label, route, kumpulan dan silence. Loceng sebenar juga tak pernah belajar. Amaran anda patut belajar: semak selalu, dan jangan takut padam.
+</Card>

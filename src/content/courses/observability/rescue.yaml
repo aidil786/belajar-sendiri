@@ -1,0 +1,209 @@
+# Monitoring & Observability rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Level Up Rescue Center (/<lang>/level-up/rescue/) lists them under Part 3.
+# Flow ids must be unique across linux, iac, observability and aws: one page, one #<flow-id> link each.
+# Start ids with `obs-` (e.g. obs-target-down). About 5 flows (docs/LEVEL-UP-PLAN.md §7, wave B).
+flows:
+  # --- Observability flows (add below this line) ---
+  # Read-only checks are danger: safe; config changes you can undo are careful; anything that deletes
+  # stored metrics is lose. <host>, <port>, <id> … are placeholders. Facts checked 2026-11-01 against
+  # prometheus.io/docs (Prometheus 3.13, Alertmanager 0.34) and grafana.com/docs (Grafana 13).
+  - id: obs-target-down
+    title: { en: "My target shows DOWN in Prometheus", ms: "Target saya tunjuk DOWN dalam Prometheus" }
+    start: error
+    steps:
+      - id: error
+        question: { en: "Open http://localhost:9090/targets. What does the error next to the target say?", ms: "Buka http://localhost:9090/targets. Apa kata ralat di sebelah target itu?" }
+        answers:
+          - { label: { en: "connection refused", ms: "connection refused" }, next: r-refused }
+          - { label: { en: "no such host", ms: "no such host" }, next: r-host }
+          - { label: { en: "context deadline exceeded", ms: "context deadline exceeded" }, next: r-slow }
+          - { label: { en: "server returned HTTP status 404 Not Found", ms: "server returned HTTP status 404 Not Found" }, next: r-path }
+      - id: r-refused
+        result:
+          text: { en: "Nothing listens at that address. The exporter is stopped, or the target says localhost. Inside the Prometheus container, localhost is Prometheus itself. Use the Compose service name instead.", ms: "Tiada apa mendengar di alamat itu. Exporter itu berhenti, atau target tulis localhost. Dalam container Prometheus, localhost ialah Prometheus sendiri. Guna nama servis Compose." }
+          commands:
+            - { command: "docker compose ps", en: "Is the exporter running at all?", ms: "Adakah exporter itu berjalan langsung?" }
+            - { command: "docker compose config --services", en: "The exact service names to put in targets, like node-exporter:9100.", ms: "Nama servis yang tepat untuk diletak dalam targets, contohnya node-exporter:9100." }
+            - { command: "docker run --rm --entrypoint promtool -v \"$PWD/prometheus:/etc/prometheus:ro\" quay.io/prometheus/prometheus:v3.13.5 check config /etc/prometheus/prometheus.yml", en: "After fixing prometheus.yml, check it before restarting.", ms: "Selepas baiki prometheus.yml, semak sebelum restart." }
+            - { command: "docker compose restart prometheus", en: "Load the fixed config.", ms: "Muatkan config yang dah dibaiki." }
+          danger: careful
+          lesson: obs-o4-m9
+      - id: r-host
+        result:
+          text: { en: "Prometheus can't find that name. Check the spelling, and that both containers are in the same Compose file or network.", ms: "Prometheus tak jumpa nama itu. Semak ejaan, dan pastikan kedua-dua container dalam fail Compose atau rangkaian yang sama." }
+          commands:
+            - { command: "docker compose config --services", en: "Compare these names with your targets, letter by letter.", ms: "Banding nama-nama ini dengan targets anda, huruf demi huruf." }
+          danger: safe
+          lesson: obs-o4-m9
+      - id: r-slow
+        result:
+          text: { en: "The target answered too slowly. The scrape timeout is 10 seconds unless you set it. A huge metrics page or a busy exporter can be the cause.", ms: "Target itu menjawab terlalu lambat. Had masa scrape ialah 10 saat jika tidak ditetapkan. Halaman metrik yang sangat besar atau exporter yang sibuk boleh jadi puncanya." }
+          commands:
+            - { command: "curl -s -o /dev/null -w '%{time_total}\\n' http://<host>:<port>/metrics", en: "How many seconds does one scrape take?", ms: "Berapa saat satu scrape ambil?" }
+            - { command: "curl -s http://<host>:<port>/metrics | wc -l", en: "How many lines? Tens of thousands means too many series.", ms: "Berapa baris? Puluhan ribu bermaksud terlalu banyak siri." }
+          danger: safe
+          lesson: obs-o2-l01
+      - id: r-path
+        result:
+          text: { en: "The address is right, but the page is not. Most exporters serve /metrics. Check metrics_path in the job, or the exporter's docs.", ms: "Alamat itu betul, tapi halamannya tidak. Kebanyakan exporter guna /metrics. Semak metrics_path dalam job itu, atau dokumen exporter." }
+          commands:
+            - { command: "curl -s http://<host>:<port>/metrics | head", en: "Does /metrics answer with metric lines?", ms: "Adakah /metrics jawab dengan baris metrik?" }
+          danger: safe
+          lesson: obs-o2-l01
+
+  - id: obs-grafana-no-data
+    title: { en: "My Grafana panel says No data", ms: "Panel Grafana saya tulis No data" }
+    start: prom
+    steps:
+      - id: prom
+        question: { en: "Run the panel's query in Prometheus itself, at http://localhost:9090. Do you get rows?", ms: "Jalankan query panel itu dalam Prometheus sendiri, di http://localhost:9090. Ada baris?" }
+        answers:
+          - { label: { en: "Yes, Prometheus has data", ms: "Ya, Prometheus ada data" }, next: ds }
+          - { label: { en: "No, Prometheus is empty too", ms: "Tidak, Prometheus pun kosong" }, next: r-nodata }
+      - id: ds
+        question: { en: "In Grafana, open the Prometheus data source and press Save & test. Does it pass?", ms: "Dalam Grafana, buka sumber data Prometheus dan tekan Save & test. Lulus?" }
+        answers:
+          - { label: { en: "No, it fails", ms: "Tidak, ia gagal" }, next: r-url }
+          - { label: { en: "Yes, it passes", ms: "Ya, ia lulus" }, next: r-var }
+      - id: r-url
+        result:
+          text: { en: "Grafana can't reach Prometheus. In Compose, the URL is http://prometheus:9090, not localhost. Inside Grafana's container, localhost is Grafana.", ms: "Grafana tak boleh sampai ke Prometheus. Dalam Compose, URL-nya http://prometheus:9090, bukan localhost. Dalam container Grafana, localhost ialah Grafana." }
+          commands:
+            - command: |-
+                datasources:
+                  - name: Prometheus
+                    type: prometheus
+                    url: http://prometheus:9090
+              en: "The provisioning file's key line: the service name and port."
+              ms: "Baris penting dalam fail provisioning: nama servis dan port."
+            - { command: "docker compose restart grafana", en: "Load the fixed provisioning file.", ms: "Muatkan fail provisioning yang dah dibaiki." }
+          danger: careful
+          lesson: obs-o4-m9
+      - id: r-var
+        result:
+          text: { en: "The link works, so look at the panel itself. Check the time range, and every $variable. With two or more values picked, a matcher needs =~, not =.", ms: "Sambungan berfungsi, jadi lihat panel itu sendiri. Semak julat masa, dan setiap $variable. Bila dua nilai atau lebih dipilih, pemadan perlu =~, bukan =." }
+          commands:
+            - { command: "rate(http_requests_total{instance=~\"$instance\"}[$__rate_interval])", en: "A panel query that works with one, many or All instances.", ms: "Query panel yang berfungsi dengan satu, banyak atau semua instance." }
+          danger: safe
+          lesson: obs-o3-l05
+      - id: r-nodata
+        result:
+          text: { en: "The series don't exist. The metric name may be wrong, or the target is down. Start with up: 1 means scraped, 0 means down.", ms: "Siri itu tidak wujud. Nama metrik mungkin salah, atau target mati. Mula dengan up: 1 bermaksud di-scrape, 0 bermaksud mati." }
+          commands:
+            - { command: "up", en: "Every target and whether its last scrape worked.", ms: "Setiap target dan sama ada scrape terakhirnya berjaya." }
+            - { command: "{__name__=~\"node_cpu.*\"}", en: "Find the real metric names that start like the one you typed.", ms: "Cari nama metrik sebenar yang bermula macam yang anda taip." }
+          danger: safe
+          lesson: obs-o3-l04
+
+  - id: obs-alert-wrong
+    title: { en: "My alert never fires, or fires all the time", ms: "Amaran saya tak pernah berbunyi, atau berbunyi sepanjang masa" }
+    start: where
+    steps:
+      - id: where
+        question: { en: "Open http://localhost:9090/alerts. What do you see for your alert?", ms: "Buka http://localhost:9090/alerts. Apa anda nampak untuk amaran anda?" }
+        answers:
+          - { label: { en: "It is not on the page at all", ms: "Ia tiada langsung di halaman itu" }, next: r-notloaded }
+          - { label: { en: "Inactive, even when things are broken", ms: "Inactive, walaupun ada yang rosak" }, next: r-expr }
+          - { label: { en: "Pending, but it never reaches firing", ms: "Pending, tapi tak pernah sampai firing" }, next: r-for }
+          - { label: { en: "Firing, but nobody got a message", ms: "Firing, tapi tiada siapa dapat mesej" }, next: r-route }
+          - { label: { en: "Firing all the time, for nothing", ms: "Firing sepanjang masa, untuk tiada apa" }, next: r-noisy }
+      - id: r-notloaded
+        result:
+          text: { en: "Prometheus did not load the rule file. Check rule_files in prometheus.yml: the path is relative to that file. promtool lists every rule file it checks.", ms: "Prometheus tak muatkan fail rule itu. Semak rule_files dalam prometheus.yml: laluannya relatif kepada fail itu. promtool senaraikan setiap fail rule yang disemaknya." }
+          commands:
+            - { command: "promtool check config prometheus.yml", en: "Look for a line like Checking …/rules.yml with SUCCESS.", ms: "Cari baris seperti Checking …/rules.yml dengan SUCCESS." }
+            - { command: "docker compose restart prometheus", en: "Prometheus reads rule files when it starts.", ms: "Prometheus baca fail rule bila ia bermula." }
+          danger: careful
+          lesson: obs-o3-l01
+      - id: r-expr
+        result:
+          text: { en: "The expression is false right now. Paste it into the query page while the problem happens. No rows means a wrong threshold or a label that doesn't match.", ms: "Ungkapan itu palsu sekarang. Tampal di halaman query semasa masalah berlaku. Tiada baris bermaksud ambang salah atau label yang tak padan." }
+          commands:
+            - { command: "promtool check rules rules.yml", en: "First make sure the file itself is valid.", ms: "Mula-mula pastikan fail itu sendiri sah." }
+            - { command: "promtool test rules tests.yml", en: "Then prove it fires on test data you write yourself.", ms: "Kemudian buktikan ia berbunyi pada data ujian yang anda tulis sendiri." }
+          danger: safe
+          lesson: obs-o3-l01
+      - id: r-for
+        result:
+          text: { en: "The problem never lasts the whole for time, or it bounces and the wait starts over. Smooth the value with avg_over_time, or pick a shorter for.", ms: "Masalah itu tak pernah berterusan sepanjang masa for, atau ia melantun dan masa tunggu bermula semula. Licinkan nilai dengan avg_over_time, atau pilih for yang lebih pendek." }
+          commands:
+            - { command: "avg_over_time(kedai_queue_length[5m]) > 25", en: "Example: the 5-minute average, so short bounces don't reset the wait.", ms: "Contoh: purata 5 minit, supaya lantunan pendek tak ulang masa tunggu." }
+          danger: safe
+          lesson: obs-o3-l08
+      - id: r-route
+        result:
+          text: { en: "Prometheus did its part. Now ask Alertmanager: which receiver gets these labels, and is a silence muting them?", ms: "Prometheus dah buat bahagiannya. Sekarang tanya Alertmanager: penerima mana dapat label ini, dan adakah silence yang senyapkannya?" }
+          commands:
+            - { command: "amtool config routes test --config.file=alertmanager.yml severity=page alertname=<name>", en: "Which receiver would get it?", ms: "Penerima mana akan dapat?" }
+            - { command: "amtool --alertmanager.url=http://localhost:9093 silence query", en: "Is a silence muting it?", ms: "Adakah silence yang menyenyapkannya?" }
+          danger: safe
+          lesson: obs-o3-l02
+      - id: r-noisy
+        result:
+          text: { en: "It fires for things customers don't feel. Alert on symptoms like failed orders, add a for, or turn it into a ticket. Delete it if nobody ever acts on it.", ms: "Ia berbunyi untuk perkara yang pelanggan tak rasa. Beri amaran pada simptom seperti pesanan gagal, tambah for, atau jadikan tiket. Padam jika tiada siapa pernah bertindak." }
+          commands:
+            - { command: "count_over_time(ALERTS{alertstate=\"firing\"}[7d])", en: "How long each alert was firing this week, counted in rule checks.", ms: "Berapa lama setiap amaran berbunyi minggu ini, dikira dalam semakan rule." }
+          danger: safe
+          lesson: obs-o3-l03
+
+  - id: obs-too-many-series
+    title: { en: "Prometheus is slow and hungry: too many series", ms: "Prometheus lambat dan lapar: terlalu banyak siri" }
+    start: top
+    steps:
+      - id: top
+        question: { en: "Open Status, then TSDB Status, at http://localhost:9090. Look at the metrics with the most series. What do you see?", ms: "Buka Status, kemudian TSDB Status, di http://localhost:9090. Lihat metrik dengan siri paling banyak. Apa anda nampak?" }
+        answers:
+          - { label: { en: "One metric has a label full of IDs, emails or full URLs", ms: "Satu metrik ada label penuh dengan ID, emel atau URL penuh" }, next: r-label }
+          - { label: { en: "Many metrics we never use", ms: "Banyak metrik yang kita tak pernah guna" }, next: r-drop }
+      - id: r-label
+        result:
+          text: { en: "Each new label value makes a new series. Remove that label in the app; keep it in logs or traces instead. Until then, drop it when scraping.", ms: "Setiap nilai label baharu buat siri baharu. Buang label itu dalam aplikasi; simpan dalam log atau trace sahaja. Sementara itu, buang semasa scrape." }
+          commands:
+            - { command: "count by (__name__) ({__name__=~\".+\"})", en: "Series per metric name. Sort the table by value.", ms: "Bilangan siri setiap nama metrik. Susun jadual ikut nilai." }
+            - command: |-
+                metric_relabel_configs:
+                  - action: labeldrop
+                    regex: order_id
+              en: "In the scrape job: drop the order_id label before it is stored."
+              ms: "Dalam job scrape: buang label order_id sebelum ia disimpan."
+          danger: careful
+          lesson: obs-o2-l04
+      - id: r-drop
+        result:
+          text: { en: "Don't store what nobody reads. Drop whole metrics by name when scraping, in the job that brings them.", ms: "Jangan simpan apa yang tiada siapa baca. Buang metrik keseluruhan ikut nama semasa scrape, dalam job yang membawanya." }
+          commands:
+            - command: |-
+                metric_relabel_configs:
+                  - source_labels: [__name__]
+                    action: drop
+                    regex: go_gc_.*
+              en: "Example: never store metrics whose name starts with go_gc_."
+              ms: "Contoh: jangan simpan metrik yang namanya bermula dengan go_gc_."
+          danger: careful
+          lesson: obs-o2-l04
+
+  - id: obs-disk-full
+    title: { en: "Prometheus filled its disk", ms: "Prometheus penuhkan cakeranya" }
+    start: running
+    steps:
+      - id: running
+        question: { en: "Is Prometheus still running?", ms: "Adakah Prometheus masih berjalan?" }
+        answers:
+          - { label: { en: "Yes, but the disk is nearly full", ms: "Ya, tapi cakera hampir penuh" }, next: r-retention }
+          - { label: { en: "No, it stopped and won't start", ms: "Tidak, ia berhenti dan tak mahu mula" }, next: r-stopped }
+      - id: r-retention
+        result:
+          text: { en: "By default Prometheus keeps 15 days. Set a time or size limit, and cut series you don't need. The oldest data goes first.", ms: "Secara asal Prometheus simpan 15 hari. Tetapkan had masa atau saiz, dan kurangkan siri yang tak perlu. Data paling lama pergi dulu." }
+          commands:
+            - { command: "docker compose exec prometheus du -sh /prometheus", en: "How big is the data folder?", ms: "Berapa besar folder data itu?" }
+            - { command: "--storage.tsdb.retention.time=7d --storage.tsdb.retention.size=20GB", en: "Flags for the prometheus command: keep 7 days, at most 20 GB. Older data is deleted.", ms: "Flag untuk arahan prometheus: simpan 7 hari, paling banyak 20 GB. Data lebih lama dipadam." }
+          danger: lose
+          lesson: obs-o2-l04
+      - id: r-stopped
+        result:
+          text: { en: "Give it room first: grow the disk or volume, then start it again. Deleting old data loses that history forever. Only remove whole old block folders, with Prometheus stopped.", ms: "Beri ruang dulu: besarkan cakera atau volume, kemudian mulakan semula. Memadam data lama hilangkan sejarah itu selamanya. Hanya buang folder blok lama yang lengkap, semasa Prometheus berhenti." }
+          commands:
+            - { command: "df -h", en: "How full is each disk?", ms: "Sepenuh mana setiap cakera?" }
+            - { command: "docker compose logs prometheus --tail 20", en: "Read why it stopped. Look for no space left on device.", ms: "Baca kenapa ia berhenti. Cari no space left on device." }
+          danger: lose
+          lesson: obs-o2-l04

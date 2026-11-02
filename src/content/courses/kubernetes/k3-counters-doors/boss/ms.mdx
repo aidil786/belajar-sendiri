@@ -1,0 +1,90 @@
+---
+id: k8s-k3-boss
+world: 3
+title: Buka pintu
+summary: "Anda akan belajar: hala / dan /api melalui Gateway dengan TLS, dan kunci pangkalan data."
+minutes: 6
+xp: 50
+interactives: [KubeReplay, YamlDoctor, FoodCourtSim, RequestTracer, Choice, Mission]
+needs: [k8s-k3-l11]
+scenario: k3-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Gateway API: HTTP routing", url: "https://gateway-api.sigs.k8s.io/guides/http-routing/" }
+  - { label: "cert-manager: sokongan Gateway API", url: "https://cert-manager.io/docs/usage/gateway/" }
+  - { label: "Kubernetes: Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-boss" commands={['kubectl get services', 'kubectl get gateway']} label="Tiga Service berjalan: api, db dan shop. Belum ada Gateway." />
+
+Boss: malam pembukaan Kedai Kancil! Pelanggan perlukan `/` dan `/api`, melalui HTTPS. Pangkalan data mesti kekal berkunci. Lima bilik. Jom!
+</Card>
+
+<Card id="try-sign" type="try">
+Bilik 1: Mei salin papan /api dari Ingress lama. Ia tak boleh apply. Baikinya.
+
+<Interactive name="YamlDoctor" file="api-route.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: Prefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} keep={['value: /api', 'name: api']} hint="Ingress sebut Prefix. HTTPRoute sebut sesuatu yang lebih panjang." success="Bilik 1 selesai! Papan itu kini sebut PathPrefix." />
+
+<Hint>kubectl senaraikan jenis laluan yang ia kenal. Pilih yang prefix.</Hint>
+</Card>
+
+<Card id="try-entrance" type="try">
+Bilik 2: bina pintu masuk dan pasang papan tanda. Kemudian ketuk di `/api`.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss" goal={{ objectExists: ['gateway/entrance', 'httproute/kedai'], reachable: { url: 'http://172.18.0.200/api', contains: 'nasi lemak' } }} hints={['Taip ls untuk lihat fail.', 'Taip kubectl apply -f entrance.yaml, kemudian kubectl apply -f routes.yaml', 'Uji: curl -s http://172.18.0.200/api']} success="Bilik 2 selesai! / pergi ke kedai, /api ke api." />
+
+<Hint>Pintunya `entrance.yaml`. Papan tandanya `routes.yaml`.</Hint>
+</Card>
+
+<Card id="try-trace" type="try">
+Bilik 3: dalam salinan rakan sepasukan, `/api` jawab 503. Cari langkah yang rosak dan tukar semula.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/api', service: 'api', port: 80 }, { path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 8080, selector: { app: 'api' } }, { name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'api-6d8f7b9c5d-k2x8p', labels: { app: 'api' }, containerPort: 8080 }, { name: 'api-6d8f7b9c5d-w9q4z', labels: { app: 'api' }, containerPort: 8080 }, { name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/api/menu' } }} breaks={['path', 'selector', 'targetPort']} broken={['selector']} task={{ type: 'deliver' }} success="Bilik 3 selesai! Nombor pesanan jumpa dulangnya semula." />
+
+<Hint>503 bermaksud nombor pesanan tiada dulang sedia. Semak apa yang ia pilih.</Hint>
+</Card>
+
+<Card id="try-tls" type="try">
+Bilik 4: kunci pesanan di tengah jalan. Secret sijil `kedai-tls` dah sedia. Buka pintu HTTPS.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss-tls" goal={{ reachable: { url: 'https://172.18.0.200/', host: 'kedai.example' } }} hints={['Taip cat tls.yaml untuk membacanya.', 'Taip kubectl apply -f tls.yaml', 'Semak: kubectl get gateway entrance']} success="Bilik 4 selesai! HTTPS di port 443 untuk kedai.example." />
+
+<Hint>`tls.yaml` tambah listener HTTPS pada pintu masuk yang sama.</Hint>
+</Card>
+
+<Card id="check-renew" type="check">
+Bos anda tanya: "Siapa perbaharui sijil itu tiga bulan lagi?"
+
+<Interactive name="Choice" options={[{ label: 'cert-manager, sendiri, sebelum tamat tempoh', correct: true, why: 'Annotation pada Gateway beritahu apa yang perlu dijaga.' }, { label: 'Anda, dengan peringatan kalendar', why: 'Itu cara lama. cert-manager jaga tarikh untuk anda.' }, { label: 'Gateway perbaharui sijilnya sendiri', why: 'Gateway hanya guna Secret. cert-manager yang isi.' }]} />
+</Card>
+
+<Card id="try-lock" type="try">
+Bilik terakhir: kunci pangkalan data. Hanya api boleh panggil. Dua fail dah sedia: `db-deny.yaml` dan `db-lock.yaml`. Baca dulu.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss-lock" goal={{ unreachable: { url: 'http://db:5432', from: 'app=shop' }, reachable: { url: 'http://db:5432', from: 'app=api' } }} hints={['Taip cat db-deny.yaml dan cat db-lock.yaml. Yang mana benarkan api masuk?', 'Taip kubectl apply -f db-lock.yaml', 'Uji: kubectl exec deploy/shop -- wget -qO- -T 5 http://db:5432']} success="Boss selesai! Kedai timeout di pangkalan data. api boleh masuk." />
+
+<Hint>Kunci semua orang juga kunci api. Anda perlukan senarai tetamu.</Hint>
+</Card>
+
+<Card id="check-timeout" type="check">
+Soalan terakhir. Kenapa kedai dapat timeout, bukan halaman ralat?
+
+<Interactive name="Choice" options={[{ label: 'Policy buang paketnya, jadi tiada siapa menjawab', correct: true, why: 'Pintu berkunci tak berbunyi. Pemanggil tunggu, kemudian putus asa.' }, { label: 'Pangkalan data terlalu perlahan', why: 'Pangkalan data jawab api serta-merta.' }, { label: 'Service tiada endpoint', why: 'Itu akan jadi Connection refused, dari setiap pod.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka pintu dengan selamat, dan kunci pangkalan data.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam kluster latihan, pangkalan data jawab permintaan web di 5432. Jadi wget boleh uji kunci itu. Postgres sebenar guna protokolnya sendiri. Uji dengan klien pangkalan data.
+
+Latihan sebenar (pilihan): bilik yang sama di kluster kind anda (kind 0.24 ke atas):
+
+<Interactive name="Mission" id="k3-boss-rep" steps={[{ id: 'routes', text: 'Gateway dengan / ke aplikasi web anda dan /api ke API anda.' }, { id: 'tls', text: 'Listener HTTPS dengan sijil daripada cert-manager.' }, { id: 'lock', text: 'NetworkPolicy: hanya API boleh sampai ke pangkalan data.' }, { id: 'test', text: 'Uji dari pod dibenarkan dan pod disekat.' }]} success="Medan selera anda dah dibuka, dan selamat!" />
+</Card>

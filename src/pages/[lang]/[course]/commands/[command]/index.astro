@@ -1,0 +1,18 @@
+---
+// /en/<course>/commands/<id>/: one command page of a course after the first.
+import { getCollection } from 'astro:content';
+import CommandPage from '~/components/pages/CommandPage.astro';
+import { LANGS, type Lang } from '~/i18n';
+import { ROOT_COURSE } from '~/lib/catalog';
+
+export async function getStaticPaths() {
+  const sets = (await getCollection('commands')).filter((c) => c.id !== ROOT_COURSE);
+  return sets.flatMap((set) =>
+    LANGS.flatMap((lang) => set.data.commands.map((c) => ({ params: { lang, course: set.id, command: c.id }, props: { cmd: c } }))),
+  );
+}
+const { lang, course } = Astro.params as { lang: Lang; course: string };
+const { cmd } = Astro.props;
+---
+
+<CommandPage lang={lang} courseId={course} cmd={cmd} />

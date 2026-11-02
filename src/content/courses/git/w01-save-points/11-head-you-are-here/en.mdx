@@ -1,0 +1,64 @@
+---
+id: git-w01-l11
+world: 1
+title: "HEAD: you are here"
+summary: "You will learn: what HEAD is, and how it moves when you commit."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, GraphPick, Choice, GraphScene]
+needs: [git-w01-l10]
+scenario: w01-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitglossary (HEAD)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Four commits wobble on the timeline: Add README, Add home page, Add purple style and Add about page." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }, { name: 'Add purple style', kind: 'commit' }, { name: 'Add about page', kind: 'commit' }] }]} />
+
+You have four save points. Which one are you standing on right now? Games show a "you are here" dot. Git has one too.
+</Card>
+
+<Card id="see-head" type="see">
+<Interactive name="TermReplay" scenario="w01-l11" commands={['git log --oneline']} label="git log --oneline. The top line, Add about page, has HEAD -> main next to its hash." />
+
+See `HEAD` on the top line? **HEAD** is Git's "you are here" marker. Right now it sits on your newest commit.
+</Card>
+
+<Card id="try-pick" type="try">
+On the graph, HEAD is the pink marker. Find it.
+
+<Interactive name="GraphPick" scenario="w01-l11" answer="^Add about page$" prompt="Tap the commit HEAD points at." why="The pink HEAD marker sits on Add about page, your newest commit." />
+
+<Hint>Look for the pink tag that says HEAD.</Hint>
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="TermReplay" scenario="w01-l11" commands={['git branch']} label="git branch prints one line: a star, then main." />
+
+HEAD points at a **branch**: a named line of commits. Yours is called main. `git branch` lists branches. The `*` marks the one HEAD points at.
+</Card>
+
+<Card id="predict" type="predict">
+You make one more commit. Where does HEAD end up?
+
+<Interactive name="Choice" options={[{ label: 'On the new commit', correct: true, why: 'main moves forward to the new commit, and HEAD rides along.' }, { label: 'Still on Add about page', why: 'HEAD follows main, and main moves to every new commit.' }, { label: 'Back on the first commit', why: 'HEAD never jumps back by itself.' }]} />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="GraphScene" scenario="w01-l11" commands={['echo "<p>Day 2: I met HEAD.</p>" >> index.html', 'git add index.html', 'git commit -m "Add day 2 entry"']} label="A new commit dot appears after Add about page. The main tag and the pink HEAD marker both slide onto it." />
+
+The new commit lands. main moves onto it, and HEAD **rides along** with main. That is why you always stay at the front.
+</Card>
+
+<Card id="win" type="win">
+You can now find HEAD and predict where it goes next.
+</Card>
+
+<Card id="deeper" type="deeper">
+Git keeps HEAD in a tiny file, `.git/HEAD`. Most of the time it says `ref: refs/heads/main`, which means "HEAD points at main". In World 2, you will move HEAD onto an old commit. That is called a detached HEAD.
+</Card>

@@ -1,0 +1,76 @@
+---
+id: cicd-c3-l01
+world: 3
+title: "Recreate, rolling, blue/green, canary"
+summary: "You will learn: four ways to swap old code for new, and when each one fits."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, Choice, OrderList, TrafficDial, SortCards, Transcript]
+needs: [cicd-c2-boss]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare: gradual deployments", url: "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/" }
+  - { label: "Kubernetes: Deployments (rolling update)", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '5:00 pm', title: 'Ship it', text: 'Friday. Version 2 of the shop goes to every user at once.' }, { when: '5:02 pm', title: 'Errors', text: 'Checkout breaks. Every single customer sees it.' }, { when: '5:40 pm', title: 'Fixed', text: 'You bring version 1 back by hand. Forty minutes of angry customers.' }]} />
+
+Friday, 5 pm. One push sends the new version to everyone. It has a bug. Tap each moment. How could it hurt fewer people?
+</Card>
+
+<Card id="see-recreate" type="see">
+Way 1: **<Term id="recreate">recreate</Term>**. Close the stall, swap the menu, open again. The old version stops, then the new one starts. What do customers see in between?
+
+<Interactive name="Choice" options={[{ label: 'A closed sign, for a short while', correct: true, why: 'Nothing serves between stop and start. Simple, but users wait.' }, { label: 'The new menu, right away', why: 'The new version starts only after the old one stops.' }, { label: 'Half old, half new', why: 'That is the next way: rolling.' }]} />
+</Card>
+
+<Card id="see-rolling" type="see">
+Way 2: **<Term id="rolling-update">rolling update</Term>**. Swap the cooks one at a time. The stall never closes. Put the steps in order.
+
+<Interactive name="OrderList" items={['Start one copy of version 2', 'Check that it is healthy', 'Stop one copy of version 1', 'Repeat until every copy is version 2']} label="First step at the top" success="Yes! No closed sign. For a while, old and new serve side by side." />
+</Card>
+
+<Card id="try-bluegreen" type="try">
+Way 3: **<Term id="blue-green">blue/green</Term>**. Two full kitchens. Version 2 waits next to version 1. Test it, then switch everyone. Trouble? Switch back.
+
+<Interactive name="TrafficDial" mode="bluegreen" newErrorRate={0.1} task={{ type: 'rollback' }} success="Safe! Version 1 kept serving while you checked." />
+
+<Hint>Test version 2 first. If it shows errors, keep version 1 live.</Hint>
+</Card>
+
+<Card id="see-canary" type="see">
+Way 4: **<Term id="canary">canary</Term>**. A few customers taste the new dish first. All good? Serve more people. Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'bluegreen', label: 'Blue/green' }, { id: 'canary', label: 'Canary' }]} items={[{ label: 'Needs two full copies running', bucket: 'bluegreen', why: 'Two whole kitchens cost more, for a short time.' }, { label: 'Moves users in small steps: 5%, 25%, 50%', bucket: 'canary', why: 'Each step waits and watches the errors.' }, { label: 'One switch moves everyone', bucket: 'bluegreen', why: 'The sign flips for all customers at once.' }, { label: 'Only a few users meet a new bug', bucket: 'canary', why: 'If 5% get version 2, a bug hurts only 5%.' }]} success="Sorted! Both let you undo fast." />
+</Card>
+
+<Card id="try-canary" type="try">
+Your turn. Send users to version 2, step by step. Watch the graph. Roll back before 150 users hit a bug.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} success="Caught it early! Most users never saw the bug." />
+
+<Hint>The version 2 line jumps over the alarm line? Press Roll back.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Version 2 renames a database column. Version 1 crashes without the old name. Which way fits?
+
+<Interactive name="Choice" options={[{ label: 'Recreate', correct: true, why: 'Old and new cannot run together, so stop the old one first. Lesson 9 shows a way with no downtime.' }, { label: 'Rolling update', why: 'For a while, old copies would run and crash on the renamed column.' }, { label: 'Canary', why: 'Most users would still be on version 1, and it would crash.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick a safe way to swap versions.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kubernetes does rolling updates by default (World K2). Cloudflare Workers can run a canary for you, called a gradual deployment. Upload a version with no traffic, then choose its share.
+
+<Interactive name="Transcript" title="bash" label="Two Wrangler commands: upload a new version, then split traffic between versions." lines={[{ cmd: 'npx wrangler versions upload' }, { cmd: 'npx wrangler versions deploy' }]} />
+
+Real rep (optional): use a free test Worker, not your team's. Send 10% to the new version, then roll back.
+</Card>

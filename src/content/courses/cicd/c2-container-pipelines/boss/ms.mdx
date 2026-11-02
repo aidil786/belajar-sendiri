@@ -1,0 +1,85 @@
+---
+id: cicd-c2-boss
+world: 2
+title: Talian hijau
+summary: "Anda akan belajar: buat setiap PR bina, uji dan imbas, dan setiap merge hantar image bertag."
+minutes: 6
+xp: 50
+interactives: [ConveyorBelt, Choice, SortCards]
+needs: [cicd-c2-m2]
+scenario: c2-green-line
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "About service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-boss-push" event="fork-pr" label="Pull request dari fork jalankan talian. Build cuba push ke ghcr.io dan ditolak." />
+
+Bos: talian hijau! Mei hantar PR pertamanya dari fork. Talian jadi merah. Tekan Run dan baca baris merah.
+</Card>
+
+<Card id="check-why" type="check">
+Maksudnya: satu PR cuba push, dengan kunci baca sahaja. Patutkah PR push image langsung?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: bina dan uji, push hanya selepas merge', correct: true, why: 'Kod PR belum disemak. Hanya main isi peti sejuk.' }, { label: 'Ya, dengan permissions: write-all', why: 'Fork tak pernah dapat kunci tulis, dan orang luar tak patut isi peti sejuk anda.' }, { label: 'Ya, tapi dari fork sahaja', why: 'Fork ialah PR yang paling kurang anda percaya.' }]} />
+</Card>
+
+<Card id="try-push" type="try">
+Bilik 1: baiki baris kuning. PR patut bina sahaja. Main patut push.
+
+<Interactive name="ConveyorBelt" scenario="c2-boss-push" event="fork-pr" events={['fork-pr']} task={{ type: 'green' }} fixes={[
+  { label: 'push: true', text: '          push: true', why: 'Itulah talian yang anda ada. PR dari fork masih cuba push.' },
+  { label: 'push: false', text: '          push: false', why: 'Hijau, tapi sekarang main pun tak pernah hantar.', correct: false },
+  { label: 'Push hanya bila bukan PR', text: "          push: ${{ github.event_name != 'pull_request' }}" }]}
+  success="Bilik 1 selesai! PR bina, main push." />
+
+<Hint>Nama event untuk PR ialah pull_request. Push bila ia apa-apa yang lain.</Hint>
+</Card>
+
+<Card id="sort-events" type="check">
+Bilik 2: apa berlaku di mana pada talian hijau?
+
+<Interactive name="SortCards" buckets={[{ id: 'both', label: 'PR dan main' }, { id: 'main', label: 'Merge ke main sahaja' }]} items={[{ label: 'Jalankan ujian', bucket: 'both', why: 'Setiap perubahan diuji rasa.' }, { label: 'Bina image', bucket: 'both', why: 'Resipi rosak nampak sebelum merge.' }, { label: 'Imbas CVE kritikal', bucket: 'both', why: 'Tangkap bahan rosak sebelum ia di-merge.' }, { label: 'Log masuk ke GHCR', bucket: 'main', why: 'Hanya main perlukan peti sejuk.' }, { label: 'Push image bertag', bucket: 'main', why: 'Hanya kod yang disemak dan di-merge dihantar.' }]} success="Itulah talian hijau: semak semuanya, hantar dari main." />
+</Card>
+
+<Card id="try-db" type="try">
+Bilik 3: ujian API perlukan Postgres, dan ia tak jumpa. Beri job ini pangkalan data.
+
+<Interactive name="ConveyorBelt" scenario="c2-service-db" task={{ type: 'green' }} fixes={[
+  { label: 'Service Redis', text: '    runs-on: ubuntu-latest\n    services:\n      cache:\n        image: redis:8\n        ports:\n          - 6379:6379', why: 'Redis ialah cache. Ujian panggil Postgres di port 5432.' },
+  { label: 'Service Postgres pada port 5432', text: '    runs-on: ubuntu-latest\n    services:\n      db:\n        image: postgres:18\n        env:\n          POSTGRES_PASSWORD: test\n        options: --health-cmd pg_isready --health-interval 5s --health-retries 10\n        ports:\n          - 5432:5432' }]}
+  success="Bilik 3 selesai! Ujian dah jumpa pangkalan data mereka." />
+
+<Hint>Baca baris merah: port mana yang tiada siapa jawab?</Hint>
+</Card>
+
+<Card id="check-cve" type="check">
+Bilik 4: image sebuah PR ada CVE CRITICAL. Apa patut talian buat?
+
+<Interactive name="Choice" options={[{ label: 'Jadi merah pada PR, supaya pek rosak tak pernah di-merge', correct: true, why: 'Baiki base image atau pakej, push semula, dan PR jadi hijau.' }, { label: 'Luluskan PR, imbas kemudian di main', why: 'Kalau begitu lubang itu dah di-merge. Tangkap pada PR.' }, { label: 'Push image itu, tapi dengan tag amaran', why: 'Label amaran tak halang sesiapa guna pek itu.' }]} />
+</Card>
+
+<Card id="predict-cve" type="predict">
+Bilik akhir: seluruh talian, dengan CVE CRITICAL dalam image. Ketik stesen yang akan hentikannya, kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-green-line-cve" event="pr" task={{ type: 'predict' }} success="Bos dikalahkan! Ujian lulus, imbasan hentikan pek rosak, tiada apa dihantar." />
+
+<Hint>Ujian lulus. Job mana yang imbas image?</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak setiap PR dan hantar setiap merge.
+</Card>
+
+<Card id="deeper" type="deeper">
+Inilah seluruh talian hijau. Compose jalankan ujian. Kemudian image dibina dan diimbas. Hanya main log masuk dan push. Imbasan datang sebelum push, jadi pek rosak tak pernah dihantar. Misi 2 letak talian ini dalam repo anda sendiri.
+
+<Interactive name="ConveyorBelt" scenario="c2-green-line" label="Seluruh talian hijau. Pada PR: ujian, build, imbas, tiada push. Pada main: sama, tambah log masuk dan push." />
+</Card>

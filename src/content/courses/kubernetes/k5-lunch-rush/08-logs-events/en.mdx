@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l08
+world: 5
+title: Logs and events
+summary: "You will learn: how to read the cook's notebook (logs) and the manager's notice board (events)."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, SortCards]
+needs: [k8s-k5-l07]
+scenario: k5-logs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: logging architecture", url: "https://kubernetes.io/docs/concepts/cluster-administration/logging/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+  - { label: "kubectl events", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_events/" }
+---
+
+<Card id="hook" type="hook">
+A customer says order 42 came late. The kitchen tray says Running. Where do you look first?
+
+<Interactive name="Choice" options={[{ label: 'In what the cook wrote down', correct: true, why: 'The app prints what happens. That is your best clue.' }, { label: 'Restart the tray', why: 'You would lose the clue, and the bug may come back.' }, { label: 'Run kubectl get pods again', why: 'It still says Running. You need the story inside.' }]} />
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KubeReplay" scenario="k5-logs" commands={['kubectl logs kitchen']} label="kubectl logs kitchen prints three lines: order 41 ready, order 42 oven too cold, order 42 ready." />
+
+**<Term id="logs">Logs</Term>** are the cook's notebook: everything the container prints. `kubectl logs kitchen` reads it. There's the clue: the oven was too cold.
+</Card>
+
+<Card id="try-tail" type="try">
+Busy cooks write long notebooks. Show only the last line with `--tail=1`.
+
+<Interactive name="FoodCourtSim" scenario="k5-logs" goal={{ lastTyped: '^(kubectl|k) logs .*--tail[= ]1(\\s|$)' }} hints={['Type kubectl logs kitchen --tail=1']} success="Just the newest line: order 42 ready." />
+
+<Hint>Type `kubectl logs kitchen --tail=1`.</Hint>
+</Card>
+
+<Card id="see-previous" type="see">
+<Interactive name="KubeReplay" scenario="k2-crashloop" commands={['kubectl get pods', 'kubectl logs {pod:app=oops} --previous']} label="The oops pod is in CrashLoopBackOff. Its previous run printed: starting the kitchen, then oh no, no gas." />
+
+`CrashLoopBackOff`: the tray keeps crashing, so Kubernetes waits longer between restarts. Each restart starts a clean notebook. `--previous` reads the notebook from the run that crashed.
+</Card>
+
+<Card id="predict" type="predict">
+You delete the kitchen pod. A new one takes its place. Can you still read the old pod's logs?
+
+<Interactive name="Choice" options={[{ label: 'No. They left with the old pod.', correct: true, why: 'kubectl logs reads from the stall. Keep logs elsewhere if you need them later.' }, { label: 'Yes, the new pod has them', why: 'The new pod starts a clean notebook.' }, { label: 'Yes, with --previous', why: '--previous is for a restart inside the same pod.' }]} />
+</Card>
+
+<Card id="see-events" type="see">
+<Interactive name="KubeReplay" scenario="k5-logs" commands={['kubectl get events --field-selector involvedObject.name=kitchen']} label="Four events for the kitchen pod: Scheduled to dev-worker, image already present, Created, Started." />
+
+**<Term id="event">Events</Term>** are the manager's notice board: placed, pulled, started, and warnings. Kubernetes writes them, not your app. They fade after a short time.
+</Card>
+
+<Card id="check-sort" type="check">
+Notebook or notice board? Sort each line.
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Logs (the app wrote it)' }, { id: 'events', label: 'Events (Kubernetes wrote it)' }]} items={[{ label: 'order 42 oven too cold', bucket: 'logs', why: 'The cook printed it.' }, { label: 'Successfully assigned default/kitchen to dev-worker', bucket: 'events', why: 'The scheduler posted it.' }, { label: 'Readiness probe failed: HTTP probe failed with statuscode: 404', bucket: 'events', why: 'The kubelet posted it after a probe.' }, { label: '"GET / HTTP/1.1" 200', bucket: 'logs', why: 'nginx printed it for each visitor.' }]} success="Sorted! Your app writes logs. Kubernetes writes events." />
+</Card>
+
+<Card id="win" type="win">
+You can now read a tray's logs and the zone's events.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl logs -f kitchen` follows new lines. `-c cook` picks one container. `--since=10m` shows only recent lines. `kubectl events --for pod/kitchen` shows one pod's events. By default the API server keeps events for one hour. To keep logs longer, send them to a log store (next lesson).
+</Card>

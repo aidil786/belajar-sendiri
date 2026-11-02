@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l11
+world: 5
+title: Naik taraf kluster dan beza versi
+summary: "Anda akan belajar: sejauh mana versi bahagian kluster boleh berbeza, dan urutan selamat untuk naik taraf."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SortCards, OrderList, FoodCourtSim, SwipeJudge]
+needs: [k8s-k5-l10]
+scenario: k5-cordon
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: version skew policy", url: "https://kubernetes.io/releases/version-skew-policy/" }
+  - { label: "Kubernetes: releases", url: "https://kubernetes.io/releases/" }
+  - { label: "Kubernetes: safely drain a node", url: "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/" }
+---
+
+<Card id="hook" type="hook">
+Projek Kubernetes hanya tampal tiga versi minor terbaru: 1.37, 1.36 dan 1.35. Kluster lama anda guna 1.34. Apa risikonya?
+
+<Interactive name="Choice" options={[{ label: 'Ia tak dapat lagi pembaikan keselamatan', correct: true, why: 'Lubang baharu sentiasa dijumpai. Versi lama kekal terbuka.' }, { label: 'Ia berhenti berfungsi esok', why: 'Ia terus berjalan. Cuma tiada lagi pembaikan.' }, { label: 'Tiada risiko langsung', why: 'Kluster tanpa tampalan ialah pintu masuk kegemaran penyerang.' }]} />
+</Card>
+
+<Card id="see-versions" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl version', 'kubectl get nodes']} label="kubectl version tunjuk Client v1.37.2 dan Server v1.37.0. Ketiga-tiga node guna v1.37.0." />
+
+kubectl anda, API server dan kubelet setiap node (gerai) semuanya ada versi. **<Term id="version-skew">Version skew</Term>** ialah sejauh mana ia boleh berbeza dan masih berfungsi bersama.
+</Card>
+
+<Card id="try-skew" type="try">
+API server guna 1.37. Bahagian mana yang cukup dekat?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Dibenarkan' }, { id: 'no', label: 'Terlalu jauh' }]} items={[{ label: 'kubelet 1.34', bucket: 'ok', why: 'kubelet boleh lebih lama sehingga 3 minor.' }, { label: 'kubelet 1.38', bucket: 'no', why: 'kubelet tak boleh lebih baharu daripada API server.' }, { label: 'kubectl 1.38', bucket: 'ok', why: 'kubectl boleh satu minor lebih lama atau lebih baharu.' }, { label: 'kubectl 1.35', bucket: 'no', why: 'Dua minor lebih lama terlalu jauh untuk kubectl.' }, { label: 'kube-scheduler 1.36', bucket: 'ok', why: 'Ia boleh satu minor lebih lama, tak pernah lebih baharu.' }]} success="Siap! API server mendahului. Yang lain boleh ketinggalan sedikit." />
+</Card>
+
+<Card id="see-order" type="see">
+Jadi API server dulu, dan gerai ikut. Susun satu naik taraf minor.
+
+<Interactive name="OrderList" items={['Baca nota keluaran untuk API yang dibuang', 'Naik taraf control plane, API server dulu', 'Drain satu gerai', 'Naik taraf kubelet gerai itu', 'Uncordon, kemudian gerai seterusnya']} label="Langkah pertama di atas" success="Itulah urutan selamat. Satu gerai pada satu masa, supaya makan tengah hari diteruskan." />
+</Card>
+
+<Card id="predict" type="predict">
+Control plane anda guna 1.35. Bolehkah terus naik taraf ke 1.37?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Satu minor setiap kali: 1.36, kemudian 1.37.', correct: true, why: 'API server tak boleh langkau versi minor.' }, { label: 'Boleh, lebih baharu sentiasa okey', why: 'Perubahan API dirancang satu minor demi satu. Melangkau rosakkan rancangan itu.' }, { label: 'Hanya pada hujung minggu', why: 'Hari bukan peraturannya. Satu minor setiap kali, itu peraturannya.' }]} />
+</Card>
+
+<Card id="try-node" type="try">
+Latih rutin gerai. Drain dev-worker. Anggap anda naik taraf kubeletnya. Kemudian uncordon.
+
+<Interactive name="FoodCourtSim" scenario="k5-cordon" goal={{ typed: '^(kubectl|k) drain dev-worker\\b', lastTyped: '^(kubectl|k) uncordon dev-worker\\b', nodeCordoned: { name: 'dev-worker', cordoned: false } }} hints={['Taip kubectl drain dev-worker --ignore-daemonsets', 'Naik taraf siap! Sekarang kubectl uncordon dev-worker']} success="Gerai dikosongkan, dinaik taraf, dan dibuka semula." />
+
+<Hint>Mula dengan `kubectl drain dev-worker --ignore-daemonsets`, kemudian `kubectl uncordon dev-worker`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Semak API yang dibuang sebelum naik taraf', good: true, why: 'YAML lama boleh gagal di-apply selepas API dibuang.' }, { text: 'Naik taraf kubelet dulu, kemudian control plane', good: false, why: 'kubelet tak boleh lebih baharu daripada API server.' }, { text: 'Dalam kind, buat kluster baharu dengan image node lebih baharu', good: true, why: 'Kluster latihan murah untuk dibuang.' }, { text: 'Naik taraf semua gerai serentak', good: false, why: 'Kemudian semua pod berpindah serentak. Satu gerai pada satu masa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh naik taraf kluster dalam urutan selamat, ikut peraturan skew.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap minor dapat tampalan kira-kira setahun. Cloud terurus boleh naik taraf control plane untuk anda. Anda masih semak YAML anda dulu. Kluster binaan sendiri guna alat seperti `kubeadm upgrade`. Naik taraf minor kubelet di tempat tidak disokong: drain gerai dulu.
+</Card>

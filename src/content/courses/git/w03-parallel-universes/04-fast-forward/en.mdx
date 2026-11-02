@@ -1,0 +1,65 @@
+---
+id: git-w03-l04
+world: 3
+title: Fast-forward merge
+summary: "You will learn: how a finished branch joins main when main has nothing new."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, Choice, GraphPick]
+needs: [git-w03-l03]
+scenario: w03-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git log --oneline --graph --all']} label="The log: about has two new commits, Add about page and Say what I like. main sits two commits behind, on Add style." />
+
+Your about page is finished on its branch. But main doesn't have it yet. How do they join?
+</Card>
+
+<Card id="see-ff" type="see">
+<Interactive name="GraphScene" scenario="w03-l04" commands={['git merge about']} label="The main label slides forward two commits and lands on Say what I like, next to about. No new commit appears." />
+
+On main, `git merge about` brings the about work in. main has nothing new, so Git just slides the note forward. That's a **<Term id="fast-forward">fast-forward</Term>**.
+</Card>
+
+<Card id="see-term" type="see">
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git merge about']} pulse label="git merge about prints Updating, then Fast-forward, then about.html with 2 new lines." />
+
+Look for the word Fast-forward. Git made no new commit. One note just moved.
+</Card>
+
+<Card id="try-merge" type="try">
+You are on main. <Term id="merge">Merge</Term> `about` into it.
+
+<Interactive name="Sim" scenario="w03-l04" panels={['graph']} goal={{ currentBranch: 'main', branchAt: { main: '^Say what I like$' }, mergeCommit: false }} hints={['Type git merge about and press Enter.', 'Check you are on main first: git branch.']} success="Fast-forward! main now has the about page." />
+
+<Hint>Type `git merge about`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+After a fast-forward, how many new commits did Git make?
+
+<Interactive name="Choice" compact options={[{ label: '0', correct: true, why: 'It only moved the main note. The commits were already there.' }, { label: '1', why: 'That would be a merge commit. A fast-forward needs none.' }, { label: '2', why: 'The two about commits already existed. Git just points main at them.' }]} />
+</Card>
+
+<Card id="check-pick" type="check">
+Where is main now?
+
+<Interactive name="GraphPick" scenario="w03-l04-done" answer="^Say what I like$" prompt="Tap the commit main points at now." why="main slid forward to the newest about commit." />
+</Card>
+
+<Card id="win" type="win">
+You can now merge with a fast-forward.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git merge --ff-only about` merges only if it can fast-forward. If not, it stops safely. `git merge --no-ff about` always makes a merge commit. Some teams like that, so the branch shows up in history.
+
+<Interactive name="TermReplay" scenario="w03-l04" commands={['git merge --no-ff about', 'git log --oneline --graph']} label="With --no-ff, Git makes a merge commit, Merge branch 'about', even though it could fast-forward." />
+</Card>

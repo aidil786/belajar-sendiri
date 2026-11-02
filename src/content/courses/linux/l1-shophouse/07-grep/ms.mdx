@@ -1,0 +1,73 @@
+---
+id: linux-l1-l07
+world: 1
+title: "Cari dalam fail: grep"
+summary: "Anda akan belajar: tarik keluar baris yang anda perlu sahaja daripada fail panjang."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l1-l06]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "grep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/grep/grep.1.en.html" }
+  - { label: "GNU grep manual", url: "https://www.gnu.org/software/grep/manual/grep.html" }
+---
+
+<Card id="hook" type="hook">
+Bos tanya: meja mana yang belum bayar? Buku pesanan ada 15 baris hari ini. Esok mungkin 900.
+
+<Interactive name="Choice" options={[{ label: 'Cari perkataan UNPAID dalam buku itu', correct: true, why: 'Biar server baca setiap baris dan simpan yang padan sahaja.' }, { label: 'Baca setiap baris dengan mata', why: 'Lambat, dan mudah terlepas satu di baris 600.' }, { label: 'Tanya setiap meja sekali lagi', why: 'Jawapannya sudah ditulis. Cari saja.' }]} />
+</Card>
+
+<Card id="see-grep" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['grep UNPAID orders.log']} />
+
+**grep** cetak baris yang ada perkataan anda sahaja. Dua meja belum bayar: T5 dan T6. Atau itu sahaja?
+</Card>
+
+<Card id="predict-case" type="predict">
+Seorang juruwang tulis `Unpaid`, bukan `UNPAID`. Adakah grep tunjuk baris itu?
+
+<Interactive name="Choice" options={[{ label: 'Tak. grep peka huruf besar dan kecil.', correct: true, why: 'UNPAID dan Unpaid berbeza bagi grep. -i abaikan bezanya.' }, { label: 'Ya. grep memang abaikan huruf besar.', why: 'Cuma dengan -i. grep biasa padankan huruf dengan tepat.' }, { label: 'Cuma kalau baris itu pendek', why: 'Panjang tak penting. Hurufnya mesti padan.' }]} />
+</Card>
+
+<Card id="try-i" type="try">
+Tangkap semua ejaan: `grep -i unpaid orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^grep (.* )?-i(c)? (.* )?unpaid' }} hints={['Taip grep -i unpaid orders.log']} solution={['grep -i unpaid orders.log']} success="Tiga meja berhutang: T5, T6 dan T2." />
+
+<Hint>`-i` maksudnya "ignore case" (abaikan huruf besar kecil).</Hint>
+</Card>
+
+<Card id="spot-t6" type="check">
+<Interactive name="SpotLines" lines={[{ text: '08:15 T4 mee-goreng 6 paid' }, { text: '08:22 T6 roti-canai 2 UNPAID', target: true }, { text: '08:28 T5 teh-tarik 3 paid' }, { text: '08:38 T6 teh-tarik 3 paid', target: true }, { text: '08:41 T2 nasi-lemak 5 Unpaid' }]} prompt="Ketik setiap baris yang grep T6 orders.log cetak." success="Kedua-dua baris T6. grep simpan mana-mana baris yang ada T6." />
+</Card>
+
+<Card id="sort-flags" type="check">
+Tiga suis berguna. Yang mana jawab setiap soalan?
+
+<Interactive name="SortCards" buckets={[{ id: 'c', label: '-c: kira' }, { id: 'n', label: '-n: nombor baris' }, { id: 'v', label: '-v: baris tanpanya' }]} items={[{ label: 'Berapa pesanan nasi lemak?', bucket: 'c', why: '-c cetak nombor, bukan baris.' }, { label: 'Meja 6 di baris ke berapa?', bucket: 'n', why: '-n letak nombor baris di depan.' }, { label: 'Setiap pesanan yang bukan nasi lemak', bucket: 'v', why: '-v terbalikkan: baris yang tak padan.' }, { label: 'Berapa pesanan belum bayar?', bucket: 'c', why: 'Kiraan lagi. Tambah -i untuk semua ejaan.' }]} success="Kira, nombor, atau sebaliknya." />
+</Card>
+
+<Card id="try-count" type="try">
+Berapa pesanan nasi lemak hari ini? Suruh grep kira: `grep -c nasi-lemak orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^grep (.* )?-c(i)? (.* )?nasi-lemak' }} hints={['Taip grep -c nasi-lemak orders.log']} solution={['grep -c nasi-lemak orders.log']} success="6. Nasi lemak bintang hari ini." />
+
+<Hint>`-c` maksudnya "count" (kira).</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tarik baris yang anda perlu sahaja daripada fail panjang.
+</Card>
+
+<Card id="deeper" type="deeper">
+`grep laksa orders.log` tak cetak apa-apa dan tamat dengan kod keluar 1. Maksudnya: tiada baris padan; tiada yang rosak. `grep -r belacan ~/kedai` cari dalam setiap fail di setiap bilik. `-n` dan `-i` boleh digabung: `grep -ni unpaid orders.log`.
+
+Latihan sebenar (pilihan): di Linux, `grep -c bash /etc/passwd` kira pengguna yang guna shell bash.
+</Card>

@@ -1,0 +1,80 @@
+---
+id: docker-d3-boss
+world: 3
+title: Data yang kekal
+summary: "Anda akan belajar: jalankan aplikasi dan Postgres yang datanya kekal selepas docker rm."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, SwipeJudge, LockerTest]
+needs: [docker-d3-l09]
+scenario: d3-boss-ready
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: Volumes", url: "https://docs.docker.com/engine/storage/volumes/" }
+  - { label: "Docker docs: Networking overview", url: "https://docs.docker.com/engine/network/" }
+  - { label: "Postgres image on Docker Hub", url: "https://hub.docker.com/_/postgres" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-pg-novolume" commands={['docker exec db psql -U postgres -c "select * from orders;"', 'docker rm -f db', 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine', 'docker exec db psql -U postgres -c "select * from orders"']} fails={['docker exec db psql -U postgres -c "select * from orders"']} label="Ujian semalam: satu pesanan, kemudian db dibuang dan dimulakan semula. psql kata relation orders does not exist." />
+
+Boss: Kedai Kancil buka esok! Ujian semalam hilangkan semua pesanan. Bina dengan betul: kedai dan Postgres, dengan pesanan yang kekal selepas `docker rm`.
+</Card>
+
+<Card id="try-room1" type="try">
+Bilik 1: buat loker pgdata dan talian telefon shopnet.
+
+<Interactive name="KitchenSim" scenario="d3-fresh" goal={{ volumeExists: ['pgdata'], networkExists: ['shopnet'] }} hints={['Taip docker volume create pgdata', 'Taip docker network create shopnet']} success="Bilik 1 selesai! Loker dan talian sudah sedia." />
+
+<Hint>Satu `docker volume create`, satu `docker network create`.</Hint>
+</Card>
+
+<Card id="check-path" type="check">
+Bilik 2 mulakan Postgres 18. Di mana loker pgdata mesti dibuka?
+
+<Interactive name="Choice" options={[{ label: '`/var/lib/postgresql`', correct: true, why: 'Postgres 18 simpan datanya di bawah folder ini.' }, { label: '`/var/lib/postgresql/data`', why: 'Itu folder lama. Postgres 18 berhenti dengan ralat di situ.' }, { label: '`/data`', why: 'Postgres tak simpan datanya di situ. pgdata akan kekal kosong.' }]} />
+</Card>
+
+<Card id="try-room2" type="try">
+Bilik 2: mulakan db di shopnet, dengan loker pgdata. Kemudian buat jadual orders.
+
+<Interactive name="KitchenSim" scenario="d3-boss-locker" goal={{ running: ['db'], networkHas: { shopnet: ['db'] }, containerEnv: { db: ['POSTGRES_PASSWORD'] }, tableInVolume: { pgdata: 'orders' } }} hints={['Taip docker run -d --name db --network shopnet -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Taip docker exec db psql -U postgres -c "create table orders (id int, dish text)"']} success="Bilik 2 selesai! Jadual orders tinggal dalam loker." />
+
+<Hint>Anda perlukan `--network shopnet`, `-e POSTGRES_PASSWORD=…` dan `-v pgdata:/var/lib/postgresql`.</Hint>
+</Card>
+
+<Card id="check-host" type="check">
+Aplikasi kedai perlu cari db. Tetapan mana yang berfungsi?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'DB_HOST=db', good: true, why: 'Di shopnet, nama itulah alamatnya.' }, { text: 'DB_HOST=localhost', good: false, why: 'Itu bekas aplikasi itu sendiri.' }, { text: 'DB_HOST=172.18.0.2', good: false, why: 'db baru mungkin dapat alamat baru. Nama kekal.' }]} />
+</Card>
+
+<Card id="try-room3" type="try">
+Bilik 3: mulakan web, halaman kedai, di shopnet. Buka tingkap 8080 untuk pelanggan.
+
+<Interactive name="KitchenSim" scenario="d3-boss-db" goal={{ running: ['web'], networkHas: { shopnet: ['web', 'db'] }, portMapped: { web: '8080:80' }, reachable: 'localhost:8080' }} hints={['Taip docker run -d --name web --network shopnet -p 8080:80 nginx:1.30-alpine', 'Kemudian curl localhost:8080']} success="Bilik 3 selesai! Pelanggan boleh tengok kedai." />
+
+<Hint>web perlukan kedua-duanya: `--network shopnet` dan `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sebelum bilik terakhir: semakan loker yang ringkas. Teka dulu, kemudian jalankan.
+
+<Interactive name="LockerTest" mounts={['writable', 'volume', 'bind']} ask={['recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="try-final" type="try">
+Bilik terakhir: buang db dengan `docker rm -f`. Mulakan semula di talian dan loker yang sama. Kemudian tunjuk pesanan.
+
+<Interactive name="KitchenSim" scenario="d3-boss-ready" goal={{ running: ['db', 'web'], networkHas: { shopnet: ['db', 'web'] }, tableInVolume: { pgdata: 'orders' }, typed: '^docker (container )?rm ', lastTyped: 'select', lastExit: 0 }} hints={['Taip docker rm -f db', 'Taip docker run -d --name db --network shopnet -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Taip docker exec db psql -U postgres -c "select * from orders"']} success="Boss tewas! Bekas itu baru, dan pesanan kekal." />
+
+<Hint>Guna baris run yang sama macam Bilik 2.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan aplikasi dan pangkalan data yang datanya kekal.
+</Card>

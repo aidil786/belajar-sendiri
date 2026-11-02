@@ -1,0 +1,70 @@
+---
+id: docker-d3-l09
+world: 3
+title: Never bake in secrets
+summary: "You will learn: why a password in a Dockerfile leaks, and how to hand it over at run time."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SortCards, Choice, SpotLines, KitchenSim, SwipeJudge, Mission]
+needs: [docker-d3-l08]
+scenario: d3-secret-baked
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: SecretsUsedInArgOrEnv", url: "https://docs.docker.com/reference/build-checks/secrets-used-in-arg-or-env/" }
+  - { label: "Docker docs: Build secrets", url: "https://docs.docker.com/build/building/secrets/" }
+  - { label: "Docker docs: Secrets in Compose", url: "https://docs.docker.com/compose/how-tos/use-secrets/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-secret-baked" commands={['cat Dockerfile', 'docker build -t shop:1.0 .', 'docker run --rm shop:1.0 printenv DB_PASSWORD']} label="The Dockerfile has ENV DB_PASSWORD=kancil123. The build warns SecretsUsedInArgOrEnv. Any box from the image prints kancil123." />
+
+The recipe says `ENV DB_PASSWORD=kancil123`. Docker even warns: `SecretsUsedInArgOrEnv`. Now every box from this image knows the password.
+</Card>
+
+<Card id="see-spicebox" type="see">
+A **<Term id="secret" course="cicd">secret</Term>** is the locked spice box. Never stir it into the recipe. Hand it over only when the dish is served. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'recipe', label: 'In the recipe (image)' }, { id: 'runtime', label: 'Handed over at run time' }]} items={[{ label: 'The base image', bucket: 'recipe', why: 'Everyone may see it. It belongs in the recipe.' }, { label: 'Your app code', bucket: 'recipe', why: 'The image exists to carry it.' }, { label: 'The database password', bucket: 'runtime', why: 'Locked spice box: only at run time.' }, { label: 'An API token', bucket: 'runtime', why: 'A token in an image is a token for anyone.' }, { label: 'The port the app listens on', bucket: 'recipe', why: 'Not a secret. EXPOSE can note it.' }]} success="Recipe for the dish, spice box at serving time." />
+</Card>
+
+<Card id="predict" type="predict">
+You push shop:1.0 to a public registry. Who can read the password?
+
+<Interactive name="Choice" options={[{ label: 'Anyone who pulls the image', correct: true, why: 'docker history and docker inspect show ENV lines to everyone.' }, { label: 'Only you', why: 'The image carries its recipe lines. Anyone with it can look.' }, { label: 'Nobody: it hides in a layer', why: 'Layers are not locked. docker history prints the line.' }]} />
+</Card>
+
+<Card id="check-leak" type="check">
+<Interactive name="SpotLines" prompt="This is docker history for shop:1.0. Tap the line that leaks." success="Found it. Deleting the line later doesn't help: old layers keep it." lines={[{ text: 'COPY site/ /usr/share/nginx/html/ # buildkit' }, { text: 'ENV DB_PASSWORD=kancil123', target: true }, { text: 'RUN /bin/sh -c set -x     && apkArch="$(cat …' }, { text: 'ENV ACME_VERSION=0.4.1' }, { text: 'ENV NJS_RELEASE=1' }]} />
+
+Every recipe line stays in the image's history. Anyone can read it.
+</Card>
+
+<Card id="try-runtime" type="try">
+Start db. Hand it the password from db.env, at run time.
+
+<Interactive name="KitchenSim" scenario="d3-secret-runtime" goal={{ running: ['db'], containerEnv: { db: ['POSTGRES_PASSWORD'] }, typed: '--env-file' }} hints={['Type docker run -d --name db --env-file db.env postgres:18-alpine']} success="The password came from your laptop, not from the image." />
+
+<Hint>`cat db.env` shows the card. Then `--env-file db.env`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Safe habit, or a leak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Put .env files in .gitignore.', good: true, why: 'Git keeps everything forever. Keep secrets out from the start.' }, { text: 'Use ARG for a password at build time.', good: false, why: 'ARG values show up in docker history too. Use a build secret.' }, { text: 'Pass the password with --env-file at run time.', good: true, why: 'The image stays clean. The box gets it when it starts.' }, { text: 'Commit the real token so teammates have it.', good: false, why: 'Share it through a secret store, never through Git.' }, { text: 'Use a test token in practice repos.', good: true, why: 'If it leaks, nothing real is lost.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep secrets out of your images.
+</Card>
+
+<Card id="deeper" type="deeper">
+Run-time env vars still show in `docker inspect`. Compose secrets arrive as files in `/run/secrets`.
+
+Where the story breaks: a locker isn't truly outside. Volumes sit on the same disk, or in Docker Desktop's VM. Lose the disk, lose the locker. Phone lines are only software. And an env var is no locked box.
+
+<Interactive name="Mission" id="d3-l09-rep" steps={[{ id: 'history', text: 'Read the history of an image you built.', command: 'docker history --no-trunc <your-image>' }, { id: 'look', text: 'Look for ENV or ARG lines with secrets.' }, { id: 'ignore', text: 'Make sure .env is ignored by Git.', command: 'git check-ignore .env' }]} success="Your images and your repo keep no secrets." />
+</Card>

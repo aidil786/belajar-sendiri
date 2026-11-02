@@ -1,0 +1,79 @@
+---
+id: k8s-k9-l08
+world: 9
+title: Naik taraf dengan kubeadm, satu minor setiap kali
+summary: "Anda akan belajar: urutan selamat naik taraf kubeadm, pejabat dulu, kemudian satu gerai demi satu."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, OrderList, CommandBuilder, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k9-l07]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: upgrading kubeadm clusters", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/" }
+  - { label: "Kubernetes: upgrading Linux nodes", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/" }
+  - { label: "kubeadm upgrade", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/" }
+  - { label: "Kubernetes: version skew policy", url: "https://kubernetes.io/releases/version-skew-policy/" }
+---
+
+<Card id="hook" type="hook">
+Kluster kubeadm anda guna 1.36. Kubernetes 1.37 sudah keluar. Bahagian mana anda naik taraf dulu?
+
+<Interactive name="Choice" options={[{ label: 'Control plane (pejabat)', correct: true, why: 'API server mendahului. Kubelet boleh ketinggalan, tapi tak boleh mendahului.' }, { label: 'Kubelet di gerai-gerai', why: 'Kubelet tak boleh lebih baharu daripada API server.' }, { label: 'Semua sekali gus', why: 'Kemudian semua dulang berpindah serentak. Kedai jadi gelap.' }]} />
+</Card>
+
+<Card id="see-versions" type="see">
+<Interactive name="KubeReplay" scenario="k9-certs" picture={false} commands={['docker exec -it dev-control-plane bash', 'kubeadm version -o short', 'grep image: /etc/kubernetes/manifests/kube-apiserver.yaml', 'exit']} label="Dalam dev-control-plane: kubeadm version -o short cetak v1.37.0. Manifest kube-apiserver guna image registry.k8s.io/kube-apiserver:v1.37.0." />
+
+Versi pejabat disimpan dalam fail static pod-nya. **<Term id="kubeadm-upgrade">kubeadm upgrade</Term>** tulis tag image baharu di situ. Satu versi minor setiap langkah.
+</Card>
+
+<Card id="try-order" type="try">
+Susun naik taraf pejabat, ikut langkah rasmi kubeadm.
+
+<Interactive name="OrderList" items={['Pasang kubeadm baharu (1.37.x)', 'sudo kubeadm upgrade plan', 'sudo kubeadm upgrade apply v1.37.x', 'kubectl drain node control-plane', 'Pasang kubelet dan kubectl baharu, mulakan semula kubelet', 'kubectl uncordon node control-plane']} label="Langkah pertama di atas" success="Itulah rutin pejabat. Alat baharu dulu, kemudian lihat, kemudian ubah." />
+
+<Hint>kubeadm naik taraf pejabat. Kubelet pakej berasingan, jadi ia datang selepas itu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Lihat sebelum ubah. Apa yang `sudo kubeadm upgrade plan` buat?
+
+<Interactive name="Choice" options={[{ label: 'Semak kluster, dan senaraikan versi yang boleh dituju', correct: true, why: 'Ya. Ia tak ubah apa-apa. Baca dulu sebelum apply.' }, { label: 'Naik taraf API server', why: 'Itu kerja apply. plan cuma melihat.' }, { label: 'Drain semua gerai', why: 'plan tak sentuh langsung mana-mana dulang.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Pejabat latihan anda guna v1.37.0. Bina arahan yang bawanya ke patch v1.37.2.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sudo', means: 'sebagai root' }, { text: 'kubeadm', means: 'alat yang membina kluster' }, { text: 'upgrade', means: 'ubah suai' }, { text: 'apply', means: 'buat sekarang, pada node control-plane pertama' }, { text: 'v1.37.2', means: 'versi sasaran' }]} decoys={[{ text: 'v1.39.0', means: 'dua minor ke depan: tak dibenarkan' }, { text: 'node', means: 'untuk node lain, selepas yang pertama' }]} success="Itulah arahannya. Ia ubah seluruh pejabat, jadi sandarkan etcd dulu." />
+
+`apply` tulis semula pejabat. Bahaya: ambil snapshot etcd sebelum itu.
+</Card>
+
+<Card id="try-stall" type="try">
+Sekarang satu gerai. Drain dev-worker, mulakan semula kubelet-nya, kemudian buka. Anggap pakej baharu sudah dipasang.
+
+<Interactive name="FoodCourtSim" scenario="k9-drain" goal={{ typed: 'systemctl restart kubelet', lastTyped: '^(kubectl|k) uncordon dev-worker', nodeCordoned: { name: 'dev-worker', cordoned: false }, nodeReady: { name: 'dev-worker' } }} hints={['Taip kubectl drain dev-worker --ignore-daemonsets', 'Kemudian ssh dev-worker, dan systemctl restart kubelet', 'Taip exit, kemudian kubectl uncordon dev-worker']} success="Satu gerai siap diubah suai dan dibuka semula. Gerai seterusnya, rutin yang sama." />
+
+<Hint>Drain, kemudian `ssh dev-worker`. Mulakan semula kubelet, `exit`, kemudian uncordon.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat malam naik taraf. Idea baik, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ambil snapshot etcd sebelum naik taraf', good: true, why: 'Kalau ada masalah, anda boleh pulihkan buku pesanan.' }, { text: 'Lompat dari 1.35 terus ke 1.37', good: false, why: 'Melangkau versi minor tak disokong. Buat 1.36 dulu.' }, { text: 'Naik taraf kubelet gerai sebelum pejabat', good: false, why: 'Kubelet tak boleh lebih baharu daripada API server.' }, { text: 'Baca nota keluaran untuk API yang dibuang', good: true, why: 'YAML lama mungkin gagal di-apply selepas API dibuang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh rancang naik taraf kubeadm, satu gerai demi satu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Node control-plane lain dan worker guna `sudo kubeadm upgrade node`, bukan apply. kubeadm juga baharui sijilnya semasa naik taraf. Ia simpan sandaran di bawah `/etc/kubernetes/tmp`. Terminal latihan kami tunjuk `kubeadm upgrade plan` sebenar di dev-control-plane. Ia dirakam pada kluster kind. Ia tak boleh jalankan apply.
+
+<Interactive name="Mission" id="k8s-k9-l08-real" steps={[{ id: 'where', text: 'Guna kluster kubeadm latihan sahaja, seperti playground CKA percuma di Killercoda.', command: 'kubectl get nodes' }, { id: 'version', text: 'Lihat kubeadm mana yang dipasang.', command: 'kubeadm version -o short' }, { id: 'plan', text: 'Lihat sahaja. Baca versi yang ditawarkan.', command: 'sudo kubeadm upgrade plan' }]} success="Anda baca pelan naik taraf sebenar, tanpa ubah apa-apa." />
+</Card>

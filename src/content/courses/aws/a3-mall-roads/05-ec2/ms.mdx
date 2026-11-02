@@ -1,0 +1,73 @@
+---
+id: aws-a3-l05
+world: 3
+title: "Asas EC2"
+summary: "Anda akan belajar: sewa server ikut jam, pilih saiznya, dan beza stop dengan terminate."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, IdleBill, SpotLines]
+needs: [aws-a3-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon EC2: What is Amazon EC2?", url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" }
+  - { label: "Amazon EC2: Instance types", url: "https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-types.html" }
+  - { label: "Amazon EC2: How stop and start works", url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-ec2-instance-stop-start-works.html" }
+  - { label: "AWS CLI: aws ec2 run-instances", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil perlukan server untuk seminggu ujian. Lepas itu, tak perlu lagi. Apa yang masuk akal?
+
+<Interactive name="Choice" options={[{ label: 'Sewa ikut jam, kemudian pulangkan', correct: true, why: 'Ya. Bayar untuk seminggu sahaja. Padam bila dah siap.' }, { label: 'Beli server untuk bilik belakang', why: 'Satu mesin untuk seminggu? Sewa lebih murah dan cepat.' }, { label: 'Sewa yang paling besar, untuk berjaga-jaga', why: 'Lebih besar, lebih mahal setiap jam. Mula kecil.' }]} />
+</Card>
+
+<Card id="see-launch" type="see">
+**<Term id="ec2">Instance EC2</Term>** (server sewa) ialah server yang anda sewa ikut jam. Melancar satu ada empat pilihan. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['Pilih cakera permulaan (AMI)', 'Pilih saiz (jenis instance)', 'Pilih baris dan pengawal pintu', 'Lancar, dan tengok ia bermula']} label="Pilihan pertama di atas" success="Cakera, saiz, baris dan pengawal, lancar. Setiap server bermula begini." />
+</Card>
+
+<Card id="see-size" type="see">
+**<Term id="instance-type">Jenis instance</Term>** tetapkan CPU dan memori. Lebih besar, lebih mahal sejam. Untuk berlatih, pilih yang paling kecil yang cukup. Susun ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Sesuai untuk server latihan' }, { id: 'big', label: 'Terlalu besar untuk latihan' }]} items={[{ label: 't3.micro (2 vCPU, 1 GiB)', bucket: 'ok', why: 'Kecil dan murah. Semak halaman Free Tier untuk apa yang dilindungi hari ini.' }, { label: 't4g.nano (2 vCPU, 0.5 GiB)', bucket: 'ok', why: 'Sangat kecil, guna cip Arm. Cukup untuk satu halaman ujian.' }, { label: 'm7i.4xlarge (16 vCPU, 64 GiB)', bucket: 'big', why: 'Untuk kerja berat. Ia bakar duit dengan cepat.' }, { label: 'p5.48xlarge (GPU)', bucket: 'big', why: 'Untuk latih model AI. Bukan untuk halaman latihan.' }]} success="Kecil dahulu. Anda sentiasa boleh tukar saiz nanti." />
+</Card>
+
+<Card id="try-launch" type="try">
+Bina arahan lancar. Guna saiz kecil, baris awam anda dan pengawal pintu anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ec2 run-instances', means: 'sewa server baru' }, { text: '--image-id ami-0abcdef1234567890', means: 'dari cakera permulaan ini' }, { text: '--instance-type t3.micro', means: 'saiz kecil' }, { text: '--subnet-id subnet-0e99b93155EXAMPLE', means: 'dalam baris awam anda' }, { text: '--security-group-ids sg-903004f8', means: 'di belakang pengawal pintu anda' }]} decoys={[{ text: '--instance-type m7i.4xlarge', means: 'saiz sangat besar' }]} success="Itu lancarkan satu server kecil di baris yang betul, dengan pengawal yang betul." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda **stop** server itu seminggu. Stop maksudnya berehat. Apa yang masih makan duit?
+
+<Interactive name="Choice" options={[{ label: 'Cakeranya, dan Elastic IP padanya', correct: true, why: 'Pengiraan berhenti. Cakera yang disimpan dan alamat awam terus dicaj.' }, { label: 'Langsung tiada', why: 'Hampir! CPU berehat, tetapi cakera masih disimpan.' }, { label: 'Harga penuh sejam', why: 'Server yang berhenti tak bayar pengiraan. Cakeranya masih bayar.' }]} />
+</Card>
+
+<Card id="check-idle" type="check">
+Stop bukan padam. Nilai apa yang masih makan duit semasa ia berehat.
+
+<Interactive name="IdleBill" items={['stoppedInstance', 'ebsOfStopped', 'elasticIpStopped', 'securityGroup']} ordered />
+</Card>
+
+<Card id="check-end" type="check">
+Dah tak perlu langsung? **Terminate** padam server itu. Ini jawapan contoh rasmi, dipendekkan. Ketik baris dengan keadaan barunya.
+
+<Interactive name="SpotLines" prompt="Ketik baris dengan keadaan baru." success="shutting-down, kemudian terminated. Cakera utamanya ikut hilang, secara lalai." lines={[{ text: '$ aws ec2 terminate-instances --instance-ids i-1234567890abcdef0' }, { text: '"InstanceId": "i-1234567890abcdef0",' }, { text: '"CurrentState": {' }, { text: '    "Code": 32,' }, { text: '    "Name": "shutting-down"', target: true }, { text: '},' }, { text: '"PreviousState": {' }, { text: '    "Code": 16,' }, { text: '    "Name": "running"' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sewa server kecil, dan stop atau tamatkannya tanpa bil mengejut.
+</Card>
+
+<Card id="deeper" type="deeper">
+Terminate tak boleh dibatalkan. Cakera tambahan yang anda sambung mungkin tertinggal, dan terus dicaj. Semak senarai Volumes selepas itu.
+
+Latihan sebenar (pilihan), dengan penggera bajet dipasang. Lancar satu instance kecil dalam VPC lalai. Tengok ia. Terminate dalam jam yang sama.
+</Card>

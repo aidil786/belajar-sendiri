@@ -1,0 +1,197 @@
+---
+// Bridge from MDX to React islands. Lesson files write:
+//   <Interactive name="DragToArea" items={[...]} />
+// Only cards that move load JavaScript, and only when shown (client:visible).
+// Scenarios come from the course in the URL (/en/docker/… → docker); `course` overrides it.
+import { getCollection } from 'astro:content';
+import { isLang } from '~/i18n';
+import { placeOfPath, ROOT_COURSE } from '~/lib/catalog';
+import { findScenario } from '~/content/courses/scenarios';
+import AreasScene from '../interactives/AreasScene';
+import DragToArea from '../interactives/DragToArea';
+import Sim from '../interactives/Sim';
+import Choice from '../interactives/Choice';
+import TermReplay from '../interactives/TermReplay';
+import GraphScene from '../interactives/GraphScene';
+import SortCards from '../interactives/SortCards';
+import OrderList from '../interactives/OrderList';
+import SwipeJudge from '../interactives/SwipeJudge';
+import TimeMachine from '../interactives/TimeMachine';
+import SpotLines from '../interactives/SpotLines';
+import CommandBuilder from '../interactives/CommandBuilder';
+import ResetLab from '../interactives/ResetLab';
+import GraphPick from '../interactives/GraphPick';
+import HunkPicker from '../interactives/HunkPicker';
+import Hotspots from '../interactives/Hotspots';
+import TimelineTap from '../interactives/TimelineTap';
+import OsPicker from '../interactives/OsPicker';
+import Mission from '../interactives/Mission';
+import Placement from '../interactives/Placement';
+import Challenge from '../interactives/Challenge';
+import LogCheck from '../interactives/LogCheck';
+import Transcript from '../interactives/Transcript';
+import PracticeRepo from '../interactives/PracticeRepo';
+import MarkdownPlayground from '../interactives/MarkdownPlayground';
+import YamlBuilder from '../interactives/YamlBuilder';
+import MissionCheck from '../interactives/MissionCheck';
+import UniverseSplitter from '../interactives/UniverseSplitter';
+import ConflictResolver from '../interactives/ConflictResolver';
+import RebaseDeck from '../interactives/RebaseDeck';
+import Courier from '../interactives/Courier';
+import ObjectXray from '../interactives/ObjectXray';
+import BisectDetective from '../interactives/BisectDetective';
+import KitchenSim from '../interactives/KitchenSim';
+import KitchenReplay from '../interactives/KitchenReplay';
+// Ship It · Kubernetes games
+import SchedulerTetris from '../interactives/SchedulerTetris';
+import LabelMatchmaker from '../interactives/LabelMatchmaker';
+import RequestTracer from '../interactives/RequestTracer';
+import YamlDoctor from '../interactives/YamlDoctor';
+import RbacSwitchboard from '../interactives/RbacSwitchboard';
+import GitOpsMirror from '../interactives/GitOpsMirror';
+// Ship It part 2 (CI/CD): conveyor engine games (cicd scenarios; outside that course pass course="cicd").
+import ConveyorBelt from '../interactives/ConveyorBelt';
+import SpotTheHole from '../interactives/SpotTheHole';
+import TrafficDial from '../interactives/TrafficDial';
+// Ship It: Docker games
+import KekLapisBuilder from '../interactives/KekLapisBuilder';
+import OrderHatch from '../interactives/OrderHatch';
+import LockerTest from '../interactives/LockerTest';
+import ComposeCanvas from '../interactives/ComposeCanvas';
+import ShrinkRay from '../interactives/ShrinkRay';
+import NamespaceXray from '../interactives/NamespaceXray';
+// Ship It · Kubernetes (food-court engine)
+import KubeSim from '../interactives/KubeSim';
+import ManagersBoard from '../interactives/ManagersBoard';
+import KubeReplay from '../interactives/KubeReplay';
+import YouAreHere from '../interactives/YouAreHere';
+// Ship It · Docker D0 (YAML basics)
+import YamlPlayground from '../interactives/YamlPlayground';
+// Level Up · Observability (PromQL engine; observability scenarios)
+import PromQLPlayground from '../interactives/PromQLPlayground';
+import AlertRuleBuilder from '../interactives/AlertRuleBuilder';
+// Level Up · Terraform & OpenTofu (tofu-sim engine; scenarios always from the iac course)
+import TofuSim from '../interactives/TofuSim';
+import PlanReader from '../interactives/PlanReader';
+// Level Up · Linux (the practice server engine)
+import LinuxSim from '../interactives/LinuxSim';
+// Level Up · AWS games (pure logic in src/lib/aws/, from the AWS docs)
+import IamJudge from '../interactives/IamJudge';
+import SubnetPlanner from '../interactives/SubnetPlanner';
+import SecurityGroupGate from '../interactives/SecurityGroupGate';
+import IdleBill from '../interactives/IdleBill';
+
+interface Props {
+  name: string;
+  scenario?: string;
+  course?: string;
+  [key: string]: unknown;
+}
+const courseIds = (await getCollection('courses')).map((c) => c.data.id);
+// Food-court interactives always read Kubernetes scenarios (also on the hidden dev page).
+const KUBE = ['FoodCourtSim', 'KubeSim', 'ManagersBoard', 'KubeReplay'];
+// The Linux practice server always reads Linux scenarios (also on the hidden dev page).
+const LINUX = ['LinuxSim'];
+// PromQL interactives always read observability scenarios (also on the hidden dev page).
+const PROM = ['PromQLPlayground', 'AlertRuleBuilder'];
+const TOFU = ['TofuSim', 'PlanReader'];
+const defaultCourse = KUBE.includes(Astro.props.name) ? 'kubernetes' : LINUX.includes(Astro.props.name) ? 'linux' : PROM.includes(Astro.props.name) ? 'observability' : TOFU.includes(Astro.props.name) ? 'iac' : undefined;
+const { name, scenario, course = defaultCourse ?? (placeOfPath(Astro.url.pathname, courseIds).course ?? ROOT_COURSE), ...rest } = Astro.props;
+const seg = Astro.url.pathname.split('/')[1];
+const lang = isLang(seg) ? seg : 'en';
+const props: Record<string, unknown> = { ...rest, lang };
+if (scenario) props.scenario = findScenario(course, scenario);
+if (Array.isArray(props.stages)) {
+  props.stages = (props.stages as { scenario: string }[]).map((s) => ({ ...s, scenario: findScenario(course, s.scenario) }));
+}
+const known = [
+  'AreasScene', 'DragToArea', 'Sim', 'Choice', 'TermReplay', 'GraphScene', 'SortCards', 'OrderList', 'SwipeJudge',
+  'TimeMachine', 'SpotLines', 'CommandBuilder', 'ResetLab', 'GraphPick', 'HunkPicker', 'Hotspots', 'TimelineTap',
+  'OsPicker', 'Mission', 'Placement', 'Challenge', 'LogCheck',
+  'Transcript', 'PracticeRepo', 'MarkdownPlayground', 'YamlBuilder', 'MissionCheck',
+  'UniverseSplitter', 'ConflictResolver', 'RebaseDeck',
+  'Courier',
+  'ObjectXray', 'BisectDetective',
+  // Ship It: the kitchen engine (Docker)
+  'KitchenSim', 'KitchenReplay',
+  'SchedulerTetris', 'LabelMatchmaker', 'RequestTracer', 'YamlDoctor', 'RbacSwitchboard', 'GitOpsMirror',
+  'ConveyorBelt', 'SpotTheHole', 'TrafficDial',
+  'KekLapisBuilder', 'OrderHatch', 'LockerTest', 'ComposeCanvas', 'ShrinkRay', 'NamespaceXray',
+  'FoodCourtSim', 'KubeSim', 'ManagersBoard', 'KubeReplay', 'YouAreHere',
+  'YamlPlayground',
+  'PromQLPlayground', 'AlertRuleBuilder',
+  'TofuSim', 'PlanReader',
+  'LinuxSim',
+  // Level Up · AWS games
+  'IamJudge', 'SubnetPlanner', 'SecurityGroupGate', 'IdleBill',
+];
+if (!known.includes(name)) throw new Error(`Unknown interactive: ${name}`);
+const p = props as any;
+---
+
+<div class="interactive" data-interactive={name}>
+  {name === 'AreasScene' && <AreasScene client:visible {...p} />}
+  {name === 'DragToArea' && <DragToArea client:visible {...p} />}
+  {name === 'Sim' && <Sim client:visible {...p} />}
+  {name === 'Choice' && <Choice client:visible {...p} />}
+  {name === 'TermReplay' && <TermReplay client:visible {...p} />}
+  {name === 'GraphScene' && <GraphScene client:visible {...p} />}
+  {name === 'SortCards' && <SortCards client:visible {...p} />}
+  {name === 'OrderList' && <OrderList client:visible {...p} />}
+  {name === 'SwipeJudge' && <SwipeJudge client:visible {...p} />}
+  {name === 'TimeMachine' && <TimeMachine client:visible {...p} />}
+  {name === 'SpotLines' && <SpotLines client:visible {...p} />}
+  {name === 'CommandBuilder' && <CommandBuilder client:visible {...p} />}
+  {name === 'ResetLab' && <ResetLab client:visible {...p} />}
+  {name === 'GraphPick' && <GraphPick client:visible {...p} />}
+  {name === 'HunkPicker' && <HunkPicker client:visible {...p} />}
+  {name === 'Hotspots' && <Hotspots client:visible {...p} />}
+  {name === 'TimelineTap' && <TimelineTap client:visible {...p} />}
+  {name === 'OsPicker' && <OsPicker client:visible {...p} />}
+  {name === 'Mission' && <Mission client:visible {...p} />}
+  {name === 'Placement' && <Placement client:visible {...p} />}
+  {name === 'Challenge' && <Challenge client:visible {...p} />}
+  {name === 'LogCheck' && <LogCheck client:visible {...p} />}
+  {name === 'Transcript' && <Transcript client:visible {...p} />}
+  {name === 'PracticeRepo' && <PracticeRepo client:visible {...p} />}
+  {name === 'MarkdownPlayground' && <MarkdownPlayground client:visible {...p} />}
+  {name === 'YamlBuilder' && <YamlBuilder client:visible {...p} />}
+  {name === 'MissionCheck' && <MissionCheck client:visible {...p} />}
+  {name === 'UniverseSplitter' && <UniverseSplitter client:visible {...p} />}
+  {name === 'ConflictResolver' && <ConflictResolver client:visible {...p} />}
+  {name === 'RebaseDeck' && <RebaseDeck client:visible {...p} />}
+  {name === 'Courier' && <Courier client:visible {...p} />}
+  {name === 'ObjectXray' && <ObjectXray client:visible {...p} />}
+  {name === 'BisectDetective' && <BisectDetective client:visible {...p} />}
+  {name === 'KitchenSim' && <KitchenSim client:visible {...p} />}
+  {name === 'KitchenReplay' && <KitchenReplay client:visible {...p} />}
+  {name === 'SchedulerTetris' && <SchedulerTetris client:visible {...p} />}
+  {name === 'LabelMatchmaker' && <LabelMatchmaker client:visible {...p} />}
+  {name === 'RequestTracer' && <RequestTracer client:visible {...p} />}
+  {name === 'YamlDoctor' && <YamlDoctor client:visible {...p} />}
+  {name === 'RbacSwitchboard' && <RbacSwitchboard client:visible {...p} />}
+  {name === 'GitOpsMirror' && <GitOpsMirror client:visible {...p} />}
+  {name === 'ConveyorBelt' && <ConveyorBelt client:visible {...p} />}
+  {name === 'SpotTheHole' && <SpotTheHole client:visible {...p} />}
+  {name === 'TrafficDial' && <TrafficDial client:visible {...p} />}
+  {name === 'KekLapisBuilder' && <KekLapisBuilder client:visible {...p} />}
+  {name === 'OrderHatch' && <OrderHatch client:visible {...p} />}
+  {name === 'LockerTest' && <LockerTest client:visible {...p} />}
+  {name === 'ComposeCanvas' && <ComposeCanvas client:visible {...p} />}
+  {name === 'ShrinkRay' && <ShrinkRay client:visible {...p} />}
+  {name === 'NamespaceXray' && <NamespaceXray client:visible {...p} />}
+  {(name === 'FoodCourtSim' || name === 'KubeSim') && <KubeSim client:visible {...p} />}
+  {name === 'ManagersBoard' && <ManagersBoard client:visible {...p} />}
+  {name === 'KubeReplay' && <KubeReplay client:visible {...p} />}
+  {name === 'YouAreHere' && <YouAreHere client:visible {...p} />}
+  {name === 'YamlPlayground' && <YamlPlayground client:visible {...p} />}
+  {name === 'PromQLPlayground' && <PromQLPlayground client:visible {...p} />}
+  {name === 'AlertRuleBuilder' && <AlertRuleBuilder client:visible {...p} />}
+  {name === 'TofuSim' && <TofuSim client:visible {...p} />}
+  {name === 'PlanReader' && <PlanReader client:visible {...p} />}
+  {name === 'LinuxSim' && <LinuxSim client:visible {...p} />}
+  {name === 'IamJudge' && <IamJudge client:visible {...p} />}
+  {name === 'SubnetPlanner' && <SubnetPlanner client:visible {...p} />}
+  {name === 'SecurityGroupGate' && <SecurityGroupGate client:visible {...p} />}
+  {name === 'IdleBill' && <IdleBill client:visible {...p} />}
+</div>

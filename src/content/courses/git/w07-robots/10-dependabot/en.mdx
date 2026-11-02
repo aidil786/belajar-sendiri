@@ -1,0 +1,61 @@
+---
+id: git-w07-l10
+world: 7
+title: Dependabot updates
+summary: "You will learn: how Dependabot keeps your packages and actions up to date."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, TermReplay, SpotLines, Choice, SortCards]
+scenario: w07-l10
+needs: [git-w07-l09]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Configuring Dependabot version updates", url: "https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuring-dependabot-version-updates" }
+  - { label: "Dependabot options reference", url: "https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="pulls" repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 15, title: 'Bump some-dev/tool from 2.1.0 to 2.2.0', body: 'Bumps some-dev/tool from 2.1.0 to 2.2.0.', author: 'dependabot', from: 'dependabot/github_actions/some-dev/tool-2.2.0', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }, { number: 14, title: 'Bump example-date-lib from 1.0.3 to 1.2.0', body: 'Bumps example-date-lib from 1.0.3 to 1.2.0.', author: 'dependabot', from: 'dependabot/npm_and_yarn/example-date-lib-1.2.0', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }]} />
+
+Monday morning. Two pull requests showed up overnight. You didn't open them. A robot did. Which one?
+</Card>
+
+<Card id="see-version" type="see">
+<Interactive name="TermReplay" scenario="w07-l10" commands={['cat .github/dependabot.yml']} label="cat .github/dependabot.yml: version 2, then two updates, npm and github-actions, both in the root folder, both weekly." />
+
+It's **<Term id="dependabot">Dependabot</Term>**. Its version updates keep packages fresh, holes or not. You switch them on with one file: `.github/dependabot.yml`.
+</Card>
+
+<Card id="try-spot" type="try">
+Which line keeps your workflow actions fresh? Tap it.
+
+<Interactive name="SpotLines" lines={[{ text: 'version: 2' }, { text: 'updates:' }, { text: '  - package-ecosystem: "npm"' }, { text: '    directory: "/"' }, { text: '  - package-ecosystem: "github-actions"', target: true }, { text: '    directory: "/"' }, { text: '    schedule:' }, { text: '      interval: "weekly"' }]} prompt="Tap the line for your workflow actions." success="Yes! Dependabot now checks every uses: line." />
+</Card>
+
+<Card id="see-pins" type="see">
+Remember pinned SHAs? Dependabot bumps those too. A pinned action gets a new version. What does Dependabot's pull request change?
+
+<Interactive name="Choice" options={[{ label: 'The SHA and the version comment, together', correct: true, why: 'It moves the pin and keeps the comment honest.' }, { label: 'Only the comment', why: 'The comment is for humans. The SHA is what runs, so that changes too.' }, { label: 'Nothing. Pins are frozen forever.', why: 'Dependabot opens a PR to move the pin. You decide.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Security alert (World 8) or version update? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'alert', label: 'Security alert' }, { id: 'version', label: 'Version update' }]} items={[{ label: 'A package you use has a known hole', bucket: 'alert', why: 'Alerts are about security holes.' }, { label: 'A newer version is out. Nothing is broken.', bucket: 'version', why: 'Version updates keep you fresh, holes or not.' }, { label: 'Switched on by .github/dependabot.yml', bucket: 'version', why: 'That file sets up version updates.' }, { label: 'Comes from the GitHub Advisory Database', bucket: 'alert', why: 'That big list of holes feeds the alerts.' }]} success="Sorted! Alerts warn. Version updates freshen." />
+</Card>
+
+<Card id="predict" type="predict">
+A Dependabot pull request makes your CI fail. What now?
+
+<Interactive name="Choice" options={[{ label: "Don't merge. Find out what the new version broke.", correct: true, why: 'CI just saved you. Read the log, then fix or wait.' }, { label: 'Merge it. Newer is always better.', why: 'Not if it breaks your site. The ✗ is a warning.' }, { label: 'Delete dependabot.yml', why: 'Then you miss every future update. Fix this one instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now let Dependabot keep your project fresh.
+</Card>
+
+<Card id="deeper" type="deeper">
+`interval` can be daily, weekly, monthly and more. Version updates look at your default branch. Lots of small PRs? `groups:` bundles many updates into one PR. Dependabot's PRs run your CI, just like a teammate's.
+</Card>

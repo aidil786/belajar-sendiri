@@ -1,0 +1,65 @@
+---
+id: git-w02-boss
+world: 2
+title: "Bilik lolos: 6 bencana"
+summary: "Anda akan belajar: cara baiki enam bencana Git berturut-turut, tanpa panik."
+minutes: 6
+xp: 50
+interactives: [AreasScene, TermReplay, Challenge, Choice]
+needs: [git-w02-l09]
+scenario: w02-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" effect="wobble" label="Masalah di setiap kawasan: debug.log dalam folder kerja, secret.txt dalam kotak dan commit bernama Add day 2 entyr. Semuanya bergoyang." frames={[{ working: [{ name: 'debug.log', tag: 'new' }], staging: [{ name: 'secret.txt', tag: 'notReady' }], repo: [{ name: 'Add day 2 entyr', kind: 'commit' }] }]} />
+
+Enam bencana Git. Satu bilik berkunci. Baiki semuanya untuk lolos!
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w02-boss-1" commands={['git status']} label="git status dalam bilik 1. secret.txt dan index.html dua-dua dalam kotak. Satu baris petunjuk sebut arahan untuk unstage." />
+
+Setiap bilik ialah terminal sebenar. Buntu? Cuba `git status` dulu. Selepas 2 cubaan, petunjuk akan muncul. Silap tak apa, jadi cubalah!
+</Card>
+
+<Card id="try-escape" type="try">
+Baiki setiap bencana untuk buka bilik seterusnya.
+
+<Interactive name="Challenge" theme="escape" stages={[
+  { title: 'Fail salah dalam kotak', text: 'secret.txt termasuk ke dalam kotak. Keluarkan. Biarkan index.html di dalam.', scenario: 'w02-boss-1', goal: { staged: ['index.html'], notStaged: ['secret.txt'], filesExist: ['secret.txt'] }, hints: ['Jalankan git status. Ia sebut arahannya.', 'Taip git restore --staged secret.txt'] },
+  { title: 'Salah taip dalam mesej', text: 'Commit terakhir anda tulis "Add day 2 entyr". Baiki mesejnya.', scenario: 'w02-boss-2', goal: { lastMessage: '^Add day 2 entry$', commits: 4 }, hints: ['Baiki commit terakhir dengan --amend.', 'Taip git commit --amend -m "Add day 2 entry"'] },
+  { title: 'Terlupa satu fail', text: 'Anda commit day2.html tapi terlupa day2.css. Masukkan ke dalam commit yang sama.', scenario: 'w02-boss-3', goal: { lastCommitHas: ['day2.html', 'day2.css'], lastMessage: '^Add day 2 page$', commits: 4 }, hints: ['Mula-mula masukkan day2.css ke dalam kotak dengan git add.', 'Kemudian taip git commit --amend --no-edit'] },
+  { title: 'Sampah dalam commit', text: 'debug.log terselit dalam commit terakhir anda. Keluarkan dari commit itu.', scenario: 'w02-boss-4', goal: { lastCommitLacks: ['debug.log'], lastMessage: '^Add day 2 entry$', commits: 4 }, hints: ['git rm --cached debug.log keluarkan ia dari kotak. Failnya kekal.', 'Kemudian taip git commit --amend --no-edit'] },
+  { title: 'Commit hilang', text: 'Anda tertaip git reset --hard HEAD~2. Day 2 dan day 3 lesap. Bawa balik.', scenario: 'w02-boss-5', goal: { headAtMessage: '^Add day 3 entry$', headDetached: false, commits: 5 }, hints: ['git reflog tunjuk ke mana HEAD pernah pergi.', 'Taip git reset --hard HEAD@{1}'] },
+  { title: 'Undur commit yang dikongsi', text: '"Add dark mode" dah dikongsi, dan semua orang tak suka. Undurkan dengan selamat.', scenario: 'w02-boss-6', goal: { lastIsRevert: true, fileNotContains: { 'style.css': 'black' }, commits: 6 }, hints: ['Commit yang dikongsi perlukan git revert, bukan reset.', 'Taip git revert HEAD~1'] }
+]} />
+
+<Hint>Baca nota setiap bilik. Kemudian `git status` atau `git log --oneline`.</Hint>
+</Card>
+
+<Card id="check-shared" type="check">
+Satu commit (titik simpan) teruk dah dikongsi. Cara baiki mana yang selamat?
+
+<Interactive name="Choice" options={[{ label: '`git revert`', correct: true, why: 'Ia tambah commit undur. Tiada siapa hilang sejarah.' }, { label: '`git reset --hard`', why: 'Reset tulis semula sejarah yang pasukan anda dah ada.' }, { label: '`git commit --amend`', why: 'Amend tulis semula commit terakhir. Tak selamat bila dah dikongsi.' }]} />
+</Card>
+
+<Card id="check-reflog" type="check">
+Kesilapan mana yang reflog TAK boleh baiki?
+
+<Interactive name="Choice" options={[{ label: 'Perubahan belum di-commit yang dipadam oleh reset --hard', correct: true, why: 'Git tak pernah simpan perubahan itu, jadi reflog tak pernah nampak.' }, { label: 'Commit yang hilang selepas reset --hard', why: 'Reflog ingat commit itu. Itu bilik 5!' }, { label: 'Versi lama commit yang di-amend', why: 'Reflog ingat yang itu juga.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lolos dari hampir semua bencana Git.
+</Card>

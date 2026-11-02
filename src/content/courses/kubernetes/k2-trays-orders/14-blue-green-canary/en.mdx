@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l14
+world: 2
+title: "Blue/green and canary with Deployments"
+summary: "You will learn: blue/green with a Service selector switch, and a canary with replica counts."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, TrafficDial, SortCards]
+needs: [k8s-k2-l13]
+scenario: k2-bluegreen
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Canary deployments (Managing Workloads)", url: "https://kubernetes.io/docs/concepts/workloads/management/#canary-deployments" }
+  - { label: "Kubernetes: Service selectors", url: "https://kubernetes.io/docs/concepts/services-networking/service/" }
+---
+
+<Card id="hook" type="hook">
+Menu version 2 is ready. You want it live in one second. If it is bad, gone in one second. With plain Kubernetes objects, how?
+
+<Interactive name="Choice" options={[{ label: 'Run both versions, then flip the order number', correct: true, why: 'Two kitchens, one signboard. Flip the sign to go; flip it back to undo.' }, { label: 'Delete version 1 first', why: 'Then there is nothing to go back to.' }, { label: 'Edit every pod by hand', why: 'Slow and risky. Pods are replaced, not edited.' }]} />
+</Card>
+
+<Card id="see-bluegreen" type="see">
+<Interactive name="KubeReplay" scenario="k2-bluegreen" commands={['kubectl get deployments', 'kubectl get service shop -o wide', 'kubectl exec client -- wget -qO- -T 5 http://shop']} label="Two Deployments run: shop-blue and shop-green. The Service selector is app=shop,version=blue, so the client gets menu v1." />
+
+**<Term id="blue-green" course="cicd">Blue/green</Term>**: two full Deployments run side by side. The Service selector says `version=blue`, so only blue trays get customers.
+</Card>
+
+<Card id="try-switch" type="try">
+Your turn. `service-green.yaml` is the same order number, pointing at green. Apply it. Then ask the shop again from `client`.
+
+<Interactive name="FoodCourtSim" scenario="k2-bluegreen" goal={{ reachable: { url: 'http://shop', from: 'client', contains: 'v2' } }} hints={['Type kubectl apply -f service-green.yaml', 'Type kubectl exec client -- wget -qO- -T 5 http://shop']} success="Every customer now gets menu v2. Blue is still warm, just in case." />
+
+<Hint>`kubectl apply -f service-green.yaml`, then `kubectl exec client -- wget -qO- -T 5 http://shop`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Green has a bug. How fast can you go back to blue?
+
+<Interactive name="Choice" options={[{ label: 'One command: apply service.yaml again', correct: true, why: 'Blue trays never left. Flip the sign back.' }, { label: 'Rebuild blue from scratch', why: 'No need. Blue is still running, waiting.' }, { label: 'Wait for a rolling update', why: 'No pods change at all. Only the selector does.' }]} />
+</Card>
+
+<Card id="see-canary" type="see">
+<Interactive name="KubeReplay" scenario="k2-canary" commands={['kubectl apply -f canary.yaml', 'kubectl rollout status deployment/shop-canary --timeout=120s', 'kubectl get deployments', 'kubectl get endpointslices -l kubernetes.io/service-name=shop']} label="shop-stable has 3 pods and shop-canary has 1. The Service picks all 4 pods, because they all have app=shop." />
+
+**<Term id="canary" course="cicd">Canary</Term>**: a second Deployment with the same `app: shop` label, but only 1 tray. The Service picks all 4, so about 1 in 4 customers tastes version 2.
+</Card>
+
+<Card id="try-dial" type="try">
+Real traffic, real errors. Move customers to version 2 step by step. Roll back before 150 of them hit the bug.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} success="Caught early! Most customers never tasted the bad batch." />
+
+<Hint>The version 2 line jumps over the alarm line? Press Roll back.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Blue/green or canary? Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'bg', label: 'Blue/green' }, { id: 'canary', label: 'Canary' }]} items={[{ label: 'Two Deployments, each at full size', bucket: 'bg', why: 'Both kitchens can feed everyone. It costs double for a while.' }, { label: 'Switch by changing the Service selector', bucket: 'bg', why: 'One change moves every customer.' }, { label: 'The share comes from tray counts: 1 of 4', bucket: 'canary', why: 'Same label, so the Service spreads customers over all trays.' }, { label: 'Scale the new one up, the old one down', bucket: 'canary', why: 'Step by step, while you watch the errors.' }]} success="Sorted! Flip a sign, or let a few taste first." />
+</Card>
+
+<Card id="win" type="win">
+You can now run blue/green and canary releases with plain Deployments.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real tray is a running program. A stall is a whole computer. A replica canary is rough: 1 of 4 is 25%, not 5%. For exact shares, use Gateway API weights (World K3) or Argo Rollouts (World K7).
+
+Real rep (optional): on a throwaway cluster, switch a Service selector, then switch it back.
+</Card>

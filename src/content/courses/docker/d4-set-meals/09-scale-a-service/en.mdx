@@ -1,0 +1,68 @@
+---
+id: docker-d4-l09
+world: 4
+title: Scale a service
+summary: "You will learn: to run more copies of one service, and when you can't."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, KitchenSim, SwipeJudge]
+needs: [docker-d4-l08]
+scenario: d4-scale
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up --scale", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "Compose Deploy Specification: replicas", url: "https://docs.docker.com/reference/compose-file/deploy/#replicas" }
+  - { label: "Compose file reference: container_name", url: "https://docs.docker.com/reference/compose-file/services/#container_name" }
+---
+
+<Card id="hook" type="hook">
+Lunch rush! One API cook can't keep up. You want three. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Start three copies of api with one flag', correct: true, why: 'Compose can run many copies of one service.' }, { label: 'Copy the api block three times', why: 'That works, but now three blocks must stay the same. There is an easier way.' }, { label: 'Buy a bigger laptop', why: 'More cooks help here, not a bigger kitchen.' }]} />
+</Card>
+
+<Card id="see-scale" type="see">
+<Interactive name="KitchenReplay" scenario="d4-scale" commands={['docker compose up -d --scale api=3', 'docker compose ps']} label="Three api boxes, numbered api-1 to api-3, and one web box." />
+
+To **<Term id="compose-scale">scale</Term>** a service is to run more copies of it. `--scale api=3` asks for three. Compose numbers them: `api-1`, `api-2`, `api-3`.
+</Card>
+
+<Card id="try-scale" type="try">
+The rush is over. Keep just two api cooks.
+
+<Interactive name="KitchenSim" scenario="d4-scale" keys="compose" intro={['docker compose up -d --scale api=3']} goal={{ running: ['kedai-kancil-api-1', 'kedai-kancil-api-2'], notExists: ['kedai-kancil-api-3'] }} hints={['Same command, smaller number.', 'Type docker compose up -d --scale api=2']} success="Two cooks left. Compose removed the extra box." />
+
+<Hint>`docker compose up -d --scale api=2`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now you scale web to two. Both copies want hatch 8080 on your laptop. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The second web box fails', correct: true, why: 'One laptop port fits one box. Real words next.' }, { label: 'They share hatch 8080', why: 'Two boxes can never hold the same laptop port.' }, { label: 'Compose picks 8081 for you', why: 'Compose never changes your hatch number.' }]} />
+</Card>
+
+<Card id="check-port" type="check">
+<Interactive name="KitchenReplay" scenario="d4-scale" commands={['docker compose up -d', 'docker compose up -d --scale web=2']} fails={['docker compose up -d --scale web=2']} label="web-2 is created, then fails: Bind for 0.0.0.0:8080 failed: port is already allocated." />
+
+Real words: `port is already allocated`. Plain words: web-1 already holds hatch 8080.
+</Card>
+
+<Card id="check-swipe" type="check">
+Can this dish scale on one laptop? Right for yes, left for no.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'api with no ports', good: true, why: 'No fixed hatch, so the copies never clash.' }, { text: 'web with ports "8080:80"', good: false, why: 'Every copy wants hatch 8080.' }, { text: 'db with container_name: kedai-db', good: false, why: 'Box names must be unique. A fixed name allows one box.' }, { text: 'api with expose: 3000', good: true, why: 'expose opens a door on the phone line only, not on your laptop.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run more copies of one service.
+</Card>
+
+<Card id="deeper" type="deeper">
+`deploy: replicas: 3` in the file does the same as the flag. Asking for `api` on the phone line now finds all three boxes. Docker doesn't truly share the work between them. A proxy does that, or Kubernetes in Part 3. Compose runs on one machine only.
+
+Real rep (optional): in a project with an api service and no ports, run `docker compose up -d --scale api=3`, then `docker compose ps`.
+</Card>

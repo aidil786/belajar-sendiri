@@ -1,0 +1,67 @@
+---
+id: aws-a3-l08
+world: 3
+title: "Route 53 dan CloudFront"
+summary: "Anda akan belajar: cara pembeli jumpa anda ikut nama, dan cara kiosk berdekatan hidangkan halaman anda dengan laju."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, SortCards, SpotLines, IdleBill]
+needs: [aws-a3-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon Route 53: What is it?", url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html" }
+  - { label: "Amazon CloudFront: What is it?", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html" }
+  - { label: "CloudFront: Invalidate files", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html" }
+  - { label: "CloudFront: Restrict access to an S3 origin", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" }
+  - { label: "AWS CLI: aws cloudfront create-invalidation", url: "https://docs.aws.amazon.com/cli/latest/reference/cloudfront/create-invalidation.html" }
+---
+
+<Card id="hook" type="hook">
+Alamat kedai anda ialah `203.0.113.9`. Tiada siapa ingat nombor. Dan pembeli di Kota Kinabalu tunggu lebih lama daripada yang dekat. Apa yang membantu dahulu?
+
+<Interactive name="Choice" options={[{ label: 'Satu nama dalam direktori pusat beli-belah', correct: true, why: 'Ya. Pembeli taip kedai.example. Direktori cari nombornya.' }, { label: 'Cetak nombor itu pada risalah', why: 'Nombor berubah bila server berubah. Nama kekal.' }, { label: 'Server yang lebih besar', why: 'Lebih besar tak pendekkan perjalanan.' }]} />
+</Card>
+
+<Card id="see-trip" type="see">
+**<Term id="route53">Route 53</Term>** (direktori) ialah DNS AWS: direktori pusat beli-belah. Susun perjalanan seorang pembeli.
+
+<Interactive name="OrderList" items={['Pembeli taip kedai.example', 'Route 53 jawab dengan satu alamat', 'Pelayar minta dari kiosk paling dekat', 'Kiosk serahkan halaman itu']} label="Langkah pertama di atas" success="Nama, alamat, kiosk paling dekat, halaman. Pembeli tak pernah nampak nombor." />
+</Card>
+
+<Card id="see-kiosk" type="see">
+**<Term id="cloudfront">CloudFront</Term>** letak kiosk dekat pembeli. Setiap kiosk simpan salinan halaman anda. Bucket S3 peribadi anda kekal sebagai stor di belakang. Siapa layan setiap lawatan?
+
+<Interactive name="SortCards" buckets={[{ id: 'kiosk', label: 'Kiosk berdekatan (salinan)' }, { id: 'origin', label: 'Stor anda (yang asal)' }]} items={[{ label: 'Pembeli pertama di bandar baru', bucket: 'origin', why: 'Kiosk belum ada salinan, jadi ia ambil satu.' }, { label: 'Pembeli kedua di situ, seminit kemudian', bucket: 'kiosk', why: 'Kiosk simpan salinan. Laju!' }, { label: 'Halaman yang anda baru suruh kiosk lupakan', bucket: 'origin', why: 'Salinan yang dilupakan diambil semula yang baru.' }]} success="Salinan dekat pembeli, yang asal selamat di belakang." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda ubah halaman menu. Pembeli masih nampak menu semalam. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Kiosk masih pegang salinan lama', correct: true, why: 'Salinan kekal sehingga tamat tempoh. Atau anda suruh kiosk lupakannya.' }, { label: 'S3 hilangkan fail anda', why: 'Stor ada fail itu. Kiosk belum minta semula.' }, { label: 'Route 53 tunjuk ke tempat salah', why: 'Nama itu berfungsi. Hanya salinannya yang lama.' }]} />
+</Card>
+
+<Card id="check-cli" type="check">
+Suruh kiosk lupakan salinan dipanggil **invalidation**. Ini jawapan contoh rasmi, dipendekkan. Ketik baris yang tunjuk ia dah bermula.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang tunjuk statusnya." success="InProgress. Tak lama lagi setiap kiosk buang salinan lama." lines={[{ text: '$ aws cloudfront create-invalidation --distribution-id EDFDVBD6EXAMPLE --paths "/example-path/example-file.jpg" "/example-path/example-file2.png"' }, { text: '"Invalidation": {' }, { text: '    "Id": "I1JLWSDAP8FU89",' }, { text: '    "Status": "InProgress",', target: true }, { text: '    "CreateTime": "2019-12-05T18:24:51.407Z",' }]} />
+</Card>
+
+<Card id="check-bill" type="check">
+Nama dan salinan murah, tetapi bukan semua percuma. Nilai setiap satu.
+
+<Interactive name="IdleBill" items={['hostedZone', 's3Objects', 'securityGroup', 'iam']} ordered />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara pembeli jumpa kedai anda, dan kenapa salinan boleh jadi lama.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: VPC bukan tanah. Anda boleh buat beberapa, dan tiada sewa. Sayap (Availability Zone) ialah bangunan berasingan, berkilometer jauhnya. Dan security group jaga setiap server, bukan pintu yang dikongsi.
+
+Latihan sebenar (pilihan): dokumen CloudFront ada panduan untuk bucket S3 peribadi di belakang CloudFront.
+</Card>

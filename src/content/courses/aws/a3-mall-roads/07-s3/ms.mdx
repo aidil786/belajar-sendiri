@@ -1,0 +1,67 @@
+---
+id: aws-a3-l07
+world: 3
+title: "Bucket S3 dan Block Public Access"
+summary: "Anda akan belajar: simpan fail dalam S3, dan kenapa kunci utama kekal hidup."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, SpotLines, IamJudge, SwipeJudge]
+needs: [aws-a3-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon S3: What is Amazon S3?", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html" }
+  - { label: "Amazon S3: Blocking public access", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html" }
+  - { label: "Amazon S3: Bucket naming rules", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html" }
+  - { label: "AWS CLI: aws s3 mb", url: "https://docs.aws.amazon.com/cli/latest/reference/s3/mb.html" }
+  - { label: "AWS CLI: aws s3api get-public-access-block", url: "https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html" }
+---
+
+<Card id="hook" type="hook">
+Pembeli patut nampak gambar menu Kedai Kancil. Stor yang sama juga simpan senarai pesanan, dengan nombor telefon. Buka seluruh stor kepada awam?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Kekal berkunci, dan kongsi gambar sahaja', correct: true, why: 'Ya. Satu pintu terbuka tunjuk semua di dalam.' }, { label: 'Ya, lebih cepat', why: 'Lebih cepat untuk orang asing juga. Senarai pesanan akan bocor.' }, { label: 'Ya, tiada siapa akan teka namanya', why: 'Nama boleh diteka dan diimbas. Sorok bukan kunci.' }]} />
+</Card>
+
+<Card id="see-bucket" type="see">
+**<Term id="s3-bucket">Bucket S3</Term>** (stor fail) ialah stor untuk fail. Ia tinggal dalam satu Region. Namanya mesti unik, jadi pilih nama anda sendiri. Tengok contoh rasmi.
+
+<Interactive name="Transcript" title="bash" label="aws s3 mb buat bucket amzn-s3-demo-bucket. aws s3 ls senaraikan dua bucket dengan tarikhnya." lines={[{ cmd: 'aws s3 mb s3://amzn-s3-demo-bucket' }, { out: 'make_bucket: s3://amzn-s3-demo-bucket', color: 'green' }, { cmd: 'aws s3 ls' }, { out: '2013-07-11 17:08:50 amzn-s3-demo-bucket\n2013-07-24 14:55:44 amzn-s3-demo-bucket2' }]} />
+</Card>
+
+<Card id="see-lock" type="see">
+**<Term id="block-public-access">Block Public Access</Term>** ialah kunci utama stor. Bucket baru dapat ia hidup secara lalai. Ketik setiap kunci yang hidup.
+
+<Interactive name="SpotLines" prompt="Ketik setiap tetapan yang hidup." success="Keempat-empat true: tiada apa dalam bucket ini boleh jadi awam." lines={[{ text: '$ aws s3api get-public-access-block --bucket amzn-s3-demo-bucket' }, { text: '"PublicAccessBlockConfiguration": {' }, { text: '    "IgnorePublicAcls": true,', target: true }, { text: '    "BlockPublicPolicy": true,', target: true }, { text: '    "BlockPublicAcls": true,', target: true }, { text: '    "RestrictPublicBuckets": true', target: true }, { text: '}' }]} />
+</Card>
+
+<Card id="try-judge" type="try">
+Aina boleh baca bucket menu. Kini dia minta satu fail dalam bucket pesanan. Adakah AWS benarkan?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-orders/2026-11-01.csv' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Betul. Kuncinya muat stor menu sahaja." />
+</Card>
+
+<Card id="predict" type="predict">
+Kunci utama hidup. Seseorang tambah polisi bucket: "semua orang boleh baca". Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'S3 tolak polisi itu', correct: true, why: 'BlockPublicPolicy tolak mana-mana polisi bucket yang benarkan akses awam.' }, { label: 'Bucket jadi awam', why: 'Tidak selagi kunci hidup. Itulah tugasnya.' }, { label: 'Gambar sahaja jadi awam', why: 'Kunci itu tengok polisi, dan tolak ia sepenuhnya.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat stor yang baik, atau berisiko? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Kekalkan Block Public Access hidup untuk setiap bucket', good: true, why: 'Kongsi halaman melalui CloudFront. Pelajaran seterusnya.' }, { text: 'Letak kata laluan pangkalan data dalam bucket untuk dikongsi', good: false, why: 'Kata laluan patut dalam peti besi rahsia. Dunia A4 tunjuk caranya.' }, { text: 'Kosongkan dan padam bucket ujian bila dah siap', good: true, why: 'Fail yang disimpan ada caj setiap bulan.' }, { text: 'Matikan kunci untuk baiki ralat akses', good: false, why: 'Itu tak baiki dengan selamat. Semak polisi IAM dahulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan fail dalam S3 dengan kunci utama hidup.
+</Card>
+
+<Card id="deeper" type="deeper">
+Padam bucket: `aws s3 rb s3://amzn-s3-demo-bucket --force` padam setiap fail di dalamnya dahulu. Anggap ia muktamad, dan semak nama dua kali.
+
+Latihan sebenar (pilihan), dalam akaun ujian. Buat satu bucket dan muat naik satu fail. Semak kunci, kemudian kosongkan dan padam.
+</Card>

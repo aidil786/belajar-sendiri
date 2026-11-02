@@ -1,0 +1,82 @@
+---
+id: k8s-k9-l01
+world: 9
+title: What CKA adds to CKAD
+summary: "You will learn: what the CKA asks on top of CKAD, and how to step inside a node."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SortCards, Choice, TimelineTap, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k1-l06]
+scenario: k9-kubelet
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "CKA exam (Linux Foundation)", url: "https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/" }
+  - { label: "CKAD exam (Linux Foundation)", url: "https://training.linuxfoundation.org/certification/certified-kubernetes-application-developer-ckad/" }
+  - { label: "Kubernetes components", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kind: quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-notready" commands={['kubectl get nodes']} label="kubectl get nodes: dev-worker is NotReady. The other two stalls are Ready." />
+
+A stall went dark: `dev-worker` is NotReady. No YAML file can fix this. Someone must go behind the counter, into the machine itself.
+</Card>
+
+<Card id="try-sort" type="try">
+CKAD tests the cooks: your apps. The **<Term id="cka">CKA</Term>** tests the building manager: the cluster itself. Sort each task.
+
+<Interactive name="SortCards" buckets={[{ id: 'both', label: 'Both exams: app work' }, { id: 'cka', label: 'CKA: the cluster itself' }]} items={[{ label: 'Roll out a new image with a Deployment', bucket: 'both', why: 'Apps and rollouts are in both exams.' }, { label: 'Give an app a Service', bucket: 'both', why: 'Services and networking are 20% of each exam.' }, { label: 'Build a cluster with kubeadm', bucket: 'cka', why: 'Building the food court is admin work.' }, { label: 'Bring a NotReady node back', bucket: 'cka', why: 'Fixing nodes is part of CKA Troubleshooting.' }, { label: 'Upgrade the cluster one version', bucket: 'cka', why: 'Looking after the cluster over time is admin work.' }, { label: 'Fix a broken scheduler', bucket: 'cka', why: 'The office staff are cluster parts, not your app.' }]} success="Same food court. The CKA adds the back office." />
+
+<Hint>Ask: is it about one app, or about the cluster itself?</Hint>
+</Card>
+
+<Card id="predict-biggest" type="predict">
+The CKA is 2 hours of hands-on tasks on Kubernetes 1.37. It has five parts. Which part weighs the most?
+
+<Interactive name="Choice" options={[{ label: 'Troubleshooting', correct: true, why: 'Yes: 30%. Broken nodes, broken parts, broken networking.' }, { label: 'Storage', why: 'Storage is the smallest part: 10%.' }, { label: 'Services and networking', why: 'Close! It is 20%. Troubleshooting is 30%.' }]} />
+</Card>
+
+<Card id="see-map" type="see">
+K9 is your road map to the back office. Tap each stop.
+
+<Interactive name="TimelineTap" events={[{ when: 'L02–L03', title: 'How a food court is built', text: 'kubeadm builds it. The office staff run from files.' }, { when: 'L04–L06', title: 'The back room of a stall', text: 'The supervisor, its diary, the stove, and a NotReady ladder.' }, { when: 'L07–L08', title: 'Maintenance nights', text: 'Empty a stall. Upgrade one version at a time.' }, { when: 'L09', title: 'The safe', text: 'Back up the order book, etcd, and bring it back.' }, { when: 'L10–L11', title: 'Keys and badges', text: 'Certificates that expire, and new users with their own keys.' }, { when: 'L12', title: 'Phone lines', text: 'Fix CoreDNS and kube-proxy.' }]} />
+</Card>
+
+<Card id="try-inside" type="try">
+Each stall is a real machine. Step into its back room: a **<Term id="node-shell">node shell</Term>**. Type `ssh dev-worker`, then `hostname`.
+
+<Interactive name="FoodCourtSim" scenario="k9-kubelet" goal={{ typed: '^(ssh dev-worker|docker exec -it dev-worker bash)$', lastTyped: '^hostname$' }} hints={['Type ssh dev-worker and press Enter.', 'The prompt now says root@dev-worker. Type hostname.']} success="You are inside dev-worker. The prompt shows it too." />
+
+<Hint>Look at the prompt. It changes when you are inside a node.</Hint>
+</Card>
+
+<Card id="see-kind" type="see">
+<Interactive name="KubeReplay" scenario="k9-kubelet" picture={false} commands={['docker exec -it dev-worker bash', 'hostname', 'exit']} label="docker exec -it dev-worker bash opens a root prompt inside the node. hostname prints dev-worker. exit goes back to the laptop." />
+
+On **<Term id="kind">kind</Term>**, each stall is a Docker container with no SSH server. So you step in with `docker exec -it dev-worker bash`. Same back room, other door.
+</Card>
+
+<Card id="check-safe" type="check">
+K9 breaks stalls on purpose. Where is it safe to practise? Swipe right for safe.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A kind cluster on your own laptop', good: true, why: 'Break it, delete it, make a new one in a minute.' }, { text: 'A free CKA playground on Killercoda', good: true, why: 'A throwaway cluster in your browser.' }, { text: 'Your company’s real cluster, late at night', good: false, why: 'Real customers eat there. Never practise on it.' }, { text: 'A shared team cluster, just for a minute', good: false, why: 'Teammates use it. Your test could break their work.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now name what the CKA adds, and step inside a node.
+</Card>
+
+<Card id="deeper" type="deeper">
+Exam facts, checked on 1 Nov 2026. Prices change: check the official page.
+
+- Online, with a proctor. 2 hours. Kubernetes 1.37.
+- Troubleshooting 30%. Cluster architecture and installation 25%.
+- Services and networking 20%. Workloads 15%. Storage 10%.
+- One retake and two simulator sessions are included.
+
+<Interactive name="Mission" id="k8s-k9-l01-real" steps={[{ id: 'where', text: 'Check you are on your throwaway kind cluster, never a work cluster.', command: 'kubectl config current-context' }, { id: 'in', text: 'Step inside a stall.', command: 'docker exec -it dev-worker bash' }, { id: 'name', text: 'Ask the machine its name.', command: 'hostname' }, { id: 'out', text: 'Leave the stall.', command: 'exit' }]} success="You stood inside a real node!" />
+</Card>

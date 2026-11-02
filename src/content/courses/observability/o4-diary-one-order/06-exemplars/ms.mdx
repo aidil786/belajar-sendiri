@@ -1,0 +1,58 @@
+---
+id: obs-o4-l06
+world: 4
+title: "Exemplar dan korelasi"
+summary: "Anda akan belajar: lompat dari lonjakan pada graf terus ke pesanan yang menyebabkannya."
+minutes: 4
+xp: 20
+interactives: [PromQLPlayground, SpotLines, OrderList, Choice, SortCards]
+needs: [obs-o4-l05]
+scenario: o4-slow-step
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus feature flags (exemplar storage)", url: "https://prometheus.io/docs/prometheus/latest/feature_flags/" }
+  - { label: "Grafana: introduction to exemplars", url: "https://grafana.com/docs/grafana/latest/fundamentals/exemplars/" }
+  - { label: "OpenTelemetry: signals", url: "https://opentelemetry.io/docs/concepts/signals/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PromQLPlayground" scenario="o4-slow-step" initial="histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_seconds_bucket[5m])))" prompt="Tekan Run. Servis mana jadi lambat, dan bila?" />
+
+Graf tunjuk kedai-pay jadi lambat dari minit 10. Tapi pesanan mana yang lambat? Graf tak boleh namakan satu pun.
+</Card>
+
+<Card id="see-exemplar" type="see">
+<Interactive name="SpotLines" prompt="Apa yang servis bayaran dedahkan, dalam teks OpenMetrics. Ketik bahagian yang namakan satu pesanan sebenar." lines={[{ text: '# TYPE http_server_request_duration_seconds histogram' }, { text: 'http_server_request_duration_seconds_bucket{le="2.5"} 11800' }, { text: 'http_server_request_duration_seconds_bucket{le="+Inf"} 12000 # {trace_id="3c9a51e0b7d24f6e9a18c2d4e6f80b15"} 2.86', target: true }, { text: 'http_server_request_duration_seconds_count 12000' }]} success="Betul. Selepas #: satu trace ID, dan pesanan itu ambil 2.86 s." />
+
+**<Term id="exemplar">Exemplar</Term>** lekatkan satu contoh pesanan pada metrik. Grafana lukisnya sebagai titik yang boleh diklik.
+</Card>
+
+<Card id="try-path" type="try">
+<Interactive name="OrderList" items={['Graf: p95 kedai-pay melonjak pada minit 10', 'Titik exemplar: trace 3c9a51e0…', 'Trace: SELECT payments ambil 2.8 s', 'Log dengan trace_id itu: slow query pada payments']} label="Tempat anda mula di atas" success="Graf, titik, trace, log: dari lonjakan ke sebabnya dalam empat klik." />
+
+Susun lompatan itu, dari petunjuk pertama ke sebabnya.
+</Card>
+
+<Card id="predict" type="predict">
+Prometheus tak simpan exemplar secara asal. Flag mana yang hidupkannya?
+
+<Interactive name="Choice" options={[{ label: '--enable-feature=exemplar-storage', correct: true, why: 'Betul. Ia simpan exemplar terkini dalam penimbal bersaiz tetap di memori.' }, { label: '--web.enable-otlp-receiver', why: 'Itu benarkan Prometheus terima metrik melalui OTLP. Kerja lain.' }, { label: '--storage.tsdb.retention.time', why: 'Itu tetapkan berapa lama sampel disimpan di cakera.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'metrics', label: 'Metrik' }, { id: 'traces', label: 'Trace' }, { id: 'logs', label: 'Log' }]} items={[{ label: 'Berapa pesanan gagal setiap saat?', bucket: 'metrics', why: 'Mengira mengikut masa ialah kepakaran metrik.' }, { label: 'Makin teruk tak sejam ini?', bucket: 'metrics', why: 'Arah aliran: graf metrik.' }, { label: 'Langkah mana pesanan A1041 yang lambat?', bucket: 'traces', why: 'Span tunjuk setiap langkah dan masanya.' }, { label: 'Apa kata kedai-pay tentang A1041?', bucket: 'logs', why: 'Diari simpan kata-katanya.' }]} success="Setiap isyarat jawab soalannya sendiri. Pautan menyambungkannya." />
+
+Isyarat mana paling sesuai jawab setiap soalan?
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lompat dari graf ke trace dan log satu pesanan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam Grafana, sumber data Prometheus boleh pautkan `trace_id` exemplar ke stor trace anda. Sumber data Loki pun boleh tukar `trace_id` dalam baris log jadi pautan. Jadi lompatan itu satu klik, dua hala.
+</Card>

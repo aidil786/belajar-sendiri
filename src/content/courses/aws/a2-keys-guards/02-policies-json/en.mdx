@@ -1,0 +1,68 @@
+---
+id: aws-a2-l02
+world: 2
+title: Policies in JSON
+summary: "You will learn: to read a policy line by line, and to change one line safely."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, SortCards, IamJudge]
+needs: [aws-a2-l01]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Policies and permissions in IAM", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html" }
+  - { label: "IAM JSON policy elements", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html" }
+  - { label: "Action element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_action.html" }
+  - { label: "Resource element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html" }
+---
+
+<Card id="hook" type="hook">
+Aina’s key card says: "Allow: read the files on the menu shelf." She tries to change today’s menu. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Refused: the card says read, not change', correct: true, why: 'A key card opens exactly what it says. Nothing more.' }, { label: 'Allowed: reading and changing are close', why: 'To AWS they are two different actions.' }, { label: 'Allowed, with a warning', why: 'IAM answers yes or no. No warnings.' }]} />
+</Card>
+
+<Card id="see-parts" type="see">
+That key card is a **<Term id="iam-policy">policy</Term>**, written in JSON. Tap the line that says **what** Aina may do.
+
+<Interactive name="SpotLines" lines={[{ text: '{' }, { text: '  "Version": "2012-10-17",' }, { text: '  "Statement": [' }, { text: '    {' }, { text: '      "Effect": "Allow",' }, { text: '      "Action": "s3:GetObject",', target: true }, { text: '      "Resource": "arn:aws:s3:::kedai-menu/*"' }, { text: '    }' }, { text: '  ]' }, { text: '}' }]} prompt="Tap the line with the action." success="Action: s3:GetObject. Read one file from S3." />
+</Card>
+
+<Card id="see-sort" type="see">
+Each statement answers three questions. Allow or Deny? Which action? On which thing? Sort these values.
+
+<Interactive name="SortCards" buckets={[{ id: 'effect', label: 'Effect' }, { id: 'action', label: 'Action' }, { id: 'resource', label: 'Resource' }]} items={[{ label: 'Allow', bucket: 'effect', why: 'Effect is only ever Allow or Deny.' }, { label: 'Deny', bucket: 'effect', why: 'A written no.' }, { label: 's3:PutObject', bucket: 'action', why: 'service:verb. Here: put a file into S3.' }, { label: 'ecr:PutImage', bucket: 'action', why: 'Push an image to ECR, the image shelf.' }, { label: 'arn:aws:s3:::kedai-menu/*', bucket: 'resource', why: 'An ARN: every file in the kedai-menu bucket.' }]} success="Effect, Action, Resource: the three parts of every statement." />
+</Card>
+
+<Card id="try-edit" type="try">
+Aina must also save today’s menu. Change the pink line so AWS says Allow. Don’t open every S3 action.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} task={{ type: 'edit', policy: 0, line: 6, want: 'Allow', forbid: ['"\\*"', 's3:\\*'] }} solution={'"Action": ["s3:GetObject", "s3:PutObject"],'} success="Two actions in a list. Read and save, nothing else." />
+
+<Hint>A list in square brackets: `["s3:GetObject", "s3:PutObject"]`.</Hint>
+</Card>
+
+<Card id="check-wild" type="check">
+A star is a wildcard. Which actions does `s3:Get*` allow?
+
+<Interactive name="Choice" options={[{ label: 'Every S3 action that starts with Get', correct: true, why: 'GetObject, and every other Get action too. Often more than you meant.' }, { label: 'Only s3:GetObject', why: 'The star matches any ending, so it covers many actions.' }, { label: 'Every action in AWS', why: 'Only S3, and only names that start with Get.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Now Aina opens a file in a different bucket, `kedai-orders`. Her policy only names `kedai-menu`. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-orders/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Denied. Right action, wrong shelf." />
+</Card>
+
+<Card id="win" type="win">
+You can now read a policy’s Effect, Action and Resource, and change one line.
+</Card>
+
+<Card id="deeper" type="deeper">
+`"Version": "2012-10-17"` is the policy language’s version, not today’s date. Always use it.
+
+Action names ignore upper and lower case. Resource ARNs do not: `kedai-menu/Today.json` and `kedai-menu/today.json` are two different files.
+</Card>

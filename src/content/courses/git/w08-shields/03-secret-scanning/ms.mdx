@@ -1,0 +1,65 @@
+---
+id: git-w08-l03
+world: 8
+title: Imbasan rahsia dan perlindungan push
+summary: "Anda akan belajar: cara GitHub tangkap kunci yang bocor, sebelum dan selepas push."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, OrderList, Choice, SortCards]
+needs: [git-w08-l02]
+scenario: w08-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+  - { label: "About push protection", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l03" commands={['git diff']} label="git diff pada app.js: baris yang baca kunci dari .env dah hilang. Baris baru ada kunci yang ditaip terus: fake_demo_key_123." />
+
+Sebab tergesa-gesa, anda tampal kunci terus dalam `app.js`. Anda hampir buat push. Sempatkah sesiapa perasan?
+</Card>
+
+<Card id="see-scanning" type="see">
+GitHub ada pengawal bernama **<Term id="secret-scanning">secret scanning</Term>** (imbasan rahsia). Ia baca repo anda, termasuk commit lama, untuk cari kunci. Jumpa satu? Ia beri amaran, supaya anda boleh bertindak. Repo awam dapat percuma.
+</Card>
+
+<Card id="try-scan" type="try">
+Jadi pengimbas! Ketik setiap baris yang ada rahsia.
+
+<Interactive name="SpotLines" lines={[{ text: '# My Diary' }, { text: 'API_KEY=fake_demo_key_123', target: true }, { text: '<h1>Day 2</h1>' }, { text: 'db_password: fake-pass-456', target: true }, { text: 'city: Ipoh' }]} prompt="Ketik setiap baris yang ada rahsia." success="Mata yang tajam! Secret scanning buat ini untuk setiap commit." />
+</Card>
+
+<Card id="see-push-protection" type="see">
+**<Term id="push-protection">Push protection</Term>** (perlindungan push) semak push anda sebelum ia sampai. Nampak kunci? GitHub sekat push itu dan tunjuk di mana kunci itu. Rahsia tak pernah sampai ke repo.
+</Card>
+
+<Card id="try-order" type="try">
+Susun push yang disekat ikut urutan. Langkah pertama di atas.
+
+<Interactive name="OrderList" items={['Anda push commit anda', 'GitHub nampak kunci itu', 'Push disekat', 'Anda keluarkan kunci dari commit', 'Anda push semula dengan selamat']} label="Langkah pertama di atas" success="Itulah alirannya! Kunci tak pernah sampai ke GitHub." />
+
+<Hint>Tiada apa sampai ke GitHub selagi kunci belum dibuang.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Push protection sekat anda. Kunci itu kunci sebenar. Apa langkah terbaik?
+
+<Interactive name="Choice" options={[{ label: 'Keluarkan kunci dari commit, kemudian push semula', correct: true, why: 'Kunci tak pernah keluar dari komputer anda. Baiki, push, siap.' }, { label: 'Langkau sekatan dan baiki kemudian', why: 'Nanti kunci sebenar sampai ke GitHub. Itulah kebocoran yang anda nak elak.' }, { label: 'Push dari komputer lain', why: 'GitHub semak setiap push, dari mana-mana.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Pengawal mana yang buat? Susun setiap kad.
+
+<Interactive name="SortCards" buckets={[{ id: 'scan', label: 'Secret scanning' }, { id: 'push', label: 'Push protection' }]} items={[{ label: 'Halang kunci sebelum ia sampai', bucket: 'push', why: 'Ia semak push itu sendiri.' }, { label: 'Cari kunci dalam commit lama', bucket: 'scan', why: 'Ia baca seluruh sejarah.' }, { label: 'Beri amaran untuk kunci yang dah ada di GitHub', bucket: 'scan', why: 'Kunci dah ada di sana. Sekarang anda mesti bertindak.' }, { label: 'Buat git push anda gagal', bucket: 'push', why: 'Push anda terhenti sampai anda baiki.' }]} success="Siap! Satu pengawal menyekat. Satu lagi mencari." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar pengawal GitHub tangkap kunci yang bocor untuk anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sesetengah servis bekerjasama dengan GitHub. Jika kunci mereka bocor dalam repo awam, GitHub beritahu mereka. Mereka boleh batalkan kunci itu dengan cepat. Push anda ke repo awam dapat push protection secara lalai. Alat seperti gitleaks boleh semak sebelum anda commit lagi.
+</Card>

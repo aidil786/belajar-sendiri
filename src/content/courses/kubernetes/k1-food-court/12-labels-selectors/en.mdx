@@ -1,0 +1,77 @@
+---
+id: k8s-k1-l12
+world: 1
+title: Labels and selectors
+summary: "You will learn: how labels tag your pods, and how selectors pick them."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, LabelMatchmaker, SwipeJudge]
+needs: [k8s-k1-l11]
+scenario: k1-labels
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Labels and selectors", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/" }
+  - { label: "kubectl label", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/" }
+---
+
+<Card id="hook" type="hook">
+Your food court has 20 trays: shop trays and api trays. The shop’s order number must reach only shop trays. How does it find them?
+
+<Interactive name="Choice" options={[{ label: 'By a sticker on each tray, like app=shop', correct: true, why: 'Yes! Those stickers are labels. Let’s look at some.' }, { label: 'By the tray names', why: 'Names change when trays are replaced. Stickers stay the same.' }, { label: 'By IP address', why: 'Pod IPs change too. Labels are the steady handle.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="KubeReplay" scenario="k1-labels" commands={['kubectl get pods --show-labels']} label="Three pods with their labels: api-1 has app=api, shop-1 has app=shop and tier=web, shop-2 has app=shop." />
+
+A **<Term id="label">label</Term>** is a sticker: a key and a value, like `app=shop`. A tray can wear many. `--show-labels` shows them.
+</Card>
+
+<Card id="try-select" type="try">
+A **<Term id="selector">selector</Term>** picks trays by their stickers. Show only the shop trays: `kubectl get pods -l app=shop`.
+
+<Interactive name="FoodCourtSim" scenario="k1-labels" goal={{ typed: '(-l|--selector)[ =]?app=shop\\b' }} hints={['Type kubectl get pods -l app=shop and press Enter.']} success="shop-1 and shop-2. api-1 stays out." />
+
+<Hint>`-l` means label selector.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Which pods match `-l app=shop,tier=web`?
+
+<Interactive name="Choice" options={[{ label: 'Only shop-1', correct: true, why: 'A comma means AND. Only shop-1 wears both stickers.' }, { label: 'shop-1 and shop-2', why: 'shop-2 has no tier=web sticker yet.' }, { label: 'All three', why: 'api-1 has app=api, not app=shop.' }]} />
+</Card>
+
+<Card id="try-match" type="try">
+The order number shop picks `app=shop` and `tier=web`. Stick labels so both shop trays answer, and api-1 does not.
+
+<Interactive name="LabelMatchmaker" pods={[{ name: 'shop-1', labels: { app: 'shop', tier: 'web' } }, { name: 'shop-2', labels: { app: 'shop' } }, { name: 'api-1', labels: { app: 'api' } }]} labels={['tier=web', 'app=shop', 'app=api']} selector={{ app: 'shop', tier: 'web' }} task={{ type: 'select', pods: ['shop-1', 'shop-2'] }} success="Both shop trays light up. api-1 stays dark." />
+
+<Hint>shop-2 is missing one sticker.</Hint>
+</Card>
+
+<Card id="try-label" type="try">
+Now do it with kubectl: `kubectl label pod shop-2 tier=web`. Then check with `kubectl get pods -l tier=web`.
+
+<Interactive name="FoodCourtSim" scenario="k1-labels" goal={{ labels: { kind: 'Pod', name: 'shop-2', labels: { tier: 'web' } } }} hints={['Type kubectl label pod shop-2 tier=web and press Enter.']} success="pod/shop-2 labeled. It wears tier=web now." />
+</Card>
+
+<Card id="check-good" type="check">
+Good label, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'app=shop', good: true, why: 'Short and clear.' }, { text: 'app=my shop', good: false, why: 'Values can’t hold spaces. Try app=my-shop.' }, { text: 'version=1.4.0', good: true, why: 'Dots are fine inside a value.' }, { text: 'team=-kitchen', good: false, why: 'A value must start with a letter or a number.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now stick labels on trays and pick them with selectors.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deployments use selectors too. Their pod template must wear the labels the selector asks for. Try it:
+
+<Interactive name="LabelMatchmaker" pods={[]} labels={['app=shop', 'tier=web']} selector={{ app: 'shop' }} templateLabels={{ app: 'web' }} task={{ type: 'template' }} success="Selector and template match. The Deployment is accepted." />
+
+Real rep (optional): `kubectl get pods -l app!=shop` shows every tray without that sticker.
+</Card>

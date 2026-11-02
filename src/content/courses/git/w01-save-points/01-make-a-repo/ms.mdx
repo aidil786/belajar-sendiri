@@ -1,0 +1,65 @@
+---
+id: git-w01-l01
+world: 1
+title: Buat repo
+summary: "Anda akan belajar: cara suruh Git mula jaga satu folder."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w00-l04]
+scenario: w01-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git init", url: "https://git-scm.com/docs/git-init" }
+  - { label: "gitglossary (repository)", url: "https://git-scm.com/docs/gitglossary" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Dua fail bergoyang dalam folder diari: README.md dan index.html. Git tidak jaga fail-fail ini." frames={[{ working: ['README.md', 'index.html'] }]} />
+
+Anda dah buat laman web diari. Anda nak ada titik simpan. Tapi Git tak tahu pun folder ini wujud!
+</Card>
+
+<Card id="see-init" type="see">
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init']} label="git init papar: Initialized empty Git repository in /home/you/diary/.git/" />
+
+`git init` suruh Git jaga folder ini. Kini folder itu sebuah **repository** (folder projek yang Git jaga). Ringkasnya, repo.
+</Card>
+
+<Card id="see-hidden" type="see">
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init', 'ls', 'ls -a']} label="Selepas git init, ls tunjuk README.md dan index.html. ls -a juga tunjuk folder tersembunyi bernama .git." />
+
+`ls -a` senaraikan semua fail, termasuk yang tersembunyi. Nampak `.git`? Itulah **folder .git**. Git simpan semua titik simpan di dalamnya.
+</Card>
+
+<Card id="try-init" type="try">
+Jadikan diari anda sebuah repo. Kemudian cari folder tersembunyi itu.
+
+<Interactive name="Sim" scenario="w01-l01" panels={[]} goal={{ repoAt: '/home/you/diary', cwd: '/home/you/diary', lastTyped: '^ls -a' }} hints={['Taip git init dan tekan Enter.', 'Sekarang taip ls -a untuk nampak fail tersembunyi juga.']} success="Itu dia: .git! Diari anda dah jadi repo." />
+
+<Hint>Mula-mula taip `git init`. Kemudian taip `ls -a`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam folder `.git`. Apa yang jadi?
+
+<Interactive name="Choice" options={[{ label: 'Git lupa semua titik simpan. Fail anda kekal.', correct: true, why: 'Semua sejarah ada dalam .git. Fail biasa anda di luar folder itu.' }, { label: 'Semua fail anda hilang juga', why: 'Fail anda di luar .git, jadi ia kekal.' }, { label: 'Tiada apa-apa. Git ada salinan sandaran.', why: 'Tiada salinan sandaran. Sejarah itu hilang terus.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Arahan `ls` biasa tak tunjuk `.git`. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Nama yang bermula dengan titik disembunyikan', correct: true, why: 'ls langkau nama bertitik. ls -a tunjuk semuanya.' }, { label: 'Git sorokkan selepas git init', why: 'Git tak buat apa-apa. Nama bertitik memang tersembunyi.' }, { label: 'Ia muncul hanya selepas commit (titik simpan)', why: 'git init terus buat folder itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jadikan mana-mana folder sebuah repo Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jalankan `git init` sekali sahaja bagi setiap projek, dalam folder projek itu. Jangan dalam folder home anda! Jalankan dua kali pun selamat: Git cuma kata "Reinitialized". Nama <Term id="branch">branch</Term> (cabang) pertama datang dari tetapan `init.defaultBranch`. Git 3.0 akan guna `main` secara lalai.
+
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init', 'git init']} label="git init dijalankan dua kali. Kali kedua Git kata: Reinitialized existing Git repository." />
+</Card>

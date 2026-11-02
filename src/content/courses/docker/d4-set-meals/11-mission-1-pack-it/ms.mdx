@@ -1,0 +1,119 @@
+---
+id: docker-d4-m1
+world: 4
+title: "Misi capstone 1: Bungkus"
+summary: "Anda akan belajar: bungkus Kedai Kancil supaya satu arahan hidupkannya di mana-mana mesin."
+minutes: 5
+xp: 100
+interactives: [SortCards, KitchenReplay, Choice, ComposeCanvas, Mission, MissionCheck]
+needs: [docker-d4-l10]
+scenario: d4-mission
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Compose quickstart", url: "https://docs.docker.com/compose/gettingstarted/" }
+  - { label: "Dockerfile reference", url: "https://docs.docker.com/reference/dockerfile/" }
+  - { label: "Compose file reference", url: "https://docs.docker.com/reference/compose-file/" }
+---
+
+<Card id="hook" type="hook">
+Misi 1: bungkus! Kedai Kancil dapat repo sendiri, `kedai-kancil`. Mula-mula, letak setiap fail dalam foldernya.
+
+<Interactive name="SortCards" buckets={[{ id: 'top', label: 'kedai-kancil/ (atas)' }, { id: 'web', label: 'web/' }, { id: 'api', label: 'api/' }]} items={[{ label: 'index.html', bucket: 'web', why: 'Laman yang nginx hidangkan.' }, { label: 'Dockerfile (FROM nginx)', bucket: 'web', why: 'Resepi web duduk di sebelah lamannya.' }, { label: 'server.js', bucket: 'api', why: 'Program API.' }, { label: 'package.json', bucket: 'api', why: 'Nama API dan skripnya.' }, { label: 'Dockerfile (FROM node)', bucket: 'api', why: 'Resepi API duduk di sebelah kodnya.' }, { label: 'compose.yaml', bucket: 'top', why: 'Menu set hidangan duduk di atas kedua-dua folder.' }]} success="Dua folder, dua resepi, satu menu di atas." />
+</Card>
+
+<Card id="see-web" type="see">
+```html
+<h1>Kedai Kancil</h1>
+```
+
+```dockerfile
+FROM nginx:1.30-alpine
+COPY index.html /usr/share/nginx/html/
+```
+
+<Interactive name="KitchenReplay" scenario="d4-mission" commands={['docker build -t web-check ./web', 'docker run -d --name webcheck -p 8080:80 web-check', 'curl -s localhost:8080']} label="Resepi web dibakar, jalan di tingkap 8080 dan hidangkan laman itu." />
+
+Atas: `web/index.html`. Bawah: `web/Dockerfile`. Dua baris: mula dari nginx, salin laman anda masuk.
+</Card>
+
+<Card id="see-api-code" type="see">
+Kod API ada di bawah: `api/server.js`, kemudian `api/package.json`. Resepinya nanti tiada langkah `npm ci`. Kenapa tak apa?
+
+<Interactive name="Choice" options={[{ label: 'Tiada pakej untuk dipasang', correct: true, why: 'server.js cuma guna node:http, yang memang datang dengan Node.' }, { label: 'npm ci jalan sendiri', why: 'Tiada apa yang jalan kecuali resepi menyuruhnya.' }, { label: 'Compose pasang pakej', why: 'Compose cuma bina apa yang Dockerfile sebut.' }]} />
+
+```js
+const http = require('node:http');
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ ok: true, shop: 'Kedai Kancil' }));
+}).listen(port, () => console.log(`API listening on port ${port}`));
+```
+
+```json
+{
+  "name": "kedai-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}
+```
+</Card>
+
+<Card id="see-api-recipe" type="see">
+```dockerfile
+FROM node:24-alpine
+WORKDIR /app
+COPY package.json server.js ./
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+<Interactive name="KitchenReplay" scenario="d4-mission" commands={['docker build -t api-check ./api', 'docker run -d --name apicheck -p 3000:3000 api-check', 'curl -s localhost:3000']} label="Resepi API dibakar, jalan di tingkap 3000 dan jawab dengan JSON." />
+
+Ini `api/Dockerfile`. `USER node` jalankan API sebagai pengguna biasa, bukan root.
+</Card>
+
+<Card id="try-compose" type="try">
+Sekarang set hidangan. Tambah web, api dan db. Beri db loker `db-data`. Buat api tunggu sampai db sihat. Cache pilihan sahaja.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'nginx hidangkan laman kedai.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'API Node yang kecil.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: '${DB_PASSWORD:-devpass}' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '5s', retries: 10 }, means: 'Postgres simpan pesanan. Kata laluan dev secara lalai.' }, { id: 'cache', image: 'redis:8-alpine', volumeTarget: '/data', healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: '5s' }, means: 'Pilihan: Redis ingat menu yang laris.' }]} volumes={['db-data', 'cache-data']} goal={{ services: ['web', 'api', 'db'], volumes: { db: 'db-data' }, dependsOn: { api: { db: 'service_healthy' } } }} success="Itulah compose.yaml anda. Pilih YAML itu dan salin." />
+
+<Hint>Tiga hidangan atas meja. db dapat db-data. api tunggu db: sihat.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang buat betul-betul, langkah demi langkah. Tanda anda disimpan.
+
+<Interactive name="Mission" id="d4-m1-pack" steps={[{ id: 'repo', text: 'Buat folder repo dengan web/ dan api/ di dalamnya, dan mulakan Git.', command: 'mkdir -p kedai-kancil/web kedai-kancil/api && cd kedai-kancil && git init' }, { id: 'files', text: 'Simpan lima fail dari kad di atas dalam foldernya.' }, { id: 'compose', text: 'Simpan set hidangan anda sebagai compose.yaml, di atas sekali.' }, { id: 'dry', text: 'Larian kering. Tiada output bermaksud fail itu okey.', command: 'docker compose config --quiet' }, { id: 'up', text: 'Bakar dan hidupkan seluruh kedai.', command: 'docker compose up -d --build' }, { id: 'ps', text: 'Semak setiap hidangan. db patut tunjuk (healthy).', command: 'docker compose ps' }, { id: 'curl', text: 'Ketuk tingkap.', command: 'curl localhost:8080' }, { id: 'remote', text: 'Buat repo GitHub awam bernama kedai-kancil. Tambah sebagai origin, dengan nama pengguna anda.', command: 'git remote add origin https://github.com/YOUR-NAME/kedai-kancil.git' }, { id: 'push', text: 'Commit dan push.', command: 'git add . && git commit -m "Pack the shop" && git branch -M main && git push -u origin main' }, { id: 'clear', text: 'Ujian mesin baru. Mula-mula kemas meja dan data ujian.', command: 'docker compose down -v' }, { id: 'fresh', text: 'Clone ke folder baru dan hidupkan di situ. Codespace pun boleh.', command: 'git clone https://github.com/YOUR-NAME/kedai-kancil.git fresh && cd fresh && docker compose up -d' }]} success="Langkah misi selesai! Sekarang biar GitHub sahkan." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub boleh sahkan sebahagiannya. Taip nama pengguna anda dan tekan Semak sekarang.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo kedai-kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: 'compose.yaml', label: 'Ia ada compose.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'web/Dockerfile', label: 'Ia ada web/Dockerfile' }, { type: 'file', repo: 'kedai-kancil', path: 'api/Dockerfile', label: 'Ia ada api/Dockerfile' }]} success="GitHub nampak kedai anda yang dah dibungkus!" />
+</Card>
+
+<Card id="self-check" type="check">
+Selebihnya hanya anda boleh lihat. Tanda yang betul.
+
+<Interactive name="Mission" id="d4-m1-self" title="Semak sendiri" steps={[{ id: 'fresh', text: 'Pada clone baru, docker compose up -d hidupkan web, api dan db.' }, { id: 'healthy', text: 'docker compose ps tunjuk db sebagai (healthy).' }, { id: 'page', text: 'curl localhost:8080 tunjuk laman Kedai Kancil.' }, { id: 'locker', text: 'Selepas docker compose down dan up -d, loker db-data masih ada.' }, { id: 'secret', text: 'Tiada kata laluan sebenar dalam repo: hanya nilai lalai dev.' }]} success="Misi 1 selesai: Kedai Kancil dah dibungkus!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bungkus seluruh aplikasi supaya satu arahan hidupkannya di mana-mana.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat. Set hidangan sebenar datang atas satu dulang. Hidangan Compose ialah bekas berasingan. Mereka cuma kongsi talian telefon dan loker. Hidangan dimakan sekali; bekas boleh berhenti dan hidang semula. Compose juga masak di satu dapur sahaja. Banyak mesin perlukan medan selera: Bahagian 3.
+
+Misi 2 (Dunia C2) tambah talian hijau.
+</Card>

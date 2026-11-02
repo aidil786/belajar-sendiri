@@ -1,0 +1,57 @@
+---
+id: obs-o4-l04
+world: 4
+title: "Trace dan span"
+summary: "Anda akan belajar: baca satu pesanan sebagai trace yang terdiri daripada span, dan lihat langkah mana yang lambat."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, SortCards]
+needs: [obs-o4-l03]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: traces", url: "https://opentelemetry.io/docs/concepts/signals/traces/" }
+  - { label: "OpenTelemetry Collector", url: "https://opentelemetry.io/docs/collector/" }
+  - { label: "OpenTelemetry Demo", url: "https://opentelemetry.io/docs/demo/" }
+---
+
+<Card id="hook" type="hook">
+Pesanan A1043 ambil hampir 2 saat. Ia lalu kedai-api dan kedai-pay. Langkah mana yang makan masa?
+
+<Interactive name="Choice" options={[{ label: 'Satu nombor tak boleh beritahu', correct: true, why: 'Betul. Anda perlukan pesanan itu langkah demi langkah, dengan masa. Itulah trace.' }, { label: 'kedai-api, ia ambil 2 saat', why: 'kedai-api mungkin cuma menunggu orang lain.' }, { label: 'Pangkalan data, selalu', why: 'Mungkin. Meneka buat malam jadi panjang.' }]} />
+</Card>
+
+<Card id="see-trace" type="see">
+<Interactive name="TimelineTap" events={[{ when: '0 ms', title: 'POST /order bermula', text: 'kedai-api terima pesanan. Span induk bermula.' }, { when: '50 ms', title: 'pay card bermula', text: 'kedai-api panggil servis bayaran. Span anak bermula.' }, { when: '1850 ms', title: 'pay card tamat', text: 'Anak itu ambil 1.8 saat.' }, { when: '1950 ms', title: 'POST /order tamat', text: 'Seluruh pesanan ambil 1.95 saat.' }]} />
+
+Trace ialah seluruh pesanan. Setiap langkah ialah **<Term id="trace-span">span</Term>**, dengan mula dan tamat. Ketik satu demi satu.
+</Card>
+
+<Card id="see-real" type="see">
+<Interactive name="SpotLines" prompt="Ini output debug Collector sebenar untuk pesanan itu. Ketik baris yang sambungkan anak dengan induknya." lines={[{ text: 'Span #0' }, { text: '    Trace ID       : 7d1f6c2a9e4b4f0a8c3e5b6d2a1f9e07' }, { text: '    Parent ID      : ' }, { text: '    ID             : a1b2c3d4e5f60718' }, { text: '    Name           : POST /order' }, { text: 'Span #1' }, { text: '    Trace ID       : 7d1f6c2a9e4b4f0a8c3e5b6d2a1f9e07' }, { text: '    Parent ID      : a1b2c3d4e5f60718', target: true }, { text: '    ID             : b2c3d4e5f6071829' }, { text: '    Name           : pay card' }]} success="Betul. Parent ID anak ialah ID induknya." />
+
+Kedua-dua span kongsi satu **<Term id="trace-id">trace ID</Term>**: nombor pesanan.
+</Card>
+
+<Card id="predict" type="predict">
+`pay card` ambil 1.8 daripada 1.95 saat. Ke mana anda tengok seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Dalam pay card: span kedai-pay sendiri', correct: true, why: 'Betul. Ikut span yang lambat turun ke anak-anaknya.' }, { label: 'Pada POST /order lagi', why: 'Ia kebanyakannya menunggu. Masanya pergi ke anaknya.' }, { label: 'Pada 50 ms yang laju sebelum panggilan', why: 'Kecil. Kejar bar paling besar dulu.' }]} />
+</Card>
+
+<Card id="check-kind" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'server', label: 'Kind: Server' }, { id: 'client', label: 'Kind: Client' }]} items={[{ label: 'kedai-api terima POST /order', bucket: 'server', why: 'Ia menjawab permintaan: Server.' }, { label: 'kedai-api panggil kedai-pay', bucket: 'client', why: 'Ia buat permintaan: Client.' }, { label: 'kedai-pay terima panggilan itu', bucket: 'server', why: 'Hujung satu lagi panggilan itu: Server.' }, { label: 'kedai-pay hantar SQL ke pangkalan data', bucket: 'client', why: 'Ia bertanya pangkalan data: Client.' }]} success="Setiap panggilan ada dua hujung: span Client dan span Server." />
+
+Output sebenar tadi kata `Kind: Server` dan `Kind: Client`. Susun span-span ini.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca trace dan cari span yang lambat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Span juga bawa attribute (`http.route: /order`), event dan status. Langkah yang gagal tetapkan status kepada Error. Latihan sebenar: OpenTelemetry Demo rasmi jalankan seluruh kedai dalam talian di laptop anda. Lihat opentelemetry.io/docs/demo.
+</Card>

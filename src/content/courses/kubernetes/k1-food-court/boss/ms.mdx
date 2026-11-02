@@ -1,0 +1,78 @@
+---
+id: k8s-k1-boss
+world: 1
+title: Pembukaan rasmi
+summary: "Anda akan belajar: mulakan kluster kind, letak satu pod, dan baca statusnya 3 cara."
+minutes: 6
+xp: 50
+interactives: [Choice, CommandBuilder, Transcript, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k1-l13]
+scenario: k1-first-pod
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "kind quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+---
+
+<Card id="hook" type="hook">
+Boss: hari pembukaan rasmi! Gerai pertama anda dibuka hari ini. Di mana anda berlatih dahulu?
+
+<Interactive name="Choice" options={[{ label: 'Kluster kind pakai buang dalam laptop saya', correct: true, why: 'Ya. Silap di situ tiada kos.' }, { label: 'Kluster syarikat yang sedang live', why: 'Jangan berlatih di tempat pelanggan berada.' }, { label: 'Tak perlu: terus buka', why: 'Raptai tangkap kesilapan kecil dahulu.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Bilik 1: buka medan selera. Bina arahan untuk kluster bernama dev, dengan fail 3 gerai.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'Kubernetes IN Docker' }, { text: 'create cluster', means: 'buka medan selera baharu' }, { text: '--name dev', means: 'namakan ia dev' }, { text: '--config kind-dev.yaml', means: 'satu gerai pejabat dan dua pekerja' }]} decoys={[{ text: 'kubectl apply -f', means: 'hantar pesanan ke kluster yang sudah ada' }, { text: 'docker compose up', means: 'hidupkan set hidangan, bukan kluster' }]} success="Bilik 1 selesai! Medan selera sedang dibuka." />
+
+<Hint>Alat dahulu, kemudian tindakan, kemudian nama dan fail.</Hint>
+</Card>
+
+<Card id="see-ready" type="see">
+<Interactive name="Transcript" title="bash" label="kind cipta kluster dev, tanda setiap langkah, dan tetapkan context kubectl ke kind-dev." lines={[{ cmd: 'kind create cluster --name dev --config kind-dev.yaml' }, { out: 'Creating cluster "dev" ...\n ✓ Ensuring node image (kindest/node:v1.37.0) 🖼\n ✓ Preparing nodes 📦 📦 📦\n ✓ Writing configuration 📜\n ✓ Starting control-plane 🕹️\n ✓ Installing CNI 🔌\n ✓ Installing StorageClass 💾\n ✓ Joining worker nodes 🚜' }, { out: 'Set kubectl context to "kind-dev"', color: 'green' }, { out: 'You can now use your cluster with:\n\nkubectl cluster-info --context kind-dev\n\nHave a nice day! 👋' }]} />
+
+kind cetak ini. Cari baris hijau: kubectl kini menghala ke kind-dev. Bar merah jambu anda pun akan kata begitu.
+</Card>
+
+<Card id="try-deploy" type="try">
+Bilik 2: letak dulang pertama anda. Apply `tray.yaml`, kemudian tunggu sehingga ia tulis Running.
+
+<Interactive name="FoodCourtSim" scenario="k1-first-pod" goal={{ objectExists: ['pod/tray'], podStatus: { selector: 'app=tray', status: 'Running' } }} hints={['Taip kubectl apply -f tray.yaml dan tekan Enter.', 'Tunggu sekejap, atau tekan +1s, kemudian taip kubectl get pods.']} success="Bilik 2 selesai! Dulang pertama anda Running." />
+
+<Hint>`ls` tunjuk fail dalam folder anda.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dulang anda tunjuk `0/1 ContainerCreating`. Ada yang rosak?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: gerai masih menyediakannya. Tunggu sekejap.', correct: true, why: 'Betul. kubelet sedang tarik image dan hidupkan container.' }, { label: 'Ya: padam sekarang juga', why: 'Sabar dulu. Tengok semula dalam beberapa saat.' }, { label: 'Ya: kluster dah mati', why: 'Kluster jawab anda. Ia cuma sibuk.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Bilik 3: baca status dulang 3 cara. Mula dengan `kubectl get pod tray`. Kemudian `kubectl describe pod tray`. Akhir sekali, `kubectl get pod tray -o yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k1-tray" goal={{ typed: '^(kubectl|k) describe (pods?|po)( |/)tray\\b', lastTyped: '^(kubectl|k) get (pods?|po)( |/)tray\\b.*-o ?yaml' }} hints={['Cara 1: kubectl get pod tray', 'Cara 2: kubectl describe pod tray', 'Cara 3: kubectl get pod tray -o yaml']} success="Bilik 3 selesai! Satu perkataan, satu cerita, setiap medan." />
+
+<Hint>Habiskan dengan yang `-o yaml`.</Hint>
+</Card>
+
+<Card id="check-ways" type="check">
+Cara mana yang paling sesuai? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'get', label: '`get`' }, { id: 'describe', label: '`describe`' }, { id: 'yaml', label: '`-o yaml`' }]} items={[{ label: 'Satu perkataan STATUS, contohnya Running', bucket: 'get', why: 'get beri satu baris untuk setiap dulang.' }, { label: 'Jadual pantas untuk banyak dulang', bucket: 'get', why: 'get senaraikan semuanya sekali gus.' }, { label: 'Events: scheduled, pulled, started', bucket: 'describe', why: 'describe berakhir dengan Events.' }, { label: 'Cerita untuk dibaca bila dulang tersekat', bucket: 'describe', why: 'Mula di situ bila ada masalah.' }, { label: 'Setiap medan, tepat seperti disimpan', bucket: 'yaml', why: '-o yaml tunjuk seluruh objek.' }, { label: 'Blok status penuh, dengan conditions', bucket: 'yaml', why: 'status duduk di hujung YAML.' }]} success="Tiga cara, tiga kerja. Boss hampir tewas!" />
+</Card>
+
+<Card id="try-real" type="try">
+Bilik terakhir, betul-betul: buka medan selera anda sendiri di laptop.
+
+<Interactive name="Mission" id="k8s-k1-boss-real" steps={[{ id: 'create', text: 'Buka medan selera (fail 3 gerai ada dalam pelajaran 7).', command: 'kind create cluster --name dev --config kind-dev.yaml' }, { id: 'here', text: 'Semak di mana anda berada.', command: 'kubectl config current-context' }, { id: 'tray', text: 'Letak satu dulang.', command: 'kubectl run tray --image=nginx:1.29-alpine' }, { id: 'wait', text: 'Tunggu sehingga ia sedia.', command: 'kubectl wait --for=condition=Ready pod/tray --timeout=60s' }, { id: 'get', text: 'Cara 1.', command: 'kubectl get pod tray' }, { id: 'describe', text: 'Cara 2.', command: 'kubectl describe pod tray' }, { id: 'yaml', text: 'Cara 3.', command: 'kubectl get pod tray -o yaml' }, { id: 'close', text: 'Tutup kedai untuk malam ini.', command: 'kind delete cluster --name dev' }]} success="Pembukaan rasmi, betul-betul! Medan selera ini milik anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka kluster, jalankan pod dan semak statusnya 3 cara.
+</Card>

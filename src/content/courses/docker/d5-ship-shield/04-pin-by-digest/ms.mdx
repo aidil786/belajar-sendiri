@@ -1,0 +1,70 @@
+---
+id: docker-d5-l04
+world: 5
+title: "Pin ikut digest: @sha256"
+summary: "Anda akan belajar: pin image ikut digest, supaya anda dapat bait yang sama setiap kali."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SpotLines, SortCards, Mission]
+needs: [docker-d5-l03]
+scenario: d5-digest
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pin versi base image", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "docker pull: pull ikut digest", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "Digest image", url: "https://docs.docker.com/dhi/core-concepts/digests/" }
+---
+
+<Card id="hook" type="hook">
+Resepi anda tulis `FROM node:24-alpine`. Bulan depan, baris yang sama beri base yang lain. Macam mana?
+
+<Interactive name="Choice" options={[{ label: 'Penerbit pindahkan tag itu ke image lebih baru', correct: true, why: 'Tag boleh berpindah. Image rasmi dibina semula dengan pembaikan.' }, { label: 'Docker ubah Dockerfile anda', why: 'Fail anda tetap sama. Tag itu tunjuk ke tempat baru.' }, { label: 'Ia tak mungkin berubah', why: 'Tag cuma label. Penerbit boleh pindahkannya bila-bila masa.' }]} />
+</Card>
+
+<Card id="see-digest" type="see">
+<Interactive name="KitchenReplay" scenario="d5-digest-pull" commands={["docker pull node:24-alpine"]} label="docker pull node:24-alpine muat turun layer-nya, kemudian cetak Digest: sha256 dan 64 huruf dan nombor." />
+
+Tengok baris `Digest:`. **<Term id="digest">Digest</Term>** (cap jari) dibuat daripada setiap bait dalam pek. Tukar satu bait, digest pun berubah.
+</Card>
+
+<Card id="try-run" type="try">
+`$PIN` simpan digest node. Jalankan `node --version` daripada pek yang tepat itu: letak `@$PIN` selepas nama image.
+
+<Interactive name="KitchenSim" scenario="d5-digest" goal={{ lastTyped: '@(\\$PIN|sha256:)', lastExit: 0 }} hints={['Tambah @$PIN terus selepas node:24-alpine.', 'Taip docker run --rm node:24-alpine@$PIN node --version']} success="Sudah dipin! Cap jari sama, pek sama, setiap kali." />
+
+<Hint>`docker run --rm node:24-alpine@$PIN node --version`</Hint>
+</Card>
+
+<Card id="see-recipe" type="see">
+Pin resepi juga. Tag untuk manusia, digest untuk mesin.
+
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine' }, { text: 'FROM node:latest' }, { text: 'FROM node:24-alpine@sha256:8a32c8cf649a…', target: true }, { text: 'FROM node' }]} prompt="Tekan baris yang sentiasa dapat base yang sama." success="Ya! Digest kuncinya. Tag cuma bantu manusia membaca." />
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang pindahkan `node:24-alpine` ke image baru. Resepi anda tulis `node:24-alpine@sha256:8a32…`. Anda bina atas apa?
+
+<Interactive name="Choice" options={[{ label: 'Base lama yang sama: digest menang', correct: true, why: 'Bila ada kedua-duanya, Docker guna digest sahaja. Tag diabaikan.' }, { label: 'Base baru: tag menang', why: 'Bila ada kedua-duanya, Docker guna digest sahaja.' }, { label: 'Binaan berhenti', why: 'Pek lama masih ada dalam peti sejuk. Docker ambil ikut digest.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Nama mana boleh tunjuk ke pek lain esok?
+
+<Interactive name="SortCards" buckets={[{ id: 'moves', label: 'Boleh berpindah' }, { id: 'fixed', label: 'Tak pernah berpindah' }]} items={[{ label: '`node:24-alpine`', bucket: 'moves', why: 'Penerbit pindahkannya setiap kali bina semula.' }, { label: '`kedai-api:latest`', bucket: 'moves', why: 'Ia pindah setiap kali anda bina.' }, { label: '`kedai-api:1.4.2`', bucket: 'moves', why: 'Anda janji tak pindahkannya. Peti sejuk tetap benarkan.' }, { label: '`node@sha256:8a32…`', bucket: 'fixed', why: 'Digest sama, bait sama. Sentiasa.' }]} success="Hanya digest yang kekal." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pin image ikut digest.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pin ada kosnya: anda juga pin pepijat lama. Biar robot kemas kininya. Dependabot buka pull request bila base berubah ([Dunia Git 7](/ms/git/#world-7)). Digest yang salah dapat `not found`. Image pelbagai platform ada satu digest untuk senarai, dan satu untuk setiap platform.
+
+Latihan sebenar (pilihan), di komputer anda:
+
+<Interactive name="Mission" id="d5-l04-rep" steps={[{ id: 'pull', text: 'Pull image kecil. Salin sha256:… dari baris Digest.', command: 'docker pull alpine:3.22' }, { id: 'run', text: 'Jalankan ikut digest. Tampal digest anda selepas @.', command: 'docker run --rm alpine:3.22@sha256:PASTE-HERE echo pinned' }, { id: 'recipe', text: 'Guna nama yang sama dalam baris FROM sebuah Dockerfile.' }]} success="Resepi anda kini dapat base yang sama setiap kali." />
+</Card>

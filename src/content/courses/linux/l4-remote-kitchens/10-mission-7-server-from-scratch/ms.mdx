@@ -1,0 +1,80 @@
+---
+id: linux-l4-m7
+world: 4
+title: "Misi capstone 7: Server dari kosong"
+summary: "Anda akan belajar: menyediakan server sebenar sendiri: pengguna, kunci, firewall, nginx, skrip dan timer."
+minutes: 5
+xp: 100
+interactives: [OrderList, SwipeJudge, Choice, SpotLines, Mission, MissionCheck]
+needs: [linux-l4-l09]
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian Reference: system tips", url: "https://www.debian.org/doc/manuals/debian-reference/ch09.en.html" }
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+---
+
+<Card id="hook" type="hook">
+Misi 7: buka dapur cawangan baharu, dari mesin kosong. Mula-mula, rancang binaannya. Susun kerja ikut tertib yang selamat.
+
+<Interactive name="OrderList" items={['Kemas kini pakej', 'Tambah pengguna anda sendiri dengan sudo', 'Log masuk dengan kunci SSH', 'Firewall: benarkan SSH dan web, kemudian hidupkan', 'nginx dengan halaman anda sendiri', 'Skrip sandaran dalam mod ketat', 'Timer systemd untuk skrip itu', 'Uji dari laptop anda']} label="Kerja pertama di atas" success="Keselamatan dahulu, kedai kemudian, kerja rutin akhir sekali." />
+</Card>
+
+<Card id="see-safety" type="see">
+Server sebenar, risiko sebenar. Peraturan yang baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Guna VM atau playground pakai buang, jangan server kerja.', good: true, why: 'Jika rosak, padam dan mula semula.' }, { text: 'Biarkan tetingkap SSH kedua terbuka semasa ubah firewall.', good: true, why: 'Jika satu peraturan kunci anda di luar, tetingkap terbuka itu masih berfungsi.' }, { text: 'Tampal curl … | sudo bash dari forum.', good: false, why: 'Jangan sesekali jalankan kod yang belum dibaca sebagai root.' }, { text: 'Letak kunci persendirian dalam repo GitHub, sebagai sandaran.', good: false, why: 'Hanya skrip dan fail unit masuk. Kunci kekal di rumah.' }]} />
+</Card>
+
+<Card id="see-script" type="see">
+Skrip sandaran anda. Baris mana yang buat ia berhenti pada masalah pertama?
+
+```bash
+#!/bin/bash
+set -euo pipefail
+src="$HOME/kedai/menu"
+dest="$HOME/backups"
+mkdir -p "$dest"
+cp -r "$src" "$dest/menu-$(date +%F)"
+echo "backup done"
+```
+
+<Interactive name="Choice" compact options={[{ label: 'Baris 2', correct: true, why: 'set -euo pipefail: penyelia yang tegas.' }, { label: 'Baris 5', why: 'mkdir -p buat folder. Ia tak hentikan apa-apa.' }, { label: 'Baris 7', why: 'echo cuma melapor di hujung.' }]} />
+</Card>
+
+<Card id="see-unit" type="see">
+Timer memulakan satu servis. Simpan ini sebagai `/etc/systemd/system/kedai-backup.service`, dengan pengguna anda sendiri. Tekan baris yang jalankan skrip.
+
+<Interactive name="SpotLines" lines={[{ text: '[Unit]' }, { text: 'Description=Back up the Kedai menu' }, { text: '[Service]' }, { text: 'Type=oneshot' }, { text: 'User=aina' }, { text: 'ExecStart=/home/aina/backup.sh', target: true }]} prompt="Tekan baris yang jalankan skrip." success="ExecStart menjalankannya. Fail timer ialah yang dari pelajaran 5." />
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang bina betul-betul. Tanda anda disimpan. Tukar aina dan SERVER-IP kepada milik anda.
+
+<Interactive name="Mission" id="linux-l4-m7-build" steps={[{ id: 'machine', text: 'Dapatkan mesin Debian 13 pakai buang: VM di laptop anda, percubaan cloud atau playground percuma.' }, { id: 'update', text: 'Kemas kini pakej.', command: 'sudo apt update && sudo apt upgrade -y' }, { id: 'user', text: 'Tambah pengguna anda dan beri sudo.', command: 'sudo adduser aina && sudo usermod -aG sudo aina' }, { id: 'key', text: 'Di laptop anda: gantung mangga anda di server.', command: 'ssh-copy-id aina@SERVER-IP' }, { id: 'tools', text: 'Di server: pasang pengawal dan kaunter.', command: 'sudo apt install -y ufw nginx' }, { id: 'fw', text: 'Benarkan SSH dan web. Biarkan tetingkap SSH kedua terbuka.', command: "sudo ufw allow OpenSSH && sudo ufw allow 'Nginx HTTP'" }, { id: 'fwon', text: 'Hidupkan pengawal dan baca senarainya.', command: 'sudo ufw enable && sudo ufw status' }, { id: 'page', text: 'Pasang papan tanda anda.', command: "echo '<h1>Kedai Kancil, branch 2</h1>' | sudo tee /var/www/html/index.html" }, { id: 'menu', text: 'Buat menu untuk disandarkan.', command: "mkdir -p ~/kedai/menu && echo 'nasi lemak 5' > ~/kedai/menu/today.txt" }, { id: 'script', text: 'Simpan backup.sh dari kad di atas, kemudian benarkan ia berjalan dan jalankannya.', command: 'chmod +x ~/backup.sh && ~/backup.sh' }, { id: 'units', text: 'Simpan servis di atas dan timer dari pelajaran 5, kemudian hidupkan timer.', command: 'sudo systemctl daemon-reload && sudo systemctl enable --now kedai-backup.timer' }, { id: 'timers', text: 'Semak bila ia berjalan seterusnya.', command: 'systemctl list-timers kedai-backup.timer' }, { id: 'repo', text: 'Letak backup.sh dan kedua-dua fail unit dalam repo GitHub awam bernama server-from-scratch.' }, { id: 'clean', text: 'Bila selesai: padam VM atau playground itu.' }]} success="Langkah misi siap! Sekarang biar GitHub sahkan sebahagiannya." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub boleh lihat fail anda. Taip nama pengguna anda dan tekan Semak sekarang.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'server-from-scratch', label: 'Repo server-from-scratch anda awam' }, { type: 'file', repo: 'server-from-scratch', path: 'backup.sh', label: 'Ia ada backup.sh' }, { type: 'file', repo: 'server-from-scratch', path: 'kedai-backup.service', label: 'Ia ada kedai-backup.service' }, { type: 'file', repo: 'server-from-scratch', path: 'kedai-backup.timer', label: 'Ia ada kedai-backup.timer' }]} success="GitHub nampak resipi server anda!" />
+</Card>
+
+<Card id="self-check" type="check">
+Selebihnya hanya anda boleh lihat. Tanda yang benar.
+
+<Interactive name="Mission" id="linux-l4-m7-self" title="Semakan sendiri" steps={[{ id: 'key', text: 'ssh aina@SERVER-IP log masuk tanpa kata laluan.' }, { id: 'fw', text: 'sudo ufw status senaraikan OpenSSH dan Nginx HTTP sahaja.' }, { id: 'page', text: 'Laptop anda tunjuk papan tanda anda di http://SERVER-IP.' }, { id: 'script', text: '~/backup.sh; echo $? cetak backup done, kemudian 0.' }, { id: 'timer', text: 'systemctl list-timers tunjuk kedai-backup.timer dengan masa NEXT.' }, { id: 'nokey', text: 'Tiada kunci persendirian dan tiada kata laluan dalam repo.' }]} success="Misi 7 selesai: server, dari kosong, oleh anda!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sediakan server Linux kecil yang selamat dari mesin kosong.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: dapur cawangan sebenar ada pekerja yang terhidu asap. Server tak perasan apa-apa melainkan anda tambah semakan. Kursus Pemantauan & Observability tambah penggera asap. Nanti, kukuhkan SSH: matikan log masuk kata laluan, tetapi hanya selepas log masuk kunci berjaya.
+</Card>

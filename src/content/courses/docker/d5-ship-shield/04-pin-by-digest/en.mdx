@@ -1,0 +1,70 @@
+---
+id: docker-d5-l04
+world: 5
+title: "Pin by digest: @sha256"
+summary: "You will learn: to pin an image by its digest, so you get the exact same bytes every time."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SpotLines, SortCards, Mission]
+needs: [docker-d5-l03]
+scenario: d5-digest
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pin base image versions", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "docker pull: pull by digest", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "Image digests", url: "https://docs.docker.com/dhi/core-concepts/digests/" }
+---
+
+<Card id="hook" type="hook">
+Your recipe says `FROM node:24-alpine`. Next month, the same line gives you a different base. How?
+
+<Interactive name="Choice" options={[{ label: 'The publisher moved the tag to a newer image', correct: true, why: 'Tags can move. Official images are rebuilt with fixes.' }, { label: 'Docker changed your Dockerfile', why: 'Your file stayed the same. The tag points somewhere new.' }, { label: 'It can never change', why: 'Tags are labels. The publisher can move them any time.' }]} />
+</Card>
+
+<Card id="see-digest" type="see">
+<Interactive name="KitchenReplay" scenario="d5-digest-pull" commands={["docker pull node:24-alpine"]} label="docker pull node:24-alpine downloads its layers, then prints Digest: sha256 and 64 letters and numbers." />
+
+Look at the `Digest:` line. A **<Term id="digest">digest</Term>** is the pack's fingerprint, made from every byte inside. Change one byte, and the digest changes.
+</Card>
+
+<Card id="try-run" type="try">
+`$PIN` holds node's digest. Run `node --version` from exactly that pack: put `@$PIN` after the image name.
+
+<Interactive name="KitchenSim" scenario="d5-digest" goal={{ lastTyped: '@(\\$PIN|sha256:)', lastExit: 0 }} hints={['Add @$PIN right after node:24-alpine.', 'Type docker run --rm node:24-alpine@$PIN node --version']} success="Pinned! Same fingerprint, same pack, every time." />
+
+<Hint>`docker run --rm node:24-alpine@$PIN node --version`</Hint>
+</Card>
+
+<Card id="see-recipe" type="see">
+Pin the recipe too. Tag for people, digest for machines.
+
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine' }, { text: 'FROM node:latest' }, { text: 'FROM node:24-alpine@sha256:8a32c8cf649a…', target: true }, { text: 'FROM node' }]} prompt="Tap the line that always gets the same base." success="Yes! The digest locks it. The tag just helps humans read it." />
+</Card>
+
+<Card id="predict" type="predict">
+Someone moves `node:24-alpine` to a new image. Your recipe says `node:24-alpine@sha256:8a32…`. What do you build on?
+
+<Interactive name="Choice" options={[{ label: 'The same old base: the digest wins', correct: true, why: 'With both, Docker uses only the digest. The tag is ignored.' }, { label: 'The new base: the tag wins', why: 'With both, Docker uses only the digest.' }, { label: 'The build stops', why: 'The old pack is still in the freezer. Docker fetches it by digest.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Which names can point to a different pack tomorrow?
+
+<Interactive name="SortCards" buckets={[{ id: 'moves', label: 'Can move' }, { id: 'fixed', label: 'Never moves' }]} items={[{ label: '`node:24-alpine`', bucket: 'moves', why: 'The publisher moves it with every rebuild.' }, { label: '`kedai-api:latest`', bucket: 'moves', why: 'It moves with every build.' }, { label: '`kedai-api:1.4.2`', bucket: 'moves', why: 'You promise not to move it. The freezer still allows it.' }, { label: '`node@sha256:8a32…`', bucket: 'fixed', why: 'Same digest, same bytes. Always.' }]} success="Only a digest is set in stone." />
+</Card>
+
+<Card id="win" type="win">
+You can now pin an image by its digest.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pinning has a cost: you also pin old bugs. Let a robot bump it. Dependabot opens a pull request when the base changes ([Git World 7](/en/git/#world-7)). A wrong digest gets `not found`. A multi-platform image has one digest for the whole list, and one per platform.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="d5-l04-rep" steps={[{ id: 'pull', text: 'Pull a small image. Copy the sha256:… from the Digest line.', command: 'docker pull alpine:3.22' }, { id: 'run', text: 'Run it by digest. Paste your digest after the @.', command: 'docker run --rm alpine:3.22@sha256:PASTE-HERE echo pinned' }, { id: 'recipe', text: 'Use the same name in the FROM line of a Dockerfile.' }]} success="Your recipe now gets the exact same base every time." />
+</Card>

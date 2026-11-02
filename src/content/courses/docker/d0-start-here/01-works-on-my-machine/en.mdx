@@ -1,0 +1,64 @@
+---
+id: docker-d0-l01
+world: 0
+title: It works on my machine
+summary: "You will learn: why an app that works on your laptop breaks on another, and how containers fix it."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, KitchenReplay, SwipeJudge]
+needs: []
+scenario: d0-rooms
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "Docker overview", url: "https://docs.docker.com/get-started/docker-overview/" }
+---
+
+<Card id="hook" type="hook">
+Your shop app runs fine on your laptop. Mei runs the same code. It crashes! You say: “But it works on my machine!” Why did it break?
+
+<Interactive name="Choice" options={[{ label: 'Her laptop has different tools and settings', correct: true, why: 'Same code, different kitchen. That is the real problem.' }, { label: 'Mei made a typo', why: 'She ran the very same code. Her laptop around it is different.' }, { label: 'The code changed by itself', why: 'Code never changes by itself. The laptop around it is different.' }]} />
+</Card>
+
+<Card id="see-kitchens" type="see">
+Every kitchen is different. One stove is gas, one is electric. One has no sambal. The same recipe tastes different. Git copies your code. What does it leave behind?
+
+<Interactive name="SortCards" buckets={[{ id: 'git', label: 'Git copies it' }, { id: 'laptop', label: 'Each laptop is different' }]} items={[{ label: 'Your code files', bucket: 'git', why: 'Your code lives in the repo. Everyone gets the same files.' }, { label: 'Node version 24', bucket: 'laptop', why: 'Mei may have Node 20. Git does not install Node.' }, { label: 'The installed libraries', bucket: 'laptop', why: 'Libraries are installed on each laptop, often at other versions.' }, { label: 'Windows, Mac or Linux', bucket: 'laptop', why: 'Each laptop runs its own system.' }, { label: 'A setting like PORT=3000', bucket: 'laptop', why: 'Settings live on each laptop, not in the repo.' }, { label: 'Your README', bucket: 'git', why: 'It is a file in the repo, so Git copies it.' }]} success="Git copies the recipe. Every kitchen around it is different." />
+</Card>
+
+<Card id="see-lunchbox" type="see">
+<Interactive name="KitchenReplay" scenario="d0-rooms" commands={['docker run -d --name shop -p 8080:80 nginx:1.30-alpine']} label="docker run starts the shop app inside a container. The picture shows one green lunchbox, open on hatch 8080." />
+
+Pack the dish with everything it needs in a sealed lunchbox. That is a **<Term id="container">container</Term>**. `docker run` opens a fresh lunchbox and starts the app inside.
+</Card>
+
+<Card id="try-pack" type="try">
+What goes into the lunchbox? Swipe right to pack it. Swipe left to leave it out.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The app code', good: true, why: 'Of course. It is the dish itself.' }, { text: 'Node 24, the exact version', good: true, why: 'Same version on every laptop. No surprises.' }, { text: 'The libraries the app uses', good: true, why: 'They travel with the app, so nothing is missing.' }, { text: 'Your holiday photos', good: false, why: 'The app does not need them. Keep the box small.' }, { text: 'Your whole web browser', good: false, why: 'The app runs without a browser. Leave it out.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Mei installs Docker. She runs your lunchbox on her laptop. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It runs just like on yours', correct: true, why: 'The box brings its own Node and libraries. Her kitchen does not matter now.' }, { label: 'It crashes like before', why: 'The box carries its own tools now. Only Docker is needed.' }, { label: 'She must install Node 24 first', why: 'Node 24 is already inside the box.' }]} />
+</Card>
+
+<Card id="check" type="check">
+A container fixes the kitchen, not the recipe. Which problems does it fix?
+
+<Interactive name="SortCards" buckets={[{ id: 'fixed', label: 'The box fixes it' }, { id: 'not', label: 'Still your job' }]} items={[{ label: 'Mei has a different Node version', bucket: 'fixed', why: 'The box brings its own Node.' }, { label: 'A library is missing', bucket: 'fixed', why: 'The libraries ride inside the box.' }, { label: 'A typo in your code', bucket: 'not', why: 'A bug travels in the box too. Fix the recipe.' }, { label: 'A setup step everyone forgets', bucket: 'fixed', why: 'The setup is done once, inside the box.' }, { label: 'The Wi-Fi is slow', bucket: 'not', why: 'A box cannot fix the network.' }]} success="Right! Same box, same taste. But a bug is still a bug." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why containers exist.
+</Card>
+
+<Card id="deeper" type="deeper">
+Containers help whole teams. A new teammate gets the app running in minutes. The server runs the same box you tested.
+
+Real rep (optional): ask a friend to type `node --version`. Compare it with yours. Different? Now you know why containers exist.
+</Card>

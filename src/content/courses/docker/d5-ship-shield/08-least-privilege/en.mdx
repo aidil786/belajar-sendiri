@@ -1,0 +1,70 @@
+---
+id: docker-d5-l08
+world: 5
+title: "Least privilege containers"
+summary: "You will learn: to run a container as non-root, with a read-only filesystem and no extra powers."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SortCards, KitchenSim, Choice, Transcript, Mission]
+needs: [docker-d5-l07]
+scenario: d5-shield
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Runtime privilege and Linux capabilities", url: "https://docs.docker.com/engine/containers/run/" }
+  - { label: "docker container run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Docker Engine security", url: "https://docs.docker.com/engine/security/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-shield" commands={["docker run --rm alpine:3.22 id"]} label="Inside a plain alpine container, id prints uid=0(root)." />
+
+Inside the lunchbox, your app runs as root: the head chef, holding every key. If someone breaks in, they hold every key too.
+</Card>
+
+<Card id="see-shields" type="see">
+**<Term id="least-privilege" course="cicd">Least privilege</Term>** means the box gets only the keys it needs. Docker has three shields. Match each one to what it does.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: '--user (or USER)' }, { id: 'ro', label: '--read-only' }, { id: 'caps', label: '--cap-drop ALL' }]} items={[{ label: 'Not the head chef: no root inside', bucket: 'user', why: 'The app runs as a plain user, like node.' }, { label: 'A sealed lid: no new files in the box', bucket: 'ro', why: 'Nobody can drop a tool into the box.' }, { label: 'Put away the special knives', bucket: 'caps', why: 'Root powers, like changing who owns a file.' }]} success="Three shields, three different jobs." />
+</Card>
+
+<Card id="see-errors" type="see">
+<Interactive name="KitchenReplay" scenario="d5-shield" commands={["docker run --rm --read-only alpine:3.22 touch /hello", "docker run --rm --cap-drop ALL alpine:3.22 chown nobody /tmp"]} fails={["docker run --rm --read-only alpine:3.22 touch /hello", "docker run --rm --cap-drop ALL alpine:3.22 chown nobody /tmp"]} label="With --read-only, touch fails: Read-only file system. With --cap-drop ALL, chown fails: Operation not permitted." />
+
+Real errors, plain words. `Read-only file system`: the lid is sealed. `Operation not permitted`: that knife, a <Term id="capability">capability</Term>, was put away.
+</Card>
+
+<Card id="try-shields" type="try">
+Run the API with all three shields. Its image already says `USER node`. Add the other two.
+
+<Interactive name="KitchenSim" scenario="d5-shield" goal={{ running: ['api'], readOnly: ['api'], containerUser: { api: 'nonroot' }, reachable: 'localhost:3000', typed: 'cap-drop[ =]ALL' }} hints={['Add --read-only and --cap-drop ALL to docker run.', 'Type docker run -d --name api --read-only --cap-drop ALL -p 3000:3000 kedai-api:1.0']} success="Shields up! The API still serves orders." />
+
+<Hint>`docker run -d --name api --read-only --cap-drop ALL -p 3000:3000 kedai-api:1.0`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+nginx starts as root and writes cache files first. You run it with `--read-only`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It stops at once, with an error', correct: true, why: 'nginx must write a few files. The sealed lid says no.' }, { label: 'It runs fine', why: 'nginx makes its cache folder first. It can’t.' }, { label: 'Docker unseals the lid for it', why: 'Docker never changes your flags.' }]} />
+</Card>
+
+<Card id="check-nginx" type="check">
+<Interactive name="Transcript" title="bash" label="nginx with --read-only stops: mkdir of /var/cache/nginx/client_temp failed, Read-only file system. With two tmpfs folders it runs: Up 2 seconds." lines={[{ cmd: 'docker run --rm --read-only nginx:1.30-alpine' }, { out: '…', color: 'dim' }, { out: 'nginx: [emerg] mkdir() "/var/cache/nginx/client_temp" failed (30: Read-only file system)', color: 'red' }, { cmd: 'docker run -d --name web --read-only --tmpfs /var/cache/nginx --tmpfs /run nginx:1.30-alpine' }, { out: '…', color: 'dim' }, { cmd: "docker ps --filter name=web --format '{{.Status}}'" }, { out: 'Up 2 seconds', color: 'green' }]} />
+
+The fix: two small scratch folders in memory, with `--tmpfs`. Everything else stays sealed.
+</Card>
+
+<Card id="win" type="win">
+You can now lock a container down: non-root, read-only, no extra powers.
+</Card>
+
+<Card id="deeper" type="deeper">
+By default Docker keeps 14 capabilities, like `CHOWN` and `NET_BIND_SERVICE`. Add back only what you need: `--cap-add CHOWN`. `--security-opt no-new-privileges` stops a program from gaining more power. Never use `--privileged`, and never mount the Docker socket: both hand over the whole host. Compose has `user`, `read_only` and `cap_drop`.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="d5-l08-rep" steps={[{ id: 'root', text: 'See who you are in a plain container.', command: 'docker run --rm alpine:3.22 id' }, { id: 'shield', text: 'Now with all three shields.', command: 'docker run --rm --user 1000 --read-only --cap-drop ALL alpine:3.22 id' }, { id: 'yours', text: 'Try the shields on one of your own images. Fix what breaks with --tmpfs.' }]} success="Your lunchboxes are locked down!" />
+</Card>

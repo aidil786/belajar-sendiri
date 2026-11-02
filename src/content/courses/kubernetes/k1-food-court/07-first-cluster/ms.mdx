@@ -1,0 +1,84 @@
+---
+id: k8s-k1-l07
+world: 1
+title: Kluster pertama anda dengan kind
+summary: "Anda akan belajar: cara buka kluster latihan dalam laptop sendiri dengan kind."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, CommandBuilder, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k1-l06]
+scenario: k1-first-cluster
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kind quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "Install kubectl", url: "https://kubernetes.io/docs/tasks/tools/" }
+  - { label: "minikube start", url: "https://minikube.sigs.k8s.io/docs/start/" }
+  - { label: "k3d", url: "https://k3d.io/" }
+---
+
+<Card id="hook" type="hook">
+Kubernetes jalankan pusat data yang besar. Bolehkah anda jalankan kluster dalam laptop sendiri?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: kind bina kluster daripada container Docker', correct: true, why: 'Ya! Setiap gerai cuma satu container. Percuma, dan selamat untuk dirosakkan.' }, { label: 'Tak boleh, mesti sewa server cloud', why: 'Cloud ialah satu cara. Untuk latihan, laptop anda pun boleh.' }, { label: 'Hanya dengan 3 laptop', why: 'Satu laptop boleh berlakon jadi 3 gerai.' }]} />
+</Card>
+
+<Card id="see-kind" type="see">
+<Interactive name="Transcript" title="bash" label="kind create cluster --name dev cetak langkahnya dengan tanda betul, tetapkan context kubectl ke kind-dev, dan ucap Have a nice day." lines={[{ cmd: 'kind create cluster --name dev --config kind-dev.yaml' }, { out: 'Creating cluster "dev" ...\n ✓ Ensuring node image (kindest/node:v1.37.0) 🖼\n ✓ Preparing nodes 📦 📦 📦\n ✓ Writing configuration 📜\n ✓ Starting control-plane 🕹️\n ✓ Installing CNI 🔌\n ✓ Installing StorageClass 💾\n ✓ Joining worker nodes 🚜' }, { out: 'Set kubectl context to "kind-dev"', color: 'green' }, { out: 'You can now use your cluster with:\n\nkubectl cluster-info --context kind-dev\n\nHave a nice day! 👋' }]} />
+
+**<Term id="kind">kind</Term>** bermaksud Kubernetes IN Docker. Setiap gerai ialah satu container Docker dalam laptop anda. Satu arahan buka medan selera latihan.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang buka kluster bernama dev.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'alatnya: Kubernetes IN Docker' }, { text: 'create cluster', means: 'buka medan selera baharu' }, { text: '--name dev', means: 'namakan ia dev' }]} decoys={[{ text: 'kubectl', means: 'bercakap dengan kluster yang sudah ada' }, { text: 'docker run', means: 'hidupkan satu container, bukan kluster' }]} success="Itulah dia! kind namakan context itu kind-dev." />
+</Card>
+
+<Card id="predict-config" type="predict">
+Fail ini ialah `kind-dev.yaml`. Berapa gerai yang kluster anda akan dapat?
+
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+```
+
+<Interactive name="Choice" options={[{ label: '3: satu gerai pejabat dan dua pekerja', correct: true, why: 'Ya. Setiap baris role ialah satu node.' }, { label: '1', why: 'Kira baris role di bawah nodes.' }, { label: '2', why: 'Control plane pun satu node.' }]} />
+</Card>
+
+<Card id="try-hello" type="try">
+Kluster anda dah sedia. Sapa ia: taip `kubectl cluster-info`. Kemudian taip `kubectl get nodes`.
+
+<Interactive name="FoodCourtSim" scenario="k1-first-cluster" goal={{ typed: 'cluster-info', lastTyped: '^(kubectl|k) get (nodes?|no)\\b' }} hints={['Taip kubectl cluster-info dan tekan Enter.', 'Kemudian taip kubectl get nodes.']} success="Hai, kind-dev! Tiga gerai, semuanya Ready." />
+
+<Hint>Lihat bar merah jambu: kubectl sudah menghala ke kind-dev.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu diperbaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pasang kind dan kubectl ikut dokumen rasmi', good: true, why: 'Pasang daripada sumber rasmi sahaja.' }, { text: 'Tampal skrip pemasangan orang asing terus ke dalam bash', good: false, why: 'Anda tak nampak apa ia buat. Ikut langkah rasmi.' }, { text: 'Berlatih di kluster syarikat', good: false, why: 'Guna kluster kind pakai buang. Rosakkan sesuka hati.' }, { text: 'Padam kluster latihan bila dah siap', good: true, why: 'kind delete cluster --name dev pulangkan memori anda.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Latihan sebenar (pilihan): buka medan selera anda sendiri. Docker mesti berjalan dahulu.
+
+<Interactive name="Mission" id="k8s-k1-l07-real" steps={[{ id: 'docker', text: 'Semak Docker berjalan: Docker Desktop, atau Docker Engine di Linux.', command: 'docker version' }, { id: 'install', text: 'Pasang kind dan kubectl ikut dokumen rasmi (pautan dalam Go deeper).' }, { id: 'config', text: 'Simpan fail 3 gerai daripada pelajaran ini sebagai kind-dev.yaml.' }, { id: 'create', text: 'Buka medan selera.', command: 'kind create cluster --name dev --config kind-dev.yaml' }, { id: 'nodes', text: 'Semak gerai.', command: 'kubectl get nodes' }, { id: 'delete', text: 'Dah siap untuk hari ini? Tutup.', command: 'kind delete cluster --name dev' }]} success="Medan selera anda sendiri dibuka, dan ditutup semula!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka kluster latihan dengan kind.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kluster latihan lain pun boleh. minikube jalankan kluster dalam container atau mesin maya. k3d jalankan k3s, Kubernetes yang ringan, dalam Docker. Arahan kubectl tetap sama.
+
+Kluster perlukan memori. Lebih kurang 8 GB RAM cukup untuk kluster kecil. Versi kind anda mungkin cetak image node yang lebih baharu.
+</Card>

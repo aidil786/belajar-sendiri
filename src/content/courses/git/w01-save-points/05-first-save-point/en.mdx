@@ -1,0 +1,74 @@
+---
+id: git-w01-l05
+world: 1
+title: Your first save point
+summary: "You will learn: how to make a commit, and what is inside one."
+minutes: 5
+xp: 25
+interactives: [AreasScene, Sim, TermReplay, GraphScene, Choice, Mission]
+needs: [git-w01-l04]
+scenario: w01-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git show", url: "https://git-scm.com/docs/git-show" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="index.html has a green tick in the working folder. The repository holds only one commit: Add README." frames={[{ working: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }]} />
+
+Tonight your home page works. Tomorrow you might break it. Can you get tonight's version back? Only with a save point.
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="AreasScene" command='git commit -m "Add home page"' effect="flash" label="Camera flash. index.html leaves the box and a new commit, Add home page, lands in the repository." frames={[{ staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }] }]} />
+
+`git commit` takes a **snapshot**: a full photo of the box, right now. The words after `-m` are a short note about it.
+</Card>
+
+<Card id="try-commit" type="try">
+Save `index.html` as a new commit.
+
+<Interactive name="Sim" scenario="w01-l05" panels={['areas', 'graph']} goal={{ commits: 2, lastCommitHas: ['index.html'] }} hints={['First put it in the box: git add index.html', 'Then save the box: git commit -m "Add home page"']} success="Saved! See the new dot on your timeline?" />
+
+<Hint>Two steps: `git add index.html`, then `git commit -m "Add home page"`.</Hint>
+</Card>
+
+<Card id="see-log" type="see">
+<Interactive name="TermReplay" scenario="w01-l05-saved" commands={['git log']} label="git log shows two commits, newest first. Each has a long code, an author, a date and a message." />
+
+`git log` lists your commits, newest first. The long code after "commit" is the **hash**. It is that commit's unique name.
+</Card>
+
+<Card id="see-parent" type="see">
+<Interactive name="GraphScene" scenario="w01-l05" commands={['git add index.html', 'git commit -m "Add home page"']} label="A new commit dot appears on the timeline. A line links it back to the older Add README dot." />
+
+Each new commit points back to the one before it. That older commit is its **parent**. Together they make your timeline.
+</Card>
+
+<Card id="check" type="check">
+Which one is NOT saved inside a commit?
+
+<Interactive name="Choice" options={[{ label: 'A snapshot of the box', why: 'That is the heart of every commit.' }, { label: 'Your name and email', why: 'Git saves the author in every commit.' }, { label: 'A link to its parent', why: 'Every commit points back to the one before it.' }, { label: 'Files you never added', correct: true, why: 'Only what is in the box gets saved.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Now do it for real, on your own computer. Type each command yourself. Copy only if you get stuck.
+
+<Interactive name="Mission" id="w01-first-commit" steps={[{ id: 'open', text: 'Open your terminal. On Windows, use Git Bash.' }, { id: 'folder', text: 'Make a new folder.', command: 'mkdir real-diary' }, { id: 'cd', text: 'Go inside it.', command: 'cd real-diary' }, { id: 'init', text: 'Make it a repo.', command: 'git init' }, { id: 'file', text: 'Make a home page file.', command: 'echo "<h1>My Diary</h1>" > index.html' }, { id: 'add', text: 'Put it in the box.', command: 'git add index.html' }, { id: 'commit', text: 'Save it with a message.', command: 'git commit -m "Add home page"' }, { id: 'log', text: 'Read it. Find your name, the date and the hash.', command: 'git log' }]} success="That is a real save point, typed by you!" />
+
+<Hint>Stuck inside `git log`? Press `q` to get out.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now make a commit and read it in git log.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show` prints the newest commit and exactly what changed in it. Want a longer note? Add a second `-m`. The first one becomes the title, the second the body.
+
+<Interactive name="TermReplay" scenario="w01-l05-saved" commands={['git show']} label="git show: the Add home page commit, then the two new lines of index.html in green." />
+</Card>

@@ -1,0 +1,78 @@
+---
+id: docker-d4-l08
+world: 4
+title: Live reload with compose watch
+summary: "You will learn: to see your edits in the running app as you save."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, Choice, KitchenSim, Transcript, SortCards, Mission]
+needs: [docker-d4-l07]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Use Compose Watch", url: "https://docs.docker.com/compose/how-tos/file-watch/" }
+  - { label: "docker compose watch", url: "https://docs.docker.com/reference/cli/docker/compose/watch/" }
+  - { label: "Compose file reference: develop", url: "https://docs.docker.com/reference/compose-file/develop/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'echo "<h1>Kedai Kancil: open!</h1>" > web/index.html', 'curl -s localhost:8080']} label="You saved a new page. curl still shows the old one: Kedai Kancil, without open." />
+
+You saved a new page. The shop still shows the old one. Why? The page was baked into the image before your edit.
+</Card>
+
+<Card id="predict" type="predict">
+How do you get the new page into the shop?
+
+<Interactive name="Choice" options={[{ label: 'docker compose up -d --build', correct: true, why: 'Bake a new image, then Compose swaps the web box for a fresh one.' }, { label: 'docker compose restart web', why: 'A restart keeps the same image. Same old page.' }, { label: 'docker compose ps', why: 'ps only looks. It changes nothing.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Prove it. Bake again, then knock on hatch 8080.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d', 'echo "<h1>Kedai Kancil: open!</h1>" > web/index.html']} goal={{ reachableContains: { 'localhost:8080': 'open!' }, lastTyped: '^curl' }} hints={['Type docker compose up -d --build', 'Then type curl localhost:8080']} success="The new page is in. But baking after every save is slow." />
+
+<Hint>`docker compose up -d --build`, then `curl localhost:8080`.</Hint>
+</Card>
+
+<Card id="see-watch" type="see">
+```yaml
+  web:
+    build: ./web
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /usr/share/nginx/html
+```
+
+<Interactive name="Transcript" title="bash" label="docker compose watch starts the shop (its build lines are left out here), then says Watch enabled. You save web/index.html in your editor. Watch copies it in: Syncing service web after 1 changes were detected." lines={[{ cmd: 'docker compose watch' }, { out: 'Watch enabled' }, { out: 'Syncing service "web" after 1 changes were detected', color: 'green' }]} />
+
+**<Term id="compose-watch">compose watch</Term>** watches your folder. When you save, it copies the file into the running box. No bake, no restart.
+</Card>
+
+<Card id="try-sort" type="try">
+Pick the right watch action for each file.
+
+<Interactive name="SortCards" buckets={[{ id: 'sync', label: 'sync' }, { id: 'rebuild', label: 'rebuild' }, { id: 'restart', label: 'sync+restart' }]} items={[{ label: 'web/index.html', bucket: 'sync', why: 'A page: copy it in. nginx serves it at once.' }, { label: 'web/style.css', bucket: 'sync', why: 'Same as a page: copy it in.' }, { label: 'web/Dockerfile', bucket: 'rebuild', why: 'A new recipe means a new bake.' }, { label: 'api/package.json', bucket: 'rebuild', why: 'New packages need a new image.' }, { label: 'api/server.js', bucket: 'restart', why: 'Node reads it only at start. Copy it, then restart.' }]} success="sync for pages, rebuild for recipes, sync+restart for code read at start." />
+</Card>
+
+<Card id="check" type="check">
+Watch only follows dishes that have `build:`. Which dish of our shop can it never watch?
+
+<Interactive name="Choice" compact options={[{ label: 'db', correct: true, why: 'db is a ready pack from the freezer. There is no recipe folder to watch.' }, { label: 'web', why: 'web has build: ./web, so watch can follow it.' }, { label: 'api', why: 'api has build: ./api, so watch can follow it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now see your edits live with compose watch.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose up --watch` starts and watches in one go, with logs mixed in. The box needs `stat`, `mkdir` and `rmdir`, and its user must be allowed to write the target. `ignore:` skips folders like `node_modules/`. A rebuild prints `Rebuilding service(s) ["api"] after changes were detected...`.
+
+<Interactive name="Mission" id="d4-l08-rep" steps={[{ id: 'yaml', text: 'Add the develop: watch: block from this lesson to your web service.' }, { id: 'watch', text: 'Start watching.', command: 'docker compose watch' }, { id: 'edit', text: 'Edit web/index.html, save, and reload the browser.' }, { id: 'stop', text: 'Press Ctrl+C to stop watching, then clear the table.', command: 'docker compose down' }]} success="Live edits in a real container!" />
+</Card>

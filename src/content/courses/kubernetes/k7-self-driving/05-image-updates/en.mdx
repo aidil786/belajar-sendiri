@@ -1,0 +1,64 @@
+---
+id: k8s-k7-l05
+world: 7
+title: Automatic image updates
+summary: "You will learn: how a robot spots a new image tag and commits it to Git for you."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, GitOpsMirror, SpotLines, SwipeJudge]
+needs: [k8s-k7-l04]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Flux: automate image updates to Git", url: "https://fluxcd.io/flux/guides/image-update/" }
+  - { label: "Argo CD Image Updater", url: "https://argocd-image-updater.readthedocs.io/en/stable/" }
+---
+
+<Card id="hook" type="hook">
+Your pipeline ships a new image every merge: 1.5.0, 1.5.1, 1.5.2. Each time, someone edits the image line in Git by hand. Who should do this boring job?
+
+<Interactive name="Choice" options={[{ label: 'A robot that watches the registry', correct: true, why: 'Boring, exact and repeated: a perfect robot job.' }, { label: 'The newest person on the team', why: 'People forget and make typos. A robot does not.' }, { label: 'Nobody. Use the latest tag instead', why: 'latest hides which version runs, and Git never changes.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+This robot is called **<Term id="image-automation">image automation</Term>**. Put its loop in order.
+
+<Interactive name="OrderList" items={['CI pushes shop:1.5.0 to the registry', 'The robot sees a new tag', 'The robot commits the new tag to Git', 'Argo CD or Flux syncs that commit', 'New pods run 1.5.0']} label="First step at the top" success="Yes! The robot writes Git. The GitOps helper does the rest." />
+</Card>
+
+<Card id="try-robot" type="try">
+Be the robot. A new tag landed in the registry. Pick it, then commit.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.5.0' }} images={['ghcr.io/kedai-kancil/shop:1.5.0', 'ghcr.io/kedai-kancil/shop:1.5.1']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.1' }} success="New tag in Git, new pods in the cluster. The commit shows exactly what changed." />
+
+<Hint>Pick shop:1.5.1 in the image list, then Commit to Git.</Hint>
+</Card>
+
+<Card id="see-marker" type="see">
+Flux finds the line to change by a marker comment. Tap the line the robot rewrites.
+
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: web' }, { text: '    image: ghcr.io/kedai-kancil/shop:1.5.1 # {"$imagepolicy": "flux-system:shop"}', target: true }, { text: '    ports:' }, { text: '      - containerPort: 80' }]} prompt="Tap the line with the marker." success="That's it. The marker names the policy that picks the tag." />
+</Card>
+
+<Card id="check-tags" type="check">
+The policy allows `>=1.5.0 <2.0.0`. Swipe right on tags the robot may pick.
+
+<Interactive name="SwipeJudge" cards={[{ text: '1.5.2', good: true, why: 'Inside the range.' }, { text: '2.0.0', good: false, why: 'A new major version. The range stops before 2.0.0.' }, { text: 'latest', good: false, why: 'Not a version number at all.' }, { text: '1.6.0', good: true, why: 'Still under 2.0.0.' }, { text: '1.6.0-rc.1', good: false, why: 'A pre-release. Plain ranges skip those.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Why should the robot commit to Git, not change the cluster directly?
+
+<Interactive name="Choice" options={[{ label: 'Git keeps the history, so you can see and undo each update', correct: true, why: 'Every new tag is a commit. Revert it to go back.' }, { label: 'Changing the cluster directly is faster, so it is better', why: 'Then Git and the cluster drift apart.' }, { label: 'It makes no difference', why: 'It does: without the commit, Git no longer tells the truth.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now let a robot ship new image tags through Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Flux uses three objects: `ImageRepository` (scan), `ImagePolicy` (pick) and `ImageUpdateAutomation` (commit). Argo CD Image Updater can also commit to Git. Its docs say it is still under active development, so test it first. Tools like Renovate open a pull request instead. Real rep (optional): read the Flux image update guide.
+</Card>

@@ -1,0 +1,63 @@
+---
+id: docker-d0-l08
+world: 0
+title: "YAML bahagian 1: kunci dan senarai"
+summary: "Anda akan belajar: cara tulis kunci, nilai dan senarai YAML yang komputer baca tepat seperti maksud anda."
+minutes: 4
+xp: 20
+interactives: [Choice, YamlPlayground, SortCards, SwipeJudge]
+needs: [docker-d0-l07]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "YAML 1.2 spec", url: "https://yaml.org/spec/1.2.2/" }
+  - { label: "Compose file reference (it is YAML)", url: "https://docs.docker.com/reference/compose-file/" }
+---
+
+<Card id="hook" type="hook">
+Fail Compose, pipeline CI dan Kubernetes semuanya guna YAML. Komputer baca nota anda perkataan demi perkataan. Nota mana yang ia boleh baca?
+
+<Interactive name="Choice" options={[{ label: '`dish: nasi lemak`', correct: true, why: 'Satu label, titik bertindih, satu ruang, kemudian nilai. Kemas!' }, { label: 'Nasi lemak (sambal lebih!!) atau mungkin laksa?', why: 'Kawan faham. Komputer pening.' }, { label: 'NASI LEMAK!!!', why: 'Menjerit tiada bentuk. Bahagian mana labelnya?' }]} />
+</Card>
+
+<Card id="see-key" type="see">
+**<Term id="yaml">YAML</Term>** ialah kad resepi yang kemas untuk komputer. Setiap baris ialah kunci, titik bertindih, satu ruang, kemudian nilai. Kotak di bawah tunjuk cara komputer membacanya.
+
+<Interactive name="YamlPlayground" file="order.yaml" initial={'dish: nasi lemak\nprice: 5\nspicy: true\n'} prompt="Tukar dish kepada laksa. Tengok kotak di bawah." />
+</Card>
+
+<Card id="see-list" type="see">
+**Senarai** (list) ialah baris yang mula dengan sengkang dan satu ruang. Kunci atau item senarai? Susun setiap baris.
+
+<Interactive name="SortCards" buckets={[{ id: 'key', label: 'Kunci: nilai' }, { id: 'list', label: 'Item senarai' }]} items={[{ label: '`dish: laksa`', bucket: 'key', why: 'Kunci, titik bertindih, ruang, nilai.' }, { label: '`- sambal`', bucket: 'list', why: 'Sengkang dan ruang mulakan item senarai.' }, { label: '`price: 5`', bucket: 'key', why: 'Kuncinya price. Nilainya 5.' }, { label: '`- egg`', bucket: 'list', why: 'Satu lagi sengkang, satu lagi item.' }, { label: '`spicy: true`', bucket: 'key', why: 'Kunci dengan nilai true/false.' }, { label: '`- cucumber`', bucket: 'list', why: 'Satu lagi item dalam senarai.' }]} success="Kunci ada titik bertindih. Item senarai mula dengan sengkang." />
+</Card>
+
+<Card id="try-list" type="try">
+Senarai duduk di bawah kuncinya, dua ruang ke dalam. Tambah satu lagi lauk.
+
+<Interactive name="YamlPlayground" file="order.yaml" initial={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n'} prompt="Tambah cucumber sebagai lauk ketiga." expect={[{ path: 'sides', type: 'list', count: 3, includes: 'cucumber', hint: 'Tambah baris baru di bawah egg: dua ruang, sengkang, satu ruang, kemudian cucumber.' }]} solution={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n  - cucumber\n'} hint="Salin baris egg, kemudian tukar perkataannya." success="Tiga lauk! Komputer nampak senarai dengan 3 item." />
+</Card>
+
+<Card id="predict" type="predict">
+`price: 5` dan `price: "5"`. Komputer baca kedua-duanya sama?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: satu nombor, satu teks', correct: true, why: 'Tanda petik jadikan ia teks. Tanpa petik, 5 ialah nombor.' }, { label: 'Ya, sama sahaja', why: 'Tak juga. Tanda petik tukar nombor jadi teks.' }, { label: 'Tanda petik tak dibenarkan dalam YAML', why: 'Ia dibenarkan. Ia kekalkan nilai sebagai teks.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Komputer akan baca setiap baris ikut maksud anda? Leret ke kanan kalau ya.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'dish: laksa', good: true, why: 'Kunci, titik bertindih, ruang, nilai. Sempurna.' }, { text: 'dish:laksa', good: false, why: 'Perlu satu ruang selepas titik bertindih: dish: laksa.' }, { text: '- sambal', good: true, why: 'Sengkang, ruang, item. Item senarai yang kemas.' }, { text: '-sambal', good: false, why: 'Tiada ruang selepas sengkang, jadi ia cuma perkataan -sambal.' }, { text: 'name: "Kedai Kancil"', good: true, why: 'Tanda petik boleh. Nilainya teks.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis kunci, nilai dan senarai YAML.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baris yang mula dengan `#` ialah komen: komputer langkau ia. Senarai pendek boleh duduk dalam satu baris: `sides: [sambal, egg]`. Fail YAML berakhir dengan `.yaml` atau `.yml`.
+
+Latihan sebenar (pilihan): buka mana-mana fail `compose.yaml` atau workflow di GitHub. Cari satu kunci dan satu senarai.
+</Card>

@@ -1,0 +1,76 @@
+---
+id: cicd-c3-l01
+world: 3
+title: "Recreate, rolling, blue/green, canary"
+summary: "Anda akan belajar: empat cara tukar kod lama kepada yang baharu, dan bila setiap satu sesuai."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, Choice, OrderList, TrafficDial, SortCards, Transcript]
+needs: [cicd-c2-boss]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare: gradual deployments", url: "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/" }
+  - { label: "Kubernetes: Deployments (rolling update)", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '5:00 ptg', title: 'Hantar', text: 'Jumaat. Versi 2 kedai sampai kepada semua pengguna serentak.' }, { when: '5:02 ptg', title: 'Ralat', text: 'Checkout rosak. Setiap pelanggan nampak.' }, { when: '5:40 ptg', title: 'Dibaiki', text: 'Anda pulihkan versi 1 dengan tangan. Empat puluh minit pelanggan marah.' }]} />
+
+Jumaat, 5 petang. Satu push hantar versi baharu kepada semua orang. Ada bug. Tekan setiap detik. Macam mana nak kurangkan mangsa?
+</Card>
+
+<Card id="see-recreate" type="see">
+Cara 1: **<Term id="recreate">recreate</Term>**. Tutup gerai, tukar menu, buka semula. Versi lama berhenti, kemudian versi baharu bermula. Apa pelanggan nampak di tengah-tengah?
+
+<Interactive name="Choice" options={[{ label: 'Papan "Tutup", sekejap', correct: true, why: 'Tiada apa yang melayan antara berhenti dan mula. Mudah, tapi pengguna kena tunggu.' }, { label: 'Menu baharu, terus', why: 'Versi baharu mula hanya selepas versi lama berhenti.' }, { label: 'Separuh lama, separuh baharu', why: 'Itu cara seterusnya: rolling.' }]} />
+</Card>
+
+<Card id="see-rolling" type="see">
+Cara 2: **<Term id="rolling-update">rolling update</Term>**. Tukar tukang masak seorang demi seorang. Gerai tak pernah tutup. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Mulakan satu salinan versi 2', 'Semak salinan itu sihat', 'Hentikan satu salinan versi 1', 'Ulang sampai semua salinan jadi versi 2']} label="Langkah pertama di atas" success="Ya! Tiada papan Tutup. Buat seketika, versi lama dan baharu melayan bersama." />
+</Card>
+
+<Card id="try-bluegreen" type="try">
+Cara 3: **<Term id="blue-green">blue/green</Term>**. Dua dapur penuh. Versi 2 menunggu di sebelah versi 1. Uji dulu, kemudian alihkan semua orang. Ada masalah? Alih balik.
+
+<Interactive name="TrafficDial" mode="bluegreen" newErrorRate={0.1} task={{ type: 'rollback' }} success="Selamat! Versi 1 terus melayan semasa anda menyemak." />
+
+<Hint>Uji versi 2 dulu. Kalau ada ralat, kekalkan versi 1.</Hint>
+</Card>
+
+<Card id="see-canary" type="see">
+Cara 4: **<Term id="canary">canary</Term>**. Beberapa pelanggan rasa hidangan baharu dulu. Semua okey? Hidang kepada lebih ramai. Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'bluegreen', label: 'Blue/green' }, { id: 'canary', label: 'Canary' }]} items={[{ label: 'Perlu dua salinan penuh berjalan', bucket: 'bluegreen', why: 'Dua dapur penuh lebih mahal, untuk sekejap.' }, { label: 'Alih pengguna sikit demi sikit: 5%, 25%, 50%', bucket: 'canary', why: 'Setiap langkah tunggu dan perhati ralat.' }, { label: 'Satu suis alihkan semua orang', bucket: 'bluegreen', why: 'Papan tanda bertukar untuk semua pelanggan serentak.' }, { label: 'Hanya sedikit pengguna jumpa bug baharu', bucket: 'canary', why: 'Kalau 5% dapat versi 2, bug hanya kena 5%.' }]} success="Siap! Kedua-duanya boleh undur dengan pantas." />
+</Card>
+
+<Card id="try-canary" type="try">
+Giliran anda. Hantar pengguna ke versi 2, langkah demi langkah. Perhati graf. Rollback sebelum 150 pengguna kena bug.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} success="Tertangkap awal! Kebanyakan pengguna tak nampak bug itu." />
+
+<Hint>Bila garis versi 2 melonjak atas garis amaran, tekan Roll back.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Versi 2 tukar nama satu lajur pangkalan data. Versi 1 crash tanpa nama lama. Cara mana sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Recreate', correct: true, why: 'Lama dan baharu tak boleh berjalan bersama, jadi hentikan yang lama dulu. Pelajaran 9 tunjuk cara tanpa henti.' }, { label: 'Rolling update', why: 'Buat seketika, salinan lama masih jalan dan crash pada lajur yang ditukar nama.' }, { label: 'Canary', why: 'Kebanyakan pengguna masih guna versi 1, dan ia akan crash.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih cara selamat untuk tukar versi.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kubernetes guna rolling update secara lalai (Dunia K2). Cloudflare Workers boleh buat canary untuk anda, dipanggil gradual deployment. Muat naik versi tanpa trafik, kemudian pilih bahagiannya.
+
+<Interactive name="Transcript" title="bash" label="Dua arahan Wrangler: muat naik versi baharu, kemudian bahagikan trafik antara versi." lines={[{ cmd: 'npx wrangler versions upload' }, { cmd: 'npx wrangler versions deploy' }]} />
+
+Latihan sebenar (pilihan): cuba pada Worker ujian percuma, bukan milik pasukan anda. Hantar 10% ke versi baharu, kemudian rollback.
+</Card>

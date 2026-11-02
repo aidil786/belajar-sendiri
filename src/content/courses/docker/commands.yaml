@@ -1,0 +1,465 @@
+# Command pages for the Docker course (same shape as src/content/courses/git/commands.yaml).
+# Shown at /<lang>/docker/commands/<id>/ and in the cheat sheet /<lang>/docker/cheatsheet/.
+# Ids are unique within this file. `lesson` is the id of the lesson that teaches the command.
+# danger: safe | careful | lose (can delete data). Checked against Docker Engine 29 + Compose v5.
+groups:
+  - { id: laptop, title: { en: "Your laptop (D0 basics)", ms: "Laptop anda (asas D0)" } }
+  - { id: run, title: { en: "Run containers", ms: "Jalankan container" } }
+  - { id: look, title: { en: "Look inside", ms: "Tengok ke dalam" } }
+  - { id: images, title: { en: "Images and recipes", ms: "Image dan resepi" } }
+  - { id: data, title: { en: "Lockers and phone lines", ms: "Loker dan talian telefon" } }
+  - { id: compose, title: { en: "Set meals (Compose)", ms: "Set hidangan (Compose)" } }
+  - { id: share, title: { en: "Share images", ms: "Kongsi image" } }
+  - { id: clean, title: { en: "Clean up", ms: "Kemas" } }
+
+commands:
+  # --- D0: the laptop shell (Linux and network crash courses)
+  - id: curl
+    group: laptop
+    syntax: "curl [-I] [-s] <address>"
+    danger: safe
+    lesson: docker-d0-l07
+    docs: "https://curl.se/docs/manpage.html"
+    what: { en: "Asks an address for a page and prints the answer.", ms: "Minta satu laman daripada sesuatu alamat dan cetak jawapannya." }
+    when: { en: "To test a hatch from your laptop, with no browser.", ms: "Untuk uji satu tingkap dari laptop anda, tanpa pelayar." }
+    example: { command: "curl localhost:8080", en: "Ask hatch 8080 on this laptop for its page.", ms: "Minta laman dari tingkap 8080 di laptop ini." }
+    variants:
+      - { command: "curl -I localhost:8080", en: "Only the top of the reply, with the status code.", ms: "Bahagian atas jawapan sahaja, dengan kod status." }
+      - { command: "curl 127.0.0.1:8080", en: "The same, using localhost's number.", ms: "Sama, guna nombor localhost." }
+
+  - id: chmod
+    group: laptop
+    syntax: "chmod <mode> <file>"
+    danger: safe
+    lesson: docker-d0-l06
+    docs: "https://man7.org/linux/man-pages/man1/chmod.1.html"
+    what: { en: "Changes who may read, write or run a file.", ms: "Tukar siapa boleh baca, tulis atau jalankan sesuatu fail." }
+    when: { en: "When a script says Permission denied.", ms: "Bila skrip kata Permission denied." }
+    example: { command: "chmod +x cook.sh", en: "Let cook.sh run as a program.", ms: "Benarkan cook.sh berjalan sebagai program." }
+    variants:
+      - { command: "ls -l", en: "See the permissions: r read, w write, x run.", ms: "Tengok kebenaran: r baca, w tulis, x jalankan." }
+
+  - id: export
+    group: laptop
+    syntax: "export NAME=value"
+    danger: safe
+    lesson: docker-d0-l06
+    docs: "https://man7.org/linux/man-pages/man7/environ.7.html"
+    what: { en: "Sets an environment variable for the programs you start here.", ms: "Tetapkan environment variable untuk program yang anda mulakan di sini." }
+    when: { en: "To give programs a setting without changing their code.", ms: "Untuk beri program satu tetapan tanpa ubah kodnya." }
+    example: { command: "export CHEF=Kancil", en: "Stick a note on the wall: CHEF is Kancil.", ms: "Lekat nota di dinding: CHEF ialah Kancil." }
+    variants:
+      - { command: "echo $CHEF", en: "Read the note back.", ms: "Baca semula nota itu." }
+      - { command: "env", en: "List every environment variable.", ms: "Senaraikan semua environment variable." }
+
+  - id: ps
+    group: laptop
+    syntax: "ps [aux]"
+    danger: safe
+    lesson: docker-d0-l06
+    docs: "https://man7.org/linux/man-pages/man1/ps.1.html"
+    what: { en: "Lists processes: programs that are running now.", ms: "Senaraikan process: program yang sedang berjalan." }
+    when: { en: "To see what runs on a computer, containers too.", ms: "Untuk tengok apa yang berjalan dalam komputer, termasuk container." }
+    example: { command: "ps aux", en: "Every process on this computer, with its PID.", ms: "Setiap process dalam komputer ini, dengan PID masing-masing." }
+
+  - id: exit-code
+    group: laptop
+    syntax: "echo $?"
+    danger: safe
+    lesson: docker-d0-l06
+    docs: "https://man7.org/linux/man-pages/man1/bash.1.html"
+    what: { en: "Shows the exit code of the last command.", ms: "Tunjuk exit code arahan terakhir." }
+    when: { en: "When you are not sure a command worked.", ms: "Bila anda tak pasti sesuatu arahan berjaya." }
+    example: { command: "echo $?", en: "0 means all good. Anything else means trouble.", ms: "0 bermaksud semua okey. Nombor lain bermaksud ada masalah." }
+
+  # --- Run containers
+  - id: docker-version
+    group: run
+    syntax: "docker version"
+    danger: safe
+    lesson: docker-d0-l05
+    docs: "https://docs.docker.com/reference/cli/docker/version/"
+    what: { en: "Shows the Docker client and engine versions.", ms: "Tunjuk versi klien dan enjin Docker." }
+    when: { en: "To check Docker is installed and running.", ms: "Untuk semak Docker sudah dipasang dan berjalan." }
+    example: { command: "docker version", en: "Is Docker here and awake?", ms: "Docker ada dan sudah sedia?" }
+    variants:
+      - { command: "docker info", en: "Counts of containers and images, and more.", ms: "Bilangan container dan image, dan lain-lain." }
+
+  - id: docker-run
+    group: run
+    syntax: "docker run [options] <image> [command]"
+    danger: safe
+    lesson: docker-d1-l01
+    docs: "https://docs.docker.com/reference/cli/docker/container/run/"
+    what: { en: "Makes a new container from an image and starts it.", ms: "Buat container baru daripada image dan mulakannya." }
+    when: { en: "Every time you want to run an app in a box.", ms: "Setiap kali anda mahu jalankan aplikasi dalam bekas." }
+    example: { command: "docker run -d --name web -p 8080:80 nginx:1.30-alpine", en: "Run nginx in the background. Open hatch 8080.", ms: "Jalankan nginx di belakang. Buka tingkap 8080." }
+    variants:
+      - { command: "docker run hello-world", en: "Your first container: it prints a hello.", ms: "Container pertama anda: ia paparkan salam." }
+      - { command: "docker run --rm alpine:3.22 echo hi", en: "Run once, then clean the box away.", ms: "Jalan sekali, kemudian buang bekasnya." }
+      - { command: "docker run -it alpine:3.22 sh", en: "Get a shell inside. Type exit to leave.", ms: "Dapatkan shell di dalam. Taip exit untuk keluar." }
+      - { command: "docker run -d -e POSTGRES_PASSWORD=secret postgres:18-alpine", en: "Give the app a setting with -e.", ms: "Beri aplikasi satu tetapan dengan -e." }
+      - { command: "docker run -d -v pgdata:/var/lib/postgresql postgres:18-alpine", en: "Keep data in a locker (volume).", ms: "Simpan data dalam loker (volume)." }
+
+  - id: docker-ps
+    group: run
+    syntax: "docker ps [-a] [-q] [--filter key=value]"
+    danger: safe
+    lesson: docker-d1-l04
+    docs: "https://docs.docker.com/reference/cli/docker/container/ls/"
+    what: { en: "Lists running containers.", ms: "Senaraikan container yang sedang berjalan." }
+    when: { en: "To see what is running and its state.", ms: "Untuk tengok apa yang berjalan dan keadaannya." }
+    example: { command: "docker ps -a", en: "Show all containers, stopped ones too.", ms: "Tunjuk semua container, termasuk yang berhenti." }
+    variants:
+      - { command: "docker ps -q", en: "Only the ids.", ms: "Id sahaja." }
+      - { command: "docker ps --filter status=exited", en: "Only stopped containers.", ms: "Container yang berhenti sahaja." }
+
+  - id: docker-stop
+    group: run
+    syntax: "docker stop <container>"
+    danger: safe
+    lesson: docker-d1-l04
+    docs: "https://docs.docker.com/reference/cli/docker/container/stop/"
+    what: { en: "Asks a container to stop, then forces it after 10 seconds.", ms: "Minta container berhenti, kemudian paksa selepas 10 saat." }
+    when: { en: "When you are done with a container for now.", ms: "Bila anda sudah selesai dengan container buat masa ini." }
+    example: { command: "docker stop web", en: "Stop web. It still exists.", ms: "Hentikan web. Ia masih wujud." }
+    variants:
+      - { command: "docker start web", en: "Start it again.", ms: "Mulakan semula." }
+      - { command: "docker restart web", en: "Stop and start in one go.", ms: "Henti dan mula sekali gus." }
+      - { command: "docker kill web", en: "Stop at once, no clean-up (exit 137).", ms: "Henti serta-merta, tanpa kemas (keluar 137)." }
+      - { command: "docker pause web", en: "Freeze it; docker unpause web wakes it.", ms: "Bekukan; docker unpause web bangunkannya." }
+
+  - id: docker-port
+    group: run
+    syntax: "docker port <container>"
+    danger: safe
+    lesson: docker-d1-l07
+    docs: "https://docs.docker.com/reference/cli/docker/container/port/"
+    what: { en: "Shows which laptop ports lead into a container.", ms: "Tunjuk port laptop yang menuju ke dalam container." }
+    when: { en: "When you forget which hatch to open in the browser.", ms: "Bila anda lupa tingkap mana untuk dibuka dalam pelayar." }
+    example: { command: "docker port web", en: "80/tcp -> 0.0.0.0:8080 means: use localhost:8080.", ms: "80/tcp -> 0.0.0.0:8080 bermaksud: guna localhost:8080." }
+
+  # --- Look inside
+  - id: docker-logs
+    group: look
+    syntax: "docker logs [-f] [--tail n] <container>"
+    danger: safe
+    lesson: docker-d1-l05
+    docs: "https://docs.docker.com/reference/cli/docker/container/logs/"
+    what: { en: "Shows what a container printed.", ms: "Tunjuk apa yang container paparkan." }
+    when: { en: "First thing to check when a container misbehaves.", ms: "Perkara pertama untuk disemak bila container buat hal." }
+    example: { command: "docker logs web", en: "Read web's messages.", ms: "Baca mesej web." }
+    variants:
+      - { command: "docker logs -f web", en: "Keep watching new lines. Ctrl+C stops.", ms: "Terus tengok baris baru. Ctrl+C untuk berhenti." }
+      - { command: "docker logs --tail 5 web", en: "Only the last 5 lines.", ms: "5 baris terakhir sahaja." }
+
+  - id: docker-exec
+    group: look
+    syntax: "docker exec [-it] <container> <command>"
+    danger: safe
+    lesson: docker-d1-l06
+    docs: "https://docs.docker.com/reference/cli/docker/container/exec/"
+    what: { en: "Runs a command inside a running container.", ms: "Jalankan arahan di dalam container yang sedang berjalan." }
+    when: { en: "To look around inside, or check a file.", ms: "Untuk tengok-tengok di dalam, atau semak satu fail." }
+    example: { command: "docker exec -it web sh", en: "Step inside web. exit brings you back.", ms: "Masuk ke dalam web. exit bawa anda kembali." }
+    variants:
+      - { command: "docker exec web ls /usr/share/nginx/html", en: "Run one command and come back.", ms: "Jalankan satu arahan dan kembali." }
+
+  - id: docker-inspect
+    group: look
+    syntax: "docker inspect [-f <template>] <name>"
+    danger: safe
+    lesson: docker-d1-l04
+    docs: "https://docs.docker.com/reference/cli/docker/inspect/"
+    what: { en: "Shows everything Docker knows about a container, image, volume or network.", ms: "Tunjuk semua yang Docker tahu tentang container, image, volume atau rangkaian." }
+    when: { en: "To find an exact detail, like an IP address or exit code.", ms: "Untuk cari butiran tepat, seperti alamat IP atau kod keluar." }
+    example: { command: "docker inspect -f '{{.State.Status}}' web", en: "Just the state of web.", ms: "Keadaan web sahaja." }
+
+  - id: docker-top
+    group: look
+    syntax: "docker top <container>"
+    danger: safe
+    lesson: docker-d6-l01
+    docs: "https://docs.docker.com/reference/cli/docker/container/top/"
+    what: { en: "Lists the processes running in a container.", ms: "Senaraikan proses yang berjalan dalam container." }
+    when: { en: "To see that a container is just processes.", ms: "Untuk lihat bahawa container hanyalah proses." }
+    example: { command: "docker top web", en: "nginx's master and workers.", ms: "Proses utama dan pekerja nginx." }
+    variants:
+      - { command: "docker stats --no-stream", en: "Memory and CPU of each container, once.", ms: "Memori dan CPU setiap container, sekali." }
+
+  - id: docker-info
+    group: look
+    syntax: "docker info"
+    danger: safe
+    lesson: docker-d6-l05
+    docs: "https://docs.docker.com/reference/cli/docker/system/info/"
+    what: { en: "Shows how the Docker engine is set up: runtimes, storage, cgroups and security.", ms: "Tunjuk cara enjin Docker disediakan: runtime, storan, cgroups dan keselamatan." }
+    when: { en: "To check what runs your containers, or if Docker runs rootless.", ms: "Untuk semak apa yang jalankan container anda, atau sama ada Docker berjalan rootless." }
+    example: { command: "docker info", en: "Look for Default Runtime: runc and Cgroup Version.", ms: "Cari Default Runtime: runc dan Cgroup Version." }
+
+  - id: docker-diff
+    group: look
+    syntax: "docker diff <container>"
+    danger: safe
+    lesson: docker-d6-l04
+    docs: "https://docs.docker.com/reference/cli/docker/container/diff/"
+    what: { en: "Lists the files a container added (A), changed (C) or deleted (D) on its top sheet.", ms: "Senaraikan fail yang container tambah (A), ubah (C) atau padam (D) pada plastik atasnya." }
+    when: { en: "To see what a container wrote, before you throw it away.", ms: "Untuk lihat apa yang container tulis, sebelum anda buangnya." }
+    example: { command: "docker diff box", en: "Every change in box, compared with its image.", ms: "Setiap perubahan dalam box, berbanding image-nya." }
+
+  - id: docker-cp
+    group: look
+    syntax: "docker cp <src> <container>:<path>"
+    danger: careful
+    lesson: docker-d1-l06
+    docs: "https://docs.docker.com/reference/cli/docker/container/cp/"
+    what: { en: "Copies files between your laptop and a container.", ms: "Salin fail antara laptop anda dan container." }
+    when: { en: "For a quick test. Real changes belong in the Dockerfile.", ms: "Untuk ujian cepat. Perubahan sebenar patut dalam Dockerfile." }
+    example: { command: "docker cp index.html web:/usr/share/nginx/html/", en: "Put a page into web.", ms: "Letak satu halaman ke dalam web." }
+    variants:
+      - { command: "docker cp web:/etc/nginx/conf.d/default.conf .", en: "Copy a file out.", ms: "Salin satu fail keluar." }
+
+  # --- Images and recipes
+  - id: docker-images
+    group: images
+    syntax: "docker images [repository]"
+    danger: safe
+    lesson: docker-d1-l02
+    docs: "https://docs.docker.com/reference/cli/docker/image/ls/"
+    what: { en: "Lists the images on your machine, with their size.", ms: "Senaraikan image dalam mesin anda, dengan saiznya." }
+    when: { en: "To see what you have pulled or built.", ms: "Untuk tengok apa yang anda sudah tarik atau bina." }
+    example: { command: "docker images", en: "U in EXTRA means a container uses it.", ms: "U dalam EXTRA bermaksud ada container yang menggunakannya." }
+
+  - id: docker-pull
+    group: images
+    syntax: "docker pull <image>[:tag]"
+    danger: safe
+    lesson: docker-d1-l09
+    docs: "https://docs.docker.com/reference/cli/docker/image/pull/"
+    what: { en: "Downloads an image from a registry.", ms: "Muat turun image dari registry." }
+    when: { en: "Before going offline, or to get a newer version.", ms: "Sebelum tiada internet, atau untuk dapatkan versi baru." }
+    example: { command: "docker pull nginx:1.30-alpine", en: "Get nginx 1.30 on Alpine. Pin the tag!", ms: "Dapatkan nginx 1.30 atas Alpine. Tetapkan tag!" }
+
+  - id: docker-build
+    group: images
+    syntax: "docker build -t <name:tag> [-f Dockerfile] <folder>"
+    danger: safe
+    lesson: docker-d2-l01
+    docs: "https://docs.docker.com/reference/cli/docker/buildx/build/"
+    what: { en: "Turns a Dockerfile (the recipe) into an image.", ms: "Tukar Dockerfile (resepi) menjadi image." }
+    when: { en: "Each time your app or recipe changes.", ms: "Setiap kali aplikasi atau resepi anda berubah." }
+    example: { command: "docker build -t diary:1.0 .", en: "Build this folder into diary:1.0.", ms: "Bina folder ini menjadi diary:1.0." }
+    variants:
+      - { command: "docker build --target build -t app:build .", en: "Stop at one stage of a multi-stage recipe.", ms: "Berhenti pada satu peringkat resepi berbilang peringkat." }
+      - { command: "docker build --no-cache -t diary:1.0 .", en: "Bake every layer again.", ms: "Bakar semula setiap layer." }
+
+  - id: docker-history
+    group: images
+    syntax: "docker history <image>"
+    danger: safe
+    lesson: docker-d2-l06
+    docs: "https://docs.docker.com/reference/cli/docker/image/history/"
+    what: { en: "Shows the layers of an image and what made each one.", ms: "Tunjuk layer sesuatu image dan apa yang membuat setiap satu." }
+    when: { en: "To find big layers, or leaked secrets.", ms: "Untuk cari layer besar, atau rahsia yang terbocor." }
+    example: { command: "docker history diary:1.0", en: "Newest layer on top.", ms: "Layer terbaru di atas." }
+
+  - id: docker-tag
+    group: images
+    syntax: "docker tag <source> <name:tag>"
+    danger: safe
+    lesson: docker-d2-l07
+    docs: "https://docs.docker.com/reference/cli/docker/image/tag/"
+    what: { en: "Gives an image another name. Nothing is copied.", ms: "Beri image satu nama lagi. Tiada apa disalin." }
+    when: { en: "Before pushing, or to mark a version.", ms: "Sebelum push, atau untuk tanda satu versi." }
+    example: { command: "docker tag diary:1.0 you/diary:1.0", en: "Add your Docker Hub name in front.", ms: "Tambah nama Docker Hub anda di depan." }
+
+  - id: docker-buildx-build
+    group: images
+    syntax: "docker buildx build --platform <os/cpu>[,<os/cpu>] -t <name:tag> <folder>"
+    danger: safe
+    lesson: docker-d2-l13
+    docs: "https://docs.docker.com/build/building/multi-platform/"
+    what: { en: "Builds one image for several CPU types (platforms) at once.", ms: "Bina satu image untuk beberapa jenis CPU (platform) sekali gus." }
+    when: { en: "When your image must run on both amd64 and arm64 machines.", ms: "Bila image anda mesti jalan di mesin amd64 dan arm64." }
+    example: { command: "docker buildx build --platform linux/amd64,linux/arm64 -t hello:1.0 .", en: "One name, a pack for each CPU.", ms: "Satu nama, satu pek untuk setiap CPU." }
+    variants:
+      - { command: "docker images --tree hello", en: "See the packs inside one name.", ms: "Tengok pek-pek di dalam satu nama." }
+      - { command: "docker build --secret id=npm_token,src=token.txt -t api:1.0 .", en: "Lend a secret to RUN --mount=type=secret steps.", ms: "Pinjamkan rahsia kepada langkah RUN --mount=type=secret." }
+
+  # --- Lockers and phone lines
+  - id: docker-volume
+    group: data
+    syntax: "docker volume create|ls|inspect|rm <name>"
+    danger: careful
+    lesson: docker-d3-l02
+    docs: "https://docs.docker.com/reference/cli/docker/volume/"
+    what: { en: "Manages volumes: lockers that keep data after containers go.", ms: "Urus volume: loker yang simpan data selepas container dibuang." }
+    when: { en: "For databases and anything you must not lose.", ms: "Untuk pangkalan data dan apa-apa yang tak boleh hilang." }
+    example: { command: "docker volume create pgdata", en: "Make a locker called pgdata.", ms: "Buat loker bernama pgdata." }
+    variants:
+      - { command: "docker volume ls", en: "List your lockers.", ms: "Senaraikan loker anda." }
+      - { command: "docker volume rm pgdata", en: "Delete a locker and its data. Careful!", ms: "Padam loker dan datanya. Hati-hati!" }
+      - { command: "docker volume inspect pgdata", en: "Where the locker lives, and when it was made.", ms: "Di mana loker itu tinggal, dan bila ia dibuat." }
+      - { command: "docker run --rm -v pgdata:/from -v \"$PWD\":/to alpine:3.22 tar czf /to/backup.tar.gz -C /from .", en: "Back up a locker into one file here.", ms: "Sandarkan loker ke dalam satu fail di sini." }
+
+  - id: docker-network
+    group: data
+    syntax: "docker network create|ls|connect|rm <name>"
+    danger: safe
+    lesson: docker-d3-l05
+    docs: "https://docs.docker.com/reference/cli/docker/network/"
+    what: { en: "Manages networks: phone lines between containers.", ms: "Urus rangkaian: talian telefon antara container." }
+    when: { en: "So containers can call each other by name.", ms: "Supaya container boleh panggil satu sama lain ikut nama." }
+    example: { command: "docker network create shopnet", en: "A new line. Start containers with --network shopnet.", ms: "Talian baru. Mulakan container dengan --network shopnet." }
+    variants:
+      - { command: "docker network connect shopnet web", en: "Plug a running container in.", ms: "Sambungkan container yang sedang berjalan." }
+      - { command: "docker network ls", en: "List the lines: bridge, host, none and yours.", ms: "Senaraikan talian: bridge, host, none dan talian anda." }
+      - { command: "docker network inspect shopnet", en: "See who is plugged into shopnet.", ms: "Tengok siapa yang bersambung ke shopnet." }
+
+  # --- Set meals (Compose)
+  - id: docker-compose-up
+    group: compose
+    syntax: "docker compose up -d [service]"
+    danger: safe
+    lesson: docker-d4-l03
+    docs: "https://docs.docker.com/reference/cli/docker/compose/up/"
+    what: { en: "Starts every service in compose.yaml.", ms: "Mulakan setiap servis dalam compose.yaml." }
+    when: { en: "To start the whole app with one command.", ms: "Untuk mulakan seluruh aplikasi dengan satu arahan." }
+    example: { command: "docker compose up -d", en: "Build, pull and start it all in the background.", ms: "Bina, tarik dan mulakan semuanya di belakang." }
+    variants:
+      - { command: "docker compose --profile cache up -d", en: "Also start services in the cache profile.", ms: "Mulakan juga servis dalam profil cache." }
+      - { command: "docker compose up -d --scale api=2", en: "Run two api containers.", ms: "Jalankan dua container api." }
+
+  - id: docker-compose-down
+    group: compose
+    syntax: "docker compose down [-v]"
+    danger: careful
+    lesson: docker-d4-l03
+    docs: "https://docs.docker.com/reference/cli/docker/compose/down/"
+    what: { en: "Stops and removes the containers and network. Volumes stay.", ms: "Henti dan buang container serta rangkaian. Volume kekal." }
+    when: { en: "When you are done for the day.", ms: "Bila anda selesai untuk hari ini." }
+    example: { command: "docker compose down", en: "Clear the table, keep the lockers.", ms: "Kemas meja, simpan loker." }
+    variants:
+      - { command: "docker compose down -v", en: "Also delete the volumes and their data.", ms: "Padam juga volume dan datanya." }
+
+  - id: docker-compose-ps
+    group: compose
+    syntax: "docker compose ps | logs | exec <service> <cmd>"
+    danger: safe
+    lesson: docker-d4-l03
+    docs: "https://docs.docker.com/reference/cli/docker/compose/"
+    what: { en: "Looks at the services of this project.", ms: "Tengok servis bagi projek ini." }
+    when: { en: "To check states, read logs, or step inside.", ms: "Untuk semak keadaan, baca log, atau masuk ke dalam." }
+    example: { command: "docker compose ps", en: "Every service with its state and ports.", ms: "Setiap servis dengan keadaan dan portnya." }
+    variants:
+      - { command: "docker compose logs api", en: "Logs of one service.", ms: "Log satu servis." }
+      - { command: "docker compose exec api sh", en: "A shell inside the api service.", ms: "Shell di dalam servis api." }
+      - { command: "docker compose config", en: "The final compose.yaml, with variables filled in.", ms: "compose.yaml akhir, dengan pemboleh ubah diisi." }
+      - { command: "docker compose restart api", en: "Restart one service.", ms: "Mulakan semula satu servis." }
+
+  - id: docker-compose-watch
+    group: compose
+    syntax: "docker compose watch"
+    danger: safe
+    lesson: docker-d4-l08
+    docs: "https://docs.docker.com/reference/cli/docker/compose/watch/"
+    what: { en: "Updates containers as you save files.", ms: "Kemas kini container bila anda simpan fail." }
+    when: { en: "While you code, for live reload.", ms: "Semasa anda menulis kod, untuk muat semula langsung." }
+    example: { command: "docker compose watch", en: "Save a file, see the change.", ms: "Simpan fail, lihat perubahannya." }
+
+  # --- Share images
+  - id: docker-login
+    group: share
+    syntax: "docker login [-u user] [registry]"
+    danger: careful
+    lesson: docker-d5-l02
+    docs: "https://docs.docker.com/reference/cli/docker/login/"
+    what: { en: "Logs in to a registry. Use an access token, not your password.", ms: "Log masuk ke registry. Guna token akses, bukan kata laluan." }
+    when: { en: "Before pushing, or to lift pull limits.", ms: "Sebelum push, atau untuk naikkan had tarikan." }
+    example: { command: "echo $DOCKER_TOKEN | docker login -u you --password-stdin", en: "Log in with a token, safely.", ms: "Log masuk dengan token, dengan selamat." }
+    variants:
+      - { command: "docker logout", en: "Forget the login.", ms: "Lupakan log masuk." }
+
+  - id: docker-push
+    group: share
+    syntax: "docker push <user>/<name>:<tag>"
+    danger: careful
+    lesson: docker-d5-l01
+    docs: "https://docs.docker.com/reference/cli/docker/image/push/"
+    what: { en: "Uploads an image to a registry.", ms: "Muat naik image ke registry." }
+    when: { en: "To share an image, or deploy it.", ms: "Untuk kongsi image, atau melancarkannya." }
+    example: { command: "docker push you/diary:1.0", en: "Put diary 1.0 in your Docker Hub account.", ms: "Letak diary 1.0 dalam akaun Docker Hub anda." }
+
+  - id: docker-scout
+    group: share
+    syntax: "docker scout quickview|cves <image>"
+    danger: safe
+    lesson: docker-d5-l06
+    docs: "https://docs.docker.com/reference/cli/docker/scout/cves/"
+    what: { en: "Checks an image's packages for known holes (CVEs). Needs a Docker login.", ms: "Semak pakej dalam image untuk lubang yang diketahui (CVE). Perlu log masuk Docker." }
+    when: { en: "Before you push, and again now and then: new holes appear.", ms: "Sebelum push, dan sekali-sekala lagi: lubang baru muncul." }
+    example: { command: "docker scout cves --only-severity critical,high kedai:1.0", en: "Only the two worst kinds of holes.", ms: "Dua jenis lubang paling teruk sahaja." }
+    variants:
+      - { command: "docker scout quickview kedai:1.0", en: "A short summary of the holes.", ms: "Ringkasan pendek lubang-lubangnya." }
+      - { command: "docker scout cves --exit-code kedai:1.0", en: "Exit code 2 when it finds holes. Good for scripts.", ms: "Kod keluar 2 bila jumpa lubang. Sesuai untuk skrip." }
+
+  - id: docker-buildx-imagetools
+    group: share
+    syntax: "docker buildx imagetools inspect <image>"
+    danger: safe
+    lesson: docker-d5-l07
+    docs: "https://docs.docker.com/reference/cli/docker/buildx/imagetools/inspect/"
+    what: { en: "Reads an image in a registry: its digest, platforms and attestations.", ms: "Baca image dalam registry: digest, platform dan attestation-nya." }
+    when: { en: "To see the SBOM and provenance that travel with an image.", ms: "Untuk tengok SBOM dan provenance yang bergerak bersama image." }
+    example: { command: "docker buildx imagetools inspect ghcr.io/you/kedai-api:1.0", en: "Digest, platforms and attestation manifests.", ms: "Digest, platform dan manifest attestation." }
+    variants:
+      - { command: "docker buildx imagetools inspect ghcr.io/you/kedai-api:1.0 --format '{{ json .SBOM.SPDX }}'", en: "The SBOM: every package inside.", ms: "SBOM: setiap pakej di dalamnya." }
+      - { command: "docker buildx imagetools inspect ghcr.io/you/kedai-api:1.0 --format '{{ json .Provenance.SLSA }}'", en: "The provenance: how it was built.", ms: "Provenance: cara ia dibina." }
+
+  # --- Clean up
+  - id: docker-rm
+    group: clean
+    syntax: "docker rm [-f] <container>"
+    danger: lose
+    lesson: docker-d1-l11
+    docs: "https://docs.docker.com/reference/cli/docker/container/rm/"
+    what: { en: "Deletes a stopped container and the files inside it.", ms: "Padam container yang berhenti dan fail di dalamnya." }
+    when: { en: "When you won't need that container again.", ms: "Bila anda tak perlukan container itu lagi." }
+    example: { command: "docker rm web", en: "Remove web. Volumes stay.", ms: "Buang web. Volume kekal." }
+    variants:
+      - { command: "docker rm -f web", en: "Stop and remove a running one. Careful!", ms: "Henti dan buang yang sedang berjalan. Hati-hati!" }
+
+  - id: docker-rmi
+    group: clean
+    syntax: "docker rmi <image>"
+    danger: careful
+    lesson: docker-d1-l11
+    docs: "https://docs.docker.com/reference/cli/docker/image/rm/"
+    what: { en: "Removes an image name, and the image when no name is left.", ms: "Buang nama image, dan image itu bila tiada nama lagi." }
+    when: { en: "To free space. You can pull it again later.", ms: "Untuk kosongkan ruang. Anda boleh tarik semula nanti." }
+    example: { command: "docker rmi diary:1.0", en: "Remove diary:1.0.", ms: "Buang diary:1.0." }
+
+  - id: docker-system-df
+    group: clean
+    syntax: "docker system df [-v]"
+    danger: safe
+    lesson: docker-d1-l11
+    docs: "https://docs.docker.com/reference/cli/docker/system/df/"
+    what: { en: "Shows how much disk images, containers, volumes and cache use.", ms: "Tunjuk berapa banyak cakera yang image, container, volume dan cache guna." }
+    when: { en: "When your disk is getting full.", ms: "Bila cakera anda hampir penuh." }
+    example: { command: "docker system df", en: "RECLAIMABLE is what a clean-up could free.", ms: "RECLAIMABLE ialah apa yang pengemasan boleh kosongkan." }
+
+  - id: docker-system-prune
+    group: clean
+    syntax: "docker system prune [-a] [--volumes]"
+    danger: lose
+    lesson: docker-d1-l11
+    docs: "https://docs.docker.com/reference/cli/docker/system/prune/"
+    what: { en: "Deletes stopped containers, unused networks, dangling images and build cache.", ms: "Padam container yang berhenti, rangkaian tak diguna, image tergantung dan cache binaan." }
+    when: { en: "Big clean-up. Read the warning before you type y.", ms: "Kemas besar-besaran. Baca amaran sebelum taip y." }
+    example: { command: "docker system prune", en: "It asks first. y deletes, N keeps.", ms: "Ia tanya dulu. y padam, N simpan." }
+    variants:
+      - { command: "docker container prune", en: "Only stopped containers.", ms: "Container yang berhenti sahaja." }
+      - { command: "docker image prune -a", en: "Every image no container uses.", ms: "Semua image yang tiada container guna." }
+      - { command: "docker volume prune", en: "Unused unnamed volumes. With -a: all unused volumes!", ms: "Volume tanpa nama yang tak diguna. Dengan -a: semua volume tak diguna!" }
+      - { command: "docker builder prune", en: "Old build cache.", ms: "Cache binaan lama." }

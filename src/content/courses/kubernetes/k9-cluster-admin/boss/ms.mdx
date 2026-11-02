@@ -1,0 +1,84 @@
+---
+id: k8s-k9-boss
+world: 9
+title: Malam node rosak
+summary: "Anda akan belajar: baiki node NotReady dan pulihkan Deployment yang hilang dari snapshot etcd, dalam keadaan tertekan."
+minutes: 6
+xp: 50
+interactives: [Choice, SpotLines, FoodCourtSim, OrderList, SwipeJudge, Mission]
+needs: [k8s-k9-l12]
+scenario: k9-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Kubernetes: troubleshooting clusters", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "Kubernetes: operating etcd clusters (backup and restore)", url: "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/" }
+  - { label: "etcd 3.7: disaster recovery", url: "https://etcd.io/docs/v3.7/op-guide/recovery/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 2 pagi. Pager kata gerai dev-worker2 NotReady. Dan pesanan shop hilang. Misi boss: baiki kedua-duanya. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Lihat: kubectl get nodes dan kubectl get deployments', correct: true, why: 'Lihat sebelum ubah. Dua masalah mungkin ada dua punca.' }, { label: 'Pulihkan etcd terus', why: 'Pemulihan buang objek yang lebih baharu. Lihat dulu, kemudian pilih.' }, { label: 'Buang dev-worker2 dari kluster', why: 'Kubelet-nya mungkin cuma perlu dihidupkan. Jangan buang gerai itu.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Anda sudah lihat. Ketik kedua-dua masalah.
+
+<Interactive name="SpotLines" prompt="Ketik kedua-dua masalah." lines={[{ text: '$ kubectl get nodes' }, { text: 'NAME                STATUS     ROLES           AGE     VERSION' }, { text: 'dev-control-plane   Ready      control-plane   6m34s   v1.37.0' }, { text: 'dev-worker          Ready      <none>          6m34s   v1.37.0' }, { text: 'dev-worker2         NotReady   <none>          6m34s   v1.37.0', target: true }, { text: '$ kubectl get deployments' }, { text: 'No resources found in default namespace.', target: true }]} success="Dua masalah: gerai yang senyap, dan pesanan yang hilang." />
+
+<Hint>Satu baris kata NotReady. Satu lagi kata tiada apa dijumpai.</Hint>
+</Card>
+
+<Card id="try-node" type="try">
+Bilik 1: pulihkan dev-worker2. Lihat ke dalamnya dulu.
+
+<Interactive name="FoodCourtSim" scenario="k9-boss" goal={{ nodeReady: { name: 'dev-worker2' } }} hints={['Taip ssh dev-worker2', 'systemctl status kubelet kata inactive (dead).', 'systemctl start kubelet, kemudian exit dan kubectl get nodes']} success="Bilik 1 selesai! dev-worker2 melapor semula." />
+
+<Hint>Penyelia di gerai itu berhenti. `systemctl` hidupkannya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu snapshot menunggu di `/opt/backup.db`. Ia diambil sebelum pemadaman. Selepas pemulihan, apa jadi pada objek yang dibuat selepas itu?
+
+<Interactive name="Choice" options={[{ label: 'Ia hilang juga', correct: true, why: 'etcd kembali ke saat itu. Apa-apa yang lebih baharu hilang.' }, { label: 'Ia kekal', why: 'Pemulihan ganti seluruh buku pesanan dengan salinan lama.' }, { label: 'Ia digabung dengan yang lama', why: 'etcd tak menggabung. Ia kembali ke masa lalu.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Bilik 2: rancang pemulihan sebelum sentuh apa-apa.
+
+<Interactive name="OrderList" items={['ssh dev-control-plane', 'etcdutl --write-out=table snapshot status /opt/backup.db', 'etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', 'Tunjukkan etcd.yaml ke /var/lib/etcd-restore (sed -i)', 'exit, tunggu kira-kira 30 s, kubectl get deployments']} label="Langkah pertama di atas" success="Pelan sedia. Semak, pulihkan, tukar arah, tunggu, lihat." />
+</Card>
+
+<Card id="try-all" type="try">
+Bilik terakhir: kedua-dua masalah kembali. Baiki gerai itu, dan pulihkan shop dari snapshot. Bahaya: pemulihan tulis semula etcd.
+
+<Interactive name="FoodCourtSim" scenario="k9-boss" goal={{ nodeReady: { name: 'dev-worker2' }, deploymentRestored: { name: 'shop' } }} hints={['Bilik 1 semula: ssh dev-worker2, systemctl start kubelet, exit.', 'ssh dev-control-plane, kemudian etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', "sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml, kemudian exit dan tunggu"]} success="Boss selesai! Gerai itu Ready dan shop kembali dengan 3 dulang." />
+
+<Hint>Dua tugas, ikut mana-mana urutan. Pemulihan sahaja biarkan satu dulang menunggu di gerai yang senyap.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+Rakan sepasukan pulihkan etcd dulu. Shop tunjuk 2/3 sedia. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Satu dulang ada di dev-worker2, yang kubelet-nya masih berhenti', correct: true, why: 'Hidupkan kubelet. Dulang ketiga lapor sedia tak lama kemudian.' }, { label: 'Snapshot itu rosak', why: 'Shop kembali dengan ketiga-tiga dulang. Satu cuma menunggu.' }, { label: 'etcd cuma pulihkan dua pertiga', why: 'Snapshot simpan setiap objek, semuanya sekali.' }]} />
+</Card>
+
+<Card id="check-next" type="check">
+Rancangan esok. Idea baik, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Simpan snapshot etcd ikut jadual, dan salin keluar dari node', good: true, why: 'Salinan baharu, jauh dari mesin yang mungkin rosak.' }, { text: 'Simpan satu-satunya snapshot di node control-plane', good: false, why: 'Kalau node itu rosak, salinannya hilang bersama.' }, { text: 'Simpan setiap YAML dalam Git juga', good: true, why: 'Apply semula dari Git selalunya lebih pantas daripada pemulihan.' }, { text: 'Pulihkan etcd untuk setiap kesilapan kecil', good: false, why: 'Pemulihan buang kerja yang lebih baharu. Ia jalan terakhir.' }, { text: 'Pasang amaran bila node NotReady', good: true, why: 'Anda tahu dulu, sebelum pelanggan perasan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki node NotReady dan pulihkan Deployment yang hilang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: buku pesanan kita satu buku kertas. Kluster sebenar selalunya ada 3 atau 5 ahli etcd. Kemudian setiap ahli dipulihkan dari snapshot yang sama. Jam kita juga melompat; mula semula sebenar ambil masa lebih lama.
+
+<Interactive name="Mission" id="k8s-k9-boss-real" steps={[{ id: 'where', text: 'Buka playground CKA percuma di Killercoda. Jangan sesekali berlatih pada kluster kerja.', command: 'kubectl get nodes' }, { id: 'save', text: 'Pada node control-plane, simpan snapshot dengan flag sijil (pelajaran 9).', command: 'sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db' }, { id: 'check', text: 'Kalau node itu ada etcdutl, semak salinan sebelum mempercayainya.', command: 'sudo etcdutl --write-out=table snapshot status /opt/backup.db' }]} success="Anda ambil dan semak sandaran etcd sebenar!" />
+</Card>

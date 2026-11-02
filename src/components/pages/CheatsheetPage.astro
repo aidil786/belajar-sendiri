@@ -1,0 +1,115 @@
+---
+// Cheat sheet for one course: /en/cheatsheet/ (Git) and /en/<course>/cheatsheet/ (other courses).
+import Base from '~/layouts/Base.astro';
+import DangerBadge from '~/components/ui/DangerBadge.astro';
+import { t, type Lang } from '~/i18n';
+import { getCourse } from '~/lib/course';
+import { getCommands } from '~/lib/content';
+import { commandHref, ROOT_COURSE, toolHref } from '~/lib/catalog';
+interface Props {
+  lang: Lang;
+  courseId: string;
+}
+const { lang, courseId } = Astro.props;
+const other = lang === 'en' ? 'ms' : 'en';
+const course = await getCourse(courseId);
+const title = courseId === ROOT_COURSE ? t(lang, 'cheatsheet.title') : t(lang, 'cheatsheet.titleCourse', { course: course.title[lang] });
+const data = await getCommands(courseId);
+---
+
+<Base lang={lang} title={title} altPath={toolHref(other, course, 'cheatsheet')}>
+  <div class="container sheet">
+    <div class="sheet-head">
+      <div>
+        <h1>{title}</h1>
+        <p>{t(lang, 'cheatsheet.intro')}</p>
+      </div>
+      {data.commands.length > 0 && <button type="button" class="btn btn-ghost" data-print>{t(lang, 'cheatsheet.print')}</button>}
+    </div>
+    {data.commands.length === 0 && <p class="sheet-empty" role="status">{t(lang, 'commands.empty')}</p>}
+    <div class="sheet-grid">
+      {
+        data.groups
+        .filter((g) => data.commands.some((c) => c.group === g.id))
+        .map((g) => (
+          <section class="sheet-group">
+            <h2>{g.title[lang]}</h2>
+            <ul>
+              {data.commands
+                .filter((c) => c.group === g.id)
+                .flatMap((c) => [{ ...c.example, id: c.id, danger: c.danger }, ...c.variants.map((v) => ({ ...v, id: c.id, danger: c.danger }))])
+                .map((row) => (
+                  <li>
+                    <a href={commandHref(lang, courseId, row.id)}>
+                      <code>{row.command}</code>
+                    </a>
+                    <span class="sheet-means">{row[lang]}</span>
+                    {row.danger !== 'safe' && <DangerBadge lang={lang} level={row.danger} />}
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</Base>
+
+<script>
+  document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+</script>
+
+<style>
+  .sheet {
+    padding-block: var(--space-5);
+  }
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .sheet-empty {
+    color: var(--color-text-muted);
+  }
+  .sheet-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    align-items: start;
+  }
+  .sheet-group {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+  }
+  .sheet-group h2 {
+    font-size: var(--text-l);
+  }
+  .sheet-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .sheet-group li {
+    display: grid;
+    gap: 2px;
+    justify-items: start;
+  }
+  .sheet-group code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .sheet-means {
+    font-size: var(--text-s);
+  }
+  @media print {
+    .sheet-head button {
+      display: none;
+    }
+  }
+</style>

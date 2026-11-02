@@ -1,0 +1,92 @@
+---
+id: k8s-k1-l06
+world: 1
+title: Control plane dan bahagian node
+summary: "Anda akan belajar: siapa jalankan pejabat pengurus, dan siapa memasak di setiap gerai."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, SchedulerTetris, SortCards, OrderList]
+needs: [k8s-k1-l05]
+scenario: k1-empty
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes components", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kube-scheduler", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" }
+  - { label: "Container Runtime Interface (CRI)", url: "https://kubernetes.io/docs/concepts/architecture/cri/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-empty" namespace="kube-system" commands={['kubectl get pods -n kube-system']} label="Kluster yang baru: 12 pod sudah berjalan dalam namespace kube-system." />
+
+Kluster baharu anda belum ada aplikasi. Tapi 12 pod sudah berjalan dalam `kube-system`. Siapa mereka?
+</Card>
+
+<Card id="try-office" type="try">
+Pejabat pengurus ialah **<Term id="control-plane">control plane (pejabat pengurus)</Term>**. Tekan 4 pod-nya. Nama mereka berakhir dengan dev-control-plane.
+
+<Interactive name="SpotLines" prompt="Tekan 4 pod pejabat pengurus." lines={[{ text: 'pod/coredns-586c9d84b4-cncvd' }, { text: 'pod/coredns-586c9d84b4-vl48c' }, { text: 'pod/etcd-dev-control-plane', target: true }, { text: 'pod/kindnet-sc2x8' }, { text: 'pod/kindnet-tsfhh' }, { text: 'pod/kindnet-wj2hr' }, { text: 'pod/kube-apiserver-dev-control-plane', target: true }, { text: 'pod/kube-controller-manager-dev-control-plane', target: true }, { text: 'pod/kube-proxy-4fvbg' }, { text: 'pod/kube-proxy-5bm7l' }, { text: 'pod/kube-proxy-8jtpv' }, { text: 'pod/kube-scheduler-dev-control-plane', target: true }]} success="Itulah pejabatnya: etcd, API server, controller manager dan scheduler." />
+
+<Hint>Cari etcd, kube-apiserver, kube-controller-manager dan kube-scheduler.</Hint>
+</Card>
+
+<Card id="see-api" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl cluster-info']} label="kubectl cluster-info kata control plane Kubernetes berjalan di https://127.0.0.1:41000." />
+
+**<Term id="api-server">API server</Term>** ialah kaunter depan pejabat. Semua orang bercakap dengannya sahaja, termasuk kubectl. `kubectl cluster-info` tunjuk alamatnya.
+</Card>
+
+<Card id="predict-etcd" type="predict">
+Pejabat tulis setiap pesanan dalam satu buku: **<Term id="etcd">etcd</Term>**. Buku itu hilang, dan tiada salinan sandaran. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Kluster lupa setiap pesanan', correct: true, why: 'Ya. etcd simpan semua data kluster. Pasukan sebenar buat salinan sandarannya.' }, { label: 'Tiada apa-apa: pod ingat semuanya', why: 'Pod yang sedang jalan mungkin terus berjalan seketika. Tapi semua pesanan hilang.' }, { label: 'kubectl bina semula', why: 'kubectl cuma bercakap dengan API server. Ia tak simpan salinan.' }]} />
+</Card>
+
+<Card id="try-scheduler" type="try">
+**<Term id="scheduler">Scheduler (penjadual)</Term>** pilih gerai untuk setiap dulang baharu. Jadi scheduler: letak setiap dulang di gerai yang ada ruang.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'dev-worker', cpu: '2', memory: '4Gi' }, { name: 'dev-worker2', cpu: '1', memory: '2Gi' }]} pods={[{ name: 'shop-1', cpu: '1500m', memory: '1Gi' }, { name: 'shop-2', cpu: '500m', memory: '512Mi' }, { name: 'shop-3', cpu: '1', memory: '1Gi' }]} success="Setiap dulang ada gerai. Itulah seluruh kerja scheduler." />
+
+<Hint>Letak dulang paling besar dahulu. shop-1 hanya muat di dev-worker.</Hint>
+</Card>
+
+<Card id="see-kubelet" type="see">
+Setiap gerai ada penyelia: **<Term id="kubelet">kubelet</Term>**. Ia hidupkan dulang yang pejabat hantar. Tekan setiap baris yang ia tulis.
+
+<Interactive name="SpotLines" prompt="Tekan setiap event daripada kubelet." lines={[{ text: '  Type    Reason     Age   From               Message' }, { text: '  Normal  Scheduled  4s    default-scheduler  Successfully assigned default/tray to dev-worker' }, { text: '  Normal  Pulling    3s    kubelet            Pulling image "nginx:1.29-alpine"', target: true }, { text: '  Normal  Pulled     0s    kubelet            Successfully pulled image "nginx:1.29-alpine" in 3.801s (3.801s including waiting). Image size: 22400000 bytes.', target: true }, { text: '  Normal  Created    0s    kubelet            Created container: web', target: true }, { text: '  Normal  Started    0s    kubelet            Started container web', target: true }]} success="Scheduler pilih gerai. kubelet buat yang selebihnya." />
+
+<Hint>Baca lajur From.</Hint>
+</Card>
+
+<Card id="see-runtime" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl get nodes -o custom-columns=NAME:.metadata.name,RUNTIME:.status.nodeInfo.containerRuntimeVersion']} label="Container runtime setiap node ialah containerd." />
+
+kubelet tak memasak. Dapur yang memasak: **<Term id="containerd">containerd</Term>** jalankan container. Ia bersambung melalui palam standard, iaitu <Term id="cri">CRI</Term>.
+</Card>
+
+<Card id="try-sort" type="try">
+Pejabat atau gerai? Susun setiap bahagian.
+
+<Interactive name="SortCards" buckets={[{ id: 'office', label: 'Pejabat pengurus (control plane)' }, { id: 'stall', label: 'Setiap gerai (node)' }]} items={[{ label: 'API server', bucket: 'office', why: 'Kaunter depan untuk setiap permintaan.' }, { label: 'etcd', bucket: 'office', why: 'Buku pesanan.' }, { label: 'scheduler', bucket: 'office', why: 'Ia pilih gerai untuk setiap dulang.' }, { label: 'controller manager', bucket: 'office', why: 'Ia jalankan controller: mahu, nampak, buat.' }, { label: 'kubelet', bucket: 'stall', why: 'Penyelia di setiap gerai.' }, { label: 'containerd', bucket: 'stall', why: 'Dapur yang jalankan container.' }, { label: 'kube-proxy', bucket: 'stall', why: 'Ia hantar trafik nombor pesanan ke dulang yang betul. Lebih lanjut dalam K3.' }]} success="Pejabat buat keputusan. Gerai memasak." />
+
+<Hint>Pejabat buat keputusan. Setiap gerai memasak dan menghidang.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Anda apply satu Deployment. Susun perjalanannya.
+
+<Interactive name="OrderList" items={['kubectl hantar pesanan anda ke API server', 'API server simpan pesanan itu dalam etcd', 'Controller nampak dan minta pod', 'Scheduler pilih gerai untuk setiap pod', 'kubelet minta containerd hidupkan pod itu']} label="Langkah pertama di atas" success="Daripada pesanan anda ke dulang panas, langkah demi langkah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan bahagian pejabat dan setiap gerai.
+</Card>
+
+<Card id="deeper" type="deeper">
+<Term id="controller-manager">Controller manager</Term> ialah satu program yang jalankan banyak controller kecil. Dengan managed Kubernetes, penyedia cloud jalankan seluruh pejabat untuk anda. Anda cuma nampak gerai.
+
+Latihan sebenar (pilihan): di kluster kind anda, `kubectl get pods -n kube-system -o wide` tunjuk gerai mana jalankan setiap bahagian.
+</Card>

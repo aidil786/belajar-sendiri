@@ -1,0 +1,76 @@
+---
+id: k8s-k2-l05
+world: 2
+title: "Rolling update dan rollout undo"
+summary: "Anda akan belajar: hantar versi baharu tanpa henti, dan undur versi rosak dengan pantas."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder]
+needs: [k8s-k2-l04]
+scenario: k2-rolling
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Updating a Deployment", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment" }
+  - { label: "kubectl rollout", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/" }
+  - { label: "kubectl set image", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_image/" }
+---
+
+<Card id="hook" type="hook">
+Waktu puncak tengah hari. Menu baharu, nginx 1.30, sudah siap. Kalau anda tutup gerai untuk tukar dulang, pelanggan lapar akan pergi. Apa yang anda mahu?
+
+<Interactive name="Choice" options={[{ label: 'Tukar beberapa dulang sekali gus, gerai terus buka', correct: true, why: 'Pelanggan sentiasa jumpa dulang. Kubernetes buat begini secara lalai.' }, { label: 'Tutup, tukar semua dulang, buka semula', why: 'Boleh, tapi papan "Tutup" buat anda hilang pelanggan.' }, { label: 'Tunggu sampai tengah malam', why: 'Nanti setiap pembaikan pun kena tunggu tengah malam. Hantar dengan selamat waktu siang.' }]} />
+</Card>
+
+<Card id="see-rolling" type="see">
+<Interactive name="KubeReplay" scenario="k2-rolling" commands={['kubectl set image deployment/shop web=nginx:1.30-alpine', 'sleep 3', 'kubectl get pods', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl get rs']} label="Selepas set image, satu pod baharu dicipta sementara 3 pod lama terus berjalan. Bila rollout tamat, ReplicaSet lama ada 0 pod dan yang baharu ada 3." />
+
+`kubectl set image` tulis image baharu dalam pesanan. **<Term id="rolling-update" course="cicd">Rolling update</Term>** bermula: satu dulang baharu masuk, satu dulang lama keluar, berulang-ulang.
+</Card>
+
+<Card id="try-update" type="try">
+Giliran anda. Hantar nginx 1.30 ke kedai. Kemudian tunggu rollout tamat.
+
+<Interactive name="FoodCourtSim" scenario="k2-rolling" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop', revision: 2 } }} hints={['Taip kubectl set image deployment/shop web=nginx:1.30-alpine', 'Kemudian kubectl rollout status deployment/shop']} success="Ketiga-tiga dulang hidang 1.30, dan gerai tak pernah tutup." />
+
+<Hint>`kubectl set image deployment/shop web=nginx:1.30-alpine`, kemudian `kubectl rollout status deployment/shop`.</Hint>
+</Card>
+
+<Card id="see-history" type="see">
+<Interactive name="KubeReplay" scenario="k2-rolling" commands={['kubectl set image deployment/shop web=nginx:1.30-alpine', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl rollout history deployment/shop']} label="rollout history senaraikan revision 1 dan revision 2." />
+
+Setiap templat baharu dapat nombor **<Term id="revision">revision</Term>** (semakan). ReplicaSet lama kekal, kosong, supaya mudah untuk kembali.
+</Card>
+
+<Card id="predict" type="predict">
+Rakan sepasukan hantar `nginx:1.299`. Tag itu tak wujud. Apa jadi pada 3 dulang lama?
+
+<Interactive name="Choice" options={[{ label: 'Ia terus melayan. Dulang baharu tersangkut.', correct: true, why: 'Rollout tunggu dulang baharu sedia. Ia tak pernah sedia, jadi dulang lama kekal.' }, { label: 'Ketiga-tiganya mati', why: 'Dengan 3 dulang, dulang lama keluar hanya selepas dulang baharu sedia.' }, { label: 'Kubernetes undur sendiri', why: 'Ia berhenti dan tunggu. Undur itu kerja anda, atau kerja pipeline anda.' }]} />
+</Card>
+
+<Card id="try-undo" type="try">
+Ia berlaku. Dulang baharu tunjuk `ErrImagePull`, kemudian `ImagePullBackOff`. Maksudnya: image itu tak boleh diambil. Undur rollout.
+
+<Interactive name="FoodCourtSim" scenario="k2-bad-rollout" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.29-alpine' }, rolloutComplete: { name: 'shop', minRevision: 3 }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Taip kubectl rollout undo deployment/shop', 'Kemudian kubectl rollout status deployment/shop']} success="Kembali ke versi baik terakhir. Dulang yang tersangkut sudah tiada." />
+
+<Hint>`kubectl rollout undo deployment/shop` kembali satu revision.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Bina arahan yang kembali tepat ke revision 1.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Bercakap dengan kluster' }, { text: 'rollout', means: 'tentang rollout' }, { text: 'undo', means: 'undur' }, { text: 'deployment/shop', means: 'untuk pesanan shop' }, { text: '--to-revision=1', means: 'ke revision 1' }]} decoys={[{ text: 'delete', means: 'buang sesuatu' }, { text: '--force', means: 'langkau semakan keselamatan' }]} success="Itulah arahannya. Undur juga satu rollout, jadi gerai terus buka." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar versi baharu tanpa henti, dan undur versi yang rosak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Selepas `rollout undo`, kubectl cetak Warning: kluster berubah, tapi fail anda tidak. Baiki fail dalam Git juga, atau `apply` seterusnya bawa balik bug itu. Secara lalai, rollout tambah sehingga 25% dulang lebih dan kurangkan paling banyak 25%.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, letak image rosak, kemudian undur.
+</Card>

@@ -1,0 +1,82 @@
+---
+id: linux-l2-l03
+world: 2
+title: "Tukar kebenaran: chmod"
+summary: "Anda akan belajar: tambah dan buang kunci dengan chmod, guna huruf dan nombor."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, CommandBuilder, SortCards, SwipeJudge]
+needs: [linux-l2-l02]
+scenario: linux-l2-chmod
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "chmod (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/chmod.1.en.html" }
+  - { label: "GNU coreutils: symbolic modes", url: "https://www.gnu.org/software/coreutils/manual/html_node/Symbolic-Modes.html" }
+  - { label: "GNU coreutils: numeric modes", url: "https://www.gnu.org/software/coreutils/manual/html_node/Numeric-Modes.html" }
+---
+
+<Card id="hook" type="hook">
+Dua masalah di kedai. `open.sh` tak boleh berjalan. Dan `secret.txt` tunjuk `-rw-r--r--`: semua orang boleh baca kod peti besi! Alat mana yang baiki kunci?
+
+<Interactive name="Choice" options={[{ label: 'chmod: tukar kunci', correct: true, why: 'chmod tambah atau buang r, w dan x.' }, { label: 'chown: tukar pemilik', why: 'Anda sudah pun pemilik kedua-dua fail. Kuncinya yang bermasalah.' }, { label: 'Padam dan tulis semula', why: 'Fail baru dapat kunci asal yang sama. Dan kod itu mungkin hilang.' }]} />
+</Card>
+
+<Card id="see-letters" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" intro={['chmod +x open.sh', 'ls -l open.sh']} />
+
+`chmod +x open.sh` tambah kunci jalan. **chmod** maksudnya "change mode" (tukar mod). Huruf: `u` pemilik, `g` kumpulan, `o` orang lain. `+` tambah, `-` buang.
+</Card>
+
+<Card id="build-go" type="try">
+Bina arahan: buang kunci baca daripada kumpulan dan orang lain pada `secret.txt`.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'chmod', means: 'tukar kunci' }, { text: 'go-r', means: 'kumpulan dan orang lain: buang baca' }, { text: 'secret.txt', means: 'fail ini' }]} decoys={[{ text: 'u+x', means: 'pemilik: tambah jalan' }, { text: '+r', means: 'semua: tambah baca' }]} success="chmod go-r secret.txt. Hanya anda boleh baca sekarang." />
+</Card>
+
+<Card id="try-x" type="try">
+Beri `open.sh` kunci jalan, kemudian jalankannya: `chmod +x open.sh`, kemudian `./open.sh`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" goal={{ fileMode: { '~/shop/open.sh': 'x' }, lastTyped: '^(\\./|bash )open\\.sh' }} hints={['Taip chmod +x open.sh', 'Sekarang jalankan: ./open.sh']} solution={['chmod +x open.sh', './open.sh']} success="Kedai is open! Gambar kini kata skrip itu boleh berjalan." />
+
+<Hint>`./` maksudnya "fail di sini".</Hint>
+</Card>
+
+<Card id="sort-numbers" type="check">
+Kunci juga ada nombor: r = 4, w = 2, x = 1. Campurkan bagi setiap gugus. Asingkan ikut nombornya.
+
+<Interactive name="SortCards" buckets={[{ id: '7', label: '7' }, { id: '6', label: '6' }, { id: '4', label: '4' }]} items={[{ label: 'rwx', bucket: '7', why: '4 + 2 + 1 = 7.' }, { label: 'rw-', bucket: '6', why: '4 + 2 = 6.' }, { label: 'r--', bucket: '4', why: 'Baca sahaja: 4.' }, { label: 'baca, tulis dan jalan', bucket: '7', why: 'Ketiga-tiga kunci: 7.' }]} success="Jadi 644 maksudnya rw- r-- r--, dan 755 maksudnya rwx r-x r-x." />
+</Card>
+
+<Card id="predict-600" type="predict">
+Anda taip `chmod 600 secret.txt`. Apa `ls -l` tunjuk untuknya?
+
+<Interactive name="Choice" options={[{ label: '-rw-------', correct: true, why: '6 untuk anda (rw), 0 untuk kumpulan, 0 untuk orang lain.' }, { label: '-rw-r--r--', why: 'Itu 644. Dua gugus terakhir masih boleh baca.' }, { label: '-rwxrwxrwx', why: 'Itu 777: semua kunci untuk semua orang.' }]} />
+</Card>
+
+<Card id="try-600" type="try">
+Kunci kod peti besi supaya hanya anda boleh baca dan ubah: `chmod 600 secret.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" goal={{ fileMode: { '~/shop/secret.txt': '600' } }} hints={['Taip chmod 600 secret.txt', 'Semak dengan ls -l secret.txt']} solution={['chmod 600 secret.txt']} success="-rw-------: kod peti besi milik anda seorang." />
+
+<Hint>Huruf pun boleh: `chmod go-r secret.txt`.</Hint>
+</Card>
+
+<Card id="judge-777" type="check">
+Tabiat baik, atau berisiko?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'chmod 600 secret.txt', good: true, why: 'Benda peribadi kekal peribadi.' }, { text: 'chmod 777 prices.txt', good: false, why: 'Semua orang boleh tukar harga. Nota Hati-hati muncul untuk 777.' }, { text: 'chmod +x open.sh', good: true, why: 'Kunci jalan sahaja, di tempat yang perlu.' }, { text: 'chmod -R 777 /var/www', good: false, why: 'Setiap fail, setiap kunci, untuk semua. Jangan jadikan jalan pintas.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tambah dan buang kunci dengan huruf atau nombor.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pasangan biasa: `644` untuk fail, `755` untuk skrip dan folder, `600` untuk rahsia. `chmod -R` ubah seluruh pokok folder, jadi semak dua kali. Skrip juga perlukan baris pertama seperti `#!/bin/bash`.
+
+Latihan sebenar (pilihan): dalam folder latihan, `touch s.sh`, `ls -l s.sh`, `chmod 755 s.sh`, kemudian `ls -l s.sh` lagi.
+</Card>

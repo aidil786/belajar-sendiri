@@ -1,0 +1,67 @@
+---
+id: docker-d2-l05
+world: 2
+title: "Build context and .dockerignore"
+summary: "You will learn: what docker build sends to the kitchen, and how to leave secrets at home."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, SortCards, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d2-l04]
+scenario: d2-l05
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Build context", url: "https://docs.docker.com/build/concepts/context/" }
+  - { label: "Docker docs: .dockerignore files", url: "https://docs.docker.com/build/concepts/context/#dockerignore-files" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l05" commands={['docker build -t diary:1.0 .', 'docker run -d --name web -p 8080:80 diary:1.0', 'curl -s localhost:8080/notes.txt']} label="The diary site is built with COPY . and served on 8080. curl asks for /notes.txt and gets the secret notes back." />
+
+You shipped your diary site. A friend opens `/notes.txt`. Your secret notes are online! How did they get in?
+</Card>
+
+<Card id="see-context" type="see">
+<Interactive name="SpotLines" lines={[{ text: ' => [internal] load build definition from Dockerfile' }, { text: ' => [internal] load .dockerignore' }, { text: ' => [1/2] FROM docker.io/library/nginx:1.30-alpine' }, { text: ' => [internal] load build context' }, { text: ' => => transferring context: 217B', target: true }, { text: ' => [2/2] COPY . /usr/share/nginx/html/' }]} prompt="Tap the line where your folder is sent." success="Yes! That is the whole folder going to the kitchen." />
+
+`docker build .` sends the whole folder to the kitchen. That folder is the **<Term id="build-context">build context</Term>**. `COPY . ` copies all of it, notes too.
+</Card>
+
+<Card id="try-sort" type="try">
+Send it to the kitchen, or leave it at home?
+
+<Interactive name="SortCards" buckets={[{ id: 'send', label: 'Send' }, { id: 'home', label: 'Leave at home' }]} items={[{ label: 'index.html', bucket: 'send', why: 'The site needs it.' }, { label: 'style.css', bucket: 'send', why: 'The site needs it too.' }, { label: 'notes.txt', bucket: 'home', why: 'Private. Never in an image.' }, { label: '.git', bucket: 'home', why: 'Your whole history. Big, and the site does not need it.' }, { label: 'node_modules', bucket: 'home', why: 'Heavy. The recipe installs fresh ones.' }, { label: '.env', bucket: 'home', why: 'Passwords live here. Keep them out.' }]} success="Only what the dish needs goes in the box." />
+</Card>
+
+<Card id="try-ignore" type="try">
+A **<Term id="dockerignore">.dockerignore</Term>** file lists what stays home. Make one, rebuild as `diary:1.1`, run it, then ask for `/notes.txt`.
+
+<Interactive name="KitchenSim" scenario="d2-l05" goal={{ fileContains: { 'diary/.dockerignore': 'notes.txt' }, imageExists: 'diary:1.1', running: ['web'], lastTyped: '^curl\\b.*notes\\.txt' }} hints={['Type echo "notes.txt" > .dockerignore', 'Then docker build -t diary:1.1 .', 'Then docker run -d --name web -p 8080:80 diary:1.1', 'Finally curl -s localhost:8080/notes.txt']} success="404 Not Found. The notes stayed at home." />
+
+<Hint>Start with `echo "notes.txt" > .dockerignore`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`.dockerignore` lists `.env`. The recipe says `COPY . .`. Is `.env` in the image?
+
+<Interactive name="Choice" options={[{ label: 'No. It never left your laptop', correct: true, why: 'Ignored files are not sent at all. COPY cannot copy what is not there.' }, { label: 'Yes. COPY . . copies everything', why: 'Everything that was sent. .env was not sent.' }, { label: 'Only an empty .env', why: 'Not even a name. The file is simply not in the context.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good `.dockerignore` lines? Swipe right for yes, left for "needs work".
+
+<Interactive name="SwipeJudge" cards={[{ text: '.git', good: true, why: 'Your history stays home. Builds get smaller and faster.' }, { text: 'node_modules', good: true, why: 'The recipe installs clean ones.' }, { text: 'index.html', good: false, why: 'The site needs it! COPY would not find it.' }, { text: '.env', good: true, why: 'Secrets stay out of every layer.' }, { text: '*', good: false, why: 'That ignores everything. COPY finds nothing.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose what goes to the kitchen with .dockerignore.
+</Card>
+
+<Card id="deeper" type="deeper">
+A line starting with `!` brings a file back: `*.md` then `!README.md`. You can list `Dockerfile` and `.dockerignore` too; the build still reads them. A smaller context also helps the cache, because fewer files can change.
+
+<Interactive name="Mission" id="d2-l05-rep" steps={[{ id: 'look', text: 'Build any project and read the "transferring context" line.' }, { id: 'ignore', text: 'Add a .dockerignore with .git and node_modules.' }, { id: 'again', text: 'Build again and compare the size.' }]} success="Your kitchen gets only what it needs." />
+</Card>

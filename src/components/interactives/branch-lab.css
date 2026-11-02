@@ -1,0 +1,745 @@
+/* World 3 interactives: UniverseSplitter (.us), ConflictResolver (.cr), RebaseDeck (.rd).
+   Tokens only. Conflict = red plus an icon, never colour alone. */
+
+/* ---------- UniverseSplitter ---------- */
+.us-band {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+}
+
+.us-band.is-here {
+  fill: var(--c-head-soft);
+  stroke: var(--deco-head);
+  stroke-dasharray: 6 5;
+}
+
+.us-band.is-target {
+  cursor: pointer;
+  fill: var(--color-surface-2);
+  stroke: var(--color-border-strong);
+  stroke-dasharray: 6 5;
+}
+
+.us-band.is-target:hover {
+  stroke: var(--color-focus);
+}
+
+/* In switch mode a tap anywhere on a lane (dots included) picks that universe. */
+.us-switch .graph-edge,
+.us-switch .graph-node,
+.us-switch .graph-head {
+  pointer-events: none;
+}
+
+.us-switcher {
+  border: 0;
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  min-width: 0;
+}
+
+.us-legend {
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.us-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.us-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.us-option code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.us-option.is-current {
+  border-color: var(--deco-head);
+  background: var(--c-head-soft);
+  color: var(--c-head-ink);
+}
+
+.us-option:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.us-option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.us-planet {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.us-seen {
+  font-weight: var(--weight-bold);
+  color: var(--color-success);
+}
+
+.us-create-form {
+  margin-top: var(--space-3);
+}
+
+.us-picked {
+  font-size: var(--text-s);
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.us-label {
+  display: block;
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.us-create-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.us-input,
+.rd-input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-s);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-s);
+}
+
+.us-term,
+.cr-log {
+  margin-top: var(--space-3);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.us-explain {
+  font-size: var(--text-s);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.us-files {
+  margin-top: var(--space-3);
+  border: 2px solid var(--deco-working);
+  border-radius: var(--radius-m);
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-working-soft);
+  color: var(--c-working-ink);
+}
+
+.us-files-head {
+  font-weight: var(--weight-bold);
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.us-chips {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.us-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  border: 1.5px solid var(--deco-working);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-2);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.us-chip.is-shown {
+  font-weight: var(--weight-bold);
+}
+
+.us-file-name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-s);
+}
+
+.us-file,
+.us-nofile {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-s);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.us-nofile {
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+.us-toolbar,
+.rd-actions,
+.cr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* ---------- ConflictResolver ---------- */
+.cr-warn {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  fill: var(--deco-danger);
+}
+
+.cr-warn rect {
+  fill: var(--c-danger-soft);
+}
+
+.cr-count {
+  margin: var(--space-2) 0;
+}
+
+.cr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-3);
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  border: 2px solid var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-text);
+}
+
+.cr-badge.is-open {
+  border-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.cr-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.cr-tab {
+  min-height: var(--tap);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+  border: 2px solid var(--color-border-strong);
+  border-bottom-width: 4px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.cr-tab.is-on {
+  background: var(--color-surface);
+  border-bottom-color: var(--color-focus);
+  font-weight: var(--weight-bold);
+}
+
+.cr-tab-left {
+  font-size: var(--text-xs);
+}
+
+.cr-file {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.cr-file-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-s);
+}
+
+.cr-file-kind {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.cr-body {
+  padding: var(--space-2) 0;
+}
+
+.cr-plain,
+.cr-code {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cr-plain {
+  margin: 0;
+  padding: 0 var(--space-3);
+  color: var(--color-text);
+}
+
+.cr-code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.cr-block {
+  margin: var(--space-1) var(--space-2);
+  border-radius: var(--radius-s);
+}
+
+.cr-block.is-open {
+  border: 2px solid var(--deco-danger);
+}
+
+.cr-block.is-fixed {
+  border: 2px solid var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.cr-block.is-editing {
+  border: 2px solid var(--color-focus);
+  padding: var(--space-2);
+}
+
+.cr-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-2);
+}
+
+.cr-act,
+.cr-change {
+  min-height: 40px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.cr-act[aria-pressed='true'] {
+  border-color: var(--color-focus);
+  background: var(--color-surface-2);
+}
+
+.cr-act:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.cr-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  padding: 2px var(--space-2);
+}
+
+.cr-marker {
+  align-items: center;
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  font-weight: var(--weight-bold);
+}
+
+.cr-ours {
+  background: var(--c-head-soft);
+  color: var(--c-head-ink);
+  border-left: 5px solid var(--deco-head);
+}
+
+.cr-theirs {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  border-left: 5px solid var(--deco-repo);
+}
+
+.cr-base {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border-left: 5px dashed var(--color-border-strong);
+}
+
+.cr-tag {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-2);
+  border: 1.5px solid currentColor;
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+.cr-tag-ours {
+  color: var(--c-head-ink);
+}
+
+.cr-tag-theirs {
+  color: var(--c-repo-ink);
+}
+
+.cr-fixed-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+}
+
+.cr-change {
+  margin-left: auto;
+  min-height: 36px;
+  font-weight: var(--weight-normal);
+}
+
+.cr-result {
+  padding-bottom: var(--space-1);
+}
+
+.cr-edit-label {
+  display: block;
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.cr-textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border-radius: var(--radius-s);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: var(--space-2);
+  resize: vertical;
+}
+
+.cr-presence {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  color: var(--c-danger-ink);
+  background: var(--c-danger-soft);
+  font-weight: var(--weight-bold);
+}
+
+/* "editor" look: like a code editor's inline conflict buttons (small text links). */
+.cr-editor .cr-file {
+  border-color: var(--color-border-strong);
+}
+
+.cr-editor .cr-bar {
+  background: transparent;
+  padding: 2px var(--space-2);
+  gap: 0 var(--space-1);
+}
+
+.cr-editor .cr-act {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  font-weight: var(--weight-normal);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  padding-inline: var(--space-2);
+}
+
+.cr-editor .cr-act:hover {
+  background: var(--color-surface-2);
+}
+
+/* ---------- RebaseDeck ---------- */
+.rd-cmd {
+  white-space: normal;
+}
+
+.rd-note {
+  font-size: var(--text-s);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.rd-deck {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rd-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 2px solid var(--deco-repo);
+  border-radius: var(--radius-m);
+  padding: var(--space-2);
+  box-shadow: var(--color-shadow);
+}
+
+.rd-card.is-joining {
+  margin-left: var(--space-5);
+  border-style: dashed;
+}
+
+.rd-card.rd-drop {
+  border-color: var(--color-border-strong);
+  border-style: dashed;
+  background: var(--color-surface-2);
+  box-shadow: none;
+}
+
+.rd-card.rd-drop .rd-msg {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.rd-card.rd-reword {
+  border-color: var(--deco-staging);
+}
+
+.rd-card.is-done {
+  box-shadow: none;
+}
+
+.rd-top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.rd-grip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-height: 32px;
+  border-radius: var(--radius-s);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  font-weight: var(--weight-bold);
+}
+
+.rd-num {
+  flex: none;
+  width: 32px;
+  text-align: center;
+  font-weight: var(--weight-bold);
+}
+
+.rd-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rd-hash {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.rd-msg {
+  font-family: var(--font-mono);
+  font-size: var(--text-s);
+}
+
+.rd-joins {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.rd-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.rd-icon {
+  width: 1.2rem;
+  text-align: center;
+  font-weight: var(--weight-bold);
+}
+
+.rd-select {
+  min-height: 40px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-s);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-s);
+}
+
+.rd-means {
+  flex: 1 1 3rem;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.rd-btns {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.rd-btn {
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.rd-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.rd-message {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.rd-message-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.rd-graph {
+  margin: var(--space-3) 0 0;
+}
+
+.rd-graph-head {
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+/* ---------- Hotspots picture "vscode-merge" (pictures.tsx) ----------
+   Same concept colours as the ConflictResolver: current (HEAD) pink, incoming green. */
+.pic-lens {
+  font-size: 5.6px;
+  fill: var(--color-text-muted);
+  text-decoration: underline;
+}
+
+.pic-mono {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  font-weight: 700;
+  fill: var(--color-text);
+}
+
+.pic-cur-head {
+  fill: var(--c-head-soft);
+  stroke: var(--deco-head);
+}
+
+.pic-cur {
+  fill: var(--c-head-soft);
+}
+
+.pic-inc-head {
+  fill: var(--c-repo-soft);
+  stroke: var(--deco-repo);
+}
+
+.pic-inc {
+  fill: var(--c-repo-soft);
+}
+
+.pic-conflict-row {
+  stroke: var(--deco-danger);
+}
+
+.pic-plus {
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--color-text);
+}
+
+.pic-mark-c {
+  font-size: 7px;
+  font-weight: 700;
+  fill: var(--c-danger-ink);
+}

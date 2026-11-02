@@ -1,0 +1,74 @@
+---
+id: git-w07-l09
+world: 7
+title: Deploy to Pages and Cloudflare
+summary: "You will learn: how a workflow publishes your site to GitHub Pages or Cloudflare."
+minutes: 5
+xp: 25
+interactives: [Transcript, OrderList, YamlBuilder, CommandBuilder, SortCards, Choice]
+needs: [git-w07-l08]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using custom workflows with GitHub Pages", url: "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages" }
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Cloudflare Workers Builds", url: "https://developers.cloudflare.com/workers/ci-cd/builds/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Two commands typed by hand on a laptop: npm run build, then npx wrangler deploy." lines={[{ cmd: 'npm run build' }, { cmd: 'npx wrangler deploy' }]} />
+
+Every new diary entry, you type these on your laptop. Forget once, and readers see old pages. Time to hand the job to a robot.
+</Card>
+
+<Card id="see-flow" type="see">
+Deploying is just more steps, after the tests. Put a deploy workflow in order.
+
+<Interactive name="OrderList" items={['A push lands on main', 'Check out the code', 'Install and test', 'Build the site', 'Upload it to the host']} label="First step at the top" success="Yes! Test, build, then ship." />
+</Card>
+
+<Card id="try-pages" type="try">
+**GitHub Pages** hosts websites straight from your repo. Set its source to GitHub Actions. Then build this workflow: pack the site, then deploy it.
+
+<Interactive name="YamlBuilder" workflow="Pages" goal={{ order: ['push', 'perms', 'job', 'checkout', 'node', 'build', 'upload', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run when main gets new commits.' },
+  { id: 'perms', kind: 'permissions', label: 'Pages permissions', yaml: 'contents: read\npages: write\nid-token: write', means: 'Read the code, write to Pages, and prove who is deploying.' },
+  { id: 'writeAll', kind: 'permissions', label: 'Write to the code', yaml: 'contents: write', means: 'Let the token change your code.', why: 'This job never changes your code. Read is enough.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy to github-pages', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment:\n    name: github-pages\n    url: ${{ steps.deployment.outputs.page_url }}', means: 'A fresh runner, deploying to the github-pages environment.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto the runner.' },
+  { id: 'node', kind: 'step', label: 'Set up Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Install Node 24.' },
+  { id: 'build', kind: 'step', label: 'Install and build', yaml: '- run: npm ci && npm run build', means: 'Build the site into dist/.' },
+  { id: 'upload', kind: 'step', label: 'Pack the site for Pages', yaml: '- uses: actions/upload-pages-artifact@v5\n  with:\n    path: dist', means: 'Pack dist/ into an artifact for Pages.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy to Pages', yaml: '- id: deployment\n  uses: actions/deploy-pages@v5', means: 'Publish the packed site.' },
+  { id: 'wrangler', kind: 'step', label: 'Deploy to Cloudflare', yaml: '- run: npx wrangler deploy', means: 'Upload the site to Cloudflare.', why: "That one is for Cloudflare. This workflow is for Pages." }]}
+  success="Your diary deploys to Pages on every push!" />
+
+<Hint>Trigger, permissions, job, then steps. Pack before you deploy.</Hint>
+</Card>
+
+<Card id="see-cloudflare" type="see">
+Cloudflare hosts sites too. This course lives there! Its tool, Wrangler, uploads your site. In a workflow, it reads two secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'npx', means: 'run a tool from npm' }, { text: 'wrangler', means: "Cloudflare's command-line tool" }, { text: 'deploy', means: 'upload the site and make it live' }]} decoys={[{ text: 'dev', means: 'run it on your own computer only' }]} success="That's the deploy command this course uses!" />
+</Card>
+
+<Card id="see-alt" type="see">
+Cloudflare can also watch your repo by itself. It builds and deploys on every push, with no workflow file. That is called Workers Builds. Who does what? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'actions', label: 'GitHub Actions deploys' }, { id: 'builds', label: 'Workers Builds deploys' }]} items={[{ label: 'You write the deploy steps in YAML', bucket: 'actions', why: 'The workflow file holds every step.' }, { label: 'Set up once in the Cloudflare dashboard', bucket: 'builds', why: 'Cloudflare connects to your repo and runs the build.' }, { label: 'Tests and deploy sit in one workflow', bucket: 'actions', why: 'One file: test first, then deploy.' }, { label: 'No Cloudflare token in your GitHub secrets', bucket: 'builds', why: 'Cloudflare builds on its own side, so GitHub needs no token.' }]} success="Sorted! Both work. Pick one per site." />
+</Card>
+
+<Card id="predict" type="predict">
+Your deploy job has `needs: test`. The tests fail. What happens to deploy?
+
+<Interactive name="Choice" options={[{ label: 'It is skipped. The old site stays live.', correct: true, why: '`needs: test` means: only after test passes.' }, { label: 'It deploys anyway', why: 'needs makes deploy wait for a ✓ from test.' }, { label: 'It deletes the live site', why: 'Nothing changes. Readers keep the last good version.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now deploy a site from a workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+`id-token: write` lets Pages check the deploy really comes from your workflow. No stored key needed. Pages needs its source set to GitHub Actions in the repo settings. Cloudflare also has its own action, `cloudflare/wrangler-action`, that runs Wrangler for you.
+</Card>

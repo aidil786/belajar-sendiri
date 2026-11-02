@@ -1,0 +1,46 @@
+---
+// One lesson card. The lesson player shows one card at a time.
+// type: hook | see | try | predict | check | win | deeper
+import { isLang, t } from '~/i18n';
+interface Props {
+  id: string;
+  type: 'hook' | 'see' | 'try' | 'predict' | 'check' | 'win' | 'deeper';
+  /** Optional narration file (later). */
+  audio?: string;
+}
+const { id, type, audio } = Astro.props;
+const seg = Astro.url.pathname.split('/')[1];
+const lang = isLang(seg) ? seg : 'en';
+const icons: Record<string, string> = { hook: '!', see: '◉', try: '✋', predict: '?', check: '✓', win: '★', deeper: '+' };
+---
+
+{
+  type === 'deeper' ? (
+    <details class="deeper" data-card-id={id} data-card-type="deeper">
+      <summary>{t(lang, 'lesson.deeper')}</summary>
+      <div class="deeper-body">
+        <slot />
+      </div>
+    </details>
+  ) : (
+    <section
+      class="lesson-card"
+      id={`card-${id}`}
+      data-card-id={id}
+      data-card-type={type}
+      data-audio={audio}
+      tabindex="-1"
+      aria-labelledby={`card-${id}-step`}
+    >
+      <p class="card-step" id={`card-${id}-step`}>
+        <span class={`card-step-icon step-${type}`} aria-hidden="true">
+          {icons[type]}
+        </span>
+        {t(lang, `lesson.step.${type}`)}
+      </p>
+      <div class="card-content">
+        <slot />
+      </div>
+    </section>
+  )
+}

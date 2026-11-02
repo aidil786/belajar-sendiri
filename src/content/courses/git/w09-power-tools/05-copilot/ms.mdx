@@ -1,0 +1,71 @@
+---
+id: git-w09-l05
+world: 9
+title: GitHub Copilot
+summary: "Anda akan belajar: cara Copilot boleh membantu, dan kenapa anda tetap yang memegang kawalan."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, SortCards, OrderList, PracticeRepo, SwipeJudge]
+needs: [git-w09-l04]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "What is GitHub Copilot?", url: "https://docs.github.com/en/copilot/get-started/what-is-github-copilot" }
+  - { label: "About Copilot coding agent", url: "https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent" }
+  - { label: "About Copilot code review", url: "https://docs.github.com/en/copilot/concepts/agents/code-review" }
+---
+
+<Card id="hook" type="hook">
+Anda taip `function wordCount(`. Teks kelabu muncul dan siapkan seluruh fungsi. Ajaib! Tapi siapa yang bertanggungjawab atas kod itu?
+
+<Interactive name="Choice" options={[{ label: 'Anda. Anda yang pilih untuk simpan', correct: true, why: 'AI cadangkan. Anda yang putuskan, jadi kod itu milik anda.' }, { label: 'AI itu', why: 'AI tak boleh dipersalahkan. Orang yang buat commit yang bertanggungjawab.' }, { label: 'Tiada siapa. Ia automatik', why: 'Nama anda ada pada commit itu. Jadi ia milik anda.' }]} />
+</Card>
+
+<Card id="see-modes" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Semasa menaip', title: 'Cadangan', text: 'Teks kelabu muncul. Tekan Tab untuk simpan, atau terus menaip untuk abaikan.' }, { when: 'Bila anda bertanya', title: 'Chat', text: 'Tanya dalam bahasa biasa. Ia terangkan dan jawab.' }, { when: 'Dalam editor anda', title: 'Agent mode', text: 'Beri satu matlamat. Ia edit fail dan boleh jalankan arahan, langkah demi langkah.' }, { when: 'Di GitHub', title: 'Coding agent', text: 'Beri satu issue. Ia bekerja di awan, kemudian buka pull request.' }, { when: 'Pada pull request', title: 'Semakan kod', text: 'Ia tinggalkan komen semakan. Pembantu, bukan keputusan akhir.' }]} />
+
+**<Term id="copilot">GitHub Copilot</Term>** ialah pembantu AI GitHub. Ia muncul di lima tempat. Ketik setiap satu.
+</Card>
+
+<Card id="try-sort" type="try">
+Pembantu Copilot mana yang sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'suggest', label: 'Cadangan' }, { id: 'chat', label: 'Chat' }, { id: 'agent', label: 'Coding agent' }]} items={[{ label: 'Habiskan baris yang anda sedang taip', bucket: 'suggest', why: 'Cadangan muncul semasa anda menaip.' }, { label: 'Terangkan maksud satu ralat', bucket: 'chat', why: 'Tanya sahaja, macam tanya kawan.' }, { label: 'Baiki issue kecil, kemudian buka pull request', bucket: 'agent', why: 'Coding agent tukar issue jadi pull request.' }, { label: 'Tanya apa yang regex ini buat', bucket: 'chat', why: 'Soalan pergi ke chat.' }, { label: 'Lengkapkan baki satu gelung', bucket: 'suggest', why: 'Bantuan kecil di tempat, semasa anda menaip.' }, { label: 'Kemas kini dokumen semasa anda buat kerja lain', bucket: 'agent', why: 'Ia bekerja di belakang tabir, kemudian minta disemak.' }]} success="Siap! Bantuan kecil, soalan, atau satu tugas penuh." />
+</Card>
+
+<Card id="try-order" type="try">
+**<Term id="coding-agent">Coding agent</Term>** (ejen pengekodan) tukar issue jadi pull request. Susun langkahnya ikut urutan.
+
+<Interactive name="OrderList" items={['Anda tulis issue yang jelas', 'Anda serahkan issue itu kepada Copilot', 'Ia bekerja pada satu branch di awan', 'Ia buka pull request', 'Anda semak, uji dan putuskan']} label="Langkah pertama di atas" success="Itulah alirannya. Di hujungnya, anda tetap yang memutuskan." />
+
+<Hint>Ia tak boleh mula sebelum ada issue untuk dikerjakan.</Hint>
+</Card>
+
+<Card id="try-comment" type="try">
+Ejen itu buka pull request #8. Ia tambah pengira perkataan, tapi tiada ujian. Minta satu ujian dalam komen.
+
+<Interactive name="PracticeRepo" screen="pull" at={8} repo={{ owner: 'aina-codes', name: 'diary', description: 'Laman web diari kecil saya.' }} issues={[{ number: 7, title: 'Tunjuk bilangan perkataan pada setiap catatan', body: 'Pembaca mahu tahu panjang setiap catatan.', state: 'open', author: 'aina-codes' }]} pulls={[{ number: 8, title: 'Tambah bilangan perkataan pada catatan', body: 'Tambah fungsi wordCount dan tunjuk hasilnya di bawah setiap catatan.\n\nFixes #7', author: 'coding-agent', from: 'agent/word-count', to: 'main', state: 'open', checks: [{ name: 'build', status: 'pass' }], files: [{ path: 'count.js', diff: ['@@ -0,0 +1,3 @@', '+export function wordCount(text) {', '+  return text.trim().split(/\\s+/).length;', '+}'] }] }]} task={{ type: 'comment', pr: 8, mustInclude: 'test|ujian' }} success="Dah minta! Permintaan yang jelas dapat pembaikan yang lebih baik." />
+
+<Hint>Tulis komen yang ada perkataan "ujian" atau "test". Kemudian tekan Komen.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pull request ejen itu lulus semua semakan. Apa patut berlaku seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Seseorang semak, kemudian putuskan', correct: true, why: 'Pull request ejen hanyalah cadangan. Manusia yang putuskan apa yang dihantar.' }, { label: 'Tiada apa. Lulus semakan bermakna ia sempurna', why: 'Semakan hanya uji apa yang ia uji. Baca kodnya juga.' }, { label: 'Ia dah pun hidup', why: 'Tiada apa dihantar sehingga seseorang merge.' }]} />
+</Card>
+
+<Card id="check-safe" type="check">
+Selamat ditampal ke dalam chat AI? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mesej ralat dari ujian anda', good: true, why: 'Ralat bantu ia membantu anda. Cuma pastikan tiada kunci di dalamnya.' }, { text: 'Fail .env anda yang ada kunci API', good: false, why: 'Jangan sekali-kali tampal rahsia ke dalam prompt.' }, { text: 'Fungsi yang anda mahu diterangkan', good: true, why: 'Itulah gunanya chat.' }, { text: 'Kata laluan GitHub anda', good: false, why: 'Tiada siapa perlukan kata laluan anda. Termasuk AI.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh guna Copilot sebagai pembantu, dan tetap kawal kod anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Copilot cepat berubah. Semak docs.github.com untuk apa yang anda boleh guna hari ini. Sekolah atau syarikat anda mungkin matikan sesetengah bahagian. Copilot juga boleh semak pull request bila diminta. Secara lalai, semakannya tak dikira sebagai kelulusan. Tengok `wordCount("")` dalam pull request tadi. Ia pulangkan 1, bukan 0. Ujian akan tangkap itu!
+</Card>

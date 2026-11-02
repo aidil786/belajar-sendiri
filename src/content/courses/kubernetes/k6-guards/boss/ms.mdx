@@ -1,0 +1,80 @@
+---
+id: k8s-k6-boss
+world: 6
+title: "Kunci dapur"
+summary: "Anda akan belajar: lulus tahap Pod Security restricted dan beri bot CI hanya hak yang ia perlu."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, FoodCourtSim, SortCards, RbacSwitchboard, Choice]
+needs: [k8s-k6-l10]
+scenario: k6-boss-zone
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "RBAC good practices", url: "https://kubernetes.io/docs/concepts/security/rbac-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Bilik 1', title: 'Kawal', text: 'Hidupkan restricted untuk zon kedai.' }, { when: 'Bilik 2', title: 'Baiki', text: 'Bawa dulang kedai melepasi pengawal.' }, { when: 'Bilik 3', title: 'Sambung', text: 'Beri bot CI satu kad tugas kecil.' }, { when: 'Bilik 4', title: 'Buktikan', text: 'Buat di terminal. Tanya sebagai bot.' }]} />
+
+Kedai Kancil buka esok. Zonnya tiada pengawal. Bot CI pegang kunci induk. Kunci dapur, bilik demi bilik.
+</Card>
+
+<Card id="try-guard" type="try">
+Bilik 1: hidupkan restricted untuk kedai. Dry run dulu, untuk lihat apa yang akan rosak.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-zone" namespace="kedai" goal={{ podSecurity: { namespace: 'kedai', level: 'restricted' } }} hints={['Dry run: kubectl label --dry-run=server --overwrite ns kedai pod-security.kubernetes.io/enforce=restricted', 'Baca amarannya. Kemudian jalankan semula tanpa --dry-run=server.']} success="Bilik 1 selesai! Dulang lama masih berjalan. Yang baharu mesti lulus." />
+
+<Hint>Tambah `--dry-run=server` dan kluster tak ubah apa-apa.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Amaran tadi sebut empat peraturan yang dilanggar. Baris mana yang membaikinya?
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'Restricted perlukannya' }, { id: 'nice', label: 'Kunci yang bagus, tidak wajib' }]} items={[{ label: '`runAsNonRoot: true`', bucket: 'need', why: 'Jangan masak sebagai bos.' }, { label: '`allowPrivilegeEscalation: false`', bucket: 'need', why: 'Jangan panjat ke kuasa lebih tinggi.' }, { label: '`capabilities: drop: ["ALL"]`', bucket: 'need', why: 'Tiada cebisan kuasa root.' }, { label: '`seccompProfile: type: RuntimeDefault`', bucket: 'need', why: 'Penapis kernel mesti hidup.' }, { label: '`readOnlyRootFilesystem: true`', bucket: 'nice', why: 'Bagus ditambah. Restricted tak memintanya.' }]} success="Empat kunci wajib. Satu kunci bonus." />
+</Card>
+
+<Card id="try-fix" type="try">
+Bilik 2: Mei apply kedai selepas anda kunci zon. Tiada dulang berjalan. Dua pembaikan menunggu dalam folder. Satu masih langgar peraturan. Jalankan dua dulang.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-fix" namespace="kedai" goal={{ podsReady: { selector: 'app=shop', namespace: 'kedai', count: 2 } }} hints={['Lihat sebabnya: kubectl describe replicaset -n kedai. Baca bahagian Events.', 'Baca kedua-dua pembaikan: cat shop-a.yaml, kemudian cat shop-b.yaml.', 'Apply yang ada keempat-empat kunci: kubectl apply -f shop-b.yaml']} success="Bilik 2 selesai! Dua dulang berkunci, sedang menjual." />
+
+<Hint>Deployment masuk dengan amaran. Dulangnya ditolak kemudian.</Hint>
+</Card>
+
+<Card id="try-wire" type="try">
+Bilik 3: bot CI pegang `cluster-admin` dalam kedai. Cabut wayar itu. Beri ia kad deployer sahaja.
+
+<Interactive name="RbacSwitchboard" subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'kedai', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'cluster-admin', rules: [{ apiGroups: ['*'], resources: ['*'], verbs: ['*'] }] }]} bindings={[{ kind: 'RoleBinding', name: 'ci-bot-admin', namespace: 'kedai', roleRef: { kind: 'ClusterRole', name: 'cluster-admin' }, subjects: [{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'kedai', expect: true }, { as: 'ServiceAccount:ci:ci-bot', verb: 'get', resource: 'secrets', namespace: 'kedai', expect: false }, { as: 'ServiceAccount:ci:ci-bot', verb: 'delete', resource: 'deployments', namespace: 'kedai', expect: false }]} success="Bilik 3 selesai! Satu kunci kecil untuk satu kerja." />
+
+<Hint>Cabut dulu. Kemudian sambung ci-bot pada deployer, dalam kedai.</Hint>
+</Card>
+
+<Card id="try-prove" type="try">
+Bilik 4: sekarang di terminal. Buang kunci induk. Apply kad tugas dan pin. Kemudian tanya sebagai bot.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-bot" picture={false} goal={{ objectExists: ['kedai/role/deployer'], canI: [{ verb: 'patch', resource: 'deployments', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: true }, { verb: 'get', resource: 'secrets', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: false }, { verb: 'delete', resource: 'pods', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: false }] }} hints={['Buang kunci induk: kubectl delete rolebinding ci-bot-admin -n kedai', 'Buat kad tugas: kubectl apply -f deployer.yaml', 'Pin: kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=ci:ci-bot', 'Semak: kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:ci:ci-bot']} success="Bilik 4 selesai! Bot boleh deploy. Tiada lebih." />
+
+<Hint>Tiga arahan, kemudian satu soalan. Bot itu tinggal dalam zon ci.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Semakan akhir. Kerja bot kini perlu baca log pod untuk lapor ralat. Apa anda tambah?
+
+<Interactive name="Choice" options={[{ label: 'Satu peraturan untuk pods/log dengan get, dalam kedai', correct: true, why: 'Satu hak kecil, dalam satu zon. Least privilege.' }, { label: 'cluster-admin, sekejap sahaja', why: 'Seminit pun cukup untuk pencuri.' }, { label: 'ClusterRole edit, di semua tempat', why: 'Jauh lebih daripada log, di semua zon.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci zon dan kecilkan kunci bot.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): buat keempat-empat bilik dalam kluster kind buang sahaja. Buat zon kedai dan ci dulu. Dry run setiap label. Baca bar merah jambu "anda di sini" sebelum setiap delete.
+
+<Interactive name="Mission" id="k6-boss-rep" steps={[{ id: 'zones', text: 'Buat dua zon.', command: 'kubectl create namespace kedai && kubectl create namespace ci' }, { id: 'guard', text: 'Kawal kedai pada tahap restricted.', command: 'kubectl label ns kedai pod-security.kubernetes.io/enforce=restricted' }, { id: 'bot', text: 'Beri bot satu lencana.', command: 'kubectl create serviceaccount ci-bot -n ci' }, { id: 'card', text: 'Satu kad tugas, dipin dalam kedai.', command: 'kubectl create role deployer -n kedai --verb=get,list,patch --resource=deployments && kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=ci:ci-bot' }, { id: 'ask', text: 'Tanya sebagai bot. Ia patut kata no.', command: 'kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:ci:ci-bot' }]} success="Dapur sebenar sudah berkunci!" />
+</Card>

@@ -1,0 +1,66 @@
+---
+id: git-w05-l06
+world: 5
+title: Issue templates, sub-issues and types
+summary: "You will learn: how templates, sub-issues and issue types keep issues clear."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, TermReplay, MarkdownPlayground, Choice, SortCards, SwipeJudge]
+needs: [git-w05-l05]
+scenario: w05-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About issue and pull request templates", url: "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates" }
+  - { label: "Adding sub-issues", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues" }
+  - { label: "Managing issue types in an organization", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/managing-issue-types-in-an-organization" }
+---
+
+<Card id="hook" type="hook">
+Sam's new issue just says "it doesn't work". Which page? Which phone? Ask Sam one kind question.
+
+<Interactive name="PracticeRepo" screen="issue" at={17} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 17, title: 'it doesnt work', body: 'it doesnt work', state: 'open', author: 'sam' }]} task={{ type: 'comment', issue: 17, mustInclude: '\\?' }} success="Good question! But asking every time is slow. There is a better way." />
+
+<Hint>End your comment with a question mark, like: Which page is it on?</Hint>
+</Card>
+
+<Card id="see-template" type="see">
+<Interactive name="TermReplay" scenario="w05-l06" commands={['cat .github/ISSUE_TEMPLATE/bug_report.md']} label="cat shows the template: a name, a short about line and the label bug at the top. Below are blank questions: What happened? Steps to see it. Phone or computer?" />
+
+An **<Term id="issue-template">issue template</Term>** is a form with blanks. It lives in `.github/ISSUE_TEMPLATE/`. Every new bug report starts with these questions.
+</Card>
+
+<Card id="try-fill" type="try">
+Help Sam. Fill in the template for the bug: the sign-up button does nothing.
+
+<Interactive name="MarkdownPlayground" initial={'## What happened?\n\n## Steps to see it\n1.\n\n## Phone or computer?\n'} prompt="Fill all three blanks." goal={{ mustMatch: ['^## What happened\\?[ \\t]*\\n+[ \\t]*[^#\\s]', '^1\\.[ \\t]+\\S', '^## Phone or computer\\?[ \\t]*\\n+[ \\t]*[^#\\s]'], hint: ['Write one line under What happened?', 'After 1. write the first step, like: Open the home page.', 'Write a line under the last heading, like: Android phone.'] }} success="Now anyone can see the bug in one read." />
+
+<Hint>Short answers are fine: "Nothing happens when I tap Sign up."</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The events page is a big job. Aina splits it into 4 **<Term id="sub-issue">sub-issues</Term>**. 2 are closed. What does the big issue show?
+
+<Interactive name="Choice" options={[{ label: 'Progress: 2 of 4 done', correct: true, why: 'The parent issue counts its closed sub-issues.' }, { label: 'Nothing, until all 4 are closed', why: 'It shows progress on the way, so you see how far along it is.' }, { label: 'It closes itself now', why: 'Half is done. The big job is still open.' }]} />
+</Card>
+
+<Card id="try-types" type="try">
+Organizations can give each issue a **<Term id="issue-type">type</Term>**. The starting types are Bug, Feature and Task. Sort these issues.
+
+<Interactive name="SortCards" buckets={[{ id: 'bug', label: 'Bug' }, { id: 'feature', label: 'Feature' }, { id: 'task', label: 'Task' }]} items={[{ label: 'The menu covers the logo', bucket: 'bug', why: 'Something looks broken: a bug.' }, { label: 'Add a photo gallery', bucket: 'feature', why: 'Something new for users: a feature.' }, { label: 'Renew the domain name', bucket: 'task', why: 'A job to do, not a bug or a feature.' }, { label: 'Sign-up form sends nothing', bucket: 'bug', why: 'It should work but does not: a bug.' }, { label: 'Let members pick a theme', bucket: 'feature', why: 'A new ability: a feature.' }, { label: 'Update the club photo', bucket: 'task', why: 'A plain chore: a task.' }]} success="Typed and tidy!" />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good way to organise issues, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Split "Build the events page" into small sub-issues', good: true, why: 'Small pieces are easier to start and to finish.' }, { text: 'Put three different bugs in one issue', good: false, why: 'One issue, one problem. Then each can close on its own.' }, { text: 'Add a template so bug reports include steps', good: true, why: 'Nobody has to ask the same questions again.' }, { text: 'Make a new label for every single issue', good: false, why: 'Labels help only when many issues share them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep issues clear with templates, sub-issues and types.
+</Card>
+
+<Card id="deeper" type="deeper">
+Templates can also be issue forms: `.yml` files with real form fields. A `config.yml` in the same folder sets up the template chooser. A pull request template (`pull_request_template.md`) fills new PR descriptions. Sub-issues can have their own sub-issues. Issue types are set up in an organization's settings.
+</Card>

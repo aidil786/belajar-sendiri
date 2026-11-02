@@ -1,0 +1,62 @@
+---
+id: git-w08-boss
+world: 8
+title: "Latihan kebocoran"
+summary: "Anda akan belajar: cara baiki kunci yang bocor dengan cepat, ikut urutan yang betul."
+minutes: 6
+xp: 50
+interactives: [AreasScene, TermReplay, Challenge, Choice, OrderList]
+needs: [git-w08-l08]
+scenario: w08-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+  - { label: "git commit (--amend)", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="Penggera latihan. .env ada dalam folder kerja dengan tanda amaran. Commit terbaru, Add weather widget, pun ada .env. Semuanya bergoyang." frames={[{ working: ['app.js', { name: '.env', tag: 'notReady' }], repo: [{ name: 'Ignore log files', kind: 'commit' }, { name: 'Add weather widget', kind: 'commit' }] }]} />
+
+Masa latihan! Satu kunci palsu terselit dalam commit (titik simpan) terakhir anda. Berita baiknya: anda belum push. Baiki cepat.
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w08-boss-1" commands={['git show --stat']} label="git show --stat: commit terbaru, Add weather widget, tambah .env dan app.js." />
+
+Itu dia: `.env` dalam commit terbaru. Tiga bilik, tiga pembaikan. Buntu? Selepas 2 cubaan, petunjuk akan muncul.
+</Card>
+
+<Card id="try-drill" type="try">
+Bersihkan kebocoran ini, bilik demi bilik.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Berhenti jejak kunci', text: 'Keluarkan .env dari kotak, tapi simpan fail itu dalam komputer anda.', scenario: 'w08-boss-1', goal: { stagedNotContains: { '.env': 'fake_demo_key' }, filesExist: ['.env'] }, hints: ['git rm --cached simpan fail itu. git rm biasa padam fail itu.', 'Taip git rm --cached .env'] },
+  { title: 'Abaikan untuk selamanya', text: 'Tambah .env ke .gitignore. Kemudian masukkan .gitignore ke dalam kotak.', scenario: 'w08-boss-2', goal: { fileContains: { '.gitignore': '.env' }, staged: ['.gitignore'], noUntracked: true, filesExist: ['.env'] }, hints: ['Dua anak panah tambah satu baris: echo ".env" >> .gitignore', 'Kemudian taip git add .gitignore'] },
+  { title: 'Baiki commit itu', text: 'Ganti commit terakhir, supaya .env tak pernah ada di dalamnya.', scenario: 'w08-boss-3', goal: { lastCommitLacks: ['.env'], lastCommitHas: ['app.js', '.gitignore'], commits: 4, clean: true }, hints: ['Commit baru akan tinggalkan kunci dalam commit lama. Baiki commit lama itu.', 'Taip git commit --amend --no-edit'] }
+]} />
+
+<Hint>Jalankan `git status` dulu dalam setiap bilik.</Hint>
+</Card>
+
+<Card id="check-first" type="check">
+Kejutan: commit itu sebenarnya dah di-push ke repo awam. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Rotate kunci itu', correct: true, why: 'Anggap ia dah dicuri. Kunci baru buat kunci lama tak berguna.' }, { label: 'Tulis semula sejarah dengan git filter-repo', why: 'Bagus, tapi nanti. Salinan mungkin dah wujud. Rotate dulu.' }, { label: 'Amend dan force-push', why: 'Kunci itu dah tersebar. Rotate dulu.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Sekarang susun penyelamatan penuh. Langkah pertama di atas.
+
+<Interactive name="OrderList" items={['Rotate kunci itu', 'Berhenti jejak .env dan tambah ke .gitignore', 'Tulis semula sejarah dengan git filter-repo', 'Force-push dan beritahu pasukan anda', 'Tutup amaran secret scanning']} label="Langkah pertama di atas" success="Latihan selesai! Rotate dulu, bersihkan kemudian." />
+
+<Hint>Kunci yang bocor mesti berhenti berfungsi sebelum apa-apa lagi.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh uruskan kunci yang bocor, dah di-push atau belum.
+</Card>

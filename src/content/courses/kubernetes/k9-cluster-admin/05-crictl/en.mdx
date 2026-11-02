@@ -1,0 +1,80 @@
+---
+id: k8s-k9-l05
+world: 9
+title: "crictl: containers under the kubelet"
+summary: "You will learn: how to see a node’s pods, containers and logs straight from the stove."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, SpotLines, Choice, SortCards, OrderList, Mission]
+needs: [k8s-k9-l04]
+scenario: k9-crictl
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debugging Kubernetes nodes with crictl", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/" }
+  - { label: "Container Runtime Interface (CRI)", url: "https://kubernetes.io/docs/concepts/architecture/cri/" }
+  - { label: "Debug running pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-crictl" commands={['kubectl get pods -o wide']} label="The oven pod on dev-worker2 is in CrashLoopBackOff, with 2 restarts." />
+
+The oven tray keeps crashing on `dev-worker2`. On a bad night, the office is down too. Then kubectl sees nothing. How do you look anyway?
+</Card>
+
+<Card id="try-pods" type="try">
+Go straight to the stove with **<Term id="crictl">crictl</Term>**. Type `docker exec -it dev-worker2 bash`, then `crictl pods`.
+
+<Interactive name="FoodCourtSim" scenario="k9-crictl" goal={{ typed: '^(ssh dev-worker2|docker exec -it dev-worker2 bash)$', lastTyped: '^crictl pods\\b' }} hints={['Type docker exec -it dev-worker2 bash', 'Then crictl pods']} success="The stove lists the oven pod, without asking the office." />
+
+<Hint>crictl talks to containerd on this one machine. It needs no API server.</Hint>
+</Card>
+
+<Card id="try-spot" type="try">
+`crictl ps -a` lists containers, stopped ones too. Tap the container that exited.
+
+<Interactive name="SpotLines" prompt="Tap the container that exited." lines={[{ text: 'CONTAINER           IMAGE               CREATED             STATE               NAME                ATTEMPT             POD ID              POD                       NAMESPACE' }, { text: 'eb52f4a9e27f3       30ecbe1509090       13 seconds ago      Exited              oven                2                   020bde3f05ec8       oven                      default', target: true }, { text: '2ff284c134601       520212b8b0fcd       5 minutes ago       Running             coredns             0                   4a9377c73c32b       coredns-59d675bd9-vbfdl   kube-system' }, { text: 'dc68581d915b3       4626fe10df5b9       5 minutes ago       Running             kindnet             0                   a7e96aecef294       kindnet-ws2pk             kube-system' }, { text: '0c989cfb67d19       d6a28daf3e6b0       5 minutes ago       Running             kube-proxy          0                   89a1643df1616       kube-proxy-hv5tc          kube-system' }]} success="Exited, ATTEMPT 2: the stove has started the oven three times now." />
+
+<Hint>Read the STATE column.</Hint>
+</Card>
+
+<Card id="try-logs" type="try">
+Read the oven’s last words. Type `crictl ps -a --name oven`. Copy the CONTAINER id. Then type `crictl logs` and paste it.
+
+<Interactive name="FoodCourtSim" scenario="k9-crictl" intro={['docker exec -it dev-worker2 bash']} goal={{ typed: '^crictl ps -a\\b', lastTyped: '^crictl logs (--tail[= ]?\\d+ )?[0-9a-f]{4,}' }} hints={['Type crictl ps -a --name oven', 'Copy the id from the first column. Then crictl logs <that id>']} success="“oven: no gas, cannot heat”: the same words kubectl logs shows, read from the stove." />
+
+<Hint>The first few letters of the id are enough.</Hint>
+</Card>
+
+<Card id="predict-down" type="predict">
+The API server is down. Which command still shows the oven’s last words?
+
+<Interactive name="Choice" options={[{ label: 'crictl logs, inside dev-worker2', correct: true, why: 'Yes. It asks containerd on that node. No office needed.' }, { label: 'kubectl logs oven', why: 'kubectl asks the office first. With the office down, it gets no answer.' }, { label: 'kubectl describe pod oven', why: 'That also goes through the API server.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which tool fits? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'kubectl', label: 'kubectl: asks the office' }, { id: 'crictl', label: 'crictl: asks one stove' }]} items={[{ label: 'See trays on every stall at once', bucket: 'kubectl', why: 'Only the office knows the whole food court.' }, { label: 'Create a Deployment', bucket: 'kubectl', why: 'Orders always go to the office.' }, { label: 'Look while the API server is down', bucket: 'crictl', why: 'It skips the office and asks containerd.' }, { label: 'List images pulled on this machine', bucket: 'crictl', why: 'crictl images shows the stove’s pantry.' }, { label: 'Look while this node’s kubelet is stopped', bucket: 'crictl', why: 'The stove keeps working without the supervisor.' }]} success="The office sees everything. The stove sees its own machine, even on a bad night." />
+
+<Hint>Does the job need the whole food court, or just this machine?</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put the steps in order: why does a tray crash?
+
+<Interactive name="OrderList" items={['Find its stall: kubectl get pods -o wide', 'Step inside: ssh dev-worker2', 'Find the container: crictl ps -a --name oven', 'Read its last words: crictl logs <id>', 'Leave the stall: exit']} label="First step at the top" success="Stall, back room, container, logs, out." />
+</Card>
+
+<Card id="win" type="win">
+You can now see a node’s containers and logs with crictl.
+</Card>
+
+<Card id="deeper" type="deeper">
+Use crictl to look. The kubelet runs the containers, so let the kubelet make the changes. `crictl images` lists what the stove has pulled. `crictl inspect <id>` shows one container in full.
+
+<Interactive name="Mission" id="k8s-k9-l05-real" steps={[{ id: 'where', text: 'Use your throwaway kind cluster only.', command: 'kubectl config current-context' }, { id: 'pods', text: 'List the pods the stove knows on one stall.', command: 'docker exec dev-worker crictl pods' }, { id: 'ps', text: 'List its containers, stopped ones too.', command: 'docker exec dev-worker crictl ps -a' }, { id: 'images', text: 'See the stove’s pantry.', command: 'docker exec dev-worker crictl images' }]} success="You looked at a real node’s stove!" />
+</Card>

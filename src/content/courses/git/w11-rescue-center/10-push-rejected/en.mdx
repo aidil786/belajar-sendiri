@@ -1,0 +1,59 @@
+---
+id: git-w11-l10
+world: 11
+title: My push was rejected
+summary: "You will learn: how to fix a rejected push without forcing it."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim, SwipeJudge]
+needs: [git-w04-l09]
+scenario: w11-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git fetch", url: "https://git-scm.com/docs/git-fetch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l10" commands={['git push']} fails={['git push']} label="git push: main -> main is rejected (fetch first). The hint says the remote has work you do not have locally." />
+
+You type `git push`. GitHub says rejected. Did you break something? No! This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+What is GitHub telling you?
+
+<Interactive name="Choice" options={[{ label: "GitHub has new commits you don't have yet", correct: true, why: 'A teammate pushed first. Get their work, then push.' }, { label: 'Your commit is broken', why: "Your commit is fine. You're just behind." }, { label: 'You have no access', why: 'That error looks different. This one says fetch first.' }]} />
+</Card>
+
+<Card id="see-fetch" type="see">
+<Interactive name="GraphScene" scenario="w11-l10" commands={['git fetch']} label="git fetch brings Aisyah's commit. origin/main and your main now split into two lines from Add style." />
+
+`git fetch` shows it: Aisyah pushed a commit. Your main and GitHub's main went separate ways.
+</Card>
+
+<Card id="try-pull" type="try">
+Put your commit on top of Aisyah's. Then push again.
+
+<Interactive name="Sim" scenario="w11-l10" panels={['graph']} goal={{ pushed: ['main'], minCommits: 5 }} hints={['Type git pull --rebase', 'Then type git push']} success="Pushed! Both commits are on GitHub, in one straight line." />
+
+<Hint>Type `git pull --rebase`, then `git push`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Good move after a rejected push, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'git pull --rebase', good: true, why: 'It puts your commits on top of the new ones.' }, { text: 'git push --force', good: false, why: "It would wipe Aisyah's commit from GitHub!" }, { text: 'git fetch', good: true, why: 'Safe: it only looks. Your work stays the same.' }, { text: 'git pull --no-rebase', good: true, why: 'Also fine: it joins the two lines with a merge commit.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fix a rejected push without forcing it.
+</Card>
+
+<Card id="deeper" type="deeper">
+Plain `git pull` may ask how to join the two lines. Pick `--rebase` or `--no-rebase`. Or set it once: `git config --global pull.rebase true`. Did the pull stop with a conflict? See "Messy pull: abort". Never use `--force` on a shared branch.
+</Card>

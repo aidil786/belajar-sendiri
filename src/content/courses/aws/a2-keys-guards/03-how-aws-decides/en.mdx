@@ -1,0 +1,61 @@
+---
+id: aws-a2-l03
+world: 2
+title: "How AWS decides: deny wins"
+summary: "You will learn: the three rules AWS uses to say yes or no, and why a Deny always wins."
+minutes: 5
+xp: 25
+interactives: [IamJudge, SortCards, Choice]
+needs: [aws-a2-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+  - { label: "Explicit and implicit denies", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic_AccessPolicyLanguage_Interplay.html" }
+  - { label: "Condition element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html" }
+---
+
+<Card id="hook" type="hook">
+Aina has a key that allows saving the menu. Another policy says no over plain, unencrypted connections. Her upload uses one. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json', context: { 'aws:SecureTransport': 'false' } }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }, { name: 'tls-only', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: 's3:*', Resource: '*', Condition: { Bool: { 'aws:SecureTransport': 'false' } } }] } }]} success="Denied. One written Deny beat the Allow." />
+</Card>
+
+<Card id="see-rules" type="see">
+AWS follows three rules. A written Deny that fits always wins: an **<Term id="explicit-deny">explicit deny</Term>**. Else, an Allow that fits wins. Else, the answer is no. Sort the cases.
+
+<Interactive name="SortCards" buckets={[{ id: 'allow', label: 'Final answer: Allow' }, { id: 'deny', label: 'Final answer: Deny' }]} items={[{ label: 'An Allow and a Deny both fit', bucket: 'deny', why: 'Rule 1: a fitting Deny wins, always.' }, { label: 'Only an Allow fits', bucket: 'allow', why: 'Rule 2: no Deny, and an Allow fits.' }, { label: 'Nothing fits at all', bucket: 'deny', why: 'Rule 3: no Allow means no. That is an implicit deny.' }, { label: 'Ten Allows and one Deny fit', bucket: 'deny', why: 'Counting does not help. One Deny is enough.' }]} success="Deny beats Allow. Allow beats silence." />
+</Card>
+
+<Card id="try-silent" type="try">
+Aina tries to delete the menu file. Her only policy allows saving. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:DeleteObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Denied, quietly. Nothing allowed a delete." />
+</Card>
+
+<Card id="predict" type="predict">
+A teammate adds a policy with fifty Allows for Aina. One old policy still has a Deny that fits. What wins?
+
+<Interactive name="Choice" options={[{ label: 'The Deny, every time', correct: true, why: 'No number of Allows beats one fitting Deny.' }, { label: 'The Allows: there are more of them', why: 'AWS does not count. A Deny ends the vote.' }, { label: 'The newest policy', why: 'Age does not matter. Only Deny, then Allow, then no.' }]} />
+</Card>
+
+<Card id="check-fix" type="check">
+The `no-deletes` policy was meant to stop deletes only. It blocks everything. Fix its pink line so Aina can save again.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }, { name: 'no-deletes', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: 's3:*', Resource: '*' }] } }]} task={{ type: 'edit', policy: 1, line: 6, want: 'Allow', forbid: ['s3:\\*"'] }} solution={'"Action": "s3:DeleteObject",'} success="The Deny now covers deletes only. Saving works again." />
+
+<Hint>Name only the delete action: `"s3:DeleteObject"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now predict AWS’s answer: Deny first, then Allow, else no.
+</Card>
+
+<Card id="deeper" type="deeper">
+The full check also looks at fences: SCPs, resource policies and permissions boundaries. Lesson 8 shows them. A Deny anywhere still wins.
+
+Real rep (free): in the IAM console, open the policy simulator. Pick your user, an action, and see Allow or Deny before you change anything.
+</Card>

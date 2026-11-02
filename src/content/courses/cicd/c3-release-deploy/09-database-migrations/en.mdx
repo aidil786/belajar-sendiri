@@ -1,0 +1,65 @@
+---
+id: cicd-c3-l09
+world: 3
+title: "Database changes without downtime"
+summary: "You will learn: how to change a database in safe steps while old and new code both run."
+minutes: 4
+xp: 20
+interactives: [Transcript, Choice, OrderList, SortCards]
+needs: [cicd-c3-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PostgreSQL 18: ALTER TABLE", url: "https://www.postgresql.org/docs/18/sql-altertable.html" }
+  - { label: "Parallel change (expand and contract)", url: "https://martinfowler.com/bliki/ParallelChange.html" }
+  - { label: "Cloudflare: rollbacks leave data as it is", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="psql" label="The old code asks for the phone column. PostgreSQL says the column does not exist." lines={[{ cmd: 'psql -c "SELECT phone FROM customers;"' }, { out: 'ERROR:  column "phone" does not exist\nLINE 1: SELECT phone FROM customers;\n               ^', color: 'red' }]} />
+
+You renamed the column `phone` to `mobile`. Version 2 is happy. But version 1 copies still run during the rollout. Plain words: old code asks for a column that is gone.
+</Card>
+
+<Card id="see-both" type="see">
+During a rolling or canary deploy, who reads and writes the database?
+
+<Interactive name="Choice" options={[{ label: 'Old and new code, at the same time', correct: true, why: 'So every database change must work for both versions.' }, { label: 'Only the new code', why: 'Old copies keep serving until the rollout ends.' }, { label: 'Nobody, until the deploy ends', why: 'The shop stays open. Orders keep coming in.' }]} />
+</Card>
+
+<Card id="see-expand" type="see">
+The fix is **<Term id="expand-contract">expand and contract</Term>**. Change the pantry in safe steps. Add the new shelf, move the stock, then remove the old one. Put the steps in order.
+
+<Interactive name="OrderList" items={['Expand: add the new column, mobile', 'Deploy code that writes to both columns', 'Migrate: copy old numbers into mobile', 'Deploy code that uses only mobile', 'Contract: drop the old phone column']} label="First step at the top" success="Yes! At every step, the running code still works." />
+</Card>
+
+<Card id="try-sort" type="try">
+Which changes are safe in one deploy? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'safe', label: 'Safe in one step' }, { id: 'steps', label: 'Needs expand and contract' }]} items={[{ label: 'Add a new table', bucket: 'safe', why: 'Old code never looks at it.' }, { label: 'Add a column that may be empty', bucket: 'safe', why: 'Old code simply ignores it.' }, { label: 'Rename a column', bucket: 'steps', why: 'Old code still asks for the old name.' }, { label: 'Drop a column old code reads', bucket: 'steps', why: 'Old code would crash, like on the first card.' }, { label: 'Make an empty-allowed column required', bucket: 'steps', why: 'Old code may still save rows without it.' }]} success="Sorted! Adding is easy. Renaming and removing need steps." />
+</Card>
+
+<Card id="predict" type="predict">
+You are at step 2: both columns exist. Version 2 has a bug. Can you roll back to version 1?
+
+<Interactive name="Choice" options={[{ label: 'Yes: phone is still there', correct: true, why: 'Nothing old was removed yet, so version 1 still works.' }, { label: 'No: the data is lost', why: 'Expand only adds. Every phone number is still there.' }, { label: 'Only after step 5', why: 'After the contract step, going back is the hard one.' }]} />
+</Card>
+
+<Card id="check-expand" type="check">
+<Interactive name="Transcript" title="psql" label="Add the mobile column. The table now has id, phone and an empty mobile." lines={[{ cmd: 'psql -c "ALTER TABLE customers ADD COLUMN mobile text;"' }, { out: 'ALTER TABLE', color: 'green' }, { cmd: 'psql -c "SELECT id, phone, mobile FROM customers;"' }, { out: ' id |    phone    | mobile \n----+-------------+--------\n  1 | 012-3456789 | \n(1 row)' }]} />
+
+Step 1 for real, on PostgreSQL 18. `ADD COLUMN` adds an empty shelf. Old code still reads `phone`. New code can start writing `mobile`.
+</Card>
+
+<Card id="win" type="win">
+You can now change a database without closing the shop.
+</Card>
+
+<Card id="deeper" type="deeper">
+Run each migration as its own step, before the code that needs it. Some changes lock a big table while they run. Read your database's docs first. And remember: a rollback swaps code, not data. Cloudflare's rollback leaves databases and other bindings as they are.
+
+Real rep (optional): try these steps on a throwaway database: `docker run --rm -e POSTGRES_PASSWORD=test postgres:18-alpine`.
+</Card>

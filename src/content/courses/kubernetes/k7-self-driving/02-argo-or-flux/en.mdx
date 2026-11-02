@@ -1,0 +1,74 @@
+---
+id: k8s-k7-l02
+world: 7
+title: Argo CD or Flux?
+summary: "You will learn: how Argo CD and Flux each point a cluster at Git, and how to pick one."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, SortCards, SwipeJudge]
+needs: [k8s-k7-l01]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: declarative setup (Application)", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/" }
+  - { label: "Flux: Kustomization", url: "https://fluxcd.io/flux/components/kustomize/kustomizations/" }
+  - { label: "Flux: GitRepository", url: "https://fluxcd.io/flux/components/source/gitrepositories/" }
+---
+
+<Card id="hook" type="hook">
+Two popular GitOps helpers both pull from Git. Your team must choose one. What should decide it?
+
+<Interactive name="Choice" options={[{ label: 'What the team needs, like a dashboard or a Git-only flow', correct: true, why: 'Both work well. Pick the one that fits how your team works.' }, { label: 'Whichever has more stars online', why: 'Stars show fame, not fit. Both are mature, graduated CNCF projects.' }, { label: 'Use both on the same app', why: 'Two helpers fighting over one app cause endless flapping.' }]} />
+</Card>
+
+<Card id="see-argo" type="see">
+**<Term id="argo-cd">Argo CD</Term>** comes with a web dashboard. You describe each app in an `Application`. Tap the two lines that say where in Git to look.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: argoproj.io/v1alpha1' }, { text: 'kind: Application' }, { text: 'metadata:' }, { text: '  name: kedai-kancil' }, { text: '  namespace: argocd' }, { text: 'spec:' }, { text: '  project: default' }, { text: '  source:' }, { text: '    repoURL: https://github.com/you/gitops.git', target: true }, { text: '    path: apps/kedai-kancil', target: true }, { text: '  destination:' }, { text: '    server: https://kubernetes.default.svc' }, { text: '    namespace: shop' }]} prompt="Tap the lines about Git." success="Yes! The repo and the folder inside it." />
+</Card>
+
+<Card id="see-flux" type="see">
+**<Term id="flux">Flux</Term>** is a set of small controllers, driven from Git and its command line. A `GitRepository` names the repo. A `Kustomization` says which folder to apply.
+
+Which line below says how often to check?
+
+<Interactive name="Choice" options={[{ label: 'interval: 10m', correct: true, why: 'Every 10 minutes, Flux applies this folder again and fixes any gap.' }, { label: 'prune: true', why: 'prune deletes objects you removed from Git.' }, { label: 'sourceRef', why: 'sourceRef points at the GitRepository object.' }]} />
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kedai-kancil
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./apps/kedai-kancil
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: gitops
+```
+</Card>
+
+<Card id="try-sort" type="try">
+Sort each fact: Argo CD, Flux, or both?
+
+<Interactive name="SortCards" buckets={[{ id: 'argo', label: 'Argo CD' }, { id: 'flux', label: 'Flux' }, { id: 'both', label: 'Both' }]} items={[{ label: 'Has a web dashboard built in', bucket: 'argo', why: 'Argo CD ships its own web UI.' }, { label: 'Uses Application objects', bucket: 'argo', why: 'An Application is Argo CD’s kind.' }, { label: 'Uses GitRepository and Kustomization objects', bucket: 'flux', why: 'Those are Flux kinds.' }, { label: 'Pulls from Git and keeps fixing gaps', bucket: 'both', why: 'That is GitOps. Both do it.' }, { label: 'Graduated CNCF project', bucket: 'both', why: 'Both graduated in 2022.' }]} success="All sorted! Same idea, different style." />
+</Card>
+
+<Card id="check" type="check">
+Swipe: true or not quite?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Both store your wishes as files in Git.', good: true, why: 'Git is the order board for both.' }, { text: 'Flux needs a web dashboard to work.', good: false, why: 'Flux works from Git and its command line.' }, { text: 'Argo CD and Flux are Kubernetes controllers.', good: true, why: 'Both run inside the cluster, in their own namespace.' }, { text: 'Once you pick one, your YAML is locked to it.', good: false, why: 'Your app manifests stay plain Kubernetes YAML.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell Argo CD and Flux apart, and pick one.
+</Card>
+
+<Card id="deeper" type="deeper">
+This course uses Argo CD, for its dashboard. Flux shines when you want everything in Git, even its own setup (`flux bootstrap`). Both read plain YAML, Kustomize and Helm charts. Real rep (optional): browse the Argo CD and Flux getting-started guides. Compare how each one installs.
+</Card>

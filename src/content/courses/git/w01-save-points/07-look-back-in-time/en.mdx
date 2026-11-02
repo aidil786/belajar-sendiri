@@ -1,0 +1,73 @@
+---
+id: git-w01-l07
+world: 1
+title: Look back in time
+summary: "You will learn: how to read your history with git log and git show."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, TimeMachine, Sim, Choice]
+needs: [git-w01-l06]
+scenario: w01-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git show", url: "https://git-scm.com/docs/git-show" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html wobbles with a changed tag. Its title now says My Git Diary." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+Your diary title now says "My Git Diary". When did that change? And what did the page look like before?
+</Card>
+
+<Card id="see-oneline" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline']} label="git log --oneline lists five commits, one per line, from Change title to My Git Diary down to Add home page." />
+
+`git log --oneline` puts each commit on **one line**: short hash, then message. The newest is on top.
+</Card>
+
+<Card id="try-slide" type="try">
+Slide back to the very first commit. Watch `index.html` change.
+
+<Interactive name="TimeMachine" scenario="w01-l07" file="index.html" label="index.html at each commit" />
+
+<Hint>Drag the slider all the way left, then back right.</Hint>
+</Card>
+
+<Card id="see-graph" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline --graph --all']} label="The same five commits, each with a star in front, joined in one straight line." />
+
+`--graph` draws your **timeline** with stars and lines. `--all` adds every <Term id="branch">branch</Term>. You have just one, so it is a straight line.
+</Card>
+
+<Card id="see-show" type="see">
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git show bc602fc']} label="git show bc602fc: the Add day 2 entry commit, then one new green line, Day 2: I learned the box." />
+
+`git show` plus a hash opens **one commit**: who, when, and exactly what changed. Green `+` lines were added.
+</Card>
+
+<Card id="try-show" type="try">
+Find the hash of "Add day 2 entry". Then open it with `git show`.
+
+<Interactive name="Sim" scenario="w01-l07" panels={['graph']} goal={{ typed: '^git show bc60' }} hints={['Type git log --oneline to see the hashes.', 'Find Add day 2 entry. Type git show and its hash: git show bc602fc']} success="You opened an old save point. That's time travel!" />
+
+<Hint>Start with `git log --oneline`. Copy the code next to "Add day 2 entry".</Hint>
+</Card>
+
+<Card id="check" type="check">
+You want to see exactly what one commit changed. Which command?
+
+<Interactive name="Choice" options={[{ label: '`git show` plus the hash', correct: true, why: 'git show prints the commit and its changes.' }, { label: '`git log --oneline`', why: 'That lists commits, but not what changed.' }, { label: '`git status`', why: 'That shows changes you have not saved yet.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now travel back through your history and see every change.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git log -n 2` shows only the newest two commits. A long log opens in a pager. Press Space for more, and `q` to quit. `git show` with no hash shows your newest commit.
+
+<Interactive name="TermReplay" scenario="w01-l07" commands={['git log --oneline -n 2']} label="git log --oneline -n 2 shows only the two newest commits." />
+</Card>

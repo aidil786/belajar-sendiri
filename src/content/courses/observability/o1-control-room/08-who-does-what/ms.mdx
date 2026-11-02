@@ -1,0 +1,70 @@
+---
+id: obs-o1-l08
+world: 1
+title: "Prometheus, Grafana, OpenTelemetry: siapa buat apa"
+summary: "Anda akan belajar: alat mana kutip, mana lukis, mana hantar, dan bagaimana satu nombor sampai ke telefon anda."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, CommandBuilder, Transcript, Mission]
+needs: [obs-o1-l07]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Prometheus: installation (Docker)", url: "https://prometheus.io/docs/prometheus/latest/installation/" }
+  - { label: "Grafana: introduction", url: "https://grafana.com/docs/grafana/latest/introduction/" }
+  - { label: "OpenTelemetry: what is OpenTelemetry?", url: "https://opentelemetry.io/docs/what-is-opentelemetry/" }
+---
+
+<Card id="hook" type="hook">
+Kawan anda kata: “<Term id="grafana">Grafana</Term> simpan semua metrik kita.” Betul?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Grafana melukis. Prometheus simpan metrik.', correct: true, why: 'Ya. Grafana tanya sumber data, seperti Prometheus, dan lukis jawapannya.' }, { label: 'Ya. Grafana ialah pangkalan data.', why: 'Grafana simpan dashboard, bukan metrik anda.' }, { label: 'Hari Isnin sahaja', why: 'Cubaan yang bagus. Grafana melukis setiap hari, dan tak simpan metrik.' }]} />
+</Card>
+
+<Card id="see-path" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Aplikasi', text: 'Ia kira pesanan dan tunjuk di /metrics.' }, { when: '2', title: 'Prometheus scrape', text: 'Setiap 15 s ia salin nombor dan simpan.' }, { when: '3', title: 'Grafana lukis', text: 'Ia tanya Prometheus dengan PromQL dan lukis skrin.' }, { when: '4', title: 'Peraturan menyemak', text: 'Prometheus semak peraturan amaran ikut jadual.' }, { when: '5', title: 'Alertmanager memanggil', text: 'Ia hantar amaran ke telefon on-call.' }]} />
+
+Ikut satu nombor dari kaunter hingga ke telefon anda. **<Term id="prometheus">Prometheus</Term>** duduk di tengah. Tekan setiap langkah.
+</Card>
+
+<Card id="try-sort" type="try">
+Siapa buat apa? Susun setiap tugas.
+
+<Interactive name="SortCards" buckets={[{ id: 'prom', label: 'Prometheus' }, { id: 'graf', label: 'Grafana' }, { id: 'otel', label: 'OpenTelemetry' }]} items={[{ label: 'Scrape /metrics ikut jadual', bucket: 'prom', why: 'Prometheus tarik nombor.' }, { label: 'Simpan metrik bersama masanya', bucket: 'prom', why: 'Pangkalan data time series miliknya sendiri.' }, { label: 'Jalankan PromQL dan peraturan amaran', bucket: 'prom', why: 'Soalan dan penggera tinggal di situ.' }, { label: 'Lukis dashboard daripada banyak sumber data', bucket: 'graf', why: 'Grafana ialah skrin besar.' }, { label: 'Tunjuk metrik, log dan trace bersebelahan', bucket: 'graf', why: 'Satu skrin, banyak sumber.' }, { label: 'Pustaka yang hasilkan metrik, log dan trace dalam aplikasi', bucket: 'otel', why: 'SDK OpenTelemetry.' }, { label: 'Collector yang terima dan hantar data', bucket: 'otel', why: 'OpenTelemetry Collector.' }]} success="Kutip, lukis, hantar. Tiga tugas, tiga alat." />
+</Card>
+
+<Card id="predict" type="predict">
+<Term id="opentelemetry">OpenTelemetry</Term> hantar metrik, log dan trace. Di mana ia simpan semua itu?
+
+<Interactive name="Choice" options={[{ label: 'Tiada di mana-mana. Ia hantar ke backend, seperti Prometheus.', correct: true, why: 'Ya. Dokumennya kata ia bukan backend observability.' }, { label: 'Dalam pangkalan datanya sendiri', why: 'Ia tiada pangkalan data. Simpanan diserahkan kepada alat lain.' }, { label: 'Dalam Grafana', why: 'Grafana melukis. Data tak tinggal di situ.' }]} />
+</Card>
+
+<Card id="try-run" type="try">
+Mulakan Prometheus sebenar di laptop anda. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d', means: 'mulakan container di latar belakang' }, { text: '--name prom-peek', means: 'namakan ia prom-peek' }, { text: '-p 9090:9090', means: 'buka port 9090 di laptop anda' }, { text: 'quay.io/prometheus/prometheus:v3.13.5', means: 'image rasmi Prometheus 3.13' }]} decoys={[{ text: 'grafana/grafana', means: 'Grafana melukis. Ia tak mengutip.' }, { text: '-p 3000:3000', means: 'Port biasa Grafana, bukan Prometheus' }]} success="Itu mulakan Prometheus 3.13 pada port 9090." />
+
+<Hint>Docker dulu, kemudian nama, kemudian port, kemudian image.</Hint>
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="Transcript" title="bash" label="curl tanya Prometheus sama ada ia sedia. Ia jawab: Prometheus Server is Ready." lines={[{ cmd: 'curl localhost:9090/-/ready' }, { out: 'Prometheus Server is Ready.', color: 'green' }]} />
+
+Prometheus menjawab. Bilik kawalan dah dibuka. Jawapan ini sebenar, daripada Prometheus 3.13.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kata siapa kutip, siapa lukis dan siapa hantar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: bilik kawalan sebenar ada orang yang tenung skrin. Di sini, mesin yang pantau, dan orang dipanggil hanya oleh amaran. Prometheus juga tak nampak kedai. Ia hanya tahu nombor yang aplikasi dan exporter kongsi.
+
+Latihan sebenar (perlukan Docker):
+
+<Interactive name="Mission" id="obs-o1-l08-real" steps={[{ id: 'run', text: 'Mulakan Prometheus.', command: 'docker run -d --name prom-peek -p 9090:9090 quay.io/prometheus/prometheus:v3.13.5' }, { id: 'ready', text: 'Tanya sama ada ia sedia.', command: 'curl localhost:9090/-/ready' }, { id: 'ui', text: 'Buka http://localhost:9090 dalam pelayar. Taip up dalam kotak query dan jalankan. Anda nampak 1: ia pantau dirinya sendiri.' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f prom-peek' }]} success="Bilik kawalan sebenar pertama anda berjalan di laptop." />
+</Card>

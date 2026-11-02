@@ -1,0 +1,79 @@
+---
+id: linux-l2-l06
+world: 2
+title: Signals, kill and jobs
+summary: "You will learn: to stop a program politely or firmly, and to run long jobs in the background."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, OrderList, SortCards, Mission]
+needs: [linux-l2-l05]
+scenario: linux-l2-signals
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kill (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/kill.1.en.html" }
+  - { label: "pkill (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/pkill.1.en.html" }
+  - { label: "signal(7): the list of signals", url: "https://man7.org/linux/man-pages/man7/signal.7.html" }
+  - { label: "Bash manual: Job Control Basics", url: "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Basics.html" }
+---
+
+<Card id="hook" type="hook">
+The oven timer script is stuck in a loop. It runs outside your terminal, so Ctrl+C cannot reach it. How do you stop it?
+
+<Interactive name="Choice" options={[{ label: 'Send it a message with kill', correct: true, why: 'kill sends a signal to a PID: a note that says stop.' }, { label: 'Unplug the server', why: 'Every service would crash with it. Far too big.' }, { label: 'Wait until it gets tired', why: 'A loop never gets tired. It runs until something stops it.' }]} />
+</Card>
+
+<Card id="see-term" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-signals" intro={['pgrep -f oven-timer', 'pkill -f oven-timer', 'pgrep -f oven-timer']} />
+
+`pkill` sent a <Term id="signal">signal</Term> called TERM: "please stop". This script ignores it, so pgrep still finds PID 1241. Watch the busy list.
+</Card>
+
+<Card id="order-ladder" type="check">
+Stopping a program is a ladder: polite first, firm last. Put the steps in order.
+
+<Interactive name="OrderList" items={['Ctrl+C, if it holds your terminal', 'kill PID: the polite TERM signal', 'Wait a few seconds, then check with pgrep', 'kill -9 PID: KILL, the last resort']} label="First step at the top" success="Ask nicely, wait, check, then force. Just like a good boss." />
+</Card>
+
+<Card id="try-kill9" type="try">
+The polite way failed. Use the last resort: **kill -9**. Stop the oven timer for good.
+
+<Interactive name="LinuxSim" scenario="linux-l2-signals" goal={{ processGone: ['oven-timer'] }} hints={['Find its PID: pgrep -f oven-timer', 'Then: kill -9 1241 (or pkill -9 -f oven-timer)']} solution={['pgrep -f oven-timer', 'kill -9 1241']} success="Gone. The busy list is empty and the CPU can rest." />
+
+<Hint>`-9` is the KILL signal. The program cannot ignore it.</Hint>
+</Card>
+
+<Card id="predict-nine" type="predict">
+Why not always start with `kill -9`?
+
+<Interactive name="Choice" options={[{ label: 'The program gets no chance to save or tidy up', correct: true, why: 'TERM lets it close files neatly. KILL stops it mid-sentence.' }, { label: 'kill -9 needs a password', why: 'No password. You may stop your own programs.' }, { label: 'It is slower', why: 'It is instant. That is exactly why it is rough.' }]} />
+</Card>
+
+<Card id="try-jobs" type="try">
+A long job need not block you. Start one in the background with `&`: `sleep 300 &`. Then type `jobs`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-jobs" goal={{ jobs: 1, lastTyped: '^jobs' }} hints={['Type sleep 300 & (with the &)', 'Then type jobs']} solution={['sleep 300 &', 'jobs']} success="[1] Running: the job works in the back while you keep typing." />
+
+<Hint>A **job** is a program this terminal started. `&` sends it to the back.</Hint>
+</Card>
+
+<Card id="sort-front-back" type="check">
+Does the program hold your terminal (front), or let you type (back)?
+
+<Interactive name="SortCards" buckets={[{ id: 'front', label: 'Front: holds the terminal' }, { id: 'back', label: 'Back: you can keep typing' }]} items={[{ label: 'sleep 300', bucket: 'front', why: 'No &, so it holds the prompt until it ends.' }, { label: 'sleep 300 &', bucket: 'back', why: '& starts it in the background.' }, { label: 'fg %1', bucket: 'front', why: 'fg brings job 1 back to the front.' }, { label: 'Ctrl+Z, then bg', bucket: 'back', why: 'Ctrl+Z pauses it. bg lets it run on in the back.' }]} success="& and bg: back. fg: front. Ctrl+Z pauses." />
+</Card>
+
+<Card id="win" type="win">
+You can now stop programs politely or firmly, and juggle jobs.
+</Card>
+
+<Card id="deeper" type="deeper">
+Signals have numbers. 15 is TERM, kill's default. 9 is KILL. Ctrl+C sends 2, INT. `kill %1` stops job 1. Work that must run all day belongs in a service: lesson 8.
+
+Real rep (optional), on your own Linux:
+
+<Interactive name="Mission" id="linux-l2-l06-rep" steps={[{ id: 'start', text: 'Start a long job.', command: 'sleep 100' }, { id: 'pause', text: 'Pause it: press Ctrl+Z.' }, { id: 'back', text: 'Let it run in the background.', command: 'bg' }, { id: 'list', text: 'List your jobs.', command: 'jobs' }, { id: 'stop', text: 'Stop it.', command: 'kill %1' }]} success="Real jobs, real signals!" />
+</Card>

@@ -1,0 +1,65 @@
+---
+id: aws-a4-l04
+world: 4
+title: "EKS: Kubernetes terurus"
+summary: "Anda akan belajar: apa yang EKS jalankan untuk anda, cara kubectl sampai ke situ, dan bila ECS pilihan lebih mudah."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, IdleBill]
+needs: [aws-a4-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon EKS: What is Amazon EKS?", url: "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html" }
+  - { label: "Amazon EKS: Connect kubectl (kubeconfig)", url: "https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html" }
+  - { label: "Amazon EKS: Kubernetes versions", url: "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html" }
+  - { label: "AWS CLI: aws eks update-kubeconfig", url: "https://docs.aws.amazon.com/cli/latest/reference/eks/update-kubeconfig.html" }
+  - { label: "Amazon EKS pricing", url: "https://aws.amazon.com/eks/pricing/" }
+---
+
+<Card id="hook" type="hook">
+Anda pernah jalankan satu medan selera dalam [Kubernetes](/ms/kubernetes/). Pejabat pengurus ialah bahagian paling susah: API server, etcd, naik taraf. Siapa boleh uruskan pejabat itu untuk anda?
+
+<Interactive name="Choice" options={[{ label: 'AWS, dengan caj sejam', correct: true, why: 'Ya. Itulah EKS. Anda terus guna kubectl seperti dahulu.' }, { label: 'Tiada siapa, Kubernetes tak perlukan pejabat', why: 'Setiap kluster perlukan control plane. Seseorang mesti jalankannya.' }, { label: 'ECS', why: 'ECS ialah pengurus AWS sendiri. Ia tak faham Kubernetes.' }]} />
+</Card>
+
+<Card id="see-eks" type="see">
+**<Term id="eks">EKS</Term>** (Kubernetes terurus) jalankan <Term id="control-plane" course="kubernetes">control plane</Term> untuk anda. Ada kerja yang kekal milik anda. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS jalankan' }, { id: 'you', label: 'Masih milik anda' }]} items={[{ label: 'API server dan etcd', bucket: 'aws', why: 'Pejabat itu berjalan atas mesin AWS, merentas sayap.' }, { label: 'Deployment dan Service anda', bucket: 'you', why: 'Manifest yang sama seperti dalam dunia K.' }, { label: 'Pilih bila nak naik taraf Kubernetes', bucket: 'you', why: 'AWS tawarkan versi. Anda tentukan bila nak pindah.' }, { label: 'Backup etcd', bucket: 'aws', why: 'Pejabat itu milik mereka, jadi rekodnya pun.' }]} success="AWS jaga pejabat. Aplikasi dan pilihan kekal milik anda." />
+</Card>
+
+<Card id="see-kubectl" type="see">
+Satu arahan AWS CLI halakan kubectl ke kluster EKS anda. Ini contoh rasmi. Ketik baris yang tunjuk apa yang berubah.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang tunjuk apa yang berubah." success="Satu context kubectl baru. Setiap arahan kubectl dari K1 kini berfungsi." lines={[{ text: '$ aws eks update-kubeconfig --name my-eks-cluster' }, { text: 'Updated context arn:aws:eks:us-west-2:123456789012:cluster/my-eks-cluster in /Users/xxx/.kube/config', target: true }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Anda buat kluster EKS untuk berlatih. Ia tak jalankan pod langsung selama seminggu. Adakah ia makan duit?
+
+<Interactive name="Choice" options={[{ label: 'Ya: setiap kluster ada caj sejam', correct: true, why: 'Tambah node yang anda tambah. Padam kluster latihan pada hari yang sama.' }, { label: 'Tidak, kluster kosong percuma', why: 'Pejabat berjalan sepanjang masa, jadi caj pun sepanjang masa.' }, { label: 'Hanya selepas sebulan percuma', why: 'Semak halaman harga EKS. Jangan anggap kluster percuma.' }]} />
+</Card>
+
+<Card id="try-pick" type="try">
+ECS atau EKS untuk setiap kedai? Kedua-duanya jalankan container. Susun sebabnya.
+
+<Interactive name="SortCards" buckets={[{ id: 'ecs', label: 'ECS pilihan lebih mudah' }, { id: 'eks', label: 'EKS lebih sesuai' }]} items={[{ label: 'Satu aplikasi kecil dan pasukan kecil', bucket: 'ecs', why: 'Kurang bahagian bergerak, tiada caj kluster.' }, { label: 'Pasukan dah hantar chart Helm', bucket: 'eks', why: 'Kekalkan kemahiran dan alat Kubernetes anda.' }, { label: 'Manifest yang sama mesti jalan di cloud lain juga', bucket: 'eks', why: 'Kubernetes cakap bahasa yang sama di mana-mana.' }, { label: 'Anda mahu bil paling kecil untuk demo', bucket: 'ecs', why: 'ECS sendiri percuma. Anda bayar task sahaja.' }]} success="Kecil dan mudah: ECS. Kemahiran Kubernetes atau banyak cloud: EKS." />
+</Card>
+
+<Card id="check-bill" type="check">
+Pengurus mana yang makan duit semasa tiada apa berjalan?
+
+<Interactive name="IdleBill" items={['eksCluster', 'ecsCluster', 'loadBalancer', 'iam']} ordered />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan apa yang EKS jalankan, dan pilih antara ECS dengan EKS.
+</Card>
+
+<Card id="deeper" type="deeper">
+EKS sokong setiap versi Kubernetes untuk satu tempoh. Versi lama pindah ke extended support, yang lebih mahal. Semak halaman versi EKS sebelum rancang naik taraf. Latihan sebenar: [dunia K](/ms/kubernetes/) guna kind di laptop anda. Itu latihan percuma.
+</Card>

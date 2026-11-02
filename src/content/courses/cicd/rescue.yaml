@@ -1,0 +1,483 @@
+# CI/CD rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Ship It Rescue Center (/<lang>/ship-it/rescue/) lists them under Part 2.
+# Flow ids must be unique across docker, cicd and kubernetes: one page, one #<flow-id> link each.
+# A "command" may be a shell command or a short YAML snippet (shown as written). Facts checked
+# 2026-10-31 against docs.github.com (events, secure use, dependency caching, packages) and Cloudflare docs.
+flows:
+  - id: ci-workflow-not-triggered
+    title: { en: "My workflow didn't run", ms: "Workflow saya tak jalan" }
+    start: file
+    steps:
+      - id: file
+        question: { en: "Is the file in .github/workflows/ on GitHub, ending in .yml or .yaml?", ms: "Adakah fail itu dalam .github/workflows/ di GitHub, berakhir dengan .yml atau .yaml?" }
+        answers:
+          - { label: { en: "Not sure, or no", ms: "Tak pasti, atau tidak" }, next: r-file }
+          - { label: { en: "Yes, it's there", ms: "Ya, ada di situ" }, next: event }
+      - id: event
+        question: { en: "What should have started it?", ms: "Apa yang patut mencetuskannya?" }
+        answers:
+          - { label: { en: "A push or a pull request", ms: "Push atau pull request" }, next: r-filters }
+          - { label: { en: "A schedule (cron)", ms: "Jadual (cron)" }, next: r-schedule }
+          - { label: { en: "Another workflow, using GITHUB_TOKEN", ms: "Workflow lain, guna GITHUB_TOKEN" }, next: r-token }
+      - id: r-file
+        result:
+          text: { en: "GitHub only reads workflow files in .github/workflows/. Check the file reached GitHub, and that its YAML is valid. A broken file shows an error in the Actions tab.", ms: "GitHub hanya baca fail workflow dalam .github/workflows/. Semak fail itu sampai ke GitHub, dan YAML-nya sah. Fail rosak tunjuk ralat dalam tab Actions." }
+          commands:
+            - { command: "ls .github/workflows/", en: "List your workflow files. Check the folder name and the ending.", ms: "Senaraikan fail workflow anda. Semak nama folder dan hujung nama fail." }
+            - { command: "git log --oneline -1 -- .github/workflows/", en: "See the last commit that changed them. Is it pushed?", ms: "Lihat commit terakhir yang mengubahnya. Dah push?" }
+            - { command: "actionlint", en: "If you have actionlint, check the YAML for mistakes.", ms: "Jika ada actionlint, semak kesilapan dalam YAML." }
+          danger: safe
+          lesson: cicd-c2-l09
+      - id: r-filters
+        result:
+          text: { en: "A filter may skip this push. Compare branches, paths and types with what you pushed. A commit message with [skip ci] also skips push and PR runs.", ms: "Penapis mungkin langkau push ini. Banding branches, paths dan types dengan apa yang anda push. Mesej commit dengan [skip ci] juga langkau run push dan PR." }
+          commands:
+            - command: |-
+                on:
+                  push:
+                    branches: [main]
+                    paths: ['src/**']
+              en: "Example: this only runs for pushes to main that change src/."
+              ms: "Contoh: ini hanya jalan untuk push ke main yang ubah src/."
+            - { command: "git diff --name-only HEAD~1", en: "List the files your last commit changed. Does one match paths?", ms: "Senaraikan fail yang commit terakhir anda ubah. Ada yang padan dengan paths?" }
+            - { command: "git log -1 --format=%B", en: "Read your last commit message. Look for [skip ci].", ms: "Baca mesej commit terakhir anda. Cari [skip ci]." }
+          danger: safe
+          lesson: cicd-c2-l13
+      - id: r-schedule
+        result:
+          text: { en: "Scheduled runs use UTC and the default branch. In a public repo, they turn off after 60 days with no activity. Turn the workflow back on, and add a button to run it by hand.", ms: "Run berjadual guna waktu UTC dan branch lalai. Dalam repo awam, ia dimatikan selepas 60 hari tanpa aktiviti. Hidupkan semula workflow itu, dan tambah butang untuk jalankannya sendiri." }
+          commands:
+            - command: |-
+                on:
+                  schedule:
+                    - cron: '30 1 * * *'
+                  workflow_dispatch:
+              en: "01:30 UTC every day (09:30 in Malaysia), plus a Run button."
+              ms: "01:30 UTC setiap hari (09:30 di Malaysia), dan butang Run."
+            - { command: "gh workflow enable nightly.yml", en: "Turn the workflow back on (use your file name).", ms: "Hidupkan semula workflow itu (guna nama fail anda)." }
+          danger: safe
+          lesson: cicd-c1-l01
+      - id: r-token
+        result:
+          text: { en: "Most events made with GITHUB_TOKEN start no new runs. That stops endless loops. A PR it opens may wait for a person to approve its run. Chain the work another way.", ms: "Kebanyakan event yang dibuat dengan GITHUB_TOKEN tak mulakan run baharu. Itu elak gelung tanpa henti. PR yang ia buka mungkin tunggu manusia luluskan run-nya. Sambungkan kerja dengan cara lain." }
+          commands:
+            - command: |-
+                on:
+                  workflow_run:
+                    workflows: [Build]
+                    types: [completed]
+              en: "Start this workflow when the Build workflow finishes."
+              ms: "Mulakan workflow ini bila workflow Build selesai."
+            - command: |-
+                deploy:
+                  needs: build
+              en: "Or put both jobs in one workflow. needs makes deploy wait for build."
+              ms: "Atau letak kedua-dua job dalam satu workflow. needs buat deploy tunggu build."
+          danger: safe
+          lesson: cicd-c2-l12
+
+  - id: ci-resource-not-accessible
+    title: { en: "\"Resource not accessible by integration\"", ms: "\"Resource not accessible by integration\" (tiada akses)" }
+    start: who
+    steps:
+      - id: who
+        question: { en: "Which run got the error?", ms: "Run mana yang dapat ralat ini?" }
+        answers:
+          - { label: { en: "A pull request from a fork, or from Dependabot", ms: "Pull request dari fork, atau dari Dependabot" }, next: r-fork }
+          - { label: { en: "My own push or pull request", ms: "Push atau pull request saya sendiri" }, next: what }
+      - id: what
+        question: { en: "What was the step trying to do?", ms: "Apa yang langkah itu cuba buat?" }
+        answers:
+          - { label: { en: "Comment on or label a PR", ms: "Komen atau label PR" }, next: r-prs }
+          - { label: { en: "Create a release or push a tag", ms: "Buat release atau push tag" }, next: r-contents }
+          - { label: { en: "Something else", ms: "Benda lain" }, next: r-other }
+      - id: r-prs
+        result:
+          text: { en: "The job's key lacks one door. Give that job the one key it needs, nothing more. Job keys replace the file's keys, so list both.", ms: "Kunci job itu kurang satu pintu. Beri job itu satu kunci yang ia perlukan, tiada lebih. Kunci job ganti kunci fail, jadi senaraikan kedua-duanya." }
+          commands:
+            - command: |-
+                permissions:
+                  contents: read
+                  pull-requests: write
+              en: "Under the job: read the code, comment on and label PRs."
+              ms: "Di bawah job: baca kod, komen dan label PR."
+          danger: safe
+          lesson: cicd-c4-l04
+      - id: r-contents
+        result:
+          text: { en: "Releases and tags live with your code. Give only the release job write access to contents.", ms: "Release dan tag tinggal bersama kod anda. Beri akses tulis contents kepada job release sahaja." }
+          commands:
+            - command: |-
+                permissions:
+                  contents: write
+              en: "Under the release job only. Other jobs keep contents: read."
+              ms: "Di bawah job release sahaja. Job lain kekal contents: read."
+          danger: safe
+          lesson: cicd-c4-l04
+      - id: r-other
+        result:
+          text: { en: "Read the URL in the error: it names the API the step called. Give the job that one scope. Never jump to write-all.", ms: "Baca URL dalam ralat itu: ia sebut API yang langkah itu panggil. Beri job itu satu skop sahaja. Jangan terus guna write-all." }
+          commands:
+            - command: |-
+                permissions:
+                  contents: read
+                  checks: write
+              en: "Example: a test-report step that writes check results."
+              ms: "Contoh: langkah laporan ujian yang tulis keputusan semakan."
+          danger: safe
+          lesson: cicd-c4-l04
+      - id: r-fork
+        result:
+          text: { en: "Fork and Dependabot PRs get a read-only key. That protects you. Don't switch to pull_request_target to get around it. Skip the write step for those runs.", ms: "PR dari fork dan Dependabot dapat kunci baca sahaja. Itu melindungi anda. Jangan tukar ke pull_request_target untuk mengelaknya. Langkau langkah tulis untuk run itu." }
+          commands:
+            - command: |-
+                if: github.event.pull_request.head.repo.fork == false
+              en: "Put this on the write step: it only runs for PRs from your own repo."
+              ms: "Letak ini pada langkah tulis: ia hanya jalan untuk PR dari repo anda sendiri."
+            - command: |-
+                if: github.actor != 'dependabot[bot]'
+              en: "Or skip it when Dependabot opened the PR."
+              ms: "Atau langkau bila Dependabot yang buka PR itu."
+          danger: safe
+          lesson: cicd-c4-l05
+
+  - id: ci-ghcr-push-denied
+    title: { en: "Push to GHCR was denied", ms: "Push ke GHCR ditolak" }
+    start: error
+    steps:
+      - id: error
+        question: { en: "What did the error say?", ms: "Apa kata ralat itu?" }
+        answers:
+          - { label: { en: "denied: permission_denied: write_package", ms: "denied: permission_denied: write_package" }, next: exists }
+          - { label: { en: "unauthorized: authentication required", ms: "unauthorized: authentication required" }, next: r-login }
+          - { label: { en: "... must be lowercase", ms: "... must be lowercase" }, next: r-lower }
+      - id: exists
+        question: { en: "Did this package exist before, made by another repo or by hand?", ms: "Pakej ini dah wujud sebelum ini, dibuat oleh repo lain atau secara manual?" }
+        answers:
+          - { label: { en: "No, this is the first push", ms: "Tak, ini push pertama" }, next: r-perm }
+          - { label: { en: "Yes, it exists already", ms: "Ya, ia dah wujud" }, next: r-access }
+      - id: r-perm
+        result:
+          text: { en: "The job's key may not write packages. Give the publishing job packages: write, and log in with the job's own token.", ms: "Kunci job itu tak boleh tulis pakej. Beri job yang menerbitkan packages: write, dan log masuk dengan token job itu sendiri." }
+          commands:
+            - command: |-
+                permissions:
+                  contents: read
+                  packages: write
+              en: "Under the job that pushes the image."
+              ms: "Di bawah job yang push image itu."
+            - command: |-
+                - uses: docker/login-action@v4
+                  with:
+                    registry: ghcr.io
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+              en: "Log in to GHCR with the job's own token."
+              ms: "Log masuk ke GHCR dengan token job itu sendiri."
+          danger: safe
+          lesson: cicd-c2-l03
+      - id: r-access
+        result:
+          text: { en: "The package doesn't trust this repo yet. In the package's settings, add this repo under Actions access, with a role that can write. Keep packages: write in the job too.", ms: "Pakej itu belum percaya repo ini. Dalam tetapan pakej, tambah repo ini di bawah akses Actions, dengan peranan yang boleh tulis. Kekalkan packages: write dalam job juga." }
+          commands:
+            - command: |-
+                permissions:
+                  contents: read
+                  packages: write
+              en: "The job still needs its own packages key."
+              ms: "Job itu tetap perlukan kunci packages sendiri."
+            - { command: "gh run rerun <run-id> --failed", en: "Then re-run only the failed jobs (use your run's number).", ms: "Kemudian jalankan semula job yang gagal sahaja (guna nombor run anda)." }
+          danger: safe
+          lesson: cicd-c2-l03
+      - id: r-login
+        result:
+          text: { en: "No login happened before the push, or the password was empty. Fork PRs get no secrets, so build on PRs and push only from main.", ms: "Tiada log masuk sebelum push, atau kata laluan kosong. PR dari fork tak dapat secret, jadi bina pada PR dan push dari main sahaja." }
+          commands:
+            - command: |-
+                - uses: docker/login-action@v4
+                  with:
+                    registry: ghcr.io
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+              en: "Log in before the build-and-push step."
+              ms: "Log masuk sebelum langkah bina dan push."
+            - command: |-
+                push: ${{ github.event_name != 'pull_request' }}
+              en: "In build-push-action: build on PRs, push only on other events."
+              ms: "Dalam build-push-action: bina pada PR, push hanya pada event lain."
+          danger: safe
+          lesson: cicd-c2-l03
+      - id: r-lower
+        result:
+          text: { en: "Image names must be all lowercase. Your user or repo name has capitals in it.", ms: "Nama image mesti huruf kecil semuanya. Nama pengguna atau repo anda ada huruf besar." }
+          commands:
+            - { command: "echo \"IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}\" >> \"$GITHUB_ENV\"", en: "In a run: step, save a lowercase image name for later steps.", ms: "Dalam langkah run:, simpan nama image huruf kecil untuk langkah seterusnya." }
+          danger: safe
+          lesson: cicd-c2-l02
+
+  - id: ci-cache-never-hits
+    title: { en: "The cache never hits", ms: "Cache tak pernah kena" }
+    start: kind
+    steps:
+      - id: kind
+        question: { en: "Which cache misses?", ms: "Cache mana yang terlepas?" }
+        answers:
+          - { label: { en: "Packages (npm, actions/cache)", ms: "Pakej (npm, actions/cache)" }, next: key }
+          - { label: { en: "Docker image layers", ms: "Layer image Docker" }, next: r-layers }
+      - id: key
+        question: { en: "What is in your cache key?", ms: "Apa ada dalam kunci cache anda?" }
+        answers:
+          - { label: { en: "github.sha, github.run_id or a date", ms: "github.sha, github.run_id atau tarikh" }, next: r-key }
+          - { label: { en: "Only a hash of my lockfile", ms: "Hanya hash fail lock saya" }, next: r-scope }
+      - id: r-key
+        result:
+          text: { en: "Your key changes on every run, so it can never match. Build it from your lockfile instead.", ms: "Kunci anda berubah setiap run, jadi ia tak akan padan. Bina kunci daripada fail lock anda." }
+          commands:
+            - command: |-
+                key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+                restore-keys: npm-${{ runner.os }}-
+              en: "Same lockfile, same key. restore-keys gives a near match when it changes."
+              ms: "Fail lock sama, kunci sama. restore-keys beri padanan hampir bila ia berubah."
+          danger: safe
+          lesson: cicd-c2-l13
+      - id: r-scope
+        result:
+          text: { en: "Caches belong to a branch. A run can use its own branch's caches and the default branch's. Sibling branches can't share. Caches unused for 7 days are removed. Run once on main to fill it.", ms: "Cache milik satu branch. Run boleh guna cache branch sendiri dan branch lalai. Branch adik-beradik tak boleh berkongsi. Cache yang tak diguna 7 hari dibuang. Jalankan sekali pada main untuk mengisinya." }
+          commands:
+            - { command: "gh cache list", en: "See which caches exist, and the branch of each.", ms: "Lihat cache yang wujud, dan branch setiap satu." }
+          danger: safe
+          lesson: cicd-c2-l13
+      - id: r-layers
+        result:
+          text: { en: "Layer caches need Buildx and a place to save them. Also copy package files before the rest of the code, so a code change doesn't redo npm ci.", ms: "Cache layer perlukan Buildx dan tempat untuk simpan. Juga salin fail pakej sebelum kod lain, supaya perubahan kod tak ulang npm ci." }
+          commands:
+            - { command: "- uses: docker/setup-buildx-action@v4", en: "Set up Buildx before the build step.", ms: "Sediakan Buildx sebelum langkah bina." }
+            - command: |-
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+              en: "In build-push-action: read and save the layer cache."
+              ms: "Dalam build-push-action: baca dan simpan cache layer."
+          danger: safe
+          lesson: cicd-c2-l04
+
+  - id: ci-flaky-test
+    title: { en: "A test fails, then passes on re-run", ms: "Ujian gagal, kemudian lulus bila diulang" }
+    start: local
+    steps:
+      - id: local
+        question: { en: "Does it ever fail on your own computer?", ms: "Pernahkah ia gagal pada komputer anda sendiri?" }
+        answers:
+          - { label: { en: "Yes, now and then", ms: "Ya, sekali-sekala" }, next: r-test }
+          - { label: { en: "Never, only in CI", ms: "Tak pernah, dalam CI sahaja" }, next: when }
+      - id: when
+        question: { en: "When does it fail in CI?", ms: "Bila ia gagal dalam CI?" }
+        answers:
+          - { label: { en: "Only in one matrix leg or one OS", ms: "Hanya dalam satu kaki matrix atau satu OS" }, next: r-matrix }
+          - { label: { en: "When jobs run at the same time", ms: "Bila job jalan serentak" }, next: r-shared }
+          - { label: { en: "At random", ms: "Secara rawak" }, next: r-random }
+      - id: r-test
+        result:
+          text: { en: "The test itself is shaky: time, random order or the network. Make it give the same answer every time.", ms: "Ujian itu sendiri tak stabil: masa, susunan rawak atau rangkaian. Buat ia beri jawapan sama setiap kali." }
+          commands:
+            - { command: "for i in 1 2 3 4 5; do npm test || break; done", en: "Run the tests 5 times. Stop at the first failure.", ms: "Jalankan ujian 5 kali. Berhenti pada kegagalan pertama." }
+          danger: safe
+          lesson: cicd-c1-l04
+      - id: r-matrix
+        result:
+          text: { en: "Something differs in that leg: Node version, OS or time zone. Let every leg finish, so you see the pattern.", ms: "Ada yang berbeza dalam kaki itu: versi Node, OS atau zon waktu. Biar setiap kaki selesai, supaya anda nampak coraknya." }
+          commands:
+            - command: |-
+                strategy:
+                  fail-fast: false
+              en: "One red leg no longer stops the others."
+              ms: "Satu kaki merah tak lagi hentikan yang lain."
+          danger: safe
+          lesson: cicd-c1-l04
+      - id: r-shared
+        result:
+          text: { en: "Jobs share something: a database, a port or a file. Give each job its own.", ms: "Job berkongsi sesuatu: pangkalan data, port atau fail. Beri setiap job miliknya sendiri." }
+          commands:
+            - command: |-
+                services:
+                  postgres:
+                    image: postgres:18-alpine
+              en: "A fresh test database inside every job."
+              ms: "Pangkalan data ujian baharu dalam setiap job."
+          danger: safe
+          lesson: cicd-c2-l07
+      - id: r-random
+        result:
+          text: { en: "Re-run once to unblock the team. Then track it and fix it. Blind retries hide real bugs.", ms: "Jalankan semula sekali untuk lepaskan pasukan. Kemudian jejak dan baikinya. Cubaan semula membuta tuli sorok pepijat sebenar." }
+          commands:
+            - { command: "gh run rerun <run-id> --failed", en: "Re-run only the failed jobs (use your run's number).", ms: "Jalankan semula job yang gagal sahaja (guna nombor run anda)." }
+            - { command: "gh issue create --title \"Flaky test: cart adds tax\" --body \"Fails now and then in CI.\"", en: "Write it down, so it gets fixed.", ms: "Catat, supaya ia dibaiki." }
+          danger: safe
+          lesson: cicd-c1-l04
+
+  - id: ci-pipeline-slow
+    title: { en: "The pipeline is too slow", ms: "Pipeline terlalu lambat" }
+    start: where
+    steps:
+      - id: where
+        question: { en: "Open the run. Where does most of the time go?", ms: "Buka run itu. Ke mana kebanyakan masa pergi?" }
+        answers:
+          - { label: { en: "Installing packages", ms: "Pasang pakej" }, next: cache }
+          - { label: { en: "Building the Docker image", ms: "Bina image Docker" }, next: r-layers }
+          - { label: { en: "Jobs wait for each other", ms: "Job tunggu satu sama lain" }, next: r-parallel }
+          - { label: { en: "Too many runs, even for tiny changes", ms: "Terlalu banyak run, walaupun untuk perubahan kecil" }, next: r-fewer }
+      - id: cache
+        question: { en: "Do you cache packages already?", ms: "Dah cache pakej?" }
+        answers:
+          - { label: { en: "No", ms: "Belum" }, next: r-cache }
+          - { label: { en: "Yes, but it never hits", ms: "Ya, tapi ia tak pernah kena" }, next: r-see-cache }
+      - id: r-cache
+        result:
+          text: { en: "Reuse downloaded packages between runs. setup-node can cache npm for you.", ms: "Guna semula pakej yang dimuat turun antara run. setup-node boleh cache npm untuk anda." }
+          commands:
+            - command: |-
+                - uses: actions/setup-node@v7
+                  with:
+                    node-version: 24
+                    cache: npm
+              en: "Saves npm's download cache, keyed by your lockfile."
+              ms: "Simpan cache muat turun npm, ikut fail lock anda."
+          danger: safe
+          lesson: cicd-c2-l13
+      - id: r-see-cache
+        result:
+          text: { en: "Check the key first: a key that changes every run never hits. The flow \"The cache never hits\" walks you through it.", ms: "Semak kunci dulu: kunci yang berubah setiap run tak akan kena. Aliran \"Cache tak pernah kena\" bantu anda langkah demi langkah." }
+          commands:
+            - { command: "gh cache list", en: "See which caches exist, and their branches.", ms: "Lihat cache yang wujud, dan branch masing-masing." }
+          danger: safe
+          lesson: cicd-c2-l13
+      - id: r-layers
+        result:
+          text: { en: "Save Docker layers between runs, and order the Dockerfile so slow steps rarely change.", ms: "Simpan layer Docker antara run, dan susun Dockerfile supaya langkah lambat jarang berubah." }
+          commands:
+            - command: |-
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+              en: "In build-push-action, after setup-buildx-action."
+              ms: "Dalam build-push-action, selepas setup-buildx-action."
+          danger: safe
+          lesson: cicd-c2-l04
+      - id: r-parallel
+        result:
+          text: { en: "Jobs without needs run side by side. Split lint and test into their own jobs. Keep needs only where order matters.", ms: "Job tanpa needs jalan serentak. Pecahkan lint dan test kepada job sendiri. Guna needs hanya bila urutan penting." }
+          commands:
+            - command: |-
+                jobs:
+                  lint: ...
+                  test: ...
+                  build:
+                    needs: [lint, test]
+              en: "lint and test run together. build waits for both."
+              ms: "lint dan test jalan serentak. build tunggu kedua-duanya."
+          danger: safe
+          lesson: cicd-c1-l03
+      - id: r-fewer
+        result:
+          text: { en: "Cancel old runs on the same branch, and skip runs when only docs change.", ms: "Batalkan run lama pada branch yang sama, dan langkau run bila hanya dokumen berubah." }
+          commands:
+            - command: |-
+                concurrency:
+                  group: ${{ github.workflow }}-${{ github.ref }}
+                  cancel-in-progress: true
+              en: "A new push cancels the older run on the same branch."
+              ms: "Push baharu batalkan run lama pada branch yang sama."
+            - command: |-
+                on:
+                  push:
+                    paths-ignore: ['**.md']
+              en: "No run when only Markdown files change."
+              ms: "Tiada run bila hanya fail Markdown berubah."
+          danger: safe
+          lesson: cicd-c2-l13
+
+  - id: ci-secret-in-logs
+    title: { en: "A secret was printed in the logs", ms: "Secret terpapar dalam log" }
+    start: shown
+    steps:
+      - id: shown
+        question: { en: "What does the log show?", ms: "Apa yang log tunjuk?" }
+        answers:
+          - { label: { en: "Only ***", ms: "Hanya ***" }, next: r-masked }
+          - { label: { en: "The real value, or an encoded copy", ms: "Nilai sebenar, atau salinan yang dikod" }, next: public }
+      - id: public
+        question: { en: "Is the repository public?", ms: "Adakah repo itu awam?" }
+        answers:
+          - { label: { en: "Yes, public", ms: "Ya, awam" }, next: r-public }
+          - { label: { en: "No, private", ms: "Tak, peribadi" }, next: r-private }
+      - id: r-masked
+        result:
+          text: { en: "GitHub hid it this time. Still remove the line: an encoded copy would not be hidden. Pass secrets to tools through env, never echo them.", ms: "GitHub sembunyikannya kali ini. Tetap buang baris itu: salinan yang dikod tak akan disembunyikan. Hantar secret kepada alat melalui env, jangan echo." }
+          commands:
+            - command: |-
+                - run: npx wrangler deploy
+                  env:
+                    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+              en: "The tool reads the secret from env. Nothing prints it."
+              ms: "Alat itu baca secret dari env. Tiada apa mencetaknya."
+          danger: safe
+          lesson: cicd-c4-l07
+      - id: r-public
+        result:
+          text: { en: "Treat it as stolen: anyone could read that log. First, cancel the old key where it was made (Cloudflare, npm…) and make a new one. Then clean up.", ms: "Anggap ia dicuri: sesiapa boleh baca log itu. Pertama, batalkan kunci lama di tempat ia dibuat (Cloudflare, npm…) dan buat yang baharu. Kemudian bersihkan." }
+          commands:
+            - { command: "gh secret set CLOUDFLARE_API_TOKEN", en: "Save the new value as the repo secret. gh asks you to paste it.", ms: "Simpan nilai baharu sebagai secret repo. gh akan minta anda tampal." }
+            - { command: "gh run delete <run-id>", en: "Delete the run with the leaked log (use your run's number).", ms: "Padam run yang ada log bocor itu (guna nombor run anda)." }
+            - { command: "echo \"::add-mask::$DERIVED\"", en: "If a step makes a new value from a secret, mask it before printing anything.", ms: "Jika satu langkah buat nilai baharu daripada secret, tutup ia sebelum mencetak apa-apa." }
+          danger: careful
+          lesson: cicd-c4-l07
+      - id: r-private
+        result:
+          text: { en: "Everyone with read access could see it. Rotate it anyway: cancel the old key where it was made, and make a new one. Then clean up.", ms: "Semua yang ada akses baca boleh nampak. Tetap tukar: batalkan kunci lama di tempat ia dibuat, dan buat yang baharu. Kemudian bersihkan." }
+          commands:
+            - { command: "gh secret set CLOUDFLARE_API_TOKEN", en: "Save the new value as the repo secret.", ms: "Simpan nilai baharu sebagai secret repo." }
+            - { command: "gh run delete <run-id>", en: "Delete the run with the leaked log.", ms: "Padam run yang ada log bocor itu." }
+          danger: careful
+          lesson: cicd-c4-l07
+
+  - id: ci-deploy-green-site-broken
+    title: { en: "Deploy succeeded, but the site is broken", ms: "Deploy berjaya, tapi laman web rosak" }
+    start: see
+    steps:
+      - id: see
+        question: { en: "What do visitors see?", ms: "Apa yang pelawat nampak?" }
+        answers:
+          - { label: { en: "An error or a blank page", ms: "Ralat atau halaman kosong" }, next: host }
+          - { label: { en: "The old version: my change is missing", ms: "Versi lama: perubahan saya tiada" }, next: r-stale }
+      - id: host
+        question: { en: "Where is the site deployed?", ms: "Di mana laman web itu di-deploy?" }
+        answers:
+          - { label: { en: "Cloudflare Workers", ms: "Cloudflare Workers" }, next: r-rollback }
+          - { label: { en: "Somewhere else, or not sure", ms: "Tempat lain, atau tak pasti" }, next: r-revert }
+      - id: r-rollback
+        result:
+          text: { en: "Roll back first, so visitors are fine. Then find the bug. Add a smoke test, so the next broken deploy turns the run red.", ms: "Rollback dulu, supaya pelawat okey. Kemudian cari pepijat. Tambah smoke test, supaya deploy rosak seterusnya jadikan run merah." }
+          commands:
+            - { command: "npx wrangler deployments list", en: "See recent deploys and their versions.", ms: "Lihat deploy terkini dan versinya." }
+            - { command: "npx wrangler rollback", en: "Go back to the previous version. It asks you to confirm.", ms: "Kembali ke versi sebelumnya. Ia minta anda sahkan." }
+            - { command: "- run: curl --fail --silent https://shop.example.com/health", en: "After deploy: fail the run if the site sends an error page.", ms: "Selepas deploy: gagalkan run jika laman hantar halaman ralat." }
+          danger: careful
+          lesson: cicd-c3-l10
+      - id: r-revert
+        result:
+          text: { en: "Undo the bad change on main with a new commit. The pipeline then ships the last good code.", ms: "Undur perubahan rosak di main dengan commit baharu. Pipeline kemudian hantar kod baik yang terakhir." }
+          commands:
+            - { command: "git revert HEAD", en: "Make a new commit that undoes the last one.", ms: "Buat commit baharu yang batalkan commit terakhir." }
+            - { command: "git push", en: "Push it. The pipeline deploys the fixed main.", ms: "Push. Pipeline deploy main yang dah dibaiki." }
+          danger: safe
+          lesson: cicd-c3-l10
+      - id: r-stale
+        result:
+          text: { en: "The deploy may have shipped an old build, or a cache shows old files. Build in the same job, right before deploying, and check the live page.", ms: "Deploy mungkin hantar binaan lama, atau cache tunjuk fail lama. Bina dalam job yang sama, sejurus sebelum deploy, dan semak halaman sebenar." }
+          commands:
+            - command: |-
+                - run: npm run build
+                - run: npx wrangler deploy
+              en: "Build, then deploy that fresh build."
+              ms: "Bina, kemudian deploy binaan baharu itu."
+            - { command: "curl --silent https://shop.example.com/ | grep \"Day 5\"", en: "Check the live page has your new text, with no browser cache.", ms: "Semak halaman sebenar ada teks baharu anda, tanpa cache pelayar." }
+          danger: safe
+          lesson: cicd-c1-l06

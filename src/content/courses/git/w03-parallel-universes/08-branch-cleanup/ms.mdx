@@ -1,0 +1,73 @@
+---
+id: git-w03-l08
+world: 3
+title: Kemas branch
+summary: "Anda akan belajar: branch mana yang selamat dipadam, dan caranya."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l07]
+scenario: w03-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch (-d, -D, --merged)", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch']} label="git branch senaraikan about, dark-mode, main dengan bintang, dan old-idea." />
+
+Senarai branch anda makin panjang. Nota lama di mana-mana! Yang mana boleh dibuang dengan selamat?
+</Card>
+
+<Card id="see-delete" type="see">
+<Interactive name="GraphScene" scenario="w03-l08" commands={['git branch -d about']} label="Label about hilang. Commit Add about page kekal, selamat di dalam main." />
+
+`git branch -d about` tanggalkan nota itu. Commit kekal selamat, sebab main dah ada semuanya.
+</Card>
+
+<Card id="try-spot" type="try">
+`git branch --merged` senaraikan nota yang kerjanya dah masuk ke branch anda. Ketik yang boleh dipadam.
+
+<Interactive name="SpotLines" scenario="w03-l08" commands={['git branch --merged']} targets="^\s+(about|dark-mode)$" prompt="Ketik setiap nota yang dah di-merge dan boleh dipadam. Bukan yang anda sedang guna!" success="Betul! about dan dark-mode dah di-merge. main ialah tempat anda berada." />
+
+<Hint>Bintang menanda branch anda sendiri. Biarkan yang itu.</Hint>
+</Card>
+
+<Card id="try-delete" type="try">
+Padam nota yang dah di-merge, `about` dan `dark-mode`. Kekalkan `old-idea`.
+
+<Interactive name="Sim" scenario="w03-l08" panels={['graph']} goal={{ branchesMissing: ['about', 'dark-mode'], branches: ['old-idea'] }} hints={['Taip git branch -d about. Kemudian git branch -d dark-mode.']} success="Kemas! Semua commit masih ada dalam main." />
+
+<Hint>Satu nota setiap kali: `git branch -d about`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`old-idea` tak pernah di-merge. Anda jalankan `git branch -d old-idea`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Git tolak dan beri amaran', correct: true, why: 'Commitnya akan hilang satu-satunya nota. Git minta anda pasti dulu.' }, { label: 'Ia dipadam', why: '-d kecil hanya padam branch yang dah di-merge. Kerja anda selamat.' }, { label: 'Git merge dulu', why: 'Git tak pernah merge sendiri.' }]} />
+</Card>
+
+<Card id="see-force" type="see">
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch -D old-idea', 'git branch']} label="git branch -D old-idea papar: Deleted branch old-idea. git branch kini senaraikan about, dark-mode dan main." />
+
+Pasti tak perlukannya? `git branch -D` (D besar) padam juga. Hati-hati: commitnya hilang nota terakhir.
+</Card>
+
+<Card id="check-sort" type="check">
+Apa kata `git branch -d`?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Dipadam' }, { id: 'no', label: 'Git kata tidak' }]} items={[{ label: 'about, dah di-merge ke main', bucket: 'ok', why: 'Kerjanya selamat dalam main.' }, { label: 'dark-mode, dah di-merge ke main', bucket: 'ok', why: 'Kerjanya selamat dalam main.' }, { label: 'Branch dengan kerja yang belum di-merge', bucket: 'no', why: 'Guna -D hanya kalau anda pasti.' }, { label: 'main, semasa anda berada di situ', bucket: 'no', why: 'Anda tak boleh padam branch tempat anda berada.' }]} success="Dah susun! -d jaga kerja anda supaya selamat." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kemas branch tanpa hilang kerja.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git branch --no-merged` senaraikan nota yang kerjanya masih menunggu. Tersilap padam nota? `git reflog` masih ingat commitnya. Kemudian `git branch old-idea <hash>` lekatkan nota itu semula.
+
+<Interactive name="TermReplay" scenario="w03-l08" commands={['git branch --no-merged']} label="git branch --no-merged senaraikan old-idea." />
+</Card>

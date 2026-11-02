@@ -1,0 +1,72 @@
+---
+id: linux-l2-l02
+world: 2
+title: Baca kebenaran rwx
+summary: "Anda akan belajar: baca sembilan kunci dalam ls -l, untuk pemilik, kumpulan dan orang lain."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, SpotLines]
+needs: [linux-l2-l01]
+scenario: linux-l2-perms
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ls (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/ls.1.en.html" }
+  - { label: "GNU coreutils: file permissions", url: "https://www.gnu.org/software/coreutils/manual/html_node/File-permissions.html" }
+  - { label: "Debian Reference: GNU/Linux tutorials", url: "https://www.debian.org/doc/manuals/debian-reference/ch01.en.html" }
+---
+
+<Card id="hook" type="hook">
+Anda sendiri tulis `open.sh`. Anda taip `./open.sh`. Server kata `-bash: ./open.sh: Permission denied`. Itu fail anda! Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Fail itu belum ada kunci "jalan"', correct: true, why: 'Memiliki fail tak cukup. Ia juga perlukan kunci x untuk berjalan.' }, { label: 'Hanya root boleh jalankan skrip', why: 'Sesiapa boleh jalankan skrip yang ada kunci jalan.' }, { label: 'Skrip itu rosak', why: 'Shell tak sempat pun buka fail itu. Kuncinya yang tiada.' }]} />
+</Card>
+
+<Card id="see-ls" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-perms" intro={['ls -l']} />
+
+`ls -l` tunjuk kunci setiap fail, iaitu **permissions** (kebenaran). `-rw-r--r--` ialah tiga gugus kunci: pemilik, kumpulan, kemudian orang lain.
+</Card>
+
+<Card id="sort-rwx" type="check">
+Setiap gugus ada tiga kunci: `r` baca, `w` tulis, `x` jalan. Kunci mana yang setiap kerja perlukan?
+
+<Interactive name="SortCards" buckets={[{ id: 'r', label: 'r: baca' }, { id: 'w', label: 'w: tulis' }, { id: 'x', label: 'x: jalan / masuk' }]} items={[{ label: 'Tengok senarai harga', bucket: 'r', why: 'Membaca perlukan r.' }, { label: 'Tukar satu harga', bucket: 'w', why: 'Mengubah fail perlukan w.' }, { label: 'Jalankan open.sh', bucket: 'x', why: 'Program perlukan x untuk berjalan.' }, { label: 'Masuk ke bilik pekerja', bucket: 'x', why: 'Pada folder, x maksudnya anda boleh masuk.' }]} success="r baca, w ubah, x jalan (atau masuk ke folder)." />
+</Card>
+
+<Card id="predict-secret" type="predict">
+`secret.txt` tunjuk `-rw-------`. Aina bukan anda dan bukan dalam kumpulan anda. Bolehkah dia baca?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Kumpulan dan orang lain dapat ---.', correct: true, why: 'Hanya gugus pertama, pemilik, ada rw. Gugus lain kosong.' }, { label: 'Ya. Semua orang boleh baca fail teks.', why: 'Teks atau bukan, kunci yang menentukan.' }, { label: 'Hari bekerja sahaja', why: 'Kunci tak berubah ikut kalendar.' }]} />
+</Card>
+
+<Card id="try-shadow" type="try">
+Ingat laci kata laluan yang berkunci? Baca kuncinya: `ls -l /etc/shadow`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-perms" goal={{ lastTyped: '^ls -l /etc/shadow$' }} hints={['Taip ls -l /etc/shadow']} solution={['ls -l /etc/shadow']} success="rw untuk root, r untuk kumpulan shadow, tiada untuk orang lain. Sebab itulah cat kata Permission denied." />
+
+<Hint>Pemiliknya `root`. Kumpulannya `shadow`. Anda bukan kedua-duanya.</Hint>
+</Card>
+
+<Card id="spot-others" type="check">
+<Interactive name="SpotLines" lines={[{ text: '-rw-r--r-- 1 you you   33 Nov  1 08:55 open.sh', target: true }, { text: '-rw-r--r-- 1 you you   21 Nov  1 08:55 prices.txt', target: true }, { text: '-rw------- 1 you you   15 Nov  1 08:55 secret.txt' }, { text: 'drwxr-x--- 2 you you 4096 Nov  1 08:55 staff' }]} prompt="Ketik setiap baris yang orang lain boleh baca. Tengok tiga huruf terakhir." success="open.sh dan prices.txt berakhir dengan r--. Yang lain berakhir dengan ---." />
+</Card>
+
+<Card id="check-dir" type="check">
+Bilik pekerja tunjuk `drwxr-x---`. `d` maksudnya ia folder. Bolehkah orang luar masuk?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Gugus terakhir ---: tiada x, tak boleh masuk.', correct: true, why: 'Pemilik rwx, kumpulan r-x, orang lain tiada. Orang luar duduk di luar.' }, { label: 'Ya. Folder sentiasa terbuka.', why: 'Folder perlukan x pada gugus anda untuk masuk.' }, { label: 'Boleh baca nama fail sahaja', why: 'Itu perlukan r pada gugus terakhir. Ia tiada.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca siapa boleh baca, tulis atau jalankan sesuatu fail.
+</Card>
+
+<Card id="deeper" type="deeper">
+Huruf pertama ialah jenis: `-` fail, `d` folder, `l` pautan. Kemudian nama pemilik dan kumpulan. root abaikan kebanyakan kunci, jadi berhati-hati lebih sebagai root.
+
+Latihan sebenar (pilihan): di Linux, bandingkan `ls -l /etc/passwd /etc/shadow`, kemudian `ls -ld ~`.
+</Card>

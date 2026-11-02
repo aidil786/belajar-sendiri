@@ -1,0 +1,67 @@
+---
+id: docker-d6-l05
+world: 6
+title: "OCI, containerd dan runc"
+summary: "Anda akan belajar: siapa sebenarnya yang mulakan container, peraturan bersama OCI, dan kenapa Kubernetes jalankan image anda tanpa Docker."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, OrderList, SortCards, TimelineTap, Mission]
+needs: [docker-d6-l04]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Open Container Initiative: overview", url: "https://opencontainers.org/about/overview/" }
+  - { label: "containerd docs", url: "https://containerd.io/docs/" }
+  - { label: "Kubernetes: container runtimes", url: "https://kubernetes.io/docs/setup/production-environment/container-runtimes/" }
+  - { label: "Kubernetes: dockershim removal FAQ", url: "https://kubernetes.io/blog/2022/02/17/dockershim-faq/" }
+---
+
+<Card id="hook" type="hook">
+Rakan sepasukan anda panik: "Kubernetes dah buang Docker! Semua image kita tak boleh pakai!" Betul ke?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Image ikut peraturan bersama. Kubernetes masih jalankannya.', correct: true, why: 'docker build hasilkan image standard. Mana-mana runtime standard boleh jalankannya.' }, { label: 'Ya. Bina semula semua image tanpa Docker.', why: 'Tak perlu bina semula. Format image ialah standard bersama.' }, { label: 'Ya, kecuali anda bayar Docker', why: 'Duit tiada kaitan langsung.' }]} />
+</Card>
+
+<Card id="see-info" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker info']} label="docker info senaraikan runtime (runc), runtime lalai runc, dan versi containerd, antara baris Cgroup Version dan Security Options." />
+
+Docker ialah satu pasukan. `docker info` sebut dua pembantu: containerd dan runc. **<Term id="runc">runc</Term>** bina bilik kecil (namespace, cgroups), mulakan aplikasi anda, kemudian pergi.
+</Card>
+
+<Card id="try-relay" type="try">
+**<Term id="containerd">containerd</Term>** ialah pengurus dapur. Ia simpan pek dan jaga bekas. Susun larian berganti ini, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Anda taip docker run', 'dockerd, kaunter depan, ambil pesanan', 'containerd, pengurus dapur, sediakan pek', 'containerd-shim tinggal untuk jaga bekas ini', 'runc hidupkan namespace dan cgroups, kemudian pergi', 'Aplikasi anda berjalan sebagai PID 1']} label="Langkah pertama di atas" success="Itulah seluruh larian berganti, dari arahan anda ke PID 1." />
+</Card>
+
+<Card id="try-oci" type="try">
+**<Term id="oci">OCI</Term>** tulis peraturan bersama. Bayangkan saiz dulang standard: semua ketuhar muat. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'rule', label: 'Peraturan bersama (OCI)' }, { id: 'tool', label: 'Program yang ikut peraturan' }]} items={[{ label: 'Image spec: susunan pek makanan', bucket: 'rule', why: 'Ia terangkan isi sebuah image.' }, { label: 'Runtime spec: cara mulakan container', bucket: 'rule', why: 'Ia terangkan tugas sebuah runtime.' }, { label: 'runc', bucket: 'tool', why: 'Runtime yang ikut runtime spec.' }, { label: 'containerd', bucket: 'tool', why: 'Ia tarik, simpan dan mulakan image standard.' }, { label: 'Distribution spec: cara registry kongsi pek', bucket: 'rule', why: 'Sebab itu mana-mana registry serasi dengan mana-mana alat.' }, { label: 'Podman', bucket: 'tool', why: 'Satu lagi alat yang jalankan image standard yang sama.' }]} success="Siap! Satu set peraturan, banyak program." />
+</Card>
+
+<Card id="predict" type="predict">
+Kubernetes 1.24 buang **dockershim**, penterjemahnya untuk Docker. Apa yang mulakan container pada setiap mesin sekarang?
+
+<Interactive name="Choice" options={[{ label: 'containerd atau CRI-O, melalui palam bernama CRI', correct: true, why: 'Kubernetes langkau kaunter depan. Ia bercakap terus dengan pengurus dapur.' }, { label: 'Tiada. Kubernetes jalankan aplikasi sendiri.', why: 'Kubernetes sentiasa perlukan runtime untuk mulakan container.' }, { label: 'Docker, sama macam dulu', why: 'Docker Engine kini perlukan penyesuai tambahan, cri-dockerd.' }]} />
+</Card>
+
+<Card id="check-time" type="check">
+Tekan setiap tahun untuk lihat bagaimana kita sampai ke sini.
+
+<Interactive name="TimelineTap" events={[{ when: '2015', title: 'OCI ditubuhkan', text: 'Docker beri runtime-nya, runc, kepada peraturan bersama yang baharu.' }, { when: '2017', title: 'containerd sertai CNCF', text: 'Pengurus dapur jadi projek terbuka bersama.' }, { when: '2020', title: 'Kubernetes 1.20 beri amaran', text: 'dockershim akan dibuang.' }, { when: '2022', title: 'Kubernetes 1.24 buang dockershim', text: 'Mesin guna containerd atau CRI-O. Image yang dibina dengan Docker masih berjalan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan siapa sebenarnya yang jalankan container, dan kenapa Kubernetes tak perlukan Docker.
+</Card>
+
+<Card id="deeper" type="deeper">
+Runtime lain ikut runtime spec yang sama, contohnya crun, gVisor dan Kata Containers. Shim membolehkan containerd dimulakan semula tanpa hentikan bekas anda. Kubernetes masih boleh guna Docker Engine melalui penyesuai cri-dockerd.
+
+<Interactive name="Mission" id="d6-l05-relay" steps={[{ id: 'info', text: 'Cari runtime dalam docker info.', command: 'docker info' }, { id: 'run', text: 'Mulakan satu bekas.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'shim', text: 'Pada Linux: cari shim yang jaganya.', command: 'ps -ef | grep containerd-shim' }, { id: 'rm', text: 'Kemas semula.', command: 'docker rm -f web' }]} success="Anda dah jumpa seluruh pasukan larian berganti." />
+</Card>

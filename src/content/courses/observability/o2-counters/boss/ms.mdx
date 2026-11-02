@@ -1,0 +1,84 @@
+---
+id: obs-o2-boss
+world: 2
+title: Kira pesanan
+summary: "Anda akan belajar: menjawab lima soalan sebenar tentang Kedai Kancil dengan PromQL."
+minutes: 7
+xp: 50
+interactives: [PromQLPlayground, Choice, SwipeJudge, OrderList, Mission]
+needs: [obs-o2-l09]
+scenario: o2-boss
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Prometheus: querying basics", url: "https://prometheus.io/docs/prometheus/latest/querying/basics/" }
+  - { label: "PromQL functions", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/" }
+  - { label: "PromQL operators", url: "https://prometheus.io/docs/prometheus/latest/querying/operators/" }
+---
+
+<Card id="hook" type="hook">
+Boss: pemilik ada lima soalan, dan sekarang 28m. Soalan 1: target mana yang mati?
+
+<Interactive name="PromQLPlayground" scenario="o2-boss" prompt="Tunjuk hanya target yang mati." goal={{ resultCount: 1, resultIncludes: [{ labels: { job: 'shop', instance: 'shop-2:8080' } }] }} hints={['up jadi 0 bila scrape gagal.', 'Taip up == 0']} solution="up == 0" success="Soalan 1: shop-2 mati." />
+</Card>
+
+<Card id="c1" type="predict">
+shop-2 mati. Siapa masih boleh beritahu sama ada pelanggan sampai ke kedai?
+
+<Interactive name="Choice" options={[{ label: 'Blackbox exporter, mengetuk dari luar', correct: true, why: 'Ya. Ia semak laman kedai macam pelanggan.' }, { label: 'Node exporter di shop-2', why: 'Kalau shop-2 mati, exporternya mungkin mati juga. Tanya dari luar.' }, { label: 'Tiada siapa', why: 'Probe dari luar masih berjalan. Itulah tugasnya.' }]} />
+</Card>
+
+<Card id="q2" type="try">
+Soalan 2: pesanan seminit, satu baris untuk setiap gerai.
+
+<Interactive name="PromQLPlayground" scenario="o2-boss" prompt="Guna rate, sum by (stall), dan tukar saat jadi minit." goal={{ labelNames: ['stall'], resultCount: 3, resultIncludes: [{ labels: { stall: 'roti-canai' }, value: 60 }] }} hints={['Mula dengan sum by (stall) (rate(kedai_orders_total[5m])).', 'Kemudian tambah * 60 di hujung.']} solution="sum by (stall) (rate(kedai_orders_total[5m])) * 60" success="Soalan 2: roti canai jual 60 seminit." />
+</Card>
+
+<Card id="c2" type="check">
+Adakah ia jawab “pesanan seminit”? Leret ke kanan untuk ya.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'rate(kedai_orders_total[5m]) * 60', good: true, why: 'Sesaat, darab 60.' }, { text: 'kedai_orders_total', good: false, why: 'Itu jumlah sejak mesin kaunter bermula.' }, { text: 'increase(kedai_orders_total[5m]) / 5', good: true, why: 'Pertambahan lima minit, dibahagi 5 minit.' }, { text: 'rate(kedai_orders_total[30s]) * 60', good: false, why: 'Dengan scrape 1m, 30s terlalu sedikit sampel.' }]} />
+</Card>
+
+<Card id="q3" type="try">
+Soalan 3: berapa peratus permintaan web gagal dengan kod 5xx?
+
+<Interactive name="PromQLPlayground" scenario="o2-boss" metrics={['http_requests_total']} prompt="Bahagikan rate 5xx dengan rate semua permintaan. Satu nombor." goal={{ labelNames: [], resultCount: 1, resultEquals: [{ labels: {}, value: 0.03846, tolerance: 0.001 }] }} hints={['Atas: jumlah rate permintaan 5xx. Tapis dengan code=~"5..".', 'Bawah: jumlah rate semua permintaan. Letak / di tengah.']} solution={'sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))'} success="Soalan 3: lebih kurang 3.8% gagal." />
+</Card>
+
+<Card id="c3" type="check">
+Seterusnya p95. Susun resipinya, dari dalam ke luar.
+
+<Interactive name="OrderList" items={['kedai_checkout_duration_seconds_bucket', 'rate( … [5m])', 'sum by (le) ( … )', 'histogram_quantile(0.95, … )']} label="Bahagian dalam di atas" success="Baldi, rate, sum by le, kuantil. Sedia." />
+</Card>
+
+<Card id="q4" type="try">
+Soalan 4: masa bayaran p95, kedua-dua kedai sekali.
+
+<Interactive name="PromQLPlayground" scenario="o2-boss" metrics={['kedai_checkout_duration_seconds_bucket']} prompt="Bina resipi p95 dan Run." goal={{ usesFunction: ['histogram_quantile'], labelNames: [], resultEquals: [{ labels: {}, value: 1.857, tolerance: 0.001 }] }} hints={['Balut rate( … [5m]) baldi dengan sum by (le), kemudian dengan histogram_quantile(0.95, … ).']} solution="histogram_quantile(0.95, sum by (le) (rate(kedai_checkout_duration_seconds_bucket[5m])))" success="Soalan 4: p95 ialah 1.86 s." />
+</Card>
+
+<Card id="c4" type="predict">
+p95 ialah 1.86 s. SLO kata 95% bayaran siap bawah 1 s. Tercapai?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. 95% hanya siap bawah 1.86 s.', correct: true, why: 'Ya. Lebih daripada 5% ambil lebih 1 s. Masa untuk tengok shop-1.' }, { label: 'Ya. Purata okey.', why: 'SLO itu tentang p95, bukan purata.' }, { label: 'Tak boleh tahu', why: 'p95 dah jawab: 1.86 s melebihi 1 s.' }]} />
+</Card>
+
+<Card id="q5" type="try">
+Soalan terakhir: berapa pesanan masuk dalam 10 minit lepas, semua gerai sekali?
+
+<Interactive name="PromQLPlayground" scenario="o2-boss" metrics={['kedai_orders_total']} prompt="Guna increase untuk 10 minit, kemudian jumlahkan semuanya." goal={{ usesFunction: ['increase', 'sum'], labelNames: [], resultEquals: [{ labels: {}, value: 1200 }] }} hints={['increase( … [10m]) beri satu baris setiap siri.', 'Balut dengan sum( ).']} solution="sum(increase(kedai_orders_total[10m]))" success="1,200 pesanan. Lima soalan, lima jawapan. Boss dikalahkan!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jawab soalan sebenar tentang kedai dengan PromQL.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar: tanya stack `kedai-watch` anda soalan yang serupa.
+
+<Interactive name="Mission" id="obs-o2-boss-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'down', text: 'Target mana yang mati? Jalankan up == 0. Hentikan node-exporter untuk lihat satu muncul.', command: 'docker compose stop node-exporter' }, { id: 'rate', text: 'Permintaan sesaat, ikut handler: sum by (handler) (rate(prometheus_http_requests_total[1m]))' }, { id: 'p90', text: 'p90 laman Prometheus sendiri, dengan histogram_quantile.' }, { id: 'stop', text: 'Hentikan semuanya.', command: 'docker compose down' }]} success="Soalan sebenar, jawapan sebenar." />
+</Card>

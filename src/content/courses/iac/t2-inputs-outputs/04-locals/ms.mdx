@@ -1,0 +1,65 @@
+---
+id: iac-t2-l04
+world: 2
+title: "Locals: nama untuk ulangan"
+summary: "Anda akan belajar: namakan nilai yang berulang sekali sahaja dengan locals, dan ubah di satu tempat."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TofuSim, SortCards]
+needs: [iac-t2-l03]
+scenario: t2-locals
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: local values", url: "https://opentofu.org/docs/language/values/locals/" }
+---
+
+<Card id="hook" type="hook">
+Waktu buka muncul dua kali dalam pelan. Kini kedai buka pukul 7 pagi. Apa yang boleh jadi masalah?
+
+```hcl
+content = "Open 8am to 10pm\n"
+content = "Kedai Kancil, 8am to 10pm\n"
+```
+
+<Interactive name="Choice" options={[{ label: 'Anda baiki satu dan terlupa yang satu lagi', correct: true, why: 'Kemudian pintu dan papan tak sama. Pelanggan keliru.' }, { label: 'Tiada masalah. OpenTofu baiki kedua-duanya.', why: 'OpenTofu bina apa yang anda tulis. Dua salinan, dua suntingan.' }, { label: 'Plan enggan berjalan', why: 'Plan berjalan seperti biasa. Ia cuma bina apa yang setiap baris kata.' }]} />
+</Card>
+
+<Card id="see-locals" type="see">
+Di sini waktu buka ditulis sekali, dalam blok `locals`. Tekan setiap baris yang menggunakannya.
+
+<Interactive name="SpotLines" lines={[{ text: 'locals {' }, { text: '  hours = "8am to 10pm"' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "door" {' }, { text: '  filename = "door.txt"' }, { text: '  content  = "Open ${local.hours}\\n"', target: true }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "board" {' }, { text: '  filename = "board.txt"' }, { text: '  content  = "Kedai Kancil, ${local.hours}\\n"', target: true }, { text: '}' }]} success="Dua pengguna, satu nilai. local.hours." />
+
+**<Term id="local-value">Local value (nilai tempatan)</Term>** beri satu nama kepada nilai, boleh diguna di mana-mana dalam pelan.
+</Card>
+
+<Card id="predict" type="predict">
+Anda tukar `hours` sekali. Berapa fail plan akan ganti?
+
+<Interactive name="Choice" compact options={[{ label: 'Dua', correct: true, why: 'Kedua-dua fail guna local.hours, jadi isi kedua-duanya berubah.' }, { label: 'Satu', why: 'Pintu dan papan kedua-duanya gunakannya.' }, { label: 'Tiada', why: 'Isinya berubah, jadi ia dibina semula.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Kedai kini buka pukul 7 pagi. Tukar `hours` sekali, jadi `7am to 11pm`. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t2-locals" goal={{ fileContains: { 'door.txt': '7am', 'board.txt': '7am' } }} hints={['Dalam main.tf, tukar baris hours = "8am to 10pm".', 'Kemudian tofu apply. Plan ganti 2 fail. Taip yes.']} success="Satu suntingan, dua fail dikemas kini. Kini ia tak boleh berbeza lagi." />
+
+<Hint>Edit blok `locals` sahaja, kemudian apply.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Variable atau local?
+
+<Interactive name="SortCards" buckets={[{ id: 'var', label: 'variable (diisi dari luar)' }, { id: 'local', label: 'local (dikira di dalam)' }]} items={[{ label: 'Nama kedai, berbeza untuk setiap cawangan', bucket: 'var', why: 'Ia berubah setiap binaan. Isi dari luar.' }, { label: 'Waktu buka yang diguna dalam dua fail', bucket: 'local', why: 'Dinamakan sekali di dalam pelan.' }, { label: 'Bilangan meja yang seseorang pilih', bucket: 'var', why: 'Pilihan yang dibuat semasa membina.' }, { label: 'Nama yang dibina dari dua nama lain, seperti kedai tambah "-sign"', bucket: 'local', why: 'Dikira di dalam, dari nilai lain.' }]} success="Variable masuk dari luar. Local dikira di dalam." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan nilai yang berulang sekali sahaja dengan locals.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bloknya `locals` (jamak); anda baca satu nilai sebagai `local.hours` (tunggal). Local boleh guna variable, fungsi dan local lain, seperti `upper(var.shop)`. Jangan berlebihan: local yang diguna sekali cuma tambah satu langkah untuk diikut.
+</Card>

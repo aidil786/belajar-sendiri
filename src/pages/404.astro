@@ -1,0 +1,49 @@
+---
+// Friendly 404 in both languages (served for any missing path).
+import '~/styles/global.css';
+import Mascot from '~/components/ui/Mascot.astro';
+import { t } from '~/i18n';
+---
+
+<!doctype html>
+<html lang="en" data-calm="false" data-font="atkinson">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t('en', 'notFound.title')} · FahamLah</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <script is:inline>
+      try {
+        const s = (JSON.parse(localStorage.getItem('fahamlah:v1') || '{}').settings) || {};
+        if (s.theme === 'light' || s.theme === 'dark') document.documentElement.dataset.theme = s.theme;
+        document.documentElement.dataset.calm = String(!!s.calm);
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <main id="main" class="container nf">
+      <div aria-hidden="true"><Mascot lang="en" mood="thinking" size={110} /></div>
+      <section>
+        <h1>{t('en', 'notFound.title')}</h1>
+        <p>{t('en', 'notFound.text')}</p>
+        <p><a class="btn" href="/en/">{t('en', 'notFound.home')}</a></p>
+      </section>
+      <section lang="ms">
+        <h2>{t('ms', 'notFound.title')}</h2>
+        <p>{t('ms', 'notFound.text')}</p>
+        <p><a class="btn btn-ghost" href="/ms/">{t('ms', 'notFound.home')}</a></p>
+      </section>
+    </main>
+  </body>
+</html>
+
+<style>
+  .nf {
+    padding-block: var(--space-7);
+    max-width: 40rem;
+    display: grid;
+    gap: var(--space-4);
+  }
+</style>

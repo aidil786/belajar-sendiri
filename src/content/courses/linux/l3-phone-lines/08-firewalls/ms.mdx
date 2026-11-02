@@ -1,0 +1,74 @@
+---
+id: linux-l3-l08
+world: 3
+title: "Firewall: ufw dan nftables"
+summary: "Anda akan belajar: bagaimana firewall menjaga pintu, dan cara buka satu port dengan selamat."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, Transcript, OrderList, SortCards, Choice, Mission]
+needs: [linux-l3-l07]
+scenario: linux-l3-guard
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "Debian wiki: nftables", url: "https://wiki.debian.org/nftables" }
+  - { label: "Docker: packet filtering and firewalls", url: "https://docs.docker.com/engine/network/packet-filtering-firewalls/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-guard" intro={['curl -sS guarded.kedai.example; echo $?']} network />
+
+Panggilan ini tunggu lebih dua minit, kemudian berputus asa. Tiada siapa kata tidak. Tiada siapa kata ya. Siapa yang diam begitu?
+</Card>
+
+<Card id="see-guard" type="see">
+<Interactive name="Transcript" title="kedai" label="sudo ufw status verbose: Status active. Default deny incoming, allow outgoing. Dibenarkan masuk: 22/tcp (OpenSSH) dan 80/tcp dari Anywhere."
+  lines={[{ cmd: 'sudo ufw status verbose' }, { out: 'Status: active\nLogging: on (low)\nDefault: deny (incoming), allow (outgoing), deny (routed)\nNew profiles: skip\n\nTo                         Action      From\n--                         ------      ----\n22/tcp (OpenSSH)           ALLOW IN    Anywhere\n80/tcp                     ALLOW IN    Anywhere' }]} />
+
+**Firewall** ialah pengawal di pintu. `ufw` ialah pengawal mudah Debian. Ia halang semua orang, kecuali sambungan dalam senarainya.
+</Card>
+
+<Card id="try-order" type="try">
+Anda berada di server melalui SSH. Hidupkan pengawal dahulu, dan anda terkunci di luar! Susun langkah dengan selamat.
+
+<Interactive name="OrderList" items={['sudo ufw allow OpenSSH', 'sudo ufw allow 80/tcp', 'sudo ufw enable', 'sudo ufw status verbose']} label="Langkah pertama di atas" success="Benarkan diri anda masuk dahulu. Kemudian hidupkan pengawal." />
+</Card>
+
+<Card id="see-enable" type="see">
+<Interactive name="Transcript" title="kedai (melalui SSH)" label="ufw allow OpenSSH kata Rules updated. ufw enable beri amaran ia mungkin ganggu sambungan ssh, tanya y atau n, kemudian kata Firewall is active and enabled on system startup."
+  lines={[{ cmd: 'sudo ufw allow OpenSSH' }, { out: 'Rules updated' }, { cmd: 'sudo ufw enable' }, { out: 'Command may disrupt existing ssh connections. Proceed with operation (y|n)? y\nFirewall is active and enabled on system startup', color: 'green' }]} />
+
+ufw bertanya sebelum bermula. Jawab `y` hanya bila SSH ada dalam senarai.
+</Card>
+
+<Card id="try-compare" type="try">
+Bandingkan dua kedai. Mula-mula `closed.kedai.example`. Kemudian `guarded.kedai.example` dengan `--connect-timeout 5`, supaya anda tunggu 5 saat sahaja.
+
+<Interactive name="LinuxSim" scenario="linux-l3-guard" goal={{ typed: 'closed\\.kedai\\.example', lastTyped: '^curl .*--connect-timeout \\d+.*guarded\\.kedai\\.example' }} hints={['curl -sS closed.kedai.example', 'curl -sS --connect-timeout 5 guarded.kedai.example']} solution={['curl -sS closed.kedai.example', 'curl -sS --connect-timeout 5 guarded.kedai.example']} success="closed menolak serta-merta. guarded diam: ada pengawal yang buang panggilan." />
+</Card>
+
+<Card id="check-sort" type="check">
+Ralat curl sebenar. Setiap satu di anak tangga mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'name', label: 'Nama tiada dalam buku telefon' }, { id: 'nobody', label: 'Tiada orang di sambungan itu' }, { id: 'guard', label: 'Pengawal membuangnya' }]} items={[{ label: '(6) Could not resolve host', bucket: 'name', why: 'DNS atau /etc/hosts tiada nombor untuknya.' }, { label: '(7) Failed to connect … after 0 ms', bucket: 'nobody', why: 'Tidak yang serta-merta: tiada yang mendengar di port itu.' }, { label: '(28) Connection timed out after 5004 milliseconds', bucket: 'guard', why: 'Senyap. Firewall, atau jalan yang terputus.' }]} success="Tidak yang pantas: tiada orang. Senyap lama: cari pengawal." />
+</Card>
+
+<Card id="check-rule" type="check">
+Hanya pejabat anda, 198.51.100.7, boleh guna port 3000. Peraturan yang mana?
+
+<Interactive name="Choice" options={[{ label: 'sudo ufw allow from 198.51.100.7 to any port 3000 proto tcp', correct: true, why: 'Satu pemanggil, satu sambungan. Orang lain kekal di luar.' }, { label: 'sudo ufw allow 3000', why: 'Itu benarkan seluruh internet hubungi 3000.' }, { label: 'sudo ufw disable', why: 'Itu suruh pengawal balik rumah. Semuanya terbuka.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca senarai firewall dan buka satu port tanpa terkunci di luar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di bawah ufw ada nftables, senarai peraturan kernel (`sudo nft list ruleset`). Firewall cloud berada di luar server: kedua-duanya mesti benarkan port itu. Awas: port yang Docker buka melangkau peraturan ufw. Output ufw di sini datang dari makmal Debian 13 sebenar.
+
+<Interactive name="Mission" id="linux-l3-l08-rep" steps={[{ id: 'vm', text: 'Guna VM pakai buang yang ada konsol, supaya silap tak mengunci anda di luar.' }, { id: 'install', text: 'Pasang pengawal.', command: 'sudo apt install ufw' }, { id: 'ssh', text: 'Benarkan SSH masuk dahulu.', command: 'sudo ufw allow OpenSSH' }, { id: 'on', text: 'Hidupkan dan baca senarainya.', command: 'sudo ufw enable && sudo ufw status verbose' }]} success="Pengawal anda sendiri, dengan SSH selamat dalam senarai." />
+</Card>

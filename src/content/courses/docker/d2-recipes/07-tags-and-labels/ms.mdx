@@ -1,0 +1,75 @@
+---
+id: docker-d2-l07
+world: 2
+title: "Tag dengan SemVer, Git SHA dan label"
+summary: "Anda akan belajar: namakan setiap image supaya sesiapa tahu tepat apa di dalamnya."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, CommandBuilder, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l06]
+scenario: d2-l07
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "Dockerfile reference: LABEL", url: "https://docs.docker.com/reference/dockerfile/#label" }
+  - { label: "OCI image annotations (standard label names)", url: "https://github.com/opencontainers/image-spec/blob/main/annotations.md" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+Laman yang hidup jalankan `diary:latest`. Ia rosak waktu makan tengah hari. Versi mana itu?
+
+<Interactive name="Choice" options={[{ label: 'Tiada siapa boleh tahu dari tag itu', correct: true, why: 'latest cuma satu nama. Ia boleh tunjuk mana-mana binaan, lama atau baharu.' }, { label: 'Binaan terbaru, sentiasa', why: 'latest cuma nama asal. Tiada apa yang pastikan ia terkini.' }, { label: 'Versi 1.0', why: 'Mungkin! Tag itu tak beritahu.' }]} />
+</Card>
+
+<Card id="see-tags" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l07" commands={['docker build -t diary:1.2.0 -t diary:sha-3f2a9c1 .', 'docker images diary']} label="Satu binaan dapat dua tag, diary:1.2.0 dan diary:sha-3f2a9c1. docker images tunjuk IMAGE ID yang sama untuk kedua-duanya." />
+
+Satu pek, dua pelekat. `1.2.0` ialah tag <Term id="semantic-versioning" course="git">SemVer</Term> untuk manusia. `sha-3f2a9c1` namakan commit Git yang tepat. ID sama: tiada apa disalin.
+</Card>
+
+<Card id="predict-semver" type="predict">
+SemVer ialah MAJOR.MINOR.PATCH. Anda baiki salah ejaan di laman diari. `1.2.0` jadi apa?
+
+<Interactive name="Choice" options={[{ label: '1.2.1', correct: true, why: 'PATCH: pembaikan kecil yang tak ubah benda lain.' }, { label: '1.3.0', why: 'MINOR untuk ciri baharu, contohnya laman baharu.' }, { label: '2.0.0', why: 'MAJOR untuk perubahan yang pecahkan cara lama menggunakannya.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan untuk versi 1.2.1. Tag juga dengan id pendek commit anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker build', means: 'bakar satu image' }, { text: '-t diary:1.2.1', means: 'versi untuk manusia' }, { text: '-t diary:sha-$(git rev-parse --short HEAD)', means: 'id commit untuk mesin' }, { text: '.', means: 'folder ini' }]} decoys={[{ text: '-t diary:final', means: 'final tak beritahu binaan mana' }]} success="Dua nama yang jelas, satu image." />
+
+<Hint>`git rev-parse --short HEAD` cetak id pendek commit semasa anda.</Hint>
+</Card>
+
+<Card id="try-tag" type="try">
+Sekarang betul-betul. Bina `diary` dengan dua tag: `1.2.0` dan `sha-3f2a9c1`.
+
+<Interactive name="KitchenSim" scenario="d2-l07" goal={{ imageExists: ['diary:1.2.0', 'diary:sha-3f2a9c1'] }} hints={['Guna -t dua kali dalam satu build.', 'Taip docker build -t diary:1.2.0 -t diary:sha-3f2a9c1 .']} success="Kedua-dua pelekat ada pada pek yang sama." />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l07" commands={['cat Dockerfile', 'docker build --label org.opencontainers.image.version=1.2.0 -t diary:1.2.0 .', 'docker inspect --format "{{json .Config.Labels}}" diary:1.2.0']} label="Resepi ada baris LABEL dengan tajuk. Build tambah label versi. docker inspect cetak semua label, termasuk label maintainer nginx." />
+
+**<Term id="image-label">Label</Term>** ialah fakta yang dilekat pada pek. Nama piawai bermula dengan `org.opencontainers.image.`, contohnya title, version dan source. `docker inspect` membacanya.
+</Card>
+
+<Card id="check-sort" type="check">
+Mahukah anda jalankan tag ini di laman yang hidup?
+
+<Interactive name="SortCards" buckets={[{ id: 'clear', label: 'Jelas' }, { id: 'risky', label: 'Berisiko' }]} items={[{ label: '1.2.0', bucket: 'clear', why: 'Versi yang tepat.' }, { label: 'sha-3f2a9c1', bucket: 'clear', why: 'Tunjuk satu commit yang tepat.' }, { label: 'latest', bucket: 'risky', why: 'Ia boleh bermaksud mana-mana binaan.' }, { label: 'new', bucket: 'risky', why: 'Baharu berbanding apa?' }, { label: 'final-v2', bucket: 'risky', why: 'Selalu ada final-v3.' }]} success="Nama yang tepat buat masalah senang dijejak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tag dan label image dengan jelas.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker tag diary:1.2.0 diary:1.2` tambah pelekat ketiga yang boleh dialih ke 1.2.1 nanti. Dalam Dunia C2, pipeline buat tag ini untuk anda. Label dari `--label` dan `LABEL` masuk ke senarai yang sama.
+
+<Interactive name="Mission" id="d2-l07-rep" steps={[{ id: 'sha', text: 'Dalam projek Git, cetak id pendek commit anda.', command: 'git rev-parse --short HEAD' }, { id: 'build', text: 'Bina dengan tag versi dan tag sha-.' }, { id: 'check', text: 'Semak kedua-dua tag kongsi satu IMAGE ID.', command: 'docker images' }]} success="Image anda kini beritahu apa ia." />
+</Card>

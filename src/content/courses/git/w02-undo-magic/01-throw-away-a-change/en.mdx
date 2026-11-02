@@ -1,0 +1,66 @@
+---
+id: git-w02-l01
+world: 2
+title: Throw away a change
+summary: "You will learn: how to throw away changes you don't want."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w01-l12]
+scenario: w02-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="index.html wobbles in your working folder. It is marked changed. Your last commit sits safe in the repository." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+You edited index.html and broke it. Ctrl+Z can't go back that far. Now what?
+</Card>
+
+<Card id="see-restore" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} command="git restore index.html" label="The command git restore index.html types itself. The changed tag on index.html disappears. The file matches the last commit again." frames={[{ working: [{ name: 'index.html', tag: 'changed', glow: true }], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }, { working: ['index.html'], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+`git restore index.html` puts the file back to its last saved version. This is called **<Term id="restore">restore</Term>**.
+</Card>
+
+<Card id="see-danger" type="see">
+<Interactive name="TermReplay" scenario="w02-l01" commands={['git diff index.html']} label="git diff index.html shows the change you would lose: the Day 1 line became oops oops oops." />
+
+⚠️ **Danger**: restore throws your changes away for good. Git never saved them, so there is no undo. Look first with `git diff`.
+</Card>
+
+<Card id="try-restore" type="try">
+Throw away the broken index.html. Keep your style.css change.
+
+<Interactive name="Sim" scenario="w02-l01" panels={['areas']} goal={{ fileContains: { 'index.html': 'Day 1' }, modified: ['style.css'] }} hints={['Type git restore index.html and press Enter.', 'Name only index.html. style.css has a change you want.']} success="index.html is fixed. Your style.css change is still there." />
+
+<Hint>Type `git restore index.html`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now you run `git restore style.css`. What happens to your teal heading?
+
+<Interactive name="Choice" options={[{ label: 'It is gone for good', correct: true, why: 'style.css goes back to the last commit. The teal line was never saved.' }, { label: 'It moves into the box', why: 'That is what git add does. restore throws the change away.' }, { label: 'Git keeps a hidden backup', why: 'There is no backup. Git only keeps what you added or committed.' }]} />
+</Card>
+
+<Card id="check-deleted" type="check">
+<Interactive name="TermReplay" scenario="w02-l01" commands={['rm README.md', 'ls', 'git restore README.md', 'ls']} label="README.md is deleted, so ls does not list it. After git restore README.md, ls lists it again." />
+
+Deleted a saved file by mistake? `git restore` brings it back. It is in a commit, so Git still has it.
+</Card>
+
+<Card id="win" type="win">
+You can now throw away changes you don't want. Carefully!
+</Card>
+
+<Card id="deeper" type="deeper">
+`git restore` copies from the box. If you staged the file, you get the staged version. `git restore .` restores every tracked file. Old guides use `git checkout -- index.html`. It does the same job.
+
+<Interactive name="TermReplay" scenario="w02-l01" commands={['git status -s', 'git checkout -- index.html', 'git status -s']} label="The old way: git checkout -- index.html also throws away the change to index.html." />
+</Card>

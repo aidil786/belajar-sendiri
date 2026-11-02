@@ -1,0 +1,82 @@
+---
+id: linux-l3-boss
+world: 3
+title: "Why can't the customer reach the shop?"
+summary: "You will learn: to climb the can't-connect ladder on your own and fix four rungs."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SpotLines, Transcript, CommandBuilder, OrderList, Mission]
+needs: [linux-l3-l10]
+scenario: linux-l3-boss-name
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "hosts(5)", url: "https://man7.org/linux/man-pages/man5/hosts.5.html" }
+  - { label: "nginx: listen", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html#listen" }
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "systemctl(1)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+---
+
+<Card id="hook" type="hook">
+Boss! Customers phone in: "menu.kedai won't open!" You log in to kedai. Which rung do you check first?
+
+<Interactive name="Choice" options={[{ label: 'The name: does menu.kedai turn into a number?', correct: true, why: 'Start at the bottom of the ladder.' }, { label: 'Restart the server', why: 'You would lose the clues. Climb first.' }, { label: 'The firewall', why: 'Maybe later. First check the rungs below it.' }]} />
+</Card>
+
+<Card id="try-name" type="try">
+Rung 1, the name. Ask `getent hosts menu.kedai`, read `/etc/hosts`, then fix it. kedai's own number is 10.0.0.5.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-name" goal={{ resolves: { 'menu.kedai': '10.0.0.5' } }} hints={['getent hosts menu.kedai finds nothing. cat /etc/hosts shows a typo: kedia.', "Add the right line: echo '10.0.0.5 menu.kedai' | sudo tee -a /etc/hosts"]} solution={["echo '10.0.0.5 menu.kedai' | sudo tee -a /etc/hosts"]} success="Rung 1 fixed: menu.kedai is 10.0.0.5." />
+
+<Hint>Look closely at the last line of /etc/hosts.</Hint>
+</Card>
+
+<Card id="see-port" type="see">
+Rung 2, the door number. `curl localhost` is refused at once. Here is `ss -tln`. Tap where nginx answers now.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:8080      0.0.0.0:*', target: true }]} prompt="Tap the line for the web counter." success="Someone moved the web counter to 8080. Customers dial 80." />
+</Card>
+
+<Card id="try-port" type="try">
+Move nginx back to port 80. Change the `listen` line, test with `sudo nginx -t`, then restart nginx.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-port" goal={{ portListening: [80], reachable: { localhost: 200 } }} hints={['grep listen /etc/nginx/sites-available/default', "sudo sed -i 's/listen 8080 default_server/listen 80 default_server/' /etc/nginx/sites-available/default", 'sudo nginx -t, then sudo systemctl restart nginx']} solution={["sudo sed -i 's/listen 8080 default_server/listen 80 default_server/' /etc/nginx/sites-available/default", 'sudo nginx -t', 'sudo systemctl restart nginx']} success="Rung 2 fixed: nginx answers on 80 again." />
+</Card>
+
+<Card id="see-guard" type="see">
+<Interactive name="Transcript" title="kedai" label="sudo ufw status: Status active. Only OpenSSH is allowed, from Anywhere."
+  lines={[{ cmd: 'sudo ufw status' }, { out: 'Status: active\n\nTo                         Action      From\n--                         ------      ----\nOpenSSH                    ALLOW       Anywhere' }]} />
+
+Rung 3. From a laptop outside, curl says `Connection timed out after 5004 milliseconds`. Plain words: a guard drops the call. Port 80 is not on the guard's list.
+</Card>
+
+<Card id="try-guard" type="try">
+Build the command that lets web customers in, and keeps the guard on duty.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sudo', means: 'as root: the guard takes orders only from root' }, { text: 'ufw', means: 'talk to the guard' }, { text: 'allow', means: 'let callers in' }, { text: '80/tcp', means: 'on the web extension' }]} decoys={[{ text: 'disable', means: 'send the guard home: everything opens' }, { text: 'deny', means: 'keep callers out' }]} success="Rung 3 fixed: sudo ufw allow 80/tcp. SSH stays allowed too." />
+</Card>
+
+<Card id="try-service" type="try">
+Rung 4. Last night kedai rebooted, and nginx stayed off. Start it now, and make it start at every boot.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-service" goal={{ serviceActive: ['nginx'], serviceEnabled: ['nginx'], reachable: { localhost: 200 } }} hints={['systemctl is-active nginx; systemctl is-enabled nginx', 'sudo systemctl enable --now nginx']} solution={['sudo systemctl enable --now nginx']} success="Rung 4 fixed: nginx runs, and comes back after every reboot." />
+</Card>
+
+<Card id="check-order" type="check">
+Write the night's report. Put the fixes in ladder order.
+
+<Interactive name="OrderList" items={['Added menu.kedai to /etc/hosts', 'Moved nginx back to port 80', 'Allowed 80/tcp in ufw', 'Enabled and started nginx']} label="First fix at the top" success="Name, port, firewall, service. The customers can order again!" />
+</Card>
+
+<Card id="win" type="win">
+You can now find and fix why customers can't reach a server, rung by rung.
+</Card>
+
+<Card id="deeper" type="deeper">
+Your ladder card: `getent hosts` (name), `ping` (road), `curl -v --connect-timeout 5` (door), `sudo ss -tlnp` and `systemctl status` (staff), the status code and `journalctl` (answer).
+
+<Interactive name="Mission" id="linux-l3-boss-rep" steps={[{ id: 'vm', text: 'On a throwaway VM with nginx and ufw, break one rung on purpose.' }, { id: 'stop', text: 'For example, stop the staff.', command: 'sudo systemctl stop nginx' }, { id: 'climb', text: 'From your laptop, climb the ladder until you find it.', command: 'curl -sv --connect-timeout 5 http://YOUR-VM-IP' }, { id: 'fix', text: 'Fix it and check again.', command: 'sudo systemctl start nginx' }]} success="A real climb, on a real server." />
+</Card>

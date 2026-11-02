@@ -1,0 +1,66 @@
+---
+id: git-w11-l03
+world: 11
+title: Undo my last commit
+summary: "You will learn: the safe undo for your last commit, pushed or not."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim]
+needs: [git-w02-l06]
+scenario: w11-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l03" commands={['git log --oneline']} label="git log --oneline: Add day 2 entry sits on top, above Add style, Add day 1 page and Add README." />
+
+You committed day 2 too soon. It isn't ready yet. Can you take the commit back? Yes! This happens to everyone.
+</Card>
+
+<Card id="decide" type="try">
+You haven't pushed. You want to keep the changes. Which undo?
+
+<Interactive name="Choice" options={[{ label: 'git reset --soft HEAD~1', correct: true, why: 'The commit goes. Your changes wait in the box.' }, { label: 'git reset --hard HEAD~1', why: 'That wipes the changes too. Careful!' }, { label: 'git revert HEAD', why: 'Revert is for pushed commits. It adds an extra commit.' }]} />
+</Card>
+
+<Card id="see-soft" type="see">
+<Interactive name="GraphScene" scenario="w11-l03" commands={['git reset --soft HEAD~1']} label="main and HEAD move back one commit, to Add style. Add day 2 entry leaves the line." />
+
+`git reset --soft HEAD~1` takes the last commit back. Nothing is lost: the changes sit in the box, ready for later.
+</Card>
+
+<Card id="try-soft" type="try">
+Take back the day 2 commit. Keep the changes in the box.
+
+<Interactive name="Sim" scenario="w11-l03" panels={['areas']} goal={{ commits: 3, staged: ['index.html'] }} hints={['Type git reset --soft HEAD~1']} success="Undone! index.html waits in the box." />
+
+<Hint>Type `git reset --soft HEAD~1`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+New story: the commit is pushed. Teammates have it. Which undo is safe?
+
+<Interactive name="Choice" options={[{ label: 'git revert HEAD', correct: true, why: 'It adds an undo commit. Nobody else has to fix anything.' }, { label: 'git reset --soft HEAD~1', why: 'That rewrites history others already have. Their copies clash.' }, { label: 'Delete the repo', why: 'No need! Revert is calm and safe.' }]} />
+</Card>
+
+<Card id="try-revert" type="try">
+Undo the pushed commit the safe way. Then push the undo.
+
+<Interactive name="Sim" scenario="w11-l03-pushed" panels={['graph']} goal={{ lastIsRevert: true, pushed: ['main'] }} hints={['Type git revert HEAD', 'Then type git push']} success="Safe undo! GitHub has the revert commit too." />
+
+<Hint>Type `git revert HEAD`, then `git push`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now undo your last commit, pushed or not.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--soft` keeps changes in the box. Plain `git reset HEAD~1` keeps them on your desk, out of the box. `--hard` wipes them, so use it only for changes you truly don't want. The commit itself stays findable. See "Reflog, your safety net" in World 2.
+</Card>

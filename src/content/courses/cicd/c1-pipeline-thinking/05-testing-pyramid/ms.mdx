@@ -1,0 +1,60 @@
+---
+id: cicd-c1-l05
+world: 1
+title: Piramid ujian
+summary: "Anda akan belajar: ujian mana yang patut banyak, dan mana yang patut sikit."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, SortCards, ConveyorBelt, SwipeJudge]
+needs: [cicd-c1-l04]
+scenario: c1-pyramid
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Building and testing Node.js", url: "https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs" }
+  - { label: "Playwright: running tests in CI", url: "https://playwright.dev/docs/ci" }
+---
+
+<Card id="hook" type="hook">
+Pasukan Mei ada 300 ujian pelayar yang lambat. Ujian kecil cuma 5. Pipeline mereka ambil masa sejam. Apa anda nak ubah dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tambah banyak ujian kecil yang pantas', correct: true, why: 'Ujian kecil semak kebanyakan perkara dalam beberapa saat.' }, { label: 'Tambah lagi ujian pelayar', why: 'Nanti sejam itu jadi lebih lama.' }, { label: 'Matikan ujian', why: 'Nanti pepijat sampai kepada pengguna. Lebih laju, tapi bukan lebih baik.' }]} />
+</Card>
+
+<Card id="see-pyramid" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Bawah', title: 'Unit test', text: 'Satu sudu, satu bahan. Uji satu bahagian kecil sahaja. Setiap satu ambil milisaat. Buat banyak.' }, { when: 'Tengah', title: 'Integration test', text: 'Rasa kuahnya. Uji beberapa bahagian bersama, macam kod dan pangkalan data. Buat sedikit.' }, { when: 'Atas', title: 'End-to-end test', text: 'Hidangan penuh di meja sebenar. Pelayar robot klik macam pengguna. Setiap satu ambil minit. Buat beberapa sahaja.' }]} />
+
+Ketik setiap lapisan, dari bawah. Lebar di bawah, nipis di atas. Bentuk itu ialah **<Term id="testing-pyramid">piramid ujian</Term>** (testing pyramid).
+</Card>
+
+<Card id="try-sort" type="try">
+Setiap ujian ini milik lapisan mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'unit', label: 'Unit' }, { id: 'integration', label: 'Integration' }, { id: 'e2e', label: 'End-to-end' }]} items={[{ label: 'Kiraan cukai tambah 6%', bucket: 'unit', why: 'Satu bahagian kecil kod, sendirian.' }, { label: 'Harga dipapar sebagai RM 4.50', bucket: 'unit', why: 'Satu fungsi, tiada pangkalan data, tiada pelayar.' }, { label: 'API simpan pesanan dalam pangkalan data sebenar', bucket: 'integration', why: 'Dua bahagian bersama: API dan pangkalan data.' }, { label: 'Halaman log masuk berhubung dengan API log masuk', bucket: 'integration', why: 'Dua bahagian yang mesti sesuai bersama.' }, { label: 'Pelayar robot beli kuih, dari mula hingga habis', bucket: 'e2e', why: 'Seluruh aplikasi, macam pengguna sebenar.' }, { label: 'Daftar, kemudian log masuk', bucket: 'e2e', why: 'Satu perjalanan penuh dalam aplikasi.' }]} success="Siap! Kecil, bersama, keseluruhan." />
+
+<Hint>Satu bahagian sendirian ialah unit. Beberapa bahagian ialah integration. Seluruh aplikasi ialah end-to-end.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu pepijat masuk ke kiraan cukai.
+
+<Interactive name="ConveyorBelt" scenario="c1-pyramid" task={{ type: 'predict' }} success="Unit test tangkap ia! Ujian yang lambat tak perlu mula pun." />
+</Card>
+
+<Card id="check" type="check">
+Pelan ujian yang baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Uji setiap peraturan harga dengan unit test', good: true, why: 'Pantas dan tepat. Sesuai untuk peraturan.' }, { text: 'Semak setiap butang dengan end-to-end test', good: false, why: 'Lambat dan flaky. Simpan untuk laluan utama sahaja.' }, { text: 'Beberapa end-to-end test untuk daftar dan bayar', good: true, why: 'Laluan duit layak disemak penuh.' }, { text: 'Langkau integration test, unit test dah cukup', good: false, why: 'Bahagian boleh jalan sendiri tapi gagal bila bersama.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh rancang ujian macam piramid.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sesetengah pasukan lukis bentuk lain, dengan lebih banyak integration test. Idea besarnya sama: banyak ujian pantas, sedikit ujian lambat. End-to-end test yang lambat juga boleh jalan setiap malam, ikut jadual.
+
+Latihan sebenar (pilihan): kira ujian dalam projek yang anda kenal. Bentuknya macam piramid, atau terbalik?
+</Card>

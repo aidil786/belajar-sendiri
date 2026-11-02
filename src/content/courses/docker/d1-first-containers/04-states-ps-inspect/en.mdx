@@ -1,0 +1,77 @@
+---
+id: docker-d1-l04
+world: 1
+title: "Container states: ps -a and inspect"
+summary: "You will learn: the states a container moves through, and how to read them."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, KitchenSim, TimelineTap, Choice, SwipeJudge, Mission]
+needs: [docker-d1-l03]
+scenario: d1-states
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+  - { label: "docker inspect", url: "https://docs.docker.com/reference/cli/docker/inspect/" }
+  - { label: "docker stop", url: "https://docs.docker.com/reference/cli/docker/container/stop/" }
+  - { label: "docker pause", url: "https://docs.docker.com/reference/cli/docker/container/pause/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-states" commands={['docker ps']} label="docker ps lists one box: web, Up. The box called job is not in the list." />
+
+You made two boxes: web and job. But `docker ps` shows only web. Where did job go?
+</Card>
+
+<Card id="try-ps-a" type="try">
+`docker ps` lists running boxes only. Add `-a` to see all of them, stopped ones too.
+
+<Interactive name="KitchenSim" scenario="d1-states" goal={{ lastTyped: '^docker (ps|container ls) (-a|--all)$' }} hints={['Type docker ps -a']} success="There is job: Exited (0). It finished its work." />
+
+<Hint>Type `docker ps -a`.</Hint>
+</Card>
+
+<Card id="see-states" type="see">
+A box has a **<Term id="container-lifecycle">life cycle</Term>**. Each command moves it one step. Tap each step.
+
+<Interactive name="TimelineTap" events={[{ when: 'docker create', title: 'Created', text: 'Packed and labelled. Not started yet.' }, { when: 'docker start', title: 'Running', text: 'The app inside is working. ps says Up.' }, { when: 'docker pause', title: 'Paused', text: 'Frozen in time. docker unpause wakes it.' }, { when: 'docker stop', title: 'Exited', text: 'The app stopped. The box and its files stay.' }, { when: 'docker rm', title: 'Removed', text: 'The box is gone for good.' }]} />
+</Card>
+
+<Card id="try-pause" type="try">
+Freeze web with `docker pause web`. Then check `docker ps`. What does STATUS say?
+
+<Interactive name="KitchenSim" scenario="d1-states" goal={{ paused: ['web'], lastTyped: '^docker (ps|container ls)' }} hints={['Type docker pause web', 'Then type docker ps']} success="(Paused)! docker unpause web wakes it up again." />
+</Card>
+
+<Card id="predict" type="predict">
+job says `Exited (0)`. Is that bad?
+
+<Interactive name="Choice" options={[{ label: 'No. 0 means it finished fine.', correct: true, why: 'A box lives while its main program runs. job printed one line, then it was done.' }, { label: 'Yes. Exited always means a crash.', why: 'Exited only means the program ended. The number tells you how.' }, { label: 'Yes. It printed 0 lines.', why: 'The number is the exit code, not a line count. 0 means all good.' }]} />
+</Card>
+
+<Card id="see-inspect" type="see">
+<Interactive name="KitchenReplay" scenario="d1-states" commands={["docker inspect -f '{{.State.Status}}' web", "docker inspect -f '{{.State.ExitCode}}' job"]} label="docker inspect with -f prints one detail. web's status is running. job's exit code is 0." />
+
+**docker inspect** reads the full label on a box. It holds every detail Docker knows. `-f` picks one line from it.
+</Card>
+
+<Card id="check" type="check">
+True, or not quite? Swipe each card.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'docker ps shows stopped boxes too.', good: false, why: 'Only running ones. Add -a for all.' }, { text: 'Exited (0) means the job finished fine.', good: true, why: '0 is the all-good exit code.' }, { text: 'A paused box still exists.', good: true, why: 'It is frozen in time. docker unpause wakes it.' }, { text: 'docker stop deletes the box.', good: false, why: 'The box stays, Exited. docker rm deletes it.' }, { text: 'docker inspect shows every detail of a box.', good: true, why: 'Add -f to pick just one.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a container's state and spot a broken one.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rarer states: `restarting` (a restart policy brings it back), `removing` and `dead`. `docker ps --filter status=exited` lists only stopped boxes. `docker stop` asks nicely, then forces the box after 10 seconds.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l04-rep" steps={[{ id: 'web', text: 'Start a box in the background.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'stop', text: 'Stop it. It still exists.', command: 'docker stop web' }, { id: 'all', text: 'Find it with -a.', command: 'docker ps -a' }, { id: 'state', text: 'Ask for its state.', command: "docker inspect -f '{{.State.Status}}' web" }, { id: 'tidy', text: 'Remove it.', command: 'docker rm web' }]} success="You followed a box through its life cycle." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: git-w07-l01
+world: 7
+title: Maksud CI/CD
+summary: "Anda akan belajar: cara robot uji dan hantar kod anda setiap kali anda push."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, PracticeRepo, SortCards, Transcript, SwipeJudge]
+needs: [git-w04-l12]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+---
+
+<Card id="hook" type="hook">
+Jumaat malam. Mei merge satu perubahan. Laman diari rosak. Tiada siapa jalankan ujian. Siapa patut jalankan ujian, setiap kali?
+
+<Interactive name="Choice" options={[{ label: 'Anda, dengan tangan, sebelum setiap merge', why: 'Manusia selalu terlupa. Lebih-lebih lagi Jumaat malam.' }, { label: 'Robot, setiap kali ada push', correct: true, why: 'Robot tak pernah lupa dan tak pernah penat.' }, { label: 'Tiada siapa. Baiki bila pembaca merungut.', why: 'Nanti pembaca yang jumpa pepijat dulu. Aduh.' }]} />
+</Card>
+
+<Card id="see-ci" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Anda push', text: 'Commit baru anda sampai ke GitHub.' }, { when: '2', title: 'Komputer baru', text: 'Robot dapat komputer bersih, khas untuk larian ini.' }, { when: '3', title: 'Ujian berjalan', text: 'Ia pasang projek anda dan jalankan setiap ujian.' }, { when: '4', title: '✓ atau ✗', text: 'Commit anda dapat ✓ hijau (lulus) atau ✗ merah (gagal).' }]} />
+
+Ketik setiap langkah. Tabiat robot ini ialah **<Term id="ci">continuous integration</Term>** (integrasi berterusan), atau CI. Setiap push disemak, jadi pepijat cepat dijumpai.
+</Card>
+
+<Card id="see-cd" type="see">
+<Interactive name="PracticeRepo" screen="run" at={41} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 41, workflow: 'CI dan deploy', event: 'push', branch: 'main', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Ambil kod', status: 'pass', log: ['Repo disalin ke runner.'] }, { name: 'Pasang pakej', status: 'pass', log: ['npm ci', 'Semua pakej dipasang.'] }, { name: 'Jalankan ujian', status: 'pass', log: ['npm test', 'Semua 12 ujian lulus.'] }] }, { name: 'deploy', steps: [{ name: 'Bina laman', status: 'pass', log: ['npm run build', 'Laman dibina dalam dist/.'] }, { name: 'Terbitkan laman', status: 'pass', log: ['dist/ dimuat naik.', 'Diari baru dah live.'] }] }] }]} />
+
+Ujian lulus? Robot boleh terus hantar juga. Itu **<Term id="cd">CD</Term>**, continuous delivery atau deployment. Ketik satu langkah untuk lihat log-nya.
+</Card>
+
+<Card id="try-sort" type="try">
+Ini menyemak, atau menghantar? Susun setiap tugas.
+
+<Interactive name="SortCards" buckets={[{ id: 'ci', label: 'CI: semak' }, { id: 'cd', label: 'CD: hantar' }]} items={[{ label: 'Jalankan ujian', bucket: 'ci', why: 'Uji setiap push ialah jantung CI.' }, { label: 'Semak gaya kod (lint)', bucket: 'ci', why: 'Lint ialah semakan, jadi ia CI.' }, { label: 'Letak ✓ atau ✗ pada commit', bucket: 'ci', why: 'CI laporkan apa yang ia jumpa.' }, { label: 'Terbitkan laman ke web', bucket: 'cd', why: 'Hantar kepada pembaca ialah CD.' }, { label: 'Hantar versi aplikasi baru kepada pengguna', bucket: 'cd', why: 'Hantar kepada pengguna ialah CD.' }]} success="Siap! CI menyemak. CD menghantar." />
+</Card>
+
+<Card id="see-actions" type="see">
+<Interactive name="Transcript" title="bash" label="ls .github/workflows senaraikan dua fail workflow: ci.yml dan deploy.yml." lines={[{ cmd: 'ls .github/workflows' }, { out: 'ci.yml  deploy.yml' }]} />
+
+Robot GitHub bernama **<Term id="github-actions">GitHub Actions</Term>**. Anda tulis arahannya dalam fail. Fail itu duduk dalam `.github/workflows/` di dalam repo anda.
+</Card>
+
+<Card id="predict" type="predict">
+Push Mei yang seterusnya rosakkan satu ujian. Apa CI buat?
+
+<Interactive name="Choice" options={[{ label: 'Tanda commit itu ✗ dan tunjuk ujian yang gagal', correct: true, why: 'Anda tahu dalam beberapa minit, bukan beberapa hari.' }, { label: 'Baiki ujian itu sendiri', why: 'CI cuma menyemak. Anda tetap kena baiki kod.' }, { label: 'Padam commit Mei', why: 'CI tak pernah ubah sejarah anda. Ia cuma melapor.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Push perubahan kecil dengan kerap, supaya CI semak setiap satu', good: true, why: 'Perubahan kecil senang disemak dan senang dibaiki.' }, { text: 'Matikan semakan yang gagal supaya cepat merge', good: false, why: 'Pepijat itu masih ada. Baiki ia.' }, { text: 'Deploy hanya selepas ujian lulus', good: true, why: 'Kod rosak tak pernah sampai kepada pembaca.' }, { text: 'Langkau ujian, sebab ia jalan dalam komputer anda', good: false, why: 'Komputer robot yang baru tangkap apa yang komputer anda sorok.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan CI dan CD.
+</Card>
+
+<Card id="deeper" type="deeper">
+CD ada dua jenis. Continuous delivery: setiap perubahan sedia dihantar, dan manusia tekan butang. Continuous deployment: ia dihantar sendiri bila semua semakan lulus. Banyak alat boleh buat CI. Dunia ini guna GitHub Actions.
+</Card>

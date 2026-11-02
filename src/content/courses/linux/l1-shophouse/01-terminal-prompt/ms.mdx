@@ -1,0 +1,73 @@
+---
+id: linux-l1-l01
+world: 1
+title: Terminal dan prompt
+summary: "Anda akan belajar: cara baca prompt dan beri server arahan pertama anda."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, LinuxSim, SortCards, Mission]
+needs: []
+scenario: linux-l1-shop
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian Reference: GNU/Linux tutorials", url: "https://www.debian.org/doc/manuals/debian-reference/ch01.en.html" }
+  - { label: "Bash manual (GNU)", url: "https://www.gnu.org/software/bash/manual/bash.html" }
+  - { label: "whoami (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/whoami.1.en.html" }
+  - { label: "hostname (Debian 13 man page)", url: "https://manpages.debian.org/trixie/hostname/hostname.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil sewa sebuah rumah kedai yang jauh. Ia sebuah server bernama `kedai`. Tiada skrin, tiada tetikus. Macam mana anda suruh ia buat kerja?
+
+<Interactive name="Choice" options={[{ label: 'Taip arahan dalam terminal', correct: true, why: 'Terminal ialah tingkap teks ke server. Anda taip, ia jawab.' }, { label: 'Klik ikon di desktopnya', why: 'Kebanyakan server tiada desktop langsung. Teks sahaja.' }, { label: 'Telefon server itu', why: 'Idea yang seronok! Tapi server cuma dengar arahan yang ditaip.' }]} />
+</Card>
+
+<Card id="see-prompt" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'you      → siapa anda' }, { text: '@kedai   → nama server', target: true }, { text: ':~       → bilik tempat anda berdiri (~ ialah rumah anda)' }, { text: '$        → sedia untuk anda' }]} prompt="Ini prompt: you@kedai:~$ Ketik bahagian yang menamakan server." success="Betul! kedai ialah rumah kedai tempat anda berada." />
+
+<Term id="terminal">Terminal</Term> ialah tingkap anda ke dalam kedai. **Prompt** (tanda sedia) ialah kedai berkata "Sedia. Giliran anda."
+</Card>
+
+<Card id="try-whoami" type="try">
+Taip `whoami` dan tekan Enter. Ia tanya server: siapa saya di sini?
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ lastTyped: '^whoami$' }} hints={['Taip whoami (satu perkataan) dan tekan Enter.']} solution={['whoami']} success="Server jawab you. Bar merah jambu pun kata begitu." />
+
+<Hint>Satu perkataan, tanpa jarak: `whoami`.</Hint>
+</Card>
+
+<Card id="predict-typo" type="predict">
+Anda tersilap taip `whoamii`. Apa server akan kata?
+
+<Interactive name="Choice" options={[{ label: '-bash: whoamii: command not found', correct: true, why: 'Maksudnya: tiada program dengan nama itu. Betulkan ejaan dan cuba lagi.' }, { label: 'Ia teka anda maksudkan whoami', why: 'Shell tak pernah meneka. Ia jalankan tepat apa yang anda taip.' }, { label: 'Server jadi rosak', why: 'Salah taip tak bahaya. Anda cuma dapat satu mesej.' }]} />
+</Card>
+
+<Card id="try-ask" type="try">
+Program yang baca taipan anda ialah <Term id="shell">shell (pembantu kaunter)</Term>. Tanya dua perkara: nama server (`hostname`), kemudian masa (`date`).
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ typed: '^hostname$', lastTyped: '^date' }} hints={['Taip hostname dan tekan Enter.', 'Kemudian taip date dan tekan Enter.']} solution={['hostname', 'date']} success="kedai jawab kedua-duanya. Anda sedang bercakap dengan server!" />
+
+<Hint>Mula-mula `hostname`, kemudian `date`.</Hint>
+</Card>
+
+<Card id="check-sigil" type="check">
+`$` maksudnya pengguna biasa. `#` maksudnya **root**: tuan kedai yang pegang semua kunci. Asingkan prompt ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: '$ pengguna biasa' }, { id: 'root', label: '# root: lebih berhati-hati' }]} items={[{ label: 'you@kedai:~$', bucket: 'you', why: 'Ia berakhir dengan $: pengguna biasa.' }, { label: 'root@kedai:~#', bucket: 'root', why: 'Ia berakhir dengan #: root boleh ubah apa saja.' }, { label: 'you@kedai:/etc$', bucket: 'you', why: 'Bilik lain, tapi masih anda yang biasa.' }, { label: 'root@kedai:/var/log#', bucket: 'root', why: '# tanda root, di mana pun anda berdiri.' }]} success="$ ialah anda. # ialah root. Baca prompt sebelum menaip." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca prompt dan bercakap dengan server.
+</Card>
+
+<Card id="deeper" type="deeper">
+`~` ialah singkatan folder rumah anda, `/home/you`. Di macOS, prompt mungkin berakhir dengan `%`: shell itu zsh. Idea yang sama.
+
+Latihan sebenar (pilihan). Guna komputer sendiri atau taman latihan percuma, jangan server tempat kerja.
+
+<Interactive name="Mission" id="linux-l1-l01-rep" steps={[{ id: 'open', text: 'Buka terminal. Linux atau macOS: aplikasi Terminal. Windows: pasang WSL, kemudian buka Debian atau Ubuntu. Atau cuba taman latihan Killercoda yang percuma.' }, { id: 'who', text: 'Tanya siapa anda.', command: 'whoami' }, { id: 'name', text: 'Tanya nama mesin itu.', command: 'hostname' }, { id: 'time', text: 'Tanya masa.', command: 'date' }]} success="Itu terminal sebenar!" />
+</Card>

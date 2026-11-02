@@ -1,0 +1,62 @@
+---
+id: cicd-c2-l08
+world: 2
+title: Compose dalam CI
+summary: "Anda akan belajar: hidupkan seluruh set hidangan anda di runner dengan Compose."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, ConveyorBelt, CommandBuilder, Mission]
+needs: [cicd-c2-l07]
+scenario: c2-compose-ci
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "docker compose run", url: "https://docs.docker.com/reference/cli/docker/compose/run/" }
+  - { label: "Status check functions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+---
+
+<Card id="hook" type="hook">
+`compose.yaml` anda hidupkan web, API dan Postgres di laptop. Dalam CI, perlukah anda tulis semula semuanya sebagai services?
+
+<Interactive name="Choice" options={[{ label: 'Tak perlu: jalankan compose.yaml yang sama di runner', correct: true, why: 'Runner Ubuntu GitHub dah ada Docker Compose. Satu resipi, dua tempat.' }, { label: 'Perlu: salin setiap bahagian ke services:', why: 'Boleh jalan, tapi sekarang anda kena jaga dua salinan.' }, { label: 'Compose tak boleh jalan dalam CI', why: 'Boleh. Runner Ubuntu ada Docker dan Compose.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'docker compose up -d --wait', text: 'Hidupkan seluruh set hidangan di latar belakang. Tunggu sampai semuanya sihat.' }, { when: '2', title: 'docker compose run --rm api npm test', text: 'Container api yang baru jalankan ujian. Kemudian ia dibuang.' }, { when: '3', title: 'docker compose down -v', text: 'Kemas meja: hentikan semuanya dan padam volume sekali.' }]} />
+
+Tiga arahan letak set hidangan <Term id="compose" course="docker">Compose</Term> di tali sawat. Ketik setiap satu.
+</Card>
+
+<Card id="predict" type="predict">
+Satu ujian pesanan gagal. Ketik stesen yang akan hentikan talian, kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-compose-ci" task={{ type: 'predict' }} success="Betul! Stesen ujian hentikan talian." />
+</Card>
+
+<Card id="check" type="check">
+Ujian gagal. Adakah langkah terakhir, `docker compose down -v`, masih jalan?
+
+<Interactive name="Choice" options={[{ label: 'Ya: if: always() tetap jalankannya', correct: true, why: 'always() maksudnya: jalankan langkah ini walaupun ada yang gagal.' }, { label: 'Tidak: talian berhenti di ujian', why: 'Kebanyakan langkah akan berhenti. always() ialah pengecualian.' }, { label: 'Hanya di main', why: 'always() tiada kaitan dengan branch.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang jalankan ujian API dalam container baru.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Bercakap dengan Docker' }, { text: 'compose', means: 'alat set hidangan' }, { text: 'run', means: 'mulakan satu container baru' }, { text: '--rm', means: 'buang ia selepas itu' }, { text: 'api', means: 'service api' }, { text: 'npm test', means: 'arahan di dalamnya' }]} decoys={[{ text: 'up', means: 'mulakan setiap service' }, { text: '-d', means: 'jalan di latar belakang' }]} success="Itulah arahan ujian!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan seluruh stack Compose anda dalam CI.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tambah satu langkah dengan `if: failure()` yang jalankan `docker compose logs`. Jadi run merah tunjuk apa kata setiap container. Runner GitHub memang dikosongkan selepas setiap job. `down -v` paling penting di runner anda sendiri.
+
+Latihan sebenar (pilihan), dalam repo latihan awam yang ada compose.yaml:
+
+<Interactive name="Mission" id="c2-l08-rep" steps={[{ id: 'local', text: 'Cuba di mesin anda dulu.', command: 'docker compose up -d --wait' }, { id: 'test', text: 'Jalankan ujian dalam container baru.', command: 'docker compose run --rm api npm test' }, { id: 'ci', text: 'Salin tiga langkah itu ke workflow anda dan push.' }]} success="Set hidangan anda berjalan di tali sawat!" />
+</Card>

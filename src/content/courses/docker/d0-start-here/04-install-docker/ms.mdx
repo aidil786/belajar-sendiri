@@ -1,0 +1,69 @@
+---
+id: docker-d0-l04
+world: 0
+title: Pasang Docker
+summary: "Anda akan belajar: cara pasang Docker di Windows, macOS atau Linux daripada dokumen rasmi, dan semak ia berjalan."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, OsPicker, KitchenReplay, SwipeJudge]
+needs: [docker-d0-l03]
+scenario: d0-down
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Install Docker Desktop on Windows", url: "https://docs.docker.com/desktop/setup/install/windows-install/" }
+  - { label: "Install Docker Desktop on Mac", url: "https://docs.docker.com/desktop/setup/install/mac-install/" }
+  - { label: "Install Docker Engine on Ubuntu", url: "https://docs.docker.com/engine/install/ubuntu/" }
+  - { label: "Linux post-installation steps", url: "https://docs.docker.com/engine/install/linux-postinstall/" }
+  - { label: "Install WSL (Microsoft)", url: "https://learn.microsoft.com/en-us/windows/wsl/install" }
+---
+
+<Card id="hook" type="hook">
+Masa untuk sediakan dapur sebenar anda! Dapur latihan di sini cuma olok-olok. Soalan pertama: dari mana anda dapatkan Docker?
+
+<Interactive name="Choice" options={[{ label: 'docs.docker.com, laman rasmi', correct: true, why: 'Sentiasa laman rasmi. Muat turun palsu boleh sorok kejutan buruk.' }, { label: 'Pautan dalam komen video entah siapa', why: 'Jangan sekali-kali. Anda tak tahu apa fail itu sebenarnya.' }, { label: 'Mana-mana laman yang tulis “muat turun percuma”', why: 'Laman muat turun palsu memang wujud. Guna docs.docker.com.' }]} />
+</Card>
+
+<Card id="see-roads" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Windows', title: 'Docker Desktop + WSL 2', text: 'WSL 2 beri Windows satu Linux sebenar di dalamnya. Docker Desktop jalankan enjinnya di situ.' }, { when: 'macOS', title: 'Docker Desktop', text: 'Pilih pemasang ikut cip anda: Apple silicon atau Intel.' }, { when: 'Linux', title: 'Docker Engine', text: 'Pasang daripada sumber pakej Docker sendiri, ikut langkah di docs.docker.com.' }]} />
+
+Tiga komputer, tiga jalan. Di Windows, Docker Desktop bergantung pada **<Term id="wsl">WSL 2</Term>**: Linux sebenar di dalam Windows. Tekan jalan anda.
+</Card>
+
+<Card id="try-os" type="try">
+Pilih komputer anda. Buat setiap langkah di mesin anda sendiri, kemudian tandakan. Tanda anda disimpan.
+
+<Interactive name="OsPicker" id="install-docker" options={[{ os: 'windows', steps: [{ id: 'check', text: 'Semak PC anda: Windows 10 (22H2) atau Windows 11, 64-bit, sekurang-kurangnya 8 GB RAM.' }, { id: 'wsl', text: 'Buka PowerShell sebagai administrator. Taip ini, kemudian restart. Dah ada WSL? Taip `wsl --update`.', command: 'wsl --install' }, { id: 'download', text: 'Muat turun **Docker Desktop for Windows** dari docs.docker.com.' }, { id: 'install', text: 'Jalankan pemasang. Biarkan pilihan WSL 2 ditanda. Klik hingga habis.' }, { id: 'start', text: 'Buka Docker Desktop dari menu Start. Ia tak mula sendiri. Terima perjanjiannya.' }, { id: 'version', text: 'Buka terminal dan taip ini. Anda patut nampak bahagian Client dan bahagian Server.', command: 'docker version' }] }, { os: 'macos', steps: [{ id: 'chip', text: 'Buka menu Apple, kemudian **About This Mac**. Cipnya Apple (M1, M2…) atau Intel?' }, { id: 'download', text: 'Muat turun **Docker Desktop for Mac** ikut cip anda dari docs.docker.com.' }, { id: 'drag', text: 'Buka Docker.dmg. Seret Docker ke folder Applications.' }, { id: 'open', text: 'Buka Docker dari Applications. Terima perjanjiannya.' }, { id: 'version', text: 'Buka Terminal dan taip ini. Anda patut nampak bahagian Client dan bahagian Server.', command: 'docker version' }] }, { os: 'linux', steps: [{ id: 'docs', text: 'Buka docs.docker.com/engine/install dan pilih sistem anda: Ubuntu, Debian, Fedora…' }, { id: 'repo', text: 'Ikut langkah repository di situ. Ia tambah sumber pakej Docker sendiri.' }, { id: 'install', text: 'Di Ubuntu, pasang pakejnya dengan ini:', command: 'sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin' }, { id: 'version', text: 'Semak. Anda patut nampak bahagian Client dan bahagian Server.', command: 'sudo docker version' }, { id: 'nosudo', text: 'Pilihan: untuk langkau sudo, ikut **Linux post-installation steps** di docs.docker.com.' }] }]} />
+
+<Hint>Tak pasti yang mana satu? Windows ada butang Start. Mac ada menu Apple.</Hint>
+</Card>
+
+<Card id="see-error" type="see">
+<Interactive name="KitchenReplay" scenario="d0-down" commands={['docker version']} fails={['docker version']} label="docker version cetak bahagian Client, kemudian: Cannot connect to the Docker daemon. Is the docker daemon running?" />
+
+Anda mungkin jumpa mesej sebenar ini: `Cannot connect to the Docker daemon`. Dalam bahasa mudah: tukang masak belum masuk dapur. Enjin belum berjalan.
+</Card>
+
+<Card id="predict" type="predict">
+Docker Desktop dah dipasang. Tapi `docker version` kata `Cannot connect to the Docker daemon`. Apa anda cuba dulu?
+
+<Interactive name="Choice" options={[{ label: 'Buka Docker Desktop dan tunggu sampai ia berjalan', correct: true, why: 'Desktop tak mula sendiri selepas dipasang.' }, { label: 'Buang semua dan mula semula', why: 'Tak perlu. Enjin cuma tidur. Kejutkan ia.' }, { label: 'Beli laptop yang lebih laju', why: 'Kelajuan bukan masalahnya. Hidupkan enjin dulu.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat pasang yang selamat. Idea bagus atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Muat turun Docker hanya dari docs.docker.com', good: true, why: 'Laman rasmi, fail sebenar.' }, { text: 'Tampal skrip dari forum terus ke terminal', good: false, why: 'Anda tak nampak apa ia buat. Ikut langkah rasmi.' }, { text: 'Kemas kini Docker Desktop selalu', good: true, why: 'Kemas kini baiki bug dan lubang keselamatan.' }, { text: 'Pasang Docker Desktop di syarikat 500 orang tanpa bertanya', good: false, why: 'Syarikat besar perlu pelan berbayar. Tanya pasukan IT dulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pasang Docker di komputer sendiri dan semak ia berjalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di Linux, hidupkan enjin yang tidur dengan `sudo systemctl start docker`. Masuk kumpulan `docker` boleh langkau sudo, tapi ia beri kuasa setaraf root. Buat hanya di mesin anda sendiri.
+
+Tiada komputer yang sesuai? Killercoda beri terminal Linux percuma dalam pelayar. Taip `docker version` di sana untuk tengok Docker dah sedia atau belum.
+</Card>

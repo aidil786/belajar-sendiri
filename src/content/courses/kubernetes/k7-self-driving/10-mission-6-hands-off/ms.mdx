@@ -1,0 +1,136 @@
+---
+id: k8s-k7-m6
+world: 7
+title: "Misi capstone 6: Lepas tangan"
+summary: "Anda akan belajar: biar Argo CD jalankan Kedai Kancil dari repo Git, supaya satu perubahan Git sampai ke kluster tanpa kubectl."
+minutes: 5
+xp: 100
+interactives: [GitOpsMirror, Mission, Choice, MissionCheck]
+needs: [k8s-k7-l09]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: getting started", url: "https://argo-cd.readthedocs.io/en/stable/getting_started/" }
+  - { label: "Argo CD: declarative setup", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/" }
+  - { label: "Argo CD: automated sync", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "kind: quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'default', replicas: 2, image: 'nginx:1.30-alpine', repo: 'https://github.com/you/kedai-kancil.git', path: 'apps' }} task={{ type: 'gitChange', field: 'replicas', to: 3 }} success="Itulah matlamatnya. Sekarang buat yang sebenar." />
+
+Misi 6: Lepas tangan. Matlamat anda: satu baris yang diubah dalam Git sampai ke kluster anda. Tiada kubectl untuk perubahan itu. Cuba di sini dulu.
+</Card>
+
+<Card id="try-install" type="try">
+Langkah 1: kluster pakai buang dengan Argo CD. Guna manifest rasmi sahaja. Baca papan "anda di sini" sebelum setiap arahan.
+
+<Interactive name="Mission" id="k8s-m6-install" steps={[
+  { id: 'cluster', text: 'Mulakan kluster latihan baharu dengan kind.', command: 'kind create cluster --name kedai' },
+  { id: 'context', text: 'Semak papan itu. Ia mesti tulis kind-kedai.', command: 'kubectl config current-context' },
+  { id: 'ns', text: 'Buat satu zon untuk Argo CD.', command: 'kubectl create namespace argocd' },
+  { id: 'install', text: 'Pasang Argo CD dari manifest rasminya.', command: 'kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml' },
+  { id: 'wait', text: 'Tunggu sehingga setiap bahagian Argo CD sedia.', command: 'kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s' }]}
+  success="Argo CD dah berjalan dalam kluster latihan anda." />
+</Card>
+
+<Card id="see-file" type="see">
+Langkah 2: papan pesanan. Dalam repo `kedai-kancil` anda, buat `apps/kedai-kancil.yaml` dengan YAML di bawah. Baris mana yang anda akan tukar dalam langkah 4?
+
+<Interactive name="Choice" options={[{ label: 'replicas: 2', correct: true, why: 'Satu nombor. Perubahan satu baris yang paling mudah dilihat.' }, { label: 'kind: Deployment', why: 'Itu akan tukar jenis objek itu.' }, { label: 'app: kedai-kancil', why: 'Label ikat dulang dengan pesanan. Biarkan.' }]} />
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedai-kancil
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kedai-kancil
+  template:
+    metadata:
+      labels:
+        app: kedai-kancil
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.30-alpine
+```
+</Card>
+
+<Card id="try-connect" type="try">
+Langkah 3: halakan Argo CD ke Git. Simpan YAML di bawah sebagai `argocd/application.yaml`. Letak nama pengguna anda dalam `repoURL`.
+
+<Interactive name="Mission" id="k8s-m6-connect" steps={[
+  { id: 'push', text: 'Commit kedua-dua fail dan push ke repo awam anda.', command: 'git add apps argocd && git commit -m "Add GitOps app" && git push' },
+  { id: 'app', text: 'Serahkan Application kepada Argo CD. Ini perubahan terakhir dengan kubectl.', command: 'kubectl apply -f argocd/application.yaml' },
+  { id: 'synced', text: 'Tunggu seminit. Dua pod kedai-kancil muncul. Membaca tak mengapa.', command: 'kubectl get deployment kedai-kancil' }]}
+  success="Argo CD kini pandu Kedai Kancil dari Git." />
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kedai-kancil
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR-USERNAME/kedai-kancil.git
+    path: apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+```
+</Card>
+
+<Card id="predict" type="predict">
+Anda push `replicas: 3`. Siapa yang ubah kluster?
+
+<Interactive name="Choice" options={[{ label: 'Argo CD, selepas ia tarik commit itu', correct: true, why: 'Ia semak Git lebih kurang setiap 3 minit, kemudian sync.' }, { label: 'GitHub tolak terus ke dalam kluster', why: 'GitHub tak boleh capai kluster di laptop anda. Argo CD yang tarik.' }, { label: 'Anda, dengan kubectl apply', why: 'Bukan kali ini. Lepas tangan!' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Langkah 4: perubahan satu baris. Tiada kubectl dibenarkan untuknya.
+
+<Interactive name="Mission" id="k8s-m6-change" steps={[
+  { id: 'edit', text: 'Dalam apps/kedai-kancil.yaml, tukar replicas: 2 kepada replicas: 3.' },
+  { id: 'commit', text: 'Commit dan push perubahan itu.', command: 'git commit -am "Scale kedai-kancil to 3" && git push' },
+  { id: 'wait', text: 'Tunggu sehingga 3 minit. Buat secawan teh tarik.' },
+  { id: 'look', text: 'Lihat, jangan sentuh: Deployment kini tunjuk 3/3.', command: 'kubectl get deployment kedai-kancil' }]}
+  success="Satu baris dalam Git sampai ke kluster. Lepas tangan!" />
+</Card>
+
+<Card id="check-api" type="check">
+Biar API awam GitHub sahkan papan pesanan anda. Taip nama pengguna anda, kemudian semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo Kedai Kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: 'apps/kedai-kancil.yaml', label: 'Ia ada apps/kedai-kancil.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'argocd/application.yaml', label: 'Ia ada argocd/application.yaml' }]} success="GitHub nampak repo GitOps anda!" />
+</Card>
+
+<Card id="check-self" type="check">
+API itu tak boleh lihat ke dalam kluster anda. Semak sendiri perkara ini.
+
+<Interactive name="Mission" id="k8s-m6-self" steps={[
+  { id: 'synced', text: 'Argo CD tunjuk aplikasi itu Synced dan Healthy.', command: 'kubectl get applications -n argocd' },
+  { id: 'three', text: 'Deployment tunjuk 3/3 selepas commit anda.' },
+  { id: 'hands', text: 'Anda tak ubah replicas dengan kubectl.' },
+  { id: 'drift', text: 'Bonus: scale kepada 1 secara manual. Self-heal kembalikan 3.', command: 'kubectl scale deployment kedai-kancil --replicas=1' },
+  { id: 'clean', text: 'Dah siap? Padam kluster latihan itu.', command: 'kind delete cluster --name kedai' }]}
+  success="Misi 6 selesai: Kedai Kancil pandu dirinya sendiri dari Git." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan Kedai Kancil dengan GitOps, lepas tangan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana seluruh cerita medan selera tak tepat. Gerai sebenar tak berpindah, tetapi pod berpindah dan dapat nama baharu. Pengurus sebenar boleh ubah rancangan; controller hanya ikut papan. Papan pesanan pula ialah kod: disemak, berversi dan boleh diundur. Keselamatan: kluster pakai buang sahaja. Guna image Misi 2 hanya jika pakejnya awam.
+</Card>

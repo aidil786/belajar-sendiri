@@ -1,0 +1,59 @@
+---
+id: obs-o3-l07
+world: 3
+title: "Runbooks"
+summary: "You will learn: to give every alert a fix-it card that a sleepy person can follow."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, YamlPlayground, AlertRuleBuilder, SwipeJudge]
+needs: [obs-o3-l06]
+scenario: o3-runbook
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting rules (annotations)", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+---
+
+<Card id="hook" type="hook">
+3 a.m. Your first night on call. The bell says `QueueTooLong`. What do you wish you had?
+
+<Interactive name="Choice" options={[{ label: 'A short page: what it means, what to check, how to make it safe', correct: true, why: 'Yes. A sleepy brain needs steps, not a puzzle.' }, { label: 'The source code of the shop', why: 'Too much to read at 3 a.m.' }, { label: 'The phone number of whoever wrote the alert', why: 'They are asleep too. Write it down once instead.' }]} />
+</Card>
+
+<Card id="see-runbook" type="see">
+<Interactive name="OrderList" items={['What this alert means', 'Check first: which stall, since when', 'Make it safe: open a second counter', 'Still bad after 15 minutes? Call the next person']} label="Top of the runbook first" success="Meaning, check, make safe, ask for help." />
+
+A **<Term id="runbook">runbook</Term>** is the fix-it card next to the bell. Put its parts in order.
+</Card>
+
+<Card id="try-link" type="try">
+Link the runbook from the rule. Add a `runbook_url` line under `annotations`.
+
+<Interactive name="YamlPlayground" file="rules.yml" initial={'groups:\n  - name: kedai\n    rules:\n      - alert: QueueTooLong\n        expr: kedai_queue_length > 50\n        for: 3m\n        labels:\n          severity: ticket\n        annotations:\n          summary: "Queue at {{ $labels.stall }} is {{ $value }}"\n'} expect={[{ path: 'groups.0.rules.0.annotations.runbook_url', type: 'text', hint: 'Under summary, same indent: runbook_url: https://wiki.example.com/runbooks/queue-too-long' }, { path: 'groups.0.rules.0.annotations.summary', type: 'text', hint: 'Keep the summary line.' }]} solution={'groups:\n  - name: kedai\n    rules:\n      - alert: QueueTooLong\n        expr: kedai_queue_length > 50\n        for: 3m\n        labels:\n          severity: ticket\n        annotations:\n          summary: "Queue at {{ $labels.stall }} is {{ $value }}"\n          runbook_url: https://wiki.example.com/runbooks/queue-too-long\n'} hint="Copy the indent of the summary line." success="Every bell now points to its fix-it card." />
+
+<Hint>`runbook_url` lines up with `summary`: ten spaces in.</Hint>
+</Card>
+
+<Card id="check-message" type="check">
+Pick the message on-call reads. Use the slider to see it at 15m.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-runbook" alert="QueueTooLong" exprs={[{ expr: 'kedai_queue_length > 50' }]} fors={['3m']} labels={[{ labels: { severity: 'ticket' } }]} annotations={[{ label: 'Short', annotations: { summary: 'Queue alert' }, why: 'Which stall? How long? What now?' }, { label: 'Stall, number and runbook', annotations: { summary: 'Queue at {{ $labels.stall }} is {{ $value }}', runbook_url: 'https://wiki.example.com/runbooks/queue-too-long' } }]} goal={{ firingAt: ['15m'], annotationUses: ['$labels.stall', 'runbooks/'] }} solution={{ annotations: 1 }} success="Stall, number and a link: on-call can start at once." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Swipe right for a good runbook step. Swipe left for one that needs work.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Open the Queue panel and find the stall named in the alert.', good: true, why: 'Clear, and it uses what the alert already says.' }, { text: 'Fix the problem.', good: false, why: 'Which problem? How? Say the first step.' }, { text: 'Ask Ali, he knows this one.', good: false, why: 'Ali sleeps and takes holidays. Write down what Ali knows.' }, { text: 'Still above 50 after 15 minutes? Call the kitchen lead.', good: true, why: 'A clear time and a clear next person.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now give every alert a runbook a sleepy person can follow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keep runbooks in Git, next to the rules. After each incident, fix the step that confused you. No runbook yet? The alert may not be ready to page anyone.
+</Card>

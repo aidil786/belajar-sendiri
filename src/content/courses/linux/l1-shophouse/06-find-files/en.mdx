@@ -1,0 +1,75 @@
+---
+id: linux-l1-l06
+world: 1
+title: Find files with find
+summary: "You will learn: to make the server search every room for a file by name or kind."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, CommandBuilder]
+needs: [linux-l1-l05]
+scenario: linux-l1-find
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "find (Debian 13 man page)", url: "https://manpages.debian.org/trixie/findutils/find.1.en.html" }
+  - { label: "GNU findutils manual", url: "https://www.gnu.org/software/findutils/manual/html_mono/find.html" }
+---
+
+<Card id="hook" type="hook">
+Mak's secret sambal recipe is lost in the store room. It sits in a box, inside a box. Do you open every room with `cd` and `ls`?
+
+<Interactive name="Choice" options={[{ label: 'No. Ask the server to search for me.', correct: true, why: 'One command can search every room. That is find.' }, { label: 'Yes, room by room', why: 'Fine for 3 rooms. Slow and tiring for 50.' }, { label: 'Give up and cook without it', why: 'Never! Mak would be sad. The server can search.' }]} />
+</Card>
+
+<Card id="see-find" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-find" intro={['find kedai -name sambal.txt']} />
+
+**find** walks through `kedai` and every room inside it. `-name sambal.txt` keeps only that name. It prints the path of each match.
+</Card>
+
+<Card id="predict-case" type="predict">
+Mak named her file `Sambal-Mak.txt`. Does `find kedai -name "sambal*"` find it?
+
+<Interactive name="Choice" options={[{ label: 'No. -name cares about big and small letters.', correct: true, why: 'S and s are different letters to Linux. -iname ignores the difference.' }, { label: 'Yes. Names are the same in any case.', why: 'On Linux, Sambal and sambal are two different names.' }, { label: 'Only if you use sudo', why: 'sudo does not change how names match.' }]} />
+</Card>
+
+<Card id="try-iname" type="try">
+Find every sambal recipe, big letters or small: `find kedai -iname "sambal*"`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-find" goal={{ lastTyped: '^find .*-iname ' }} hints={['Type find kedai -iname "sambal*"']} solution={['find kedai -iname "sambal*"']} success="Two recipes! Mak's is in store/box2/old." />
+
+<Hint>The `*` means "anything after". Keep the quotes.</Hint>
+</Card>
+
+<Card id="sort-tests" type="check">
+`find` can test more than names. Which test fits each search?
+
+<Interactive name="SortCards" buckets={[{ id: 'name', label: '-name "*.log"' }, { id: 'dir', label: '-type d' }, { id: 'empty', label: '-empty' }]} items={[{ label: 'Every log file', bucket: 'name', why: 'Log files end in .log.' }, { label: 'Every room (folder)', bucket: 'dir', why: '-type d keeps directories only. -type f keeps files.' }, { label: 'Boxes with nothing inside', bucket: 'empty', why: '-empty matches empty files and folders.' }, { label: 'The delivery log', bucket: 'name', why: 'You know its name, so search by name.' }]} success="Name, kind, or empty. You can mix them too." />
+</Card>
+
+<Card id="try-logs" type="try">
+Find every log file in the shop: `find kedai -name "*.log"`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-find" goal={{ lastTyped: '^find .*-name ["\']?\\*\\.log' }} hints={['Type find kedai -name "*.log"']} solution={['find kedai -name "*.log"']} success="Two logs: the order book and the delivery log." />
+
+<Hint>Quotes around `"*.log"` let find see the star.</Hint>
+</Card>
+
+<Card id="check-build" type="check">
+Build a search for empty folders, so you can tidy them later.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'find', means: 'search' }, { text: 'kedai', means: 'start in the shop' }, { text: '-type d', means: 'folders only' }, { text: '-empty', means: 'with nothing inside' }]} decoys={[{ text: '-name', means: 'match a name' }, { text: 'rm', means: 'delete' }]} success="find kedai -type d -empty. It finds store/box1." />
+</Card>
+
+<Card id="win" type="win">
+You can now find files by name, kind or emptiness.
+</Card>
+
+<Card id="deeper" type="deeper">
+Search from `/` and you see lines like `find: ‘/root’: Permission denied`. Plain words: rooms you have no key for. World L2 explains keys. `-delete` and `-exec` act on every match: run the search alone first.
+
+Real rep (optional): on Linux, `find /etc -name "*.conf"` lists settings files. Ignore the Permission denied lines.
+</Card>

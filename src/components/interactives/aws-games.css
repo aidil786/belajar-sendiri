@@ -1,0 +1,895 @@
+/* The AWS games (Level Up). Tokens only. The mall story: units, keys, guards, roads, the bill.
+   Concept colours keep their meanings: green = allowed / healthy, red + icon = denied / problem,
+   pink = "you are here" (the line you may change). Public rows are warm, private rows are brand teal. */
+
+.awg {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.awg > *,
+.awg section,
+.awg figure,
+.awg fieldset,
+.awg-rules {
+  min-width: 0;
+}
+
+/* Grids never grow wider than the card: wide code and tables scroll inside their own box. */
+.awg,
+.awg-guard,
+.awg-cell,
+.awg-visitor,
+.awg-ladder,
+.awg-map {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.awg figure {
+  margin: 0;
+}
+
+.awg-icon {
+  flex: none;
+  vertical-align: -0.2em;
+}
+
+.card-content .interactive .awg-head,
+.awg-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-2);
+}
+
+.awg-subhead {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  margin: var(--space-2) 0 var(--space-1);
+}
+
+.card-content .interactive .awg-note,
+.awg-note {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.awg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.awg-mono,
+.awg code {
+  font-family: var(--font-mono);
+}
+
+.awg code {
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
+.awg-detail {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  overflow-wrap: anywhere;
+}
+
+/* Status marks: never colour alone. */
+.awg-mark {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-s);
+  padding: 2px var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.awg-mark.is-ok {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.awg-mark.is-bad {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+/* Inputs */
+.awg-field {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.awg-field label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+}
+
+.awg-field select,
+.awg-input {
+  min-height: var(--tap);
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-s);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-s);
+}
+
+.awg-num {
+  width: 6.5rem;
+}
+
+.awg-x {
+  min-height: var(--tap);
+  padding-inline: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+/* --- IamJudge ----------------------------------------------------------------------------- */
+.awg-request {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-m);
+  padding: var(--space-3);
+  background: var(--color-surface);
+}
+
+.awg-facts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.awg-facts > div {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.awg-facts dt {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+}
+
+.awg-facts dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.awg-arn,
+.awg-ctx {
+  display: block;
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.awg-policies {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.awg-policy {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.awg-policy-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.awg-code {
+  overflow-x: auto;
+  padding-block: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.awg-code-line {
+  display: flex;
+  align-items: center;
+  min-width: max-content;
+  padding-inline-end: var(--space-3);
+  border-inline-start: 4px solid transparent;
+}
+
+.awg-code-no {
+  flex: none;
+  width: 2.2em;
+  text-align: right;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.awg-code-mark {
+  flex: none;
+  width: 1.6em;
+  text-align: center;
+  font-weight: var(--weight-bold);
+}
+
+.awg-code-text {
+  white-space: pre;
+  overflow-wrap: normal;
+  font-size: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.awg-code-line.is-allow {
+  background: var(--c-repo-soft);
+  border-inline-start-color: var(--deco-repo);
+  color: var(--c-repo-ink);
+}
+
+.awg-code-line.is-deny {
+  background: var(--c-danger-soft);
+  border-inline-start-color: var(--deco-danger);
+  color: var(--c-danger-ink);
+}
+
+.awg-code-line.is-edit {
+  background: var(--c-head-soft);
+  border-inline-start-color: var(--deco-head);
+  padding-block: 2px;
+}
+
+.awg-code-line.is-edit .awg-code-mark {
+  color: var(--c-head-ink);
+}
+
+.awg-code-input {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  border: 2px solid var(--c-head-ink);
+  border-radius: var(--radius-s);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.awg-predict-q {
+  font-weight: var(--weight-bold);
+}
+
+.awg-ladder {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-m);
+  padding: var(--space-3);
+  background: var(--color-surface);
+}
+
+.awg-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.awg-step {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.awg-step-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface-2);
+}
+
+.awg-step.is-stopDeny .awg-step-icon {
+  border-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.awg-step.is-stopAllow .awg-step-icon,
+.awg-step.is-pass .awg-step-icon {
+  border-color: var(--deco-repo);
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.awg-step.is-skip .awg-step-icon {
+  border-style: dashed;
+}
+
+.awg-step.is-waiting .awg-step-icon {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.awg-step-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.awg-step-title {
+  font-weight: var(--weight-bold);
+}
+
+.awg-step.is-waiting .awg-step-title {
+  color: var(--color-text-muted);
+}
+
+.awg-step-outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.awg-step-outcome.is-stopDeny {
+  color: var(--c-danger-ink);
+}
+
+.awg-step-outcome.is-pass,
+.awg-step-outcome.is-stopAllow {
+  color: var(--c-repo-ink);
+}
+
+.awg-step-outcome.is-skip {
+  color: var(--color-text-muted);
+}
+
+.awg-step-why,
+.awg-step-cond {
+  font-size: var(--text-s);
+  overflow-wrap: anywhere;
+}
+
+.awg-step-cond {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* One small rise as each guard post answers (transform only, so contrast never dips). */
+@keyframes awg-rise {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.awg-step.can-move:not(.is-waiting) .awg-step-body {
+  animation: awg-rise var(--dur-fast) var(--ease-out) 1;
+}
+
+.awg-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  border-inline-start: 6px solid transparent;
+}
+
+.awg-verdict.is-allow {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  border-inline-start-color: var(--deco-repo);
+}
+
+.awg-verdict.is-deny {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  border-inline-start-color: var(--deco-danger);
+}
+
+/* --- SubnetPlanner ------------------------------------------------------------------------- */
+.awg-vpc,
+.awg-brief {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.card-content .interactive .awg-vpc-cidr,
+.awg-vpc-cidr {
+  margin: 0;
+  font-size: var(--text-l);
+}
+
+.awg-brief-list {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
+.awg-map {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.awg-map-bar {
+  position: relative;
+  height: 2.25rem;
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--color-border-strong);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-surface-2) 0 calc(12.5% - 1px),
+    var(--color-border) calc(12.5% - 1px) 12.5%
+  );
+  overflow: hidden;
+}
+
+.awg-map-block {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-surface);
+}
+
+.awg-map-block.is-public,
+.awg-swatch.is-public {
+  background: var(--warm);
+}
+
+.awg-map-block.is-private,
+.awg-swatch.is-private {
+  background: var(--brand-b);
+}
+
+.awg-map-block.is-bad {
+  background: repeating-linear-gradient(45deg, var(--c-danger) 0 4px, var(--c-danger-soft) 4px 8px);
+}
+
+.awg-map-key {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.awg-map-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.awg-map-key li.is-bad {
+  color: var(--c-danger-ink);
+}
+
+.awg-swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+}
+
+.awg-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+.awg-cell {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border: 1.5px solid var(--color-border);
+  border-inline-start-width: 6px;
+}
+
+.awg-cell legend {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-s);
+  padding-inline: var(--space-1);
+}
+
+.awg-cell.is-public {
+  border-inline-start-color: var(--warm);
+}
+
+.awg-cell.is-private {
+  border-inline-start-color: var(--brand-b);
+}
+
+.awg-cell-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-2);
+}
+
+.awg-peek summary,
+.awg-own summary {
+  cursor: pointer;
+  font-weight: var(--weight-bold);
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+}
+
+.awg-peek ul {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
+/* --- SecurityGroupGate --------------------------------------------------------------------- */
+.awg-visitors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.awg-visitor {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+}
+
+.awg-visitor.is-ok {
+  border-color: var(--deco-repo);
+}
+
+.awg-visitor.is-bad {
+  border-color: var(--deco-danger);
+}
+
+.awg-visitor-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.awg-visitor-line {
+  font-size: var(--text-s);
+  overflow-wrap: anywhere;
+}
+
+.awg-want {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-2);
+  border: 1.5px solid currentColor;
+}
+
+.awg-want.is-in {
+  color: var(--brand-ink);
+  background: var(--brand-soft);
+}
+
+.awg-want.is-out {
+  color: var(--warm-ink);
+  background: var(--warm-soft);
+}
+
+/* The walk: a line grows from the visitor to where it stopped (gate, door, or back out). */
+.awg-track {
+  position: relative;
+  height: 2rem;
+  margin-inline: 0.75rem;
+}
+
+.awg-track::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  border-top: 2px dashed var(--color-border-strong);
+}
+
+.awg-track-line {
+  position: absolute;
+  inset-inline-start: 0;
+  top: calc(50% - 2px);
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--brand-a);
+  transform-origin: left center;
+  transform: scaleX(var(--stop, 1));
+}
+
+.awg-track.is-bad .awg-track-line {
+  background: var(--deco-danger);
+}
+
+.awg-track.can-move .awg-track-line {
+  animation: awg-walk var(--dur-slow) var(--ease-out) 1 both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes awg-walk {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(var(--stop, 1));
+  }
+}
+
+.awg-track-stop {
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.awg-track-stop.at-gate {
+  left: 33%;
+}
+
+.awg-track-stop.at-door {
+  left: 66%;
+}
+
+.awg-track-stop.at-out {
+  left: 100%;
+}
+
+.awg-track.is-bad .awg-track-stop.is-stop {
+  border-color: var(--deco-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+
+.awg-track.is-good .awg-track-stop.is-stop,
+.awg-track-stop.is-in {
+  border-color: var(--deco-repo);
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+}
+
+.awg-trace {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.awg-guards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.awg-guard {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.awg-rules {
+  /* Positioned, so the visually hidden header text stays inside the scroll box (else it widens the page). */
+  position: relative;
+  overflow-x: auto;
+}
+
+.awg-table {
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+  min-width: 100%;
+}
+
+.awg-table th,
+.awg-table td {
+  text-align: start;
+  padding: 2px var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.awg-table th {
+  color: var(--color-text-muted);
+}
+
+.awg-table code {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.awg-star td {
+  color: var(--color-text-muted);
+}
+
+.awg-act {
+  font-weight: var(--weight-bold);
+}
+
+.awg-sg-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.awg-sg-rules li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-s);
+}
+
+.awg-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border-strong);
+}
+
+.awg-form .awg-field {
+  flex: 1 1 8rem;
+}
+
+/* --- IdleBill -------------------------------------------------------------------------------- */
+.awg-now {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-l);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  text-align: center;
+  justify-items: center;
+}
+
+.card-content .interactive .awg-now-name,
+.awg-now-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-l);
+}
+
+.awg-say {
+  min-width: 9rem;
+}
+
+.awg-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+.awg-col {
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border: 1.5px solid var(--color-border);
+}
+
+.awg-col.is-costs {
+  background: var(--warm-soft);
+  color: var(--warm-ink);
+}
+
+.awg-col.is-free {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.awg-col .awg-head,
+.awg-col .awg-note {
+  color: inherit;
+}
+
+.awg-sorted {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.awg-sorted-item {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-s);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px dashed currentColor;
+}
+
+.awg-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.awg-sources a {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.awg-cleanup {
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  border: 2px dashed var(--color-border-strong);
+}
+
+.awg-cleanup ol {
+  margin: 0 0 var(--space-2);
+  padding-inline-start: var(--space-5);
+}
+
+/* Calm mode and reduced motion: no movement, the end state at once. */
+:root[data-calm='true'] .awg-track.can-move .awg-track-line,
+:root[data-calm='true'] .awg-step.can-move .awg-step-body {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .awg-track.can-move .awg-track-line,
+  .awg-step.can-move .awg-step-body {
+    animation: none;
+  }
+}

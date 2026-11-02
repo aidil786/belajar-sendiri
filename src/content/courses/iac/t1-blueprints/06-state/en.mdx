@@ -1,0 +1,68 @@
+---
+id: iac-t1-l06
+world: 1
+title: "State: the building's register"
+summary: "You will learn: how OpenTofu remembers what it built, and why the state file matters."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SwipeJudge]
+needs: [iac-t1-l05]
+scenario: t1-built
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state", url: "https://opentofu.org/docs/language/state/" }
+  - { label: "OpenTofu: purpose of state", url: "https://opentofu.org/docs/language/state/purpose/" }
+  - { label: "tofu state", url: "https://opentofu.org/docs/cli/commands/state/" }
+---
+
+<Card id="hook" type="hook">
+Yesterday OpenTofu built `sign.txt`. Today you run a plan again. How does OpenTofu know `sign.txt` is its own?
+
+<Interactive name="Choice" options={[{ label: 'It wrote it down in a register file', correct: true, why: 'Every build is recorded. The next plan reads that record.' }, { label: 'It guesses from the file name', why: 'Guessing could grab a file it does not own. OpenTofu keeps a record.' }, { label: 'It asks the computer who made the file', why: 'Computers do not track that. OpenTofu keeps its own record.' }]} />
+</Card>
+
+<Card id="try-list" type="try">
+The register is the **<Term id="state">state</Term>** file, `terraform.tfstate`. Type `tofu state list` to read its entries.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ lastTyped: '^tofu state list' }} hints={['Type tofu state list and press Enter.']} success="Two entries: the sign and the stall name. Same as the green side of the picture." />
+
+<Hint>Type `tofu state list`.</Hint>
+</Card>
+
+<Card id="see-show" type="see">
+`tofu state show random_pet.stall` prints one entry. Tap the line with the name OpenTofu picked.
+
+<Interactive name="SpotLines" lines={[{ text: '# random_pet.stall:' }, { text: 'resource "random_pet" "stall" {' }, { text: '    id        = "lucky-civet"', target: true }, { text: '    length    = 2' }, { text: '    separator = "-"' }, { text: '}' }]} success="The id is the picked name. The blueprint never says it; only the state knows." />
+</Card>
+
+<Card id="predict" type="predict">
+Someone deletes `sign.txt` by hand. The register still lists it. What will `tofu plan` say?
+
+<Interactive name="Choice" options={[{ label: '1 to add: make the sign again', correct: true, why: 'The plan checks the real file, sees it is gone, and plans to build it.' }, { label: 'No changes', why: 'Before planning, OpenTofu looks at the real thing. It notices.' }, { label: 'An error: the register is broken', why: 'No error. The register says what should exist, so it plans to fix it.' }]} />
+</Card>
+
+<Card id="try-drift" type="try">
+Try it. Type `rm sign.txt`, then `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ planSummary: { add: 1, change: 0, destroy: 0 } }} hints={['Type rm sign.txt first.', 'Then type tofu plan.']} success="1 to add. OpenTofu noticed and will build the sign again." />
+
+<Hint>`rm sign.txt`, then `tofu plan`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Good habit or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep terraform.tfstate safe, with a backup', good: true, why: 'Lose it and OpenTofu forgets what it built.' }, { text: 'Edit terraform.tfstate by hand to fix a name', good: false, why: 'One stray comma breaks it. World T3 shows the safe commands.' }, { text: 'Delete terraform.tfstate to start fresh', good: false, why: 'OpenTofu forgets, then tries to build everything again.' }, { text: 'Put the state file in a public Git repo', good: false, why: 'State can hold secrets. Teams keep it in a shared, locked place (World T3).' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read the state and explain why it matters.
+</Card>
+
+<Card id="deeper" type="deeper">
+The state is JSON. Its `serial` number goes up after each change, and `terraform.tfstate.backup` keeps the one before. `tofu show` prints the whole state in a readable way. On a team, the state lives in a shared backend with a lock. Then two people can't build at once. World T3 covers that.
+</Card>

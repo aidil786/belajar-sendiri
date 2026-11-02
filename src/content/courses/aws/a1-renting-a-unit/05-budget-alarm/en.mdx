@@ -1,0 +1,76 @@
+---
+id: aws-a1-l05
+world: 1
+title: A budget alarm before anything else
+summary: "You will learn: how to set a budget alarm that emails you before the bill grows."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, SortCards, OrderList, SpotLines, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [aws-a1-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing your costs with AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "Using a budget template", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budget-templates.html" }
+  - { label: "aws budgets create-budget", url: "https://docs.aws.amazon.com/cli/latest/reference/budgets/create-budget.html" }
+  - { label: "CloudWatch billing alarms", url: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Friday', title: 'A test server', text: 'Kancil starts a server to try an idea.' }, { when: 'Saturday', title: 'Forgotten', text: 'The idea works. The server keeps running.' }, { when: 'Month end', title: 'The bill', text: 'A surprise. Nobody warned Kancil.' }]} />
+
+Tap the story. One email on Saturday would have saved it. That email is a budget alarm.
+</Card>
+
+<Card id="see-budget" type="see">
+A **<Term id="budget">budget</Term>** is a line on the bill. When spending passes it, AWS emails you. AWS Budgets has ready-made templates. Sort what each one does.
+
+<Interactive name="SortCards" buckets={[{ id: 'zero', label: 'Zero spend budget' }, { id: 'monthly', label: 'Monthly cost budget' }]} items={[{ label: 'Emails once you spend past the free limits', bucket: 'zero', why: 'Any real spend at all sets it off.' }, { label: 'You pick a monthly amount', bucket: 'monthly', why: 'You choose the line yourself.' }, { label: 'Warns when the forecast will pass your line', bucket: 'monthly', why: 'It looks ahead, not only back.' }, { label: 'A great first alarm for a learner', bucket: 'zero', why: 'Learners usually plan to spend nothing.' }]} success="Use both: zero spend first, a monthly line as a backstop." />
+</Card>
+
+<Card id="try-steps" type="try">
+Set it up in the console. Put the steps in order.
+
+<Interactive name="OrderList" items={['Open Billing and Cost Management', 'Choose Budgets, then Create budget', 'Choose Use a template', 'Pick Zero spend budget', 'Type the email you read every day', 'Create the budget']} label="First step at the top" success="Done in two minutes. Now AWS can warn you." />
+</Card>
+
+<Card id="see-json" type="see">
+The same budget can live in a file. Tap the line that says **when** AWS emails you.
+
+<Interactive name="SpotLines" lines={[{ text: '"Notification": {' }, { text: '  "NotificationType": "ACTUAL",' }, { text: '  "ComparisonOperator": "GREATER_THAN",' }, { text: '  "Threshold": 80,', target: true }, { text: '  "ThresholdType": "PERCENTAGE"' }, { text: '},' }, { text: '"Subscribers": [' }, { text: '  { "SubscriptionType": "EMAIL",' }, { text: '    "Address": "kancil@example.com" }' }, { text: ']' }]} prompt="Tap the line with the trigger point." success="80 percent of the budget. Then an email goes out." />
+</Card>
+
+<Card id="try-cli" type="try">
+Now build the command that sends both files to AWS.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws budgets create-budget', means: 'make a new budget' }, { text: '--account-id 111122223333', means: 'which account to watch' }, { text: '--budget file://budget.json', means: 'the line on the bill' }, { text: '--notifications-with-subscribers file://notify.json', means: 'when, and whom, to email' }]} decoys={[{ text: '--region ap-southeast-5', means: 'a Region; a budget watches the whole account' }]} success="Sent! It prints nothing when it works." />
+
+<Hint>The command, then the account, then the two files.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kancil’s alarm email arrives. Does AWS stop the forgotten server?
+
+<Interactive name="Choice" options={[{ label: 'No. The email warns; Kancil must delete it.', correct: true, why: 'A budget alarm is a smoke alarm, not a brake.' }, { label: 'Yes, everything stops at once', why: 'Nothing stops. The meter keeps running until you act.' }, { label: 'Yes, AWS deletes the newest thing', why: 'AWS never guesses what to delete for you.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Budget data updates up to three times a day, so emails can come hours late. Good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Set the alarm before you build anything.', good: true, why: 'Day one, before the first resource.' }, { text: 'Add the alarm after the first bill.', good: false, why: 'Too late. The surprise already happened.' }, { text: 'Send alerts to an email you really read.', good: true, why: 'An unread alarm is no alarm.' }, { text: 'Trust the alarm to catch everything in minutes.', good: false, why: 'It can lag by hours. Delete things when you finish.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now set a budget alarm before you build anything.
+</Card>
+
+<Card id="deeper" type="deeper">
+A second option is a CloudWatch <Term id="billing-alarm">billing alarm</Term>. First switch on billing alerts. The billing data lives in US East (N. Virginia), `us-east-1`, so make the alarm there.
+
+Real rep (no resources, no cost). Sign in with your admin (lesson 6), or come back after it:
+
+<Interactive name="Mission" id="aws-a1-l05-rep" steps={[{ id: 'zero', text: 'Create a Zero spend budget from the templates, with your email.' }, { id: 'monthly', text: 'Create a Monthly cost budget with a small amount you can afford.' }, { id: 'list', text: 'List your budgets from the terminal (use your own account id).', command: 'aws budgets describe-budgets --account-id 111122223333' }, { id: 'mail', text: 'Make sure AWS emails reach your inbox, not spam.' }]} success="Your smoke alarm is on." />
+</Card>

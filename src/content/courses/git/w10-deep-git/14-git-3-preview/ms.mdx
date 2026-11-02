@@ -1,0 +1,64 @@
+---
+id: git-w10-l14
+world: 10
+title: Pratonton Git 3.0
+summary: "Anda akan belajar: apa yang Git 3.0 rancang untuk ubah, apa yang kekal, dan cara bersedia."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, TermReplay, SwipeJudge]
+needs: [git-w10-l13]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Upcoming breaking changes (Git 3.0)", url: "https://git-scm.com/docs/BreakingChanges" }
+  - { label: "git init (--object-format, --ref-format)", url: "https://git-scm.com/docs/git-init" }
+  - { label: "Hash function transition", url: "https://git-scm.com/docs/hash-function-transition" }
+  - { label: "git whatchanged", url: "https://git-scm.com/docs/git-whatchanged" }
+---
+
+<Card id="hook" type="hook">
+Git 3.0 sedang dalam perjalanan. Adakah Git yang anda belajar akan berhenti berfungsi?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Arahan kekal; beberapa lalai berubah', correct: true, why: 'Kemahiran anda masih berguna. Repo baru cuma bermula sedikit berbeza.' }, { label: 'Ya, anda perlu belajar Git semula', why: 'Tidak! Hampir setiap arahan kekal sama.' }, { label: 'Ia dah pun keluar', why: 'Belum lagi. Git 3.0 belum ada tarikh keluaran.' }]} />
+</Card>
+
+<Card id="see-story" type="see">
+Git 3.0 **belum ada tarikh keluaran**. Tapi pelannya dah ditulis. Ketik setiap babak cerita.
+
+<Interactive name="TimelineTap" events={[{ when: '2005', title: 'Git lahir', text: 'Id guna SHA-1. Ref ialah fail kecil.' }, { when: 'Hari ini (2.56)', title: 'Pilihan baru', text: 'SHA-256 dan reftable dah boleh digunakan, kalau anda minta.' }, { when: '2.x terakhir', title: 'Sokongan jangka panjang', text: 'Versi terakhir sebelum 3.0 dapat pembaikan untuk masa yang lama.' }, { when: 'Git 3.0', title: 'Lalai baru', text: 'Repo baru guna SHA-256, reftable dan branch main.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Apa jadi pada setiap satu dalam Git 3.0?
+
+<Interactive name="SortCards" buckets={[{ id: 'new', label: 'Lalai baru' }, { id: 'removed', label: 'Dibuang' }, { id: 'stays', label: 'Kekal' }]} items={[{ label: 'Repo baru guna id SHA-256', bucket: 'new', why: 'Id yang lebih kuat untuk repo baru.' }, { label: 'Repo baru simpan ref dalam reftable', bucket: 'new', why: 'Storan ref yang lebih laju dan selamat secara lalai.' }, { label: 'Repo baru bermula di main', bucket: 'new', why: 'Nama branch lalai jadi main.' }, { label: 'git whatchanged', bucket: 'removed', why: 'Ia cuma git log dengan lalai lain.' }, { label: 'git pack-redundant', bucket: 'removed', why: 'Arahan lama yang hampir tiada siapa guna.' }, { label: 'git checkout, di sebelah switch dan restore', bucket: 'stays', why: 'Ramai orang guna, jadi ketiga-tiganya kekal.' }, { label: 'Repo SHA-1 lama anda', bucket: 'stays', why: 'Tiada rancangan untuk buang repo SHA-1.' }]} success="Tersusun! Beberapa lalai baru, dua arahan lama hilang, yang lain kekal." />
+</Card>
+
+<Card id="see-sha256" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git rev-parse HEAD']} label="git rev-parse HEAD cetak id SHA-1 40 aksara: 9e8ddf8fb3a185e7920bc21542abe85b09f07e21." />
+
+Id hari ini ialah SHA-1: 40 aksara. Id **<Term id="sha-256">SHA-256</Term>** pula 64 aksara panjang. Ia jauh lebih susah dipalsukan.
+</Card>
+
+<Card id="predict" type="predict">
+Git 3.0 tiba. Repo lama anda guna id SHA-1. Apa jadi kepadanya?
+
+<Interactive name="Choice" options={[{ label: 'Ia terus berfungsi seperti biasa', correct: true, why: 'Lalai baru hanya untuk repo baru. Tiada rancangan untuk buang repo SHA-1.' }, { label: 'Git tukar ia serta-merta', why: 'Tiada apa berubah sendiri. Hanya repo baru bermula dengan SHA-256.' }, { label: 'Ia berhenti berfungsi', why: 'Repo lama terus berfungsi. Hanya lalai untuk repo baru yang berubah.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Dah sedia untuk Git 3.0? Leret setiap tabiat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Namakan branch pertama anda main', good: true, why: 'Itu lalai Git 3.0 untuk repo baru.' }, { text: 'Tulis skrip yang anggap id sentiasa 40 aksara', good: false, why: 'Id SHA-256 ada 64. Biar skrip terima apa-apa panjang.' }, { text: 'Guna git whatchanged dalam skrip', good: false, why: 'Ia dibuang dalam 3.0. Guna git log --raw --no-merges sebagai ganti.' }, { text: 'Terus guna git switch dan git restore', good: true, why: 'Kedua-duanya kekal. git checkout pun kekal.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan apa yang Git 3.0 ubah, dan bersedia untuknya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cuba masa depan hari ini: `git init --object-format=sha256` atau `git init --ref-format=reftable`. Semak dulu laman hosting anda menyokongnya. `safe.bareRepository` jadi `explicit`: Git tak akan guna <Term id="bare-repository">repo bare</Term> yang ia terjumpa sendiri. Bina Git sendiri akan perlukan Rust. Sumber: git-scm.com/docs/BreakingChanges.
+</Card>

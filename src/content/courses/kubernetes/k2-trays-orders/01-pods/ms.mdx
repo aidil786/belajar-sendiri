@@ -1,0 +1,77 @@
+---
+id: k8s-k2-l01
+world: 2
+title: "Pod: sedulang hidangan"
+summary: "Anda akan belajar: apa itu pod, dan apa yang dikongsi oleh container dalam satu pod."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim, SortCards, Transcript]
+needs: [k8s-k1-boss]
+scenario: k2-pods
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pods", url: "https://kubernetes.io/docs/concepts/workloads/pods/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+Nasi lemak ada nasi, sambal dan telur. Semuanya keluar dari dapur bersama, atas satu dulang. Aplikasi web anda perlukan pembantu kecil di sebelahnya, sentiasa. Di mana pembantu itu patut duduk?
+
+<Interactive name="Choice" options={[{ label: 'Atas dulang yang sama', correct: true, why: 'Benda yang mesti bersama kongsi satu dulang. Dalam Kubernetes, dulang itu ialah pod.' }, { label: 'Di gerai lain', why: 'Nanti mereka mungkin terpisah jauh. Pembantu mesti duduk betul-betul di sebelah aplikasi.' }, { label: 'Dalam container yang sama', why: 'Satu container, satu kerja. Dua kerja dalam satu kotak susah dikemas kini.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+<Interactive name="KubeReplay" scenario="k2-pods" commands={['kubectl apply -f tray.yaml', 'kubectl wait --for=condition=Ready pod/tray --timeout=60s', 'kubectl get pods']} label="kubectl apply hantar tray.yaml. Pod tray mendarat di satu gerai dan jadi Running, READY 1/1." />
+
+**<Term id="pod">Pod</Term>** (dulang) ialah sedulang hidangan. Ia bawa satu atau lebih container. Kubernetes letak seluruh dulang di satu gerai, tak pernah separuh. `kubectl apply -f tray.yaml` hantar dulang ke medan selera.
+</Card>
+
+<Card id="try-fix" type="try">
+`tray.yaml` ini ada satu silap kecil. Tekan Apply, baca ralat sebenar, kemudian baiki baris itu.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  container:\n    - name: web\n      image: nginx:1.29-alpine\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} keep={['image: nginx:1.29-alpine']} hint="Satu dulang boleh bawa banyak container. Nama medan itu dalam bentuk jamak." success="Siap! kubectl terima dulang itu." />
+
+<Hint>`unknown field` maksudnya perkataan yang Kubernetes tak kenal. Semak ejaannya.</Hint>
+</Card>
+
+<Card id="try-apply" type="try">
+Giliran anda. Hantar dulang ke medan selera. Kemudian semak dengan `kubectl get pods`.
+
+<Interactive name="FoodCourtSim" scenario="k2-pods" goal={{ podsReady: { selector: 'app=tray', count: 1 }, typed: 'get pods?$' }} hints={['Taip kubectl apply -f tray.yaml', 'Sekarang taip kubectl get pods']} success="Dulang anda Running di satu gerai." />
+
+<Hint>Taip `kubectl apply -f tray.yaml`, kemudian `kubectl get pods`.</Hint>
+</Card>
+
+<Card id="see-duo" type="see">
+<Interactive name="KubeReplay" scenario="k2-pods" commands={['kubectl apply -f duo.yaml', 'kubectl wait --for=condition=Ready pod/duo --timeout=60s', 'kubectl get pod duo -o wide']} label="Pod duo ada dua container. READY tunjuk 2/2. Pod ini ada satu IP dan duduk di satu node." />
+
+Dua container, satu dulang. READY tunjuk 2/2. Lihat: satu alamat IP, satu gerai. Dalam dulang, mereka saling sampai melalui `localhost`.
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `kubectl delete pod tray`. Apa jadi lepas itu?
+
+<Interactive name="Choice" options={[{ label: 'Dulang itu hilang terus', correct: true, why: 'Pod sendirian tiada pengurus. Tiada siapa pesan yang baharu. Pelajaran 3 dan 4 selesaikannya.' }, { label: 'Dulang baharu muncul', why: 'Hanya pengurus yang ganti dulang. Pod sendirian ini tiada pengurus.' }, { label: 'Ia hidup semula di gerai sama', why: 'Delete buang seluruh pod. Restart hanya berlaku pada container dalam pod yang masih ada.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Susun setiap benda. Adakah ia dikongsi seluruh dulang, atau setiap container ada sendiri?
+
+<Interactive name="SortCards" buckets={[{ id: 'shared', label: 'Dikongsi dulang' }, { id: 'own', label: 'Setiap container ada sendiri' }]} items={[{ label: 'Alamat IP', bucket: 'shared', why: 'Satu dulang, satu alamat. Container berbual melalui localhost.' }, { label: 'Gerai (node) tempat ia duduk', bucket: 'shared', why: 'Seluruh dulang duduk di satu gerai.' }, { label: 'Image', bucket: 'own', why: 'Setiap container datang dari image sendiri.' }, { label: 'Kiraan restart', bucket: 'own', why: 'Kalau satu container crash, hanya ia yang hidup semula.' }]} success="Siap! Dulang bergerak sebagai satu." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan apa itu pod dan apa yang ia kongsi.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kebanyakan pod bawa satu container sahaja. Tambah yang kedua hanya bila kedua-duanya memang sepasang. Container juga boleh kongsi fail melalui volume (Dunia K4).
+
+Latihan sebenar (pilihan): guna kluster kind yang boleh dibuang, bukan kluster kerja. Baca context sebelum delete.
+
+<Interactive name="Transcript" title="bash" label="Buat kluster latihan, semak di mana anda, hantar dulang, kemudian padam." lines={[{ cmd: 'kind create cluster --name practice' }, { cmd: 'kubectl config current-context' }, { cmd: 'kubectl apply -f tray.yaml' }, { cmd: 'kubectl delete pod tray' }]} />
+</Card>

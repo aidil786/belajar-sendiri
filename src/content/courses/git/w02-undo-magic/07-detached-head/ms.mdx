@@ -1,0 +1,67 @@
+---
+id: git-w02-l07
+world: 2
+title: HEAD terlerai
+summary: "Anda akan belajar: cara melawat commit lama dan pulang dengan selamat."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, Sim, TermReplay, Choice]
+needs: [git-w02-l06]
+scenario: w02-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Empat commit dalam repositori. Yang lama, Add day 1 page, bercahaya dan bergoyang." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit', glow: true }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+Anda nak tengok diari anda macam pada hari pertama. Tengok sahaja, bukan ubah. Macam mana?
+</Card>
+
+<Card id="see-detach" type="see">
+<Interactive name="GraphScene" scenario="w02-l07" commands={['git switch --detach HEAD~2']} label="HEAD tinggalkan label main dan lompat balik dua commit, ke Add day 1 page. main kekal pada Add day 2 entry." />
+
+`git switch --detach HEAD~2` lawat commit (titik simpan) lama. Kini HEAD tunjuk ke commit, bukan branch (jalan cerita). Ini dipanggil **<Term id="detached-head">detached HEAD</Term>** (HEAD terlerai).
+</Card>
+
+<Card id="try-visit" type="try">
+Lawat commit "Add day 1 page".
+
+<Interactive name="Sim" scenario="w02-l07" panels={['graph']} goal={{ headDetached: true, headAtMessage: '^Add day 1 page$' }} hints={['Taip git switch --detach HEAD~2 dan tekan Enter.', 'Atau taip git log --oneline. Kemudian git switch --detach dan hash itu.']} success="Anda di hari pertama. Commit yang lebih baru selamat dalam main." />
+
+<Hint>Taip `git switch --detach HEAD~2`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-checkout" type="see">
+<Interactive name="TermReplay" scenario="w02-l07" commands={['git checkout HEAD~2']} label="git checkout HEAD~2 cetak nota panjang tentang keadaan detached HEAD, kemudian: HEAD is now at Add day 1 page." />
+
+Panduan lama guna `git checkout` dengan satu commit. Hasilnya sama, tambah satu nota panjang. Jangan panik: itu cuma nasihat.
+</Card>
+
+<Card id="predict" type="predict">
+Anda dalam detached HEAD. Anda buat commit, kemudian tukar ke main. Apa jadi pada commit itu?
+
+<Interactive name="Choice" options={[{ label: 'Ia ditinggalkan', correct: true, why: 'Tiada branch yang tunjuk ke situ. Git pun beri amaran bila anda pergi.' }, { label: 'Ia masuk ke main', why: 'main hanya bergerak bila anda commit semasa berada di main.' }, { label: 'Git terus padam', why: 'Ia kekal untuk sementara. Reflog masih ingat (pelajaran 9).' }]} />
+</Card>
+
+<Card id="try-back" type="try">
+Anda sedang melawat hari pertama. Pulang ke branch anda.
+
+<Interactive name="Sim" scenario="w02-l07b" panels={['graph']} goal={{ headDetached: false, headAtMessage: '^Add day 2 entry$' }} hints={['Taip git switch main dan tekan Enter.', 'main ialah branch anda. Tukar ke situ untuk letak HEAD semula padanya.']} success="HEAD dah balik ke main. Selamat pulang!" />
+
+<Hint>Taip `git switch main`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lawat commit lama dan pulang dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git switch -` lompat balik ke tempat anda tadi. Ada buat commit semasa terlerai? Beri ia satu branch sebelum pergi, atau ia akan ditinggalkan. Cara buat branch ada dalam World 3. `git checkout` masih ada dalam Git 3.0, bersama `git switch`.
+
+<Interactive name="TermReplay" scenario="w02-l07" commands={['git switch --detach HEAD~2', 'git switch -']} label="git switch --detach HEAD~2 lawat hari pertama. git switch - terus balik ke main." />
+</Card>

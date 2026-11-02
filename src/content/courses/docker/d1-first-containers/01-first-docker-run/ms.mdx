@@ -1,0 +1,72 @@
+---
+id: docker-d1-l01
+world: 1
+title: docker run pertama anda
+summary: "Anda akan belajar: apa yang docker run buat, satu langkah demi satu langkah."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d0-l10]
+scenario: d1-hello
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+---
+
+<Card id="hook" type="hook">
+Anda mahu jalankan satu aplikasi. Tak perlu pasang, tak perlu tetapan. Cuma satu baris: `docker run hello-world`. Laptop anda tak pernah ada aplikasi ini. Apa Docker buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Ambil dari peti sejuk kedai dalam talian', correct: true, why: 'Dapur anda belum ada salinan, jadi Docker muat turun dulu.' }, { label: 'Berhenti dengan ralat "not found"', why: 'Bila laptop tiada salinan, Docker cari dalam talian dulu.' }, { label: 'Pasang macam aplikasi biasa', why: 'Tiada apa yang dipasang. Aplikasi berjalan dalam bekas bertutup.' }]} />
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="KitchenReplay" scenario="d1-hello" commands={['docker run hello-world']} label="docker run hello-world. Docker tak jumpa image, jadi ia tarik dari Docker Hub. Kemudian satu container berjalan, paparkan Hello from Docker!, lalu berhenti. Gambar tunjuk satu image dan satu bekas kelabu yang sudah selesai." />
+
+Baca baris atas. Docker tiada pek beku. Jadi ia **<Term id="pull">pull (tarik)</Term>** satu dari Docker Hub, peti sejuk kedai. Kemudian satu bekas berjalan dan beri salam.
+</Card>
+
+<Card id="try-order" type="try">
+`docker run` buat tiga kerja berturut-turut. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['Pull: ambil pek beku (image)', 'Create: isi bekas makanan (container) daripadanya', 'Start: hidupkan aplikasi dalam bekas']} label="Kerja pertama di atas" success="Pull, create, start. Itulah docker run!" />
+</Card>
+
+<Card id="try-run" type="try">
+Giliran anda. Taip `docker run hello-world`. Tengok gambar: pek beku sampai, kemudian bekas muncul.
+
+<Interactive name="KitchenSim" scenario="d1-hello" goal={{ imageExists: 'hello-world:latest', typed: '^docker (container )?run (.* )?hello-world' }} hints={['Taip docker run hello-world dan tekan Enter.']} success="Container pertama anda! Pek beku kini ada dalam peti sejuk anda." />
+
+<Hint>Taip `docker run hello-world`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda taip `docker run hello-world` sekali lagi. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Tiada muat turun. Bekas kedua berjalan.', correct: true, why: 'Pek beku sudah ada dalam peti sejuk. Setiap run isi bekas baru.' }, { label: 'Ia muat turun pek itu lagi', why: 'Pek itu sudah ada dalam peti sejuk. Docker guna semula.' }, { label: 'Bekas pertama berjalan semula', why: 'docker run sentiasa buat bekas baru. Bekas lama kekal.' }]} />
+</Card>
+
+<Card id="check-ps" type="check">
+Jalankan sekali lagi. Kemudian taip `docker ps -a`: ia senaraikan setiap <Term id="container">container (bekas)</Term>, termasuk yang sudah selesai. Berapa bekas sekarang?
+
+<Interactive name="KitchenSim" scenario="d1-hello" intro={['docker run hello-world']} goal={{ count: { containers: 2 }, lastTyped: '^docker (ps|container ls) (-a|--all)$' }} hints={['Taip docker run hello-world dulu.', 'Kemudian taip docker ps -a']} success="Dua bekas, kedua-duanya Exited (0). Setiap run buat satu yang baru." />
+
+<Hint>Mula-mula `docker run hello-world`, kemudian `docker ps -a`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan container dan terangkan apa yang berlaku.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run` ialah tiga arahan dalam satu: `docker pull`, `docker create` dan `docker start`. Setiap run buat bekas baru, dengan nama rawak seperti `vibrant_ritchie`. Pelajaran 3 tunjuk cara pilih nama sendiri.
+
+Latihan sebenar (pilihan). Di mesin anda sendiri, dengan Docker sudah dipasang:
+
+<Interactive name="Mission" id="docker-d1-l01-rep" steps={[{ id: 'run', text: 'Jalankan container pertama anda.', command: 'docker run hello-world' }, { id: 'list', text: 'Senaraikan semua bekas, termasuk yang sudah selesai.', command: 'docker ps -a' }, { id: 'read', text: 'Baca mesej hello itu. Boleh anda cari empat langkah yang disenaraikan?' }]} success="Itu Docker sebenar!" />
+</Card>

@@ -1,0 +1,68 @@
+---
+id: docker-d6-l04
+world: 6
+title: "Sistem fail overlay"
+summary: "Anda akan belajar: cara banyak container kongsi satu image, dan setiap satu tulis pada lapisan atas sendiri yang nipis."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, Transcript, SwipeJudge, Mission]
+needs: [docker-d6-l03]
+scenario: d6-two-boxes
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OverlayFS storage driver", url: "https://docs.docker.com/engine/storage/drivers/overlayfs-driver/" }
+  - { label: "containerd image store", url: "https://docs.docker.com/engine/storage/containerd/" }
+  - { label: "docker container diff", url: "https://docs.docker.com/reference/cli/docker/container/diff/" }
+---
+
+<Card id="hook" type="hook">
+Sepuluh bekas bermula dari satu pek makanan alpine. Berapa banyak ruang cakera yang diperlukan?
+
+<Interactive name="Choice" options={[{ label: 'Pek itu sekali, dan satu lapisan nipis untuk setiap bekas', correct: true, why: 'Semua baca lapisan yang sama. Setiap bekas simpan perubahannya sahaja.' }, { label: 'Sepuluh salinan penuh pek itu', why: 'Tiada apa disalin. Lapisan dikongsi.' }, { label: 'Langsung tiada', why: 'Setiap bekas tulis perubahannya di satu tempat: lapisan nipisnya sendiri.' }]} />
+</Card>
+
+<Card id="see-stack" type="see">
+<Interactive name="KitchenReplay" scenario="d6-two-boxes" commands={['docker ps', 'docker system df']} label="Dua bekas berjalan, box1 dan box2, dari satu image alpine. docker system df tunjuk satu image 12.9MB dan dua container yang guna 8.192kB sahaja." />
+
+Satu image, dua bekas, ruang tambahan yang kecil. Lapisan image ialah kek lapis baca sahaja. Setiap bekas dapat plastik lutsinar di atas. Susunan itu ialah **<Term id="overlay-filesystem">overlay filesystem</Term>** (sistem fail overlay).
+</Card>
+
+<Card id="try-note" type="try">
+box1 tulis nota pada plastiknya. Boleh box2 baca? Taip `docker exec box2 cat /root/note.txt`.
+
+<Interactive name="KitchenSim" scenario="d6-two-boxes" intro={['docker exec box1 sh -c "echo hi > /root/note.txt"']} goal={{ lastTyped: '^docker exec box2 (cat|ls)' }} hints={['Taip docker exec box2 cat /root/note.txt']} success="Tiada fail itu! Nota itu ada pada plastik box1 sahaja." />
+
+<Hint>`docker exec box2 cat /root/note.txt` baca fail itu di dalam box2.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+box1 ubah `/etc/profile`, satu fail dari image. Ke mana perubahan itu pergi?
+
+<Interactive name="Choice" options={[{ label: 'Satu salinan masuk ke plastik box1. Image kekal sama.', correct: true, why: 'Ini copy-up: tulisan pertama salin fail itu ke plastik atas.' }, { label: 'Masuk ke dalam lapisan image', why: 'Lapisan image baca sahaja. Kalau tidak, semua bekas nampak perubahan itu.' }, { label: 'Tak ke mana. Tulisan itu gagal.', why: 'Bekas boleh menulis. Ia tulis pada plastiknya sendiri.' }]} />
+</Card>
+
+<Card id="check-diff" type="check">
+<Interactive name="Transcript" title="bash" label="Output sebenar pada Docker 29: satu bekas tambah nota, padam /etc/motd dan ubah /etc/profile. docker diff senaraikan baris C, A dan D." lines={[{ cmd: "docker run --name box alpine:3.22 sh -c 'echo hi > /root/note.txt; rm /etc/motd; echo hi >> /etc/profile'" }, { cmd: 'docker diff box' }, { out: 'C /etc\nC /etc/profile\nD /etc/motd\nC /root\nA /root/note.txt' }]} />
+
+`docker diff` baca plastik atas. A = ditambah, C = diubah, D = dipadam. Padam tinggalkan pelekat penyorok, dipanggil **whiteout**. Image masih ada fail itu.
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Simpan fail pangkalan data dalam volume, bukan pada plastik atas.', good: true, why: 'Tulisan besar pada plastik itu perlahan, dan plastik hilang bersama bekas.' }, { text: 'Biar fail log membesar tanpa henti dalam container.', good: false, why: 'Ia penuhkan plastik atas. Hantar log ke stdout.' }, { text: 'Ubah image dengan membinanya semula dari resepi.', good: true, why: 'Lapisan image baca sahaja. Resepi baharu buat pek baharu.' }, { text: 'Padam fail besar pada baris Dockerfile kemudian untuk kecilkan image.', good: false, why: 'Fail itu kekal dalam lapisan bawah. Padam dalam baris RUN yang sama.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara container kongsi satu image.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam istilah OverlayFS: lapisan image ialah `lowerdir`, plastik ialah `upperdir`, dan bekas nampak `merged`. Pemasangan baharu Docker Engine 29 guna stor image containerd dengan snapshotter `overlayfs`. Pemasangan lama yang dinaik taraf mungkin tunjuk `overlay2`. Semak dengan `docker info`.
+
+<Interactive name="Mission" id="d6-l04-diff" steps={[{ id: 'run', text: 'Mulakan bekas yang cuma menunggu.', command: 'docker run -d --name box alpine:3.22 sleep 300' }, { id: 'write', text: 'Tulis nota pada plastik atasnya.', command: 'docker exec box sh -c "echo hi > /root/note.txt"' }, { id: 'diff', text: 'Senaraikan apa yang berubah.', command: 'docker diff box' }, { id: 'rm', text: 'Kemas semula. Plastik itu pun hilang.', command: 'docker rm -f box' }]} success="Anda dah baca plastik atas sebuah container." />
+</Card>

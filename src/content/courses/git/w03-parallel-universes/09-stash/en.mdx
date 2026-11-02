@@ -1,0 +1,71 @@
+---
+id: git-w03-l09
+world: 3
+title: Put work aside with stash
+summary: "You will learn: to park half-done work, switch branches, and get it back."
+minutes: 4
+xp: 20
+interactives: [Transcript, AreasScene, Sim, TermReplay, Choice, SpotLines]
+needs: [git-w03-l08]
+scenario: w03-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git stash", url: "https://git-scm.com/docs/git-stash" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="git switch main fails: your local changes to style.css would be overwritten by checkout. Please commit your changes or stash them before you switch branches." lines={[{ cmd: 'git switch main' }, { out: 'error: Your local changes to the following files would be overwritten by checkout:\n\tstyle.css\nPlease commit your changes or stash them before you switch branches.\nAborting' }]} />
+
+Dark mode is half done. Then: an urgent fix on main! Git won't let you switch. Now what?
+</Card>
+
+<Card id="see-stash" type="see">
+<Interactive name="AreasScene" zones={['working']} zoneLabels={{ working: 'Your folder' }} command="git stash" label="style.css, with unfinished changes, leaves your folder and goes into a drawer. Your folder is clean." frames={[{ working: [{ name: 'style.css', tag: 'changed' }] }, { working: [] }]} />
+
+`git stash` puts unfinished changes in a drawer. Your folder is clean again, so you can switch. The drawer is the **<Term id="stash">stash</Term>**.
+</Card>
+
+<Card id="try-stash" type="try">
+Put your work in the drawer. Then switch to main.
+
+<Interactive name="Sim" scenario="w03-l09" panels={['areas']} goal={{ stashCount: 1, currentBranch: 'main' }} hints={['First type git stash.', 'Then type git switch main.']} success="Drawer closed, folder clean, and you're on main." />
+
+<Hint>Two commands: `git stash`, then `git switch main`.</Hint>
+</Card>
+
+<Card id="see-pop" type="see">
+<Interactive name="TermReplay" scenario="w03-l09" commands={['git stash', 'git stash pop']} label="git stash saves the work. git stash pop puts it back: style.css shows as modified, and the stash entry is dropped." />
+
+Done with the fix? `git stash pop` takes the newest work out of the drawer. It lands in your folder again.
+</Card>
+
+<Card id="try-pop" type="try">
+You fixed main. Go back to `dark-mode` and take your work out of the drawer.
+
+<Interactive name="Sim" scenario="w03-l09b" panels={['areas']} goal={{ currentBranch: 'dark-mode', stashCount: 0, modified: ['style.css'] }} hints={['Type git switch dark-mode.', 'Then type git stash pop.']} success="Your half-done dark mode is back. Carry on!" />
+
+<Hint>Switch first. Then `git stash pop`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You stash twice, then pop once. Which work comes out?
+
+<Interactive name="Choice" options={[{ label: 'The newest one', correct: true, why: 'The stash is a pile. The last one in comes out first.' }, { label: 'The oldest one', why: 'Pop takes from the top of the pile: the newest.' }, { label: 'Both at once', why: 'Each pop takes out one entry.' }]} />
+</Card>
+
+<Card id="check-list" type="check">
+Here is a drawer with two entries.
+
+<Interactive name="SpotLines" scenario="w03-l09c" commands={['git stash list']} targets="^stash@\{0\}" prompt="Tap the entry that git stash pop takes out." success="stash@{0} is always the newest one." />
+</Card>
+
+<Card id="win" type="win">
+You can now put work aside and get it back later.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git stash -u` also takes new, untracked files. `git stash push -m "note"` adds a label. `git stash apply` puts work back but keeps a copy in the drawer. `git stash drop` throws one away for good. A pop can clash with newer changes. Then the markers say Updated upstream and Stashed changes.
+</Card>

@@ -1,0 +1,62 @@
+---
+id: git-w08-l06
+world: 8
+title: CodeQL basics
+summary: "You will learn: how CodeQL finds risky code before attackers do."
+minutes: 4
+xp: 20
+interactives: [SpotLines, SortCards, Choice, OrderList]
+needs: [git-w08-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About code scanning with CodeQL", url: "https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql" }
+  - { label: "About code scanning", url: "https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning" }
+---
+
+<Card id="hook" type="hook">
+Your login page works. The tests pass. But one line lets a trickster read every user's data. Could you find it in 500 files?
+</Card>
+
+<Card id="see-codeql" type="see">
+**<Term id="codeql">CodeQL</Term>** is a code detective from GitHub. It turns your code into data. Then it asks questions, like "can typed text reach the database?"
+</Card>
+
+<Card id="try-spot" type="try">
+Be the detective. Tap the line that glues typed text into a database question.
+
+<Interactive name="SpotLines" lines={[{ text: 'const name = form.name;' }, { text: 'db.ask("name = " + name);', target: true }, { text: 'db.ask("name = ?", [name]);' }, { text: 'showWelcome(name);' }]} prompt="Tap the line that glues typed text into the query." success="Found it! The line with ? is the safe way. CodeQL hunts for the risky kind." />
+
+<Hint>Look for a + sign that sticks the name onto the question.</Hint>
+</Card>
+
+<Card id="see-scanning" type="see">
+CodeQL runs as **<Term id="code-scanning">code scanning</Term>**. Turn it on. Then GitHub Actions checks your code on pushes and pull requests. Problems show up as alerts on the exact line.
+</Card>
+
+<Card id="try-sort" type="try">
+Three guards, three jobs. Who catches what?
+
+<Interactive name="SortCards" buckets={[{ id: 'codeql', label: 'CodeQL' }, { id: 'secrets', label: 'Secret scanning' }, { id: 'dependabot', label: 'Dependabot' }]} items={[{ label: 'Typed text glued into a database question', bucket: 'codeql', why: 'A risky pattern in your own code.' }, { label: 'An API key pasted into app.js', bucket: 'secrets', why: 'A leaked secret.' }, { label: 'A package with a known hole', bucket: 'dependabot', why: 'Borrowed code that needs an update.' }, { label: 'A password in an old commit', bucket: 'secrets', why: 'It reads old commits too.' }, { label: 'Code that opens any file path a user types', bucket: 'codeql', why: 'Another risky pattern in your own code.' }]} success="All sorted! Your code, your secrets, your packages: all guarded." />
+</Card>
+
+<Card id="predict" type="predict">
+CodeQL flags a line in your pull request. What now?
+
+<Interactive name="Choice" options={[{ label: 'Read the alert, fix the code, push again', correct: true, why: 'The scan runs again. Fixed code means no alert.' }, { label: 'Turn CodeQL off', why: 'The hole stays. You just stop seeing it.' }, { label: 'Merge anyway. It is only a robot.', why: 'Robots can be wrong, so check first. If it is wrong, dismiss it with a reason.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the code scanning loop in order, first at the top.
+
+<Interactive name="OrderList" items={['Turn on code scanning', 'Open a pull request', 'CodeQL checks the new code', 'You read the alert and fix the line']} label="First step at the top" success="That's the loop. Every pull request gets a fresh check." />
+</Card>
+
+<Card id="win" type="win">
+You can now let CodeQL hunt for risky code.
+</Card>
+
+<Card id="deeper" type="deeper">
+The bug in the detective card is called SQL injection. CodeQL knows many languages, like JavaScript, Python, Java, Go, C# and Ruby. Default setup picks settings for you. Advanced setup adds a workflow file that you can change.
+</Card>

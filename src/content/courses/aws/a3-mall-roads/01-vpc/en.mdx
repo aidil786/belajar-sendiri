@@ -1,0 +1,68 @@
+---
+id: aws-a3-l01
+world: 3
+title: "VPC: your own corner of the mall"
+summary: "You will learn: what a VPC is, and how its block of addresses works."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SubnetPlanner, SpotLines, SwipeJudge]
+needs: [aws-a2-boss]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: What is Amazon VPC?", url: "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" }
+  - { label: "Amazon VPC: VPC CIDR blocks", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html" }
+  - { label: "Amazon VPC: Default VPCs", url: "https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html" }
+  - { label: "AWS CLI: aws ec2 create-vpc", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil wants servers in the cloud. Thousands of other shops rent in the same mall. How do you keep your units apart?
+
+<Interactive name="Choice" options={[{ label: 'Fence off your own plot of land', correct: true, why: 'Yes. Your servers live inside your own fenced plot.' }, { label: 'Trust the other tenants', why: 'Never. Strangers rent here too. Fence your plot.' }, { label: 'Rent the whole mall', why: 'Too big and too costly. A small plot is enough.' }]} />
+</Card>
+
+<Card id="see-vpc" type="see">
+A **<Term id="vpc">VPC</Term>** is your fenced plot in the mall. Your servers and databases live inside it. Some services live outside. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'in', label: 'Inside your VPC' }, { id: 'out', label: 'Outside any VPC' }]} items={[{ label: 'Your web server (EC2)', bucket: 'in', why: 'Servers always live in a VPC.' }, { label: 'Your database (RDS)', bucket: 'in', why: 'It sits in your VPC, in a back room.' }, { label: 'An S3 bucket', bucket: 'out', why: 'S3 is a Region-wide storeroom. Buckets never sit inside a VPC.' }, { label: 'IAM users and roles', bucket: 'out', why: 'IAM is account-wide. It holds the keys, not the units.' }]} success="Sorted! Units live in your plot. The key office and the storeroom don't." />
+</Card>
+
+<Card id="see-cidr" type="see">
+Your plot gets a block of addresses, written as a **<Term id="cidr">CIDR</Term>**. `10.0.0.0/16` has 65,536 addresses. A smaller number after the slash means a bigger block. Which is biggest?
+
+<Interactive name="Choice" compact options={[{ label: '/16', correct: true, why: '/16 is the biggest block a VPC may have.' }, { label: '/24', why: '/24 holds 256 addresses. That is smaller.' }, { label: '/28', why: '/28 holds only 16. The smallest a VPC may have.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+This plot is far too big. Make the VPC a /16. Then give each wing one public row.
+
+<Interactive name="SubnetPlanner" vpc="10.0.0.0/8" editVpc tiers={['public']} azs={['ap-southeast-5a', 'ap-southeast-5b']} success="Your plot has a good size, and each wing has its row." />
+
+<Hint>Type `10.0.0.0/16` in the VPC box. Then pick a size for each row.</Hint>
+</Card>
+
+<Card id="check-cli" type="check">
+The AWS CLI makes a VPC too. Here is the official example's answer, cut short. Tap the line with the new VPC's id.
+
+<Interactive name="SpotLines" prompt="Tap the line with the new VPC's id." success="That id names your plot in every later command." lines={[{ text: '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16' }, { text: '"Vpc": {' }, { text: '    "CidrBlock": "10.0.0.0/16",' }, { text: '    "State": "pending",' }, { text: '    "VpcId": "vpc-0a60eb65b4EXAMPLE",', target: true }, { text: '    "OwnerId": "123456789012",' }, { text: '    "IsDefault": false,' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good plot habits, or risky? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Use a private range like 10.0.0.0/16', good: true, why: 'Private ranges never clash with public websites.' }, { text: 'Copy your office network range exactly', good: false, why: 'If you link them later, the same addresses clash.' }, { text: 'Practise in the default VPC, then delete what you made', good: true, why: 'Every Region gives you one. A VPC alone costs nothing.' }, { text: 'One giant /8 plot for everything', good: false, why: 'AWS refuses it. A VPC is /16 to /28.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fence your own plot: a VPC with its address block.
+</Card>
+
+<Card id="deeper" type="deeper">
+Each Region gives you a default VPC, with a public row in every wing. It is handy for practice. A VPC has no charge, but some parts inside it do. You meet those next.
+
+Real rep (optional): in a test account, open the VPC page. Find your default VPC and its CIDR. Create nothing yet.
+</Card>

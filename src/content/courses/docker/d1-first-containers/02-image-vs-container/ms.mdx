@@ -1,0 +1,70 @@
+---
+id: docker-d1-l02
+world: 1
+title: Image lawan container
+summary: "Anda akan belajar: bagaimana satu image (pek beku) mengisi banyak container (bekas makanan)."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l01]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "What is an image?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker images", url: "https://docs.docker.com/reference/cli/docker/image/ls/" }
+---
+
+<Card id="hook" type="hook">
+Ali padam halaman selamat datang dalam bekasnya. Kemudian dia isi bekas baru daripada pek beku yang sama. Halaman itu ada semula! Pepijat atau memang begitu?
+
+<Interactive name="Choice" options={[{ label: 'Memang begitu: setiap bekas mula dengan salinan baru', correct: true, why: 'Pek beku tak pernah berubah. Setiap bekas baru dapat hidangan penuh.' }, { label: 'Pepijat: Docker terlupa simpan', why: 'Tiada yang rosak. Dia cuma ubah bekas pertama, bukan pek.' }, { label: 'Dia padam fail lain', why: 'Fail itu betul, tapi dipadam dalam satu bekas sahaja.' }]} />
+</Card>
+
+<Card id="see-pack" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker images', 'docker run -d --name lunch1 nginx:1.30-alpine', 'docker run -d --name lunch2 nginx:1.30-alpine', 'docker ps']} label="docker images senaraikan pek beku nginx. Dua arahan docker run isi dua bekas daripadanya, lunch1 dan lunch2. docker ps tunjuk kedua-duanya berjalan." />
+
+Satu pek beku isi dua bekas. Pek itu ialah **<Term id="image">image (pek beku)</Term>**: templat yang tak pernah berubah. Setiap <Term id="container">container</Term> ialah satu bekas daripadanya.
+</Card>
+
+<Card id="try-sort" type="try">
+Susun setiap kad. Ia tentang pek beku atau bekas makanan?
+
+<Interactive name="SortCards" buckets={[{ id: 'image', label: 'Pek beku (image)' }, { id: 'container', label: 'Bekas makanan (container)' }]} items={[{ label: 'Templat beku yang tak pernah berubah', bucket: 'image', why: 'Image kekal sama, walau apa pun bekas buat.' }, { label: 'Boleh berjalan, atau berhenti', bucket: 'container', why: 'Hanya bekas yang berjalan. Pek cuma tunggu dalam peti sejuk.' }, { label: 'Satu boleh isi banyak', bucket: 'image', why: 'Satu pek, seberapa banyak bekas yang anda mahu.' }, { label: 'Ada nama seperti lunch1', bucket: 'container', why: 'Setiap bekas dapat nama sendiri.' }, { label: 'Disimpan dalam peti sejuk kedai, seperti Docker Hub', bucket: 'image', why: 'Pek dikongsi melalui peti sejuk yang dipanggil registry.' }, { label: 'Ada ruang sendiri untuk perubahan', bucket: 'container', why: 'Perubahan kekal dalam bekas itu sahaja.' }]} success="Siap! Pek ialah templat. Bekas ialah yang berjalan." />
+</Card>
+
+<Card id="try-sim" type="try">
+Isi dua bekas daripada satu pek. Jalankan `docker run alpine:3.22 echo hi` dua kali. Kemudian taip `docker images`.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ count: { containers: 2 }, lastTyped: '^docker (images|image ls)' }} hints={['Taip docker run alpine:3.22 echo hi dua kali.', 'Kemudian taip docker images']} success="Dua bekas, tapi masih satu pek alpine. Pek digunakan semula." />
+
+<Hint>Anak panah atas bawa balik arahan terakhir anda.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam `index.html` dalam lunch1. Kemudian anda tengok dalam lunch2. Adakah `index.html` di situ?
+
+<Interactive name="Choice" options={[{ label: 'Ya. lunch2 ada salinan sendiri.', correct: true, why: 'Setiap bekas ada ruang sendiri. Perubahan kekal dalam satu bekas.' }, { label: 'Tidak. Kedua-dua bekas kongsi fail.', why: 'Bekas tak pernah kongsi perubahan. Setiap satu bertutup.' }, { label: 'Tidak. Pek pun hilang fail itu.', why: 'Pek itu beku. Apa-apa dalam bekas tak boleh mengubahnya.' }]} />
+</Card>
+
+<Card id="check-proof" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run -d --name lunch1 nginx:1.30-alpine', 'docker run -d --name lunch2 nginx:1.30-alpine', 'docker exec lunch1 rm /usr/share/nginx/html/index.html', 'docker exec lunch1 ls /usr/share/nginx/html', 'docker exec lunch2 ls /usr/share/nginx/html']} label="index.html dipadam dalam lunch1. lunch1 kini senaraikan 50x.html sahaja. lunch2 masih senaraikan 50x.html dan index.html." />
+
+Buktinya! Halaman itu hilang dari lunch1 sahaja. lunch2 masih ada. `docker exec` jalankan arahan dalam bekas. Lebih lagi dalam pelajaran 6.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan pek beku (image) dengan bekas makanan (container).
+</Card>
+
+<Card id="deeper" type="deeper">
+Container ialah image ditambah satu lapisan nipis yang boleh ditulis di atasnya. Setiap perubahan masuk ke lapisan itu. Buang bekas, lapisannya pun hilang. Image di bawahnya tak terusik.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l02-rep" steps={[{ id: 'two', text: 'Isi dua bekas daripada satu pek.', command: 'docker run alpine:3.22 echo hi' }, { id: 'again', text: 'Jalankan arahan yang sama sekali lagi.' }, { id: 'boxes', text: 'Lihat kedua-dua bekas.', command: 'docker ps -a' }, { id: 'pack', text: 'Lihat satu pek alpine sahaja.', command: 'docker images' }]} success="Satu pek, banyak bekas." />
+</Card>

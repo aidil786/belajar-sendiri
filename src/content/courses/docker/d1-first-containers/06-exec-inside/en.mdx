@@ -1,0 +1,75 @@
+---
+id: docker-d1-l06
+world: 1
+title: Step inside with exec
+summary: "You will learn: to run commands inside a running container, and to step in with a shell."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, CommandBuilder, SwipeJudge, Mission]
+needs: [docker-d1-l05]
+scenario: d1-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker exec", url: "https://docs.docker.com/reference/cli/docker/container/exec/" }
+  - { label: "docker cp", url: "https://docs.docker.com/reference/cli/docker/container/cp/" }
+---
+
+<Card id="hook" type="hook">
+web serves a welcome page. You want to see the files behind it. But the lunchbox is sealed. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Run a command inside web', correct: true, why: 'Docker can reach into a running box for you. See the next card!' }, { label: 'Look in a folder on your laptop', why: 'The files live inside the box, not on your laptop.' }, { label: 'Delete web and start again', why: 'No need to break it. You can peek inside.' }]} />
+</Card>
+
+<Card id="see-exec" type="see">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker exec web ls /usr/share/nginx/html', 'docker exec web cat /etc/os-release']} label="docker exec web ls lists two pages: 50x.html and index.html. docker exec web cat /etc/os-release shows the box runs Alpine Linux." />
+
+**docker exec** runs one command inside a running box. It is like reaching in through a side door. Then you are back on your laptop.
+</Card>
+
+<Card id="try-exec" type="try">
+List the files in web's page folder, `/usr/share/nginx/html`.
+
+<Interactive name="KitchenSim" scenario="d1-web" goal={{ lastTyped: '^docker (container )?exec (-\\w+ )*web ls( -\\w+)* /usr/share/nginx/html/?$' }} hints={['Type docker exec web ls /usr/share/nginx/html']} success="Two pages live in there: 50x.html and index.html." />
+
+<Hint>`docker exec web ls /usr/share/nginx/html`</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Want to look around for longer? Build the command for a shell inside. **-it** gives you a keyboard and a screen in there.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'exec', means: 'run something in a running box' }, { text: '-it', means: 'with a keyboard and a screen' }, { text: 'web', means: 'this box' }, { text: 'sh', means: "the box's own command line" }]} decoys={[{ text: 'run', means: 'fill a brand-new box' }]} success="That opens a shell inside web." />
+</Card>
+
+<Card id="try-shell" type="try">
+Step inside web. Look around with `ls`. Type `exit` to come back.
+
+<Interactive name="KitchenSim" scenario="d1-web" goal={{ typed: '^docker (container )?exec -(it|ti) web (/bin/)?sh$', lastTyped: '^exit$' }} hints={['Type docker exec -it web sh', 'Inside, type ls. Then type exit.']} success="In and out again. web is still running." />
+</Card>
+
+<Card id="predict" type="predict">
+Inside web you typed `exit`. Is web still running?
+
+<Interactive name="Choice" options={[{ label: 'Yes. exit closes your shell, not the box.', correct: true, why: 'web runs nginx. Your shell was only a visitor.' }, { label: 'No. exit stops the box.', why: 'exit ends your visit. nginx keeps cooking.' }, { label: 'No. exec boxes always stop after.', why: 'exec never stops the box. docker ps still says Up.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good use of exec, or not quite? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Peek at a file to check it', good: true, why: 'Perfect: look, then leave.' }, { text: 'See which Linux a box runs', good: true, why: 'cat /etc/os-release tells you.' }, { text: 'Fix the app by editing files inside the box', good: false, why: 'Changes vanish when the box is replaced. Fix the image instead (World D2).' }, { text: 'exec into a stopped box', good: false, why: 'exec needs a running box. Start it first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now look inside a running container.
+</Card>
+
+<Card id="deeper" type="deeper">
+exec into a stopped box fails with `container ... is not running`. Some small images have no shell, so `sh` is not found (World D2). `docker cp` copies a file out of a box: `docker cp web:/etc/nginx/nginx.conf .`
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l06-rep" steps={[{ id: 'web', text: 'Start web in the background.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'in', text: 'Step inside.', command: 'docker exec -it web sh' }, { id: 'look', text: 'Look around, then leave.', command: 'ls /usr/share/nginx/html' }, { id: 'out', text: 'Type exit, then tidy up.', command: 'docker rm -f web' }]} success="You stepped inside a real container." />
+</Card>

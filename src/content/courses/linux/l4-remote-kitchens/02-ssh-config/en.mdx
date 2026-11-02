@@ -1,0 +1,67 @@
+---
+id: linux-l4-l02
+world: 4
+title: "Short names: ~/.ssh/config"
+summary: "You will learn: to call a server by a short name with your own speed dial."
+minutes: 3
+xp: 15
+interactives: [Transcript, SpotLines, LinuxSim, Choice, SwipeJudge, Mission]
+needs: [linux-l4-l01]
+scenario: linux-l4-sshconfig
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: ssh_config", url: "https://man.openbsd.org/ssh_config" }
+  - { label: "OpenSSH: ssh -G", url: "https://man.openbsd.org/ssh#G" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop (lab)" label="ssh you@10.0.0.5 hostname prints kedai. ssh kedai hostname prints kedai too."
+  lines={[{ cmd: 'ssh you@10.0.0.5 hostname' }, { out: 'kedai' }, { cmd: 'ssh kedai hostname' }, { out: 'kedai' }]} />
+
+Same kitchen, two ways to call. Who wants to remember numbers? The second one uses a speed dial.
+</Card>
+
+<Card id="see-config" type="see">
+Your speed dial is <Term id="ssh-config">~/.ssh/config</Term>. `Host` is the short name. Tap the line with the real address.
+
+<Interactive name="SpotLines" lines={[{ text: 'Host kedai' }, { text: '    HostName 10.0.0.5', target: true }, { text: '    User you' }, { text: '    IdentityFile ~/.ssh/id_ed25519' }]} prompt="Tap the real address." success="HostName is the real number. User is who you log in as. IdentityFile is which key." />
+</Card>
+
+<Card id="try-fix" type="try">
+This speed dial misses your user name. And anyone may change it! Add the line `    User you`, then `chmod 600` the file.
+
+<Interactive name="LinuxSim" scenario="linux-l4-sshconfig" goal={{ fileContains: { '~/.ssh/config': 'User you' }, fileMode: { '~/.ssh/config': '600' } }} hints={["echo '    User you' >> ~/.ssh/config", 'chmod 600 ~/.ssh/config']} solution={["echo '    User you' >> ~/.ssh/config", 'chmod 600 ~/.ssh/config']} success="A full speed-dial entry, readable only by you." />
+</Card>
+
+<Card id="see-g" type="see">
+<Interactive name="Transcript" title="laptop (lab)" label="ssh -G kedai shows what ssh will use: user you, hostname 10.0.0.5, port 22, identityfile ~/.ssh/id_ed25519."
+  lines={[{ cmd: "ssh -G kedai | grep -E '^(hostname|user|port|identityfile) '" }, { out: 'user you\nhostname 10.0.0.5\nport 22\nidentityfile ~/.ssh/id_ed25519' }]} />
+
+`ssh -G` shows what ssh will really use, without calling. Great for checking typos.
+</Card>
+
+<Card id="predict" type="predict">
+Your config file is `-rw-rw-rw-` (666): anyone can change it. What does ssh do?
+
+<Interactive name="Choice" options={[{ label: 'It refuses: Bad owner or permissions', correct: true, why: 'Someone could point kedai at a fake server. chmod 600 fixes it.' }, { label: 'It works as normal', why: 'ssh checks who can change the file first.' }, { label: 'It deletes the file', why: 'ssh never deletes it. It just refuses to use it.' }]} />
+</Card>
+
+<Card id="check" type="check">
+True or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The short name kedai only works on this laptop.', good: true, why: 'It lives in your own ~/.ssh/config.' }, { text: 'scp and rsync can use the short name too.', good: true, why: 'They call through ssh, so they read the speed dial.' }, { text: 'Port 22 must always be written in the file.', good: false, why: '22 is the default. Add Port only for another number.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now call a server by a short name.
+</Card>
+
+<Card id="deeper" type="deeper">
+More lines: `Port 2222` for another extension, `Host *` for settings that fit every server. The real error for a loose file is `Bad owner or permissions on /home/you/.ssh/config`. The lab outputs came from real Debian 13 machines.
+
+<Interactive name="Mission" id="linux-l4-l02-rep" steps={[{ id: 'add', text: 'Add your VM to ~/.ssh/config with Host, HostName and User.' }, { id: 'lock', text: 'Lock the file.', command: 'chmod 600 ~/.ssh/config' }, { id: 'check', text: 'Check what ssh will use.', command: 'ssh -G myvm | head' }, { id: 'call', text: 'Call it by name.', command: 'ssh myvm' }]} success="Your own speed dial works." />
+</Card>

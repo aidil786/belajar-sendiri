@@ -1,0 +1,62 @@
+---
+id: git-w08-l06
+world: 8
+title: Asas CodeQL
+summary: "Anda akan belajar: cara CodeQL cari kod berisiko sebelum penyerang jumpa."
+minutes: 4
+xp: 20
+interactives: [SpotLines, SortCards, Choice, OrderList]
+needs: [git-w08-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About code scanning with CodeQL", url: "https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql" }
+  - { label: "About code scanning", url: "https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning" }
+---
+
+<Card id="hook" type="hook">
+Laman log masuk anda berfungsi. Ujian pun lulus. Tapi satu baris benarkan penipu baca data setiap pengguna. Bolehkah anda jumpa baris itu dalam 500 fail?
+</Card>
+
+<Card id="see-codeql" type="see">
+**<Term id="codeql">CodeQL</Term>** ialah detektif kod dari GitHub. Ia jadikan kod anda sebagai data. Kemudian ia tanya soalan. Contohnya: "bolehkah teks yang ditaip sampai ke pangkalan data?"
+</Card>
+
+<Card id="try-spot" type="try">
+Jadi detektif. Ketik baris yang lekatkan teks ditaip terus ke soalan pangkalan data.
+
+<Interactive name="SpotLines" lines={[{ text: 'const name = form.name;' }, { text: 'db.ask("name = " + name);', target: true }, { text: 'db.ask("name = ?", [name]);' }, { text: 'showWelcome(name);' }]} prompt="Ketik baris yang lekatkan teks ditaip ke dalam query." success="Jumpa! Baris dengan ? ialah cara selamat. CodeQL memburu jenis yang berisiko." />
+
+<Hint>Cari tanda + yang lekatkan nama itu pada soalan.</Hint>
+</Card>
+
+<Card id="see-scanning" type="see">
+CodeQL berjalan sebagai **<Term id="code-scanning">code scanning</Term>** (imbasan kod). Hidupkan, dan GitHub Actions semak kod anda setiap push dan pull request. Masalah muncul sebagai amaran pada baris yang tepat.
+</Card>
+
+<Card id="try-sort" type="try">
+Tiga pengawal, tiga tugas. Siapa tangkap apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'codeql', label: 'CodeQL' }, { id: 'secrets', label: 'Secret scanning' }, { id: 'dependabot', label: 'Dependabot' }]} items={[{ label: 'Teks ditaip dilekatkan ke soalan pangkalan data', bucket: 'codeql', why: 'Corak berisiko dalam kod anda sendiri.' }, { label: 'Kunci API ditampal dalam app.js', bucket: 'secrets', why: 'Rahsia yang bocor.' }, { label: 'Pakej dengan lubang yang diketahui', bucket: 'dependabot', why: 'Kod pinjaman yang perlu dikemas kini.' }, { label: 'Kata laluan dalam commit lama', bucket: 'secrets', why: 'Ia baca commit lama juga.' }, { label: 'Kod yang buka apa saja laluan fail yang pengguna taip', bucket: 'codeql', why: 'Satu lagi corak berisiko dalam kod anda sendiri.' }]} success="Semua siap! Kod, rahsia dan pakej anda: semuanya dijaga." />
+</Card>
+
+<Card id="predict" type="predict">
+CodeQL tanda satu baris dalam pull request anda. Apa sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Baca amaran, baiki kod, push semula', correct: true, why: 'Imbasan berjalan semula. Kod yang dibaiki tak dapat amaran.' }, { label: 'Matikan CodeQL', why: 'Lubang itu kekal. Anda cuma tak nampak lagi.' }, { label: 'Merge saja. Ia cuma robot.', why: 'Robot boleh silap, jadi semak dulu. Kalau ia silap, tolak amaran itu dengan sebab.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun kitaran code scanning, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Hidupkan code scanning', 'Buka pull request', 'CodeQL semak kod baru', 'Anda baca amaran dan baiki baris itu']} label="Langkah pertama di atas" success="Itulah kitarannya. Setiap pull request disemak semula." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar CodeQL memburu kod berisiko.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pepijat dalam kad detektif tadi dipanggil SQL injection. CodeQL faham banyak bahasa, contohnya JavaScript, Python, Java, Go, C# dan Ruby. Default setup pilih tetapan untuk anda. Advanced setup tambah fail workflow yang anda boleh ubah.
+</Card>

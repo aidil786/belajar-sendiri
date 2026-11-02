@@ -1,0 +1,78 @@
+---
+id: cicd-c3-boss
+world: 3
+title: "Jumaat malang"
+summary: "Anda akan belajar: hantar canary, kesan lonjakan ralat, dan rollback sebelum ramai pengguna perasan."
+minutes: 6
+xp: 50
+interactives: [Choice, ConveyorBelt, TrafficDial, OrderList, Transcript]
+needs: [cicd-c3-l11]
+scenario: c3-boss-canary
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Cloudflare: gradual deployments", url: "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/" }
+  - { label: "Cloudflare: rollbacks", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+---
+
+<Card id="hook" type="hook">
+Jumaat, 4:55 petang. Versi 2.3.0 kedai dah ditag. Ketua anda dalam kapal terbang, dan anda bertugas. Misi bos: hantar dengan selamat, atau undur dengan pantas. Macam mana anda hantar?
+
+<Interactive name="Choice" options={[{ label: 'Canary: 5% pengguna dulu', correct: true, why: 'Kalau teruk, hanya sedikit pengguna terkena.' }, { label: 'Semua orang serentak. Hari Jumaat!', why: 'Satu bug akan kena setiap pelanggan sebelum hujung minggu.' }, { label: 'Tutup kedai, kemudian tukar', why: 'Itu recreate. Tak perlu henti di sini.' }]} />
+</Card>
+
+<Card id="try-ship" type="try">
+Bilik 1: tag itu mulakan workflow canary. Ia hantar 5% pengguna ke versi 2.3.0, kemudian rasa `/health`. Run.
+
+<Interactive name="ConveyorBelt" scenario="c3-boss-canary" label="Tag v2.3.0 deploy canary kepada 5% pengguna, kemudian smoke test semak /health." />
+
+<Hint>Pilih tag itu, kemudian tekan Run.</Hint>
+</Card>
+
+<Card id="try-dial" type="try">
+Bilik 2: canary dah live pada 5%. Perhati graf. Naik hanya bila garis versi 2 tenang. Rollback sebelum 150 pengguna kena bug.
+
+<Interactive name="TrafficDial" scenario="c3-boss-canary" task={{ type: 'rollback', maxHurt: 150 }} success="Dah rollback! Kebanyakan pengguna tak nampak bug itu." />
+
+<Hint>Garis merah melonjak atas garis amaran? Tekan Roll back serta-merta.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+Smoke test lulus, tapi pengguna kena ralat. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Ia rasa /health sahaja. Bug itu dalam checkout.', correct: true, why: 'Satu sudu tak boleh rasa setiap hidangan. Canary tangkap yang selebihnya.' }, { label: 'Smoke test itu rosak', why: 'Ia buat kerjanya: /health memang okey.' }, { label: 'Canary selalu terlepas bug', why: 'Canary anda tangkap bug itu, dengan hanya 5% pengguna.' }]} />
+</Card>
+
+<Card id="try-rollback" type="try">
+Bilik 3: kekalkan undur itu. Workflow rollback, yang dijalankan secara manual, jadi merah. Baca ralat sebenar. Baiki baris kuning.
+
+<Interactive name="ConveyorBelt" scenario="c3-boss-rollback" task={{ type: 'green' }} fixes={[
+  { label: 'Tambah environment: production', text: '    runs-on: ubuntu-latest\n    environment: production' },
+  { label: 'Tampal token dalam fail', text: '    runs-on: ubuntu-latest\n    env:\n      CLOUDFLARE_API_TOKEN: paste-token-here', why: 'Jangan letak kunci dalam fail. Lagipun langkah itu masih baca secret yang kosong.' },
+  { label: 'Tambah permissions: write-all', text: '    runs-on: ubuntu-latest\n    permissions: write-all', why: 'Permissions token bukan secret. Kotak rempah tetap berkunci.' }]}
+  success="Hijau! Versi 2.2 layan semua orang semula, dan /health okey." />
+
+<Hint>Ingat pelajaran 7: secret hanya sampai kepada job yang sebut environment-nya.</Hint>
+</Card>
+
+<Card id="check-next" type="check">
+Tulis pelan untuk lain kali. Susun apa yang pipeline buat.
+
+<Interactive name="OrderList" items={['Tag hantar canary kepada 5% pengguna', 'Smoke test rasa /health dan checkout', 'Perhati kadar ralat selama 15 minit', 'Ralat melonjak: job rollback berjalan', 'Satu makluman dibuka, dengan pautan ke larian']} label="Langkah pertama di atas" success="Itulah Jumaat yang anda boleh tidur lena." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar pada hari Jumaat dan undur dalam beberapa minit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di Cloudflare, canary ialah gradual deployment. Arahan ini buatnya secara manual. Wrangler cetak id setiap versi bila anda muat naik.
+
+<Interactive name="Transcript" title="bash" label="Muat naik versi, beri 5% trafik, kemudian rollback ke versi sebelumnya." lines={[{ cmd: 'npx wrangler versions upload' }, { cmd: 'npx wrangler versions deploy NEW_ID@5% OLD_ID@95%' }, { cmd: 'npx wrangler rollback --message "Bad Friday"' }]} />
+
+Latihan sebenar (pilihan): berlatih pada Worker ujian percuma, bukan milik pasukan anda.
+</Card>

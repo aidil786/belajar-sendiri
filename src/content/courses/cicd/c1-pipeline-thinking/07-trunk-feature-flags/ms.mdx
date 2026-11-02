@@ -1,0 +1,69 @@
+---
+id: cicd-c1-l07
+world: 1
+title: Kerja trunk-based dan feature flag
+summary: "Anda akan belajar: cara merge kecil setiap hari dan feature flag pastikan main sentiasa sedia dihantar."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, ConveyorBelt, SortCards, SwipeJudge]
+needs: [cicd-c1-l06]
+scenario: c1-flag-matrix
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Running variations of jobs (matrix)", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations" }
+  - { label: "Managing a merge queue", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+---
+
+<Card id="hook" type="hook">
+Dunia 6 kursus Git ada pelajaran [Berasaskan trunk dan feature flag](/ms/git/team-workflows/trunk-based/). Kini pasukan anda merge ke main 20 kali sehari. Apa yang mesti kekal benar tentang main?
+
+<Interactive name="Choice" options={[{ label: 'Ia sentiasa lulus tali sawat, jadi selamat dihantar', correct: true, why: 'Ya. Mana-mana merge boleh jadi yang dihantar seterusnya.' }, { label: 'Ia tak pernah ada kod separuh siap', why: 'Kod separuh siap tak apa, asalkan ia ditutup.' }, { label: 'Hanya seorang boleh merge', why: 'Semua orang merge. Tali sawat semak setiap satu.' }]} />
+</Card>
+
+<Card id="see-day" type="see">
+<Interactive name="TimelineTap" events={[{ when: '9:05', title: 'Aina merge satu baikan kecil', text: 'Branch dia hidup dua jam. Tali sawat jalan. Hijau. Live pada 9:20.' }, { when: '11:30', title: 'Ben merge separuh checkout', text: 'Ia ditutup. Tali sawat jalan. Hijau. Pengguna tak nampak apa-apa yang baru.' }, { when: '14:00', title: 'Staf cuba dulu', text: 'Ben hidupkan untuk staf sahaja. Tak perlu deploy baru.' }, { when: '16:00', title: 'Semua orang dapat', text: 'Suis dihidupkan untuk semua pengguna. Main sedia sepanjang hari.' }]} />
+
+Merge kecil, banyak kali sehari, setiap satu disemak oleh tali sawat. Itulah **<Term id="trunk-based" course="git">trunk-based development</Term>** (pembangunan berasaskan trunk) dengan CI.
+</Card>
+
+<Card id="try-predict" type="predict">
+Pull request Ben siapkan checkout baru. Tali sawat uji dengan suis tutup dan buka.
+
+<Interactive name="ConveyorBelt" scenario="c1-flag-matrix" task={{ type: 'predict' }} success="Lorong “on” merah. Ben baiki dulu sebelum sesiapa hidupkan suis." />
+
+**<Term id="feature-flag" course="git">Feature flag</Term>** (suis ciri) macam kad menu yang ditutup: dah masak, tapi tersorok. Uji kedua-dua belah.
+</Card>
+
+<Card id="try-sort" type="try">
+Sedia untuk merge ke main hari ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge hari ini' }, { id: 'wait', label: 'Belum lagi' }]} items={[{ label: 'Checkout separuh siap, ditutup, ujian hijau', bucket: 'merge', why: 'Pengguna tak nampak, dan tali sawat hijau.' }, { label: 'Baikan salah taip yang kecil, ujian hijau', bucket: 'merge', why: 'Kecil dan dah disemak. Merge.' }, { label: 'Ciri dah siap, tapi satu ujian gagal', bucket: 'wait', why: 'Merah bermaksud berhenti. Baiki dulu.' }, { label: 'Halaman separuh siap tanpa suis', bucket: 'wait', why: 'Pengguna akan nampak halaman rosak. Tambah flag dulu.' }]} success="Siap! Yang hijau dan selamat masuk. Yang merah tunggu." />
+
+<Hint>Tanya: tali sawat hijau tak? Boleh pengguna nampak kerja separuh siap?</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Checkout baru dah hidup untuk semua. Bayaran mula gagal. Apa cara paling cepat dan selamat?
+
+<Interactive name="Choice" options={[{ label: 'Matikan flag itu', correct: true, why: 'Beberapa saat, tanpa build baru dan tanpa deploy. Kemudian baiki dengan tenang.' }, { label: 'Revert, kemudian tunggu seluruh tali sawat', why: 'Itu pun boleh, tapi ambil masa satu run pipeline penuh.' }, { label: 'Padam branch main', why: 'Jangan! Itu rosakkan semuanya untuk semua orang.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat trunk yang baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jalankan seluruh tali sawat pada setiap merge ke main', good: true, why: 'Setiap merge boleh dihantar, jadi semak setiap merge.' }, { text: 'Simpan flag selama-lamanya, kalau-kalau perlu', good: false, why: 'Flag lama gandakan laluan untuk diuji. Buang bila dah siap.' }, { text: 'Hidupkan flag untuk staf dulu', good: true, why: 'Pasukan anda jumpa pepijat sebelum pengguna.' }, { text: 'Merge pull request merah supaya kerja terus bergerak', good: false, why: 'Nanti main merah, dan tiada siapa boleh hantar.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pastikan main sentiasa sedia dihantar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Repo yang sibuk boleh tambah merge queue. Ia uji setiap pull request dengan main terbaru, kemudian merge. Setiap flag tambah laluan untuk diuji. Simpan sedikit, dan buang yang lama. Hidupkan ciri ialah release, bukan deploy (Dunia C3).
+
+Latihan sebenar (pilihan): beri job ujian satu matrix dengan flag anda `off` dan `on`.
+</Card>

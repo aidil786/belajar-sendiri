@@ -1,0 +1,72 @@
+---
+id: iac-t2-l02
+world: 2
+title: tfvars files
+summary: "You will learn: to keep variable values in files, and which value wins."
+minutes: 3
+xp: 15
+interactives: [Choice, TofuSim, OrderList, SwipeJudge]
+needs: [iac-t2-l01]
+scenario: t2-tfvars
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: variable definition precedence", url: "https://opentofu.org/docs/language/values/variables/#variable-definition-precedence" }
+---
+
+<Card id="hook" type="hook">
+You type `-var shop=…` every time you build. One day you will forget it. Where can the values live?
+
+<Interactive name="Choice" options={[{ label: 'In a values file next to the blueprint', correct: true, why: 'Write them once. OpenTofu reads the file.' }, { label: 'In your head', why: 'Heads forget. Files do not.' }, { label: 'As defaults in variables.tf, for every shop', why: 'A default fits one shop. Each shop needs its own values.' }]} />
+</Card>
+
+<Card id="see-auto" type="see">
+`terraform.tfvars` already holds the shop name. Type `tofu plan`. No question this time.
+
+<Interactive name="TofuSim" scenario="t2-tfvars" open="terraform.tfvars" goal={{ planSummary: { add: 1 }, typed: '^tofu plan' }} hints={['Type tofu plan and press Enter.']} success="No question. The value came from terraform.tfvars." />
+
+A **<Term id="tfvars">.tfvars file</Term>** holds values. `terraform.tfvars` loads by itself.
+</Card>
+
+<Card id="predict" type="predict">
+`penang.tfvars` holds the Penang shop. You type `tofu plan -var-file=penang.tfvars`. Which shop name wins?
+
+```hcl
+shop   = "Kedai Kancil Penang"
+tables = 8
+```
+
+<Interactive name="Choice" options={[{ label: 'Kedai Kancil Penang', correct: true, why: 'A file you name on the command line beats terraform.tfvars.' }, { label: 'Kedai Kancil', why: 'terraform.tfvars loads first. The file you name comes later and wins.' }, { label: 'OpenTofu asks which one', why: 'It never asks. A clear order decides.' }]} />
+</Card>
+
+<Card id="try-penang" type="try">
+Build the Penang sign: `tofu apply -var-file=penang.tfvars`, then `yes`.
+
+<Interactive name="TofuSim" scenario="t2-tfvars" open="penang.tfvars" goal={{ fileContains: { 'sign.txt': 'Penang' } }} hints={['Type tofu apply -var-file=penang.tfvars', 'Read the plan: Penang, 8 tables. Then type yes.']} success="Kedai Kancil Penang: 8 tables. One blueprint, one file per shop." />
+
+<Hint>`tofu apply -var-file=penang.tfvars`, then `yes`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Who wins? Put the weakest at the top. Later ones beat earlier ones.
+
+<Interactive name="OrderList" items={['default in variables.tf', 'TF_VAR_shop, an environment variable', 'terraform.tfvars', 'files ending in .auto.tfvars', '-var or -var-file on the command line']} label="Weakest at the top" success="Command line beats files. Files beat defaults." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Safe to commit to Git?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'penang.tfvars with the shop name and 8 tables', good: true, why: 'Plain settings. Teammates need them.' }, { text: 'prod.tfvars with the database password', good: false, why: 'Secrets never go in Git. Pass them in another way (World T3 and T4).' }, { text: 'A .gitignore line that keeps secret.tfvars out', good: true, why: 'Git will never pick it up by accident.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep values in .tfvars files and know which one wins.
+</Card>
+
+<Card id="deeper" type="deeper">
+Any file ending in `.auto.tfvars` loads by itself too, in name order. `export TF_VAR_tables=6` gives `var.tables` a value from your shell. In a pipeline, `-input=false` stops OpenTofu from asking. A missing value then fails at once, instead of waiting forever.
+</Card>

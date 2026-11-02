@@ -1,0 +1,77 @@
+---
+id: aws-a1-l07
+world: 1
+title: The AWS CLI and profiles
+summary: "You will learn: how the aws command signs in, and how profiles keep accounts apart."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SpotLines, CommandBuilder, SortCards, Mission]
+needs: [aws-a1-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Install the AWS CLI", url: "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" }
+  - { label: "IAM Identity Center with the AWS CLI", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html" }
+  - { label: "aws login (console credentials)", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html" }
+  - { label: "aws sts get-caller-identity", url: "https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html" }
+  - { label: "Environment variables (AWS_PROFILE)", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil has two accounts: a practice one and the real shop. He types a delete command. How does `aws` know which account he means?
+
+<Interactive name="Choice" options={[{ label: 'From the profile he picked', correct: true, why: 'A profile names the account, the role and the Region.' }, { label: 'It guesses the newest account', why: 'The CLI never guesses. It uses a profile, or the default one.' }, { label: 'It asks AWS which one is safer', why: 'AWS only sees the keys you send. Pick on purpose.' }]} />
+</Card>
+
+<Card id="see-whoami" type="see">
+<Interactive name="Transcript" title="bash" label="aws sts get-caller-identity prints the user id, the account number and the ARN of the IAM user DevAdmin." lines={[{ cmd: 'aws sts get-caller-identity' }, { out: '{\n    "UserId": "AIDASAMPLEUSERID",\n    "Account": "123456789012",\n    "Arn": "arn:aws:iam::123456789012:user/DevAdmin"\n}', color: 'green' }]} />
+
+The first habit: ask "who am I?" Read the Arn line. This is the user DevAdmin, in account 123456789012.
+</Card>
+
+<Card id="see-config" type="see">
+A **<Term id="cli-profile">profile</Term>** is a named set of settings in `~/.aws/config`. Tap the line that picks the account.
+
+<Interactive name="SpotLines" lines={[{ text: '[profile my-dev-profile]' }, { text: 'sso_session = my-sso' }, { text: 'sso_account_id = 123456789011', target: true }, { text: 'sso_role_name = readOnly' }, { text: 'region = us-west-2' }, { text: 'output = json' }, { text: '[sso-session my-sso]' }, { text: 'sso_region = us-east-1' }, { text: 'sso_start_url = https://my-sso-portal.awsapps.com/start' }]} prompt="Tap the account line." success="That number is the account. The role line says which badge to wear." />
+</Card>
+
+<Card id="try-login" type="try">
+Build the command that signs in with that profile.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws', means: 'talk to AWS' }, { text: 'sso login', means: 'sign in at the front desk' }, { text: '--profile my-dev-profile', means: 'with these settings' }]} decoys={[{ text: 'configure set aws_secret_access_key', means: 'stores a long-lived key: what we avoid' }]} success="One sign-in, then short-lived badges." />
+
+<Hint>Tool, then sso login, then the profile.</Hint>
+</Card>
+
+<Card id="see-login" type="see">
+<Interactive name="Transcript" title="bash" label="aws sso login opens the browser, then says it logged into the start URL." lines={[{ cmd: 'aws sso login --profile my-dev-profile' }, { out: 'SSO authorization page has automatically been opened in your default browser.\nFollow the instructions in the browser to complete this authorization request.' }, { out: 'Successfully logged into Start URL: https://my-sso-portal.awsapps.com/start', color: 'green' }]} />
+
+The browser asks you to approve, with MFA. The CLI then keeps short-lived badges in a cache. No key is saved in a file.
+</Card>
+
+<Card id="predict" type="predict">
+This terminal has `AWS_PROFILE=shop` set. Kancil runs a command with `--profile practice`. Which account does it use?
+
+<Interactive name="Choice" options={[{ label: 'practice: the command line wins', correct: true, why: 'Options you type override environment variables.' }, { label: 'shop: the variable wins', why: 'The variable is only a default. --profile overrides it.' }, { label: 'Both accounts at once', why: 'One command, one profile.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Some files are settings. Some are secrets. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'setting', label: 'A setting (fine to show)' }, { id: 'secret', label: 'A secret (never share)' }]} items={[{ label: 'region = ap-southeast-5', bucket: 'setting', why: 'Just which mall to use.' }, { label: 'output = json', bucket: 'setting', why: 'Just how answers look.' }, { label: 'aws_secret_access_key = …', bucket: 'secret', why: 'Anyone with it can act as you.' }, { label: 'Sign-in tokens in ~/.aws/sso/cache', bucket: 'secret', why: 'A live badge. Treat it like a key.' }]} success="Settings can travel. Secrets stay home." />
+</Card>
+
+<Card id="win" type="win">
+You can now sign in with a profile and check who you are.
+</Card>
+
+<Card id="deeper" type="deeper">
+Not using Identity Center? Since AWS CLI 2.32.0, `aws login` uses your console sign-in instead. It refreshes short-lived badges for up to 12 hours. No access keys needed.
+
+Real rep (no resources, no cost; budget alarm already set):
+
+<Interactive name="Mission" id="aws-a1-l07-rep" steps={[{ id: 'install', text: 'Install AWS CLI version 2 from the official guide.' }, { id: 'version', text: 'Check it works.', command: 'aws --version' }, { id: 'setup', text: 'Identity Center: set up a profile.', command: 'aws configure sso' }, { id: 'login', text: 'Or, with an IAM user: sign in with your console login.', command: 'aws login' }, { id: 'who', text: 'Ask who you are.', command: 'aws sts get-caller-identity' }, { id: 'list', text: 'List your profiles.', command: 'aws configure list-profiles' }]} success="Your terminal talks to AWS, with no stored keys." />
+</Card>

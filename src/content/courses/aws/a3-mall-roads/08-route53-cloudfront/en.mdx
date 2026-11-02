@@ -1,0 +1,67 @@
+---
+id: aws-a3-l08
+world: 3
+title: "Route 53 and CloudFront"
+summary: "You will learn: how shoppers find you by name, and how kiosks near them serve your pages fast."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, SortCards, SpotLines, IdleBill]
+needs: [aws-a3-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon Route 53: What is it?", url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html" }
+  - { label: "Amazon CloudFront: What is it?", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html" }
+  - { label: "CloudFront: Invalidate files", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html" }
+  - { label: "CloudFront: Restrict access to an S3 origin", url: "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" }
+  - { label: "AWS CLI: aws cloudfront create-invalidation", url: "https://docs.aws.amazon.com/cli/latest/reference/cloudfront/create-invalidation.html" }
+---
+
+<Card id="hook" type="hook">
+Your shop's address is `203.0.113.9`. Nobody remembers numbers. And shoppers in Kota Kinabalu wait longer than those next door. What helps first?
+
+<Interactive name="Choice" options={[{ label: 'A name in the mall directory', correct: true, why: 'Yes. Shoppers type kedai.example. The directory finds the number.' }, { label: 'Print the number on flyers', why: 'Numbers change when servers change. Names stay.' }, { label: 'A bigger server', why: 'Bigger does not make the trip shorter.' }]} />
+</Card>
+
+<Card id="see-trip" type="see">
+**<Term id="route53">Route 53</Term>** is AWS's DNS: the mall directory. Put a shopper's trip in order.
+
+<Interactive name="OrderList" items={['The shopper types kedai.example', 'Route 53 answers with an address', 'The browser asks the nearest kiosk', 'The kiosk hands over the page']} label="First step at the top" success="Name, address, nearest kiosk, page. The shopper never sees a number." />
+</Card>
+
+<Card id="see-kiosk" type="see">
+**<Term id="cloudfront">CloudFront</Term>** puts kiosks near shoppers. Each kiosk keeps copies of your pages. Your private S3 bucket stays the storeroom behind them. Who serves each visit?
+
+<Interactive name="SortCards" buckets={[{ id: 'kiosk', label: 'The nearby kiosk (a copy)' }, { id: 'origin', label: 'Your storeroom (the original)' }]} items={[{ label: 'The first shopper in a new city', bucket: 'origin', why: 'The kiosk has no copy yet, so it fetches one.' }, { label: 'The second shopper there, a minute later', bucket: 'kiosk', why: 'The kiosk kept a copy. Fast!' }, { label: 'A page you just told the kiosks to forget', bucket: 'origin', why: 'Forgotten copies get fetched fresh.' }]} success="Copies near shoppers, the original safe in back." />
+</Card>
+
+<Card id="predict" type="predict">
+You change the menu page. Shoppers still see yesterday's menu. Why?
+
+<Interactive name="Choice" options={[{ label: 'The kiosks still hold the old copy', correct: true, why: 'Copies live until they expire. Or you tell the kiosks to forget them.' }, { label: 'S3 lost your upload', why: 'The storeroom has it. The kiosks have not asked again yet.' }, { label: 'Route 53 points to the wrong place', why: 'The name works. Only the copy is old.' }]} />
+</Card>
+
+<Card id="check-cli" type="check">
+Telling kiosks to forget is an **invalidation**. Here is the official example's answer, cut short. Tap the line that says it has started.
+
+<Interactive name="SpotLines" prompt="Tap the line that shows its status." success="InProgress. Soon every kiosk drops the old copy." lines={[{ text: '$ aws cloudfront create-invalidation --distribution-id EDFDVBD6EXAMPLE --paths "/example-path/example-file.jpg" "/example-path/example-file2.png"' }, { text: '"Invalidation": {' }, { text: '    "Id": "I1JLWSDAP8FU89",' }, { text: '    "Status": "InProgress",', target: true }, { text: '    "CreateTime": "2019-12-05T18:24:51.407Z",' }]} />
+</Card>
+
+<Card id="check-bill" type="check">
+Names and copies are cheap, but not all free. Judge each one.
+
+<Interactive name="IdleBill" items={['hostedZone', 's3Objects', 'securityGroup', 'iam']} ordered />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how shoppers find you, and why a copy can be old.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a VPC is not land. You can make several, and none costs rent. Wings (Availability Zones) are separate buildings, kilometres apart. And a security group guards each server, not a shared door.
+
+Real rep (optional): follow the CloudFront guide for a private S3 bucket.
+</Card>

@@ -1,0 +1,71 @@
+---
+id: k8s-k7-l03
+world: 7
+title: "Sync: dari Git ke kluster"
+summary: "Anda akan belajar: apa sync buat, dan cara baca dua lampu status Argo CD."
+minutes: 4
+xp: 20
+interactives: [Choice, GitOpsMirror, OrderList, SortCards, YamlDoctor, SwipeJudge]
+needs: [k8s-k7-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: automated sync policy", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "Argo CD: resource health", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/health/" }
+  - { label: "Argo CD: Git webhooks", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/" }
+---
+
+<Card id="hook" type="hook">
+Anda merge versi baharu pukul 12:00. Pukul 12:01, kluster masih jalankan versi lama. Ada yang rosak?
+
+<Interactive name="Choice" options={[{ label: 'Belum. Argo CD semak Git lebih kurang setiap 3 minit', correct: true, why: 'Secara lalai, ia semak paling lama setiap 3 minit. Webhook buat ia semak serta-merta.' }, { label: 'Ya. GitOps patut serta-merta', why: 'Argo CD tarik ikut pemasa. Menunggu sekejap itu biasa.' }, { label: 'Ya. Jalankan kubectl apply untuk bantu', why: 'Itu langkau Git. Beri Argo CD masa sekejap dulu.' }]} />
+</Card>
+
+<Card id="try-sync" type="try">
+Hantar versi 1.5.0 melalui Git. Perhati dua lampu: **<Term id="sync">sync</Term>** (selaraskan: kluster sama dengan Git?) dan health (ia berfungsi?).
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} images={['ghcr.io/kedai-kancil/shop:1.4.0', 'ghcr.io/kedai-kancil/shop:1.5.0']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.0' }} success="OutOfSync, Syncing, Synced. Progressing, kemudian Healthy. Itulah satu sync." />
+
+<Hint>Pilih image 1.5.0, kemudian Commit ke Git. Tekan Langkah untuk perlahan-lahan.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Susun satu sync mengikut urutan.
+
+<Interactive name="OrderList" items={['Anda merge commit dalam Git', 'Argo CD perasan: OutOfSync', 'Argo CD apply fail: Syncing', 'Pod baharu bermula: Progressing', 'Synced dan Healthy']} label="Langkah pertama di atas" success="Itulah seluruh gelung, dari commit ke kluster." />
+</Card>
+
+<Card id="see-lights" type="see">
+Argo CD tunjuk dua lampu berasingan. Susun setiap perkataan ke lampu yang betul.
+
+<Interactive name="SortCards" buckets={[{ id: 'sync', label: 'Sync: Git lawan kluster' }, { id: 'health', label: 'Health: ia berfungsi?' }]} items={[{ label: 'Synced', bucket: 'sync', why: 'Kluster sama dengan Git.' }, { label: 'OutOfSync', bucket: 'sync', why: 'Git dan kluster berbeza.' }, { label: 'Healthy', bucket: 'health', why: 'Semua dah hidup dan sedia.' }, { label: 'Progressing', bucket: 'health', why: 'Masih sedang rollout. Tunggu sekejap.' }, { label: 'Degraded', bucket: 'health', why: 'Ada yang gagal, contohnya pod yang asyik crash.' }]} success="Dua lampu. Satu tanya 'sama dengan Git?', satu tanya 'berfungsi?'" />
+</Card>
+
+<Card id="try-fix" type="try">
+Commit rakan sepasukan buat sync gagal. Argo CD tunjuk ralat sama seperti `kubectl apply`. Baiki fail itu dalam Git.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: "3"\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} keep={['replicas: 3', 'shop:1.5.0']} hint="replicas ialah nombor. Buang tanda petik di sekeliling 3." success="Dibaiki dalam Git. Sync seterusnya jadi hijau." />
+</Card>
+
+<Card id="predict" type="predict">
+Argo CD tunjuk Synced, tetapi Degraded. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Kluster sama dengan Git, tetapi apa yang Git minta itu rosak', correct: true, why: 'Sync salin Git dengan tepat. Baiki commit itu, contohnya tag image yang salah.' }, { label: 'Argo CD sendiri yang rosak', why: 'Argo CD dah buat kerjanya. Aplikasi yang di-sync itu yang bermasalah.' }, { label: 'Seseorang ubah kluster secara manual', why: 'Itu akan tunjuk OutOfSync, bukan Synced.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Leret: betul atau belum tepat?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Webhook dari GitHub boleh buat Argo CD sync serta-merta.', good: true, why: 'Jadi ia tak tunggu pemasa 3 minit.' }, { text: 'Synced sentiasa bermaksud aplikasi anda berfungsi.', good: false, why: 'Synced cuma bermaksud "sama dengan Git". Semak health juga.' }, { text: 'Sync automatik tak padam apa-apa secara lalai.', good: true, why: 'Untuk padam, perlu prune: true. Ia dimatikan secara lalai.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca satu sync, lampu demi lampu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sync boleh automatik atau manual. Sync manual tunggu butang atau `argocd app sync shop`. Dengan `prune: true`, objek yang anda buang dari Git dipadam dari kluster juga. Latihan sebenar (pilihan): pasang Argo CD pada kluster kind pakai buang. Perhati aplikasi contoh di-sync. Misi 6 tunjuk caranya.
+</Card>

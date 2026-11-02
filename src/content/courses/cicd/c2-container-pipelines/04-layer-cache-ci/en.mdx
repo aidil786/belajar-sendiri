@@ -1,0 +1,72 @@
+---
+id: cicd-c2-l04
+world: 2
+title: Layer cache in CI
+summary: "You will learn: to keep your kek lapis layers between runs, so builds get fast."
+minutes: 4
+xp: 20
+interactives: [Choice, KekLapisBuilder, SpotLines, ConveyorBelt, SwipeJudge, Mission]
+needs: [cicd-c2-l03]
+scenario: c2-layer-cache
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: cache management with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/cache/" }
+  - { label: "Docker docs: GitHub Actions cache backend", url: "https://docs.docker.com/build/cache/backends/gha/" }
+---
+
+<Card id="hook" type="hook">
+On your laptop, a rebuild takes 10 seconds. On the belt, every build takes 4 minutes. Why?
+
+<Interactive name="Choice" options={[{ label: 'Each runner starts fresh, with no layers from last time', correct: true, why: 'Your laptop keeps old layers. A new runner starts with an empty kitchen.' }, { label: "GitHub's computers are slow", why: 'They are fine. They just start with no saved layers.' }, { label: 'The Dockerfile is wrong', why: 'Same Dockerfile both times. The difference is the cache.' }]} />
+</Card>
+
+<Card id="see-cake" type="try">
+Even with a cache, this recipe bakes `npm ci` again after every code change. Move the lines so it stays cached when `src/cart.js` changes.
+
+<Interactive name="KekLapisBuilder" edit="src/cart.js" goal={{ cached: ['install'] }} lines={[
+  { id: 'from', text: 'FROM node:24-alpine', size: '181MB' }, { id: 'workdir', text: 'WORKDIR /app', size: '8.19kB' },
+  { id: 'copy-all', text: 'COPY . .', size: '36.9kB' }, { id: 'copy-pkg', text: 'COPY package.json package-lock.json ./', size: '53.2kB' },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: '12.8MB' }, { id: 'cmd', text: 'CMD ["node", "server.js"]' }]} />
+
+<Hint>Copy the package files and install first. Copy the code last.</Hint>
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    tags: kedai-kancil:ci' }, { text: '    cache-from: type=gha' }, { text: '    cache-to: type=gha,mode=max', target: true }]} prompt="Tap the line that saves today's layers for next time." success="Yes! cache-to saves. cache-from reads." />
+
+The **<Term id="layer-cache">layer cache</Term>** can live in the GitHub Actions cache. `cache-from` reads old layers. `cache-to` saves new ones. `mode=max` keeps middle stages too.
+</Card>
+
+<Card id="try-cache" type="try">
+Press Run. Then press Run again, and watch the build station.
+
+<Interactive name="ConveyorBelt" scenario="c2-layer-cache" task={{ type: 'cacheHit' }} success="Cache hit! The second build reused the layers." />
+</Card>
+
+<Card id="predict" type="predict">
+Now you add a package, so `package.json` changes. What bakes again on the belt?
+
+<Interactive name="Choice" options={[{ label: 'Everything from COPY package*.json up', correct: true, why: 'That layer changed, so every layer above it bakes again. FROM still comes from the cache.' }, { label: 'Nothing, the cache has it all', why: 'The cache only fits layers whose input did not change.' }, { label: 'Everything, even FROM', why: 'Layers below the change still come from the cache.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good cache habit? Swipe right for yes, left for "needs work".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Copy the package files and install before copying the code', good: true, why: 'Code changes often. Keep it near the top of the cake.' }, { text: 'Copy all the code first, then run npm ci', good: false, why: 'Every code change would run npm ci again.' }, { text: 'Set up Buildx before the build step', good: true, why: 'The Buildx builder can save the cache to GitHub.' }, { text: 'Bake a secret into a layer so it gets cached', good: false, why: 'Never. Anyone with the image or cache can read layers.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep your layer cache between runs.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub deletes caches nobody used for a while. Each repo also has a size limit. `type=registry` keeps the cache in GHCR instead. Two images? Give each its own `scope`, like `type=gha,scope=api`.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="c2-l04-rep" steps={[{ id: 'add', text: 'In a public practice repo, add cache-from and cache-to with type=gha.' }, { id: 'run1', text: 'Push once. Note how long the build step takes.' }, { id: 'run2', text: 'Change one line of code and push again. Compare the times.' }]} success="You saw the cache work for real!" />
+</Card>

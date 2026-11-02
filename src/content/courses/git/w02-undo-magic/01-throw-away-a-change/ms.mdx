@@ -1,0 +1,66 @@
+---
+id: git-w02-l01
+world: 2
+title: Buang satu perubahan
+summary: "Anda akan belajar: cara buang perubahan yang anda tak mahu."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w01-l12]
+scenario: w02-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="index.html bergoyang dalam folder kerja anda. Ia bertanda diubah. Commit terakhir anda selamat dalam repositori." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+Anda ubah index.html, dan ia jadi rosak. Ctrl+Z tak boleh undur sejauh itu. Jadi, macam mana?
+</Card>
+
+<Card id="see-restore" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} command="git restore index.html" label="Arahan git restore index.html menaip sendiri. Tanda diubah pada index.html hilang. Fail itu sama semula dengan commit terakhir." frames={[{ working: [{ name: 'index.html', tag: 'changed', glow: true }], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }, { working: ['index.html'], repo: [{ name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+`git restore index.html` kembalikan fail itu kepada versi terakhir yang disimpan. Ini dipanggil **<Term id="restore">restore</Term>** (pulihkan).
+</Card>
+
+<Card id="see-danger" type="see">
+<Interactive name="TermReplay" scenario="w02-l01" commands={['git diff index.html']} label="git diff index.html tunjuk perubahan yang akan hilang: baris Day 1 jadi oops oops oops." />
+
+⚠️ **Bahaya**: restore buang perubahan anda terus. Git tak pernah simpan perubahan itu, jadi tiada undo. Semak dulu dengan `git diff`.
+</Card>
+
+<Card id="try-restore" type="try">
+Buang index.html yang rosak. Kekalkan perubahan style.css anda.
+
+<Interactive name="Sim" scenario="w02-l01" panels={['areas']} goal={{ fileContains: { 'index.html': 'Day 1' }, modified: ['style.css'] }} hints={['Taip git restore index.html dan tekan Enter.', 'Sebut index.html sahaja. Perubahan style.css itu anda mahu simpan.']} success="index.html dah pulih. Perubahan style.css anda masih ada." />
+
+<Hint>Taip `git restore index.html`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang anda jalankan `git restore style.css`. Apa jadi pada tajuk warna teal anda?
+
+<Interactive name="Choice" options={[{ label: 'Hilang terus', correct: true, why: 'style.css kembali kepada commit terakhir. Baris teal itu tak pernah disimpan.' }, { label: 'Masuk ke dalam kotak', why: 'Itu kerja git add. restore buang perubahan itu.' }, { label: 'Git simpan salinan tersembunyi', why: 'Tiada salinan. Git hanya simpan apa yang anda dah add atau commit.' }]} />
+</Card>
+
+<Card id="check-deleted" type="check">
+<Interactive name="TermReplay" scenario="w02-l01" commands={['rm README.md', 'ls', 'git restore README.md', 'ls']} label="README.md dipadam, jadi ls tak senaraikannya. Selepas git restore README.md, ls senaraikannya semula." />
+
+Terpadam fail yang dah disimpan? `git restore` bawa ia balik. Fail itu ada dalam commit (titik simpan), jadi Git masih ada salinannya.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buang perubahan yang anda tak mahu. Dengan berhati-hati!
+</Card>
+
+<Card id="deeper" type="deeper">
+`git restore` salin dari kotak. Kalau fail itu dah di-stage, anda dapat versi dalam kotak. `git restore .` pulihkan semua fail yang dijejak. Panduan lama guna `git checkout -- index.html`. Hasilnya sama.
+
+<Interactive name="TermReplay" scenario="w02-l01" commands={['git status -s', 'git checkout -- index.html', 'git status -s']} label="Cara lama: git checkout -- index.html juga buang perubahan pada index.html." />
+</Card>

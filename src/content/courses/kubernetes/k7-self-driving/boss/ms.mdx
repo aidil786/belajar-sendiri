@@ -1,0 +1,74 @@
+---
+id: k8s-k7-boss
+world: 7
+title: Lepas tangan
+summary: "Anda akan belajar: jalankan Kedai Kancil dari Git sahaja, kemudian tangkap dan undur suntingan manual."
+minutes: 6
+xp: 50
+interactives: [Choice, GitOpsMirror, ManagersBoard, YamlDoctor, SwipeJudge]
+needs: [k8s-k7-l09]
+scenario: k7-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Argo CD: automated sync and self-heal", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "OpenGitOps: the four principles", url: "https://opengitops.dev/" }
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+---
+
+<Card id="hook" type="hook">
+Waktu puncak, hari Sabtu. Kedai Kancil kini berjalan dengan GitOps. Misi boss: jangan sentuh kluster. Git yang memandu. Anda perlukan lebih banyak dulang. Di mana anda minta?
+
+<Interactive name="Choice" options={[{ label: 'Dalam Git: tukar replicas dan commit', correct: true, why: 'Git ialah papan pesanan. Argo CD ikut papan itu.' }, { label: 'kubectl scale pada kluster', why: 'Itu drift. Self-heal akan kembalikannya.' }, { label: 'Minta Argo CD ubah Git', why: 'Argo CD hanya baca Git. Manusia yang menulisnya.' }]} />
+</Card>
+
+<Card id="try-scale" type="try">
+Bilik 1: tukar satu baris dalam Git. Minta 5 dulang, kemudian perhati kluster ikut.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'gitChange', field: 'replicas', to: 5 }} success="Bilik 1 selesai! Satu baris dalam Git, lima dulang dalam kluster." />
+
+<Hint>Tekan + dua kali, kemudian Commit ke Git.</Hint>
+</Card>
+
+<Card id="try-heal" type="try">
+Bilik 2: Argo CD pastikan pesanan sama dengan Git. Deployment pula jaga dulang. Satu dulang jatuh. Perhati gelung dalam membaikinya.
+
+<Interactive name="ManagersBoard" scenario="k7-boss" target="shop" actions={['deletePod']} goal={{ healed: 1 }} label="Mahu 5, nampak 5. Satu dulang dipadam: nampak 4, buat 1 lagi." />
+
+<Hint>Tekan butang padam pada satu dulang.</Hint>
+</Card>
+
+<Card id="try-ship" type="try">
+Bilik 3: hantar versi 1.5.0, cara GitOps.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 5, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} images={['ghcr.io/kedai-kancil/shop:1.4.0', 'ghcr.io/kedai-kancil/shop:1.5.0']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.0' }} success="Bilik 3 selesai! Versi 1.5.0 dah keluar, dan Git ingat." />
+
+<Hint>Pilih shop:1.5.0 dalam senarai image, kemudian commit.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Bilik 4: commit rakan sepasukan rosakkan sync. Baca ralat sebenar. Baiki fail itu dalam Git.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 5\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      contianers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 5\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} keep={['replicas: 5', 'shop:1.5.0', '^      containers:']} hint="Lihat betul-betul ejaan containers." success="Bilik 4 selesai! Sync seterusnya jadi hijau." />
+</Card>
+
+<Card id="try-drift" type="try">
+Bilik 5: self-heal dimatikan pada aplikasi ini. Seseorang scale secara manual. Tangkap drift itu dan undurkannya.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 5, image: 'ghcr.io/kedai-kancil/shop:1.5.0' }} selfHeal={false} task={{ type: 'drift' }} success="Ditangkap dan diundur! 5 dulang ikut Git dah kembali." />
+
+<Hint>Tekan butang kubectl, kemudian Sync sekarang. Atau hidupkan self-heal.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Semakan terakhir. Leret: betul atau belum tepat?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Setiap perubahan hari ini ialah commit yang boleh dibaca dan di-revert.', good: true, why: 'Itulah janji GitOps.' }, { text: 'Argo CD dah ganti controller Deployment.', good: false, why: 'Kedua-duanya berjalan. Argo CD padankan Git; Deployment jaga dulang.' }, { text: 'Self-heal mati bermaksud drift kekal sehingga seseorang sync.', good: true, why: 'Argo CD tunjuk OutOfSync tetapi tunggu anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan kluster dari Git sahaja, lepas tangan.
+</Card>

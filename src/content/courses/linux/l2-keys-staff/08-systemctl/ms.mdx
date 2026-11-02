@@ -1,0 +1,78 @@
+---
+id: linux-l2-l08
+world: 2
+title: Servis dengan systemctl
+summary: "Anda akan belajar: semak, mula, henti dan mula semula servis, dan buat ia hidup semasa but."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, SortCards, Mission]
+needs: [linux-l2-l07]
+scenario: linux-l2-services
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "systemctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/systemctl.1.en.html" }
+  - { label: "systemd.io: the systemd project", url: "https://systemd.io/" }
+  - { label: "Debian Reference: system initialization", url: "https://www.debian.org/doc/manuals/debian-reference/ch03.en.html" }
+---
+
+<Card id="hook" type="hook">
+Semalam bekalan elektrik terputus. Server hidup semula. Laman web menu tidak. Tiada siapa sentuh. Apa yang berlaku?
+
+<Interactive name="Choice" options={[{ label: 'Web server tak ditetapkan hidup semasa but', correct: true, why: 'Ada pekerja yang cuma datang bila dipanggil. But ialah hari baru.' }, { label: 'Fail laman web dipadam', why: 'Fail itu okey. Tiada siapa yang menghidangkannya.' }, { label: 'Seluruh internet rosak', why: 'Laman lain boleh dibuka. Masalahnya di server ini.' }]} />
+</Card>
+
+<Card id="see-state" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-services" intro={['systemctl is-active nginx', 'systemctl is-enabled nginx']} />
+
+nginx ialah <Term id="service">service (servis)</Term>: pekerja yang bertugas sepanjang hari di belakang. **systemd** ialah pengurus syif. nginx `inactive` sekarang, dan `disabled` semasa but.
+</Card>
+
+<Card id="predict-sudo" type="predict">
+Anda taip `systemctl start nginx`, tanpa sudo. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Failed to start nginx.service: Access denied', correct: true, why: 'Maksudnya: hanya root boleh mula atau henti servis. Tambah sudo.' }, { label: 'nginx bermula', why: 'Memulakan servis mengubah seluruh server. Itu perlukan root.' }, { label: 'command not found', why: 'systemctl dijumpai. Ia cuma menolak tanpa sudo.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Mulakan web server sekarang: `sudo systemctl start nginx`. Kemudian minta laman itu: `curl -sI localhost`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-services" goal={{ serviceActive: ['nginx'], lastTyped: '^curl' }} hints={['Taip sudo systemctl start nginx', 'Kemudian: curl -sI localhost']} solution={['sudo systemctl start nginx', 'curl -sI localhost']} success="HTTP/1.1 200 OK. Lampu hijau dan laman itu kembali." />
+
+<Hint>Tengok lampu Servis bertukar hijau.</Hint>
+</Card>
+
+<Card id="sort-now-boot" type="check">
+Sesetengah arahan bertindak sekarang. Yang lain tentukan apa berlaku pada but seterusnya. Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'now', label: 'Sekarang' }, { id: 'boot', label: 'Pada but seterusnya' }]} items={[{ label: 'start: hidupkan', bucket: 'now', why: 'Ia terus berjalan, sampai dihentikan atau but semula.' }, { label: 'enable: kembali selepas elektrik putus', bucket: 'boot', why: 'enable cuma rancang but seterusnya.' }, { label: 'stop: matikan untuk dibaiki', bucket: 'now', why: 'Mati serta-merta.' }, { label: 'disable: kekal mati selepas but semula', bucket: 'boot', why: 'Ia ubah rancangan but, bukan sekarang.' }]} success="start dan stop: sekarang. enable dan disable: semasa but." />
+</Card>
+
+<Card id="try-enable" type="try">
+Buat kedua-dua kerja sekali gus: hidupkan nginx sekarang dan setiap kali but: `sudo systemctl enable --now nginx`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-services" goal={{ serviceActive: ['nginx'], serviceEnabled: ['nginx'] }} hints={['Taip sudo systemctl enable --now nginx', 'Semak: systemctl is-enabled nginx']} solution={['sudo systemctl enable --now nginx']} success="Berjalan, dan ia hidup semasa but. Elektrik putus lain kali tak jadi masalah." />
+
+<Hint>`--now` maksudnya "dan mulakan sekarang juga".</Hint>
+</Card>
+
+<Card id="check-restart" type="check">
+Anda ubah fail tetapan nginx. Arahan mana buat nginx guna tetapan baru?
+
+<Interactive name="Choice" options={[{ label: 'sudo systemctl restart nginx', correct: true, why: 'Henti, kemudian mula dengan tetapan baru. reload lebih lembut untuk nginx.' }, { label: 'sudo systemctl enable nginx', why: 'enable cuma rancang but seterusnya.' }, { label: 'systemctl status nginx', why: 'status cuma melihat. Ia tak ubah apa-apa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh mula, henti, mula semula dan enable sesuatu servis.
+</Card>
+
+<Card id="deeper" type="deeper">
+`systemctl status nginx` tunjuk semuanya: ● hijau berjalan, ○ berhenti, × gagal, dan baris log terakhir. `reload` baca semula tetapan tanpa putuskan pelawat. `systemctl list-units --type=service` senaraikan setiap servis.
+
+Latihan sebenar (pilihan), di VM Debian atau Ubuntu:
+
+<Interactive name="Mission" id="linux-l2-l08-rep" steps={[{ id: 'status', text: 'Tengok servis SSH.', command: 'systemctl status ssh' }, { id: 'boot', text: 'Adakah ia hidup semasa but?', command: 'systemctl is-enabled ssh' }, { id: 'list', text: 'Senaraikan setiap servis.', command: 'systemctl list-units --type=service' }]} success="Servis sebenar, systemd sebenar!" />
+</Card>

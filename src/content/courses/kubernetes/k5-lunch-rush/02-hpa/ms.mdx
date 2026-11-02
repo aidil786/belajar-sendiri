@@ -1,0 +1,78 @@
+---
+id: k8s-k5-l02
+world: 5
+title: "Skala keluar waktu puncak: HPA"
+summary: "Anda akan belajar: cara HPA tambah pod bila sibuk, dan buang semula kemudian."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim]
+needs: [k8s-k5-l01]
+scenario: k5-rush
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Horizontal Pod Autoscaling", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" }
+  - { label: "Kubernetes: HPA walkthrough", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" }
+  - { label: "kubectl autoscale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_autoscale/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 12 tengah hari, barisan jadi tiga kali ganda. Pukul 3 petang, medan selera kosong. Berapa pod (dulang) yang anda mahu?
+
+<Interactive name="Choice" options={[{ label: 'Pod yang ikut barisan, naik dan turun', correct: true, why: 'Lebih banyak pod tengah hari, kurang pukul 3. Anda bayar apa yang anda guna.' }, { label: '10 pod sepanjang hari', why: 'Pukul 3 petang anda bayar 7 pod yang tiada siapa perlu.' }, { label: '3 pod sepanjang hari', why: 'Tengah hari barisan panjang dan pelanggan pergi.' }]} />
+</Card>
+
+<Card id="see-hpa" type="see">
+<Interactive name="KubeReplay" scenario="k5-rush-on" commands={['kubectl get hpa shop', 'kubectl get deployment shop']} label="Waktu puncak, HPA shop tunjuk cpu 81% berbanding sasaran 50% dan 10 replika. Deployment shop sedia 10/10." />
+
+**<Term id="hpa">HorizontalPodAutoscaler</Term>** (HPA) ialah pembantu pengurus. Setiap 15 saat ia semak betapa sibuk pod. Sibuk? Ia pesan lagi. Waktu makan bawa kedai ini dari 3 ke 10.
+</Card>
+
+<Card id="predict-math" type="predict">
+"Sibuk" maksudnya guna CPU berbanding request setiap pod. Sasaran 50%. Sekarang 3 pod berjalan pada 100%. Berapa pod yang HPA mahu?
+
+<Interactive name="Choice" compact options={[{ label: '6', correct: true, why: '3 pod × 100% ÷ sasaran 50% = 6. Dua kali sibuk, dua kali pod.' }, { label: '4', why: 'Hampir! Ini caranya: pod × (sekarang ÷ sasaran). 3 × 2 = 6.' }, { label: '10', why: 'Hanya kalau jauh lebih sibuk. Kiraan beri 6.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+HPA juga YAML. Yang ini tak boleh di-apply. Baca ralat kubectl, kemudian baiki satu baris itu.
+
+<Interactive name="YamlDoctor" file="hpa.yaml" manifest={'apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 3\n  maxReplicas: 1\n'} solution={'apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 3\n  maxReplicas: 10\n'} keep={['minReplicas: 3', 'name: shop']} keepHint="Kekalkan minReplicas pada 3. Tukar nombor yang satu lagi." hint="Paling banyak tak boleh kurang daripada paling sedikit. Cuba maxReplicas: 10." success="Berjaya! HPA kini boleh guna 3 hingga 10 pod." />
+</Card>
+
+<Card id="try-autoscale" type="try">
+Sekarang buat dengan satu arahan. Cipta HPA, kemudian tekan Waktu makan tengah hari. Lihat pod bertambah.
+
+```bash
+kubectl autoscale deployment shop --cpu=50% --min=3 --max=10
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-rush" faults={['traffic']} goal={{ hpaReplicas: { name: 'shop', min: 6 } }} hints={['Taip kubectl autoscale deployment shop --cpu=50% --min=3 --max=10', 'Kemudian tekan butang Waktu makan tengah hari dan tunggu kira-kira 30 saat (+30s).', 'Semak dengan kubectl get hpa shop']} success="HPA nampak waktu puncak dan pesan lebih banyak pod!" />
+
+<Hint>Cipta HPA dulu. Kemudian tekan Waktu makan tengah hari dan biar jam berjalan.</Hint>
+</Card>
+
+<Card id="see-unknown" type="see">
+<Interactive name="KubeReplay" scenario="k5-no-request" commands={['kubectl get hpa shop']} label="HPA pada pod tanpa request CPU tunjuk cpu: unknown daripada 50%." />
+
+`cpu: <unknown>/50%` maksudnya: pod ini tiada request CPU. Tanpa request, "50% sibuk" tiada makna. Tambah `resources.requests.cpu` pada container.
+</Card>
+
+<Card id="predict-down" type="predict">
+Waktu makan habis. CPU turun ke 5%. Bila pod tambahan hilang?
+
+<Interactive name="Choice" options={[{ label: 'Selepas kira-kira 5 minit guna rendah', correct: true, why: 'HPA tunggu 5 minit sebelum kecilkan, supaya satu saat lengang tak batalkan waktu puncak.' }, { label: 'Serta-merta', why: 'Kecil serta-merta akan berayun: naik, turun, naik lagi.' }, { label: 'Tak pernah. Anda kena kecilkan sendiri.', why: 'HPA skala dua arah. Ia cuma tunggu sedikit sebelum kecilkan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar HPA tambah dan buang pod untuk anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kecilkan tunggu 5 minit secara lalai. Besarkan boleh paling banyak dua kali ganda, atau tambah 4 pod, setiap 15 saat. Laraskan kedua-duanya dengan `behavior` dalam YAML. Dalam Kubernetes 1.37, `minReplicas: 0` (skala ke sifar) ialah beta dan hidup secara lalai. Ia perlu metrik object atau external, bukan CPU.
+
+Latihan sebenar (pilihan): cuba HPA walkthrough di kubernetes.io. Guna kluster kind untuk dibuang.
+</Card>

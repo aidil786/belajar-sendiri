@@ -1,0 +1,70 @@
+---
+id: docker-d6-l01
+world: 6
+title: "A container is just a process"
+summary: "You will learn: that a running container is a normal Linux process, and how to see it from both sides."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SortCards, Mission]
+needs: [docker-d5-boss]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker container top", url: "https://docs.docker.com/reference/cli/docker/container/top/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker inspect", url: "https://docs.docker.com/reference/cli/docker/inspect/" }
+---
+
+<Card id="hook" type="hook">
+You run `ps aux` on your Linux laptop. One line says `nginx: master process`. But you never installed nginx! Where did it come from?
+
+<Interactive name="Choice" options={[{ label: 'From the web container you started', correct: true, why: 'A running container is a normal program on your laptop.' }, { label: 'A virus sneaked in', why: 'It is your own lunchbox. Docker started it for you.' }, { label: 'Docker installed nginx on the laptop', why: 'Nothing was installed. nginx runs from the image files.' }]} />
+</Card>
+
+<Card id="see-top" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker top web', 'ps aux']} label="docker top lists the nginx processes in web. Then ps aux on the laptop lists the same PID numbers, under a containerd-shim line." />
+
+`docker top web` asks Docker what runs in the lunchbox. `ps aux` asks the laptop. The PIDs match! The lunchbox is a normal **process** wearing blinkers.
+</Card>
+
+<Card id="try-inside" type="try">
+Now look from inside the lunchbox. Type `docker exec web ps`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ lastTyped: '^docker exec (-it )?web ps' }} hints={['Type docker exec web ps and press Enter.']} success="Inside, nginx is PID 1. It sees only its own processes." />
+
+<Hint>`docker exec web ps` runs the `ps` program inside web.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Inside, nginx is PID 1. On the laptop, it has a big PID. How many nginx masters are running?
+
+<Interactive name="Choice" options={[{ label: 'One. It just has two name tags.', correct: true, why: 'The laptop numbers every process. Inside, the count starts again at 1.' }, { label: 'Two: one inside, one outside', why: 'docker top and ps aux point at the same single process.' }, { label: 'None. It is only a picture of nginx.', why: 'It is real: it answers on port 8080.' }]} />
+</Card>
+
+<Card id="see-kernel" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['uname -r', 'docker exec web uname -r']} label="uname -r prints the same Linux kernel version on the laptop and inside web." />
+
+Both print the same <Term id="linux-kernel">kernel</Term> version. The **kernel** is the kitchen's one stove. Every lunchbox cooks on the laptop's stove.
+</Card>
+
+<Card id="check-sort" type="check">
+Which ones are true for a container? Which ones fit a virtual machine?
+
+<Interactive name="SortCards" buckets={[{ id: 'ctr', label: 'Container (a process)' }, { id: 'vm', label: 'Virtual machine' }]} items={[{ label: 'Shows up in the laptop’s process list', bucket: 'ctr', why: 'It is a process, so ps sees it.' }, { label: 'Boots its own kernel', bucket: 'vm', why: 'A VM has its own stove. A container borrows the laptop’s.' }, { label: 'Shares the laptop’s kernel', bucket: 'ctr', why: 'uname -r gave the same answer inside and out.' }, { label: 'Can run Windows on a Linux laptop', bucket: 'vm', why: 'A Linux kernel can’t run Windows programs. A VM brings its own.' }]} success="Sorted! A container is a process. A VM is a whole computer." />
+</Card>
+
+<Card id="win" type="win">
+You can now show that a container is a process on your laptop.
+</Card>
+
+<Card id="deeper" type="deeper">
+On a Mac or Windows PC with Docker Desktop, `ps` won't show nginx. It runs inside a small Linux VM (lesson 7).
+
+Real rep (optional, Linux): see one process from both sides.
+
+<Interactive name="Mission" id="d6-l01-both-sides" steps={[{ id: 'run', text: 'Start nginx in the background.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'top', text: 'Ask Docker for its processes. Note the first PID.', command: 'docker top web' }, { id: 'ps', text: 'Find the same PID in the laptop’s list.', command: 'ps -ef | grep nginx' }, { id: 'rm', text: 'Clean up.', command: 'docker rm -f web' }]} success="Same PID, two views. Nice!" />
+</Card>

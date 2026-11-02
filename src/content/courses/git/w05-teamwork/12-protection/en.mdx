@@ -1,0 +1,64 @@
+---
+id: git-w05-l12
+world: 5
+title: Rulesets, protection, CODEOWNERS
+summary: "You will learn: how rules keep main safe, and how CODEOWNERS picks reviewers."
+minutes: 4
+xp: 20
+interactives: [Choice, PracticeRepo, SortCards, TermReplay, SwipeJudge]
+needs: [git-w05-l11]
+scenario: w05-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About protected branches", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+  - { label: "About rulesets", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets" }
+  - { label: "About code owners", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners" }
+---
+
+<Card id="hook" type="hook">
+Sam merged his own PR at midnight. Its test had failed. The club site broke! How can the team stop this?
+
+<Interactive name="Choice" options={[{ label: 'Put rules on main: checks must pass first', correct: true, why: 'Rules work every time, even at midnight.' }, { label: 'Ask Sam to pinky promise', why: 'Promises are nice. Rules work even when people are sleepy.' }, { label: "Take away everyone's access", why: 'Then nobody can help. Rules are kinder.' }]} />
+</Card>
+
+<Card id="try-rules" type="try">
+**<Term id="branch-protection">Branch protection</Term>** puts rules on a branch. Turn on the rule that needs checks to pass. Then look at Sam's PR.
+
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 40, title: 'Make the logo spin', body: 'Spins the logo on hover.', author: 'sam', from: 'spin', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'style.css', diff: ['@@ -0,0 +1 @@', '+.logo:hover { animation: spin 1s; }'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: false }, { id: 'requireChecks', label: 'Require checks to pass', on: false }, { id: 'linearHistory', label: 'Keep history in a straight line', on: false }] }} task={{ type: 'toggleRule', rule: 'requireChecks', on: true }} success="Rule on! Open Pull requests: Sam's PR is now blocked until its test passes." />
+
+<Hint>Switch on "Require checks to pass".</Hint>
+</Card>
+
+<Card id="see-rulesets" type="see">
+A **<Term id="ruleset">ruleset</Term>** is the newer way to add rules. Rulesets can stack on one branch. Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'classic', label: 'Branch protection rule' }, { id: 'ruleset', label: 'Ruleset' }]} items={[{ label: 'Only one can apply to a branch', bucket: 'classic', why: 'One branch, one protection rule.' }, { label: 'Several can apply at once', bucket: 'ruleset', why: 'Rulesets stack. The strictest rule wins.' }, { label: 'Can cover tags too', bucket: 'ruleset', why: 'Rulesets can target branches or tags.' }, { label: 'Anyone who can read the repo can see them', bucket: 'ruleset', why: 'So everyone knows the rules, not just admins.' }]} success="Sorted! Both keep main safe. Rulesets do more." />
+</Card>
+
+<Card id="see-owners" type="see">
+<Interactive name="TermReplay" scenario="w05-l12" commands={['cat .github/CODEOWNERS']} label="cat shows the CODEOWNERS file. Line one: star, at-aina. Then star dot css, at-mei. Then slash docs slash, at-ravi." />
+
+A **<Term id="codeowners">CODEOWNERS</Term>** file says who owns which files. GitHub asks those owners to review changes to their files. Automatically!
+</Card>
+
+<Card id="predict" type="predict">
+A PR changes `style.css`. Who gets asked to review?
+
+<Interactive name="Choice" compact options={[{ label: '@mei', correct: true, why: 'Both * and *.css match. The last matching line wins.' }, { label: '@aina', why: 'The * line matches, but a later line matches too. The last match wins.' }, { label: '@ravi', why: '/docs/ only covers files in the docs folder.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good rule for main, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Require one approving review', good: true, why: 'A second pair of eyes catches mistakes.' }, { text: 'Require checks to pass', good: true, why: 'Broken code stays out of main.' }, { text: 'Let everyone force-push to main', good: false, why: "A force push can wipe out other people's work." }, { text: 'Let anyone delete main', good: false, why: 'main is the heart of the repo. Keep it safe.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now protect main with rules and pick reviewers with CODEOWNERS.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rules can also require code owner reviews, resolved comments or signed commits. Force pushes and deleting a protected branch are blocked by default. Code owners need write access to the repo. The CODEOWNERS file can live in `.github/`, the top folder or `docs/`. Rulesets can let chosen people or apps skip a rule.
+</Card>

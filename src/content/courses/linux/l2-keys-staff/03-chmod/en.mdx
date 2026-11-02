@@ -1,0 +1,82 @@
+---
+id: linux-l2-l03
+world: 2
+title: "Change permissions: chmod"
+summary: "You will learn: to add and take away keys with chmod, with letters and with numbers."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, CommandBuilder, SortCards, SwipeJudge]
+needs: [linux-l2-l02]
+scenario: linux-l2-chmod
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "chmod (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/chmod.1.en.html" }
+  - { label: "GNU coreutils: symbolic modes", url: "https://www.gnu.org/software/coreutils/manual/html_node/Symbolic-Modes.html" }
+  - { label: "GNU coreutils: numeric modes", url: "https://www.gnu.org/software/coreutils/manual/html_node/Numeric-Modes.html" }
+---
+
+<Card id="hook" type="hook">
+Two problems in the shop. `open.sh` cannot run. And `secret.txt` shows `-rw-r--r--`: everyone may read the safe code! Which tool fixes keys?
+
+<Interactive name="Choice" options={[{ label: 'chmod: change the keys', correct: true, why: 'chmod adds or takes away r, w and x.' }, { label: 'chown: change the owner', why: 'You already own both files. The keys are the problem.' }, { label: 'Delete them and write them again', why: 'New files get the same default keys. And you risk losing the code.' }]} />
+</Card>
+
+<Card id="see-letters" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" intro={['chmod +x open.sh', 'ls -l open.sh']} />
+
+`chmod +x open.sh` added the run key. **chmod** means "change mode". Letters: `u` owner, `g` group, `o` others. `+` adds, `-` takes away.
+</Card>
+
+<Card id="build-go" type="try">
+Build a command: take the read key from group and others on `secret.txt`.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'chmod', means: 'change the keys' }, { text: 'go-r', means: 'group and others: take away read' }, { text: 'secret.txt', means: 'this file' }]} decoys={[{ text: 'u+x', means: 'owner: add run' }, { text: '+r', means: 'everyone: add read' }]} success="chmod go-r secret.txt. Only you can read it now." />
+</Card>
+
+<Card id="try-x" type="try">
+Give `open.sh` its run key, then run it: `chmod +x open.sh`, then `./open.sh`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" goal={{ fileMode: { '~/shop/open.sh': 'x' }, lastTyped: '^(\\./|bash )open\\.sh' }} hints={['Type chmod +x open.sh', 'Now run it: ./open.sh']} solution={['chmod +x open.sh', './open.sh']} success="Kedai is open! The picture now says the script can run." />
+
+<Hint>`./` means "the file right here".</Hint>
+</Card>
+
+<Card id="sort-numbers" type="check">
+Keys also have numbers: r = 4, w = 2, x = 1. Add them per ring. Sort each into its number.
+
+<Interactive name="SortCards" buckets={[{ id: '7', label: '7' }, { id: '6', label: '6' }, { id: '4', label: '4' }]} items={[{ label: 'rwx', bucket: '7', why: '4 + 2 + 1 = 7.' }, { label: 'rw-', bucket: '6', why: '4 + 2 = 6.' }, { label: 'r--', bucket: '4', why: 'Just read: 4.' }, { label: 'read, write and run', bucket: '7', why: 'All three keys: 7.' }]} success="So 644 means rw- r-- r--, and 755 means rwx r-x r-x." />
+</Card>
+
+<Card id="predict-600" type="predict">
+You type `chmod 600 secret.txt`. What does `ls -l` show for it?
+
+<Interactive name="Choice" options={[{ label: '-rw-------', correct: true, why: '6 for you (rw), 0 for the group, 0 for others.' }, { label: '-rw-r--r--', why: 'That is 644. The last two rings would still read.' }, { label: '-rwxrwxrwx', why: 'That is 777: every key for everyone.' }]} />
+</Card>
+
+<Card id="try-600" type="try">
+Lock the safe code so only you can read and change it: `chmod 600 secret.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-chmod" goal={{ fileMode: { '~/shop/secret.txt': '600' } }} hints={['Type chmod 600 secret.txt', 'Check with ls -l secret.txt']} solution={['chmod 600 secret.txt']} success="-rw-------: the safe code is yours alone." />
+
+<Hint>Letters work too: `chmod go-r secret.txt`.</Hint>
+</Card>
+
+<Card id="judge-777" type="check">
+Good habit, or risky?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'chmod 600 secret.txt', good: true, why: 'Private things stay private.' }, { text: 'chmod 777 prices.txt', good: false, why: 'Everyone could change the prices. A Careful note shows for 777.' }, { text: 'chmod +x open.sh', good: true, why: 'Just the run key, where it is needed.' }, { text: 'chmod -R 777 /var/www', good: false, why: 'Every file, every key, for everyone. Never as a quick fix.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now add and take away keys with letters or numbers.
+</Card>
+
+<Card id="deeper" type="deeper">
+Common pairs: `644` for files, `755` for scripts and folders, `600` for secrets. `chmod -R` changes a whole folder tree, so check twice. A script also needs a first line like `#!/bin/bash`.
+
+Real rep (optional): in a practice folder, `touch s.sh`, `ls -l s.sh`, `chmod 755 s.sh`, then `ls -l s.sh` again.
+</Card>

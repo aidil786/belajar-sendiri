@@ -1,0 +1,61 @@
+---
+id: git-w11-l09
+world: 11
+title: I lost commits after reset
+summary: "You will learn: how to bring commits back after a hard reset."
+minutes: 3
+xp: 15
+interactives: [GraphScene, Choice, TermReplay, Sim, OrderList]
+needs: [git-w02-l09]
+scenario: w11-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD@{1})", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w11-l09-before" commands={['git reset --hard HEAD~2']} showLost label="main and HEAD jump back two commits. Add day 2 entry and Add day 3 entry turn into dashed, lost dots." />
+
+Oops. One `git reset --hard HEAD~2`, and two days of diary vanished. Breathe. This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+Day 2 and day 3 were commits. Can Git bring them back?
+
+<Interactive name="Choice" options={[{ label: 'Yes. Commits stay findable for a while', correct: true, why: 'The reflog remembers every commit HEAD was on.' }, { label: 'No, reset --hard deletes commits', why: 'It only moves the branch. The commits wait.' }, { label: 'Only if you pushed them', why: 'The reflog lives on your computer. Pushed or not, it works.' }]} />
+</Card>
+
+<Card id="see-reflog" type="see">
+<Interactive name="TermReplay" scenario="w11-l09" commands={['git reflog']} label="git reflog: HEAD@{0} is the reset. HEAD@{1} is commit: Add day 3 entry." />
+
+`git reflog` lists every move HEAD made. `HEAD@{1}` is where you were just before the reset.
+</Card>
+
+<Card id="try-back" type="try">
+Jump back to just before the reset.
+
+<Interactive name="Sim" scenario="w11-l09" panels={['graph']} showLost goal={{ headAtMessage: '^Add day 3 entry$', commits: 5 }} hints={['Type git reflog', 'Then type git reset --hard HEAD@{1}']} success="Day 2 and day 3 are back! The dashed dots are solid again." />
+
+<Hint>Type `git reset --hard HEAD@{1}`, then press Enter.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put the rescue steps in order, first at the top.
+
+<Interactive name="OrderList" items={['git status: check nothing is uncommitted', 'git reflog: find the line before the reset', 'git reset --hard HEAD@{1}', 'git log --oneline: check the commits are back']} label="First step at the top" success="Perfect order. Check first, then jump." />
+
+<Hint>`--hard` wipes uncommitted changes. So look before you jump.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now bring commits back after a hard reset.
+</Card>
+
+<Card id="deeper" type="deeper">
+Extra careful? `git branch rescue HEAD@{1}` only puts a label on the lost commit. Nothing moves, nothing is wiped. Right after a reset, `ORIG_HEAD` also points where you were. Changes you never committed can't come back. Commit often!
+</Card>

@@ -1,0 +1,66 @@
+---
+id: cicd-c3-l07
+world: 3
+title: "Secrets per environment"
+summary: "You will learn: how to give staging and production their own keys, so one leak can't open both."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, ConveyorBelt, SwipeJudge]
+needs: [cicd-c3-l06]
+scenario: c3-env-secret
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deployments and environments: environment secrets", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Cloudflare: create an API token", url: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" }
+---
+
+<Card id="hook" type="hook">
+Staging and production share one deploy token. A staging test script goes wrong. What can it break?
+
+<Interactive name="Choice" options={[{ label: 'Production too: the same key opens both', correct: true, why: 'One key opens every door it fits.' }, { label: 'Only staging', why: 'The script holds a key that fits production as well.' }, { label: 'Nothing: tokens are safe', why: 'A token is only as safe as what it can open.' }]} />
+</Card>
+
+<Card id="see-boxes" type="see">
+Give each kitchen its own locked spice box. An **<Term id="environment-secret">environment secret</Term>** opens only for jobs that name that environment. Sort these <Term id="secret">secrets</Term>.
+
+<Interactive name="SortCards" buckets={[{ id: 'repo', label: 'Repository secret (every job)' }, { id: 'env', label: 'Environment secret (one environment)' }]} items={[{ label: 'The production deploy token', bucket: 'env', why: 'Only production jobs should hold it.' }, { label: 'The staging deploy token', bucket: 'env', why: 'Staging gets its own, weaker key.' }, { label: 'A read-only token for a test service', bucket: 'repo', why: 'Every job may need it, and it changes nothing.' }, { label: 'A key only the release job may use', bucket: 'env', why: 'Put it in the environment that job names.' }]} success="Sorted! Strong keys live in their own box." />
+</Card>
+
+<Card id="try-fix" type="try">
+The token now lives only in the production environment. The deploy is red. Read the real error. Then pick a fix for the yellow line.
+
+<Interactive name="ConveyorBelt" scenario="c3-env-secret" task={{ type: 'green' }} fixes={[
+  { label: 'Add environment: production', text: '    runs-on: ubuntu-latest\n    environment: production' },
+  { label: 'Add environment: staging', text: '    runs-on: ubuntu-latest\n    environment: staging', correct: false, why: "Green, but that is staging's key. Production needs its own." },
+  { label: 'Add permissions: write-all', text: '    runs-on: ubuntu-latest\n    permissions: write-all', why: 'Token permissions are not secrets. The spice box stays locked.' }]}
+  success="Green! The job named production, so production's box opened." />
+
+<Hint>An environment's secrets reach only jobs that name it.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Production also has a required reviewer. When can the deploy job read production's secrets?
+
+<Interactive name="Choice" options={[{ label: 'Only after a reviewer approves', correct: true, why: 'Until then, the job waits and the box stays locked.' }, { label: 'As soon as the job starts', why: 'The job waits at the door first. No approval, no key.' }, { label: 'Never, in any job', why: 'Jobs that name production get them, once approved.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Key habits: good, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A different token for staging and for production.', good: true, why: 'A staging leak cannot touch production.' }, { text: 'One token for everything. It is simpler.', good: false, why: 'One leak opens every door.' }, { text: 'Give each token only the rights it needs.', good: true, why: 'A Cloudflare token can be limited to one account, or even one Worker.' }, { text: 'Print the token once, to check it works.', good: false, why: 'Logs get shared. Never print a secret, not even once.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep each environment's keys in its own box.
+</Card>
+
+<Card id="deeper" type="deeper">
+Self-hosted runners can read environment secrets too, so guard them well (World C4). On private repos, environment secrets need GitHub Pro, Team or Enterprise.
+
+Real rep (optional): in a public test repo, make staging and production environments. Give each its own test token with `gh secret set CLOUDFLARE_API_TOKEN --env staging`.
+</Card>

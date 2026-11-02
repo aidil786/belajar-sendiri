@@ -1,0 +1,82 @@
+---
+id: linux-l1-l08
+world: 1
+title: Pipe dan redirect
+summary: "Anda akan belajar: sambung arahan kecil dengan | dan simpan hasilnya ke dalam fail."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, OrderList, SortCards, Mission]
+needs: [linux-l1-l07]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Pipelines", url: "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html" }
+  - { label: "Bash manual: Redirections", url: "https://www.gnu.org/software/bash/manual/html_node/Redirections.html" }
+  - { label: "sort (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/sort.1.en.html" }
+  - { label: "uniq (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/uniq.1.en.html" }
+  - { label: "cut (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cut.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Bos mahu senarai: setiap hidangan terjual hari ini, paling laris dulu. Tiada satu arahan yang buat semua itu. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'Sambung arahan kecil, setiap satu buat satu kerja', correct: true, why: 'Alat Linux ialah stesen kecil. Sambungkan jadi satu barisan.' }, { label: 'Tulis program besar yang baru', why: 'Tak perlu. Empat alat kecil sudah boleh buat bersama.' }, { label: 'Kira dengan kertas dan pen', why: 'Okey untuk 15 pesanan. Bukan untuk 900.' }]} />
+</Card>
+
+<Card id="see-pipe" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['grep -i unpaid orders.log | wc -l']} />
+
+<Term id="pipe">Pipe</Term> `|` ialah tali sawat. Baris dari grep bergerak ke `wc -l`, yang mengiranya. Jawapan: 3 belum bayar.
+</Card>
+
+<Card id="order-stations" type="try">
+Bina tali sawat paling laris. Susun empat stesen ini.
+
+<Interactive name="OrderList" items={['cut -d" " -f3 orders.log: simpan lajur hidangan sahaja', 'sort: susun hidangan yang sama bersebelahan', 'uniq -c: kira setiap kumpulan', 'sort -rn: nombor paling besar dulu']} label="Stesen pertama di atas" success="Potong, susun, kira, susun lagi. Tali sawat sebenar!" />
+</Card>
+
+<Card id="try-belt" type="try">
+Sekarang jalankan seluruh tali sawat dalam satu baris:
+
+`cut -d" " -f3 orders.log | sort | uniq -c | sort -rn`
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: 'uniq -c *\\| *sort -(rn|nr)' }} hints={['Salin baris di atas dengan tepat. Jarak di sekeliling | tak penting.']} solution={['cut -d" " -f3 orders.log | sort | uniq -c | sort -rn']} success="6 nasi-lemak, 4 teh-tarik, 3 roti-canai, 2 mee-goreng." />
+
+<Hint>`-d" "` pecahkan ikut jarak. `-f3` simpan bahagian ketiga.</Hint>
+</Card>
+
+<Card id="predict-overwrite" type="predict">
+`unpaid.txt` ada 3 baris. Anda taip `echo oops > unpaid.txt`. Apa isi fail itu sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Perkataan oops sahaja', correct: true, why: '> kosongkan fail dulu, kemudian tulis. 3 baris itu hilang, tanpa undo.' }, { label: '3 baris itu, kemudian oops', why: 'Itu >>. Satu > ganti semuanya.' }, { label: 'Ralat: fail sudah wujud', why: 'Bash ganti fail itu tanpa bertanya. Hati-hati dengan >.' }]} />
+</Card>
+
+<Card id="try-save" type="try">
+Simpan setiap pesanan belum bayar ke fail baru, satu **redirect** (hala semula): `grep -i unpaid orders.log > unpaid.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ fileContains: { '~/kedai/counter/unpaid.txt': 'Unpaid' }, fileNotContains: { '~/kedai/counter/unpaid.txt': ' paid' } }} hints={['Taip grep -i unpaid orders.log > unpaid.txt', 'Semak dengan cat unpaid.txt']} solution={['grep -i unpaid orders.log > unpaid.txt']} success="unpaid.txt simpan tiga meja itu. Gambar tunjuk fail baru." />
+
+<Hint>Tiada apa dicetak: baris itu masuk ke dalam fail. `cat unpaid.txt` tunjuk isinya.</Hint>
+</Card>
+
+<Card id="sort-arrows" type="check">
+Tiga anak panah. Yang mana sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'new', label: '> ganti' }, { id: 'add', label: '>> tambah di hujung' }, { id: 'err', label: '2> ralat sahaja' }]} items={[{ label: 'Mula laporan harian yang baru', bucket: 'new', why: 'Fail baru, atau fail lama yang dikosongkan.' }, { label: 'Tambah satu baris lagi dalam diari', bucket: 'add', why: '>> simpan apa yang sudah ada.' }, { label: 'Simpan mesej ralat dalam fail sendiri', bucket: 'err', why: '2> tangkap baris ralat sahaja.' }, { label: 'Tambah jumlah hari ini di bawah semalam', bucket: 'add', why: 'Menambah, bukan mengganti.' }]} success="> ganti, >> tambah, 2> tangkap ralat." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sambung arahan dengan pipe dan simpan hasil ke fail.
+</Card>
+
+<Card id="deeper" type="deeper">
+`2> /dev/null` buang baris ralat. `cmd > all.txt 2>&1` simpan kedua-dua jenis. `tee report.txt` tunjuk baris dan simpan sekali. `<` suapkan fail masuk: `sort < today.txt`.
+
+Latihan sebenar (pilihan), di mesin anda sendiri:
+
+<Interactive name="Mission" id="linux-l1-l08-rep" steps={[{ id: 'count', text: 'Kira pengguna yang guna shell bash.', command: 'grep bash /etc/passwd | wc -l' }, { id: 'save', text: 'Simpan senarai proses anda ke fail.', command: 'ps aux > procs.txt' }, { id: 'top', text: 'Tengok 5 baris pertamanya.', command: 'head -n 5 procs.txt' }]} success="Tali sawat sebenar, fail sebenar!" />
+</Card>

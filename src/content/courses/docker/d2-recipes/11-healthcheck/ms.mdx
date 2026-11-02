@@ -1,0 +1,61 @@
+---
+id: docker-d2-l11
+world: 2
+title: "HEALTHCHECK: masih hidup?"
+summary: "Anda akan belajar: biar Docker semak aplikasi masih menjawab, bukan sekadar berjalan."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, CommandBuilder, KitchenSim, Mission]
+needs: [docker-d2-l10]
+scenario: d2-l11
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: HEALTHCHECK", url: "https://docs.docker.com/reference/dockerfile/#healthcheck" }
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ps/" }
+---
+
+<Card id="hook" type="hook">
+`docker ps` kata bekas anda `Up`. Tapi setiap laman tunjuk ralat. Adakah ia sihat?
+
+<Interactive name="Choice" options={[{ label: 'Docker tak tahu: Up cuma maksudnya proses berjalan', correct: true, why: 'Aplikasi yang tersangkut pun boleh Up. Docker perlu ujian untuk tahu lebih.' }, { label: 'Ya. Up maksudnya semua okey', why: 'Up cuma maksudnya proses utama belum berhenti.' }, { label: 'Tak. Docker sudah hentikannya', why: 'Docker biar ia terus berjalan. Ia tak tahu laman itu gagal.' }]} />
+</Card>
+
+<Card id="see-health" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l11" commands={['cat broken/Dockerfile', 'docker build -t diary:broken broken', 'docker run -d --name web diary:broken', 'sleep 20', 'docker ps']} label="Resepi broken semak /health setiap 5 saat, laman yang tak wujud. Selepas 20 saat, docker ps tunjuk web sebagai Up (unhealthy)." />
+
+**<Term id="healthcheck">HEALTHCHECK</Term>** mengetuk setiap 5 saat. Di sini ia minta `/health`, yang tak wujud. Selepas 3 kali gagal berturut-turut, statusnya jadi `unhealthy`.
+</Card>
+
+<Card id="try-line" type="try">
+Bina baris health check yang ketuk laman utama setiap 10 saat.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'HEALTHCHECK', means: 'ujian yang Docker ulang' }, { text: '--interval=10s', means: 'ketuk setiap 10 saat' }, { text: 'CMD', means: 'ujian yang dijalankan' }, { text: 'curl -fs http://localhost/', means: 'minta laman utama; gagal jika dapat laman ralat' }, { text: '|| exit 1', means: 'gagal bermaksud unhealthy' }]} decoys={[{ text: 'RUN', means: 'RUN bekerja semasa membakar, bukan semasa menghidang' }]} success="Baris itu ketuk setiap 10 saat." />
+</Card>
+
+<Card id="try-healthy" type="try">
+Resepi ini semak laman utama. Bina, jalankan sebagai `web`, tunggu sekejap, kemudian tengok.
+
+<Interactive name="KitchenSim" scenario="d2-l11" goal={{ healthy: ['web'], lastTyped: '^docker (ps|inspect)' }} hints={['Taip docker build -t diary:1.0 .', 'Kemudian docker run -d --name web -p 8080:80 diary:1.0', 'Tunggu dengan sleep 6, kemudian taip docker ps']} success="(healthy). Ketukan itu dapat jawapan." />
+
+<Hint>Ketukan pertama datang selepas 5 saat. `sleep 6` menunggu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`web` jadi `unhealthy`. Apa yang Docker biasa buat?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa dengan sendirinya. Ia cuma melaporkan', correct: true, why: 'Docker biasa tak mulakan semula bekas yang unhealthy. Ia tunjuk status untuk anda dan alat anda.' }, { label: 'Mulakan semula serta-merta', why: 'Restart policy bertindak bila proses keluar, bukan bila unhealthy.' }, { label: 'Padam ia', why: 'Docker tak pernah padam bekas sebab unhealthy.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tambah HEALTHCHECK dan baca status kesihatan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nilai asal: setiap 30s, had masa 30s, 3 kali cuba. `--start-period` beri masa untuk aplikasi yang lambat bangun. Compose boleh tunggu `service_healthy` (Dunia D4). Kubernetes abaikan HEALTHCHECK dan guna probe sendiri (Bahagian 3). Semak `/` atau laman kecil `/health`, jangan yang lambat.
+
+<Interactive name="Mission" id="d2-l11-rep" steps={[{ id: 'add', text: 'Tambah HEALTHCHECK pada resepi nginx anda.' }, { id: 'run', text: 'Bina dan jalankan, kemudian tunggu 30 saat.' }, { id: 'look', text: 'Baca statusnya.', command: 'docker ps' }]} success="Bekas anda boleh beritahu keadaannya!" />
+</Card>

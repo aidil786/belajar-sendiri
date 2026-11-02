@@ -1,0 +1,79 @@
+---
+id: linux-l1-l02
+world: 1
+title: "Where am I? pwd, cd, ls"
+summary: "You will learn: to see where you stand, list a folder and move between folders."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, CommandBuilder, Mission]
+needs: [linux-l1-l01]
+scenario: linux-l1-shop
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "pwd (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/pwd.1.en.html" }
+  - { label: "ls (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/ls.1.en.html" }
+  - { label: "cd: Bash builtins (GNU)", url: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" }
+  - { label: "How Linux finds a path (man7.org)", url: "https://man7.org/linux/man-pages/man7/path_resolution.7.html" }
+---
+
+<Card id="hook" type="hook">
+You type `cat today.txt`. The server answers `cat: today.txt: No such file or directory`. But the menu file exists! What went wrong?
+
+<Interactive name="Choice" options={[{ label: 'I am standing in another room', correct: true, why: 'The shell looks for names in the folder you stand in. The menu lives in another room.' }, { label: 'The file is broken', why: 'The file is fine. The shell just looked in another room.' }, { label: 'I need a password', why: 'No password needed. The name is simply not in this folder.' }]} />
+</Card>
+
+<Card id="see-pwd" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-shop" intro={['pwd', 'ls']} />
+
+Every room has an address: its **path**. `pwd` prints where you stand. `ls` lists what is in this room. Try `ls kedai` too.
+</Card>
+
+<Card id="see-paths" type="see">
+`/home/you` starts at `/`, the front door. It works from anywhere. `kedai/menu` starts from where you stand. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'abs', label: 'From the front door /' }, { id: 'rel', label: 'From where I stand' }]} items={[{ label: '/home/you/kedai', bucket: 'abs', why: 'It starts with /: the same address from any room.' }, { label: 'kedai/menu', bucket: 'rel', why: 'No / at the start: it begins in your current room.' }, { label: '/etc', bucket: 'abs', why: 'It starts with /.' }, { label: '../counter', bucket: 'rel', why: '.. means one room up from where you stand.' }]} success="A / at the start means: begin at the front door." />
+</Card>
+
+<Card id="try-cd" type="try">
+Walk into the kitchen with `cd kedai/kitchen`. Then list it with `ls`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ cwd: '~/kedai/kitchen', lastTyped: '^ls' }} hints={['Type cd kedai/kitchen and press Enter.', 'Now type ls.']} solution={['cd kedai/kitchen', 'ls']} success="You are in the kitchen. Two recipes are here." />
+
+<Hint>`cd` means "change directory": walk into a folder.</Hint>
+</Card>
+
+<Card id="predict-up" type="predict">
+You stand in `/home/you/kedai/kitchen`. You type `cd ..` (two dots). Where are you now?
+
+<Interactive name="Choice" options={[{ label: '/home/you/kedai', correct: true, why: '.. is the room one level up. kitchen sits inside kedai.' }, { label: '/home/you', why: 'That is two levels up. One .. climbs one level.' }, { label: '/', why: 'That is the front door, the very top. .. climbs only one level.' }]} />
+</Card>
+
+<Card id="try-counter" type="try">
+You start in the kitchen. Walk to the counter next door in one step: `cd ../counter`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" intro={['cd kedai/kitchen']} goal={{ cwd: '~/kedai/counter' }} hints={['Go up one room, then into counter: cd ../counter']} solution={['cd ../counter']} success="Up one room, then into the counter. The pink bar follows you." />
+
+<Hint>`..` climbs one level. Then add `/counter`.</Hint>
+</Card>
+
+<Card id="check-home" type="check">
+Lost? Build the command that takes you to your <Term id="home-folder">home folder</Term> from anywhere.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'cd', means: 'walk to a folder' }, { text: '~', means: 'your home, /home/you' }]} decoys={[{ text: '..', means: 'one room up' }, { text: '/', means: 'the front door' }]} success="cd ~ always brings you home. A plain cd does too." />
+</Card>
+
+<Card id="win" type="win">
+You can now see where you are and walk between folders.
+</Card>
+
+<Card id="deeper" type="deeper">
+`cd -` jumps back to the room you were in before. `ls -a` also shows hidden names that start with a dot, like `.keys`. `ls -l` shows owners and keys: that is World L2.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="linux-l1-l02-rep" steps={[{ id: 'where', text: 'Where are you?', command: 'pwd' }, { id: 'list', text: 'What is here, hidden names too?', command: 'ls -a' }, { id: 'door', text: 'Walk to the front door and look.', command: 'cd / && ls' }, { id: 'home', text: 'Go home again.', command: 'cd ~' }]} success="You walked a real filesystem!" />
+</Card>

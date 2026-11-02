@@ -1,0 +1,69 @@
+---
+id: aws-a4-l03
+world: 4
+title: "Fargate: tiada server untuk dijaga"
+summary: "Anda akan belajar: jalankan task ECS di Fargate, pilih saiz paling kecil, dan jaga setiap task."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, CommandBuilder, SecurityGroupGate, SwipeJudge]
+needs: [aws-a4-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon ECS: AWS Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" }
+  - { label: "Amazon ECS: Task CPU and memory", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html" }
+  - { label: "Amazon ECS: Fargate task networking", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html" }
+  - { label: "AWS CLI: aws ecs run-task", url: "https://docs.aws.amazon.com/cli/latest/reference/ecs/run-task.html" }
+  - { label: "AWS Fargate pricing", url: "https://aws.amazon.com/fargate/pricing/" }
+---
+
+<Card id="hook" type="hook">
+ECS perlukan komputer untuk jalankan task anda. Anda boleh sewa server EC2, tampal dan ubah saiznya. Ada cara lebih senang?
+
+<Interactive name="Choice" options={[{ label: 'Biar AWS sediakan tempat yang sesuai untuk setiap task', correct: true, why: 'Ya. Anda bawa image. Pusat beli-belah bawa kaunter.' }, { label: 'Tidak, server sentiasa kerja anda', why: 'Bukan di Fargate. AWS jaga mesinnya.' }, { label: 'Jalankan di laptop anda', why: 'Laptop anda tidur. Kedai mesti terus dibuka.' }]} />
+</Card>
+
+<Card id="see-fargate" type="see">
+**<Term id="fargate">Fargate</Term>** (kaunter sedia ada) jalankan setiap task tanpa server untuk anda jaga. Ada kerja yang kekal milik anda. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS jaga' }, { id: 'you', label: 'Masih kerja anda' }]} items={[{ label: 'Tampal mesin di bawah task', bucket: 'aws', why: 'Dengan Fargate anda tak pernah nampak mesin itu.' }, { label: 'Pakej lama dalam image anda', bucket: 'you', why: 'Image anda, pakej anda. Bina semula dan imbas.' }, { label: 'Cari ruang untuk setiap task', bucket: 'aws', why: 'Fargate letak task untuk anda.' }, { label: 'Pengawal pintu setiap task', bucket: 'you', why: 'Anda pilih security group dan peraturannya.' }]} success="Mesin milik AWS. Image dan pintu kekal milik anda." />
+</Card>
+
+<Card id="try-run" type="try">
+Mulakan satu task di Fargate, saiz paling kecil, dalam baris awam anda. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ecs run-task', means: 'mulakan task sekali' }, { text: '--cluster kedai', means: 'dalam kluster kedai' }, { text: '--launch-type FARGATE', means: 'di Fargate, tiada server' }, { text: '--task-definition kedai-web:1', means: 'dari kad resepi revision 1' }, { text: '--network-configuration "awsvpcConfiguration={subnets=[subnet-0e99b93155EXAMPLE],securityGroups=[sg-903004f8],assignPublicIp=ENABLED}"', means: 'baris mana, pengawal mana, satu IP awam' }]} decoys={[{ text: '--launch-type EC2', means: 'di server yang anda jaga' }]} success="Satu task kecil, dalam baris anda, di belakang pengawal anda." />
+
+<Hint>Saiz tertulis pada kad resepi: `"cpu": "256"` dan `"memory": "512"`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Task anda guna 0.25 vCPU dan 0.5 GB. Apa yang Fargate caj?
+
+<Interactive name="Choice" options={[{ label: 'CPU dan memori itu, untuk setiap saat ia berjalan', correct: true, why: 'Hentikan task, meter pun berhenti. Semak halaman harga untuk kadar hari ini.' }, { label: 'Satu server penuh, sebulan', why: 'Tiada server milik anda. Anda bayar saiz dan masa task.' }, { label: 'Tiada, Fargate percuma', why: 'ECS percuma. CPU dan memori Fargate tidak.' }]} />
+</Card>
+
+<Card id="check-door" type="check">
+Setiap task Fargate dapat pengawal pintunya sendiri. Untuk ujian anda, hanya laptop anda boleh melawat di port 80.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'me', label: 'Laptop anda', ip: '203.0.113.9', protocol: 'tcp', port: 80, want: 'in' }, { id: 'stranger', label: 'Orang asing', ip: '192.0.2.77', protocol: 'tcp', port: 80, want: 'out' }, { id: 'ssh', label: 'Orang asing (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="Hanya anda boleh nampak kedai ujian." />
+
+<Hint>Satu peraturan: TCP 80 dari 203.0.113.9/32.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat Fargate yang baik, atau berisiko? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mula dengan 0.25 vCPU dan 0.5 GB', good: true, why: 'Saiz paling kecil. Besarkan hanya jika ia sesak.' }, { text: 'Lupakan task ujian selama sebulan', good: false, why: 'Ia dicaj setiap saat ia berjalan. Hentikan bila siap.' }, { text: 'Fargate Spot untuk ujian yang boleh berhenti', good: true, why: 'Lebih murah, tetapi AWS boleh ambil balik. Sesuai untuk ujian.' }, { text: 'Buka port 80 kepada semua untuk aplikasi separuh siap', good: false, why: 'Hanya laptop anda perlukannya semasa menguji.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan task kecil di Fargate, di belakang pengawalnya sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap task Fargate dapat IP peribadinya sendiri, macam pod dalam [Dunia Kubernetes K3](/ms/kubernetes/#world-3). Untuk pull dari rak ECR peribadi, task perlukan task execution role. Role itu pegang kunci untuk pull.
+</Card>

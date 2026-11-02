@@ -1,0 +1,83 @@
+---
+id: docker-d0-l07
+world: 0
+title: Kursus kilat rangkaian
+summary: "Anda akan belajar: lima perkataan rangkaian, iaitu IP address, port, localhost, DNS dan kod status, untuk cari kenapa aplikasi tak dapat dicapai."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, Choice, TimelineTap, KitchenSim, SortCards]
+needs: [docker-d0-l06]
+scenario: d0-net
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "MDN: IP address", url: "https://developer.mozilla.org/en-US/docs/Glossary/IP_Address" }
+  - { label: "MDN: port", url: "https://developer.mozilla.org/en-US/docs/Glossary/Port" }
+  - { label: "MDN: DNS", url: "https://developer.mozilla.org/en-US/docs/Glossary/DNS" }
+  - { label: "MDN: HTTP status codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" }
+  - { label: "curl manual", url: "https://curl.se/docs/manpage.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d0-net" commands={['curl localhost:9090']} fails={['curl localhost:9090']} label="curl tanya port 9090 dan dapat: Failed to connect to localhost port 9090. Couldn't connect to server." />
+
+Aplikasi anda berjalan, tapi anda tak dapat capainya. Alamatnya salah? Pintunya? Atau aplikasi itu sendiri? Lima perkataan rangkaian akan beritahu anda.
+</Card>
+
+<Card id="see-ip" type="see">
+Setiap komputer dalam rangkaian ada **<Term id="ip-address">IP address</Term>** (alamat IP). Ia macam alamat jalan sebuah bangunan. Yang mana satu IP address?
+
+<Interactive name="Choice" options={[{ label: '`192.168.1.20`', correct: true, why: 'Empat nombor dengan titik. Itulah IP address.' }, { label: '`kedai-kancil.my`', why: 'Itu nama. Buku telefon tukar nama jadi nombor. Sekejap lagi!' }, { label: '`8080`', why: 'Itu nombor pintu pada bangunan. Kad seterusnya!' }]} />
+</Card>
+
+<Card id="see-port" type="see">
+<Interactive name="TimelineTap" events={[{ when: '80', title: 'Web (HTTP)', text: 'Pintu biasa untuk laman web.' }, { when: '443', title: 'Web berkunci (HTTPS)', text: 'Laman web melalui talian yang selamat dan berkunci.' }, { when: '22', title: 'SSH', text: 'Terminal jarak jauh ke komputer lain.' }, { when: '5432', title: 'Postgres', text: 'Pangkalan data tunggu pesanan di sini.' }, { when: '8080', title: 'Web, untuk ujian', text: 'Pintu ganti yang popular untuk aplikasi yang anda uji.' }]} />
+
+Satu bangunan ada banyak tingkap bernombor. Setiap aplikasi tunggu pesanan di **<Term id="port">port</Term>** sendiri. Tekan beberapa yang terkenal.
+</Card>
+
+<Card id="try-localhost" type="try">
+**<Term id="localhost">localhost</Term>** bermaksud “komputer ini, di sini”. Kedai dibuka di tingkap 8080. `curl` ambil satu laman, macam pelayar kecil. Taip `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '127.0.0.1', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*(localhost|127\\.0\\.0\\.1):8080', lastExit: 0 }} hints={['Taip curl localhost:8080 dan tekan Enter.']} success="Kedai menjawab dari laptop anda sendiri. localhost ialah anda!" />
+
+<Hint>`curl localhost:8080`: tiada ruang di sekeliling titik bertindih.</Hint>
+</Card>
+
+<Card id="see-dns" type="see">
+<Interactive name="KitchenReplay" scenario="d0-net" commands={['cat /etc/hosts', 'curl http://kedai-kancil:8080']} fails={['curl http://kedai-kancil:8080']} label="/etc/hosts senaraikan localhost sebagai 127.0.0.1. Kemudian curl kata: Could not resolve host: kedai-kancil." />
+
+**<Term id="dns">DNS</Term>** ialah buku telefon: ia tukar nama kepada IP address. Laptop anda pun simpan buku telefon kecil, /etc/hosts. Tiada siapa senaraikan kedai-kancil, jadi curl mengalah.
+</Card>
+
+<Card id="predict" type="predict">
+curl kata `Could not resolve host`. Bahagian mana yang gagal?
+
+<Interactive name="Choice" options={[{ label: 'Mencari nama (DNS)', correct: true, why: 'Tiada buku telefon kenal nama itu, jadi curl tiada alamat untuk dituju.' }, { label: 'Port tertutup', why: 'Port tertutup akan kata Couldn’t connect to server.' }, { label: 'Laman tiada', why: 'Laman yang tiada menjawab 404. Di sini langsung tiada jawapan.' }]} />
+</Card>
+
+<Card id="try-codes" type="try">
+Bila server menjawab, ia mula dengan **<Term id="http-status-code">HTTP status code</Term>** (kod status HTTP). 2xx: nah, ambil. 4xx: pesanan anda tak kena. 5xx: dapur bermasalah. Susun semua ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '2xx: nah, ambil' }, { id: 'you', label: '4xx: pesanan tak kena' }, { id: 'kitchen', label: '5xx: dapur bermasalah' }]} items={[{ label: '200 OK', bucket: 'ok', why: 'Laman sedang dihantar.' }, { label: '201 Created', bucket: 'ok', why: 'Benda baru anda sudah dibuat.' }, { label: '404 Not Found', bucket: 'you', why: 'Laman itu tiada dalam menu.' }, { label: '403 Forbidden', bucket: 'you', why: 'Anda tak dibenarkan ambil yang itu.' }, { label: '500 Internal Server Error', bucket: 'kitchen', why: 'Ada yang rosak di dapur.' }, { label: '503 Service Unavailable', bucket: 'kitchen', why: 'Dapur terlalu sibuk atau tutup.' }]} success="2 bagus, 4 pesanan anda, 5 dapur." />
+</Card>
+
+<Card id="check" type="check">
+Minta dua laman dari kedai. `curl -I` tunjuk bahagian atas jawapan sahaja. Cuba `/menu.html`, kemudian `/sambal.html`. Baca baris pertama setiap kali.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '/', 'Tab', '↑']} goal={{ typed: '^curl\\b.*/menu\\.html', lastTyped: '^curl\\b.*/sambal\\.html' }} hints={['Taip curl -I localhost:8080/menu.html', 'Sekarang taip curl -I localhost:8080/sambal.html']} success="menu.html: 200 OK. sambal.html: 404 Not Found. Tiada dalam menu!" />
+
+<Hint>`curl -I localhost:8080/menu.html`, kemudian sama dengan `sambal.html`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari kenapa aplikasi tak dapat dicapai.
+</Card>
+
+<Card id="deeper" type="deeper">
+`127.0.0.1` ialah nombor localhost sendiri. Dalam output Docker, `0.0.0.0:8080` bermaksud “port 8080 pada setiap alamat laptop ini”. Pelayar di http://localhost:8080 bertanya sama macam curl.
+
+Latihan sebenar (pilihan): selepas Docker dipasang, jalankan `docker run -d --name web -p 8080:80 nginx:1.30-alpine`. Buka http://localhost:8080 dalam pelayar. Kemas dengan `docker rm -f web`.
+</Card>

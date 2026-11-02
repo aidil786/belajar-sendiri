@@ -1,0 +1,67 @@
+---
+id: git-w02-l05
+world: 2
+title: Undur dengan selamat guna revert
+summary: "Anda akan belajar: cara undur commit yang dah dikongsi tanpa tulis semula sejarah."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, GraphPick, Choice, Sim, TermReplay]
+needs: [git-w02-l04]
+scenario: w02-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Tiga commit: Add style, Make heading blink dan Add day 2 entry. Make heading blink bergoyang." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Make heading blink', kind: 'commit', glow: true }, { name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+Dua commit (titik simpan) lalu, anda buat tajuk berkelip-kelip. Semua orang tak suka. Pasukan anda pun dah ada commit itu.
+</Card>
+
+<Card id="see-revert" type="see">
+<Interactive name="GraphScene" scenario="w02-l05" commands={['git revert HEAD~1']} label="Satu commit baru, Revert Make heading blink, muncul di hujung. Semua commit lama kekal di tempatnya." />
+
+**<Term id="revert">Revert</Term>** (batalkan) tambah commit baru yang buat sebaliknya. Commit yang teruk kekal dalam sejarah. Tiada apa yang dipadam.
+</Card>
+
+<Card id="try-pick" type="try">
+Tekan commit yang buat tajuk berkelip.
+
+<Interactive name="GraphPick" scenario="w02-l05" answer="blink" prompt="Tekan commit yang teruk itu." why="Ia tambah baris blink dalam style.css. Tengok commit undur itu muncul." then="git revert {hash}" />
+
+<Hint>Baca mesejnya. Salah satu ada perkataan "blink".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda revert "Make heading blink". Adakah catatan day 2 anda masih ada?
+
+<Interactive name="Choice" options={[{ label: 'Ya, ia kekal', correct: true, why: 'Revert hanya batalkan satu commit yang anda pilih.' }, { label: 'Tidak, ia pun dibatalkan', why: 'Itu kerja reset. Revert kekalkan kerja yang datang kemudian.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Sekarang revert commit blink itu dalam terminal.
+
+<Interactive name="Sim" scenario="w02-l05" panels={['graph']} goal={{ lastIsRevert: true, fileNotContains: { 'style.css': 'blink' }, commits: 6 }} hints={['Taip git log --oneline untuk tengok hash.', 'Taip git revert, kemudian hash Make heading blink. Atau taip git revert HEAD~1']} success="Dah revert! Tajuk dah tenang, dan sejarah masih lengkap." />
+
+<Hint>`HEAD~1` ialah commit sebelum yang terbaru.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Commit teruk anda dah ada di GitHub. Undur yang mana anda pilih?
+
+<Interactive name="Choice" options={[{ label: '`git revert`', correct: true, why: 'Ia tambah commit undur. Semua orang kekal dengan sejarah yang sama.' }, { label: '`git reset --hard`', why: 'Reset tulis semula sejarah. Pasukan anda akan ada sejarah yang berbeza.' }, { label: '`git commit --amend`', why: 'Amend cuma baiki commit terakhir. Ia pun tulis semula sejarah.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh undur commit yang dikongsi tanpa rosakkan sejarah sesiapa.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam Git sebenar, `git revert` buka editor dengan mesej yang dah siap. Simpan dan tutup. `--no-edit` langkau editor itu. Commit kemudian ubah baris yang sama? Anda akan dapat konflik. Konflik ada dalam World 3.
+
+<Interactive name="TermReplay" scenario="w02-l05" commands={['git revert --no-edit HEAD~1', 'git log --oneline']} label="git revert --no-edit HEAD~1 buat commit undur tanpa buka editor." />
+</Card>

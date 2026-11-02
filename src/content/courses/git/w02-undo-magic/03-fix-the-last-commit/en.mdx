@@ -1,0 +1,73 @@
+---
+id: git-w02-l03
+world: 2
+title: Fix the last commit
+summary: "You will learn: how to fix the message of your last commit, or add a forgotten file."
+minutes: 4
+xp: 20
+interactives: [AreasScene, CommandBuilder, Sim, Choice, GraphScene, TermReplay]
+needs: [git-w02-l02]
+scenario: w02-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Three commits in the repository. The newest one, Add day 2 pgae, wobbles. It has a typo." frames={[{ repo: [{ name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 pgae', kind: 'commit', glow: true }] }]} />
+
+You just made a commit. Then you spot it: "Add day 2 pgae". Can you fix it?
+</Card>
+
+<Card id="see-amend" type="see">
+<Interactive name="AreasScene" zones={['repo']} effect="flash" command={'git commit --amend -m "Add day 2 page"'} label="The amend command types itself. Flash: the commit Add day 2 pgae is swapped for Add day 2 page." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 pgae', kind: 'commit', glow: true }] }, { repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 page', kind: 'commit' }] }]} />
+
+`git commit --amend` swaps your last commit for a fixed one. **<Term id="amend">Amend</Term>** means "fix". Add `-m` with the new message.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that fixes the typo.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'commit', means: 'make a commit' }, { text: '--amend', means: 'replace the last one' }, { text: '-m', means: 'here is the message' }, { text: '"Add day 2 page"', means: 'the fixed message' }]} decoys={[{ text: '--no-edit', means: 'keep the old message' }, { text: '"Add day 2 pgae"', means: 'the old typo' }]} success="That's it! One command, and the typo is gone." />
+
+<Hint>Start with `git commit`. The message comes last.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Now fix the typo for real.
+
+<Interactive name="Sim" scenario="w02-l03" panels={['areas']} goal={{ lastMessage: '^Add day 2 page$', commits: 4 }} hints={['Type git commit --amend -m "Add day 2 page" and press Enter.', 'Check the spelling: page, not pgae.']} success="Fixed! Still 4 commits, now with a clean message." />
+
+<Hint>Type `git commit --amend -m "Add day 2 page"`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-forgot" type="see">
+<Interactive name="AreasScene" zones={['staging', 'repo']} effect="flash" command="git commit --amend --no-edit" label="day2.css waits in the box. Flash: it joins the last commit, Add day 2 page. The box is empty again." frames={[{ staging: [{ name: 'day2.css', glow: true }], repo: [{ name: 'Add day 2 page', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add day 2 page', kind: 'commit', tick: true }] }]} />
+
+Forgot a file? Put it in the box with `git add day2.css`. Then run `git commit --amend --no-edit`. `--no-edit` keeps the same message.
+</Card>
+
+<Card id="predict" type="predict">
+You amend a commit. Does it keep the same <Term id="hash">hash</Term>?
+
+<Interactive name="Choice" options={[{ label: 'No, it gets a new hash', correct: true, why: 'Amend makes a brand new commit. It replaces the old one.' }, { label: 'Yes, the same hash', why: 'A hash comes from what is inside. New inside, new hash.' }, { label: 'It has no hash now', why: 'Every commit has a hash, amended or not.' }]} />
+</Card>
+
+<Card id="see-pushed" type="see">
+<Interactive name="GraphScene" scenario="w02-l03" commands={['git commit --amend -m "Add day 2 page"']} label="The newest commit is swapped for a new commit with a different hash. The older commits stay the same." />
+
+⚠️ **Careful**: amend swaps in a new commit. Never amend a commit you already pushed to GitHub. Your team may have the old one.
+</Card>
+
+<Card id="win" type="win">
+You can now fix your last commit: the message or the files.
+</Card>
+
+<Card id="deeper" type="deeper">
+Without `-m`, `git commit --amend` opens your editor with the old message. Change it, save and close. Amend only fixes the *last* commit. Older commits need interactive rebase, in World 3.
+
+<Interactive name="TermReplay" scenario="w02-l03b" commands={['git status -s', 'git add day2.css', 'git commit --amend --no-edit', 'git log --oneline']} label="day2.css is untracked. After git add and git commit --amend --no-edit, it joins the Add day 2 page commit." />
+</Card>

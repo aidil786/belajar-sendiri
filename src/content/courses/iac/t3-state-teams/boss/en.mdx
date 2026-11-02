@@ -1,0 +1,72 @@
+---
+id: iac-t3-boss
+world: 3
+title: Someone clicked
+summary: "You will learn: to find the drift, import the stray and rename without rebuilding, on your own."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, TofuSim, Choice, SpotLines, SortCards]
+needs: [iac-t3-l08]
+scenario: t3-boss-drift
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "tofu plan (-refresh-only)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: import blocks", url: "https://opentofu.org/docs/language/import/" }
+  - { label: "OpenTofu: moved blocks", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+---
+
+<Card id="hook" type="hook">
+Boss: someone clicked! It was a busy weekend at Kedai Kancil. Tap each moment. Then fix all three surprises, with nothing rebuilt that was fine.
+
+<Interactive name="TimelineTap" events={[{ when: 'Friday', title: 'Menu edited', text: 'Ben swapped Roti canai for Mee goreng in menu.txt, by hand.' }, { when: 'Saturday', title: 'Sign deleted', text: 'Someone deleted sign.txt while tidying up.' }, { when: 'Sunday', title: 'Door code', text: 'The manager set the door code KANCIL, by hand.' }, { when: 'Monday', title: 'Rename', text: 'Ben renamed stall to chef in main.tf.' }]} />
+</Card>
+
+<Card id="try-drift" type="try">
+Surprise 1: the menu and the sign. The blueprint is right. Make the building match it again.
+
+<Interactive name="TofuSim" scenario="t3-boss-drift" goal={{ fileContains: { 'menu.txt': 'Roti canai' }, fileNotContains: { 'menu.txt': 'Mee goreng' }, filesExist: ['sign.txt'] }} hints={['Look first: tofu plan', 'Then tofu apply, and yes.']} success="Menu and sign are back, straight from the blueprint." />
+
+<Hint>Plan first. It should want to add two things.</Hint>
+</Card>
+
+<Card id="check-drift" type="check">
+Next time, you only want to see what changed outside OpenTofu, and change nothing. Which command?
+
+<Interactive name="Choice" options={[{ label: 'tofu plan -refresh-only', correct: true, why: 'It reports the drift and touches nothing.' }, { label: 'tofu apply -auto-approve', why: 'That fixes the drift at once, with no look first.' }, { label: 'tofu state rm local_file.menu', why: 'That makes OpenTofu forget the menu. Not a look.' }]} />
+</Card>
+
+<Card id="try-door" type="try">
+Surprise 2: the door code. The blueprint has the door, but OpenTofu would make a new code. Adopt `KANCIL` instead.
+
+<Interactive name="TofuSim" scenario="t3-boss-door" goal={{ outputEquals: { door: 'KANCIL' } }} hints={['Add an import block: to = random_string.door, id = "KANCIL".', 'tofu plan should say 1 to import, 0 to add.', 'Then tofu apply. Built a new code? Press Start again.']} success="KANCIL adopted. The manager's key still works." />
+
+<Hint>An import block has two lines: `to` and `id`.</Hint>
+</Card>
+
+<Card id="check-import" type="check">
+A teammate pastes this plan in chat. Is it safe?
+
+<Interactive name="SpotLines" prompt="Tap the line that proves nothing gets destroyed." lines={[{ text: 'random_string.door: Preparing import... [id=KANCIL]' }, { text: 'random_pet.stall: Refreshing state... [id=lucky-civet]' }, { text: '' }, { text: '  # random_string.door will be imported' }, { text: '  # (imported from "KANCIL")' }, { text: '    resource "random_string" "door" {' }, { text: '        id          = "KANCIL"' }, { text: '        … (more lines)' }, { text: '    }' }, { text: '' }, { text: 'Plan: 1 to import, 0 to add, 0 to change, 0 to destroy.', target: true }]} success="0 to destroy. Safe to apply." />
+</Card>
+
+<Card id="try-rename" type="try">
+Surprise 3: Ben's rename. The plan wants to destroy the stall and make a new one. Keep the name `lucky-civet`.
+
+<Interactive name="TofuSim" scenario="t3-boss-rename" goal={{ resourceInState: ['random_pet.chef'], outputEquals: { name: 'lucky-civet' } }} hints={['Read tofu plan first: 1 to destroy.', 'Add a moved block: from = random_pet.stall, to = random_pet.chef.', 'Plan should say 0 to destroy. Then tofu apply. New name? Press Start again.']} success="Renamed, nothing rebuilt. The stall is still lucky-civet." />
+
+<Hint>A new name needs a moved block.</Hint>
+</Card>
+
+<Card id="check-tools" type="check">
+Your night-shift notes. Which tool fixes which surprise?
+
+<Interactive name="SortCards" buckets={[{ id: 'apply', label: 'plan, then apply' }, { id: 'import', label: 'import block' }, { id: 'moved', label: 'moved block' }]} items={[{ label: 'A file was changed by hand', bucket: 'apply', why: 'The blueprint is right. Apply puts it back.' }, { label: 'Something was built by hand and should stay', bucket: 'import', why: 'Adopt it, then manage it.' }, { label: 'A resource got a new name in the code', bucket: 'moved', why: 'Same thing, new address.' }, { label: 'A file was deleted by mistake', bucket: 'apply', why: 'Apply builds it again from the blueprint.' }]} success="Drift Hunter! You fixed a messy weekend without breaking anything." />
+</Card>
+
+<Card id="win" type="win">
+You can now hunt drift, adopt strays and refactor, all without rebuilding.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: docker-d2-l04
+world: 2
+title: "ARG lawan ENV"
+summary: "Anda akan belajar: tetapan untuk masa membakar (ARG) dan tetapan yang kekal dalam pek (ENV)."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, CommandBuilder, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l03]
+scenario: d2-l04
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Build variables", url: "https://docs.docker.com/build/building/variables/" }
+  - { label: "Dockerfile reference: ARG", url: "https://docs.docker.com/reference/dockerfile/#arg" }
+  - { label: "Dockerfile reference: ENV", url: "https://docs.docker.com/reference/dockerfile/#env" }
+---
+
+<Card id="hook" type="hook">
+Anda bakar menu yang sama untuk dua kedai: Kancil dan Pasar. Hanya nama kedai berbeza. Perlukah dua resepi?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Beri nama kedai semasa build', correct: true, why: 'Satu resepi, satu ruang kosong diisi semasa build.' }, { label: 'Perlu, satu resepi untuk setiap kedai', why: 'Boleh jalan, tapi setiap pembaikan kena buat dua kali.' }, { label: 'Perlu, dan dua folder juga', why: 'Tak perlu. Tetapan build boleh isi ruang itu.' }]} />
+</Card>
+
+<Card id="see-arg" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l04" commands={['cat Dockerfile', 'docker build --build-arg SHOP=pasar -t menu:pasar .', 'docker run --rm menu:pasar']} label="Resepi ada ARG SHOP=kancil dan ENV GREETING. Dibina dengan --build-arg SHOP=pasar, image cetak Menu for pasar." />
+
+**<Term id="build-arg">ARG</Term>** ialah ruang kosong untuk masa membakar. `--build-arg SHOP=pasar` mengisinya. Tanpanya, nilai asal `kancil` dipakai.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang bakar menu untuk Pasar.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker build', means: 'bakar satu image' }, { text: '--build-arg SHOP=pasar', means: 'isi ruang SHOP' }, { text: '-t menu:pasar', means: 'nama dan tag' }, { text: '.', means: 'folder ini' }]} decoys={[{ text: '-e SHOP=pasar', means: '-e untuk docker run, bukan build' }]} success="Itu bakar menu Pasar." />
+</Card>
+
+<Card id="predict" type="predict">
+Container dari `menu:pasar` jalankan `printenv SHOP`. Apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa. ARG hilang selepas build', correct: true, why: 'ARG wujud semasa membakar sahaja. Bekas yang berjalan tak nampak ia.' }, { label: 'pasar', why: 'Itu nilai semasa build. Ia tak dibungkus.' }, { label: 'kancil', why: 'Nilai asal pun nilai masa build. Hilang juga.' }]} />
+</Card>
+
+<Card id="try-env" type="try">
+`ENV GREETING` memang kekal dalam pek. Cetak ia. Kemudian tukar dengan `-e` dan cetak lagi.
+
+<Interactive name="KitchenSim" scenario="d2-l04" intro={['docker build -t menu:1.0 .']} goal={{ typed: '-e GREETING=', lastTyped: 'printenv GREETING' }} hints={['Taip docker run --rm menu:1.0 printenv GREETING', 'Sekarang: docker run --rm -e GREETING=Hai menu:1.0 printenv GREETING']} success="ENV beri nilai asal. -e tukar untuk satu bekas." />
+
+<Hint>`-e` diletak sebelum nama image.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+ARG atau ENV?
+
+<Interactive name="SortCards" buckets={[{ id: 'arg', label: 'ARG (masa membakar)' }, { id: 'env', label: 'ENV (kekal dalam pek)' }]} items={[{ label: 'Versi Node mana nak dimuat turun semasa membakar', bucket: 'arg', why: 'Hanya build yang perlukannya.' }, { label: 'Port yang aplikasi baca bila ia mula', bucket: 'env', why: 'Aplikasi yang berjalan perlukannya.' }, { label: 'docker run -e boleh tukar nilainya', bucket: 'env', why: '-e tetapkan nilai ENV untuk satu bekas.' }, { label: 'Hilang bila build tamat', bucket: 'arg', why: 'ARG cuma ruang kosong masa membakar.' }]} success="Ruang masa membakar: ARG. Tetapan dalam pek: ENV." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih ARG untuk membakar dan ENV untuk berjalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jangan sesekali beri kata laluan melalui ARG atau ENV. `docker history` tunjuk nilai ARG, dan ENV kekal dalam setiap container. Pelajaran 12 tunjuk cara selamat: rahsia binaan.
+
+`ARG` sebelum `FROM` boleh pilih image asas: `ARG BASE=nginx:latest`, kemudian `FROM ${BASE}`. Pelajaran 9 guna helah ini.
+
+<Interactive name="Mission" id="d2-l04-rep" steps={[{ id: 'arg', text: 'Tambah ARG SHOP=kancil dan satu baris RUN yang guna $SHOP pada resepi kecil.' }, { id: 'build', text: 'Bina dua kali: sekali biasa, sekali dengan nilai anda.', command: 'docker build --build-arg SHOP=pasar -t menu:pasar .' }, { id: 'check', text: 'Semak SHOP sudah hilang semasa berjalan.', command: 'docker run --rm menu:pasar printenv SHOP' }]} success="ARG buat kerjanya dan pergi." />
+</Card>

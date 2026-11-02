@@ -1,0 +1,76 @@
+---
+id: obs-o1-boss
+world: 1
+title: Pilih isyarat
+summary: "Anda akan belajar: memilih SLI, menetapkan SLO dan menyemak bajet ralat untuk kaunter bayar Kedai Kancil."
+minutes: 6
+xp: 50
+interactives: [Choice, SwipeJudge, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l08]
+scenario: o1-checkout-slo
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Google SRE book: service level objectives", url: "https://sre.google/sre-book/service-level-objectives/" }
+  - { label: "Google SRE book: embracing risk", url: "https://sre.google/sre-book/embracing-risk/" }
+  - { label: "Prometheus: alerting practices", url: "https://prometheus.io/docs/practices/alerting/" }
+---
+
+<Card id="hook" type="hook">
+Boss: pemilik Kedai Kancil mahu satu janji untuk kaunter bayar, hari ini juga. Anda mula dari mana?
+
+<Interactive name="Choice" options={[{ label: 'Dari apa pelanggan rasa: bayaran yang berjaya, dan cepat', correct: true, why: 'Ya. Mula dari pengguna, kemudian pilih nombor.' }, { label: 'Dari graf CPU', why: 'Pelanggan tak nampak CPU. Mula dengan apa yang mereka rasa.' }, { label: 'Dengan janji 100%', why: '100% mustahil. Anda dah belajar dalam pelajaran 5.' }]} />
+</Card>
+
+<Card id="try-sli" type="try">
+Bilik 1: pilih SLI untuk kaunter bayar. Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Peratus bayaran yang berjaya', good: true, why: 'Janji utama.' }, { text: 'Peratus bayaran yang siap bawah 1 saat', good: true, why: 'Lambat rasa macam rosak.' }, { text: 'Memori yang server bayaran guna', good: false, why: 'Punca, bukan simptom. Letak di dashboard.' }, { text: 'Bilangan staf yang bertugas', good: false, why: 'Ia tak tunjuk apa pelanggan rasa.' }, { text: 'Peratus laman pesanan yang berjaya dimuat', good: true, why: 'Pelanggan perlukan laman itu sebelum boleh bayar.' }]} />
+</Card>
+
+<Card id="try-measure" type="try">
+Bilik 2: ukur SLI pertama. Bayaran berjaya dibahagi dengan semua, pada 30m.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" prompt="Tulis bayaran berjaya ÷ semua bayaran, kemudian Run." goal={{ resultEquals: [{ labels: {}, value: 0.9995 }] }} hints={['Tekan kedai_checkout_good_total, taip / kemudian tekan kedai_checkout_total.']} solution="kedai_checkout_good_total / kedai_checkout_total" success="Bilik 2 selesai! 99.95% bayaran berjaya." />
+
+<Hint>Yang berjaya di atas, semua di bawah.</Hint>
+</Card>
+
+<Card id="try-target" type="try">
+Bilik 3: pilih SLO untuk bayaran yang berjaya.
+
+<Interactive name="Choice" options={[{ label: '99.9% dalam 30 hari', correct: true, why: 'Ya. Bercita-cita tinggi, jujur, dan tinggalkan bajet 43 minit.' }, { label: '100% setiap hari', why: 'Mustahil. Setiap gangguan kecil akan pecahkan janji.' }, { label: '90% dalam 30 hari', why: 'Terlalu longgar. 1 dalam 10 bayaran boleh gagal dan masih lulus.' }]} />
+</Card>
+
+<Card id="try-screens" type="try">
+Bilik 4: apa yang panggil orang, dan apa yang kekal di skrin?
+
+<Interactive name="SortCards" buckets={[{ id: 'alert', label: 'Amaran' }, { id: 'dash', label: 'Dashboard' }]} items={[{ label: 'SLI jatuh laju: bajet habis dalam beberapa jam', bucket: 'alert', why: 'Pelanggan terjejas sekarang. Bertindak.' }, { label: 'Kaunter bayar rosak sepenuhnya selama 5 minit', bucket: 'alert', why: 'Bertindak sekarang.' }, { label: 'Memori server bayaran 80%', bucket: 'dash', why: 'Punca untuk dipantau, bukan panggilan.' }, { label: 'Pesanan seminit hari ini', bucket: 'dash', why: 'Seronok ditengok. Tiada siapa perlu bertindak.' }, { label: 'Bajet terguna bulan ini: 30%', bucket: 'dash', why: 'Guna untuk merancang. Tak perlu kejutkan sesiapa.' }]} success="Bilik 4 selesai! Panggilan hanya untuk kesakitan sebenar." />
+</Card>
+
+<Card id="try-failed" type="try">
+Bilik 5: gangguan bermula pada 40m. Berapa bayaran gagal menjelang 60m?
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_total" at="60m" prompt="Tolak bayaran berjaya daripada semua bayaran. Jalankan pada 60m." goal={{ at: '60m', typed: '-', resultEquals: [{ labels: {}, value: 440 }] }} hints={['Tambah tanda tolak dan counter yang berjaya: kedai_checkout_total - kedai_checkout_good_total']} solution="kedai_checkout_total - kedai_checkout_good_total" success="440 bayaran gagal menjelang 60m." />
+
+<Hint>Semua tolak yang berjaya tinggal yang gagal.</Hint>
+</Card>
+
+<Card id="check-budget" type="check">
+120,000 bayaran menjelang 60m. SLO 99.9% benarkan 0.1% gagal: 120. Anda ada 440. Berapa banyak bajet terguna?
+
+<Interactive name="Choice" options={[{ label: 'Lebih daripada semuanya: lebih kurang 3.7 kali', correct: true, why: '440 ÷ 120 ≈ 3.7. Bekukan perubahan berisiko dan baiki kebolehpercayaan dulu.' }, { label: 'Lebih kurang satu pertiga', why: 'Itu 40 kegagalan. Anda ada 440.' }, { label: 'Tiada. 440 nombor yang kecil.', why: 'Kecil berbanding 120,000, tapi besar berbanding bajet 120.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Bilik terakhir, betul-betul: tulis janji untuk satu aplikasi yang anda kenal.
+
+<Interactive name="Mission" id="obs-o1-boss-real" steps={[{ id: 'user', text: 'Namakan satu perkara yang pengguna paling kerap buat, seperti “bayar”.' }, { id: 'sli', text: 'Tulis dua SLI untuknya: satu untuk berjaya, satu untuk kelajuan.' }, { id: 'slo', text: 'Tetapkan sasaran dan tempoh untuk setiap satu, seperti 99.9% dalam 30 hari.' }, { id: 'budget', text: 'Kira setiap bajet dalam minit atau dalam permintaan gagal.' }, { id: 'alert', text: 'Tulis satu keadaan yang patut panggil seseorang.' }]} success="Isyarat dipilih, janji ditulis. Boss dikalahkan!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih SLI, tetapkan SLO dan semak bajet ralat.
+</Card>

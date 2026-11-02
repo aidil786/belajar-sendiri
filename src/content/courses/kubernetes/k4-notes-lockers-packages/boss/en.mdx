@@ -1,0 +1,84 @@
+---
+id: k8s-k4-boss
+world: 4
+title: "Same app, three kitchens"
+summary: "You will learn: to run one app in dev, staging and prod, each with its own settings and trays."
+minutes: 6
+xp: 50
+interactives: [KubeReplay, FoodCourtSim, YamlDoctor, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l12]
+scenario: k4-kitchens
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "Kubernetes: ConfigMaps", url: "https://kubernetes.io/docs/concepts/configuration/configmap/" }
+  - { label: "Namespaces", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kitchens" commands={['ls overlays', 'cat overlays/staging/kustomization.yaml']} picture={false} label="ls overlays shows dev, prod and staging. The staging kustomization puts everything in namespace staging, with 2 replicas and a settings patch." />
+
+Boss: one shop, three kitchens. Dev: 1 tray, `debug` logs. Staging: 2 trays, `info`. Prod: 3 trays, `warn`. One base, three sticky notes. Open them all.
+</Card>
+
+<Card id="try-dev" type="try">
+Kitchen 1: dev. Preview it, then open it.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens" namespace="dev" goal={{ replicas: { name: 'shop', count: 1, namespace: 'dev' }, objectExists: ['dev/configmap/settings'], podsReady: { selector: 'app=shop', count: 1, namespace: 'dev' } }} hints={['Preview: kubectl kustomize overlays/dev', 'Open it: kubectl apply -k overlays/dev']} success="Dev is open: 1 tray, chatty logs." />
+
+<Hint>A preview never changes the cluster. Then `apply -k` does.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Kitchen 2 has a problem. A teammate added a cache switch to staging's note. The API server refuses it. Fix the note.
+
+<Interactive name="YamlDoctor" file="settings-patch.yaml" manifest={'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: settings\ndata:\n  LOG_LEVEL: info\n  CACHE: true\n'} solution={'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: settings\ndata:\n  LOG_LEVEL: info\n  CACHE: "true"\n'} keep={['LOG_LEVEL: info', 'CACHE: ']} keepHint="Keep both settings. Change how CACHE is written." hint="ConfigMap data is always text. Put true in quotes." success="Fixed! The note says CACHE is the text true." />
+</Card>
+
+<Card id="try-staging-prod" type="try">
+Your fix is in the files now. Open staging, then prod.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens" namespace="prod" goal={{ objectExists: ['staging/deployment/shop', 'staging/configmap/settings', 'prod/configmap/settings'], replicas: { name: 'shop', count: 3, namespace: 'prod' }, podsReady: { selector: 'app=shop', count: 3, namespace: 'prod' } }} hints={['Type kubectl apply -k overlays/staging', 'Then: kubectl apply -k overlays/prod', 'Check: kubectl get pods -n prod']} success="Staging and prod are open. Three kitchens, one recipe." />
+</Card>
+
+<Card id="check-level" type="check">
+The base says `LOG_LEVEL: debug`. Staging's note says `info`. What does a staging tray print for `printenv LOG_LEVEL`?
+
+<Interactive name="Choice" options={[{ label: 'info', correct: true, why: 'The overlay patch sits on top of the base.' }, { label: 'debug', why: 'Almost! The base is only the start. The patch wins.' }, { label: 'debug and info', why: 'One key, one value. The patch replaces it.' }]} />
+</Card>
+
+<Card id="check-all" type="check">
+<Interactive name="KubeReplay" scenario="k4-kitchens-up" namespace="all" commands={['kubectl get deployments -A -l app=shop', 'kubectl exec -n staging deploy/shop -- printenv CACHE']} label="get deployments across all namespaces shows shop in dev 1/1, prod 3/3 and staging 2/2. The staging tray prints true for CACHE." />
+
+Three zones, three orders: 1, 2 and 3 trays. Staging read your fixed note: `true`.
+</Card>
+
+<Card id="try-where" type="try">
+Before any work on prod, make prod your "you are here" zone. Then list its trays.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens-up" goal={{ namespaceIs: 'prod', lastTyped: 'get pods' }} hints={['Type kubectl config set-context --current --namespace=prod', 'Then: kubectl get pods']} success="The pink bar says prod. Every command now lands there, so take care." />
+
+<Hint>Watch the pink bar at the top change.</Hint>
+</Card>
+
+<Card id="check-safe" type="check">
+Safe move or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Preview with kubectl kustomize before apply -k.', good: true, why: 'You see the YAML before the cluster does.' }, { text: 'Edit the base to give prod 3 trays.', good: false, why: 'The base feeds every kitchen. Change the prod overlay.' }, { text: 'Read the pink bar before kubectl delete.', good: true, why: 'Know which zone you are in first.' }, { text: 'Copy the base into each overlay folder.', good: false, why: 'Then every fix must happen three times.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run one app in three kitchens, each its own way.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real teams keep these folders in Git. A change to `overlays/prod` goes through a pull request. In World K7, a GitOps tool applies it for you.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-boss-rep" steps={[{ id: 'copy', text: 'In the practice terminal above, cat each file under base and overlays. Make the same folders on your machine.' }, { id: 'dev', text: 'Open dev.', command: 'kubectl apply -k overlays/dev' }, { id: 'staging', text: 'Open staging.', command: 'kubectl apply -k overlays/staging' }, { id: 'prod', text: 'Open prod.', command: 'kubectl apply -k overlays/prod' }, { id: 'look', text: 'See all three kitchens.', command: 'kubectl get deployments -A -l app=shop' }, { id: 'tidy', text: 'Close prod. This deletes its zone. Then do the same for staging and dev.', command: 'kubectl delete -k overlays/prod' }]} success="Three real kitchens from one recipe." />
+</Card>

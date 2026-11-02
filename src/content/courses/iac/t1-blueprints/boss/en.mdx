@@ -1,0 +1,79 @@
+---
+id: iac-t1-boss
+world: 1
+title: Build a tiny food court
+summary: "You will learn: to run the whole loop on your own: init, plan, apply, change, destroy."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, PlanReader, OrderList, Mission]
+needs: [iac-t1-l08]
+scenario: t1-boss
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "tofu init", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "tofu apply", url: "https://opentofu.org/docs/cli/commands/apply/" }
+  - { label: "tofu destroy", url: "https://opentofu.org/docs/cli/commands/destroy/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil runs a tiny food court at Saturday's fair. You get the blueprint fresh from Git. What do you type first?
+
+<Interactive name="Choice" options={[{ label: '`tofu init`', correct: true, why: 'A fresh folder has no providers yet. init gets them.' }, { label: '`tofu apply`', why: 'Without init, OpenTofu stops and asks for init.' }, { label: '`tofu destroy`', why: 'Nothing is built yet. And destroy is for the end.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build the food court: a stall name, a table, a board, a bell, a lamp. Use init, plan, then apply.
+
+<Interactive name="TofuSim" scenario="t1-boss" goal={{ stateCount: 5, filesExist: ['board.txt'] }} hints={['Start with tofu init.', 'Then tofu plan. Count the + lines: 5 to add.', 'Then tofu apply, and yes.']} success="Five things built. board.txt shows the table number." />
+
+<Hint>`tofu init`, `tofu plan`, `tofu apply`, `yes`.</Hint>
+</Card>
+
+<Card id="try-read" type="try">
+Friday night, the boss changes the blueprint. Read the plan before anyone builds.
+
+<Interactive name="PlanReader" scenario="t1-boss-next" />
+</Card>
+
+<Card id="predict" type="predict">
+The plan shows `-` next to `null_resource.lamp`. Why does the lamp go?
+
+<Interactive name="Choice" options={[{ label: 'The new blueprint has no lamp block', correct: true, why: 'Not in the blueprint, so not in the building. OpenTofu removes it.' }, { label: 'Its table number changed', why: 'random_integer.table keeps its number. The lamp block is simply gone.' }, { label: 'Every apply destroys lamps', why: 'Only things missing from the blueprint, or forced to change, go away.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+The plan looks right. Apply the new blueprint.
+
+<Interactive name="TofuSim" scenario="t1-boss-next" goal={{ resourceInState: ['local_file.menu'], resourceMissing: ['null_resource.lamp'] }} hints={['Type tofu apply.', 'Read the plan again, then type yes.']} success="New menu, no lamp, a new stall name. The register matches the blueprint." />
+
+<Hint>`tofu apply`, then `yes`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Your fair checklist. Put it in order.
+
+<Interactive name="OrderList" items={['tofu init in the fresh folder', 'tofu plan and read every symbol', 'tofu apply, then yes', 'Change the blueprint, plan again, apply again', 'tofu destroy when the fair is over']} label="First step at the top" success="The whole loop, from start to tidy up." />
+</Card>
+
+<Card id="try-destroy" type="try">
+Sunday night. The fair is over. Tear the food court down.
+
+<Interactive name="TofuSim" scenario="t1-boss-done" goal={{ stateCount: 0, filesMissing: ['board.txt', 'menu.txt'] }} hints={['Type tofu destroy.', 'Read the list of what goes, then type yes.']} success="All gone. Nothing left running, nothing left to pay for." />
+
+<Hint>`tofu destroy`, then `yes`. Careful: read the list first.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now build, change and tear down a blueprint on your own.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): build this food court on your own machine. It uses only the random, local and null providers, so it costs nothing.
+
+<Interactive name="Mission" id="iac-t1-boss-rep" steps={[{ id: 'folder', text: 'Make a folder for the fair and go into it.', command: 'mkdir fair && cd fair' }, { id: 'file', text: 'Copy the main.tf from the first build card into it.' }, { id: 'init', text: 'Get the providers.', command: 'tofu init' }, { id: 'plan', text: 'Read the plan: 5 to add.', command: 'tofu plan' }, { id: 'apply', text: 'Build it. Type yes.', command: 'tofu apply' }, { id: 'look', text: 'Read the board.', command: 'cat board.txt' }, { id: 'destroy', text: 'Tear it down. Type yes.', command: 'tofu destroy' }]} success="A real food court, built and tidied by you." />
+</Card>

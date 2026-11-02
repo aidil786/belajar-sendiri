@@ -1,0 +1,62 @@
+---
+id: aws-a1-l06
+world: 1
+title: IAM Identity Center or IAM users?
+summary: "You will learn: how people should sign in for daily work, and the Free plan trap."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, OrderList, SwipeJudge, Mission]
+needs: [aws-a1-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "What is IAM Identity Center?", url: "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html" }
+  - { label: "Organization and account instances", url: "https://docs.aws.amazon.com/singlesignon/latest/userguide/identity-center-instances.html" }
+  - { label: "Use cases for IAM users", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/gs-identities-iam-users.html" }
+  - { label: "Choosing a plan (Free or Paid)", url: "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html" }
+---
+
+<Card id="hook" type="hook">
+Aina joins Kedai Kancil to help with the website. How should she get into the AWS account?
+
+<Interactive name="Choice" options={[{ label: 'Her own sign-in, with only the rights she needs', correct: true, why: 'Her own key, her own MFA, and you can take it back any day.' }, { label: 'Share the root password with her', why: 'Never. Root stays locked away.' }, { label: 'Share your own admin sign-in', why: 'Then nobody can tell who did what.' }]} />
+</Card>
+
+<Card id="see-desk" type="see">
+**<Term id="identity-center">IAM Identity Center</Term>** is the mall’s front desk. Staff sign in once and get a short-lived badge for each account. An <Term id="iam-user">IAM user</Term> is a copied key that lasts. Sort the facts.
+
+<Interactive name="SortCards" buckets={[{ id: 'idc', label: 'Identity Center (front desk)' }, { id: 'user', label: 'IAM user (copied key)' }]} items={[{ label: 'One sign-in for many accounts', bucket: 'idc', why: 'The access portal lists every account you may enter.' }, { label: 'Short-lived badges for each session', bucket: 'idc', why: 'Badges expire, so a leak does less harm.' }, { label: 'A password or keys that last until changed', bucket: 'user', why: 'Long-term secrets are the risky part.' }, { label: 'Lives inside one account only', bucket: 'user', why: 'Each account needs its own copies.' }, { label: 'Uses AWS Organizations to reach accounts', bucket: 'idc', why: 'Account access comes with an organization.' }]} success="AWS recommends the front desk for people." />
+</Card>
+
+<Card id="try-steps" type="try">
+Set up the front desk for Aina. Put the steps in order.
+
+<Interactive name="OrderList" items={['Create an organization (AWS Organizations)', 'Enable IAM Identity Center', 'Create a user for Aina', 'Make a permission set with the rights she needs', 'Assign Aina and the set to the account', 'Aina signs in at the access portal, with MFA']} label="First step at the top" success="Aina has her own badge, and no long-lived keys." />
+</Card>
+
+<Card id="predict" type="predict">
+Your account is on the AWS Free plan. You create an organization for Identity Center. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The account moves to the Paid plan by itself', correct: true, why: 'AWS’s rules: joining Organizations upgrades a Free plan account.' }, { label: 'Nothing changes', why: 'Check the plan rules. This one upgrades you.' }, { label: 'AWS blocks it on the Free plan', why: 'It is allowed. It just upgrades the plan.' }]} />
+</Card>
+
+<Card id="check-solo" type="check">
+A solo learner who wants to stay on the Free plan. Good plan, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Make one IAM user as my daily admin, with MFA.', good: true, why: 'A fair solo setup. Root stays locked away.' }, { text: 'Give that IAM user access keys for the terminal.', good: false, why: 'Use aws login instead: short-lived, no stored keys.' }, { text: 'Share my IAM user with a friend.', good: false, why: 'One person, one sign-in. Always.' }, { text: 'Move to Identity Center when a team joins.', good: true, why: 'That is when the front desk pays off.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose how people sign in, and spot the Free plan trap.
+</Card>
+
+<Card id="deeper" type="deeper">
+Identity Center also has an "account instance" for one account. It serves apps only. It cannot give sign-ins to AWS accounts.
+
+AWS keeps IAM users for a few cases, like emergency access. Pick one path and do it:
+
+<Interactive name="Mission" id="aws-a1-l06-rep" steps={[{ id: 'read', text: 'Read today’s plan rules on the official page before you choose.' }, { id: 'pick', text: 'Team or Paid plan: set up Identity Center. Solo on the Free plan: one IAM user.' }, { id: 'admin', text: 'Give your everyday sign-in admin rights, and billing access.' }, { id: 'mfa', text: 'Add MFA to that sign-in.' }, { id: 'test', text: 'Sign out of root. Sign in with the new one.' }]} success="Daily work no longer touches the master key." />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: docker-d0-l09
+world: 0
+title: "YAML bahagian 2: bersarang dan perangkap"
+summary: "Anda akan belajar: cara ruang letak baris YAML di dalam satu sama lain, dan cara elak tab, sifar yang hilang dan nilai true yang licik."
+minutes: 4
+xp: 20
+interactives: [Transcript, YamlPlayground, Choice, SortCards]
+needs: [docker-d0-l08]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "YAML 1.2 spec", url: "https://yaml.org/spec/1.2.2/" }
+  - { label: "Compose file reference", url: "https://docs.docker.com/reference/compose-file/" }
+  - { label: "Kubernetes objects in YAML", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="docker compose config gagal: found character that cannot start any token, di baris 3, lajur 1." lines={[{ cmd: 'docker compose config' }, { out: 'failed to parse /home/you/shop/compose.yaml: go-yaml load error in scanner (while scanning for the next token) at L3.C1: found character that cannot start any token', color: 'red' }]} />
+
+Satu tab yang tak nampak rosakkan seluruh fail. Itulah mesej sebenar. Dalam bahasa mudah: baris 3 mula dengan tab, dan YAML hanya terima ruang.
+</Card>
+
+<Card id="see-nesting" type="see">
+Mangkuk tingkat susun mangkuk dalam satu bekas. YAML susun dengan ruang. Dua ruang lagi bermaksud “di dalam baris atasnya”. Inilah **<Term id="nesting">nesting</Term>** (bersarang).
+
+<Interactive name="YamlPlayground" file="tiffin.yaml" initial={'tiffin:\n  top: rice\n  middle: chicken curry\n  bottom:\n    - egg\n    - cucumber\n'} prompt="Tukar chicken curry kepada rendang. Tengok di mana ia tinggal dalam kotak." />
+</Card>
+
+<Card id="predict" type="predict">
+Baris `bottom:` dan senarainya beralih 2 ruang ke kiri. Kini `bottom:` sebaris dengan `tiffin:`. Ia ke mana?
+
+<Interactive name="Choice" options={[{ label: 'Keluar dari tiffin, ke peringkat paling atas', correct: true, why: 'Ruang sama dengan tiffin bermaksud di sebelahnya, bukan di dalam.' }, { label: 'Masih di dalam tiffin', why: 'Di dalam bermaksud lebih banyak ruang daripada tiffin. Sekarang sama.' }, { label: 'Ia dipadam', why: 'Tiada apa dipadam. Ia cuma keluar dari mangkuk tingkat.' }]} />
+</Card>
+
+<Card id="try-indent" type="try">
+Baris 3 kurang satu ruang. Baca kotak itu: kata-kata sebenar pembaca YAML, kemudian bahasa mudah. Luruskan ia. Di telefon, guna “Tambah satu ruang”.
+
+<Interactive name="YamlPlayground" file="tiffin.yaml" initial={'tiffin:\n  top: rice\n middle: chicken curry\n  bottom: sambal\n'} prompt="Letak middle kembali di dalam tiffin." expect={[{ path: 'tiffin', type: 'map', count: 3, hint: 'middle perlu dua ruang yang sama macam top.' }, { path: 'tiffin.middle', equals: 'chicken curry' }]} solution={'tiffin:\n  top: rice\n  middle: chicken curry\n  bottom: sambal\n'} hint="Kira ruang sebelum top. Beri middle jumlah yang sama." success="Ketiga-tiga mangkuk duduk dalam tiffin semula." />
+</Card>
+
+<Card id="see-traps" type="see">
+Kebanyakan bug YAML datang daripada beberapa perangkap licik. Okey, atau perangkap? Susun semuanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'fine', label: 'Okey' }, { id: 'trap', label: 'Perangkap' }]} items={[{ label: 'Dua ruang untuk setiap peringkat', bucket: 'fine', why: 'Langkah sama setiap kali. Senang dibaca.' }, { label: 'Tab di awal baris', bucket: 'trap', why: 'YAML hanya terima ruang untuk inden.' }, { label: '`phone: 0123456789` tanpa tanda petik', bucket: 'trap', why: 'Pembaca nampak nombor dan buang 0 pertama.' }, { label: '`name: "Kedai Kancil"`', bucket: 'fine', why: 'Tanda petik kekalkan nilai sebagai teks. Sentiasa selamat.' }, { label: 'Sesetengah baris 2 ruang, yang lain 3', bucket: 'trap', why: 'Baris mesti sebaris dengan tepat.' }, { label: '`spicy: yes` bila anda maksudkan perkataan yes', bucket: 'trap', why: 'Sesetengah pembaca tukar yes jadi true.' }]} success="Ruang, bukan tab. Sebariskan. Letak petik pada apa-apa yang nampak macam nombor atau true." />
+</Card>
+
+<Card id="try-zero" type="try">
+Tengok kotak itu: pembaca nampak nombor, 123456789. Sifar pertama hilang! Nombor telefon ialah teks. Tanda petik kekalkan sifar itu.
+
+<Interactive name="YamlPlayground" file="shop.yaml" initial={'name: Kedai Kancil\nphone: 0123456789\nopen: true\n'} prompt="Jadikan nombor telefon itu teks semula." expect={[{ path: 'phone', type: 'text', equals: '0123456789', hint: 'Letak tanda petik di sekelilingnya: "0123456789".' }]} solution={'name: Kedai Kancil\nphone: "0123456789"\nopen: true\n'} hint="Tambah tanda petik sebelum 0 dan selepas 9." success="Nombor telefon kekal dengan 0. Pelanggan boleh telefon sekarang." />
+</Card>
+
+<Card id="check" type="check">
+`spicy: yes`. Kubernetes baca itu sebagai true. Macam mana nak kekalkan perkataan yes?
+
+<Interactive name="Choice" options={[{ label: 'Tulis `spicy: "yes"`', correct: true, why: 'Tanda petik jadikan ia teks dalam setiap pembaca YAML.' }, { label: 'Tulis dengan HURUF BESAR: YES', why: 'Pembaca itu tukar YES jadi true juga.' }, { label: 'Tambah lebih banyak ruang di depannya', why: 'Ruang ubah nesting, bukan jenis nilai.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh susun YAML bersarang dengan ruang dan elak perangkap liciknya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alatan berbeza guna pembaca YAML berbeza. Pembaca lama (YAML 1.1) tukar yes, no, on dan off jadi true atau false. Pembaca baru kekalkannya sebagai perkataan. Tanda petik selamat di mana-mana.
+
+Latihan sebenar (pilihan): dalam editor kod anda, hidupkan “show whitespace”. Tab dan ruang nampak berbeza. Buka satu fail YAML dan semak.
+</Card>

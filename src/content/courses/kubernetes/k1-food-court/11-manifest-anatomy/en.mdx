@@ -1,0 +1,71 @@
+---
+id: k8s-k1-l11
+world: 1
+title: Anatomy of a manifest
+summary: "You will learn: the four parts of every Kubernetes order, and the one Kubernetes writes itself."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, SortCards, Choice, YamlDoctor]
+needs: [k8s-k1-l10]
+scenario: k1-tray
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Objects in Kubernetes", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/" }
+  - { label: "Declarative management with kubectl apply", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-first-pod" commands={['kubectl apply -f tray.yaml', 'kubectl get pods']} label="kubectl apply -f tray.yaml creates pod/tray. One small file made a whole tray." />
+
+One small file made this tray. What does each line tell Kubernetes?
+</Card>
+
+<Card id="try-keys" type="try">
+This file is a **<Term id="manifest">manifest</Term>**: an order slip written in YAML. Tap its 4 top-level keys. They start at the left edge.
+
+<Interactive name="SpotLines" prompt="Tap the 4 top-level keys of tray.yaml." lines={[{ text: 'apiVersion: v1', target: true }, { text: 'kind: Pod', target: true }, { text: 'metadata:', target: true }, { text: '  name: tray' }, { text: '  labels:' }, { text: '    app: tray' }, { text: 'spec:', target: true }, { text: '  containers:' }, { text: '    - name: web' }, { text: '      image: nginx:1.29-alpine' }]} success="apiVersion, kind, metadata, spec: every order has them." />
+
+<Hint>Indented lines belong to the key above them.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Who writes each part? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'You write it' }, { id: 'k8s', label: 'Kubernetes writes it' }]} items={[{ label: '`apiVersion: v1`', bucket: 'you', why: 'Which rulebook version to use.' }, { label: '`kind: Pod`', bucket: 'you', why: 'What kind of thing to make.' }, { label: '`metadata.name: tray`', bucket: 'you', why: 'Its name, plus labels if you like.' }, { label: '`spec.containers`', bucket: 'you', why: 'What you want: the order itself.' }, { label: '`status.phase: Running`', bucket: 'k8s', why: 'What is really there now.' }, { label: '`metadata.uid`', bucket: 'k8s', why: 'A unique id the cluster hands out.' }]} success="You write the order. Kubernetes writes what happened." />
+</Card>
+
+<Card id="see-status" type="see">
+<Interactive name="KubeReplay" scenario="k1-tray" commands={['kubectl get pod tray -o jsonpath={.status.phase}']} label="Asking only for status.phase prints: Running." />
+
+`spec` is what you ordered. **<Term id="status">status</Term>** is what Kubernetes sees right now. It is the See box on the manager’s board.
+</Card>
+
+<Card id="predict" type="predict">
+You add `replicas: 3` under this Pod’s `spec`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It is refused', correct: true, why: 'Kubernetes says: strict decoding error: unknown field "spec.replicas". Plain words: a Pod has no such field. Counting trays is a Deployment’s job.' }, { label: '3 trays appear', why: 'A Pod is one tray. It can’t count. A Deployment can (World K2).' }, { label: 'It is quietly ignored', why: 'Kubernetes checks fields strictly. It refuses ones it doesn’t know.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+This order is refused. Read the red line, then fix the file until `kubectl apply` turns green.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: apps/v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\n  labels:\n    app: tray\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n'} keep={['^kind: Pod$', 'name: tray']} hint="Pods live in the core group. Their apiVersion is just v1." success="pod/tray created. Right rulebook, right kind." />
+
+<Hint>Deployments use apps/v1. Pods use v1.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now read the four parts of any manifest.
+</Card>
+
+<Card id="deeper" type="deeper">
+See every field Kubernetes added. `uid`, `creationTimestamp` and the whole `status` come from the cluster. Don’t copy them back into your file.
+
+<Interactive name="KubeReplay" scenario="k1-tray" picture={false} commands={['kubectl get pod tray -o yaml']} label="The full pod as stored: your fields, plus many defaults and a status block written by Kubernetes." />
+
+Real rep (optional): on your kind cluster, run `kubectl get pod tray -o yaml` and find the status block.
+</Card>

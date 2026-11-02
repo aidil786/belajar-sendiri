@@ -1,0 +1,77 @@
+---
+id: linux-l2-l07
+world: 2
+title: Pemboleh ubah persekitaran dan PATH
+summary: "Anda akan belajar: tetapkan nota yang program boleh baca, dan ajar shell di mana alat anda berada."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, OrderList, SwipeJudge]
+needs: [linux-l2-l06]
+scenario: linux-l2-path
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Bash Variables", url: "https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html" }
+  - { label: "Bash manual: Environment", url: "https://www.gnu.org/software/bash/manual/html_node/Environment.html" }
+  - { label: "environ(7): the environment", url: "https://man7.org/linux/man-pages/man7/environ.7.html" }
+  - { label: "which (Debian 13 man page)", url: "https://manpages.debian.org/trixie/debianutils/which.debianutils.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Anda simpan skrip pembantu bernama `menu` dalam `~/tools`. Anda taip `menu`. Shell kata `-bash: menu: command not found`. Ia ada di situ! Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Shell cuma cari dalam folder yang ada dalam senarai', correct: true, why: 'Senarai itu ialah PATH. ~/tools belum ada di dalamnya.' }, { label: 'Skrip itu rosak', why: 'Shell tak jumpa pun, jadi ia tak pernah berjalan.' }, { label: 'Anda perlu sudo', why: 'sudo tak membantu. Shell tak tahu di mana nak cari.' }]} />
+</Card>
+
+<Card id="see-vars" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-path" intro={['echo $HOME', 'echo $PATH']} />
+
+Nota di dinding: **environment variables** (pemboleh ubah persekitaran). `$HOME` ialah bilik anda. `$PATH` senaraikan bilik yang shell cari untuk arahan, dipisah dengan `:`.
+</Card>
+
+<Card id="predict-export" type="predict">
+Anda taip `SHOP=Kancil`, kemudian jalankan `tools/menu`. Ia cetak `Today at : nasi lemak`. Kenapa SHOP kosong?
+
+<Interactive name="Choice" options={[{ label: 'Nota itu kekal dalam shell. export yang kongsikannya.', correct: true, why: 'Pemboleh ubah biasa peribadi bagi shell ini. export lekatkannya di dinding untuk program yang anda mulakan.' }, { label: 'Skrip tak boleh baca pemboleh ubah', why: 'Boleh, selepas pemboleh ubah itu di-export.' }, { label: 'Ejaan Kancil salah', why: 'Ejaannya betul. Skrip itu tak pernah dapat nota.' }]} />
+</Card>
+
+<Card id="try-export" type="try">
+Lekatkan nota di dinding: `export SHOP=Kancil`. Kemudian jalankan `tools/menu` sekali lagi.
+
+<Interactive name="LinuxSim" scenario="linux-l2-path" goal={{ envVar: { SHOP: '^Kancil$' }, lastTyped: '^(\\./)?tools/menu$' }} hints={['Taip export SHOP=Kancil', 'Kemudian jalankan tools/menu']} solution={['export SHOP=Kancil', 'tools/menu']} success="Today at Kancil: nasi lemak. Skrip itu baca nota tadi." />
+
+<Hint>Tiada jarak di sekeliling `=`.</Hint>
+</Card>
+
+<Card id="order-path" type="check">
+Katakan PATH ialah `/home/you/tools:/usr/local/bin:/usr/bin:/bin`. Anda taip `menu`. Susun bilik ikut urutan shell mencari.
+
+<Interactive name="OrderList" items={['/home/you/tools', '/usr/local/bin', '/usr/bin', '/bin']} label="Dicari dulu di atas" success="Kiri ke kanan. Padanan pertama menang." />
+</Card>
+
+<Card id="try-path" type="try">
+Letak `~/tools` di depan <Term id="path-variable">PATH</Term>: `export PATH="$HOME/tools:$PATH"`. Kemudian taip `menu` sahaja.
+
+<Interactive name="LinuxSim" scenario="linux-l2-path" goal={{ envVar: { PATH: '/home/you/tools:.*' }, lastTyped: '^menu$' }} hints={['Salin dengan tepat: export PATH="$HOME/tools:$PATH"', 'Kemudian taip menu']} solution={['export PATH="$HOME/tools:$PATH"', 'menu']} success="menu kini jalan dari mana-mana. Cuba which menu untuk tengok di mana ia tinggal." />
+
+<Hint>`$PATH` di hujung kekalkan senarai lama.</Hint>
+</Card>
+
+<Card id="judge-path" type="check">
+Tabiat PATH yang baik, atau berisiko?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'export PATH="$HOME/tools:$PATH"', good: true, why: 'Tambah folder anda dan kekalkan yang lain.' }, { text: 'export PATH="$HOME/tools"', good: false, why: 'Senarai lama hilang. ls pun tak dijumpai lagi.' }, { text: 'export PATH=".:$PATH"', good: false, why: 'Mana-mana folder yang anda masuk boleh jalankan ls palsu. Berisiko.' }, { text: 'which menu', good: true, why: 'Semak fail mana yang sebenarnya berjalan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi nota dengan export dan beritahu shell di mana alat berada.
+</Card>
+
+<Card id="deeper" type="deeper">
+Perubahan ini kekal sampai anda log keluar. Untuk simpan, tambah baris export dalam `~/.profile`. Di Debian, `~/.profile` sudah tambah `~/bin` ke PATH jika ia wujud. `env` senaraikan setiap nota yang di-export; `unset SHOP` turunkan satu.
+
+Latihan sebenar (pilihan): di Linux, `echo $PATH`, kemudian `which ls`, kemudian `env | wc -l`.
+</Card>

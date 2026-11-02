@@ -1,0 +1,73 @@
+---
+id: git-w04-l02
+world: 4
+title: Sign in with HTTPS and tokens
+summary: "You will learn: how Git proves to GitHub that it's you, over HTTPS."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, OrderList, TimelineTap, SwipeJudge]
+needs: [git-w04-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About authentication to GitHub", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github" }
+  - { label: "Managing your personal access tokens", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" }
+  - { label: "Caching your GitHub credentials in Git", url: "https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git" }
+  - { label: "Git Credential Manager", url: "https://github.com/git-ecosystem/git-credential-manager" }
+  - { label: "gitcredentials", url: "https://git-scm.com/docs/gitcredentials" }
+---
+
+<Card id="hook" type="hook">
+You push to GitHub. Git asks for a password. You type your GitHub password. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It fails. GitHub wants a token or a sign-in helper.', correct: true, why: 'GitHub stopped taking account passwords for Git in 2021. Safer ways are next.' }, { label: 'It works, like on the website', why: 'The website, yes. Git over HTTPS, no.' }, { label: 'GitHub locks your account', why: 'No. It just refuses that password.' }]} />
+</Card>
+
+<Card id="see-https" type="see">
+<Interactive name="Transcript" title="bash" label="git push asks for a username, then a password. The password stays hidden while you type." lines={[{ cmd: 'git push' }, { out: "Username for 'https://github.com': you" }, { out: "Password for 'https://you@github.com':", color: 'dim' }]} />
+
+Your remote address starts with `https://`. So Git talks to GitHub over **HTTPS**. Git asks who you are. The password you type stays hidden.
+</Card>
+
+<Card id="see-token" type="see">
+Which key would you lend a plumber?
+
+<Interactive name="Choice" options={[{ label: 'A key that opens only the kitchen', correct: true, why: 'Small access, small risk. A fine-grained token works like that.' }, { label: 'The master key for every door', why: 'Lose it, and every door is open.' }]} />
+
+A **<Term id="personal-access-token">personal access token</Term>** is a key for Git. Paste it at that Password prompt. A fine-grained token opens only the repos you pick.
+</Card>
+
+<Card id="try-order" type="try">
+Make a fine-grained token for your diary. Put the steps in order.
+
+<Interactive name="OrderList" items={['Open Settings, then Developer settings', 'Pick Fine-grained tokens. Generate a new one.', 'Give it a name and an end date', 'Choose only the diary repo', 'Allow Contents: Read and write', 'Generate it and copy it once']} label="First step at the top" success="That's it! GitHub shows the token only once, so save it right away." />
+
+<Hint>You need a token page before you can fill it in.</Hint>
+</Card>
+
+<Card id="see-gcm" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'You push', text: 'Git needs to know who you are.' }, { when: '2', title: 'A browser opens', text: 'You sign in to GitHub there, with 2FA.' }, { when: '3', title: 'It remembers', text: 'The login is stored safely. Next push just works.' }]} />
+
+Copying tokens is a chore. **<Term id="credential-manager">Git Credential Manager</Term>** signs you in with your browser instead. It comes with Git for Windows.
+</Card>
+
+<Card id="predict" type="predict">
+Your token's end date was yesterday. You push today. What happens?
+
+<Interactive name="Choice" options={[{ label: 'GitHub refuses until you use a new token', correct: true, why: 'An old token is a dead key. Make a new one, or let a helper sign you in.' }, { label: 'It still works forever', why: 'The end date is real. That is the point!' }, { label: 'Your repo gets deleted', why: 'No, your repo is fine. Only the key stopped working.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Token habits: good, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Give every token an end date', good: true, why: 'A lost token stops working by itself.' }, { text: 'Paste a token into your code to save time', good: false, why: 'Anyone who reads the code can use it. Never commit tokens.' }, { text: 'Let a token open only the repos it needs', good: true, why: 'Small key, small risk.' }, { text: 'Send your token to a teammate in a chat', good: false, why: 'Each person makes their own token.' }, { text: 'Token leaked? Delete it on GitHub at once', good: true, why: 'Deleting it makes it useless right away.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now sign Git in to GitHub over HTTPS, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Classic tokens still exist, but they can reach every repo you own. GitHub suggests fine-grained ones. On macOS and Linux, install Git Credential Manager yourself. `git config --global credential.helper` shows which helper Git uses. The GitHub CLI can sign Git in too: next lesson!
+</Card>

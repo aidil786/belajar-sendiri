@@ -1,0 +1,59 @@
+---
+id: git-w11-l10
+world: 11
+title: Push saya ditolak
+summary: "Anda akan belajar: cara baiki push yang ditolak tanpa memaksa."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim, SwipeJudge]
+needs: [git-w04-l09]
+scenario: w11-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git fetch", url: "https://git-scm.com/docs/git-fetch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l10" commands={['git push']} fails={['git push']} label="git push: main -> main ditolak (fetch first). Petunjuk kata remote ada kerja yang anda tiada." />
+
+Anda taip `git push`. GitHub kata rejected (ditolak). Anda rosakkan sesuatu? Tidak! Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+Apa yang GitHub cuba beritahu?
+
+<Interactive name="Choice" options={[{ label: 'GitHub ada commit baru yang anda belum ada', correct: true, why: 'Kawan sepasukan push dulu. Ambil kerja dia, kemudian push.' }, { label: 'Commit anda rosak', why: 'Commit anda okey. Anda cuma ketinggalan.' }, { label: 'Anda tiada akses', why: 'Ralat itu nampak lain. Yang ini kata fetch first.' }]} />
+</Card>
+
+<Card id="see-fetch" type="see">
+<Interactive name="GraphScene" scenario="w11-l10" commands={['git fetch']} label="git fetch bawa commit Aisyah. origin/main dan main anda kini berpecah jadi dua garis dari Add style." />
+
+`git fetch` tunjukkannya: Aisyah push satu commit (titik simpan). main anda dan main GitHub dah ikut jalan berasingan.
+</Card>
+
+<Card id="try-pull" type="try">
+Letak commit anda di atas commit Aisyah. Kemudian push semula.
+
+<Interactive name="Sim" scenario="w11-l10" panels={['graph']} goal={{ pushed: ['main'], minCommits: 5 }} hints={['Taip git pull --rebase', 'Kemudian taip git push']} success="Dah push! Kedua-dua commit ada di GitHub, dalam satu garis lurus." />
+
+<Hint>Taip `git pull --rebase`, kemudian `git push`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Langkah bagus selepas push ditolak, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'git pull --rebase', good: true, why: 'Ia letak commit anda di atas commit baru.' }, { text: 'git push --force', good: false, why: 'Ia akan padam commit Aisyah dari GitHub!' }, { text: 'git fetch', good: true, why: 'Selamat: ia cuma tengok. Kerja anda kekal sama.' }, { text: 'git pull --no-rebase', good: true, why: 'Pun okey: ia cantumkan dua garis dengan commit merge.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki push yang ditolak tanpa memaksa.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git pull` biasa mungkin tanya cara cantumkan dua garis itu. Pilih `--rebase` atau `--no-rebase`. Atau tetapkan sekali: `git config --global pull.rebase true`. Pull berhenti dengan konflik? Lihat "Pull bersepah: abort". Jangan guna `--force` pada branch (cabang) dikongsi.
+</Card>

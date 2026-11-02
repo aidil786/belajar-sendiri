@@ -1,0 +1,80 @@
+---
+id: git-w01-l03
+world: 1
+title: Kotak
+summary: "Anda akan belajar: cara simpan fail yang dah siap sahaja."
+minutes: 4
+xp: 20
+interactives: [AreasScene, DragToArea, Sim, Choice, TermReplay]
+needs: [git-w01-l02]
+scenario: w01-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Tiga fail bergoyang atas meja anda: index.html, style.css dan about.html. Hanya index.html ada tanda hijau." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css', 'about.html'] }]} />
+
+Anda ubah 3 fail. Hanya 1 yang dah siap. Macam mana nak simpan yang itu sahaja?
+</Card>
+
+<Card id="see-box" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} label="Fail bertanda, index.html, bercahaya dan meluncur masuk ke kotak kuning. style.css dan about.html kekal di belakang." frames={[{ working: [{ name: 'index.html', tick: true, glow: true }, 'style.css', 'about.html'] }, { working: ['style.css', 'about.html'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+Git ada satu kotak. Namanya **kawasan staging**. Perubahan yang siap masuk ke dalam kotak.
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git add index.html" label="Arahan git add index.html menaip sendiri. Kemudian index.html meluncur masuk ke kotak." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css', 'about.html'] }, { working: ['style.css', 'about.html'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+`git add index.html` masukkan satu fail ke dalam kotak.
+</Card>
+
+<Card id="try-drag" type="try">
+<Interactive name="DragToArea" zones={['working', 'staging']} items={[{ name: 'index.html', tick: true, target: 'staging', wrong: 'Belum siap lagi!' }, { name: 'style.css', target: 'working', wrong: 'Belum siap lagi!' }, { name: 'about.html', target: 'working', wrong: 'Belum siap lagi!' }]} success="Ya! Hanya fail yang siap ada dalam kotak." />
+
+Seret fail yang **dah siap** sahaja ke dalam kotak.
+
+<Hint>Cari tanda hijau.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+<Interactive name="Sim" scenario="w01-l03" panels={['areas']} goal={{ staged: ['index.html'], notStaged: ['style.css', 'about.html'] }} hints={['Taip git add index.html dan tekan Enter.']} success="Kotak ada index.html. Tiada yang lain." />
+
+Sekarang taip arahan itu sendiri.
+
+<Hint>Taip `git add index.html`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="AreasScene" zones={['staging', 'repo']} effect="flash" label="Kilat kamera. Gambar isi kotak terbang ke garis masa sebagai commit baru. Kotak kini kosong." frames={[{ staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+**Commit** (titik simpan) ambil gambar isi kotak. Hanya yang di dalam akan disimpan.
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `git commit` sekarang. Fail mana yang disimpan?
+
+<Interactive name="Choice" options={[{ label: '`index.html` sahaja', correct: true, why: 'Hanya isi kotak yang disimpan.' }, { label: 'Ketiga-tiga fail', why: 'style.css dan about.html bukan dalam kotak.' }, { label: 'Tiada fail', why: 'index.html ada dalam kotak, jadi ia disimpan.' }]} reveal={{ effect: 'flash', label: 'Kilat. Hanya index.html masuk ke commit baru. style.css dan about.html kekal dalam folder kerja.', frames: [{ working: ['style.css', 'about.html'], staging: ['index.html'], repo: [{ name: 'Add README', kind: 'commit' }] }, { working: ['style.css', 'about.html'], staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w01-l03" commands={['git add index.html', 'git status']} pulse label="git status selepas index.html dimasukkan." />
+
+Dalam `git status`, hijau maksudnya "dalam kotak". Merah maksudnya "belum lagi".
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan hanya yang dah siap.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git add -p` simpan *sebahagian* fail sahaja. `git restore --staged` keluarkan fail dari kotak.
+
+<Interactive name="TermReplay" scenario="w01-l03" commands={['git add index.html', 'git status -s', 'git restore --staged index.html', 'git status -s']} label="Masukkan index.html, kemudian keluarkan semula dari kotak." />
+</Card>

@@ -1,0 +1,65 @@
+---
+id: aws-a4-l08
+world: 4
+title: "Kos: apa yang makan duit"
+summary: "Anda akan belajar: apa yang terus dicaj semasa anda tidur, pilihan mana jimat duit untuk demo, dan apa nak buat bila penggera berbunyi."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, IdleBill, Choice, SortCards, SwipeJudge]
+needs: [aws-a4-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Cost Explorer", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" }
+  - { label: "AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "Cost allocation tags", url: "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html" }
+  - { label: "Amazon EC2 data transfer pricing", url: "https://aws.amazon.com/ec2/pricing/on-demand/#Data_Transfer" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Hari 1', title: 'Berlatih', text: 'Aina bina VPC dengan NAT, load balancer dan kluster EKS.' }, { when: 'Hari 2', title: 'Siap!', text: 'Dia padam pod dan tutup laptop.' }, { when: 'Hari 30', title: 'Bil tiba', text: 'NAT, load balancer dan kluster dicaj setiap jam, sebulan penuh.' }]} />
+
+Kosong bukan bermaksud dipadam. Ketik cerita itu. Apa yang masih berjalan selepas pod hilang?
+</Card>
+
+<Card id="see-idle" type="see">
+Ada bahagian dicaj ikut jam, sibuk atau senyap. Yang lain percuma sehingga digunakan. Nilai setiap satu.
+
+<Interactive name="IdleBill" items={['natGateway', 'eksCluster', 'loadBalancer', 'elasticIpIdle', 'ecrImages', 'ecsCluster', 'vpc', 'iam']} ordered />
+</Card>
+
+<Card id="see-transfer" type="see">
+Memindahkan data pun ada harga. **<Term id="data-transfer">Data transfer out</Term>** (data keluar) ialah yang besar. Arah mana biasanya ada kos?
+
+<Interactive name="Choice" options={[{ label: 'Keluar dari AWS, ke internet', correct: true, why: 'Dicaj ikut GB. Muat turun besar bertambah. Semak halaman harga.' }, { label: 'Masuk dari internet', why: 'Data yang masuk biasanya percuma. Yang keluar ada kos.' }, { label: 'Kedua-duanya tidak, data percuma', why: 'Data keluar dan antara sayap dicaj. Awasi fail besar.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Demo dan kedai sebenar perlukan pilihan berbeza. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'demo', label: 'Cukup untuk demo sehari' }, { id: 'prod', label: 'Berbaloi dibayar dalam production' }]} items={[{ label: 'Satu task Fargate kecil dengan IP awam', bucket: 'demo', why: 'Tiada NAT, tiada load balancer. Cara paling murah untuk tengok ia berfungsi.' }, { label: 'Load balancer merentas dua sayap', bucket: 'prod', why: 'Pembeli sebenar perlukan sayap ganti.' }, { label: 'RDS dengan Multi-AZ', bucket: 'prod', why: 'Salinan siap sedia gandakan kos pangkalan data. Berbaloi untuk pesanan sebenar.' }, { label: 'ECS, bukan kluster EKS', bucket: 'demo', why: 'Tiada caj kluster. Guna EKS bila anda perlukan Kubernetes.' }]} success="Demo: paling kecil dan mudah. Production: ganti di tempat yang penting." />
+</Card>
+
+<Card id="predict" type="predict">
+Penggera bajet e-mel anda pada hari ke-10: 80% dah dibelanja. Apa anda buat dahulu?
+
+<Interactive name="Choice" options={[{ label: 'Buka Cost Explorer, cari servis teratas, padam yang tak guna', correct: true, why: 'Tengok dahulu, kemudian bersihkan. Baris paling besar biasanya puncanya.' }, { label: 'Tutup akaun serta-merta', why: 'Hampir! Tutup akaun tak hentikan semua caj serta-merta. Cari dan padam dahulu.' }, { label: 'Abaikan sehingga hujung bulan', why: 'Setiap jam tambah lagi. Bertindak hari ini.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat jimat duit, atau berisiko? Leret ke kanan untuk selamat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tag semua dengan project=kedai-kancil', good: true, why: 'Cost Explorer kemudian boleh tunjuk kos projek itu.' }, { text: 'Free tier tanggung, jadi langkau pembersihan', good: false, why: 'Peraturan free tier berubah dan ada had. Bersihkan juga.' }, { text: 'Padam sumber latihan pada hari yang sama', good: true, why: 'Benda yang dicaj ikut jam berhenti hanya bila dipadam.' }, { text: 'Semak bil sekali lagi pagi esok', good: true, why: 'Caj muncul lambat. Pastikan ia dah berhenti.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kesan apa yang makan duit, dan bertindak cepat bila penggera berbunyi.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: pusat beli-belah caj sewa bulanan. AWS caj ikut jam, saat atau GB, dan bil sampai lambat. Unit yang senyap masih boleh makan duit. Sebab itu penggera bajet datang dahulu, dan pembersihan datang terakhir.
+</Card>

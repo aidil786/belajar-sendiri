@@ -1,0 +1,86 @@
+---
+id: git-w04-l03
+world: 4
+title: Kunci SSH dan gh auth login
+summary: "Anda akan belajar: cara biar komputer buktikan siapa anda, dengan sepasang kunci atau dengan gh."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, CommandBuilder, Transcript, SwipeJudge, Mission]
+needs: [git-w04-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Generating a new SSH key", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent" }
+  - { label: "Adding a new SSH key to your account", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account" }
+  - { label: "Testing your SSH connection", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection" }
+  - { label: "gh auth login", url: "https://cli.github.com/manual/gh_auth_login" }
+---
+
+<Card id="hook" type="hook">
+Anda push banyak kali sehari. Bolehkah laptop buktikan itu anda, tanpa menaip apa-apa?
+
+<Interactive name="Choice" options={[{ label: 'Boleh, dengan sepasang kunci yang disimpan di dalamnya', correct: true, why: 'Itulah SSH. Jom buat satu.' }, { label: 'Tak boleh. Mesti taip sesuatu setiap kali.', why: 'Tak perlu, kalau guna kunci SSH atau pembantu log masuk.' }, { label: 'Boleh, dengan simpan kata laluan dalam fail teks', why: 'Jangan! Sesiapa yang buka fail itu boleh masuk.' }]} />
+</Card>
+
+<Card id="see-pair" type="see">
+Bayangkan mangga dan kuncinya. Beri GitHub mangga itu. Simpan kuncinya. **<Term id="ssh-key">Kunci SSH</Term>** berfungsi begitu juga. Asingkan dua bahagiannya.
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'Simpan rahsia' }, { id: 'give', label: 'Beri kepada GitHub' }]} items={[{ label: 'id_ed25519', bucket: 'keep', why: 'Tiada .pub: ini kunci peribadi. Ia tak pernah keluar dari komputer anda.' }, { label: 'id_ed25519.pub', bucket: 'give', why: '.pub maksudnya awam. Inilah mangganya.' }, { label: 'Kunci awam (mangga)', bucket: 'give', why: 'GitHub guna untuk semak kunci peribadi anda.' }, { label: 'Kunci peribadi (kunci)', bucket: 'keep', why: 'Sesiapa yang ada kunci ini boleh push sebagai anda.' }]} success="Betul! Fail .pub pergi ke GitHub. Yang satu lagi kekal di rumah." />
+
+<Hint>.pub maksudnya awam. Awam ialah mangga.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan untuk buat sepasang kunci baru.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'ssh-keygen', means: 'Buat sepasang kunci' }, { text: '-t', means: 'jenis ini' }, { text: 'ed25519', means: 'jenis moden yang kuat' }, { text: '-C', means: 'dengan label' }, { text: '"you@example.com"', means: 'e-mel anda sebagai label' }]} decoys={[{ text: 'git', means: 'Git tak buat kunci SSH' }, { text: '--force', means: 'bukan pilihan ssh-keygen di sini' }]} success="Itulah arahan yang panduan GitHub guna juga." />
+
+<Hint>Alatnya ssh-keygen. Jenisnya ed25519.</Hint>
+</Card>
+
+<Card id="see-keygen" type="see">
+<Interactive name="Transcript" title="bash" label="ssh-keygen mula membuat sepasang kunci ed25519. Kemudian cat papar kunci awam: satu baris panjang yang berakhir dengan e-mel anda. Kunci di sini hanya contoh palsu." lines={[{ cmd: 'ssh-keygen -t ed25519 -C "you@example.com"' }, { out: 'Generating public/private ed25519 key pair.' }, { cmd: 'cat ~/.ssh/id_ed25519.pub' }, { out: 'ssh-ed25519 AAAA...FAKE-EXAMPLE-KEY... you@example.com', color: 'cyan' }]} />
+
+Ia tanya mana nak simpan. Tekan Enter untuk tempat biasa. Kemudian pilih passphrase: kata laluan untuk kunci itu. `cat` papar kunci awam untuk disalin.
+</Card>
+
+<Card id="predict" type="predict">
+GitHub dah ada mangga anda. Alamat remote mana yang guna SSH?
+
+<Interactive name="Choice" options={[{ label: '`git@github.com:you/diary.git`', correct: true, why: 'Alamat SSH bermula dengan git@ dan guna titik bertindih.' }, { label: '`https://github.com/you/diary.git`', why: 'Yang itu HTTPS. Ia guna token atau pembantu.' }]} />
+</Card>
+
+<Card id="see-test" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com menjawab: Hi you! You've successfully authenticated, but GitHub does not provide shell access." lines={[{ cmd: 'ssh -T git@github.com' }, { out: "Hi you! You've successfully authenticated, but GitHub does not provide shell access.", color: 'green' }]} />
+
+Tampal kunci `.pub` di GitHub: Settings, kemudian SSH and GPG keys. Kemudian uji. "Hi you!" maksudnya mangga itu padan.
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat kunci: baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Lindungi kunci dengan passphrase', good: true, why: 'Fail kunci yang dicuri tak berguna tanpanya.' }, { text: 'E-mel kunci peribadi kepada diri sendiri sebagai sandaran', good: false, why: 'E-mel bukan peti besi. Buat kunci baru sahaja.' }, { text: 'Buat kunci berasingan untuk setiap komputer', good: true, why: 'Hilang satu laptop? Buang kunci itu sahaja di GitHub.' }, { text: 'Tampal id_ed25519 (tanpa .pub) di GitHub', good: false, why: 'Itu kunci peribadi! Hanya fail .pub pergi ke GitHub.' }]} />
+</Card>
+
+<Card id="see-gh" type="see">
+<Interactive name="Transcript" title="bash" label="Arahan gh auth login. Ia tanya beberapa soalan dan log masuk melalui pelayar anda." lines={[{ cmd: 'gh auth login' }]} />
+
+Jalan pintas: **<Term id="github-cli">GitHub CLI</Term>**. Jalankan `gh auth login`. Pilih GitHub.com, kemudian HTTPS atau SSH. Log masuk dengan pelayar. Ia boleh sediakan Git untuk anda juga.
+</Card>
+
+<Card id="try-mission" type="try">
+Pilih satu cara dan buat betul-betul. Tanda setiap langkah.
+
+<Interactive name="Mission" id="w04-ssh" title="Misi: Git log masuk sendiri" steps={[{ id: 'keygen', text: 'Buat sepasang kunci. Guna e-mel anda sendiri.', command: 'ssh-keygen -t ed25519 -C "you@example.com"' }, { id: 'copy', text: 'Papar kunci awam dan salin semuanya.', command: 'cat ~/.ssh/id_ed25519.pub' }, { id: 'add', text: 'Di GitHub: Settings, kemudian SSH and GPG keys, kemudian New SSH key. Tampal.' }, { id: 'test', text: 'Uji. Cari "Hi" dan username anda.', command: 'ssh -T git@github.com' }, { id: 'or-gh', text: 'Atau langkau semua itu: pasang gh dan jalankan gh auth login.' }]} success="Komputer anda kini boleh buktikan siapa anda." />
+
+<Hint>Di Windows, guna Git Bash untuk arahan ini.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sambung ke GitHub dengan kunci SSH atau dengan gh.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dah ada remote HTTPS? Tukar: `git remote set-url origin git@github.com:you/diary.git`. ssh-agent boleh ingat passphrase, jadi anda taip sekali sahaja setiap sesi. Ujian SSH pertama minta anda percaya github.com. Semak cap jarinya di docs.github.com dulu.
+</Card>

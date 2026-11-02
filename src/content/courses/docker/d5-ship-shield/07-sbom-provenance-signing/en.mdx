@@ -1,0 +1,69 @@
+---
+id: docker-d5-l07
+world: 5
+title: "SBOM, provenance and signing"
+summary: "You will learn: to ship an ingredients list and a \"made here\" record with your image, and what a signature adds."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, CommandBuilder, SpotLines, OrderList, Mission]
+needs: [docker-d5-l06]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Build attestations", url: "https://docs.docker.com/build/metadata/attestations/" }
+  - { label: "SBOM attestations", url: "https://docs.docker.com/build/metadata/attestations/sbom/" }
+  - { label: "Provenance attestations", url: "https://docs.docker.com/build/metadata/attestations/slsa-provenance/" }
+  - { label: "docker buildx imagetools inspect", url: "https://docs.docker.com/reference/cli/docker/buildx/imagetools/inspect/" }
+  - { label: "Sigstore", url: "https://docs.sigstore.dev/" }
+---
+
+<Card id="hook" type="hook">
+Tonight, a new hole is found in `musl`. You run 30 images. Which of them have `musl` inside?
+
+<Interactive name="Choice" options={[{ label: "Search each image's ingredients list", correct: true, why: 'With a list per image, it takes seconds.' }, { label: 'Open every image and look around', why: 'Thirty images, by hand? That takes days.' }, { label: 'Rebuild all 30, just in case', why: 'Maybe later. First you need to know which ones.' }]} />
+</Card>
+
+<Card id="see-sbom" type="see">
+<Interactive name="Transcript" title="bash" label="docker buildx imagetools inspect reads the SBOM of ghcr.io/you/kedai-api:1.0. grep picks four packages: kedai-api 1.0.0, musl 1.2.6-r3, node 24.22.2 and npm 11.19.1." lines={[{ cmd: "docker buildx imagetools inspect ghcr.io/you/kedai-api:1.0 --format '{{ range .SBOM.SPDX.packages }}{{ .name }} {{ .versionInfo }}{{ \"\\n\" }}{{ end }}' | grep -E '^(node|npm|musl|kedai-api) '" }, { out: 'kedai-api 1.0.0\nmusl 1.2.6-r3\nnode 24.22.2\nnpm 11.19.1' }]} />
+
+An **<Term id="sbom" course="cicd">SBOM</Term>** is the ingredients list: every package and its version. This image lists 168. Yes, `musl` is in it.
+</Card>
+
+<Card id="try-build" type="try">
+**<Term id="provenance" course="cicd">Provenance</Term>** is the "made here" record: which recipe, which inputs, how. BuildKit can add both labels as it builds. Build that command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker buildx build', means: 'build with BuildKit' }, { text: '--sbom=true', means: 'add the ingredients list' }, { text: '--provenance=mode=max', means: 'add the full "made here" record' }, { text: '-t ghcr.io/you/kedai-api:1.0', means: 'the full name' }, { text: '--push', means: 'send it to the freezer' }, { text: '.', means: 'this folder is the kitchen' }]} decoys={[{ text: '--sbom=false', means: 'no ingredients list' }]} success="Pack, list and record travel together." />
+</Card>
+
+<Card id="see-attest" type="see">
+The labels travel with the image, in the same registry. Real output from `docker buildx imagetools inspect`.
+
+<Interactive name="SpotLines" lines={[{ text: 'MediaType: application/vnd.oci.image.index.v1+json' }, { text: 'Digest:    sha256:cf80c1b0d5d9…' }, { text: '  Platform:    linux/amd64' }, { text: '  Platform:    unknown/unknown' }, { text: '    vnd.docker.reference.type:   attestation-manifest', target: true }]} prompt="Tap the line that marks the labels." success="Yes! The attestations sit right next to the image." />
+</Card>
+
+<Card id="see-sign" type="see">
+**<Term id="signing">Signing</Term>** adds a tamper-proof seal. Sigstore's cosign signs the image's digest. Put the steps in order.
+
+<Interactive name="OrderList" items={['Build the image', 'Push it to the registry', 'Sign its digest', 'Check the seal before you run it']} label="First step at the top" success="Build, push, sign, check." />
+</Card>
+
+<Card id="predict" type="predict">
+Someone swaps the pack in the freezer. Same tag, new bytes. What does the seal check say?
+
+<Interactive name="Choice" options={[{ label: 'It fails: the digest changed', correct: true, why: 'The seal belongs to one exact digest. New bytes, new digest.' }, { label: 'It passes: the tag is the same', why: 'Seals check the digest, not the tag.' }, { label: 'Nothing: seals only work on your laptop', why: 'Anyone can check a seal, anywhere.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now ship an image with its ingredients list and "made here" record.
+</Card>
+
+<Card id="deeper" type="deeper">
+BuildKit adds a small provenance record by default (`mode=min`). Attestations need the containerd image store, the default for new Docker 29 installs. Keyless signing uses your GitHub or Google login. It writes to a public log. [Part 2, World C2](/en/cicd/#world-2) signs in CI with `actions/attest`.
+
+Real rep (optional), after logging in to GHCR (lesson 2):
+
+<Interactive name="Mission" id="d5-l07-rep" steps={[{ id: 'build', text: 'Build and push with both labels.', command: 'docker buildx build --sbom=true --provenance=mode=max -t ghcr.io/YOUR-NAME/kedai-api:1.0 --push .' }, { id: 'read', text: 'Read the ingredients list (it is long).', command: "docker buildx imagetools inspect ghcr.io/YOUR-NAME/kedai-api:1.0 --format '{{ json .SBOM.SPDX }}'" }, { id: 'sign', text: 'Optional: install cosign from docs.sigstore.dev and sign your digest.' }]} success="Your pack carries its own paperwork!" />
+</Card>

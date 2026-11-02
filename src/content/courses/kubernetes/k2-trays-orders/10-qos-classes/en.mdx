@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l10
+world: 2
+title: "QoS classes"
+summary: "You will learn: the three QoS classes, and which pods leave first when a node runs short."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l09]
+scenario: k2-qos
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pod Quality of Service classes", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/" }
+  - { label: "Kubernetes: Node-pressure eviction", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/" }
+---
+
+<Card id="hook" type="hook">
+A stall is running out of memory. Someone has to leave, or everyone suffers. Who should go first?
+
+<Interactive name="Choice" options={[{ label: 'The tray that booked nothing', correct: true, why: 'It promised nothing and got no promise back. Kubernetes thinks the same way.' }, { label: 'The tray that booked exactly what it uses', why: 'It kept its promise. It should be the last to go.' }, { label: 'Pick one at random', why: 'Kubernetes has a fair order. It comes from requests and limits.' }]} />
+</Card>
+
+<Card id="see-classes" type="see">
+Kubernetes gives every pod a **<Term id="qos-class">QoS class</Term>**, worked out from its requests and limits. Sort these trays.
+
+<Interactive name="SortCards" buckets={[{ id: 'g', label: 'Guaranteed' }, { id: 'b', label: 'Burstable' }, { id: 'e', label: 'BestEffort' }]} items={[{ label: 'gold: CPU and memory requests equal their limits', bucket: 'g', why: 'Every container books exactly its maximum. That is Guaranteed.' }, { label: 'silver: requests, but no limits', bucket: 'b', why: 'It booked something, but not everything is pinned. Burstable.' }, { label: 'bronze: no requests, no limits', bucket: 'e', why: 'Nothing booked at all. BestEffort.' }, { label: 'Only a memory limit, nothing else', bucket: 'b', why: 'Some numbers, not all equal for CPU and memory. Burstable.' }]} success="Sorted! All pinned: Guaranteed. Some: Burstable. None: BestEffort." />
+</Card>
+
+<Card id="see-check" type="see">
+<Interactive name="KubeReplay" scenario="k2-qos" commands={['kubectl apply -f gold.yaml', 'kubectl apply -f silver.yaml', 'kubectl apply -f bronze.yaml', 'kubectl get pod gold -o jsonpath={.status.qosClass}', 'kubectl get pod silver -o jsonpath={.status.qosClass}', 'kubectl get pod bronze -o jsonpath={.status.qosClass}']} label="The three pods are created. Their QoS classes are Guaranteed, Burstable and BestEffort." />
+
+You never write the class. Kubernetes works it out and stores it in the pod's status. `jsonpath` reads one field.
+</Card>
+
+<Card id="try-order" type="try">
+Memory runs short on a stall. Who leaves first? Put them in order.
+
+<Interactive name="OrderList" items={['BestEffort pods', 'Burstable pods using more than they booked', 'Guaranteed pods, last of all']} label="First to leave at the top" success="Right! Keep your important trays Guaranteed." />
+
+<Hint>Fewer promises, earlier exit.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Your turn. Apply `gold.yaml`. Then read its class: `kubectl get pod gold -o jsonpath={.status.qosClass}`.
+
+<Interactive name="FoodCourtSim" scenario="k2-qos" goal={{ objectExists: ['pod/gold'], typed: 'qosClass' }} hints={['Type kubectl apply -f gold.yaml', 'Type kubectl get pod gold -o jsonpath={.status.qosClass}']} success="Guaranteed: gold leaves last." />
+
+<Hint>Copy the field path exactly, braces and dots too.</Hint>
+</Card>
+
+<Card id="check" type="check">
+A container requests `cpu: 100m` and `memory: 64Mi`. Its only limit is `memory: 64Mi`. Which class?
+
+<Interactive name="Choice" options={[{ label: 'Burstable', correct: true, why: 'Memory matches, but CPU has no limit. Not everything is pinned.' }, { label: 'Guaranteed', why: 'Guaranteed needs a CPU limit too, equal to its request.' }, { label: 'BestEffort', why: 'It has requests, so it is not BestEffort.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell the three QoS classes apart and know who leaves first.
+</Card>
+
+<Card id="deeper" type="deeper">
+If a container sets only limits, its requests copy the limits. So limits for CPU and memory alone also give Guaranteed. When memory runs short, the kubelet evicts pods using more than they requested first.
+
+Real rep (optional): on a throwaway cluster, apply the three pods and run `kubectl describe pod bronze`. Find the QoS Class line.
+</Card>

@@ -1,0 +1,71 @@
+---
+id: cicd-c1-l06
+world: 1
+title: Build once, promote through environments
+summary: "You will learn: why the build that staging tested is the build that production gets."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, OrderList, ConveyorBelt, SwipeJudge]
+needs: [cicd-c1-l05]
+scenario: c1-promote
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Store and share data with artifacts", url: "https://docs.github.com/en/actions/tutorials/store-and-share-data" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Managing environments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments" }
+---
+
+<Card id="hook" type="hook">
+Staging worked perfectly. Then production broke. Same code! What changed?
+
+<Interactive name="Choice" options={[{ label: 'Production got a new build, made later', correct: true, why: 'A later build can pull in newer packages. Staging tested something else.' }, { label: 'Nothing. Computers are random.', why: 'Computers do what they are told. Something was different.' }, { label: 'Staging was lying', why: 'Staging told the truth about the build it got. Production got another one.' }]} />
+</Card>
+
+<Card id="see-envs" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Dev', text: 'Your home kitchen: your own laptop. Try things freely.' }, { when: '2', title: 'Staging', text: 'The tasting room: a copy of the shop. Check it before real users do.' }, { when: '3', title: 'Production', text: 'The real shop. Real users, real money.' }]} />
+
+Tap each place. Each place your app runs is an **<Term id="environment" course="git">environment</Term>**.
+</Card>
+
+<Card id="try-order" type="try">
+Cook once and seal the pack. That sealed pack is the **<Term id="artifact" course="git">artifact</Term>**. Put its trip in order.
+
+<Interactive name="OrderList" items={['Build and seal the artifact', 'Deploy it to staging', 'Check staging', 'Send the same artifact to production']} label="First step at the top" success="One pack, two stops. Production gets exactly what staging checked." />
+</Card>
+
+<Card id="see-promote" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-promote" />
+
+Press Run. The build happens once. Staging and production get the same pack. Moving it on is called **<Term id="promote">promote</Term>**.
+</Card>
+
+<Card id="predict-rebuild" type="predict">
+Why not make a fresh build just for production?
+
+<Interactive name="Choice" options={[{ label: 'It may differ from the build staging tested', correct: true, why: 'New packages or tools can sneak in. Then staging proved nothing.' }, { label: 'Builds cost a lot of money', why: 'Builds are cheap. The risk is that it differs.' }, { label: 'GitHub does not allow it', why: 'GitHub allows it. It is just not a safe habit.' }]} />
+</Card>
+
+<Card id="predict-stop" type="predict">
+Staging's health check finds a problem.
+
+<Interactive name="ConveyorBelt" scenario="c1-promote-smoke" task={{ type: 'predict' }} success="Staging caught it. Production never got the bad pack." />
+</Card>
+
+<Card id="check" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Build once, then deploy that same artifact everywhere', good: true, why: 'What you tested is what users get.' }, { text: 'Rebuild for production from the same commit', good: false, why: 'Packages can change between builds.' }, { text: 'Keep each place’s web address outside the build', good: true, why: 'The same pack then works in staging and production.' }, { text: 'Bake staging’s password into the build', good: false, why: 'Now production carries a staging secret. Keep secrets per environment.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now build once and promote the same artifact.
+</Card>
+
+<Card id="deeper" type="deeper">
+Web addresses and keys differ per place. They come in at deploy time. In GitHub, `environment:` on a job picks that place's secrets and rules. Container images make this easy: one image, many places (World C2).
+
+Real rep (optional): find where your repo builds. Does a deploy job build again? Pass the build on with `actions/upload-artifact` and `actions/download-artifact` instead.
+</Card>

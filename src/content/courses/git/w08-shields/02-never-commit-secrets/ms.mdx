@@ -1,0 +1,72 @@
+---
+id: git-w08-l02
+world: 8
+title: Jangan commit rahsia
+summary: "Anda akan belajar: cara jauhkan kunci dan kata laluan dari commit anda."
+minutes: 4
+xp: 20
+interactives: [TermReplay, AreasScene, SortCards, Sim, Choice, SwipeJudge]
+needs: [git-w08-l01]
+scenario: w08-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "Removing sensitive data (prevention tips)", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l02" commands={['cat .env', 'git status -s']} label="cat .env tunjuk satu baris: API_KEY=fake_demo_key_123. Kemudian git status -s senaraikan dua fail baru: .env dan app.js." />
+
+Diari anda dapat widget cuaca. Ia perlukan satu kunci, disimpan dalam `.env`. Satu `git add .` yang cuai, dan kunci itu masuk ke sejarah anda.
+</Card>
+
+<Card id="see-secret" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git add ." label="git add . sapu app.js dan .env masuk ke dalam kotak. .env ada tanda amaran belum siap." frames={[{ working: ['app.js', { name: '.env', tag: 'notReady', glow: true }] }, { working: [], staging: ['app.js', { name: '.env', tag: 'notReady' }] }]} />
+
+**<Term id="secret">Rahsia</Term>** (secret) macam kunci rumah. Kunci API, kata laluan dan token semuanya rahsia. `git add .` ambil semua benda, rahsia sekali.
+</Card>
+
+<Card id="see-ignore" type="see">
+<Interactive name="TermReplay" scenario="w08-l02" commands={['echo ".env" >> .gitignore', 'git status -s']} label="Baris .env ditambah ke .gitignore. Sekarang git status -s senaraikan .gitignore dan app.js. .env dah hilang dari senarai." />
+
+Tambah satu baris dalam **<Term id="gitignore">.gitignore</Term>** anda. Sekarang Git buat-buat `.env` tak wujud. Dua anak panah, `>>`, tambah satu baris dan kekalkan baris lama.
+</Card>
+
+<Card id="try-sort" type="try">
+Rahsia, atau selamat untuk di-commit? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'secret', label: 'Rahsia: jauhkan' }, { id: 'safe', label: 'Selamat di-commit' }]} items={[{ label: 'Kunci API', bucket: 'secret', why: 'Sesiapa yang ada boleh guna servis itu sebagai anda.' }, { label: 'Kata laluan pangkalan data anda', bucket: 'secret', why: 'Ia buka semua data anda.' }, { label: 'Kunci SSH peribadi anda', bucket: 'secret', why: 'Ia bukti anda ialah anda. Jangan kongsi.' }, { label: 'index.html', bucket: 'safe', why: 'Itu laman anda. Semua orang boleh nampak pun.' }, { label: '.gitignore', bucket: 'safe', why: 'Commit fail ini, supaya pasukan anda abaikan fail yang sama.' }, { label: '.env.example dengan nilai kosong', bucket: 'safe', why: 'Ia senaraikan kunci yang perlu, tanpa nilai sebenar.' }]} success="Siap! Rahsia kekal di rumah. Kod masuk." />
+</Card>
+
+<Card id="try-sim" type="try">
+Sembunyikan `.env` dari Git. Kemudian masukkan semua yang lain ke dalam kotak.
+
+<Interactive name="Sim" scenario="w08-l02" panels={['areas', 'files']} goal={{ fileContains: { '.gitignore': '.env' }, staged: ['.gitignore', 'app.js'], notStaged: ['.env'], noUntracked: true }} hints={['Sembunyikan dulu: echo ".env" >> .gitignore', 'Sekarang git add . dah selamat. Taip git add .', '.env ada dalam kotak? Keluarkan: git restore --staged .env']} success="app.js dan .gitignore ada dalam kotak. .env kekal di rumah." />
+
+<Hint>Taip `echo ".env" >> .gitignore`. Kemudian `git add .`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`.env` dah ada dalam `.gitignore`. Anda sengaja taip `git add .env`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Git berhenti dan kata fail itu diabaikan', correct: true, why: 'Git hanya tambah jika anda paksa dengan -f. Jangan buat begitu dengan rahsia.' }, { label: 'Git tambah macam fail biasa', why: 'Git berhenti dan beritahu laluan itu diabaikan.' }, { label: 'Git padam .env', why: '.gitignore tak pernah padam apa-apa.' }]} />
+</Card>
+
+<Card id="check-code" type="check">
+Rahsia juga bersembunyi dalam kod, bukan dalam `.env` sahaja. Bagus, atau perlu baiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '`const key = process.env.API_KEY;`', good: true, why: 'Ia baca kunci dari .env. Kod itu tak simpan rahsia.' }, { text: '`const key = "fake_demo_key_123";`', good: false, why: 'Kunci ditaip terus dalam kod. Ia akan di-commit.' }, { text: 'Commit .env.example dengan `API_KEY=` tanpa nilai', good: true, why: 'Rakan sepasukan nampak kunci yang perlu. Tiada rahsia di dalam.' }, { text: '`git add -f .env`', good: false, why: '-f paksa fail yang diabaikan masuk. Kunci anda akan di-commit.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jauhkan rahsia dari commit anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Fail `.env.example` senaraikan nama kunci dengan nilai kosong, contohnya `API_KEY=`. Rakan sepasukan salin ke `.env` dan isi kunci sendiri. Abaikan `.env` sebelum commit pertama anda. Jadi `git add .` yang cuai tak akan dapat menangkapnya.
+
+<Interactive name="TermReplay" scenario="w08-l02" commands={['echo ".env" >> .gitignore', 'cat .gitignore', 'git add .', 'git status']} label="Selepas .env ditambah ke .gitignore, fail itu ada dua baris: *.log dan .env. git add . hanya masukkan .gitignore dan app.js ke dalam kotak." />
+</Card>

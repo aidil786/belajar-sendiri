@@ -1,0 +1,70 @@
+---
+id: linux-l4-l05
+world: 4
+title: "Scheduled jobs: cron and timers"
+summary: "You will learn: to run a job on a schedule with cron, and with a systemd timer."
+minutes: 5
+xp: 25
+interactives: [Transcript, OrderList, LinuxSim, Choice, SortCards, Mission]
+needs: [linux-l4-l04]
+scenario: linux-l4-cron
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian: crontab(5)", url: "https://manpages.debian.org/trixie/cron/crontab.5.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+  - { label: "systemd.time: calendar events", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="kedai (lab)" label="crontab -l shows one line: 0 2 * * * /home/you/backup.sh"
+  lines={[{ cmd: 'crontab -l' }, { out: '0 2 * * * /home/you/backup.sh' }]} />
+
+Someone must back up the menu at 2 a.m., every night. Nobody wants that shift. This one line does it. How?
+</Card>
+
+<Card id="try-fields" type="try">
+<Term id="cron">cron</Term> is the roster on the wall. It checks every minute. A roster line has five time fields, then the job. Put the fields in order.
+
+<Interactive name="OrderList" items={['minute (0-59)', 'hour (0-23)', 'day of the month (1-31)', 'month (1-12)', 'day of the week (0-7, Sunday is 0 or 7)', 'the command, with its full path']} label="First field at the top" success="0 2 * * * means minute 0, hour 2, every day." />
+</Card>
+
+<Card id="try-cron" type="try">
+`jobs.txt` holds a roster line for every minute. Install it with `crontab jobs.txt`. Then `sleep 15` until a minute passes, and read `cron.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-cron" goal={{ crontabHas: { you: 'hello\\.sh' }, fileContains: { '~/cron.log': 'Kedai is open' } }} hints={['crontab jobs.txt', 'crontab -l shows it.', 'sleep 15, then cat cron.log']} solution={['crontab jobs.txt', 'crontab -l', 'sleep 15']} success="cron ran hello.sh on the minute, all by itself." />
+
+<Hint>The clock here starts at 09:00:40. One minute comes quickly.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+What does `*/15 * * * *` mean?
+
+<Interactive name="Choice" options={[{ label: 'Every 15 minutes', correct: true, why: '*/15 in the minute field: 0, 15, 30 and 45.' }, { label: 'At 15:00 every day', why: 'That would be 0 15 * * *.' }, { label: 'On the 15th of each month', why: 'That would be 0 0 15 * *.' }]} />
+</Card>
+
+<Card id="see-timer" type="see">
+<Interactive name="Transcript" title="kedai (lab)" label="A timer file with OnCalendar 02:00 and Persistent=true. enable --now creates a symlink. list-timers shows the next run, Mon 2026-11-02 02:00 UTC, which starts kedai-backup.service."
+  lines={[{ cmd: 'cat /etc/systemd/system/kedai-backup.timer' }, { out: '[Unit]\nDescription=Back up the Kedai menu every night\n\n[Timer]\nOnCalendar=*-*-* 02:00:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target' }, { cmd: 'sudo systemctl enable --now kedai-backup.timer' }, { out: "Created symlink '/etc/systemd/system/timers.target.wants/kedai-backup.timer' → '/etc/systemd/system/kedai-backup.timer'." }, { cmd: 'systemctl list-timers kedai-backup.timer' }, { out: 'NEXT                        LEFT LAST PASSED UNIT               ACTIVATES\nMon 2026-11-02 02:00:00 UTC  13h -         - kedai-backup.timer kedai-backup.service', color: 'green' }]} />
+
+systemd has its own alarm clock: a <Term id="systemd-timer">timer</Term>. It starts a service on time. `Persistent=true` catches up on a run missed while the machine was off.
+</Card>
+
+<Card id="check" type="check">
+cron or a systemd timer?
+
+<Interactive name="SortCards" buckets={[{ id: 'cron', label: 'cron' }, { id: 'timer', label: 'systemd timer' }]} items={[{ label: 'One line, quick to add', bucket: 'cron', why: 'crontab and you are done.' }, { label: 'Its output lands in journalctl', bucket: 'timer', why: 'Runs as a service, so the journal keeps it.' }, { label: 'Catches up after the machine was off', bucket: 'timer', why: 'Persistent=true.' }, { label: 'crontab -l lists it', bucket: 'cron', why: 'Each user has a crontab.' }]} success="Quick: cron. Logged and catches up: a timer." />
+</Card>
+
+<Card id="win" type="win">
+You can now schedule a job with cron or a systemd timer.
+</Card>
+
+<Card id="deeper" type="deeper">
+cron runs with a tiny PATH and no terminal. Use full paths, and save output: `>> /home/you/backup.log 2>&1`. `crontab -r` deletes your whole roster without asking. `systemd-analyze calendar '*-*-* 02:00:00'` tells you when a timer fires next. Timer outputs here came from a real Debian 13 lab.
+
+<Interactive name="Mission" id="linux-l4-l05-rep" steps={[{ id: 'cron', text: 'On a VM: add a roster line that writes the date every minute.', command: "echo '* * * * * date >> /tmp/tick.log' | crontab -" }, { id: 'wait', text: 'Wait two minutes, then look.', command: 'cat /tmp/tick.log' }, { id: 'clean', text: 'Tidy up: this removes your whole roster.', command: 'crontab -r' }, { id: 'timers', text: 'See the timers your system already has.', command: 'systemctl list-timers' }]} success="Your first scheduled job ran on its own." />
+</Card>

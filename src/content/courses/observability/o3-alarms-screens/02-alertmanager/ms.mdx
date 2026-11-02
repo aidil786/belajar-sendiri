@@ -1,0 +1,73 @@
+---
+id: obs-o3-l02
+world: 3
+title: "Alertmanager: hala, kumpul, senyap"
+summary: "Anda akan belajar: cara Alertmanager kumpul loceng, pilih siapa dipanggil dan senyap bila disuruh."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, Transcript, YamlPlayground, SortCards, Mission]
+needs: [obs-o3-l01]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alertmanager", url: "https://prometheus.io/docs/alerting/latest/alertmanager/" }
+  - { label: "Alertmanager configuration", url: "https://prometheus.io/docs/alerting/latest/configuration/" }
+  - { label: "Alerting overview", url: "https://prometheus.io/docs/alerting/latest/overview/" }
+---
+
+<Card id="hook" type="hook">
+Sepuluh server kedai terputus bekalan elektrik serentak. Sepuluh alert rule berbunyi. Apa patut telefon anda dapat?
+
+<Interactive name="Choice" options={[{ label: 'Satu mesej yang senaraikan kesepuluhnya', correct: true, why: 'Betul. Satu panggilan, gambaran penuh. Itulah grouping.' }, { label: 'Sepuluh mesej dalam sepuluh saat', why: 'Sepuluh getaran untuk satu masalah. Orang berhenti membaca.' }, { label: 'Tiada apa-apa, terlalu bising', why: 'Bekalan terputus itu benar. Seseorang mesti tahu.' }]} />
+</Card>
+
+<Card id="see-journey" type="see">
+<Interactive name="OrderList" items={['Prometheus: rule berbunyi', 'Alertmanager: loceng dengan label sama masuk satu kumpulan', 'Alertmanager: route pilih penerima', 'Penerima dapat satu mesej']} label="Langkah pertama di atas" success="Itulah seluruh perjalanan loceng." />
+
+Prometheus cuma bunyikan loceng. **<Term id="alertmanager">Alertmanager</Term>** ialah pengagih. Ia tentukan siapa dengar, dan bagaimana.
+</Card>
+
+<Card id="see-route" type="see">
+<Interactive name="Transcript" title="bash" label="amtool lukis pokok route: default-route ke team-chat; di bawahnya, severity page ke on-call-phone. Ujian dengan severity=page jawab on-call-phone." lines={[{ cmd: 'amtool config routes show --config.file=alertmanager.yml' }, { out: 'Routing tree:\n.\n└── default-route  receiver: team-chat\n    └── {severity="page"}  receiver: on-call-phone' }, { cmd: 'amtool config routes test --config.file=alertmanager.yml severity=page alertname=InstanceDown' }, { out: 'on-call-phone', color: 'green' }]} />
+
+Setiap amaran bermula di atas pokok **<Term id="alert-route">route</Term>** (hala). Anak pertama yang padan dengan labelnya menang.
+</Card>
+
+<Card id="predict" type="predict">
+Satu amaran ada `severity=ticket` dan `alertname=QueueTooLong`. Siapa dapat?
+
+<Interactive name="Choice" options={[{ label: 'team-chat', correct: true, why: 'Betul. Tiada route anak yang padan, jadi ia kekal di atas: team-chat. amtool pun kata begitu.' }, { label: 'on-call-phone', why: 'Anak itu cuma ambil severity="page".' }, { label: 'Tiada siapa', why: 'Route paling atas tangkap semua yang tiada anak ambil.' }]} />
+</Card>
+
+<Card id="try-group" type="try">
+Kumpulkan loceng ikut `alertname` dan `job`. Barulah sepuluh kedai jadi satu panggilan.
+
+<Interactive name="YamlPlayground" file="alertmanager.yml" initial={'route:\n  receiver: team-chat\n  group_by: [alertname]\n  routes:\n    - matchers: [severity="page"]\n      receiver: on-call-phone\nreceivers:\n  - name: team-chat\n  - name: on-call-phone\n'} expect={[{ path: 'route.group_by', type: 'list', includes: 'alertname', hint: 'Kekalkan alertname dalam senarai.' }, { path: 'route.group_by', type: 'list', includes: 'job', hint: 'Tambah job dalam kurungan, selepas koma.' }]} solution={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\n  routes:\n    - matchers: [severity="page"]\n      receiver: on-call-phone\nreceivers:\n  - name: team-chat\n  - name: on-call-phone\n'} hint="Tukar baris 3 kepada: group_by: [alertname, job]" success="Nama amaran sama, job sama: satu kumpulan, satu mesej." />
+
+<Hint>Senarai dalam kurungan guna koma: `[alertname, job]`.</Hint>
+</Card>
+
+<Card id="check-silence" type="check">
+<Interactive name="Transcript" title="bash" label="amtool tambah silence 2 jam untuk QueueTooLong di gerai nasi-lemak dan cetak ID-nya. silence query senaraikannya dengan masa tamat, penulis aina dan komennya." lines={[{ cmd: 'amtool --alertmanager.url=http://localhost:9093 silence add alertname=QueueTooLong stall=nasi-lemak --duration=2h --author=aina --comment="Fixing the queue, back by 3pm"' }, { out: '16587a75-aee0-4b83-b053-8781c8afcb22', color: 'green' }, { cmd: 'amtool --alertmanager.url=http://localhost:9093 silence query' }, { out: 'ID                                    Matchers                                     Ends At                  Created By  Comment\n16587a75-aee0-4b83-b053-8781c8afcb22  alertname="QueueTooLong" stall="nasi-lemak"  2026-11-01 14:56:48 UTC  aina        Fixing the queue, back by 3pm' }]} />
+
+Aina sedang baiki barisan itu. **<Term id="silence">Silence</Term>** (senyap) kata: jangan panggil untuk ini selama 2 jam. Ia ada penulis dan sebab.
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'group', label: 'grouping' }, { id: 'silence', label: 'silence' }, { id: 'inhibit', label: 'inhibition' }]} items={[{ label: 'Sepuluh kedai mati: hantar satu mesej', bucket: 'group', why: 'Label sama, satu kumpulan, satu mesej.' }, { label: 'Aina sedang baiki: jangan panggil selama 2 jam', bucket: 'silence', why: 'Seseorang senyapkannya dengan sengaja, ada masa tamat.' }, { label: 'Seluruh laman mati: senyapkan amaran "laman lambat"', bucket: 'inhibit', why: 'Amaran besar senyapkan amaran kecil yang berpunca daripadanya.' }]} success="Tiga cara tenangkan pager." />
+
+Alat mana yang tenangkan pager di sini?
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hala, kumpul dan senyapkan amaran dengan Alertmanager.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pemasa pada route: `group_wait` (asal 30s) tunggu kawan sebelum mesej pertama. `group_interval` (asal 5m) tunggu sebelum beritahu loceng baharu dalam kumpulan. `repeat_interval` (asal 4h) hantar semula jika tiada perubahan. `inhibit_rules` senyapkan `target_matchers` semasa `source_matchers` berbunyi.
+
+<Interactive name="Mission" id="obs-o3-l02-real" steps={[{ id: 'file', text: 'Simpan alertmanager.yml dari kad cuba, dengan dua kumpulan anda.' }, { id: 'check', text: 'Semak dengan amtool dari image Alertmanager rasmi.', command: 'docker run --rm --entrypoint amtool -v "$PWD:/w" -w /w quay.io/prometheus/alertmanager:v0.34.1 check-config alertmanager.yml' }, { id: 'test', text: 'Tanya pokok route ke mana tiket pergi.', command: 'docker run --rm --entrypoint amtool -v "$PWD:/w" -w /w quay.io/prometheus/alertmanager:v0.34.1 config routes test --config.file=alertmanager.yml severity=ticket' }]} success="Pengagih anda dah disemak!" />
+</Card>

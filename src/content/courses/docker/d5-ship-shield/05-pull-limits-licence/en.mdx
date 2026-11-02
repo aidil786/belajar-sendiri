@@ -1,0 +1,70 @@
+---
+id: docker-d5-l05
+world: 5
+title: "Pull limits and licence rules"
+summary: "You will learn: why Docker Hub says 429, and who may use Docker Desktop for free."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, OrderList, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d5-l04]
+scenario: d5-pull-limit
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Hub usage and limits", url: "https://docs.docker.com/docker-hub/usage/" }
+  - { label: "Docker Hub pull usage", url: "https://docs.docker.com/docker-hub/usage/pulls/" }
+  - { label: "Docker Desktop license agreement", url: "https://docs.docker.com/subscription/desktop-license/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-pull-limit" commands={["docker pull redis:8-alpine"]} fails={["docker pull redis:8-alpine"]} label="docker pull redis:8-alpine fails with 429 Too Many Requests." />
+
+Real error: `429 Too Many Requests`. Plain words: Docker Hub counts your pulls, and you used them all up.
+</Card>
+
+<Card id="see-limits" type="see">
+Docker Hub has a **<Term id="pull-limit">pull limit</Term>**: so many pulls every 6 hours. Logged-out pulls share one count per internet address. Order these, fewest pulls first.
+
+<Interactive name="OrderList" items={['Logged out: 100 per address', 'Free account, logged in: 200', 'Paid plan: no limit']} label="Fewest pulls at the top" success="Logging in doubles it, for free." />
+</Card>
+
+<Card id="try-login" type="try">
+Your token is in `$DOCKER_TOKEN`. Log in, then pull `redis:8-alpine` again.
+
+<Interactive name="KitchenSim" scenario="d5-pull-limit" goal={{ loggedIn: 'you', imageExists: 'redis:8-alpine' }} hints={['Log in first: echo $DOCKER_TOKEN | docker login -u you --password-stdin', 'Then type docker pull redis:8-alpine']} success="Logged in, and the freezer opens again." />
+
+<Hint>Lesson 2's safe login, then `docker pull redis:8-alpine`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your office shares one internet address. 40 test robots each pull 3 images, logged out. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Some robots fail with 429', correct: true, why: '40 × 3 = 120 pulls. Logged out, the limit is 100 per 6 hours.' }, { label: 'They all pass', why: '120 is more than 100. The last pulls are refused.' }, { label: 'Docker Hub blocks the office forever', why: 'It refuses pulls for a while. Later they work again.' }]} />
+</Card>
+
+<Card id="see-licence" type="see">
+Docker Desktop is the app for Mac and Windows. Its **licence** is free for some and paid for others. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'free', label: 'Free Docker Desktop' }, { id: 'paid', label: 'Needs a paid plan' }]} items={[{ label: 'You, learning at home', bucket: 'free', why: 'Personal use is free.' }, { label: 'A school class', bucket: 'free', why: 'Education is free.' }, { label: 'Kedai Kancil: 12 staff, small income', bucket: 'free', why: 'Under 250 staff AND under USD 10 million a year.' }, { label: 'A bank with 5,000 staff', bucket: 'paid', why: 'More than 250 staff.' }, { label: 'A firm with 100 staff and USD 40 million a year', bucket: 'paid', why: 'Both rules must hold. This one earns too much.' }, { label: 'A government office', bucket: 'paid', why: 'Government use needs a paid plan.' }]} success="Small and personal is free. Big or government pays." />
+</Card>
+
+<Card id="check" type="check">
+The bank runs Docker Engine on its Linux servers. No Docker Desktop. Does it need that paid plan?
+
+<Interactive name="Choice" options={[{ label: 'No: the rule is for the Docker Desktop app', correct: true, why: 'Docker Engine is open source. The paid rule covers Docker Desktop.' }, { label: 'Yes: every Docker needs it', why: 'The paid rule is only for Docker Desktop.' }, { label: 'Yes, because the bank is big', why: 'Size matters for Docker Desktop only.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now dodge pull limits and pick the right Docker licence.
+</Card>
+
+<Card id="deeper" type="deeper">
+Free tiers change, so check docs.docker.com before you plan. A pull counts when you fetch an image's manifest. A HEAD request, which only peeks, does not count. In CI, log in, or keep copies in your own registry. Podman, and Docker Engine on Linux, are free choices too.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d5-l05-rep" steps={[{ id: 'login', text: 'Log in to Docker Hub on your machine (lesson 2).' }, { id: 'usage', text: 'Open the Usage page in your Docker Hub account. See your pulls.' }, { id: 'ask', text: 'At work? Ask if your company has a Docker subscription.' }]} success="No surprise 429s for you." />
+</Card>

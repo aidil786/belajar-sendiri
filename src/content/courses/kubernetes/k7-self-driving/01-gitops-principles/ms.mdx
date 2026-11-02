@@ -1,0 +1,66 @@
+---
+id: k8s-k7-l01
+world: 7
+title: "GitOps: papan pesanan ialah repo"
+summary: "Anda akan belajar: empat peraturan GitOps, dan kenapa Git patut pandu kluster anda."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, GitOpsMirror, SortCards, Choice, CommandBuilder]
+needs: [k8s-k6-boss]
+scenario: k7-drift
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenGitOps: the four principles", url: "https://opengitops.dev/" }
+  - { label: "Argo CD: core concepts", url: "https://argo-cd.readthedocs.io/en/stable/core_concepts/" }
+  - { label: "Flux: core concepts", url: "https://fluxcd.io/flux/concepts/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-drift" commands={['kubectl get deployment shop', 'kubectl rollout history deployment/shop']} label="Deployment shop tunjuk 1/1 sedia. Sejarahnya ada satu revision, tanpa nota tentang siapa yang mengubahnya." />
+
+Fail itu minta 3 dulang. Kluster jalankan 1. Seseorang taip arahan pukul 2 pagi. Siapa? Kenapa? Kluster tak simpan sebarang nota.
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Declarative', text: 'Tulis apa yang anda mahu, contohnya "3 dulang". Bukan langkah untuk ke sana.' }, { when: '2', title: 'Versioned', text: 'Simpan dalam Git. Setiap perubahan ialah commit yang boleh dibaca dan diundur.' }, { when: '3', title: 'Pulled', text: 'Pembantu dalam kluster tarik dari Git. Tiada siapa push dari laptop.' }, { when: '4', title: 'Reconciled', text: 'Pembantu itu periksa berulang kali. Ia baiki sebarang beza dengan Git.' }]} />
+
+Tekan setiap peraturan. Bersama-sama, ia dipanggil **<Term id="gitops">GitOps</Term>**: papan pesanan ialah repo Git.
+</Card>
+
+<Card id="try-mirror" type="try">
+Waktu puncak hampir tiba. Tukar pesanan dalam Git, bukan dalam kluster. Tetapkan replicas kepada 4, kemudian commit.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'gitChange', field: 'replicas', to: 4 }} success="Satu commit, dan kluster terus ikut. Git kini ingat siapa yang minta 4." />
+
+<Hint>Tekan + sekali, kemudian Commit ke Git.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Yang mana ikut peraturan GitOps?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'GitOps' }, { id: 'no', label: 'Bukan GitOps' }]} items={[{ label: 'shop.yaml dalam repo Git tulis replicas: 3', bucket: 'yes', why: 'Ditulis, dan disimpan dengan versi dalam Git.' }, { label: 'kubectl scale pada malam Jumaat', bucket: 'no', why: 'Tiada commit, jadi tiada rekod dan tiada semakan.' }, { label: 'Pembantu dalam kluster tarik dari Git', bucket: 'yes', why: 'Ditarik, bukan ditolak. Itu peraturan 3.' }, { label: 'Halaman wiki senaraikan tetapan', bucket: 'no', why: 'Tiada apa yang banding kluster dengan wiki.' }, { label: 'Pembantu itu baiki sebarang beza, sepanjang hari', bucket: 'yes', why: 'Sentiasa diselaraskan. Itu peraturan 4.' }]} success="Semua tersusun! GitOps maksudnya Git, ditarik, dan disemak sepanjang hari." />
+</Card>
+
+<Card id="predict" type="predict">
+Git tulis 3 dulang. Kluster ada 2. Apa pembantu GitOps buat?
+
+<Interactive name="Choice" options={[{ label: 'Buat 1 dulang lagi, supaya kluster sama dengan Git', correct: true, why: 'Git ialah kebenaran. Pembantu itu tutup jurangnya.' }, { label: 'Tukar Git supaya tulis 2', why: 'Pembantu itu hanya baca Git. Manusia yang ubah Git.' }, { label: 'Tiada apa sehingga seseorang taip kubectl', why: 'Pembantu itu periksa sendiri, sepanjang hari.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+Anda mahu 5 dulang. Selepas edit fail, bina cara GitOps untuk memintanya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'commit', means: 'simpan satu perubahan' }, { text: '-am', means: 'semua fail yang diedit, dengan mesej' }, { text: '"Scale shop to 5"', means: 'nota yang semua orang boleh baca' }]} decoys={[{ text: 'kubectl', means: 'bercakap terus dengan kluster' }, { text: 'scale', means: 'ubah bilangan secara manual' }]} success="Betul! Push, dan pembantu itu buat selebihnya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan GitOps dengan empat peraturannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitOps juga mudahkan undur: `git revert` kembalikan pesanan lama. Pembantu itu ialah controller, sama macam controller Deployment, cuma ia pantau Git. Latihan sebenar (pilihan): baca empat prinsip di opengitops.dev. Kemudian lihat repo Kedai Kancil anda. Fail mana yang dah terangkan apa yang anda mahu?
+</Card>

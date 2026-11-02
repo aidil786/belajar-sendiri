@@ -1,0 +1,71 @@
+---
+id: git-w04-l08
+world: 4
+title: Pull dengan merge atau rebase
+summary: "Anda akan belajar: apa nak buat bila anda dan GitHub sama-sama ada commit baru."
+minutes: 4
+xp: 20
+interactives: [Courier, GraphScene, Choice, CommandBuilder, Sim, SwipeJudge]
+needs: [git-w04-l07]
+scenario: w04-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git config", url: "https://git-scm.com/docs/git-config" }
+---
+
+<Card id="hook" type="hook">
+Anda tukar tajuk jadi teal. Aisyah push harinya. Kedua-dua ada commit baru. Tekan Pull. Apa Git kata?
+
+<Interactive name="Courier" scenario="w04-l08" actions={['pull']} />
+</Card>
+
+<Card id="see-merge" type="see">
+<Interactive name="GraphScene" scenario="w04-l08" commands={['git pull --no-rebase']} label="git pull --no-rebase buat merge commit. Commit anda dan commit Aisyah sama-sama menuju ke situ, macam huruf Y." />
+
+`git pull --no-rebase` cantum kedua-duanya dengan merge commit. Sejarah simpan kedua-dua laluan, macam huruf Y.
+</Card>
+
+<Card id="predict" type="predict">
+Pull mana yang beri sejarah satu garis lurus?
+
+<Interactive name="Choice" options={[{ label: '`git pull --rebase`', correct: true, why: 'Rebase letak commit anda di atas commit Aisyah. Satu garis lurus.' }, { label: '`git pull --no-rebase`', why: 'Yang itu buat merge commit: bentuk Y.' }, { label: '`git pull --ff-only`', why: 'Ia berhenti di sini, sebab kedua-dua belah ada commit baru.' }]} />
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="GraphScene" scenario="w04-l08" commands={['git pull --rebase']} label="git pull --rebase angkat commit teal anda dan letak di atas commit Aisyah. Sejarah jadi satu garis lurus." />
+
+`git pull --rebase` angkat commit anda dan letak di atas commit Aisyah. Satu garis lurus. Commit anda dapat **hash** baru, sebab induknya baru.
+</Card>
+
+<Card id="try-build" type="try">
+Penat pilih setiap kali? Bina arahan yang jadikan rebase cara biasa anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'config', means: 'tukar tetapan' }, { text: '--global', means: 'untuk semua projek anda' }, { text: 'pull.rebase', means: 'cara pull mencantum' }, { text: 'true', means: 'rebase setiap kali' }]} decoys={[{ text: 'false', means: 'merge sahaja' }, { text: 'push', means: 'ini tentang pull' }]} success="Buat sekali, diingat selamanya. Pasukan biasanya pilih satu cara bersama." />
+
+<Hint>Tetapan, untuk semua projek, bernama pull.rebase, nilai true.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Pull commit Aisyah dengan cara anda. Kemudian push kedua-dua commit.
+
+<Interactive name="Sim" scenario="w04-l08" panels={['graph']} goal={{ pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }} hints={['Cuba git pull --rebase', 'Kemudian git push']} success="GitHub kini ada kedua-dua commit. Kerja berpasukan!" />
+
+<Hint>`git pull` biasa minta anda pilih. Tambah `--rebase` atau `--no-rebase`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rebase commit sendiri yang belum di-push', good: true, why: 'Tiada orang lain ada, jadi hash baru tak susahkan sesiapa.' }, { text: 'Rebase commit yang pasukan anda dah pull', good: false, why: 'Mereka dapat salinan dengan hash baru. Bersepah!' }, { text: 'Setuju satu gaya pull sebagai pasukan', good: true, why: 'Jadi sejarah semua orang nampak sama.' }, { text: 'Pull dulu sebelum mula kerja baru', good: true, why: 'Kurang kejutan kemudian.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pull dengan merge atau rebase, dan pilih cara anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git config --global pull.ff only` buat pull tolak semua kecuali fast-forward. Rebase boleh berhenti kerana konflik, macam merge. Baiki fail, `git add`, kemudian `git rebase --continue`. Atau `git rebase --abort` untuk undur.
+</Card>

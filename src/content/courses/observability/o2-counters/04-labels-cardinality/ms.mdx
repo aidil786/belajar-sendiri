@@ -1,0 +1,68 @@
+---
+id: obs-o2-l04
+world: 2
+title: Label dan kardinaliti
+summary: "Anda akan belajar: bagaimana label pecahkan satu metrik jadi banyak siri, cara menapisnya, dan label mana yang perlu dielak."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o2-l03]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: data model", url: "https://prometheus.io/docs/concepts/data_model/" }
+  - { label: "Prometheus: metric and label naming", url: "https://prometheus.io/docs/practices/naming/" }
+  - { label: "Prometheus: querying basics (matchers)", url: "https://prometheus.io/docs/prometheus/latest/querying/basics/" }
+---
+
+<Card id="hook" type="hook">
+Anda tambah nombor pesanan sebagai label: `order_id`. 10,000 pesanan hari ini. Berapa siri yang Prometheus simpan?
+
+<Interactive name="Choice" options={[{ label: 'Lebih kurang 10,000: satu untuk setiap pesanan', correct: true, why: 'Ya. Setiap nilai label baru buat satu siri baru.' }, { label: 'Satu', why: 'Satu nama, tapi 10,000 nota berbeza. Itu 10,000 siri.' }, { label: 'Sifar: label percuma', why: 'Setiap siri guna memori dan cakera.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="SpotLines" prompt="Tekan setiap siri nasi lemak." lines={[{ text: 'kedai_orders_total{outlet="ss15", stall="nasi-lemak"} 300', target: true }, { text: 'kedai_orders_total{outlet="bangsar", stall="nasi-lemak"} 150', target: true }, { text: 'kedai_orders_total{outlet="ss15", stall="roti-canai"} 450' }, { text: 'kedai_orders_total{outlet="bangsar", stall="roti-canai"} 150' }, { text: 'kedai_orders_total{outlet="ss15", stall="cendol"} 150' }]} success="Dua siri: satu untuk setiap cawangan." />
+
+**<Term id="label">Label</Term>** ialah nota lekat pada siri. Satu nama, lima set nota: lima <Term id="time-series">siri</Term>.
+</Card>
+
+<Card id="try-filter" type="try">
+Tunjuk cawangan SS15 sahaja. Letak penapis label dalam kurungan kerinting.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="kedai_orders_total" prompt={'Tambah {outlet="ss15"} terus selepas nama, kemudian Run.'} goal={{ resultEquals: [{ labels: { stall: 'nasi-lemak', outlet: 'ss15' } }, { labels: { stall: 'roti-canai', outlet: 'ss15' } }, { labels: { stall: 'cendol', outlet: 'ss15' } }] }} hints={['Terus selepas nama, taip {outlet="ss15"}', 'Nilai itu perlukan tanda petik berganda.']} solution={'kedai_orders_total{outlet="ss15"}'} success="Tiga gerai di SS15." />
+
+<Hint>`!=` bermaksud “tidak sama”. `=~` padankan corak.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+3 gerai, 2 cawangan, dan label baru untuk 4 cara bayar. Paling banyak, berapa siri?
+
+<Interactive name="Choice" options={[{ label: '24', correct: true, why: 'Ya. 3 × 2 × 4 = 24. Label berganda.' }, { label: '9', why: 'Label didarab, bukan ditambah: 3 × 2 × 4.' }, { label: '1', why: 'Setiap gabungan ialah sirinya sendiri.' }]} />
+</Card>
+
+<Card id="try-swipe" type="try">
+Adakah ia label yang selamat? Leret ke kanan untuk yang selamat.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'stall="cendol"', good: true, why: 'Beberapa gerai sahaja. Kecil dan stabil.' }, { text: 'code="500"', good: true, why: 'Hanya segelintir kod status.' }, { text: 'outlet="bangsar"', good: true, why: 'Beberapa cawangan sahaja.' }, { text: 'user_email="aina@example.com"', good: false, why: 'Satu siri untuk setiap pelanggan. Terlalu banyak.' }, { text: 'order_id="A1043"', good: false, why: 'Satu siri untuk setiap pesanan. Letak dalam log.' }, { text: 'path="/order/A1043"', good: false, why: 'Setiap pesanan buat path baru. Guna laluan, seperti /order/:id.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Berapa siri yang `kedai_orders_total` hasilkan? Kira dengan `count()`.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} prompt="Balut nama itu dengan count( ), kemudian Run." goal={{ usesFunction: ['count'], resultEquals: [{ labels: {}, value: 5 }] }} hints={['Taip count(kedai_orders_total)']} solution="count(kedai_orders_total)" success="5 siri. Kecil dan sihat." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tapis ikut label dan kekalkan bilangan siri yang kecil.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bilangan siri dipanggil **<Term id="cardinality">kardinaliti</Term>**. Terlalu banyak siri penuhkan memori dan lambatkan setiap query. Simpan id, emel dan URL penuh dalam log atau trace. Empat pemadan: `=`, `!=`, `=~` dan `!~`.
+
+<Interactive name="Mission" id="obs-o2-l04-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'count', text: 'Di http://localhost:9090, kira semua siri: `count({__name__=~".+"})`. Mungkin lebih daripada seribu.' }, { id: 'by', text: 'Tengok job mana yang buat paling banyak: `count by (job) ({__name__=~".+"})`' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="Anda dah ukur kardinaliti sebenar." />
+</Card>

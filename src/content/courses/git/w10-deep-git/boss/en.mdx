@@ -1,0 +1,69 @@
+---
+id: git-w10-boss
+world: 10
+title: "Detective: find the bug commit"
+summary: "You will learn: to track down the commit that broke a page, with bisect, a test and blame."
+minutes: 6
+xp: 50
+interactives: [TermReplay, Choice, BisectDetective, Sim]
+needs: [git-w10-l14]
+scenario: w10-boss
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git bisect", url: "https://git-scm.com/docs/git-bisect" }
+  - { label: "git blame", url: "https://git-scm.com/docs/git-blame" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w10-boss" commands={['git log --oneline']} label="git log --oneline lists fourteen commits, from Add order page up to Update footer year." />
+
+Emergency at Kedai Kancil! The Buy button is greyed out. Nobody can order kuih. Fourteen suspects. Find the guilty commit, detective!
+</Card>
+
+<Card id="read-clue" type="try">
+Your clue is `test.sh`. It runs `! grep -q "disabled" order.html`. When does the test pass?
+
+<Interactive name="Choice" options={[{ label: 'When order.html does not say disabled', correct: true, why: 'grep finds disabled, then ! flips it into a fail. No disabled means a pass.' }, { label: 'When order.html says disabled', why: 'The ! flips the answer. Finding disabled makes the test fail.' }, { label: 'Always', why: 'It checks order.html every time it runs.' }]} />
+</Card>
+
+<Card id="round-1" type="try">
+Round 1: question the suspects. Run the test, then mark each commit good or bad.
+
+<Interactive name="BisectDetective" scenario="w10-boss" test={{ file: 'order.html', bad: 'disabled', label: 'The test: the Buy button in order.html must not be disabled.' }} success="Got the culprit! Bisect needed only a few tests." />
+
+<Hint>Watch out: a guilty-sounding name can be innocent. Trust the test.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+"Fix button colour" sounds guilty. Was it?
+
+<Interactive name="Choice" options={[{ label: 'No. The test passed there', correct: true, why: 'It only added style.css. Bisect trusts tests, not names.' }, { label: 'Yes, its name says button', why: 'Names can fool you. At that commit, the test passed.' }, { label: 'Bisect never tested it', why: 'It did, as the last test. And it passed.' }]} />
+</Card>
+
+<Card id="round-2" type="try">
+Round 2: the real terminal. Start bisect, let `test.sh` judge every step, then go back to `main`.
+
+<Interactive name="Sim" scenario="w10-boss" panels={['graph']} goal={{ bisectFound: '^Clean up the form$', bisectActive: false }} hints={['Type git bisect start HEAD HEAD~13', 'Let the script judge: git bisect run sh test.sh', 'Last, type git bisect reset']} success="Case closed! Clean up the form disabled the Buy button. You are back on main." />
+
+<Hint>`git bisect start HEAD HEAD~13`, then `git bisect run sh test.sh`, then `git bisect reset`.</Hint>
+</Card>
+
+<Card id="evidence" type="check">
+<Interactive name="TermReplay" scenario="w10-boss" commands={['git blame -L 6,6 order.html']} label="git blame -L 6,6 order.html shows the button line, last changed by commit 7bb484d1, Clean up the form." />
+
+Double-check the evidence. `git blame -L 6,6` names the last change to the button line. Same suspect!
+</Card>
+
+<Card id="next-move" type="check">
+The culprit is already shared with the team. What is your next move?
+
+<Interactive name="Choice" options={[{ label: 'Look at its change, then fix the line in a new commit', correct: true, why: 'History stays honest, and the five later commits stay safe.' }, { label: 'git reset --hard to before it', why: 'That throws away five good commits and rewrites shared history.' }, { label: 'Scold the author in the team chat', why: 'Be kind. Share what bisect found and fix it together.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find the commit that broke something, like a detective.
+</Card>

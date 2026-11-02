@@ -1,0 +1,64 @@
+---
+id: git-w11-l05
+world: 11
+title: Saya terlupa satu fail
+summary: "Anda akan belajar: cara tambah fail yang terlupa ke commit terakhir."
+minutes: 3
+xp: 15
+interactives: [AreasScene, Choice, CommandBuilder, Sim, TermReplay]
+needs: [git-w02-l03]
+scenario: w11-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git commit --amend", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="Satu commit, Add day 2 page, ada dalam repositori. day2.css bercahaya atas meja anda, tertinggal." frames={[{ working: [{ name: 'day2.css', glow: true, tag: 'new' }], repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 page', kind: 'commit' }] }]} />
+
+Anda commit (titik simpan) halaman hari 2. Tapi fail gayanya masih atas meja! Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+Anda belum push. Apa cara paling kemas?
+
+<Interactive name="Choice" options={[{ label: 'Masukkan fail itu ke commit terakhir', correct: true, why: 'Satu commit yang kemas, macam tak pernah terlupa.' }, { label: 'Commit baru: "oops forgot css"', why: 'Boleh, tapi tambah semak. Simpan cara itu untuk commit yang dah push.' }, { label: 'Mula semula dengan reset --hard', why: 'Itu padam kerja. Tak perlu!' }]} />
+</Card>
+
+<Card id="build" type="try">
+Mula-mula, `git add day2.css` masukkan fail ke dalam kotak. Sekarang bina arahan yang selitkan isi kotak ke commit terakhir.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'commit', means: 'simpan isi kotak' }, { text: '--amend', means: 'ke dalam commit terakhir' }, { text: '--no-edit', means: 'kekalkan mesej yang sama' }]} decoys={[{ text: 'revert', means: 'undur satu commit' }, { text: '--hard', means: 'padam perubahan' }]} success="Betul! git commit --amend --no-edit." />
+</Card>
+
+<Card id="try-fix" type="try">
+Sekarang buat betul-betul. Tambah `day2.css` ke commit terakhir.
+
+<Interactive name="Sim" scenario="w11-l05" panels={['areas']} goal={{ commits: 4, lastCommitHas: ['day2.html', 'day2.css'], lastMessage: '^Add day 2 page$', clean: true, noUntracked: true }} hints={['Taip git add day2.css', 'Kemudian taip git commit --amend --no-edit']} success="Kemas! Satu commit simpan kedua-dua fail hari 2." />
+
+<Hint>Taip `git add day2.css`, kemudian `git commit --amend --no-edit`.</Hint>
+</Card>
+
+<Card id="check-stat" type="check">
+<Interactive name="TermReplay" scenario="w11-l05" commands={['git add day2.css', 'git commit --amend --no-edit', 'git show --stat']} label="Selepas amend, git show --stat senaraikan day2.css dan day2.html dalam commit Add day 2 page." />
+
+Semak dengan `git show --stat`. Kedua-dua fail dalam satu commit. Mesej sama seperti tadi.
+</Card>
+
+<Card id="predict" type="predict">
+Cerita baru: anda dah push commit itu. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'Buat commit baru yang kecil dengan fail itu', correct: true, why: 'Sejarah dikongsi kekal sama. Orang lain tak perlu baiki apa-apa.' }, { label: 'Amend juga', why: 'Amend buat commit baru. Salinan kawan akan bertembung.' }, { label: 'Biarkan fail itu tertinggal selamanya', why: 'Halaman anda perlukannya! Commit saja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tambah fail yang terlupa ke commit terakhir.
+</Card>
+
+<Card id="deeper" type="deeper">
+Amend buat commit baru dengan hash baru. Sebab itu ia hanya untuk commit yang belum push. Terlupa fail beberapa commit dulu? Commit saja sekarang dengan mesej yang jelas. Cara mudah menang.
+</Card>

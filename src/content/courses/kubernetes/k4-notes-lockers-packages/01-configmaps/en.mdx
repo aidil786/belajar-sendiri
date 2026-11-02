@@ -1,0 +1,84 @@
+---
+id: k8s-k4-l01
+world: 4
+title: "ConfigMaps: notes on the wall"
+summary: "You will learn: to keep settings in a ConfigMap and read them as env vars or as files."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, SortCards, Mission]
+needs: [k8s-k3-boss]
+scenario: k4-notes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: ConfigMaps", url: "https://kubernetes.io/docs/concepts/configuration/configmap/" }
+  - { label: "Configure a Pod to use a ConfigMap", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/" }
+  - { label: "kubectl create configmap", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_configmap/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-notes" commands={['kubectl exec deploy/shop -- printenv GREETING']} label="kubectl exec runs printenv GREETING inside the shop tray. It prints Selamat datang." />
+
+Your shop greets everyone with `Selamat datang`. The boss wants `Jemput makan`. Bake a new image for two words? There is a calmer way.
+</Card>
+
+<Card id="see-note" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: ConfigMap' }, { text: 'metadata:' }, { text: '  name: settings' }, { text: 'data:' }, { text: '  GREETING: Selamat datang', target: true }, { text: '  SPICY: "3"', target: true }]} prompt="Tap the two settings on the note." success="GREETING and SPICY. Plain text, outside the image." />
+
+A note on the stall wall holds the settings. The cook reads it, and the recipe never changes. In Kubernetes, that note is a **<Term id="configmap">ConfigMap</Term>**.
+</Card>
+
+<Card id="try-create" type="try">
+Pin up the note from the terminal. Then open the shop.
+
+<Interactive name="FoodCourtSim" scenario="k4-notes-new" goal={{ objectExists: ['configmap/settings'], podsReady: { selector: 'app=shop', count: 1 } }} hints={['Type kubectl create configmap settings --from-literal=GREETING=Hai', 'Then open the shop: kubectl apply -f shop.yaml']} success="The note is up, and the tray is reading it." />
+
+<Hint>`--from-literal=GREETING=Hai` writes one line on the note.</Hint>
+</Card>
+
+<Card id="see-two-ways" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: web' }, { text: '    image: nginx:1.29-alpine' }, { text: '    envFrom:', target: true }, { text: '      - configMapRef:', target: true }, { text: '          name: settings', target: true }, { text: '    volumeMounts:' }, { text: '      - name: notes' }, { text: '        mountPath: /etc/notes' }, { text: 'volumes:' }, { text: '  - name: notes' }, { text: '    configMap:' }, { text: '      name: settings' }]} prompt="Tap the lines that turn the note into env vars." success="envFrom copies every line of the note into the box." />
+
+The tray reads the note two ways. `envFrom` makes each line an **environment variable**. The volume makes each line a file in `/etc/notes`.
+</Card>
+
+<Card id="try-read" type="try">
+Read the note both ways. First the env var, then the file.
+
+<Interactive name="FoodCourtSim" scenario="k4-notes" goal={{ typed: 'printenv GREETING', lastTyped: 'cat /etc/notes/GREETING' }} hints={['Type kubectl exec deploy/shop -- printenv GREETING', 'Then: kubectl exec deploy/shop -- cat /etc/notes/GREETING']} success="Same words, two doors: an env var and a file." />
+
+<Hint>Everything after `--` runs inside the box.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You change the note to `Jemput makan`. You wait two minutes. What does the tray see?
+
+<Interactive name="Choice" options={[{ label: 'The file changes. The env var stays old.', correct: true, why: 'Files follow the note. Env vars are read once, at start.' }, { label: 'Both change.', why: 'Almost! Env vars are copied when the box starts. They never change after.' }, { label: 'Nothing changes until a new image.', why: 'The note lives outside the image. That is the whole point.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k4-notes" commands={['kubectl apply -f settings-v2.yaml', 'sleep 120', 'kubectl exec deploy/shop -- cat /etc/notes/GREETING', 'kubectl exec deploy/shop -- printenv GREETING']} label="The new note is applied. Two minutes later, the file says Jemput makan, but printenv still says Selamat datang." />
+
+The file caught up. The env var did not. Restart the trays to read it again: `kubectl rollout restart deployment/shop`.
+</Card>
+
+<Card id="check-sort" type="check">
+Sort each fact: env var or file?
+
+<Interactive name="SortCards" buckets={[{ id: 'env', label: 'Env var' }, { id: 'file', label: 'File from a volume' }]} items={[{ label: 'Read once, when the box starts', bucket: 'env', why: 'The box copies env vars at start.' }, { label: 'Catches up after a short wait', bucket: 'file', why: 'The kubelet refreshes mounted notes.' }, { label: 'printenv GREETING shows it', bucket: 'env', why: 'printenv lists env vars.' }, { label: 'cat /etc/notes/GREETING shows it', bucket: 'file', why: 'It is a file in the mount folder.' }]} success="Env vars: read at start. Files: follow the note." />
+</Card>
+
+<Card id="win" type="win">
+You can now read settings from a ConfigMap, two ways.
+</Card>
+
+<Card id="deeper" type="deeper">
+A ConfigMap holds up to 1 MiB. It is not secret: anyone who can read ConfigMaps sees it. A file mounted with `subPath` never updates. `immutable: true` stops changes by accident.
+
+Real rep (optional), on a practice kind cluster only:
+
+<Interactive name="Mission" id="k8s-k4-l01-rep" steps={[{ id: 'where', text: 'Check you are on the practice cluster.', command: 'kubectl config current-context' }, { id: 'note', text: 'Pin up a note.', command: 'kubectl create configmap settings --from-literal=GREETING=Hai' }, { id: 'shop', text: 'Open a shop.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine' }, { id: 'env', text: 'Give the shop the note as env vars.', command: 'kubectl set env deployment/shop --from=configmap/settings' }, { id: 'read', text: 'Read it inside the box.', command: 'kubectl exec deploy/shop -- printenv GREETING' }, { id: 'tidy', text: 'Tidy up.', command: 'kubectl delete deployment/shop configmap/settings' }]} success="A real note, read by a real box." />
+</Card>

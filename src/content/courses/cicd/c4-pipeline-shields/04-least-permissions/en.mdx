@@ -1,0 +1,84 @@
+---
+id: cicd-c4-l04
+world: 4
+title: Least-privilege permissions
+summary: "You will learn: how to give each job only the keys it needs with permissions."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, ConveyorBelt, YamlBuilder]
+needs: [cicd-c4-l03]
+scenario: c4-release-perms
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Your release job turns red with this error:
+
+`HTTP 403: Resource not accessible by integration`
+
+What does it mean?
+
+<Interactive name="Choice" options={[{ label: "The job's key may not open this door", correct: true, why: 'The token works, but it lacks one permission.' }, { label: 'GitHub is down', why: '403 means "not allowed", not "down".' }, { label: 'The repo was deleted', why: 'The job found the repo. It just may not change it.' }]} />
+</Card>
+
+<Card id="see-least" type="see">
+Each job gets a key card: the <Term id="github-token" course="git">GITHUB_TOKEN</Term>. `permissions:` picks its doors. Open only what the job needs. That is **<Term id="least-privilege">least privilege</Term>**.
+
+<Interactive name="SortCards" buckets={[{ id: 'contents', label: 'contents: write' }, { id: 'prs', label: 'pull-requests: write' }, { id: 'packages', label: 'packages: write' }]} items={[{ label: 'Create a release', bucket: 'contents', why: 'Releases and tags live with your code.' }, { label: 'Comment on a PR', bucket: 'prs', why: 'Comments belong to the pull request.' }, { label: 'Add a label to a PR', bucket: 'prs', why: 'Labels on a PR need the PR key.' }, { label: 'Push an image to GHCR', bucket: 'packages', why: 'Images are packages.' }]} success="Sorted! One door per task." />
+</Card>
+
+<Card id="see-levels" type="see">
+`permissions: {}` at the top gives no keys. Then each job asks for its own. List some keys, and every other key becomes `none`.
+
+<Interactive name="SpotLines" lines={[{ text: 'permissions: {}' }, { text: 'jobs:' }, { text: '  test:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    permissions:' }, { text: '      contents: read' }, { text: '  release:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    permissions:' }, { text: '      contents: write', target: true }]} prompt="Tap the line that lets a job create a release." success="Only the release job can write. The test job can only read." />
+</Card>
+
+<Card id="try-fix" type="try">
+Push tag v1.4.0. The release step is refused. Pick the smallest fix that turns it green.
+
+<Interactive name="ConveyorBelt" scenario="c4-release-perms" task={{ type: 'green' }} fixes={[
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Releases live with your code. One key, one door.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'It works, but every step gets every key.', correct: false },
+  { label: 'contents: read + packages: write', text: 'permissions:\n  contents: read\n  packages: write', why: 'Packages are images. A release needs contents.' }]} success="Green, with one extra key only." />
+
+<Hint>Releases live with your code: contents.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your PR job has `pull-requests: write`. A stranger opens a PR from a fork. It runs on `pull_request`. Can it comment?
+
+<Interactive name="Choice" options={[{ label: 'No: a fork PR gets a read-only key', correct: true, why: 'That protects you. Lesson 5 shows the trap around it.' }, { label: 'Yes: you gave it write', why: 'A fork PR gets a read-only key, whatever the file says.' }, { label: 'Only if the PR is small', why: 'Size does not matter. Forks get read-only keys.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build it. The file reads code only. The job adds one door: PR comments. Job keys replace the file's keys, so list both.
+
+<Interactive name="YamlBuilder" workflow="PR report" goal={{ order: ['pr', 'read', 'job', 'prw', 'checkout', 'test', 'comment'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'On pull request', yaml: 'pull_request:', means: 'Run on every pull request.' },
+  { id: 'read', kind: 'permissions', label: 'Whole file: read code', yaml: 'contents: read', means: 'Every job starts with a read-only key.' },
+  { id: 'all', kind: 'permissions', label: 'Whole file: write lots', yaml: 'contents: write\npull-requests: write\npackages: write', means: 'Every job can change code, PRs and packages.', why: 'No job here changes code or packages. Read is enough.' },
+  { id: 'job', kind: 'job', label: 'Job: report', yaml: 'report:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'prw', kind: 'permissions', label: 'This job: read code, write PRs', yaml: 'contents: read\npull-requests: write', means: 'Job keys replace the file keys, so list both.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto the runner.' },
+  { id: 'test', kind: 'step', label: 'Install and test', yaml: '- run: npm ci && npm test', means: 'Install packages, then run the tests.' },
+  { id: 'comment', kind: 'step', label: 'Comment on the PR', yaml: '- run: gh pr comment "$PR" --body "Tests passed"\n  env:\n    GH_TOKEN: ${{ github.token }}\n    PR: ${{ github.event.pull_request.number }}', means: 'Post a comment with the job key.' }]}
+  success="Least privilege! Read for the file, one extra door for the job." />
+
+<Hint>Trigger, file keys, job, job keys, then steps.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now give each job only the keys it needs.
+</Card>
+
+<Card id="deeper" type="deeper">
+Repo settings also pick a default key: read-only, or read and write. Don't trust the default. Write `permissions:` in every workflow. Tip: split a release into a test job and a release job. Only the release job gets `contents: write`. Real rep: add `permissions:` with `contents: read` to one of your workflows.
+</Card>

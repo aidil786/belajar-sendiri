@@ -1,0 +1,64 @@
+---
+id: git-w11-l04
+world: 11
+title: Baiki mesej commit yang salah
+summary: "Anda akan belajar: cara baiki mesej commit, dan bila perlu biarkan saja."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim, SwipeJudge]
+needs: [git-w02-l03]
+scenario: w11-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git commit --amend", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git push --force-with-lease", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l04" commands={['git log --oneline']} label="git log --oneline: commit terbaru cuma kata: stuff." />
+
+Commit (titik simpan) terakhir anda kata `stuff`. Stuff? Minggu depan, tiada siapa tahu apa itu. Anda pun tak tahu! Ini berlaku pada semua orang.
+</Card>
+
+<Card id="decide" type="try">
+Anda belum push. Apa cara paling cepat?
+
+<Interactive name="Choice" options={[{ label: 'git commit --amend -m "Add day 2 entry"', correct: true, why: 'Amend tukar commit terakhir dengan yang ada mesej lebih baik.' }, { label: 'Commit baru bernama "fix message"', why: 'Itu tambah semak. Amend baiki terus di tempatnya.' }, { label: 'git revert HEAD', why: 'Revert batalkan perubahan itu sendiri, bukan mesejnya sahaja.' }]} />
+</Card>
+
+<Card id="see-amend" type="see">
+<Interactive name="GraphScene" scenario="w11-l04" commands={['git commit --amend -m "Add day 2 entry"']} label="Commit stuff ditukar dengan commit baru, Add day 2 entry. main kini tunjuk ke commit baru itu." />
+
+**<Term id="amend">Amend</Term>** tukar commit terakhir anda dengan salinan baru. Perubahan sama, mesej baru, hash baru.
+</Card>
+
+<Card id="try-amend" type="try">
+Beri commit terakhir mesej yang jelas.
+
+<Interactive name="Sim" scenario="w11-l04" panels={['graph']} goal={{ commits: 4, cleanMessages: 4 }} hints={['Taip git commit --amend -m "Add day 2 entry"']} success="Jauh lebih baik! Anda di masa depan ucap terima kasih." />
+
+<Hint>Taip `git commit --amend -m "Add day 2 entry"`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Cerita baru: dah push, dan kawan sepasukan dah pull. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'Biarkan. Tulis mesej yang jelas mulai sekarang', correct: true, why: 'Mesej yang bersepah menjengkelkan, tapi tak bahaya. Tulis semula sejarah dikongsi yang bahaya.' }, { label: 'Amend dan force push', why: 'Salinan kawan akan bertembung. Simpan cara itu untuk branch anda seorang.' }, { label: 'Padam commit itu', why: 'Itu hilangkan kerja sebenar. Simpan.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Mesej jelas, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'Add day 2 entry', good: true, why: 'Pendek dan jelas: anda tahu apa yang berubah.' }, { text: 'stuff', good: false, why: 'Stuff apa? Sebut apa yang berubah.' }, { text: 'fix: correct typo on about page', good: true, why: 'Jelas, dan guna awalan Conventional Commits.' }, { text: 'asdf', good: false, why: 'Tekan papan kekunci rambang tak beritahu apa-apa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki mesej commit yang salah, dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Mesej salah pada commit lebih lama? Sebelum push, `git rebase -i` boleh tukar mesejnya (Dunia 3). Dah push, tapi di branch (cabang) anda seorang? Amend, kemudian `git push --force-with-lease` gantikannya dengan selamat (Dunia 4). Jangan buat begitu di branch dikongsi seperti main.
+</Card>

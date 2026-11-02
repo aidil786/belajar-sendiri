@@ -1,0 +1,69 @@
+---
+id: git-w07-l11
+world: 7
+title: Jaga keselamatan workflow
+summary: "Anda akan belajar: cara beri robot anda kuasa yang ia perlukan sahaja."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, SpotLines, SwipeJudge]
+needs: [git-w07-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+Workflow anda boleh baca rahsia dan ubah repo anda. Apa-apa kod yang ia jalankan dapat kuasa itu juga. Siapa boleh salah guna kuasa itu?
+
+<Interactive name="Choice" options={[{ label: 'Action pihak ketiga yang ditipu atau digodam', correct: true, why: 'Apa-apa kod yang workflow anda jalankan boleh guna kuasanya.' }, { label: 'Tiada siapa. Robot sentiasa selamat.', why: 'Robot jalankan apa sahaja kod yang diberi.' }, { label: 'Hanya orang yang tahu kata laluan anda', why: 'Penyerang boleh sasarkan kod yang workflow anda jalankan.' }]} />
+</Card>
+
+<Card id="see-token" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Mula', title: 'Kunci dibuat', text: 'Job bermula. GitHub buat kunci baru untuk repo ini sahaja.' }, { when: 'Jalan', title: 'Kunci diguna', text: 'Langkah guna kunci itu untuk baca kod, komen atau deploy.' }, { when: 'Tamat', title: 'Kunci luput', text: 'Job tamat. Kunci itu berhenti berfungsi.' }]} />
+
+Setiap job dapat kunci baru: **<Term id="github-token">GITHUB_TOKEN</Term>**. Ia hanya berfungsi dalam repo ini. Ia berhenti berfungsi bila job tamat.
+</Card>
+
+<Card id="see-permissions" type="see">
+**<Term id="permissions">permissions:</Term>** (kebenaran) tentukan apa kunci itu boleh buat. Beri apa yang job perlu sahaja. Senaraikan sebahagian, yang lain jadi `none`. Setiap job perlukan yang mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'read', label: 'contents: read' }, { id: 'write', label: 'contents: write' }, { id: 'pages', label: 'pages: write' }]} items={[{ label: 'Jalankan ujian', bucket: 'read', why: 'Ujian cuma baca kod anda.' }, { label: 'Bina laman', bucket: 'read', why: 'Membina cuma baca kod anda.' }, { label: 'Buat release baru', bucket: 'write', why: 'Release tambah sesuatu ke repo, jadi perlu write.' }, { label: 'Terbitkan ke GitHub Pages', bucket: 'pages', why: 'Pages ada kebenarannya sendiri.' }]} success="Siap! Kuasa sedikit, risiko pun sedikit." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu job ada `contents: read` sahaja. Satu langkah jahat cuba push kod. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'GitHub tolak. Kunci itu cuma boleh baca.', correct: true, why: 'Kuasa paling minimum sedang berfungsi. Serangan itu terlanggar pintu berkunci.' }, { label: 'Push itu berjaya', why: 'Kunci itu tiada kuasa tulis. GitHub tolak.' }, { label: 'Seluruh repo terpadam', why: 'Baca sahaja maksudnya ia tak boleh ubah apa-apa.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Cari risikonya. Ketik setiap baris yang berisiko.
+
+<Interactive name="SpotLines" lines={[{ text: 'on: pull_request' }, { text: 'permissions: write-all', target: true }, { text: 'jobs:' }, { text: '  build:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - uses: random-dev/helper@main', target: true }, { text: '      - run: echo "${{ secrets.DEPLOY_TOKEN }}"', target: true }, { text: '      - run: npm test' }]} prompt="Ketik setiap baris yang berisiko." success="Ketiga-tiganya! Kuasa berlebihan, orang asing tanpa pin, rahsia yang dicetak." />
+
+<Hint>Cari kuasa berlebihan, versi yang boleh beralih, dan rahsia yang terdedah.</Hint>
+</Card>
+
+<Card id="see-prt" type="see">
+`pull_request_target` berjalan dengan rahsia anda dan kunci tulis, walaupun pada PR orang asing. Jadi jangan sekali-kali jalankan kod mereka di situ. Trigger mana patut uji kod PR orang asing?
+
+<Interactive name="Choice" compact options={[{ label: '`pull_request`', correct: true, why: 'Kod dari fork berjalan tanpa rahsia dan dengan kunci baca sahaja.' }, { label: '`pull_request_target`', why: 'Ia pegang rahsia anda. Jalankan kod orang asing di situ memang bahaya.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat selamat, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mulakan setiap workflow dengan `contents: read`', good: true, why: 'Kemudian tambah kuasa lebih yang job perlu sahaja.' }, { text: 'Sematkan action pihak ketiga pada SHA penuh', good: true, why: 'Tiada siapa boleh tukar kod itu senyap-senyap.' }, { text: 'Cetak rahsia, untuk semak ia berfungsi', good: false, why: 'Log boleh bocor. Uji dengan menggunakannya, bukan mencetaknya.' }, { text: 'Masukkan tajuk PR terus ke dalam skrip `run:`', good: false, why: 'Tajuk yang licik boleh jadi arahan. Hantar melalui env: dulu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci workflow dengan ketat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Teks dari orang asing, contohnya tajuk PR, boleh selitkan arahan ke dalam `run:`. Letak dalam `env:` dulu, kemudian guna `"$TITLE"` dalam skrip. `persist-credentials: false` pada checkout simpan kunci itu di luar config Git repo. Workflow kursus ini sendiri buat begitu.
+</Card>

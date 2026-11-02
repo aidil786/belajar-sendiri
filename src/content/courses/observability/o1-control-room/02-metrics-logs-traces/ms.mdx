@@ -1,0 +1,73 @@
+---
+id: obs-o1-l02
+world: 1
+title: Metrik, log dan trace
+summary: "Anda akan belajar: tiga jenis data yang bilik kawalan guna, dan kekuatan setiap satu."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SpotLines, TimelineTap, SortCards, Mission]
+needs: [obs-o1-l01]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: signals", url: "https://opentelemetry.io/docs/concepts/signals/" }
+  - { label: "Prometheus: data model", url: "https://prometheus.io/docs/concepts/data_model/" }
+  - { label: "Prometheus: exposition formats", url: "https://prometheus.io/docs/instrumenting/exposition_formats/" }
+---
+
+<Card id="hook" type="hook">
+Bilik kawalan ada tiga pembantu: kaunter di dinding, diari dan penjejak pesanan. Siapa paling cepat jawab: *berapa pesanan masuk minit ini?*
+
+<Interactive name="Choice" options={[{ label: 'Kaunter di dinding', correct: true, why: 'Ya. Kaunter beri nombor sekali pandang.' }, { label: 'Diari', why: 'Boleh, tapi anda kena kira setiap baris sendiri.' }, { label: 'Penjejak pesanan', why: 'Ia jejak satu pesanan pada satu masa. Kaunter nampak semua.' }]} />
+</Card>
+
+<Card id="see-metric" type="see">
+<Interactive name="Transcript" title="bash" label="curl minta nombor daripada satu mesin. Tiga baris keluar: baris bantuan, baris jenis, dan node_load1 dengan nilainya." lines={[{ cmd: "curl -s localhost:9100/metrics | grep 'node_load1 '" }, { out: '# HELP node_load1 1m load average.\n# TYPE node_load1 gauge' }, { out: 'node_load1 11.37', color: 'green' }]} />
+
+**<Term id="metric">Metrik</Term>** ialah nama dan nombor. Prometheus catat masanya, berulang kali. Kecil, murah, sesuai untuk graf.
+</Card>
+
+<Card id="see-log" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris yang terangkan bayaran yang gagal." lines={[{ text: '12:31:02 INFO  order A1041 paid in 0.4s' }, { text: '12:31:04 INFO  order A1042 sent to kitchen' }, { text: '12:31:09 ERROR order A1043 payment timeout after 5s', target: true }, { text: '12:31:11 INFO  order A1044 paid in 0.3s' }]} success="Baris itu kata apa yang rosak, dan untuk pesanan mana." />
+
+**<Term id="log">Log</Term>** ialah satu baris diari. Ia kata apa yang berlaku, bila, dengan butiran.
+</Card>
+
+<Card id="see-trace" type="see">
+<Interactive name="TimelineTap" events={[{ when: '0 ms', title: 'Laman web', text: 'Pesanan A1043 keluar dari telefon pelanggan.' }, { when: '40 ms', title: 'Servis pesanan', text: 'Ia semak menu. Laju.' }, { when: '90 ms', title: 'Servis bayaran', text: 'Ia panggil bank dan tunggu.' }, { when: '5.09 s', title: 'Tamat masa', text: 'Tiada jawapan selepas 5 s. Inilah langkah yang lambat.' }]} />
+
+**<Term id="trace">Trace</Term>** (jejak) ikut satu pesanan melalui setiap servis. Setiap langkah dipanggil span. Tekan setiap langkah.
+</Card>
+
+<Card id="try-sort" type="try">
+Pembantu mana yang simpan ini? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'metric', label: 'Metrik' }, { id: 'log', label: 'Log' }, { id: 'trace', label: 'Trace' }]} items={[{ label: '42 pesanan seminit', bucket: 'metric', why: 'Satu nombor dari masa ke masa.' }, { label: 'Bayaran ambil 2.8 s untuk kebanyakan orang', bucket: 'metric', why: 'Satu nombor untuk semua pesanan.' }, { label: 'ERROR order A1043 payment timeout', bucket: 'log', why: 'Satu baris diari dengan butiran.' }, { label: 'Pengguna 88 tukar alamat pada 12:05', bucket: 'log', why: 'Satu peristiwa yang dicatat.' }, { label: 'Pesanan A1043: web 40 ms, bayaran 5 s', bucket: 'trace', why: 'Satu pesanan, langkah demi langkah.' }, { label: 'Servis mana yang buat pesanan ini lambat?', bucket: 'trace', why: 'Trace tunjuk langkah yang lambat.' }]} success="Kaunter, diari, penjejak. Masing-masing ada tugas." />
+</Card>
+
+<Card id="predict" type="predict">
+Pada 12:30, skrin ralat melonjak. Anda mahu tahu ralat *apa*. Apa yang anda buka seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Log dari 12:30', correct: true, why: 'Ya. Metrik kata berapa banyak. Diari kata apa.' }, { label: 'Lebih banyak skrin metrik', why: 'Metrik mengira. Jarang ia kata apa ralatnya.' }, { label: 'Tiada. Tunggu dan lihat.', why: 'Pelanggan pun sedang tunggu. Tengok sekarang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan metrik, log dan trace.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ketiga-tiganya paling berguna bersama. Metrik bunyikan penggera, log terangkan, dan trace tunjuk langkah yang lambat. Prometheus simpan metrik. Log dan trace ada dunia sendiri: O4.
+
+Prometheus pun tulis diarinya sendiri. Baris ini sebenar:
+
+```text
+time=2026-11-01T12:50:04.542Z level=INFO source=main.go:1447 msg="Server is ready to receive web requests."
+```
+
+Latihan sebenar (perlukan Docker, dari Ship It D1):
+
+<Interactive name="Mission" id="obs-o1-l02-real" steps={[{ id: 'run', text: 'Mulakan satu Prometheus untuk ditengok.', command: 'docker run -d --name prom-peek -p 9090:9090 quay.io/prometheus/prometheus:v3.13.5' }, { id: 'metrics', text: 'Baca metriknya: teks biasa, satu nombor sebaris.', command: 'curl -s localhost:9090/metrics | head' }, { id: 'logs', text: 'Baca diarinya.', command: 'docker logs prom-peek' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f prom-peek' }]} success="Metrik dan log, daripada Prometheus sebenar." />
+</Card>

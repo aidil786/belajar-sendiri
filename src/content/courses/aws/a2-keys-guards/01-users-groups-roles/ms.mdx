@@ -1,0 +1,66 @@
+---
+id: aws-a2-l01
+world: 2
+title: Pengguna, kumpulan dan role
+summary: "Anda akan belajar: tiga jenis pemegang kunci dalam IAM, dan mana yang sesuai untuk kerja mana."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Transcript, IamJudge, SwipeJudge]
+needs: [aws-a1-boss]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM identities", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id.html" }
+  - { label: "IAM user groups", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html" }
+  - { label: "IAM roles", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" }
+  - { label: "aws iam create-role", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/create-role.html" }
+---
+
+<Card id="hook" type="hook">
+Lima juruwang di Kedai Kancil perlukan kunci yang sama. Orang keenam masuk minggu depan. Macam mana nak beri kunci tanpa serabut?
+
+<Interactive name="Choice" options={[{ label: 'Buat kumpulan Cashiers; beri kunci kepada kumpulan', correct: true, why: 'Tambah orang, dia dapat kunci. Keluarkan dia, kunci pun hilang.' }, { label: 'Salin kunci pada setiap orang, satu demi satu', why: 'Enam salinan untuk diselaraskan. Satu akan terlupa.' }, { label: 'Biar semua juruwang kongsi satu log masuk', why: 'Nanti tiada siapa tahu siapa buat apa.' }]} />
+</Card>
+
+<Card id="see-three" type="see">
+**IAM** ialah pejabat kunci pusat beli-belah. Ia kenal tiga jenis pemegang kunci: pengguna, kumpulan dan role. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: 'Pengguna (user)' }, { id: 'group', label: 'Kumpulan (group)' }, { id: 'role', label: 'Role' }]} items={[{ label: 'Aina, dengan log masuk sendiri', bucket: 'user', why: 'Seorang atau satu aplikasi, dengan rahsia tahan lama.' }, { label: 'Cashiers: semua yang jaga kaunter', bucket: 'group', why: 'Senarai pengguna yang berkongsi kunci yang sama.' }, { label: 'Pas yang dipinjam orang atau servis dipercayai', bucket: 'role', why: 'Dipinjam sekejap, kemudian luput.' }, { label: 'Tak boleh log masuk sendiri', bucket: 'group', why: 'Kumpulan hanya pegang pengguna dan kunci mereka.' }, { label: 'Beri kunci sementara', bucket: 'role', why: 'Tiada kata laluan, tiada kunci disimpan.' }]} success="Pengguna, kumpulan, role. Tiga pemegang kunci, tiga kerja." />
+</Card>
+
+<Card id="see-role" type="see">
+<Interactive name="Transcript" title="bash" label="aws iam create-role buat Test-Role daripada fail trust policy. AWS jawab dengan nama dan ARN role itu." lines={[{ cmd: 'aws iam create-role --role-name Test-Role --assume-role-policy-document file://Test-Role-Trust-Policy.json' }, { out: '{\n    "Role": {\n        "AssumeRolePolicyDocument": "<URL-encoded-JSON>",\n        "RoleId": "AKIAIOSFODNN7EXAMPLE",\n        "CreateDate": "2013-06-07T20:43:32.821Z",\n        "RoleName": "Test-Role",\n        "Path": "/",\n        "Arn": "arn:aws:iam::123456789012:role/Test-Role"\n    }\n}', color: 'green' }]} />
+
+**<Term id="iam-role">Role</Term>** bermula dengan fail trust: siapa boleh pinjam pas ini. Baris terakhir jawapan ialah <Term id="arn">ARN</Term>, alamat penuh role itu.
+</Card>
+
+<Card id="try-judge" type="try">
+Aina dalam kumpulan Cashiers. Dia buka fail menu hari ini. Adakah AWS kata ya?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'cashiers (group)', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Dibenarkan. Kunci kumpulan ialah kunci Aina." />
+</Card>
+
+<Card id="predict" type="predict">
+Aina pindah ke dapur. Anda keluarkan dia dari Cashiers. Boleh dia masih buka fail menu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: kunci menunya datang dari kumpulan', correct: true, why: 'Keluar kumpulan, hilang kuncinya. Tiada yang perlu dikemas manual.' }, { label: 'Ya: pengguna simpan kunci selamanya', why: 'Kunci kumpulan milik kumpulan, bukan orang itu.' }, { label: 'Hanya hujung minggu', why: 'IAM tiada peraturan hujung minggu di sini. Ya atau tidak.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Betul tentang pemegang kunci, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Seorang pengguna boleh masuk banyak kumpulan.', good: true, why: 'Aina boleh jadi juruwang dan tukang masak.' }, { text: 'Masukkan kumpulan Cashiers ke dalam kumpulan Staff.', good: false, why: 'Kumpulan tak boleh pegang kumpulan lain. Pengguna sahaja.' }, { text: 'Peraturan bucket boleh namakan kumpulan sebagai pelawat.', good: false, why: 'Kumpulan bukan principal. Namakan pengguna atau role.' }, { text: 'Server dan robot patut pinjam role.', good: true, why: 'Kunci jangka pendek, tiada apa disimpan dalam mesin.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan pengguna, kumpulan dan role, dan pilih yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tiada kumpulan "semua orang" yang sedia ada. Kalau mahu, anda buat sendiri dan tambah setiap pengguna.
+
+Latihan sebenar: IAM sendiri percuma. Buat satu kumpulan, tambah pengguna admin anda, kemudian tengok dengan `aws iam get-group --group-name Cashiers`. Padam kumpulan itu bila siap.
+</Card>

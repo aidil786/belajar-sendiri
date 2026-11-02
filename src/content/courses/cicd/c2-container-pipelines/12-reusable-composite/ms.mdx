@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l12
+world: 2
+title: Workflow guna semula dan composite action
+summary: "Anda akan belajar: tulis pipeline sekali dan kongsi dengan semua aplikasi anda."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l11]
+scenario: c2-reusable
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Reuse workflows", url: "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows" }
+  - { label: "Creating a composite action", url: "https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action" }
+  - { label: "Reusing workflow configurations", url: "https://docs.github.com/en/actions/concepts/workflows-and-actions/reusing-workflow-configurations" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil ada image web dan image API. Kedua-dua workflow ada 30 baris build yang sama. Anda baiki satu pepijat dalam satu fail. Yang satu lagi macam mana?
+
+<Interactive name="Choice" options={[{ label: 'Masih rosak: anda kena salin pembaikan sendiri', correct: true, why: 'Salinan makin lama makin berbeza. Tulis sekali sahaja.' }, { label: 'GitHub baiki kedua-duanya', why: 'GitHub jalankan apa yang anda tulis. Dua salinan tetap dua.' }, { label: 'Salinan sentiasa sama', why: 'Tak lama. Selalu ada orang yang ubah satu sahaja.' }]} />
+</Card>
+
+<Card id="see-callee" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: Build image' }, { text: 'on:' }, { text: '  workflow_call:' }, { text: '    inputs:' }, { text: '      folder:', target: true }, { text: '        required: true' }, { text: '        type: string' }, { text: 'jobs:' }, { text: '  build:' }, { text: '    runs-on: ubuntu-latest' }]} prompt="Ketik baris yang namakan tempat kosong untuk diisi." success="Ya! Setiap pemanggil isi folder." />
+
+Ulang kaji dari [Dunia 7](/ms/git/#world-7). <Term id="reusable-workflow" course="git">reusable workflow</Term> (workflow guna semula) ialah resipi standard ibu pejabat. `workflow_call` benarkan orang lain panggilnya. Inputs ialah tempat kosong.
+</Card>
+
+<Card id="see-caller" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-reusable" label="Dua job, web dan api, setiap satu panggil build-image.yml dengan folder sendiri. Kedua-duanya jalan serentak dan jadi hijau." />
+
+Dua job panggil satu resipi, setiap satu dengan foldernya. Tekan Run. Baiki resipi sekali, dan kedua-dua aplikasi dapat pembaikan.
+</Card>
+
+<Card id="see-composite" type="see">
+<Interactive name="SpotLines" lines={[{ text: '# .github/actions/setup-shop/action.yml' }, { text: 'name: Set up shop' }, { text: 'runs:' }, { text: '  using: composite', target: true }, { text: '  steps:' }, { text: '    - uses: actions/setup-node@v7' }, { text: '      with:' }, { text: '        node-version: 24' }, { text: '    - run: npm ci' }, { text: '      shell: bash' }]} prompt="Ketik baris yang jadikan ini composite action." success="Ya! using: composite himpunkan langkah-langkah itu." />
+
+**<Term id="composite-action">Composite action</Term>** ialah rempah siap campur: beberapa langkah dalam satu balang. Dalam job, `uses: ./.github/actions/setup-shop` jalankannya sebagai satu langkah.
+</Card>
+
+<Card id="try-sort" type="try">
+Yang mana satu?
+
+<Interactive name="SortCards" buckets={[{ id: 'rw', label: 'Reusable workflow' }, { id: 'ca', label: 'Composite action' }]} items={[{ label: 'Bawa job dan runner sendiri', bucket: 'rw', why: 'Ia satu workflow yang lengkap.' }, { label: 'Jalan sebagai satu langkah dalam job anda', bucket: 'ca', why: 'Ia kongsi job dan runner anda.' }, { label: 'Dipanggil dengan uses: pada job', bucket: 'rw', why: 'jobs.<id>.uses panggil workflow.' }, { label: 'Dipanggil dengan uses: pada langkah', bucket: 'ca', why: 'steps[].uses panggil action.' }, { label: 'Setiap run: perlukan shell:', bucket: 'ca', why: 'Composite action mesti sebut shell mana.' }, { label: 'Boleh terima secrets: inherit', bucket: 'rw', why: 'Pemanggil boleh hantar semua secret-nya.' }]} success="Siap! Resipi penuh lawan rempah siap." />
+</Card>
+
+<Card id="predict" type="predict">
+Token pemanggil ada `packages: read`. Workflow yang dipanggil minta `packages: write`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Run gagal: workflow yang dipanggil cuma boleh kekal atau kurangkan kunci', correct: true, why: 'Pemanggil tentukan had paling tinggi. Beri packages: write dalam pemanggil.' }, { label: 'Ia tetap dapat packages: write', why: 'Kalau begitu, mana-mana resipi kongsi boleh rampas kuasa. GitHub sekat.' }, { label: 'GitHub minta anda luluskan', why: 'Tiada gesaan. Run itu terus gagal dengan ralat.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi satu pipeline dengan banyak aplikasi.
+</Card>
+
+<Card id="deeper" type="deeper">
+Panggil reusable workflow dari repo lain macam action: `owner/repo/.github/workflows/build.yml@ref`. Pin ref itu pada SHA penuh, seperti diterangkan dalam Dunia C4. Dalam log, composite action ialah satu langkah. Buka untuk tengok isinya.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="c2-l12-rep" steps={[{ id: 'callee', text: 'Dalam repo latihan awam, pindahkan job build ke .github/workflows/build-image.yml dengan on: workflow_call.' }, { id: 'caller', text: 'Panggilnya dari ci.yml dengan uses: ./.github/workflows/build-image.yml.' }, { id: 'push', text: 'Push, dan cari job yang dipanggil dalam run itu.' }]} success="Satu resipi, banyak dapur!" />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: cicd-c2-l10
+world: 2
+title: Henti talian bila ada CVE kritikal
+summary: "Anda akan belajar: imbas setiap image dan henti talian bila ada lubang kritikal."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, ConveyorBelt, SpotLines, SwipeJudge, Mission]
+needs: [cicd-c2-l09]
+scenario: c2-cve-no-exit
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "aquasecurity/trivy-action", url: "https://github.com/aquasecurity/trivy-action" }
+  - { label: "Docker Scout in GitHub Actions", url: "https://docs.docker.com/scout/integrations/ci/gha/" }
+  - { label: "About CVE records", url: "https://www.cve.org/About/Overview" }
+---
+
+<Card id="hook" type="hook">
+Pemeriksa makanan jumpa bahan yang ditarik balik dalam pek malam ini. Apa patut tali sawat buat?
+
+<Interactive name="Choice" options={[{ label: 'Hentikan talian sebelum pek dihantar', correct: true, why: 'Pelanggan tak dapat pek rosak itu. Baiki dulu, kemudian jalankan semula.' }, { label: 'Hantar sekarang, baiki minggu depan', why: 'Jadi pelanggan dapat pek rosak itu malam ini.' }, { label: 'Sorokkan laporan itu', why: 'Bahan rosak itu masih ada dalam pek.' }]} />
+</Card>
+
+<Card id="see-cve" type="see">
+**<Term id="cve">CVE</Term>** ialah ID awam untuk lubang yang diketahui, contohnya `CVE-2099-0001`. Pengimbas beri setiap satu tahap bahaya. Susun dari yang paling ringan.
+
+<Interactive name="OrderList" items={['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']} label="Paling ringan di atas" success="CRITICAL ialah yang hentikan talian." />
+</Card>
+
+<Card id="predict" type="predict">
+Trivy imbas lubang CRITICAL, dan image ini ada satu. Ketik stesen yang akan hentikan talian. Atau ketik "Tiada yang hentikannya".
+
+<Interactive name="ConveyorBelt" scenario="c2-cve-no-exit" task={{ type: 'predict' }} success="Licik, kan? Imbasan jumpa lubang itu, tapi talian terus jalan." />
+
+<Hint>Baca baris terakhir langkah Trivy. Apa yang tiada?</Hint>
+</Card>
+
+<Card id="see-exit" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: aquasecurity/trivy-action@v0.36.0' }, { text: '  with:' }, { text: '    image-ref: kedai-kancil:scan' }, { text: '    severity: CRITICAL' }, { text: "    exit-code: '1'", target: true }]} prompt="Ketik baris yang jadikan penemuan satu stesen merah." success="Ya! Penemuan kini gagalkan langkah itu." />
+
+Trivy tamat dengan kod keluar 0 melainkan anda minta. `exit-code: '1'` buat penemuan gagalkan langkah. Stesen merah, talian berhenti.
+</Card>
+
+<Card id="try-watch" type="try">
+Image yang sama, kini dengan `exit-code: '1'`. Tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-cve-stop" success="Imbasan hentikan talian. Tiada pek rosak dihantar." />
+</Card>
+
+<Card id="check" type="check">
+Tabiat imbasan yang bagus? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Imbas image yang tepat yang anda akan push', good: true, why: 'Imbas apa yang dihantar, bukan sesuatu yang serupa.' }, { text: 'Gagal pada CRITICAL, dan laporkan yang lain', good: true, why: 'Peraturan yang jelas. Pasukan masih nampak lubang yang kecil.' }, { text: 'Matikan imbasan bila ia jadi merah', good: false, why: 'Kemas kini pakej atau base image itu.' }, { text: 'Imbas setahun sekali', good: false, why: 'CVE baru muncul setiap hari. Imbas setiap build.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hentikan talian bila ada lubang kritikal.
+</Card>
+
+<Card id="deeper" type="deeper">
+`ignore-unfixed: true` langkau lubang yang belum ada pembaikan. Docker Scout buat kerja sama dengan `docker/scout-action`. Image lama pun dapat CVE baru. Imbas semula ikut jadual.
+
+Latihan sebenar (pilihan), dengan Trivy yang dipasang ikut dokumen rasminya:
+
+<Interactive name="Mission" id="c2-l10-rep" steps={[{ id: 'scan', text: 'Imbas satu image rasmi yang kecil.', command: 'trivy image --severity CRITICAL --exit-code 1 alpine:3.22' }, { id: 'code', text: 'Semak kod keluar: 0 maksudnya tiada lubang kritikal.', command: 'echo $?' }, { id: 'ci', text: "Tambah langkah Trivy dengan exit-code: '1' dalam repo latihan." }]} success="Anda boleh baca imbasan macam pemeriksa makanan!" />
+</Card>

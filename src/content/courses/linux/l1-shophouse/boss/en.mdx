@@ -1,0 +1,82 @@
+---
+id: linux-l1-boss
+world: 1
+title: Tidy the messy kitchen
+summary: "You will learn: to tidy a real messy folder on your own: find, move and delete safely."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SwipeJudge, OrderList, Mission]
+needs: [linux-l1-l09]
+scenario: linux-l1-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "mv (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mv.1.en.html" }
+  - { label: "rm (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rm.1.en.html" }
+  - { label: "find (Debian 13 man page)", url: "https://manpages.debian.org/trixie/findutils/find.1.en.html" }
+  - { label: "grep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/grep/grep.1.en.html" }
+  - { label: "Bash manual: Filename Expansion", url: "https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: the day cook left `~/kitchen` in a mess. Recipes on the floor, temp files everywhere, and the supplier note is lost. Dinner rush in 10 minutes. What comes first?
+
+<Interactive name="Choice" options={[{ label: 'Look around before touching anything', correct: true, why: 'ls -a and find show the whole mess. Then you act calmly.' }, { label: 'Delete everything and start fresh', why: 'The recipes and the supplier note would be gone for good.' }, { label: 'Move everything into one folder', why: 'Then the mess just lives in a new room.' }]} />
+</Card>
+
+<Card id="try-recipes" type="try">
+Job 1: look with `ls -a`. Then make a `recipes` room and move the three `.txt` recipes into it. Leave `oven.log` alone.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss" goal={{ fileExists: ['~/kitchen/recipes/sambal.txt', '~/kitchen/recipes/rendang.txt', '~/kitchen/recipes/kuih.txt', '~/kitchen/oven.log'], fileMissing: ['~/kitchen/sambal.txt'] }} hints={['Make the room: mkdir recipes', 'One pattern moves all three: mv *.txt recipes/']} solution={['ls -a', 'mkdir recipes', 'mv *.txt recipes/']} success="Job 1 done! Three recipes on their shelf, the oven log untouched." />
+
+<Hint>Every recipe ends in `.txt`.</Hint>
+</Card>
+
+<Card id="check-star" type="check">
+Why `mv *.txt recipes/` and not `mv * recipes/`?
+
+<Interactive name="Choice" options={[{ label: '* would grab the log, the old folder, even recipes itself', correct: true, why: '* matches every name. mv then complains it cannot move recipes into itself.' }, { label: '* is slower', why: 'Speed is the same. The trouble is what * picks.' }, { label: 'mv does not understand *', why: 'mv never sees the star. The shell swaps it for names first.' }]} />
+</Card>
+
+<Card id="try-tmp" type="try">
+Job 2: three empty `.tmp` files clutter the floor. Check them first, then delete only those.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss-2" goal={{ fileMissing: ['~/kitchen/tmp1.tmp', '~/kitchen/tmp2.tmp', '~/kitchen/tmp3.tmp'], fileExists: ['~/kitchen/oven.log', '~/kitchen/recipes/kuih.txt', '~/kitchen/old/box/supplier.md'] }} hints={['Look first: ls *.tmp', 'Same pattern, now delete: rm *.tmp']} solution={['ls *.tmp', 'rm *.tmp']} success="Job 2 done! The temp files are gone. Nothing else was touched." />
+
+<Hint>Use the same pattern twice: once with `ls`, once with `rm`.</Hint>
+</Card>
+
+<Card id="judge-delete" type="check">
+The night cook suggests these. Safe here, or risky?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'ls *.tmp, then rm *.tmp', good: true, why: 'Look, then delete with the very same pattern.' }, { text: 'rm *', good: false, why: 'It deletes oven.log too. No undo.' }, { text: 'rm -r old', good: false, why: 'old still holds the supplier note!' }, { text: 'find . -name "*.tmp"', good: true, why: 'A search changes nothing. Always safe.' }]} />
+</Card>
+
+<Card id="try-note" type="try">
+Job 3: the supplier note is lost somewhere in `old`. Find it. Then save only the Pak Ali line into `todo.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss-3" goal={{ fileContains: { '~/kitchen/todo.txt': 'Pak Ali brings chilli' }, fileNotContains: { '~/kitchen/todo.txt': 'Mak Su' } }} hints={['Find it: find . -name "*supplier*"', 'Save the line: grep "Pak Ali" old/box/supplier.md > todo.txt']} solution={['find . -name "*supplier*"', 'grep "Pak Ali" old/box/supplier.md > todo.txt']} success="Job 3 done! Pak Ali brings chilli on Friday. It is on the todo list." />
+
+<Hint>`find` gives the path. `grep … > todo.txt` saves the line.</Hint>
+</Card>
+
+<Card id="order-routine" type="check">
+Write the tidy-up routine for the next cook. Put it in order.
+
+<Interactive name="OrderList" items={['Look: ls -a and find', 'Group: mkdir, then mv with a pattern', 'Clean: ls the pattern, then rm it', 'Search: grep for what you need', 'Check: ls one last time']} label="First step at the top" success="Look, group, clean, search, check. The kitchen is ready!" />
+</Card>
+
+<Card id="win" type="win">
+You can now tidy a messy folder on your own, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+The tools you used: `ls -a`, `mkdir`, `mv` with `*`, `ls` before `rm`, `find -name`, `grep … >`. Every one comes back in World L2.
+
+Real rep (optional): build your own mess in a practice folder, then tidy it.
+
+<Interactive name="Mission" id="linux-l1-boss-rep" steps={[{ id: 'mess', text: 'Make a messy kitchen.', command: 'mkdir -p mess && cd mess && touch a.txt b.txt c.tmp d.tmp' }, { id: 'group', text: 'Group the .txt files.', command: 'mkdir notes && mv *.txt notes/' }, { id: 'look', text: 'Look before deleting.', command: 'ls *.tmp' }, { id: 'clean', text: 'Delete the temp files.', command: 'rm *.tmp' }, { id: 'check', text: 'Check what is left.', command: 'ls -R' }]} success="A real tidy kitchen!" />
+</Card>

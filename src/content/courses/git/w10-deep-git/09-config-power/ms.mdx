@@ -1,0 +1,75 @@
+---
+id: git-w10-l09
+world: 10
+title: Alias, includeIf, hujung baris
+summary: "Anda akan belajar: tiga kuasa config: nama pendek, tetapan ikut folder, dan hujung baris yang tenang."
+minutes: 4
+xp: 20
+interactives: [TermReplay, CommandBuilder, Sim, Choice, Transcript, SortCards]
+needs: [git-w10-l08]
+scenario: w10-aliases
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git config (alias, includeIf)", url: "https://git-scm.com/docs/git-config" }
+  - { label: "gitattributes", url: "https://git-scm.com/docs/gitattributes" }
+  - { label: "Configuring Git to handle line endings", url: "https://docs.github.com/en/get-started/git-basics/configuring-git-to-handle-line-endings" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w10-aliases" commands={['git log --oneline --graph --all']} label="git log --oneline --graph --all lukis dua commit dalam diari." />
+
+Anda taip arahan panjang ini dua puluh kali sehari. Banyak betul kekunci! Boleh Git beri ia nama pendek?
+</Card>
+
+<Card id="try-build" type="try">
+**<Term id="alias">Alias</Term>** (nama samaran) ialah nama pendek anda sendiri untuk sesuatu arahan. Bina satu: `git lg` akan lukis sejarah anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'config', means: 'tukar tetapan' }, { text: '--global', means: 'untuk semua projek anda' }, { text: 'alias.lg', means: 'nama pendek baru: lg' }, { text: '"log --oneline --graph --all"', means: 'apa yang lg jalankan' }]} decoys={[{ text: '--local', means: 'projek ini sahaja' }, { text: 'alias.log', means: 'nama terbina dalam: Git akan abaikan' }]} success="Betul! Sekarang git lg lukis seluruh sejarah anda." />
+</Card>
+
+<Card id="try-alias" type="try">
+Sekarang jadikan `git st` sama dengan `git status`. Kemudian cuba.
+
+<Interactive name="Sim" scenario="w10-aliases" panels={[]} goal={{ aliases: { st: 'status' }, typed: '^git st( |$)' }} hints={['Taip git config --global alias.st status', 'Kemudian taip git st']} success="git st berfungsi! Kurang kekunci, jawapan sama." />
+
+<Hint>Taip `git config --global alias.st status`, kemudian `git st`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda buat alias bernama `status` yang jalankan `log`. Apa yang `git status` buat sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Masih git status: arahan terbina dalam menang', correct: true, why: 'Git abaikan alias yang sorok arahannya sendiri. Ini jaga skrip supaya selamat.' }, { label: 'Ia jalankan git log', why: 'Git semak arahannya sendiri dulu. Alias itu diabaikan.' }, { label: 'Git tunjuk ralat', why: 'Tiada ralat. Git diam-diam jalankan arahan sebenar.' }]} />
+</Card>
+
+<Card id="see-include-if" type="see">
+<Interactive name="Transcript" title="bash" label="~/.gitconfig Aina ada nama dan e-melnya, kemudian includeIf untuk gitdir ~/work/ yang muatkan ~/.gitconfig-work. Fail itu tetapkan e-mel kerjanya." lines={[{ cmd: 'cat ~/.gitconfig' }, { out: '[user]\n    name = Aina\n    email = aina@example.com\n[includeIf "gitdir:~/work/"]\n    path = ~/.gitconfig-work' }, { cmd: 'cat ~/.gitconfig-work' }, { out: '[user]\n    email = aina@company.example' }]} />
+
+**<Term id="include-if">includeIf</Term>** muatkan tetapan tambahan dalam folder tertentu sahaja. Setiap repo dalam `~/work/` guna e-mel kerja Aina.
+</Card>
+
+<Card id="try-attributes" type="try">
+<Term id="line-ending">Hujung baris</Term> (line ending) berbeza. Windows guna CRLF, Mac dan Linux guna LF. Fail **<Term id="gitattributes">.gitattributes</Term>** tetapkan satu peraturan untuk seluruh pasukan. Buat satu dan commit.
+
+<Interactive name="Sim" scenario="w10-aliases" panels={['areas']} goal={{ fileContains: { '.gitattributes': '*.png binary' }, typed: 'text=auto', lastCommitHas: ['.gitattributes'] }} hints={['Taip echo "* text=auto" > .gitattributes', 'Kemudian taip echo "*.png binary" >> .gitattributes', 'Kemudian git add .gitattributes dan git commit -m "Add line ending rules"']} success="Dah commit! Fail teks dapat LF dalam repo. Gambar tak diusik." />
+
+<Hint>`* text=auto` biar Git uruskan hujung baris fail teks. `*.png binary` suruh Git jangan usik gambar.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Alat mana buat setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'alias', label: 'alias' }, { id: 'include', label: 'includeIf' }, { id: 'attributes', label: '.gitattributes' }]} items={[{ label: 'git co jalankan git checkout', bucket: 'alias', why: 'Nama pendek untuk satu arahan.' }, { label: 'E-mel kerja dalam repo kerja sahaja', bucket: 'include', why: 'Tetapan yang dimuat dalam folder tertentu sahaja.' }, { label: 'Jangan ubah hujung baris dalam fail .png', bucket: 'attributes', why: 'Peraturan untuk sesetengah fail, dikongsi dalam repo.' }, { label: 'git last tunjuk commit terbaru', bucket: 'alias', why: 'Alias boleh jalankan log -1 HEAD.' }, { label: 'LF dalam repo untuk setiap rakan sepasukan', bucket: 'attributes', why: 'Fail itu ikut repo, jadi semua orang dapat.' }]} success="Tersusun! Nama pendek, peraturan folder dan peraturan fail." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pendekkan arahan, tetapkan peraturan folder dan tenangkan hujung baris.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di Windows, `git config --global core.autocrlf true` beri CRLF atas meja anda dan LF dalam Git. Di Mac atau Linux, guna `input`. Letak `includeIf` selepas `[user]`, supaya e-melnya menang. Alias yang bermula dengan `!` jalankan arahan shell. Hujung baris dah bersepah? Lihat pelajaran World 11 "Huru-hara hujung baris Windows".
+
+<Interactive name="TermReplay" scenario="w10-aliases" commands={['git config --global alias.st status', 'git config --global alias.last "log -1 HEAD"', 'git config --global --get-regexp alias']} label="Dua alias ditetapkan. --get-regexp alias senaraikan alias.st status dan alias.last log -1 HEAD." />
+</Card>

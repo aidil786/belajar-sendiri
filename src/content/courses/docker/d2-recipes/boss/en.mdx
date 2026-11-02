@@ -1,0 +1,78 @@
+---
+id: docker-d2-boss
+world: 2
+title: "Shrink ray"
+summary: "You will learn: to pack a real site with nginx: small, non-root and reachable."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, ShrinkRay, Mission]
+needs: [docker-d2-l13]
+scenario: d2-boss-pack
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: Best practices", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "Docker docs: Build context", url: "https://docs.docker.com/build/concepts/context/" }
+  - { label: "Dockerfile reference: USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-boss-pack" commands={['ls', 'cat Dockerfile']} label="The diary folder has index.html, style.css, notes.txt and a Dockerfile. The recipe picks its base with ARG BASE=nginx:latest." />
+
+Boss: the Shrink ray! Pack your diary site with nginx. Finish line: under 100MB, no secret notes inside, and not running as root.
+</Card>
+
+<Card id="try-pack" type="try">
+Stage 1: make it work. Build `diary:1.0` and serve it on laptop port 8080.
+
+<Interactive name="KitchenSim" scenario="d2-boss-pack" goal={{ imageExists: 'diary:1.0', reachable: 'localhost:8080' }} hints={['Type docker build -t diary:1.0 .', 'Then docker run -d --name web -p 8080:80 diary:1.0']} success="The diary is online. Now look at its size: docker images diary." />
+
+<Hint>Build first, then run with `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="check-size" type="check">
+`docker images` says `diary:1.0` is 241MB. The target is under 100MB. Which move helps most?
+
+<Interactive name="Choice" options={[{ label: 'Swap to an Alpine nginx base', correct: true, why: 'The base is most of the size. Alpine nginx is far smaller.' }, { label: 'Delete style.css', why: 'It is a few bytes. The base is the giant.' }, { label: 'Use a shorter tag', why: 'A tag is a sticker. It weighs nothing.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Stage 2: plan the shrink. Get the meal pack to 70MB or less.
+
+<Interactive name="ShrinkRay" app="static-site" target={70} />
+</Card>
+
+<Card id="try-shrink" type="try">
+Stage 3: shrink for real. Leave `notes.txt` at home, and build `diary:2.0` on `nginx:1.30-alpine`.
+
+<Interactive name="KitchenSim" scenario="d2-boss-pack" goal={{ fileContains: { 'diary/.dockerignore': 'notes.txt' }, imageExists: 'diary:2.0', imageMaxSize: { 'diary:2.0': '100MB' } }} hints={['First: echo "notes.txt" > .dockerignore', 'Then pick the base with a build argument: docker build --build-arg BASE=nginx:1.30-alpine -t diary:2.0 .']} success="Under 100MB, and the notes stayed home." />
+
+<Hint>The recipe starts with `ARG BASE`. `--build-arg BASE=...` swaps the base.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You add only `USER nginx` to the recipe. What happens when the box starts?
+
+<Interactive name="Choice" options={[{ label: 'nginx stops: it cannot write its cache folder', correct: true, why: 'Real log: mkdir() "/var/cache/nginx/client_temp" failed (13: Permission denied). root owns that folder.' }, { label: 'It works the same', why: 'nginx needs to write a few places. As a normal user, it may not.' }, { label: 'It cannot open port 80', why: 'Docker lets normal users open port 80 inside a box. The cache folder is the problem.' }]} />
+</Card>
+
+<Card id="try-nonroot" type="try">
+Stage 4: no root. This recipe already gives nginx its folders. Add `USER nginx`, build `diary:3.0`, run it on 8080, and knock.
+
+<Interactive name="KitchenSim" scenario="d2-boss-nonroot" intro={['cat Dockerfile']} goal={{ imageExists: 'diary:3.0', imageMaxSize: { 'diary:3.0': '100MB' }, imageUser: { 'diary:3.0': 'nonroot' }, reachable: 'localhost:8080', lastTyped: '^curl' }} hints={['Type echo "USER nginx" >> Dockerfile', 'Then docker build -t diary:3.0 .', 'Then docker run -d --name web -p 8080:80 diary:3.0', 'Finally curl localhost:8080']} success="Small, non-root and online. Shrink ray complete!" />
+
+<Hint>Stuck? `docker logs web` shows why a box stopped.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now pack a real site: small, safe and non-root.
+</Card>
+
+<Card id="deeper" type="deeper">
+Why the `chown` line? nginx writes its cache to `/var/cache/nginx` and its process id to `/run/nginx.pid`. As root, it may. As `nginx`, only if it owns them. Some platforms block low ports for normal users. Many teams use 8080.
+
+<Interactive name="Mission" id="d2-boss-rep" steps={[{ id: 'site', text: 'Take your own diary site (or any static site).' }, { id: 'recipe', text: 'Write a recipe on nginx:1.30-alpine with a .dockerignore.' }, { id: 'user', text: 'Add the chown line and USER nginx, like stage 4.' }, { id: 'check', text: 'Build, run on 8080 and check the size.', command: 'docker images' }]} success="Your own site, shrunk and safe!" />
+</Card>

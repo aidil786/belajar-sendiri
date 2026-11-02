@@ -1,0 +1,59 @@
+---
+id: obs-o3-l03
+world: 3
+title: "Alert on symptoms, not causes"
+summary: "You will learn: to page people for what customers feel, not for every busy machine."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, AlertRuleBuilder, SwipeJudge]
+needs: [obs-o3-l02]
+scenario: o3-symptoms
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+---
+
+<Card id="hook" type="hook">
+3 a.m. The pager rings: CPU at 95%. You get up and check. Every order works fine. Was it worth waking you?
+
+<Interactive name="Choice" options={[{ label: 'No. Customers felt nothing.', correct: true, why: 'Right. A busy machine is not a problem until customers feel it.' }, { label: 'Yes. 95% is scary.', why: 'Scary, but harmless here. Sleep matters too.' }]} />
+</Card>
+
+<Card id="see-sort" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'symptom', label: 'Customers feel it' }, { id: 'cause', label: 'One possible reason' }]} items={[{ label: 'Orders fail', bucket: 'symptom', why: 'Customers see an error.' }, { label: 'Pages take 4 seconds', bucket: 'symptom', why: 'Customers wait.' }, { label: 'CPU at 95%', bucket: 'cause', why: 'A reason things might get slow. Maybe.' }, { label: 'One pod restarted', bucket: 'cause', why: 'Kubernetes healed it. Customers may not notice.' }, { label: 'Disk 80% full', bucket: 'cause', why: 'A worry for later, not pain now.' }]} success="Symptoms are pain. Causes are guesses about pain." />
+
+A **<Term id="symptom-alert">symptom</Term>** is what the customer feels. A cause is one reason it might happen.
+</Card>
+
+<Card id="try-build" type="try">
+The CPU is busy from 5m to 13m. Orders fail from 18m. Pick the rule that wakes someone only for the second.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-symptoms" alert="KedaiPain" exprs={[{ label: 'CPU above 90%', expr: 'kedai:cpu_busy:ratio > 0.9', why: 'The CPU was busy at 10m, but every order worked.' }, { label: 'More than 5% of orders fail', expr: 'sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05', threshold: 0.05 }]} fors={['0s', '2m']} labels={[{ labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: '{{ $value | humanizePercentage }} of orders fail' } }]} goal={{ firingAt: ['25m'], quietAt: ['10m'], noFlap: true }} solution={{ expr: 1, for: 1 }} hints={['Which one did customers feel? Look at the graph at 25m.']} success="Quiet while the CPU sweats. A bell when orders fail." />
+
+<Hint>The busy CPU never broke an order. The failing orders did hurt.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The disk will be full in 4 hours. Customers feel nothing yet. What fits best?
+
+<Interactive name="Choice" options={[{ label: 'A ticket for working hours', correct: true, why: 'Yes. It will hurt soon, but nobody needs to wake up now.' }, { label: 'Page someone now', why: 'Four hours is time enough to fix it awake.' }, { label: 'Ignore it', why: 'It will become pain. A ticket keeps it on the list.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Swipe right if it should page someone. Swipe left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'More than 5% of checkouts fail for 2 minutes', good: true, why: 'Customers are losing orders right now.' }, { text: 'CPU above 80%', good: false, why: 'Busy is not broken. Show it on a screen.' }, { text: 'p95 page time above 2 seconds for 5 minutes', good: true, why: 'Slow pages are pain customers feel.' }, { text: 'One pod restarted once', good: false, why: 'It healed. Count restarts on a dashboard instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now page people for customer pain, not for busy machines.
+</Card>
+
+<Card id="deeper" type="deeper">
+Causes still matter. Put CPU, memory and disk on the screens, and in the runbook. Then on-call can find the reason fast. Prometheus's own advice: few alerts, each tied to pain a user feels.
+</Card>

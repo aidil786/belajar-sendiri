@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l13
+world: 2
+title: Concurrency, path filters and caching
+summary: "You will learn: three tricks that make the belt faster and cheaper."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l12]
+scenario: c2-concurrency
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Control the concurrency of workflows and jobs", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency" }
+  - { label: "Workflow syntax: paths and paths-ignore", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushpull_requestpull_request_targetpathspaths-ignore" }
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+---
+
+<Card id="hook" type="hook">
+You push 3 small fixes in 2 minutes. The belt runs all 3 in full. Only the last one matters. What would help?
+
+<Interactive name="Choice" options={[{ label: 'Cancel the older runs when a newer one starts', correct: true, why: 'Old orders for the same table are not needed. Cook only the newest one.' }, { label: 'Push less often', why: 'Small, frequent pushes are good. Let the belt handle them.' }, { label: 'Buy a faster runner', why: 'It still runs 3 builds. Two are wasted.' }]} />
+</Card>
+
+<Card id="see-concurrency" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-concurrency" label="A push to menu-page starts a run. An older run on the same branch is cancelled first. Then the tests run and pass." />
+
+**<Term id="concurrency">Concurrency</Term>** puts runs in a group: same workflow, same branch. `cancel-in-progress: true` cancels the older run. Press Run.
+</Card>
+
+<Card id="check-group" type="check">
+You push to `main` and to `menu-page` at the same time. Does one cancel the other?
+
+<Interactive name="Choice" options={[{ label: 'No: different branches, different groups', correct: true, why: 'The group name includes github.ref, so each branch gets its own.' }, { label: 'Yes: same workflow, so one wins', why: 'The group also has the branch in it. Different branch, different group.' }, { label: 'Both are cancelled', why: 'Cancelling only hits an older run in the same group.' }]} />
+</Card>
+
+<Card id="try-paths" type="try">
+A **<Term id="path-filter">path filter</Term>** skips the belt when only some files change. This one says `paths-ignore: ['docs/**', '**.md']`. Sort each push.
+
+<Interactive name="SortCards" buckets={[{ id: 'run', label: 'Starts the belt' }, { id: 'skip', label: 'Skipped' }]} items={[{ label: '`docs/menu.md`', bucket: 'skip', why: 'Inside docs/, and a Markdown file.' }, { label: '`README.md`', bucket: 'skip', why: 'A Markdown file.' }, { label: '`src/cart.js`', bucket: 'run', why: 'Code changed: test it.' }, { label: '`Dockerfile`', bucket: 'run', why: 'The recipe changed: build it.' }, { label: '`package-lock.json`', bucket: 'run', why: 'New packages: test them.' }]} success="Docs-only pushes skip the belt." />
+</Card>
+
+<Card id="try-cache" type="try">
+`cache: npm` keeps npm's downloads in the pantry between runs. Press Run twice. The second `npm ci` is quicker.
+
+<Interactive name="ConveyorBelt" scenario="c2-concurrency" task={{ type: 'cacheHit' }} success="Cache hit! npm took the shortcut." />
+</Card>
+
+<Card id="predict" type="predict">
+A PR changes only `README.md`. Its required CI check uses this path filter. Can you merge?
+
+<Interactive name="Choice" options={[{ label: 'No: the check waits as Pending, so the merge is blocked', correct: true, why: 'A skipped workflow never reports back. Do not require a check that may be skipped.' }, { label: 'Yes: skipped counts as passed', why: 'A skipped workflow never reports, so the check stays Pending.' }, { label: 'Yes: README changes skip all rules', why: 'Branch rules still apply. The required check never arrives.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make the belt skip, cancel and reuse work.
+</Card>
+
+<Card id="deeper" type="deeper">
+Don't cancel a deploy halfway: `cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}` keeps main safe. Path filters are not checked for tag pushes. Caches nobody uses for a while are deleted.
+
+Real rep (optional), in a public practice repo:
+
+<Interactive name="Mission" id="c2-l13-rep" steps={[{ id: 'conc', text: 'Add a concurrency group with cancel-in-progress: true.' }, { id: 'twice', text: 'Push twice quickly. Find the cancelled run in the Actions tab.' }, { id: 'paths', text: 'Add paths-ignore for docs/**, then push a docs-only change.' }]} success="Your belt now saves time and minutes!" />
+</Card>

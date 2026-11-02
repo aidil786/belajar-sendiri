@@ -1,0 +1,73 @@
+---
+id: aws-a4-l05
+world: 4
+title: "RDS: a managed database"
+summary: "You will learn: what RDS does for you, how Multi-AZ saves you, and how to keep the database in back."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, SortCards, Choice, SecurityGroupGate, IdleBill, SpotLines]
+needs: [aws-a4-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon RDS: What is Amazon RDS?", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" }
+  - { label: "Amazon RDS: Multi-AZ deployments", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" }
+  - { label: "Amazon RDS: Backups", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html" }
+  - { label: "Amazon RDS: Stopping a DB instance", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html" }
+  - { label: "AWS CLI: aws rds stop-db-instance", url: "https://docs.aws.amazon.com/cli/latest/reference/rds/stop-db-instance.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Mon', title: 'Home-made', text: 'Kedai Kancil runs Postgres in a container on one server.' }, { when: 'Wed', title: 'Disk dies', text: 'The server’s disk fails at lunch.' }, { when: 'Wed', title: 'No backup', text: 'Nobody set one up. Three days of orders are gone.' }]} />
+
+Databases need backups, patches and a spare. Every day. Tap the story. Could someone else do the boring parts?
+</Card>
+
+<Card id="see-rds" type="see">
+**<Term id="rds">RDS</Term>** is a managed database: Postgres, MySQL and others. AWS does the boring parts. Some parts stay yours. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'RDS does it' }, { id: 'you', label: 'Still yours' }]} items={[{ label: 'Daily automatic backups', bucket: 'aws', why: 'You pick how many days to keep. RDS takes them.' }, { label: 'Your tables and queries', bucket: 'you', why: 'The data and the design are yours.' }, { label: 'Engine patches in a maintenance window', bucket: 'aws', why: 'You pick the window. RDS applies them.' }, { label: 'Who may connect', bucket: 'you', why: 'Your security group decides. Keep it tight.' }]} success="The chores are AWS's. The data and the doors stay yours." />
+</Card>
+
+<Card id="see-standby" type="see">
+**<Term id="multi-az">Multi-AZ</Term>** keeps a standby copy in another wing. The wing with your database loses power. What happens?
+
+<Interactive name="Choice" options={[{ label: 'RDS switches to the standby in the other wing', correct: true, why: 'Your app keeps the same address. It reconnects after a short pause.' }, { label: 'All orders since the last backup are lost', why: 'That is without Multi-AZ. The standby has the latest data.' }, { label: 'Nothing, wings never fail', why: 'They can. That is why spares live in other wings.' }]} />
+</Card>
+
+<Card id="try-door" type="try">
+The database lives in a private row. Only the app group, `sg-app`, may use port 5432. Not even your laptop.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-app']} visitors={[{ id: 'app', label: 'Kedai Kancil task', ip: '10.0.1.25', groups: ['sg-app'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'laptop', label: 'Your laptop', ip: '203.0.113.9', protocol: 'tcp', port: 5432, want: 'out' }, { id: 'stranger', label: 'Stranger', ip: '192.0.2.77', protocol: 'tcp', port: 5432, want: 'out' }]} success="Only the app reaches the orders." />
+
+<Hint>One rule: TCP 5432 from `sg-app`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You **stop** a test database to save money, and forget it for a month. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It starts itself again after 7 days', correct: true, why: 'Then it bills hours again. Storage and backups bill even while stopped.' }, { label: 'It stays stopped and free', why: 'Almost! Storage still costs. And it wakes up after 7 days.' }, { label: 'AWS deletes it', why: 'No. It restarts after 7 days. Delete it yourself if unused.' }]} />
+</Card>
+
+<Card id="check-bill" type="check">
+Running or resting, which database parts cost money?
+
+<Interactive name="IdleBill" items={['rdsRunning', 'rdsStopped', 'securityGroup', 'privateIp']} ordered />
+</Card>
+
+<Card id="check-cli" type="check">
+The CLI can stop a database too. Here is the official example's answer. Tap the line with its new status.
+
+<Interactive name="SpotLines" prompt="Tap the line with its new status." success="stopping, then stopped. Remember: 7 days, then it wakes." lines={[{ text: '$ aws rds stop-db-instance --db-instance-identifier test-instance' }, { text: '{' }, { text: '    "DBInstance": {' }, { text: '        "DBInstanceIdentifier": "test-instance",' }, { text: '        "DBInstanceStatus": "stopping"', target: true }, { text: '    }' }, { text: '}' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run a managed database with backups, a spare and a tight door.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deleting a database is careful work. RDS offers a final snapshot first, and deletion protection can block mistakes. Snapshots cost storage too, so delete old test ones. For practice, pick the smallest size, one wing, and delete it the same day.
+</Card>

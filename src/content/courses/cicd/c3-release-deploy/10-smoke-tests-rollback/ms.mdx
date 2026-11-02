@@ -1,0 +1,86 @@
+---
+id: cicd-c3-l10
+world: 3
+title: "Smoke test dan rollback automatik"
+summary: "Anda akan belajar: cara rasa deploy dengan segera, dan biar pipeline undur deploy yang teruk dengan sendiri."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SwipeJudge, CommandBuilder, YamlBuilder, Choice]
+needs: [cicd-c3-l09]
+scenario: c3-canary
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl: --fail", url: "https://curl.se/docs/manpage.html#-f" }
+  - { label: "Status check functions: failure()", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+  - { label: "Cloudflare: rollbacks", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+  - { label: "Cloudflare: version overrides", url: "https://developers.cloudflare.com/workers/versions-and-deployments/version-overrides/" }
+---
+
+<Card id="hook" type="hook">
+Deploy jadi hijau. Laman live tunjuk halaman ralat. Stesen mana akan hentikan talian ini? Tekan satu, kemudian Run.
+
+<Interactive name="ConveyorBelt" scenario="c3-smoke-weak" task={{ type: 'predict' }} success="Tiada apa yang hentikannya! Semakan itu nampak halaman ralat tapi tetap lulus." />
+
+<Hint>Tengok baris curl betul-betul. Apa jadi bila ia dapat halaman ralat?</Hint>
+</Card>
+
+<Card id="see-smoke" type="see">
+**<Term id="smoke-test">Smoke test</Term>** (rasa sekejap) ialah satu rasa pantas sejurus selepas deploy. Bukan seluruh menu, satu sudu. Smoke test yang bagus, atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tanya /health dan jangka 200 OK.', good: true, why: 'Pantas, dan ia buktikan versi baharu menjawab.' }, { text: 'Jalankan semua 400 ujian unit sekali lagi.', good: false, why: 'Terlalu lambat. CI dah jalankannya sebelum deploy.' }, { text: 'Buka halaman utama dan cari tajuknya.', good: true, why: 'Halaman sebenar, disemak dalam sesaat.' }, { text: 'Tunggu pelanggan merungut.', good: false, why: 'Nanti pelanggan anda yang jadi smoke test.' }]} />
+</Card>
+
+<Card id="try-curl" type="try">
+Baiki semakan dari kad pertama. Bina arahan curl yang gagal bila dapat halaman ralat.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'curl', means: 'tanya satu alamat web' }, { text: '--fail', means: 'keluar dengan ralat pada halaman 400 atau 500' }, { text: '--silent', means: 'sorok meter kemajuan' }, { text: 'https://shop.example.com/health', means: 'halaman kesihatan' }]} decoys={[{ text: '--insecure', means: 'langkau semakan sijil' }]} success="Kini halaman ralat jadikan langkah itu merah." />
+
+<Hint>curl, kemudian --fail, kemudian --silent, kemudian alamatnya.</Hint>
+</Card>
+
+<Card id="see-rollback" type="see">
+Tambah job **<Term id="rollback">rollback</Term>**: ia jalan hanya `if: failure()`. Di sini smoke test canary jumpa ralat. Stesen mana hentikan talian? Tekan, kemudian Run.
+
+<Interactive name="ConveyorBelt" scenario="c3-canary" task={{ type: 'predict' }} success="Canary hentikan talian. Production dilangkau, dan rollback jalan sendiri." />
+
+<Hint>Smoke test itu ada dalam job canary.</Hint>
+</Card>
+
+<Card id="try-yaml" type="try">
+Bina sendiri: deploy, rasa, dan rollback bila gagal.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'perms', 'deploy', 'ready1', 'ship', 'smoke', 'rollback', 'ready2', 'undo'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baharu.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Token hanya boleh baca kod.' },
+  { id: 'deploy', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Deploy dengan kunci production.' },
+  { id: 'ready1', kind: 'step', label: 'Bersedia (job deploy)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Salin kod. Pasang pakej.' },
+  { id: 'ship', kind: 'step', label: 'Deploy', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Muat naik versi baharu.' },
+  { id: 'smoke', kind: 'step', label: 'Smoke test', yaml: '- run: curl --fail --silent https://shop.example.com/health', means: 'Satu rasa pantas. Halaman ralat gagalkan job.' },
+  { id: 'always', kind: 'job', label: 'Job: rollback (sentiasa)', yaml: 'rollback:\n  needs: deploy\n  if: always()\n  runs-on: ubuntu-latest\n  environment: production', means: 'Rollback selepas setiap deploy.', why: 'always() akan undur release yang elok juga.' },
+  { id: 'rollback', kind: 'job', label: 'Job: rollback (hanya bila gagal)', yaml: 'rollback:\n  needs: deploy\n  if: failure()\n  runs-on: ubuntu-latest\n  environment: production', means: 'Jalan hanya bila job deploy gagal.' },
+  { id: 'ready2', kind: 'step', label: 'Bersedia (job rollback)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Runner baharu perlukan kod dan Wrangler.' },
+  { id: 'undo', kind: 'step', label: 'Rollback', yaml: '- run: npx wrangler rollback --message "Smoke test failed"\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Kembali ke versi sebelum ini.' }]}
+  success="Pipeline anda kini boleh undur deploy yang teruk dengan sendiri." />
+
+<Hint>Job deploy dengan tiga langkahnya. Kemudian job rollback yang jalan hanya bila gagal.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Minggu depan, smoke test lulus. Apa job rollback buat?
+
+<Interactive name="Choice" options={[{ label: 'Ia dilangkau: tiada yang gagal', correct: true, why: 'failure() palsu, jadi job itu tak bermula.' }, { label: 'Ia tetap rollback', why: 'Hanya always() buat begitu. failure() tunggu kegagalan.' }, { label: 'Ia gagal', why: 'Job yang dilangkau bukan job yang gagal.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tangkap deploy yang teruk dan undurkannya secara automatik.
+</Card>
+
+<Card id="deeper" type="deeper">
+`wrangler rollback` tukar kod, bukan data. Pangkalan data dan binding lain kekal. Gandingkan dengan expand dan contract. Mahu rasa sebelum ada pengguna? Deploy versi pada 0%, kemudian panggilnya dengan header `Cloudflare-Workers-Version-Overrides`.
+
+Latihan sebenar (pilihan): beri Worker ujian halaman `/health` dan semakan curl.
+</Card>

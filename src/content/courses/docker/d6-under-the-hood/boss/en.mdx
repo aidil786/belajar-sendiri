@@ -1,0 +1,80 @@
+---
+id: docker-d6-boss
+world: 6
+title: "X-ray"
+summary: "You will learn: to turn a plain process into a container, one namespace and one limit at a time."
+minutes: 6
+xp: 50
+interactives: [Choice, NamespaceXray, KitchenSim, OrderList, Mission]
+needs: [docker-d6-l07]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "namespaces(7)", url: "https://man7.org/linux/man-pages/man7/namespaces.7.html" }
+  - { label: "cgroups(7)", url: "https://man7.org/linux/man-pages/man7/cgroups.7.html" }
+  - { label: "docker container top", url: "https://docs.docker.com/reference/cli/docker/container/top/" }
+---
+
+<Card id="hook" type="hook">
+Boss mission: the X-ray. `node server.js` is a plain process on Aina's laptop. You will make it a container, one switch at a time. First: what is a container, really?
+
+<Interactive name="Choice" options={[{ label: 'A normal process with namespaces and cgroups switched on', correct: true, why: 'Blinkers for what it sees, portions for what it uses.' }, { label: 'A tiny computer inside the laptop', why: 'That is a virtual machine. A container shares the laptop’s kernel.' }, { label: 'A special kind of file', why: 'The image is files. A running container is a process.' }]} />
+</Card>
+
+<Card id="try-pid" type="try">
+Room 1: hide the laptop's other processes from it.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt']} task={{ type: 'turnOn', switches: ['pid'] }} prompt="Turn on the switch that hides other processes." success="Inside, it is PID 1 now. But read the note!" />
+
+<Hint>The PID switch sits next to the process list.</Hint>
+</Card>
+
+<Card id="predict-proc" type="predict">
+PID is on. Yet `ps` inside would still list the laptop's processes. Why?
+
+<Interactive name="Choice" options={[{ label: 'ps reads /proc. It needs a fresh /proc, from the Mount switch.', correct: true, why: 'Docker mounts a new /proc inside, so ps shows only the box.' }, { label: 'The PID switch is broken', why: 'It works. ps just reads the laptop’s old /proc files.' }, { label: 'A container can always see everything', why: 'With a fresh /proc, ps shows only its own processes.' }]} />
+</Card>
+
+<Card id="try-docker" type="try">
+Room 2: turn on Docker's own set of blinkers, until the banner says container.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt', 'net', 'uts', 'ipc', 'user']} start={['pid']} task={{ type: 'docker' }} />
+
+<Hint>Docker turns on five: PID, Mount, Network, UTS and IPC. User stays off.</Hint>
+</Card>
+
+<Card id="try-real" type="try">
+Room 3: now a real one. `web` runs nginx. See it from inside with `docker exec web ps`, then from the laptop with `docker top web`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ typed: '^docker exec (-it )?web ps', lastTyped: '^docker top web' }} hints={['First type docker exec web ps', 'Then type docker top web']} success="PID 1 inside, a big PID outside. One process, two views!" />
+
+<Hint>Inside first: `docker exec web ps`. Then the laptop's view: `docker top web`.</Hint>
+</Card>
+
+<Card id="try-all" type="try">
+Room 4: add portion limits, and the last blinker. Turn on every switch.
+
+<Interactive name="NamespaceXray" start={['pid', 'mnt', 'net', 'uts', 'ipc']} task={{ type: 'all' }} success="Every switch is on. Your plain process is a tight little container!" />
+
+<Hint>Still off: User, Memory limit, CPU limit and Process limit.</Hint>
+</Card>
+
+<Card id="check-relay" type="check">
+Last room: what happens when you type `docker run`? Put it in order, first at the top.
+
+<Interactive name="OrderList" items={['You type docker run', 'dockerd passes the order to containerd', 'containerd stacks the image layers with a fresh top sheet', 'runc switches on namespaces and cgroups', 'Your app starts as PID 1, and runc leaves']} label="First step at the top" success="X-ray complete. You can see right through a container!" />
+</Card>
+
+<Card id="win" type="win">
+You can now build a container in your head, switch by switch.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional, Linux): flip real switches with `unshare`. A new network namespace has only `lo`, and it starts down. Nothing changes on your laptop.
+
+<Interactive name="Mission" id="d6-boss-unshare" steps={[{ id: 'in', text: 'Open a shell with its own PID, mount, UTS and network.', command: 'sudo unshare --pid --fork --mount-proc --uts --net sh' }, { id: 'ps', text: 'Only this shell and ps are here.', command: 'ps' }, { id: 'net', text: 'Only the loopback card is here.', command: 'ip link' }, { id: 'out', text: 'Leave. The switches go away.', command: 'exit' }]} success="You flipped real Linux switches by hand." />
+</Card>

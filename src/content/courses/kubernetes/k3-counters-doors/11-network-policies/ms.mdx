@@ -1,0 +1,100 @@
+---
+id: k8s-k3-l11
+world: 3
+title: NetworkPolicy dan plugin CNI
+summary: "Anda akan belajar: kunci pintu pod secara lalai, dan benarkan hanya pod pilihan anda."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, RequestTracer, Choice, FoodCourtSim, YamlDoctor, SortCards, SwipeJudge, Mission]
+needs: [k8s-k3-l10]
+scenario: k3-policy
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "Kubernetes: plugin rangkaian", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-policy" commands={['kubectl exec stranger -- wget -qO- -T 5 http://shop']} label="Pod bernama stranger minta halaman kedai, dan dapat." />
+
+Dulang orang asing masuk terus ke dapur kedai. Secara lalai, setiap pintu dalam kluster terbuka.
+</Card>
+
+<Card id="see-lock" type="see">
+**<Term id="networkpolicy">NetworkPolicy</Term>** ialah senarai tetamu di pintu pod. Tiada dalam senarai? Pintu kekal tertutup. Hidupkan kunci, kemudian hantar pesanan.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-hjttw', labels: { app: 'shop' }, containerPort: 80 }], policy: { name: 'shop-lock', allowGateway: true }, request: { path: '/' } }} breaks={['policy', 'ready']} task={{ type: 'outcome', want: 'timeout' }} />
+
+<Hint>Kunci itu buang paket. Tiada siapa kata tidak, jadi pelanggan hanya menunggu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda apply policy ini. Bolehkah client masih sampai ke kedai?
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+```
+
+<Interactive name="Choice" options={[{ label: 'Tidak: ia pilih setiap pod dan tak benarkan sesiapa masuk', correct: true, why: 'podSelector kosong bermaksud setiap pod dalam namespace itu.' }, { label: 'Ya: ia tak sebut client', why: 'Ia kunci pintu kedai. Senarai tetamunya kosong.' }, { label: 'Ya: Service langkau policy', why: 'Kunci ada di pintu dulang, walaupun di belakang Service.' }]} />
+</Card>
+
+<Card id="try-allow" type="try">
+Setiap pintu kini berkunci. Benarkan client sahaja masuk semula dengan `allow-client.yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k3-policy-locked" goal={{ reachable: { url: 'http://shop', from: 'client' }, unreachable: { url: 'http://shop', from: 'stranger' } }} hints={['Taip kubectl apply -f allow-client.yaml', 'Uji: kubectl exec client -- wget -qO- -T 5 http://shop', 'Dan: kubectl exec stranger -- wget -qO- -T 5 http://shop']} success="Client boleh masuk. Orang asing tunggu di luar." />
+
+Senarai tetamunya:
+
+```yaml
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: client
+      ports:
+        - port: 80
+```
+</Card>
+
+<Card id="check-doctor" type="check">
+Kunci ini tak boleh apply. Baca kata-kata kubectl, kemudian baiki.
+
+<Interactive name="YamlDoctor" file="deny-all.yaml" manifest={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: deny-all\nspec:\n  podSelector: {}\n  policyTypes:\n    - ingress\n'} solution={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: deny-all\nspec:\n  podSelector: {}\n  policyTypes:\n    - Ingress\n'} keep={['podSelector: \\{\\}', 'name: deny-all']} hint="kubectl senaraikan dua perkataan yang ia kenal. Salin huruf besarnya." success="Berjaya! Ingress dan Egress bermula dengan huruf besar." />
+
+Maksudnya: Kubernetes kenal `Ingress` dan `Egress`, dengan huruf besar sahaja.
+</Card>
+
+<Card id="see-cni" type="see">
+Policy hanya kata-kata. **<Term id="cni">Plugin CNI</Term>**, laluan pejalan kaki medan selera, yang jadikannya nyata. Plugin mana yang buat begitu?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Kuatkuasakan NetworkPolicy' }, { id: 'no', label: 'Tidak dengan sendiri' }]} items={[{ label: 'Calico', bucket: 'yes', why: 'Calico kuatkuasakan policy, dan tambah ciri sendiri.' }, { label: 'Cilium', bucket: 'yes', why: 'Cilium kuatkuasakan policy dengan eBPF.' }, { label: 'kindnet dalam kind 0.24 ke atas', bucket: 'yes', why: 'kind tambah sokongan policy dalam v0.24.' }, { label: 'Flannel', bucket: 'no', why: 'Flannel hanya gerakkan paket. Pasangkan dengan enjin policy.' }]} success="Semak CNI anda sebelum percaya pada kunci." />
+</Card>
+
+<Card id="check-habits" type="check">
+Nilai setiap tabiat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mulakan namespace dengan deny-all, kemudian benarkan ikut label.', good: true, why: 'Tertutup secara lalai, dibuka dengan sengaja.' }, { text: 'Guna IP pod dalam senarai tetamu.', good: false, why: 'IP berubah. Label kekal.' }, { text: 'Percaya policy tanpa semak CNI anda.', good: false, why: 'Tanpa sokongan, policy itu langsung tak buat apa-apa.' }, { text: 'Uji dari satu pod dibenarkan dan satu pod disekat.', good: true, why: 'Barulah anda tahu kunci itu betul-betul berfungsi.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci pintu pod, dan benarkan hanya pod yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: Service bukan kaunter sebenar. Tiada siapa berdiri di situ; setiap gerai cuma tukar alamat. Pintu berkunci tak berbunyi: paket yang dibuang hilang begitu sahaja, jadi anda nampak timeout. Policy bertambah: mana-mana peraturan allow yang sepadan buka pintu. Peraturan egress boleh sekat DNS juga.
+
+Latihan sebenar (pilihan), di kind 0.24 ke atas:
+
+<Interactive name="Mission" id="k3-l11-rep" steps={[{ id: 'deny', text: 'Apply policy deny-all dalam namespace latihan.' }, { id: 'blocked', text: 'wget dari pod client akan timeout.' }, { id: 'allow', text: 'Benarkan app=client ke kedai di port 80.' }, { id: 'check', text: 'Client boleh masuk. Pod lain masih timeout.', command: 'kubectl get networkpolicy' }]} success="Pintu dapur anda berkunci dengan betul!" />
+</Card>

@@ -1,0 +1,68 @@
+---
+id: obs-o3-l04
+world: 3
+title: "Grafana dashboards and panels"
+summary: "You will learn: to build screens that answer \"is the shop OK?\" in one glance."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, SortCards, SpotLines, OrderList, Mission]
+needs: [obs-o3-l03]
+scenario: o2-shop-requests
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana dashboards", url: "https://grafana.com/docs/grafana/latest/dashboards/" }
+  - { label: "Panels and visualizations", url: "https://grafana.com/docs/grafana/latest/panels-visualizations/" }
+  - { label: "Dashboard best practices", url: "https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+The control room wall has 40 graphs. A customer phones: orders fail! Which screen helps you first?
+
+<Interactive name="Choice" options={[{ label: 'A big "orders failing" number at the top left', correct: true, why: 'Yes. The first thing you see should answer: is the shop OK?' }, { label: 'Graph number 27, CPU of server 4', why: 'Maybe later. First see if customers hurt.' }, { label: 'All 40, one by one', why: 'Too slow at 3 a.m. Put the answer on top.' }]} />
+</Card>
+
+<Card id="see-panel" type="see">
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial={'sum by (instance) (rate(http_requests_total{job="shop"}[5m]))'} prompt="This is one panel's query. Press Run and look at the graph." />
+
+A Grafana **<Term id="grafana-panel">panel</Term>** is one screen on the wall. It runs one query and draws it.
+</Card>
+
+<Card id="try-type" type="try">
+Pick the right kind of panel for each question.
+
+<Interactive name="SortCards" buckets={[{ id: 'series', label: 'Time series' }, { id: 'stat', label: 'Stat (one number)' }, { id: 'table', label: 'Table' }]} items={[{ label: 'Requests per second over the last hour', bucket: 'series', why: 'A line over time shows the trend.' }, { label: 'Orders failing right now: 2.1%', bucket: 'stat', why: 'One big number, read in a second.' }, { label: 'Every target, and whether it is up', bucket: 'table', why: 'Many rows, a few columns.' }, { label: 'CPU over the whole day', bucket: 'series', why: 'A day of ups and downs: a line.' }]} success="Each question gets its best picture." />
+</Card>
+
+<Card id="try-query" type="try">
+Write a Stat panel's query: one number, all shop requests per second.
+
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial={'rate(http_requests_total{job="shop"}[5m])'} goal={{ resultCount: 1, labelNames: [], usesFunction: ['sum', 'rate'], typed: 'job="shop"' }} hints={['Wrap the whole thing in sum( … ).']} solution={'sum(rate(http_requests_total{job="shop"}[5m]))'} success="One number for one big Stat panel." />
+
+<Hint>`sum( … )` with no `by` adds every row into one.</Hint>
+</Card>
+
+<Card id="check-json" type="check">
+<Interactive name="SpotLines" prompt="Tap the line that holds the panel's query." lines={[{ text: '{' }, { text: '  "type": "stat",' }, { text: '  "title": "Targets up",' }, { text: '  "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },' }, { text: '  "targets": [{ "refId": "A", "expr": "sum(up)" }]', target: true }, { text: '}' }]} success="Yes: expr holds the PromQL. Grafana sends it to Prometheus." />
+
+Grafana saves every dashboard as JSON. Keep that file in Git, like code.
+</Card>
+
+<Card id="predict-order" type="predict">
+<Interactive name="OrderList" items={['Is the shop OK? Errors, speed, traffic', 'Which service hurts? One row per service', 'Why? CPU, memory, disk']} label="Top of the dashboard first" success="From customer pain down to machine parts." />
+
+Order the rows of a good dashboard, top first.
+</Card>
+
+<Card id="win" type="win">
+You can now plan a dashboard that answers "is the shop OK?" first.
+</Card>
+
+<Card id="deeper" type="deeper">
+Set a unit on each panel (percent, seconds, bytes), so 0.021 reads as 2.1%. Colour thresholds help, but add a word or an icon too. Try Grafana on your laptop, for free:
+
+<Interactive name="Mission" id="obs-o3-l04-real" steps={[{ id: 'run', text: 'Start Grafana in a container on port 3000.', command: 'docker run -d --name grafana-try -p 3000:3000 grafana/grafana:13.2.5' }, { id: 'login', text: 'Open http://localhost:3000. Log in as admin with the password admin, then pick a new password.' }, { id: 'panel', text: 'Make a new dashboard. Add one panel. Look at the panel types.' }, { id: 'clean', text: 'Clean up when you are done.', command: 'docker rm -f grafana-try' }]} success="You built your first real panel!" />
+</Card>

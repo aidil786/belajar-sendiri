@@ -1,0 +1,75 @@
+---
+id: cicd-c3-l04
+world: 3
+title: "Versi dan changelog automatik"
+summary: "Anda akan belajar: cara robot pilih versi seterusnya dan tulis changelog daripada commit anda."
+minutes: 4
+xp: 20
+interactives: [SwipeJudge, SortCards, TimelineTap, YamlBuilder, Choice, SpotLines]
+needs: [cicd-c3-l03]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "release-please-action", url: "https://github.com/googleapis/release-please-action" }
+  - { label: "semantic-release on GitHub Actions", url: "https://semantic-release.gitbook.io/semantic-release/recipes/ci-configurations/github-actions" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+---
+
+<Card id="hook" type="hook">
+Bos anda tanya: "Apa yang berubah dalam versi 1.5?" Anda skrol 60 commit. Robot boleh jawab, kalau commit jelas. Boleh robot baca yang ini?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'feat: add a search box', good: true, why: 'feat: bermaksud ciri baharu.' }, { text: 'fix: show the right price after a coupon', good: true, why: 'fix: bermaksud baiki bug.' }, { text: 'stuff', good: false, why: 'Stuff tak beritahu apa-apa, kepada robot atau manusia.' }, { text: 'feat!: remove the old cart API', good: true, why: 'Tanda ! bermaksud perubahan yang memecahkan.' }]} />
+</Card>
+
+<Card id="see-bump" type="see">
+Mesej yang jelas pilih nombor seterusnya. Peraturannya ialah **<Term id="semantic-versioning" course="git">SemVer</Term>**: MAJOR.MINOR.PATCH. Anda di 1.4.2. Susun setiap commit ikut versi yang dihasilkannya.
+
+<Interactive name="SortCards" buckets={[{ id: 'patch', label: '1.4.3 (patch)' }, { id: 'minor', label: '1.5.0 (minor)' }, { id: 'major', label: '2.0.0 (major)' }]} items={[{ label: '`fix: typo on the menu`', bucket: 'patch', why: 'Pembaikan naikkan nombor terakhir.' }, { label: '`feat: add a search box`', bucket: 'minor', why: 'Ciri baharu naikkan nombor tengah.' }, { label: '`feat!: remove the old cart API`', bucket: 'major', why: 'Perubahan yang memecahkan naikkan nombor pertama.' }, { label: '`fix: crash on an empty cart`', bucket: 'patch', why: 'Satu lagi pembaikan. Masih patch.' }]} success="Siap! Mesej yang tentukan nombor." />
+</Card>
+
+<Card id="see-release-pr" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Merge', text: 'Anda merge feat: add a search box ke main.' }, { when: '2', title: 'Release PR', text: 'Robot buka pull request: versi 1.5.0 dan changelog.' }, { when: '3', title: 'Lebih banyak merge', text: 'Setiap merge baharu kemas kini pull request yang sama.' }, { when: '4', title: 'Release', text: 'Anda merge PR itu. Robot tambah tag v1.5.0 dan GitHub release.' }]} />
+
+Robot release-please buka satu **<Term id="release-pr">release PR</Term>** dan jaganya. Anda tentukan bila nak release: merge PR itu.
+</Card>
+
+<Card id="try-yaml" type="try">
+Bina workflow robot itu. Ia jalan pada setiap push ke main.
+
+<Interactive name="YamlBuilder" workflow="Release Please" goal={{ order: ['push', 'job', 'perms', 'robot'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Setiap merge ke main kejutkan robot.' },
+  { id: 'job', kind: 'job', label: 'Job: release-please', yaml: 'release-please:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baharu.' },
+  { id: 'perms', kind: 'permissions', label: 'Tulis tag, PR dan issue', yaml: 'contents: write\npull-requests: write\nissues: write', means: 'Buat tag dan release. Buka PR. Tambah label.' },
+  { id: 'pkgs', kind: 'permissions', label: 'Tulis pakej', yaml: 'packages: write', means: 'Push image ke GHCR.', why: 'Job ini tak terbitkan image. Beri apa yang perlu sahaja.' },
+  { id: 'robot', kind: 'step', label: 'Jalankan release-please', yaml: '- uses: googleapis/release-please-action@v4\n  with:\n    release-type: node', means: 'Baca commit. Kemas kini release PR.' },
+  { id: 'hand', kind: 'step', label: 'Tulis changelog dengan tangan', yaml: '- run: echo "1.5.0" >> CHANGELOG.md', means: 'Tambah satu baris pada changelog.', why: 'Robot tuliskan changelog untuk anda.' }]}
+  success="Robot release anda dah sedia." />
+
+<Hint>Trigger, job, permissions job itu, kemudian langkah release-please.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda di 1.4.2. Sejak itu: satu `fix:` dan satu `feat:`. Versi apa yang release PR tunjuk?
+
+<Interactive name="Choice" options={[{ label: '1.5.0', correct: true, why: 'feat naikkan MINOR dan set PATCH balik ke 0.' }, { label: '1.4.3', why: 'fix sahaja beri 1.4.3. Tapi ada feat juga.' }, { label: '2.0.0', why: 'Hanya perubahan yang memecahkan (!) naikkan MAJOR.' }]} />
+</Card>
+
+<Card id="check-changelog" type="check">
+Ini sebahagian changelog yang ia tulis. Tekan baris yang datang daripada commit `fix:`.
+
+<Interactive name="SpotLines" prompt="Tekan baris daripada commit fix:." success="Ya! Pembaikan masuk bawah Bug Fixes." lines={[{ text: '## 1.5.0 (2026-10-31)' }, { text: '### Features' }, { text: '* add a search box' }, { text: '### Bug Fixes' }, { text: '* show the right price after a coupon', target: true }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar robot pilih versi dan tulis changelog.
+</Card>
+
+<Card id="deeper" type="deeper">
+semantic-release buat kerja yang sama tanpa release PR. Ia release pada setiap push ke main. Satu perangkap: tag yang dibuat dengan `GITHUB_TOKEN` tak mulakan workflow lain. Jadi deploy dalam workflow yang sama, selepas release-please lapor ada release.
+
+Latihan sebenar (pilihan): tambah workflow ini pada repo ujian. Merge commit `feat:` dan lihat release PR muncul.
+</Card>

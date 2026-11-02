@@ -1,0 +1,74 @@
+---
+id: k8s-k7-boss
+world: 7
+title: Hands off
+summary: "You will learn: to run Kedai Kancil from Git alone, then catch and undo a manual edit."
+minutes: 6
+xp: 50
+interactives: [Choice, GitOpsMirror, ManagersBoard, YamlDoctor, SwipeJudge]
+needs: [k8s-k7-l09]
+scenario: k7-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Argo CD: automated sync and self-heal", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "OpenGitOps: the four principles", url: "https://opengitops.dev/" }
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+---
+
+<Card id="hook" type="hook">
+Lunch rush, Saturday. Kedai Kancil now runs on GitOps. Boss mission: keep your hands off the cluster. Git does the driving. You need more trays. Where do you ask?
+
+<Interactive name="Choice" options={[{ label: 'In Git: change replicas and commit', correct: true, why: 'Git is the order board. Argo CD follows it.' }, { label: 'kubectl scale on the cluster', why: 'That is drift. Self-heal would put it back.' }, { label: 'Ask Argo CD to change Git', why: 'Argo CD only reads Git. People write it.' }]} />
+</Card>
+
+<Card id="try-scale" type="try">
+Room 1: change one line in Git. Ask for 5 trays, then watch the cluster follow.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'gitChange', field: 'replicas', to: 5 }} success="Room 1 cleared! One line in Git, five trays in the cluster." />
+
+<Hint>Press + twice, then Commit to Git.</Hint>
+</Card>
+
+<Card id="try-heal" type="try">
+Room 2: Argo CD keeps the order the same as Git. The Deployment keeps the trays. A tray falls. Watch the inner loop fix it.
+
+<Interactive name="ManagersBoard" scenario="k7-boss" target="shop" actions={['deletePod']} goal={{ healed: 1 }} label="Want 5, see 5. A tray is deleted: see 4, make 1 more." />
+
+<Hint>Tap a tray's delete button.</Hint>
+</Card>
+
+<Card id="try-ship" type="try">
+Room 3: ship version 1.5.0, the GitOps way.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 5, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} images={['ghcr.io/kedai-kancil/shop:1.4.0', 'ghcr.io/kedai-kancil/shop:1.5.0']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.0' }} success="Room 3 cleared! Version 1.5.0 is out, and Git remembers it." />
+
+<Hint>Pick shop:1.5.0 in the image list, then commit.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Room 4: a teammate's commit broke the sync. Read the real error. Fix the file in Git.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 5\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      contianers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 5\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} keep={['replicas: 5', 'shop:1.5.0', '^      containers:']} hint="Look closely at how containers is spelt." success="Room 4 cleared! The next sync goes green." />
+</Card>
+
+<Card id="try-drift" type="try">
+Room 5: self-heal is off on this app. Someone scales it by hand. Catch the drift and undo it.
+
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'shop', deployment: 'shop', replicas: 5, image: 'ghcr.io/kedai-kancil/shop:1.5.0' }} selfHeal={false} task={{ type: 'drift' }} success="Caught and undone! Git's 5 trays are back." />
+
+<Hint>Press the kubectl button, then Sync now. Or turn self-heal on.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Last check. Swipe: true or not quite?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Every change today is a commit you can read and revert.', good: true, why: 'That is the GitOps promise.' }, { text: 'Argo CD replaced the Deployment controller.', good: false, why: 'Both run. Argo CD matches Git; the Deployment keeps the trays.' }, { text: 'Self-heal off means drift stays until someone syncs.', good: true, why: 'Argo CD shows OutOfSync but waits for you.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run a cluster from Git alone, hands off.
+</Card>

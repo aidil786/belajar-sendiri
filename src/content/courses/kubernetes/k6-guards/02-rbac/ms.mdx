@@ -1,0 +1,78 @@
+---
+id: k8s-k6-l02
+world: 6
+title: "RBAC: role dan binding"
+summary: "Anda akan belajar: cara beri orang atau bot satu kad tugas untuk satu zon, tidak lebih."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, KubeReplay, RbacSwitchboard, FoodCourtSim]
+needs: [k8s-k6-l01]
+scenario: k6-rbac-start
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "Service accounts", url: "https://kubernetes.io/docs/concepts/security/service-accounts/" }
+  - { label: "RBAC good practices", url: "https://kubernetes.io/docs/concepts/security/rbac-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+Bot CI anda cuma kemas kini satu benda: Deployment shop. Hari ini ia pegang kunci induk seluruh kluster. Kunci apa patut ia bawa?
+
+<Interactive name="Choice" options={[{ label: 'Kunci untuk Deployment shop sahaja', correct: true, why: 'Kalau bot bocor, pencuri cuma dapat satu kunci kecil.' }, { label: 'Kunci induk, untuk berjaga-jaga', why: 'Kunci induk yang bocor buka semua pintu.' }, { label: 'Tiada kunci langsung', why: 'Nanti ia tak boleh deploy. Beri tepat apa yang perlu.' }]} />
+
+Tepat apa yang perlu, tidak lebih. Itulah **<Term id="least-privilege" course="cicd">least privilege</Term>** (hak paling sedikit).
+</Card>
+
+<Card id="see-who" type="see">
+Kubernetes kenal dua jenis "siapa". Orang bawa ID sendiri. Robot dapat lencana staf: **<Term id="serviceaccount">ServiceAccount</Term>**. Asingkan mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: 'Orang (user)' }, { id: 'sa', label: 'Robot (ServiceAccount)' }]} items={[{ label: 'Mei, pembangun', bucket: 'user', why: 'Seorang manusia, dengan sijil atau log masuk sendiri.' }, { label: 'Anda, dengan kubectl di laptop', bucket: 'user', why: 'Anda log masuk sebagai manusia.' }, { label: 'Bot CI yang deploy kedai', bucket: 'sa', why: 'Robot. Ia dapat lencana dalam satu namespace.' }, { label: 'Aplikasi dalam pod yang baca API', bucket: 'sa', why: 'Pod bercakap dengan API guna ServiceAccount.' }]} success="Siap! Robot pakai lencana." />
+</Card>
+
+<Card id="see-role" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac-start" commands={['cat deployer.yaml', 'kubectl apply -f deployer.yaml']} picture={false} label="cat tunjuk Role bernama deployer: dalam kumpulan API apps, pada deployments, kata kerja get, list dan patch. kubectl apply ciptanya." />
+
+**<Term id="role">Role</Term>** ialah kad tugas. Ia senaraikan kata kerja, seperti `patch`, pada benda, seperti `deployments`. Ia hanya berfungsi dalam satu zon.
+</Card>
+
+<Card id="try-wire" type="try">
+Kad sahaja tak buat apa-apa. **<Term id="rolebinding">RoleBinding</Term>** pin kad pada lencana, dalam satu zon. Sambungkan bot CI pada `deployer`, dalam shop sahaja.
+
+<Interactive name="RbacSwitchboard" subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'shop', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'cluster-admin', rules: [{ apiGroups: ['*'], resources: ['*'], verbs: ['*'] }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'shop', expect: true }, { as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'default', expect: false }, { as: 'ServiceAccount:ci:ci-bot', verb: 'get', resource: 'secrets', namespace: 'shop', expect: false }]} success="Satu kad, satu zon, satu bot. Least privilege!" />
+
+<Hint>Siapa: ci-bot. Role: deployer. Di mana: shop.</Hint>
+</Card>
+
+<Card id="see-cluster" type="see">
+Role berfungsi dalam satu zon. ClusterRole berfungsi di semua zon, dan untuk benda tanpa zon, seperti node. Asingkan ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'role', label: 'Role (satu namespace)' }, { id: 'cluster', label: 'ClusterRole (seluruh kluster)' }]} items={[{ label: 'Patch deployment dalam zon shop', bucket: 'role', why: 'Satu benda, satu zon. Role pun cukup.' }, { label: 'Baca senarai node', bucket: 'cluster', why: 'Node tiada zon. Hanya ClusterRole boleh sebutnya.' }, { label: 'Baca pod di semua zon', bucket: 'cluster', why: 'Semua zon serentak perlukan ClusterRole.' }, { label: 'Baca config map dalam zon ci', bucket: 'role', why: 'Satu zon. Kekalkan kecil.' }]} success="Siap! Zon kecil, kad kecil." />
+</Card>
+
+<Card id="try-sim" type="try">
+Sekarang di terminal. Apply kad tugas. Kemudian pin pada `ci-bot` dengan RoleBinding.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac-start" picture={false} goal={{ canI: [{ verb: 'patch', resource: 'deployments', as: 'system:serviceaccount:default:ci-bot', allowed: true }, { verb: 'delete', resource: 'deployments', as: 'system:serviceaccount:default:ci-bot', allowed: false }] }} hints={['Taip kubectl apply -f deployer.yaml', 'Kemudian taip kubectl create rolebinding ci-bot-deployer --role=deployer --serviceaccount=default:ci-bot']} success="Bot boleh patch deployment. Ia tak boleh padamnya." />
+
+<Hint>`--serviceaccount` ambil zon:nama, contohnya `default:ci-bot`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+RBAC tiada peraturan "tolak". Bot ada dua RoleBinding. Satu benarkan padam pod. Satu lagi tidak. Bolehkah ia padam pod?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: satu ya sudah cukup', correct: true, why: 'RBAC hanya menambah hak. Untuk tarik balik, buang binding itu.' }, { label: 'Tidak: yang lebih ketat menang', why: 'Tiada yang lebih ketat. Tiada apa dalam RBAC yang kata tidak.' }, { label: 'Bergantung pada susunan', why: 'Susunan tak penting. Mana-mana ya akan menang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri bot satu kad tugas untuk satu zon.
+</Card>
+
+<Card id="deeper" type="deeper">
+RoleBinding boleh tunjuk pada ClusterRole. Kad itu hanya berfungsi dalam zon binding tersebut. ClusterRole terbina: `view`, `edit`, `admin`, `cluster-admin`. Pod dapat token ServiceAccount yang cepat tamat. Tetapkan `automountServiceAccountToken: false` bila aplikasi tak pernah panggil API.
+
+<Interactive name="Mission" id="k6-l02-rep" steps={[{ id: 'cluster', text: 'Dalam kluster kind buang sahaja, buat lencana untuk bot.', command: 'kubectl create serviceaccount ci-bot' }, { id: 'role', text: 'Buat kad tugas tanpa fail.', command: 'kubectl create role deployer --verb=get,list,patch --resource=deployments' }, { id: 'bind', text: 'Pin kad pada lencana.', command: 'kubectl create rolebinding ci-bot-deployer --role=deployer --serviceaccount=default:ci-bot' }, { id: 'look', text: 'Baca semula binding itu.', command: 'kubectl describe rolebinding ci-bot-deployer' }]} success="Bot anda ada tepat satu kad tugas." />
+</Card>

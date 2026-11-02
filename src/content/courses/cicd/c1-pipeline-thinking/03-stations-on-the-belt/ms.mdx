@@ -1,0 +1,83 @@
+---
+id: cicd-c1-l03
+world: 1
+title: Stesen pada tali sawat
+summary: "Anda akan belajar: enam stesen dalam pipeline, dan kenapa susunannya penting."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, TimelineTap, OrderList, YamlBuilder, SwipeJudge]
+needs: [cicd-c1-l02]
+scenario: c1-shop-line
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Workflow syntax: jobs and needs", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c1-wrong-order" />
+
+Tali sawat ini hantar dulu, rasa kemudian. Tekan Run. Ujian gagal, tapi pepijat dah pun live. Aduh!
+</Card>
+
+<Card id="see-stations" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Lint', text: 'Kad resepi kemas tak? Kesan salah taip dan kod bersepah dalam beberapa saat.' }, { when: '2', title: 'Test', text: 'Uji rasa. Adakah kod buat apa yang sepatutnya?' }, { when: '3', title: 'Build', text: 'Masak dan bungkus: tukar kod jadi sesuatu yang boleh dihantar.' }, { when: '4', title: 'Scan', text: 'Periksa pek untuk bahan buruk: lubang keselamatan yang dah dikenali.' }, { when: '5', title: 'Publish', text: 'Letak pek dalam peti sejuk kedai: registry.' }, { when: '6', title: 'Deploy', text: 'Van penghantaran bawa ia kepada pengguna sebenar.' }]} />
+
+Ketik setiap stesen. Setiap satu ialah **<Term id="stage">stage</Term>** (peringkat). Semakan murah datang dulu. Van keluar paling akhir.
+</Card>
+
+<Card id="try-order" type="try">
+Susun stesen ikut urutan. Stesen pertama di atas.
+
+<Interactive name="OrderList" items={['Lint', 'Test', 'Build', 'Scan', 'Publish', 'Deploy']} label="Stesen pertama di atas" success="Itulah tali sawatnya! Semak, masak, semak lagi, baru hantar." />
+
+<Hint>Semakan cepat dulu. Tiada apa dihantar sebelum disemak.</Hint>
+</Card>
+
+<Card id="see-line" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-shop-line" />
+
+Ini seluruh tali sawat dalam satu job. Tekan Run dan tengok setiap stesen jadi hijau. Ketik mana-mana stesen untuk baca log.
+</Card>
+
+<Card id="try-build" type="try">
+Giliran anda. Bina tali sawat yang berhenti selepas build.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'install', 'lint', 'test', 'build'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan setiap kali push ke main.' },
+  { id: 'job', kind: 'job', label: 'Job: line', yaml: 'line:\n  runs-on: ubuntu-latest', means: 'Dapatkan runner Linux yang baru.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod anda ke runner.' },
+  { id: 'install', kind: 'step', label: 'Pasang pakej', yaml: '- run: npm ci', means: 'Pasang pakej yang tepat.' },
+  { id: 'lint', kind: 'step', label: 'Lint', yaml: '- run: npm run lint', means: 'Semak kod kemas.' },
+  { id: 'test', kind: 'step', label: 'Test', yaml: '- run: npm test', means: 'Uji rasa kod.' },
+  { id: 'build', kind: 'step', label: 'Build', yaml: '- run: npm run build', means: 'Masak dan bungkus laman.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Hantar kepada pengguna.', why: 'Tali sawat ini berhenti selepas build. Van datang kemudian.' }]}
+  success="Tali sawat yang kemas: bersedia, lint, test, build." />
+
+<Hint>Bersedia dulu: ambil kod, kemudian pasang. Lepas tu lint, test, build.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kali ini image ada bahan buruk.
+
+<Interactive name="ConveyorBelt" scenario="c1-scan-stop" task={{ type: 'predict' }} success="Scan tangkap ia! Tiada apa sampai ke peti sejuk." />
+</Card>
+
+<Card id="check" type="check">
+Tali sawat yang baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Lint sebelum ujian', good: true, why: 'Lint ambil beberapa saat. Salah taip muncul dulu.' }, { text: 'Deploy dulu, kemudian jalankan ujian', good: false, why: 'Pengguna dapat pepijat sebelum ujian jumpa.' }, { text: 'Scan sebelum publish', good: true, why: 'Pek buruk tak pernah sampai ke peti sejuk.' }, { text: 'Publish dulu, scan kemudian', good: false, why: 'Orang lain boleh tarik pek buruk sebelum scan habis.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan enam stesen dan susun ikut urutan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bukan setiap projek perlukan semua stesen. Laman statik yang kecil tiada image untuk di-scan atau di-publish. Stesen juga boleh jalan serentak. Job tanpa `needs:` mula pada masa yang sama. Job dengan `needs:` tunggu job yang disebut.
+
+Latihan sebenar (pilihan): buka fail workflow anda sendiri. Tulis nama stesen di sebelah setiap step sebagai komen.
+</Card>

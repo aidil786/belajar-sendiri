@@ -1,0 +1,73 @@
+---
+id: linux-l1-l01
+world: 1
+title: The terminal and the prompt
+summary: "You will learn: how to read the prompt and give a server your first commands."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, LinuxSim, SortCards, Mission]
+needs: []
+scenario: linux-l1-shop
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian Reference: GNU/Linux tutorials", url: "https://www.debian.org/doc/manuals/debian-reference/ch01.en.html" }
+  - { label: "Bash manual (GNU)", url: "https://www.gnu.org/software/bash/manual/bash.html" }
+  - { label: "whoami (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/whoami.1.en.html" }
+  - { label: "hostname (Debian 13 man page)", url: "https://manpages.debian.org/trixie/hostname/hostname.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil rents a shophouse far away. It is a server called `kedai`. It has no screen and no mouse. How do you tell it what to do?
+
+<Interactive name="Choice" options={[{ label: 'Type commands in a terminal', correct: true, why: 'A terminal is a text window to the server. You type, it answers.' }, { label: 'Click icons on its desktop', why: 'Most servers have no desktop at all. Only text.' }, { label: 'Phone the server', why: 'Fun idea! But a server only listens to typed commands.' }]} />
+</Card>
+
+<Card id="see-prompt" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'you      → who you are' }, { text: '@kedai   → the server', target: true }, { text: ':~       → the room you stand in (~ is your home)' }, { text: '$        → ready for you' }]} prompt="This is the prompt: you@kedai:~$ Tap the part that names the server." success="Yes! kedai is the shophouse you are in." />
+
+The <Term id="terminal">terminal</Term> is your window into the shop. The **prompt** is the shop saying "Ready. Your turn."
+</Card>
+
+<Card id="try-whoami" type="try">
+Type `whoami` and press Enter. It asks the server: who am I here?
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ lastTyped: '^whoami$' }} hints={['Type whoami (one word) and press Enter.']} solution={['whoami']} success="The server says you. The pink bar says the same." />
+
+<Hint>One word, no spaces: `whoami`.</Hint>
+</Card>
+
+<Card id="predict-typo" type="predict">
+You type `whoamii` by mistake. What does the server say?
+
+<Interactive name="Choice" options={[{ label: '-bash: whoamii: command not found', correct: true, why: 'Plain words: no program has that name. Fix the spelling and try again.' }, { label: 'It guesses you meant whoami', why: 'The shell never guesses. It runs exactly what you type.' }, { label: 'The server breaks', why: 'A typo is harmless. You only get a message.' }]} />
+</Card>
+
+<Card id="try-ask" type="try">
+The program that reads your typing is the <Term id="shell">shell</Term>. Ask it two things: the server's name (`hostname`), then the time (`date`).
+
+<Interactive name="LinuxSim" scenario="linux-l1-shop" goal={{ typed: '^hostname$', lastTyped: '^date' }} hints={['Type hostname and press Enter.', 'Then type date and press Enter.']} solution={['hostname', 'date']} success="kedai answered both. You are talking to a server!" />
+
+<Hint>First `hostname`, then `date`.</Hint>
+</Card>
+
+<Card id="check-sigil" type="check">
+`$` means a normal user. `#` means **root**: the owner with every key. Sort these prompts.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: '$ normal user' }, { id: 'root', label: '# root: be extra careful' }]} items={[{ label: 'you@kedai:~$', bucket: 'you', why: 'It ends with $: a normal user.' }, { label: 'root@kedai:~#', bucket: 'root', why: 'It ends with #: root can change anything.' }, { label: 'you@kedai:/etc$', bucket: 'you', why: 'Another room, same normal you.' }, { label: 'root@kedai:/var/log#', bucket: 'root', why: 'The # says root, wherever you stand.' }]} success="$ is you. # is root. Read the prompt before you type." />
+</Card>
+
+<Card id="win" type="win">
+You can now read the prompt and talk to a server.
+</Card>
+
+<Card id="deeper" type="deeper">
+`~` is short for your home folder, `/home/you`. On macOS the prompt may end with `%`: that shell is zsh. Same idea.
+
+Real rep (optional). Use your own computer or a free playground, never a work server.
+
+<Interactive name="Mission" id="linux-l1-l01-rep" steps={[{ id: 'open', text: 'Open a terminal. Linux or macOS: the Terminal app. Windows: install WSL, then open Debian or Ubuntu. Or try a free Killercoda playground.' }, { id: 'who', text: 'Ask who you are.', command: 'whoami' }, { id: 'name', text: 'Ask the machine its name.', command: 'hostname' }, { id: 'time', text: 'Ask the time.', command: 'date' }]} success="That was a real terminal!" />
+</Card>

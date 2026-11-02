@@ -1,0 +1,81 @@
+---
+id: docker-d1-boss
+world: 1
+title: Night shift
+summary: "You will learn: to find and fix three broken containers on your own."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d1-l11]
+scenario: d1-night-1
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+  - { label: "docker logs", url: "https://docs.docker.com/reference/cli/docker/container/logs/" }
+  - { label: "Port publishing and mapping", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-night-1" commands={['docker ps -a']} label="docker ps -a lists three boxes. db: Exited (1). timer: Exited (127). web: Up, with the hatch 0.0.0.0:8080->8080/tcp." />
+
+Boss: night shift! The day cook left three broken lunchboxes. The shop opens at 7. Fix web, timer and db.
+</Card>
+
+<Card id="try-web" type="try">
+Box 1: web is Up, but `curl localhost:8080` fails. Check its hatch, then fix it.
+
+<Interactive name="KitchenSim" scenario="d1-night-1" goal={{ running: ['web'], reachable: 'localhost:8080' }} hints={['docker port web shows the hatch. nginx listens on port 80 inside.', 'Remove it with docker rm -f web. Then: docker run -d --name web -p 8080:80 nginx:1.30-alpine']} success="Box 1 fixed! Orders on 8080 reach nginx on 80." />
+
+<Hint>`docker port web` shows where the hatch leads.</Hint>
+</Card>
+
+<Card id="check-port" type="check">
+curl said `Connection reset by peer`. Why did `-p 8080:8080` fail?
+
+<Interactive name="Choice" options={[{ label: 'The hatch led to port 8080 inside, but nginx listens on 80', correct: true, why: 'Plain words: the order reached the box, but nobody was at that counter.' }, { label: 'Laptop port 8080 was busy', why: 'Then docker run would refuse to start web. It started fine.' }, { label: 'nginx was stopped', why: 'docker ps said Up. The hatch pointed at an empty counter.' }]} />
+</Card>
+
+<Card id="try-timer" type="try">
+Box 2: timer stops at once with `Exited (127)`. Find out why, then make it tick for an hour.
+
+<Interactive name="KitchenSim" scenario="d1-night-2" goal={{ running: ['timer'] }} hints={['Read why it stopped: docker logs timer', 'Remove it: docker rm timer. Then: docker run -d --name timer alpine:3.22 sleep 3600']} success="Box 2 fixed! timer is Up and ticking." />
+
+<Hint>Read its logs first.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Notes for the next night shift. Where do you look first?
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Read the logs' }, { id: 'port', label: 'Check the hatch' }]} items={[{ label: 'Exited (1), a second after starting', bucket: 'logs', why: 'The app said why before it stopped.' }, { label: 'Up, but the browser cannot connect', bucket: 'port', why: 'The box runs. The hatch is the suspect.' }, { label: 'Exited (127)', bucket: 'logs', why: '127 often means command not found. The logs name it.' }, { label: 'curl says Connection reset by peer', bucket: 'port', why: 'The hatch leads to an empty counter inside.' }]} success="Stopped box: logs. Running but unreachable: hatch." />
+</Card>
+
+<Card id="try-db" type="try">
+Box 3: db stops with `Exited (1)`. Read what it asks for. Then give it that.
+
+<Interactive name="KitchenSim" scenario="d1-night-3" goal={{ running: ['db'], containerEnv: { db: ['POSTGRES_PASSWORD'] } }} hints={['Read why: docker logs db', 'Remove it: docker rm db. Then: docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine']} success="Box 3 fixed! db found its password note." />
+
+<Hint>db's logs name the setting it needs.</Hint>
+</Card>
+
+<Card id="check-morning" type="check">
+<Interactive name="KitchenReplay" scenario="d1-night-done" commands={['docker ps', 'curl -sI localhost:8080']} label="7 a.m. check. docker ps lists db, timer and web, all Up. curl -sI localhost:8080 answers HTTP/1.1 200 OK." />
+
+7 a.m. check: three boxes Up. The hatch answers `200 OK`. The shop can open. Night shift done!
+</Card>
+
+<Card id="win" type="win">
+You can now find and fix broken containers on your own.
+</Card>
+
+<Card id="deeper" type="deeper">
+Your night shift checklist. 1: `docker ps -a` shows the state. 2: `docker logs` tells you why it stopped. 3: `docker port` or `docker inspect` checks the setup. 4: remove the box, then run it again, right.
+
+Real rep (optional): break a box on purpose, then fix it.
+
+<Interactive name="Mission" id="docker-d1-boss-rep" steps={[{ id: 'break', text: 'Start Postgres with no password.', command: 'docker run -d --name db postgres:18-alpine' }, { id: 'state', text: 'See it stop.', command: 'docker ps -a' }, { id: 'why', text: 'Read why.', command: 'docker logs db' }, { id: 'fix', text: 'Remove it, then run it right.', command: 'docker rm db' }, { id: 'run', text: 'Give it a practice password.', command: 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine' }, { id: 'tidy', text: 'Tidy up when done.', command: 'docker rm -f db' }]} success="A real night shift, done by you." />
+</Card>

@@ -1,0 +1,74 @@
+---
+id: linux-l2-l10
+world: 2
+title: Pakej dengan apt
+summary: "Anda akan belajar: cari, pasang dan buang program dengan selamat dari stor Debian sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, OrderList, SortCards, SwipeJudge]
+needs: [linux-l2-l09]
+scenario: linux-l2-apt
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "apt (Debian 13 man page)", url: "https://manpages.debian.org/trixie/apt/apt.8.en.html" }
+  - { label: "Debian Reference: package management", url: "https://www.debian.org/doc/manuals/debian-reference/ch02.en.html" }
+  - { label: "Debian packages: tree", url: "https://packages.debian.org/trixie/tree" }
+---
+
+<Card id="hook" type="hook">
+Anda mahu cara lebih cantik untuk tengok folder: program bernama `tree`. Anda taip `tree`. Server kata `-bash: tree: command not found`. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'Pasang dari stor Debian dengan apt', correct: true, why: 'Debian simpan beribu program yang disemak dan ditandatangani. apt ambilkannya.' }, { label: 'Muat turun fail dari mana-mana laman dan jalankan', why: 'Fail yang tak dikenali boleh sorok apa saja. Guna stor dulu.' }, { label: 'Tulis tree sendiri', why: 'Seronok, tapi orang lain sudah buat. Cuma satu arahan.' }]} />
+</Card>
+
+<Card id="see-show" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-apt" intro={['apt show tree']} />
+
+<Term id="package">Package</Term> (pakej) ialah program dalam kotak dari stor Debian. `apt show tree` baca labelnya: versi, saiz, apa ia buat. **apt** ialah kerani stor.
+</Card>
+
+<Card id="predict-root" type="predict">
+Anda taip `apt install tree` tanpa sudo. Ia berakhir dengan `are you root?`. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Memasang mengubah folder sistem, jadi perlu sudo', correct: true, why: 'Program masuk ke /usr untuk semua orang. Hanya root boleh letak di situ.' }, { label: 'tree untuk root sahaja', why: 'Semua orang boleh jalankan tree. Memasang sahaja perlukan root.' }, { label: 'Stor sudah tutup', why: 'Stor buka. apt cuma tak dapat ambil kunci kunciannya.' }]} />
+</Card>
+
+<Card id="order-install" type="check">
+Susun rutin memasang.
+
+<Interactive name="OrderList" items={['sudo apt update: ambil senarai rak terkini', 'apt show tree: baca label', 'sudo apt install tree: bawa masuk', 'tree: gunakan']} label="Langkah pertama di atas" success="Segarkan, baca, pasang, guna." />
+</Card>
+
+<Card id="try-install" type="try">
+Segarkan senarai, pasang `tree`, kemudian jalankannya: `sudo apt update`, kemudian `sudo apt install tree`, kemudian `tree`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-apt" goal={{ packageInstalled: ['tree'], lastTyped: '^tree' }} hints={['Mula-mula: sudo apt update', 'Kemudian: sudo apt install tree', 'Sekarang lukis rumah anda: tree']} solution={['sudo apt update', 'sudo apt install tree', 'tree']} success="Kedai anda, dilukis sebagai pokok. Itu rutin memasang yang sebenar." />
+
+<Hint>Baca baris Summary sebelum apt bermula: apa yang masuk, berapa besar.</Hint>
+</Card>
+
+<Card id="sort-apt" type="check">
+update, upgrade atau remove? Pilih yang betul.
+
+<Interactive name="SortCards" buckets={[{ id: 'update', label: 'apt update' }, { id: 'upgrade', label: 'apt upgrade' }, { id: 'remove', label: 'apt remove' }]} items={[{ label: 'Dapatkan senarai rak terkini', bucket: 'update', why: 'update cuma segarkan senarai. Tiada apa dipasang.' }, { label: 'Kemas kini setiap program', bucket: 'upgrade', why: 'upgrade pasang versi baru yang dijumpai.' }, { label: 'Buang tree dari server', bucket: 'remove', why: 'remove keluarkan program itu.' }, { label: 'Sebelum pasang apa-apa yang baru', bucket: 'update', why: 'Senarai segar bermaksud versi terbaru.' }]} success="update baca, upgrade segarkan, remove keluarkan." />
+</Card>
+
+<Card id="judge-safe" type="check">
+Selamat di server, atau berisiko?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'sudo apt install htop', good: true, why: 'Dari stor Debian yang disemak.' }, { text: 'curl https://example.com/install.sh | sudo bash', good: false, why: 'Skrip orang asing berjalan sebagai root, tanpa dibaca. Jangan.' }, { text: 'sudo apt update', good: true, why: 'Ia cuma segarkan senarai.' }, { text: 'sudo apt remove openssh-server (over SSH)', good: false, why: 'Anda potong talian yang anda sedang guna. Terkunci di luar!' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari, pasang dan buang program dengan selamat guna apt.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): di VM Debian atau Ubuntu, cuba `apt search monitor`. Pasang kemas kini keselamatan selalu: `sudo apt update && sudo apt upgrade`.
+
+Di mana cerita ini tak tepat: pekerja sebenar boleh kata tidak. Proses buat tepat apa yang programnya kata, dan root boleh buat apa saja. Sebab itu kunci sangat penting.
+</Card>

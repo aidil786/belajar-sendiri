@@ -1,0 +1,70 @@
+---
+id: git-w04-boss
+world: 4
+title: "Publish the diary site"
+summary: "You will learn: to put your diary site on GitHub and keep it in sync with a teammate."
+minutes: 6
+xp: 50
+interactives: [Courier, TermReplay, Challenge, Choice, Mission, MissionCheck]
+needs: [git-w04-l12]
+scenario: w04-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git remote", url: "https://git-scm.com/docs/git-remote" }
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "Adding locally hosted code to GitHub", url: "https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Courier" scenario="w04-boss-1" url="https://github.com/you/diary.git" />
+
+Your diary site is ready on your laptop. GitHub is still empty. Aisyah wants to help. Publish it, and stay in sync!
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w04-boss-1" commands={['git log --oneline']} label="git log shows the diary site's four commits: README, home page, purple style and about page." />
+
+Five stages. Each one is a real terminal. Stuck? Try `git status` or `git remote -v`. Hints come after 2 tries.
+</Card>
+
+<Card id="try-boss" type="try">
+Clear each stage to unlock the next.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Connect to GitHub', text: 'Save https://github.com/you/diary.git as origin.', scenario: 'w04-boss-1', panels: ['graph'], goal: { remotes: { origin: 'https://github.com/you/diary.git' } }, hints: ['Use git remote add with a name and the address.', 'Type git remote add origin https://github.com/you/diary.git'] },
+  { title: 'First push', text: 'Send main to GitHub, and make main follow origin/main.', scenario: 'w04-boss-2', panels: ['graph'], goal: { pushed: ['main'], upstream: { main: 'origin/main' } }, hints: ['The first push needs -u.', 'Type git push -u origin main'] },
+  { title: 'The push bounces', text: 'You made your titles teal. Push them. (Psst: Aisyah pushed too. Read what Git says!)', scenario: 'w04-boss-3', panels: ['graph'], goal: { typed: '^git push' }, hints: ['Type git push'] },
+  { title: 'Bring in Aisyah’s work', text: 'Same moment. Pull Aisyah’s commit into your main.', scenario: 'w04-boss-3', panels: ['graph'], goal: { minCommits: 6, noConflicts: true, inRebase: false, inMerge: false }, hints: ['Plain git pull asks you to choose a way.', 'Type git pull --rebase'] },
+  { title: 'Push again', text: 'Your main has both commits now. Send them to GitHub.', scenario: 'w04-boss-5', panels: ['graph'], goal: { pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }, hints: ['The upstream is set already.', 'Type git push'] }
+]} />
+
+<Hint>Read each stage's note. Then `git status` tells you where you stand.</Hint>
+</Card>
+
+<Card id="check-fix" type="check">
+A teammate pushed, so your push was rejected. What is the safe fix?
+
+<Interactive name="Choice" options={[{ label: 'Pull, then push', correct: true, why: 'You keep their work and yours.' }, { label: '`git push --force`', why: 'That would wipe their commit from GitHub.' }, { label: 'Delete the repo and start again', why: 'Way too much! A pull fixes it.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Optional: publish your real diary. Tick each step as you go.
+
+<Interactive name="Mission" id="w04-publish" title="Mission: your diary on GitHub" steps={[{ id: 'repo', text: 'On GitHub, make an empty public repo called diary (no README, no licence).' }, { id: 'remote', text: 'In your diary folder, save it as origin. Use your own username.', command: 'git remote add origin https://github.com/YOUR-USERNAME/diary.git' }, { id: 'push', text: 'Push main and set the upstream. Sign in if Git asks.', command: 'git push -u origin main' }, { id: 'look', text: 'Open your repo on GitHub. Your commits are there!' }]} success="Your diary is live on GitHub!" />
+
+<Hint>Rejected? Your GitHub repo may have a README. Pull first, or make it again, empty.</Hint>
+</Card>
+
+<Card id="check-mission" type="check">
+Let's check with GitHub. Type your username.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'diary', label: 'Your diary repo is public' }, { type: 'commits', repo: 'diary', min: 3, label: 'It has 3 or more commits' }]} success="GitHub can see your diary. Published!" />
+</Card>
+
+<Card id="win" type="win">
+You can now publish your project on GitHub and stay in sync.
+</Card>

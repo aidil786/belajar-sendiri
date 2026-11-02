@@ -1,0 +1,60 @@
+---
+id: git-w07-l08
+world: 7
+title: Reusable workflows
+summary: "You will learn: how to write a workflow once and call it from many repos."
+minutes: 4
+xp: 20
+interactives: [Transcript, Choice, SpotLines, SortCards, SwipeJudge, OrderList]
+needs: [git-w07-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Reuse workflows", url: "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows" }
+  - { label: "Workflow syntax: on.workflow_call", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Three project folders, blog, diary and shop. Each has its own copy of test.yml." lines={[{ cmd: 'ls */.github/workflows' }, { out: 'blog/.github/workflows:\ntest.yml\n\ndiary/.github/workflows:\ntest.yml\n\nshop/.github/workflows:\ntest.yml' }]} />
+
+You have three sites. Each has the same 40-line test workflow. Found a bug in it? Fix it three times. Ugh.
+</Card>
+
+<Card id="see-call" type="see">
+Write the recipe once, in one shared repo. Other workflows call it. That is a **<Term id="reusable-workflow">reusable workflow</Term>**. Which trigger makes it callable?
+
+<Interactive name="Choice" compact options={[{ label: '`workflow_call`', correct: true, why: 'Call me! It turns the file into a recipe others can use.' }, { label: '`workflow_dispatch`', why: 'That adds a Run button for people. Workflows need workflow_call.' }, { label: '`push`', why: 'push runs on new commits. Nobody can call it.' }]} />
+</Card>
+
+<Card id="see-use" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'on: push' }, { text: 'jobs:' }, { text: '  test:' }, { text: '    uses: aina-codes/shared/.github/workflows/test.yml@v1', target: true }, { text: '    with:' }, { text: '      node-version: 24' }]} prompt="Tap the line that calls the shared workflow." success="Yes! The job points at the recipe, then lets it cook." />
+
+To call it, a job says `uses:` with the file's path. It goes in a **job**, not a step. The caller job has no `runs-on` and no steps.
+</Card>
+
+<Card id="see-inputs" type="see">
+Send plain settings with `with:`. Send keys with `secrets:`. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'with', label: 'with:' }, { id: 'secrets', label: 'secrets:' }]} items={[{ label: 'Node version: 24', bucket: 'with', why: 'A plain setting. Nothing to hide.' }, { label: 'Cloudflare API token', bucket: 'secrets', why: 'A key. Pass it as a secret.' }, { label: 'Site name: diary', bucket: 'with', why: 'Anyone can see it. A plain input.' }, { label: 'Database password', bucket: 'secrets', why: 'Keys and passwords always go under secrets.' }]} success="Sorted! Settings go in with. Keys go in secrets." />
+</Card>
+
+<Card id="check-ideas" type="check">
+Good idea, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'One shared test workflow for all three sites', good: true, why: 'Fix a bug once, and every site gets the fix.' }, { text: 'Copy the 40 lines into each repo', good: false, why: 'Three copies means three fixes for every bug.' }, { text: 'Pin the shared workflow to a tag or a SHA', good: true, why: 'Like actions, pins stop surprise changes.' }, { text: 'Call it as a step, inside `steps:`', good: false, why: 'A reusable workflow is called by a job, not a step.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+You push to the diary repo. Put what happens in order.
+
+<Interactive name="OrderList" items={["The diary's workflow starts", 'Its test job calls shared/test.yml', 'The shared jobs run with your inputs', 'A ✓ or ✗ lands on your commit']} label="First step at the top" success="That's the whole trip!" />
+</Card>
+
+<Card id="win" type="win">
+You can now share one workflow across many repos.
+</Card>
+
+<Card id="deeper" type="deeper">
+A composite action is a smaller cousin. It bundles steps, and you use it as a step. A reusable workflow bundles whole jobs. Its file must sit right in `.github/workflows/`, not in a subfolder. In the same repo, call it as `./.github/workflows/test.yml`.
+</Card>

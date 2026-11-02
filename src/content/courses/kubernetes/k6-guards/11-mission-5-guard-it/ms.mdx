@@ -1,0 +1,89 @@
+---
+id: k8s-k6-m5
+world: 6
+title: "Misi capstone 5: Kawal"
+summary: "Anda akan belajar: beri Kedai Kancil lencana, kunci, pagar dan meterai, kemudian buktikan kluster tolak image root atau tanpa tandatangan."
+minutes: 5
+xp: 100
+interactives: [KubeReplay, Mission, SpotLines, MissionCheck]
+needs: [k8s-k6-boss]
+scenario: k6-mission
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "GitHub: enforce artifact attestations in Kubernetes", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/enforce-artifact-attestations" }
+  - { label: "Helm 4: helm upgrade", url: "https://helm.sh/docs/helm/helm_upgrade/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k6-mission" commands={['kubectl apply -f root.yaml --dry-run=server']} fails={['kubectl apply -f root.yaml --dry-run=server']} namespace="kedai" label="Dry run pod nginx root dalam zon kedai ditolak: ia langgar PodSecurity restricted." />
+
+Misi 5: Kawal. Matlamat anda: kluster anda sendiri tolak image root atau tanpa tandatangan, macam ini. Empat kerja: lencana, kunci, pagar, meterai.
+</Card>
+
+<Card id="try-badges" type="try">
+Langkah 1: lencana dan kunci. kubectl boleh tuliskan YAML untuk anda dengan `--dry-run=client -o yaml`.
+
+<Interactive name="Mission" id="k6-m5-badges" steps={[
+  { id: 'sa', text: 'Mulakan `k8s/base/rbac.yaml` dengan lencana bot CI.', command: 'kubectl create serviceaccount ci-bot -n kedai --dry-run=client -o yaml > k8s/base/rbac.yaml' },
+  { id: 'role', text: 'Tambah kad tugasnya.', command: 'echo "---" >> k8s/base/rbac.yaml && kubectl create role deployer -n kedai --verb=get,list,patch --resource=deployments --dry-run=client -o yaml >> k8s/base/rbac.yaml' },
+  { id: 'bind', text: 'Tambah pinnya.', command: 'echo "---" >> k8s/base/rbac.yaml && kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=kedai:ci-bot --dry-run=client -o yaml >> k8s/base/rbac.yaml' },
+  { id: 'dry', text: 'Dry run pengawal dalam kluster kind anda. Baca pod mana yang akan gagal.', command: 'kubectl label --dry-run=server --overwrite ns kedai pod-security.kubernetes.io/enforce=restricted' },
+  { id: 'locks', text: 'Tambah empat kunci pada setiap container dalam Deployment anda. Image misi 1 anda patut sudah berjalan bukan sebagai root.' },
+  { id: 'label', text: 'Letak label `pod-security.kubernetes.io/enforce: restricted` pada fail Namespace kedai anda.' },
+  { id: 'apply', text: 'Senaraikan `rbac.yaml` dalam `k8s/base/kustomization.yaml`. Apply overlay anda, macam misi 4.' },
+  { id: 'ask', text: 'Tanya sebagai bot. Secret mesti jawab no.', command: 'kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:kedai:ci-bot' }]}
+  success="Lencana dan kunci sudah dalam Git." />
+</Card>
+
+<Card id="see-zone" type="see">
+Zon kedai anda akan bawa dua label pengawal. Satu semak kunci. Satu semak meterai.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Namespace' }, { text: 'metadata:' }, { text: '  name: kedai' }, { text: '  labels:' }, { text: '    pod-security.kubernetes.io/enforce: restricted', target: true }, { text: '    policy.sigstore.dev/include: "true"' }]} prompt="Tekan label yang tolak dulang root." success="Betul! Label satu lagi menunggu langkah 2." />
+</Card>
+
+<Card id="try-fences-seals" type="try">
+Langkah 2: pagar dan meterai. Arahan meterai datang dari panduan GitHub, ditulis untuk Helm 4.
+
+<Interactive name="Mission" id="k6-m5-fences" steps={[
+  { id: 'deny', text: 'Buat `k8s/base/networkpolicy.yaml`. Mulakan dengan pagar deny-all, macam pelajaran 6.' },
+  { id: 'gates', text: 'Tambah satu pintu kecil untuk setiap laluan: pintu masuk ke web, web ke API, API ke pangkalan data.' },
+  { id: 'probe', text: 'Dari zon lain, panggil Service API anda. Ia patut tamat masa. Guna nama Service anda.', command: 'kubectl run probe --rm -it --restart=Never --image=busybox:1.37 -- wget -qO- -T 2 http://api.kedai' },
+  { id: 'attest', text: 'Pastikan misi 2 buat attestation untuk image anda, dengan `push-to-registry: true` (Bahagian 2, "SBOM dan provenance dalam CI").' },
+  { id: 'controller', text: 'Pasang policy controller Sigstore.', command: 'helm upgrade policy-controller --install --rollback-on-failure --create-namespace --namespace artifact-attestations oci://ghcr.io/sigstore/helm-charts/policy-controller --version 0.10.5' },
+  { id: 'trust', text: 'Tambah trust root dan polisi GitHub. Guna nama GitHub anda.', command: 'helm upgrade trust-policies --install --rollback-on-failure --namespace artifact-attestations oci://ghcr.io/github/artifact-attestations-helm-charts/trust-policies --version v0.7.0 --set policy.enabled=true --set policy.organization=YOUR-NAME' },
+  { id: 'exempt', text: 'Image dari tempat lain, macam Postgres dari Docker Hub, perlukan `policy.exemptImages`. Panduan itu tunjuk caranya.' },
+  { id: 'switch', text: 'Hidupkan semakan meterai untuk kedai. Tambah label itu dalam fail Namespace juga.', command: 'kubectl label namespace kedai policy.sigstore.dev/include=true' }]}
+  success="Pagar dipasang. Meterai disemak." />
+</Card>
+
+<Card id="check-api" type="check">
+Biar API awam GitHub sahkan fail anda. Taip nama pengguna anda, kemudian semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo Kedai Kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/base/rbac.yaml', label: 'Ia ada k8s/base/rbac.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/base/networkpolicy.yaml', label: 'Ia ada k8s/base/networkpolicy.yaml' }]} success="GitHub nampak pengawal anda!" />
+</Card>
+
+<Card id="check-self" type="check">
+API tak nampak dalam kluster anda. Semak sendiri perkara ini.
+
+<Interactive name="Mission" id="k6-m5-self" steps={[
+  { id: 'bot', text: 'Bot boleh patch deployment dalam kedai. Ia tak boleh baca secret.', command: 'kubectl auth can-i patch deployments -n kedai --as=system:serviceaccount:kedai:ci-bot' },
+  { id: 'root', text: 'Dulang root ditolak, walaupun semasa dry run.', command: 'kubectl run root-test -n kedai --image=nginx:1.29-alpine --dry-run=server' },
+  { id: 'unsigned', text: 'Image tanpa attestation anda ditolak, walaupun ada keempat-empat kunci.' },
+  { id: 'shop', text: 'Kedai anda masih menjawab melalui Gateway.' }]}
+  success="Misi 5 selesai: Kedai Kancil berkawal." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kawal Kedai Kancil dengan lencana, kunci, pagar dan meterai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keselamatan: guna kluster kind anda sahaja, jangan kluster kerja. Baca bar merah jambu "anda di sini" sebelum setiap label atau delete. Pod tersekat? Jalankan `kubectl get events -n kedai`. Kyverno atau Gatekeeper pun boleh semak meterai, kalau pasukan anda sudah guna salah satunya.
+</Card>

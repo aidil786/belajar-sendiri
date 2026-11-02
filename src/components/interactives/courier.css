@@ -1,0 +1,417 @@
+/* Push/pull courier. Laptop = your repository (green); GitHub = the remote (purple).
+   Side by side when the card is wide enough, stacked on phones. Tokens only. */
+
+.courier {
+  container-type: inline-size;
+}
+
+.courier-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  /* The parcel flies between the panels and never makes the page scroll sideways. */
+  overflow: hidden;
+  padding: 2px;
+}
+
+.courier-side {
+  min-width: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+.courier-laptop {
+  border-color: var(--deco-repo);
+}
+
+.courier-github {
+  border-color: var(--deco-remote);
+}
+
+.courier-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.courier-laptop .courier-head svg {
+  color: var(--c-repo-ink);
+}
+
+.courier-github .courier-head svg {
+  color: var(--c-remote-ink);
+}
+
+.courier-title {
+  font-weight: var(--weight-bold);
+}
+
+.courier-where {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.courier .courier-empty,
+.courier .courier-more,
+.courier .courier-foot {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.courier .courier-empty {
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-s);
+  padding: var(--space-2);
+}
+
+.courier .courier-foot {
+  font-weight: var(--weight-bold);
+}
+
+/* Road between the panels: the courier's path. */
+.courier-road {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--space-5);
+}
+
+.courier-road-line {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-left: 3px dashed var(--deco-remote);
+  opacity: 0.6;
+}
+
+/* Commits */
+.courier-commits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.courier-commit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.courier-hash {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.courier-msg {
+  flex: 1 1 6rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.courier-by {
+  color: var(--color-text-muted);
+}
+
+.courier-mark {
+  font-weight: var(--weight-bold);
+}
+
+.courier-commit.is-local {
+  background: var(--c-repo-soft);
+  border-color: var(--deco-repo);
+}
+
+.courier-commit.is-local .courier-mark {
+  color: var(--c-repo-ink);
+}
+
+.courier-commit.is-fetched {
+  background: var(--c-remote-soft);
+  border-style: dashed;
+  border-color: var(--deco-remote);
+}
+
+.courier-commit.is-remote {
+  background: var(--c-remote-soft);
+  border-color: var(--deco-remote);
+}
+
+.courier-commit.is-remote .courier-mark {
+  color: var(--c-remote-ink);
+}
+
+.courier-commit.is-fresh {
+  animation: courier-glow var(--dur-concept) var(--ease-out) 1;
+}
+
+@keyframes courier-glow {
+  0% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--deco-head) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Branch, remote-tracking and tag labels (same colours as the commit graph). */
+.courier-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.courier-ref {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.6;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border-strong);
+  overflow-wrap: anywhere;
+}
+
+.courier-ref-branch {
+  color: var(--c-repo-ink);
+  background: var(--c-repo-soft);
+  border-color: var(--deco-repo);
+}
+
+.courier-ref-branch.is-head {
+  border-color: var(--deco-head);
+  box-shadow: 0 0 0 1.5px var(--deco-head);
+}
+
+.courier-ref-remote,
+.courier-ref-branch.on-github {
+  color: var(--c-remote-ink);
+  background: var(--c-remote-soft);
+  border-color: var(--deco-remote);
+}
+
+.courier-ref-tag {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-style: dashed;
+}
+
+/* The parcel */
+.courier-parcel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.courier-parcel-box {
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--deco-remote);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--color-shadow);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.courier-parcel-box svg {
+  color: var(--c-remote-ink);
+}
+
+.courier-parcel.is-bounced .courier-parcel-box {
+  border-color: var(--deco-danger);
+}
+
+.courier-parcel-who {
+  font-family: var(--font-body);
+  color: var(--c-remote-ink);
+}
+
+.courier-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  font-family: var(--font-body);
+}
+
+/* Legend, command and messages */
+.courier .courier-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.courier-key {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--color-border);
+}
+
+.courier-key.is-local {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  border-color: var(--deco-repo);
+}
+
+.courier-key.is-fetched {
+  background: var(--c-remote-soft);
+  color: var(--c-remote-ink);
+  border-style: dashed;
+  border-color: var(--deco-remote);
+}
+
+.courier-key.is-remote {
+  background: var(--c-remote-soft);
+  color: var(--c-remote-ink);
+  border-color: var(--deco-remote);
+}
+
+.courier-cmd {
+  margin-top: var(--space-3);
+}
+
+.courier-say > * {
+  margin: var(--space-2) 0 0;
+}
+
+.courier .courier-carried {
+  font-size: var(--text-s);
+  font-weight: var(--weight-bold);
+  color: var(--c-remote-ink);
+}
+
+.courier .courier-explain {
+  font-size: var(--text-s);
+}
+
+.courier-explain.is-err {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  border-left: 6px solid var(--deco-danger);
+  font-weight: var(--weight-bold);
+}
+
+.courier-explain.is-err svg {
+  flex: none;
+  margin-top: 0.25em;
+}
+
+/* Action buttons: a word, and the command under it. */
+.courier-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.btn.courier-act {
+  flex-direction: column;
+  gap: 0;
+  padding: var(--space-1) var(--space-4);
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+.courier-act-cmd {
+  font-size: 0.8rem;
+  font-weight: var(--weight-normal);
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.courier-controls {
+  flex-wrap: wrap;
+}
+
+.courier-reset {
+  margin-left: auto;
+}
+
+.courier-output {
+  margin-top: var(--space-3);
+}
+
+.courier-output summary {
+  cursor: pointer;
+  font-size: var(--text-s);
+  color: var(--color-text-muted);
+  padding-block: var(--space-2);
+}
+
+.courier-output pre {
+  margin: var(--space-2) 0 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-s);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.courier-output pre:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Wide cards: panels side by side, the road runs left to right. (Last, so it wins.) */
+@container (min-width: 520px) {
+  .courier-stage {
+    grid-template-columns: minmax(0, 1fr) var(--space-6) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .courier-road {
+    height: auto;
+  }
+  .courier-road-line {
+    width: 100%;
+    height: 0;
+    border-left: 0;
+    border-top: 3px dashed var(--deco-remote);
+  }
+}

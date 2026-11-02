@@ -1,0 +1,67 @@
+---
+id: git-w03-l10
+world: 3
+title: Asas rebase
+summary: "Anda akan belajar: alihkan branch anda ke atas main yang terkini."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, Choice]
+needs: [git-w03-l09]
+scenario: w03-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rebase", url: "https://git-scm.com/docs/git-rebase" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l10" commands={['git log --oneline --graph --all']} label="Log bercabang. main ada Make heading teal. about, tempat HEAD berada, ada Add about page dan Say what I like." />
+
+main dah bergerak semasa anda bina about. Anda nak kerja anda di atas main yang terkini. Tanpa merge commit.
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="GraphScene" scenario="w03-l10" commands={['git rebase main']} label="Dua commit about terangkat dan mendarat selepas Make heading teal. Sejarah jadi satu garis lurus." />
+
+`git rebase main` main semula commit anda di atas main, satu demi satu. Macam alihkan kerja anda ke hujung barisan. Itulah **<Term id="rebase">rebase</Term>** (asas semula).
+</Card>
+
+<Card id="try-rebase" type="try">
+Anda di about. Rebase ke atas main.
+
+<Interactive name="Sim" scenario="w03-l10" panels={['graph']} goal={{ currentBranch: 'about', linearHistory: true, messages: ['^Say what I like$', '^Add about page$', '^Make heading teal$'] }} hints={['Taip git rebase main dan tekan Enter.', 'Pastikan anda di about: git branch.']} success="Satu garis lurus! Kerja anda kini di atas main yang terkini." />
+
+<Hint>Taip `git rebase main`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-ids" type="see">
+<Interactive name="TermReplay" scenario="w03-l10" commands={['git log --oneline -n 2', 'git rebase main', 'git log --oneline -n 2']} label="Sebelum rebase, dua commit about ada sepasang hash pendek. Selepas itu, mesej yang sama ada hash baru." />
+
+Tengok id itu. Mesej sama, hash baru! Rebase buat salinan baru commit anda.
+</Card>
+
+<Card id="predict" type="predict">
+about kini betul-betul di atas main. Anda merge about ke main. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Fast-forward', correct: true, why: 'main betul-betul di belakang about sekarang. Notanya cuma meluncur.' }, { label: 'Merge commit baru', why: 'Tak perlu: sejarahnya satu garis lurus.' }, { label: 'Konflik', why: 'Tiada yang bertembung. Dua branch itu ubah fail berbeza.' }]} />
+</Card>
+
+<Card id="try-ff" type="try">
+Bawa about masuk ke main. Perhatikan fast-forward!
+
+<Interactive name="Sim" scenario="w03-l10-rebased" panels={['graph']} goal={{ currentBranch: 'main', branchAt: { main: '^Say what I like$' }, linearHistory: true }} hints={['Tukar dulu: git switch main.', 'Kemudian: git merge about.']} success="Satu garis lurus, dan tak perlu merge commit." />
+
+<Hint>Tukar ke main. Kemudian merge about.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh rebase branch ke atas main yang terkini.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rebase pun boleh berhenti kerana konflik. Baiki fail itu dan `git add`. Kemudian jalankan `git rebase --continue`. Ubah fikiran? `git rebase --abort` kembalikan semuanya. Penanda bawah menamakan commit yang sedang dimain semula.
+
+<Interactive name="TermReplay" scenario="w03-l10-conflict" commands={['git rebase main', 'git status']} label="git rebase main berhenti: CONFLICT dalam index.html, tak dapat apply Add cake day. git status kata rebase sedang berjalan dan senaraikan langkahnya." />
+</Card>

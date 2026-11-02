@@ -1,0 +1,74 @@
+---
+id: k8s-k6-l03
+world: 6
+title: "Ask first: kubectl auth can-i"
+summary: "You will learn: to ask the cluster what you, or a bot, may do, before anything breaks."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, RbacSwitchboard]
+needs: [k8s-k6-l02]
+scenario: k6-rbac
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl auth can-i", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/" }
+  - { label: "Checking API access", url: "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#checking-api-access" }
+  - { label: "User impersonation", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation" }
+---
+
+<Card id="hook" type="hook">
+Your CI job crashed at 2 a.m. Here is the error.
+
+```
+Error from server (Forbidden): secrets is forbidden: User "system:serviceaccount:default:ci-bot" cannot list resource "secrets" in API group "" in the namespace "default"
+```
+
+How could you have known before the run?
+
+<Interactive name="Choice" options={[{ label: 'Ask the cluster first, as the bot', correct: true, why: 'One question shows the answer. Nothing breaks.' }, { label: 'Give the bot cluster-admin', why: 'That hides the problem and opens every door.' }, { label: 'Run the job again and hope', why: 'The answer will not change by itself.' }]} />
+</Card>
+
+<Card id="see-cani" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac" commands={['kubectl auth can-i list pods --as=system:serviceaccount:default:ci-bot', 'kubectl auth can-i delete pods --as=system:serviceaccount:default:ci-bot']} picture={false} label="can-i list pods as the CI bot says yes. can-i delete pods says no." />
+
+`kubectl auth can-i` asks gate 2 a yes or no question. It changes nothing. `--as` lets you **impersonate** the bot: ask as if you were it.
+</Card>
+
+<Card id="try-build" type="try">
+Build the question: may the bot patch deployments?
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'talk to Kubernetes' }, { text: 'auth', means: 'the access desk' }, { text: 'can-i', means: 'ask yes or no' }, { text: 'patch', means: 'the verb' }, { text: 'deployments', means: 'the thing' }, { text: '--as=system:serviceaccount:default:ci-bot', means: 'answer as the CI bot' }]} decoys={[{ text: 'delete', means: 'another verb' }, { text: '--dry-run=server', means: 'checks a change, not a right' }]} success="That's the question. Safe to ask any time." />
+</Card>
+
+<Card id="predict" type="predict">
+The bot's RoleBinding lives in the `default` zone. May it patch deployments in `kube-system`?
+
+<Interactive name="Choice" options={[{ label: 'No', correct: true, why: 'A RoleBinding counts only in its own zone.' }, { label: 'Yes', why: 'Its job card is pinned in default only. Other zones say no.' }, { label: 'Only on Mondays', why: 'RBAC has no calendar. The zone decides.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Now check your guess. Ask the cluster, as the bot, about `kube-system`.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac" picture={false} prefill="kubectl auth can-i patch deployments " goal={{ typed: '^(?=.*can-i patch deployments)(?=.*kube-system)(?=.*--as=system:serviceaccount:default:ci-bot)' }} hints={['Add -n kube-system and --as=system:serviceaccount:default:ci-bot']} success="No, as you guessed. One zone, one card." />
+
+<Hint>`-n kube-system` picks the zone.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Read the wires. Will Kubernetes say yes or no?
+
+<Interactive name="RbacSwitchboard" task={{ type: 'predict' }} subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'shop', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'pod-reader', rules: [{ apiGroups: [''], resources: ['pods', 'pods/log'], verbs: ['get', 'list'] }] }]} bindings={[{ kind: 'RoleBinding', name: 'ci-bot-deployer', namespace: 'shop', roleRef: { kind: 'Role', name: 'deployer' }, subjects: [{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }] }, { kind: 'ClusterRoleBinding', name: 'mei-pod-reader', roleRef: { kind: 'ClusterRole', name: 'pod-reader' }, subjects: [{ kind: 'User', name: 'mei' }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'shop' }, { as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'default' }, { as: 'User:mei', verb: 'list', resource: 'pods', namespace: 'ci' }, { as: 'User:mei', verb: 'delete', resource: 'pods', namespace: 'shop' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now ask the cluster before you act, as anyone.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl auth can-i --list --as=…` lists everything that identity may do. can-i exits with 0 for yes and 1 for no, so scripts can use it. To use `--as`, you need the `impersonate` right yourself. Cluster admins have it.
+
+<Interactive name="Mission" id="k6-l03-rep" steps={[{ id: 'me', text: 'On a throwaway cluster, ask about yourself.', command: 'kubectl auth can-i create deployments' }, { id: 'bot', text: 'Ask as the default ServiceAccount.', command: 'kubectl auth can-i list pods --as=system:serviceaccount:default:default' }, { id: 'list', text: 'See its whole job card.', command: 'kubectl auth can-i --list --as=system:serviceaccount:default:default' }]} success="You asked before you acted. That's the habit." />
+</Card>

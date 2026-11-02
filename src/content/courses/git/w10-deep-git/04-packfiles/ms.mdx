@@ -1,0 +1,69 @@
+---
+id: git-w10-l04
+world: 10
+title: Packfile, gc dan maintenance
+summary: "Anda akan belajar: cara Git kekalkan sejarah besar supaya kecil dan laju, kebanyakannya sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Transcript, SortCards, SwipeJudge]
+needs: [git-w10-l03]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git gc", url: "https://git-scm.com/docs/git-gc" }
+  - { label: "git maintenance", url: "https://git-scm.com/docs/git-maintenance" }
+  - { label: "git count-objects", url: "https://git-scm.com/docs/git-count-objects" }
+  - { label: "gitglossary (pack)", url: "https://git-scm.com/docs/gitglossary" }
+---
+
+<Card id="hook" type="hook">
+Projek anda ada 10,000 commit (titik simpan). Setiap satu buat objek baru. Adakah `.git` kini bersepah dengan fail kecil?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Git padatkan objek itu sekali-sekala', correct: true, why: 'Git mengemas. Banyak fail kecil jadi satu pack.' }, { label: 'Ya, selama-lamanya', why: 'Git memang mengemas. Teruskan untuk tengok caranya.' }, { label: 'Git padam commit lama', why: 'Git tak pernah buang commit yang branch boleh capai.' }]} />
+</Card>
+
+<Card id="see-pack" type="see">
+Git mampatkan banyak objek ke dalam satu **<Term id="packfile">packfile</Term>**. Ketik setiap langkah untuk tengok caranya.
+
+<Interactive name="TimelineTap" events={[{ when: 'Commit', title: 'Objek longgar', text: 'Setiap objek baru bermula sebagai satu fail kecil yang dimampatkan.' }, { when: 'Kemudian', title: 'Pemadatan', text: 'Git pindahkan banyak objek ke dalam satu packfile.' }, { when: 'Di dalam', title: 'Beza kecil', text: 'Versi yang hampir sama disimpan sebagai perubahan kecil, bukan salinan penuh.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Satu fail besar ada 10 versi. Setiap versi ubah satu baris. Dalam packfile, apa yang guna ruang?
+
+<Interactive name="Choice" options={[{ label: 'Satu salinan penuh, dan beza-beza kecil', correct: true, why: 'Git simpan perubahan antara versi yang hampir sama. Sebab itu pack kekal kecil.' }, { label: 'Sepuluh salinan penuh', why: 'Objek longgar ialah salinan penuh. Pack simpan beza kecil sebagai ganti.' }, { label: 'Versi terbaru sahaja', why: 'Git simpan setiap versi yang anda commit. Cuma caranya bijak.' }]} />
+</Card>
+
+<Card id="see-gc" type="see">
+<Interactive name="Transcript" title="bash" label="Dua arahan: git gc, kemudian git count-objects -vH." lines={[{ cmd: 'git gc' }, { cmd: 'git count-objects -vH' }]} />
+
+`git gc` ialah **<Term id="garbage-collection">kutipan sampah</Term>** (garbage collection). Ia padatkan objek dan buang sampah yang tiada siapa boleh capai. `git count-objects -vH` tunjuk saiznya. Git juga mengemas sedikit sendiri.
+</Card>
+
+<Card id="try-sort" type="try">
+`gc` cuma buang objek yang tiada apa-apa boleh capai. Yang mana ia simpan?
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'gc simpan' }, { id: 'prune', label: 'gc mungkin buang' }]} items={[{ label: 'Commit di atas branch', bucket: 'keep', why: 'Branch boleh capainya.' }, { label: 'Commit yang ditunjuk oleh tag', bucket: 'keep', why: 'Tag pun boleh capai commit.' }, { label: 'Commit yang hilang kerana reset, masih dalam reflog', bucket: 'keep', why: 'Reflog boleh capainya, untuk sementara. Anda masih boleh selamatkannya.' }, { label: 'Blob lama daripada git add yang tak pernah di-commit', bucket: 'prune', why: 'Tiada apa capainya. Selepas tempoh tangguh, gc buang.' }]} success="Betul! Kalau ada yang boleh capai, gc simpan." />
+</Card>
+
+<Card id="see-maintenance" type="see">
+<Interactive name="Transcript" title="bash" label="Satu arahan: git maintenance start." lines={[{ cmd: 'git maintenance start' }]} />
+
+Repo besar yang anda guna setiap hari? `git maintenance start` kemaskannya di belakang tabir. Komputer anda jalankan kerja itu ikut jadual.
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Biar Git padatkan objek untuk anda', good: true, why: 'Git buat sendiri. Anda jarang perlu fikir tentangnya.' }, { text: 'Padam fail dalam .git/objects untuk jimat ruang', good: false, why: 'Itu boleh rosakkan repo. Biar git gc yang tentukan.' }, { text: 'Jalankan git maintenance start pada repo besar yang anda guna setiap hari', good: true, why: 'Kemas di belakang tabir kekalkan ia laju.' }, { text: 'Jalankan git gc --aggressive setiap hari', good: false, why: 'Ia sangat lambat dan jarang diperlukan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan packfile dan biar Git mengemas untuk anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Packfile tinggal dalam `.git/objects/pack`. `git gc --prune=now` buang objek yang tak boleh dicapai serta-merta, tanpa tempoh tangguh. `git maintenance stop` matikan kerja di belakang tabir. `git maintenance run --task=gc` jalankan satu kerja sekarang. Git 3.0 buang arahan lama `git pack-redundant`.
+</Card>

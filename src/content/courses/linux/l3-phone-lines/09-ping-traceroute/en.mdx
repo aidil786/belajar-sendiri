@@ -1,0 +1,72 @@
+---
+id: linux-l3-l09
+world: 3
+title: "ping and traceroute"
+summary: "You will learn: to check if a machine answers, and which exchanges a call passes."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, Transcript, Choice, SortCards, Mission]
+needs: [linux-l3-l08]
+scenario: linux-l3-ping
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ping(8)", url: "https://man7.org/linux/man-pages/man8/ping.8.html" }
+  - { label: "Debian: traceroute(1)", url: "https://manpages.debian.org/trixie/traceroute/traceroute.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ping" intro={['ping -c 2 tutup.kedai.example; echo $?']} network />
+
+Two hellos, no reply: `100% packet loss`. Is the shop closed? Or is the road broken on the way?
+</Card>
+
+<Card id="see-ping" type="see">
+<Term id="ping">ping</Term> sends a tiny hello and times the echo. `-c 3` sends three, then stops. Tap the line that says how many came back.
+
+<Interactive name="SpotLines" lines={[{ text: 'PING pasar.example (198.51.100.7) 56(84) bytes of data.' }, { text: '64 bytes from 198.51.100.7: icmp_seq=1 ttl=57 time=33.1 ms' }, { text: '64 bytes from 198.51.100.7: icmp_seq=2 ttl=57 time=34.7 ms' }, { text: '64 bytes from 198.51.100.7: icmp_seq=3 ttl=57 time=32.3 ms' }, { text: '--- pasar.example ping statistics ---' }, { text: '3 packets transmitted, 3 received, 0% packet loss, time 2004ms', target: true }]} prompt="Tap the summary line." success="3 sent, 3 back, 0% lost. About 33 ms there and back." />
+</Card>
+
+<Card id="try-ping" type="try">
+Ping pasar.example three times. Without `-c`, ping never stops: then press Ctrl+C.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ping" goal={{ lastTyped: '^ping -c ?\\d+ pasar\\.example$' }} hints={['Type ping -c 3 pasar.example']} solution={['ping -c 3 pasar.example']} success="pasar.example answers. The line is fine." />
+</Card>
+
+<Card id="see-trace" type="see">
+<Interactive name="Transcript" title="kedai (lab)" label="traceroute kedai.example shows three hops: gateway.kedai 10.0.0.1, exchange.example 198.51.100.1, then kedai.example 203.0.113.10."
+  lines={[{ cmd: 'traceroute kedai.example' }, { out: 'traceroute to kedai.example (203.0.113.10), 30 hops max, 60 byte packets\n 1  gateway.kedai (10.0.0.1)  0.026 ms  0.003 ms  0.002 ms\n 2  exchange.example (198.51.100.1)  0.012 ms  0.004 ms  0.003 ms\n 3  kedai.example (203.0.113.10)  0.024 ms  0.004 ms  0.005 ms' }]} />
+
+<Term id="traceroute">traceroute</Term> lists every exchange on the way. Each line is a **hop**. This lab sits on one machine, so the times are tiny.
+</Card>
+
+<Card id="predict" type="predict">
+Another day, the same traceroute shows this. Is the road broken at hop 2?
+
+```
+ 1  gateway.kedai (10.0.0.1)  0.040 ms  0.004 ms  0.004 ms
+ 2  * * *
+ 3  kedai.example (203.0.113.10)  0.015 ms  0.007 ms  0.007 ms
+```
+
+<Interactive name="Choice" options={[{ label: 'No: hop 2 just stays quiet', correct: true, why: 'Hop 3 answered, so the call passed hop 2.' }, { label: 'Yes: the call stops at hop 2', why: 'Then hop 3 would never answer.' }, { label: 'The shop is down', why: 'The shop answered at hop 3.' }]} />
+</Card>
+
+<Card id="check" type="check">
+What does each ping result tell you?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'The line works' }, { id: 'name', label: 'A name problem' }, { id: 'quiet', label: 'No reply: look closer' }]} items={[{ label: '64 bytes from 198.51.100.7: time=33.1 ms', bucket: 'ok', why: 'An echo came back.' }, { label: 'ping: nope.example: Name or service not known', bucket: 'name', why: 'No number for that name. Check DNS.' }, { label: '2 packets transmitted, 0 received, 100% packet loss', bucket: 'quiet', why: 'Down, or a guard blocks ping. Try the real port with curl.' }, { label: 'From exchange.example (198.51.100.1) icmp_seq=1 Destination Host Unreachable', bucket: 'quiet', why: 'An exchange says it cannot find the shop.' }]} success="An echo, a name problem, or silence to dig into." />
+</Card>
+
+<Card id="win" type="win">
+You can now ping a machine and trace the road to it.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many servers block ping on purpose. No reply does not always mean down: test the real port with curl. `mtr` mixes ping and traceroute into one live table. Our traceroute outputs came from a real Debian 13 lab.
+
+<Interactive name="Mission" id="linux-l3-l09-rep" steps={[{ id: 'ping', text: 'Say hello to a real site.', command: 'ping -c 3 example.com' }, { id: 'install', text: 'Install traceroute.', command: 'sudo apt install traceroute' }, { id: 'trace', text: 'Count the hops from your home.', command: 'traceroute example.com' }]} success="You traced a real road across the internet." />
+</Card>

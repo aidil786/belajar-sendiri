@@ -1,0 +1,74 @@
+---
+id: k8s-k5-l07
+world: 5
+title: ResourceQuota dan LimitRange
+summary: "Anda akan belajar: cara beri setiap zon bajet dan saiz pinggan lalai."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, SortCards]
+needs: [k8s-k5-l06]
+scenario: k5-quota
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: resource quotas", url: "https://kubernetes.io/docs/concepts/policy/resource-quotas/" }
+  - { label: "Kubernetes: limit ranges", url: "https://kubernetes.io/docs/concepts/policy/limit-range/" }
+  - { label: "kubectl create quota", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_quota/" }
+---
+
+<Card id="hook" type="hook">
+Tiga pasukan kongsi satu medan selera. Satu pasukan pesan 50 pod (dulang) dan penuhkan semua gerai. Yang lain tak dapat apa-apa. Macam mana nak elak?
+
+<Interactive name="Choice" options={[{ label: 'Beri setiap zon satu bajet', correct: true, why: 'Setiap pasukan bekerja dalam namespace sendiri, dengan had sendiri.' }, { label: 'Percaya semua orang akan berhati-hati', why: 'Satu salah taip pada replicas masih boleh penuhkan medan selera.' }, { label: 'Beri setiap pasukan kluster sendiri', why: 'Boleh, tapi mahal. Bajet untuk setiap zon lebih ringan.' }]} />
+</Card>
+
+<Card id="see-quota" type="see">
+<Interactive name="KubeReplay" scenario="k5-quota" commands={['kubectl apply -f quota.yaml', 'kubectl get resourcequota -n food']} label="Bajet food-quota dicipta dalam namespace food. Belum ada yang diguna: 0 daripada 10 pod, 0 daripada 1 CPU, 0 daripada 1Gi memori." />
+
+**<Term id="resource-quota">ResourceQuota</Term>** ialah bajet satu zon. Zon food boleh minta 1 CPU, memori 1Gi dan 10 pod semuanya.
+</Card>
+
+<Card id="try-limits" type="try">
+**<Term id="limit-range">LimitRange</Term>** tetapkan saiz pinggan lalai. Container tanpa requests dapat nombor ini. Tekan baris yang tetapkan request CPU lalai.
+
+<Interactive name="SpotLines" lines={[{ text: 'kind: LimitRange' }, { text: 'spec:' }, { text: '  limits:' }, { text: '    - type: Container' }, { text: '      defaultRequest:' }, { text: '        cpu: 250m', target: true }, { text: '        memory: 128Mi' }, { text: '      default:' }, { text: '        cpu: 500m' }, { text: '        memory: 256Mi' }]} prompt="Tekan request CPU lalai." success="Ya: defaultRequest ialah request. default ialah limit." />
+</Card>
+
+<Card id="predict" type="predict">
+Setiap pod kedai kini minta CPU 250m. Bajet zon ialah 1 CPU. Anda pesan 5 pod. Berapa yang bermula?
+
+<Interactive name="Choice" compact options={[{ label: '4', correct: true, why: '4 × 250m = 1 CPU. Yang ke-5 akan lebih bajet.' }, { label: '5', why: 'Hampir! 5 × 250m ialah 1.25 CPU. Bajetnya 1.' }, { label: '0', why: 'Bajet hanya tolak pod yang terlebih.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k5-quota-full" commands={['kubectl get deployment shop -n food', 'kubectl get events -n food --field-selector reason=FailedCreate -o jsonpath={.items[0].message}']} label="shop tunjuk 4 daripada 5 sedia. Event FailedCreate kata: exceeded quota food-quota, minta cpu 250m, diguna 1, had 1." />
+
+`exceeded quota` dalam bahasa mudah: pod ke-5 akan melebihi bajet zon. Jadi ia tak pernah dibuat.
+</Card>
+
+<Card id="try-fit" type="try">
+Buat kedai muat dalam bajet: minta 4 pod. Bar merah jambu tunjuk anda dalam zon food.
+
+<Interactive name="FoodCourtSim" scenario="k5-quota-full" intro={['kubectl config set-context --current --namespace=food']} goal={{ replicas: { name: 'shop', count: 4 } }} hints={['Taip kubectl scale deployment shop --replicas=4']} success="Mahu 4, nampak 4. Bajet gembira." />
+
+<Hint>Taip `kubectl scale deployment shop --replicas=4`.</Hint>
+</Card>
+
+<Card id="check-facts" type="check">
+Betul atau tidak? Asingkan setiap ayat.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Betul' }, { id: 'no', label: 'Tidak betul' }]} items={[{ label: 'Quota kira requests, bukan guna sebenar', bucket: 'yes', why: 'Ia jumlahkan apa yang pod minta.' }, { label: 'LimitRange baharu ubah pod yang sedang berjalan', bucket: 'no', why: 'Ia isi nombor hanya semasa pod dibuat.' }, { label: 'Dengan quota CPU, pod tanpa request CPU boleh ditolak', bucket: 'yes', why: 'Bajet perlukan nombor. LimitRange boleh isikan satu.' }, { label: 'Quota food juga hadkan zon default', bucket: 'no', why: 'Quota hidup dalam satu namespace sahaja.' }]} success="Semua siap!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri zon satu bajet dan saiz pinggan lalai.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe namespace food` tunjuk bajet dan apa yang diguna. Quota juga boleh kira objek, contohnya Service atau Secret. LimitRange boleh tetapkan min dan max juga. Kemudian pod yang minta terlalu banyak ditolak.
+
+Latihan sebenar (pilihan): buat namespace dalam kind dan tambah kedua-dua fail. Kemudian pesan terlalu banyak pod.
+</Card>

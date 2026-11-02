@@ -1,0 +1,80 @@
+---
+id: linux-l4-m7
+world: 4
+title: "Capstone mission 7: A server from scratch"
+summary: "You will learn: to set up a real server yourself: a user, a key, a firewall, nginx, a script and a timer."
+minutes: 5
+xp: 100
+interactives: [OrderList, SwipeJudge, Choice, SpotLines, Mission, MissionCheck]
+needs: [linux-l4-l09]
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian Reference: system tips", url: "https://www.debian.org/doc/manuals/debian-reference/ch09.en.html" }
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+---
+
+<Card id="hook" type="hook">
+Mission 7: open a new branch kitchen, from an empty machine. First, plan the build. Put the jobs in a safe order.
+
+<Interactive name="OrderList" items={['Update the packages', 'Add your own user with sudo', 'Log in with an SSH key', 'Firewall: allow SSH and web, then switch it on', 'nginx with your own page', 'A backup script in strict mode', 'A systemd timer for the script', 'Test from your laptop']} label="First job at the top" success="Safe first, shop second, chores last." />
+</Card>
+
+<Card id="see-safety" type="see">
+Real servers, real risks. Good rule or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Use a throwaway VM or playground, never a work server.', good: true, why: 'If it breaks, delete it and start again.' }, { text: 'Keep a second SSH window open while you change the firewall.', good: true, why: 'If a rule locks you out, the open window still works.' }, { text: 'Paste curl … | sudo bash from a forum.', good: false, why: 'Never run code you have not read as root.' }, { text: 'Put the private key in the GitHub repo, as a backup.', good: false, why: 'Only scripts and unit files go in. Keys stay home.' }]} />
+</Card>
+
+<Card id="see-script" type="see">
+Your backup script. Which line makes it stop at the first problem?
+
+```bash
+#!/bin/bash
+set -euo pipefail
+src="$HOME/kedai/menu"
+dest="$HOME/backups"
+mkdir -p "$dest"
+cp -r "$src" "$dest/menu-$(date +%F)"
+echo "backup done"
+```
+
+<Interactive name="Choice" compact options={[{ label: 'Line 2', correct: true, why: 'set -euo pipefail: the strict supervisor.' }, { label: 'Line 5', why: 'mkdir -p makes the folder. It does not stop anything.' }, { label: 'Line 7', why: 'echo only reports at the end.' }]} />
+</Card>
+
+<Card id="see-unit" type="see">
+The timer starts a service. Save this as `/etc/systemd/system/kedai-backup.service`, with your own user. Tap the line that runs the script.
+
+<Interactive name="SpotLines" lines={[{ text: '[Unit]' }, { text: 'Description=Back up the Kedai menu' }, { text: '[Service]' }, { text: 'Type=oneshot' }, { text: 'User=aina' }, { text: 'ExecStart=/home/aina/backup.sh', target: true }]} prompt="Tap the line that runs the script." success="ExecStart runs it. The timer file is the one from lesson 5." />
+</Card>
+
+<Card id="try-mission" type="try">
+Now build it for real. Your ticks are saved. Replace aina and SERVER-IP with your own.
+
+<Interactive name="Mission" id="linux-l4-m7-build" steps={[{ id: 'machine', text: 'Get a throwaway Debian 13 machine: a VM on your laptop, a cloud trial or a free playground.' }, { id: 'update', text: 'Update the packages.', command: 'sudo apt update && sudo apt upgrade -y' }, { id: 'user', text: 'Add your user and give it sudo.', command: 'sudo adduser aina && sudo usermod -aG sudo aina' }, { id: 'key', text: 'On your laptop: hang your padlock on the server.', command: 'ssh-copy-id aina@SERVER-IP' }, { id: 'tools', text: 'On the server: install the guard and the counter.', command: 'sudo apt install -y ufw nginx' }, { id: 'fw', text: 'Allow SSH and web. Keep a second SSH window open.', command: "sudo ufw allow OpenSSH && sudo ufw allow 'Nginx HTTP'" }, { id: 'fwon', text: 'Switch the guard on and read the list.', command: 'sudo ufw enable && sudo ufw status' }, { id: 'page', text: 'Put up your sign.', command: "echo '<h1>Kedai Kancil, branch 2</h1>' | sudo tee /var/www/html/index.html" }, { id: 'menu', text: 'Make a menu to back up.', command: "mkdir -p ~/kedai/menu && echo 'nasi lemak 5' > ~/kedai/menu/today.txt" }, { id: 'script', text: 'Save backup.sh from the card above, then make it runnable and run it.', command: 'chmod +x ~/backup.sh && ~/backup.sh' }, { id: 'units', text: 'Save the service above and the timer from lesson 5, then switch the timer on.', command: 'sudo systemctl daemon-reload && sudo systemctl enable --now kedai-backup.timer' }, { id: 'timers', text: 'Check when it runs next.', command: 'systemctl list-timers kedai-backup.timer' }, { id: 'repo', text: 'Put backup.sh and both unit files in a public GitHub repo called server-from-scratch.' }, { id: 'clean', text: 'When you are done: delete the VM or playground.' }]} success="Mission steps done! Now let GitHub confirm part of it." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub can see your files. Type your username and press Check now.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'server-from-scratch', label: 'Your server-from-scratch repo is public' }, { type: 'file', repo: 'server-from-scratch', path: 'backup.sh', label: 'It has backup.sh' }, { type: 'file', repo: 'server-from-scratch', path: 'kedai-backup.service', label: 'It has kedai-backup.service' }, { type: 'file', repo: 'server-from-scratch', path: 'kedai-backup.timer', label: 'It has kedai-backup.timer' }]} success="GitHub sees your server's recipe!" />
+</Card>
+
+<Card id="self-check" type="check">
+The rest only you can see. Tick what is true.
+
+<Interactive name="Mission" id="linux-l4-m7-self" title="Self-check" steps={[{ id: 'key', text: 'ssh aina@SERVER-IP logs in without a password.' }, { id: 'fw', text: 'sudo ufw status lists only OpenSSH and Nginx HTTP.' }, { id: 'page', text: 'Your laptop shows your sign at http://SERVER-IP.' }, { id: 'script', text: '~/backup.sh; echo $? prints backup done, then 0.' }, { id: 'timer', text: 'systemctl list-timers shows kedai-backup.timer with a NEXT time.' }, { id: 'nokey', text: 'No private key and no password is in the repo.' }]} success="Mission 7 complete: a server, from scratch, by you!" />
+</Card>
+
+<Card id="win" type="win">
+You can now set up a small, safe Linux server from an empty machine.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real branch kitchen has staff who smell smoke. A server notices nothing unless you add checks. The Monitoring & Observability course adds the smoke alarms. Later, harden SSH: turn off password logins, but only after your key login works.
+</Card>

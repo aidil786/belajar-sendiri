@@ -1,0 +1,74 @@
+---
+id: linux-l2-l05
+world: 2
+title: "Proses: ps dan top"
+summary: "Anda akan belajar: tengok setiap program yang bekerja di server dan cari yang membolot CPU."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l2-l04]
+scenario: linux-l2-procs
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ps (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/ps.1.en.html" }
+  - { label: "top (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/top.1.en.html" }
+  - { label: "pgrep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/pgrep.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Server terasa perlahan. Pelanggan tunggu 10 saat untuk laman menu. Apa anda semak dulu?
+
+<Interactive name="Choice" options={[{ label: 'Program mana yang bekerja paling kuat', correct: true, why: 'Satu program yang sibuk boleh perlahankan semua. Cari ia dulu.' }, { label: 'Beli server yang lebih besar', why: 'Mungkin nanti. Dulu, cari apa yang makan tenaga.' }, { label: 'Hidupkan semula server', why: 'Masalah itu mungkin datang balik terus. Tengok dulu sebelum bertindak.' }]} />
+</Card>
+
+<Card id="see-ps" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-procs" intro={['ps aux']} />
+
+Setiap program yang bekerja ialah <Term id="process">process (proses)</Term>, macam tukang masak yang bertugas. `ps aux` senaraikan semuanya. Setiap satu ada nombor pekerja: **PID**.
+</Card>
+
+<Card id="spot-cpu" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND' }, { text: 'root          69  0.0  0.1   4296  2796 ?        Ss   08:30   0:00 /usr/sbin/cron -f' }, { text: 'www-data     120  0.0  0.2  15008  3644 ?        S    08:30   0:00 nginx: worker process' }, { text: 'you         1241 99.0  0.1   5817  2573 ?        R    08:55   4:45 bash /home/you/bin/stock-check.sh', target: true }, { text: 'you         1243  0.0  0.2   6400  3756 pts/0    R+   09:00   0:00 ps aux' }]} prompt="Ketik proses yang makan CPU. Tengok lajur %CPU." success="stock-check.sh: 99% satu CPU, hampir 5 minit." />
+</Card>
+
+<Card id="try-top" type="try">
+`top` tunjuk perkara sama, secara langsung, yang paling sibuk di atas. Jalankan `top`, tengok baris teratas, kemudian tekan q.
+
+<Interactive name="LinuxSim" scenario="linux-l2-procs" goal={{ typed: '^top$', noForeground: true }} hints={['Taip top dan tekan Enter.', 'Tekan butang q (keluar) untuk tinggalkan top.']} solution={['top', 'q']} success="PID 1241, bash, hampir 100% CPU. Itulah skrip yang tersangkut." />
+
+<Hint>`top` pegang terminal sehingga anda tekan q.</Hint>
+</Card>
+
+<Card id="sort-columns" type="check">
+Lajur mana beritahu apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'pid', label: 'PID: nombor pekerja' }, { id: 'cpu', label: '%CPU: sekuat mana ia bekerja' }, { id: 'user', label: 'USER: siapa jalankannya' }]} items={[{ label: '1241', bucket: 'pid', why: 'Nombor yang menamakan satu proses.' }, { label: '99.0', bucket: 'cpu', why: 'Hampir seluruh satu CPU.' }, { label: 'www-data', bucket: 'user', why: 'Pekerja web jalankan nginx worker.' }, { label: '0.0', bucket: 'cpu', why: 'Berehat, menunggu kerja.' }]} success="PID namakan ia, %CPU timbang ia, USER memilikinya." />
+</Card>
+
+<Card id="try-pgrep" type="try">
+Senarai panjang memenatkan. Minta PID ikut nama: `pgrep -f stock-check`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-procs" goal={{ lastTyped: '^pgrep (-f )?.*stock' }} hints={['Taip pgrep -f stock-check']} solution={['pgrep -f stock-check']} success="1241. Ingat nombor itu: pelajaran seterusnya akan menghentikannya." />
+
+<Hint>`-f` cari dalam seluruh baris arahan, bukan nama program sahaja.</Hint>
+</Card>
+
+<Card id="predict-ps" type="predict">
+Anda taip `ps` sahaja, tanpa `aux`. Adakah anda nampak `stock-check.sh`?
+
+<Interactive name="Choice" options={[{ label: 'Tak. ps biasa tunjuk program terminal ini sahaja.', correct: true, why: 'stock-check berjalan di luar terminal anda. aux maksudnya semua pengguna, semua terminal.' }, { label: 'Ya. ps sentiasa tunjuk semua.', why: 'Hanya dengan aux (atau -e). ps biasa pendek sahaja.' }, { label: 'Hanya jika ia guna CPU', why: 'Sibuk atau tidak, ps biasa langkau terminal lain.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh senaraikan proses server dan cari yang membolot CPU.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam `top`, `M` susun ikut memori dan `P` ikut CPU. `ps aux | grep nginx` tapis senarai dengan pipe. `htop` ialah top yang lebih mesra: anda pasangnya dalam pelajaran 10.
+
+Latihan sebenar (pilihan): di Linux, jalankan `top` selama sepuluh saat, kemudian tekan q. Proses mana paling sibuk?
+</Card>

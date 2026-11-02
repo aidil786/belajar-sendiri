@@ -1,0 +1,66 @@
+---
+id: git-w07-l04
+world: 7
+title: Marketplace actions and pinning
+summary: "You will learn: how to borrow actions safely and pin them so they can't change."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, SwipeJudge, TimelineTap, SortCards]
+needs: [git-w07-l03]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using pre-written building blocks", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/find-and-customize-actions" }
+  - { label: "Secure use: pin actions to a full SHA", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Your job needs Node on the runner. You could write 30 lines of install script. Thousands of people need the same thing. What's the smart move?
+
+<Interactive name="Choice" options={[{ label: 'Write your own install script', why: 'It works, but now you must fix it forever.' }, { label: 'Borrow `actions/setup-node`, already written and tested', correct: true, why: 'Many thousands of repos use it. You write three lines.' }, { label: 'Skip Node and hope', why: 'npm needs Node. The run would fail.' }]} />
+</Card>
+
+<Card id="see-action" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'steps:' }, { text: '  - uses: actions/checkout@v7', target: true }, { text: '  - uses: actions/setup-node@v7', target: true }, { text: '  - run: npm ci' }, { text: '  - run: npm test' }]} prompt="Tap every line that borrows an action." success="Both found! uses means: borrow this action." />
+
+An **<Term id="action">action</Term>** is a ready-made step, like a Lego brick. `uses: owner/name@version` borrows one.
+</Card>
+
+<Card id="see-marketplace" type="see">
+The **<Term id="marketplace">GitHub Marketplace</Term>** is a shop of shared actions. Anyone can publish there. So check before you borrow. Trust it? Swipe each clue.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Made by a creator GitHub verified, used by thousands', good: true, why: 'A known maker and many users are good signs.' }, { text: 'Last update six years ago, many open bug reports', good: false, why: 'Nobody looks after it. Bugs and holes stay.' }, { text: 'Asks for your deploy token, but only formats text', good: false, why: 'A text tool has no reason to want your secrets.' }, { text: 'Open source: you can read every line', good: true, why: 'You, and others, can check what it really does.' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Day 1', title: 'v7 is fine', text: 'You write `uses: some-dev/tool@v7`. It works.' }, { when: 'Day 30', title: 'The tag moves', text: "An attacker breaks into the tool's repo. They move the v7 tag to evil code." }, { when: 'Day 31', title: 'Your next run', text: 'Your workflow fetches v7 again. Now it runs the evil code.' }]} />
+
+`@v7` is a **tag**: a sticky note on one commit. Sticky notes can be moved. Tap through the story.
+</Card>
+
+<Card id="see-pin" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: some-dev/tool@main' }, { text: '- uses: some-dev/tool@v7' }, { text: '- uses: some-dev/tool@a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0 # v7.0.1', target: true }]} prompt="Tap the line that can never change under you." success="Yes! A full SHA always means the same code." />
+
+A full commit SHA can never point at other code. Using it is called **<Term id="pinning">pinning</Term>**. Add the version as a comment, for humans. (That SHA is a made-up example.)
+</Card>
+
+<Card id="try-sort" type="try">
+Can it move, or never? Sort each version.
+
+<Interactive name="SortCards" buckets={[{ id: 'moves', label: 'Can move' }, { id: 'fixed', label: 'Never moves' }]} items={[{ label: '`@main` (a branch)', bucket: 'moves', why: 'A branch moves with every new commit.' }, { label: '`@v7` (a tag)', bucket: 'moves', why: 'A tag is a sticky note. It can be moved.' }, { label: '`@v7.0.1` (a tag too)', bucket: 'moves', why: 'It looks exact, but it is still a tag.' }, { label: 'A full 40-character commit SHA', bucket: 'fixed', why: "A SHA is the code's fingerprint. New code means a new SHA." }]} success="Only the SHA stays put." />
+</Card>
+
+<Card id="predict" type="predict">
+You pinned an action to a SHA. Then version 7.0.2 fixes a bug. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Nothing, until you change the SHA', correct: true, why: 'Pins never move by themselves. Lesson 10 shows a robot that bumps them.' }, { label: 'Your workflow gets 7.0.2 by itself', why: 'A SHA never moves. You must change it.' }, { label: 'Your workflow breaks', why: 'It keeps running 7.0.1, safely.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick safe actions and pin them.
+</Card>
+
+<Card id="deeper" type="deeper">
+Actions under `actions/` are made by GitHub. GitHub's own advice: pin third-party actions to a full SHA. Copy the SHA from the action's own repo, never from a fork. A branch like `@main` is the riskiest: you run whatever lands there next.
+</Card>

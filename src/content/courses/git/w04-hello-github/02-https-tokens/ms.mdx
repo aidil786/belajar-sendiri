@@ -1,0 +1,73 @@
+---
+id: git-w04-l02
+world: 4
+title: Log masuk dengan HTTPS dan token
+summary: "Anda akan belajar: cara Git buktikan kepada GitHub bahawa itu anda, melalui HTTPS."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, OrderList, TimelineTap, SwipeJudge]
+needs: [git-w04-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About authentication to GitHub", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github" }
+  - { label: "Managing your personal access tokens", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" }
+  - { label: "Caching your GitHub credentials in Git", url: "https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git" }
+  - { label: "Git Credential Manager", url: "https://github.com/git-ecosystem/git-credential-manager" }
+  - { label: "gitcredentials", url: "https://git-scm.com/docs/gitcredentials" }
+---
+
+<Card id="hook" type="hook">
+Anda push ke GitHub. Git minta kata laluan. Anda taip kata laluan GitHub anda. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Gagal. GitHub mahu token atau pembantu log masuk.', correct: true, why: 'Sejak 2021, GitHub tak terima kata laluan akaun untuk Git. Cara lebih selamat ada di depan.' }, { label: 'Berjaya, macam di laman web', why: 'Di laman web, ya. Git melalui HTTPS, tidak.' }, { label: 'GitHub kunci akaun anda', why: 'Tidak. Ia cuma tolak kata laluan itu.' }]} />
+</Card>
+
+<Card id="see-https" type="see">
+<Interactive name="Transcript" title="bash" label="git push minta username, kemudian kata laluan. Kata laluan tersembunyi semasa ditaip." lines={[{ cmd: 'git push' }, { out: "Username for 'https://github.com': you" }, { out: "Password for 'https://you@github.com':", color: 'dim' }]} />
+
+Alamat remote anda bermula dengan `https://`. Jadi Git bercakap dengan GitHub melalui **HTTPS**. Git tanya siapa anda. Kata laluan yang ditaip tak kelihatan.
+</Card>
+
+<Card id="see-token" type="see">
+Kunci mana yang anda pinjamkan kepada tukang paip?
+
+<Interactive name="Choice" options={[{ label: 'Kunci yang buka dapur sahaja', correct: true, why: 'Akses kecil, risiko kecil. Token fine-grained macam itu.' }, { label: 'Kunci induk untuk semua pintu', why: 'Kalau hilang, semua pintu terbuka.' }]} />
+
+**<Term id="personal-access-token">Token akses peribadi</Term>** ialah kunci untuk Git. Tampal di ruang Password tadi. Token fine-grained hanya buka repo yang anda pilih.
+</Card>
+
+<Card id="try-order" type="try">
+Buat token fine-grained untuk diari anda. Susun langkah-langkahnya.
+
+<Interactive name="OrderList" items={['Buka Settings, kemudian Developer settings', 'Pilih Fine-grained tokens. Jana yang baru.', 'Beri nama dan tarikh tamat', 'Pilih repo diary sahaja', 'Benarkan Contents: Read and write', 'Jana dan salin sekali sahaja']} label="Langkah pertama di atas" success="Betul! GitHub tunjuk token sekali sahaja, jadi simpan segera." />
+
+<Hint>Anda perlu halaman token dulu sebelum mengisinya.</Hint>
+</Card>
+
+<Card id="see-gcm" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Anda push', text: 'Git perlu tahu siapa anda.' }, { when: '2', title: 'Pelayar terbuka', text: 'Anda log masuk ke GitHub di situ, dengan 2FA.' }, { when: '3', title: 'Ia ingat', text: 'Log masuk disimpan dengan selamat. Push seterusnya terus jalan.' }]} />
+
+Menyalin token memang leceh. **<Term id="credential-manager">Git Credential Manager</Term>** log masuk melalui pelayar. Ia datang bersama Git for Windows.
+</Card>
+
+<Card id="predict" type="predict">
+Tarikh tamat token anda ialah semalam. Anda push hari ini. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'GitHub tolak sehingga anda guna token baru', correct: true, why: 'Token lama ialah kunci mati. Buat yang baru, atau biar pembantu log masuk untuk anda.' }, { label: 'Ia masih berfungsi selama-lamanya', why: 'Tarikh tamat itu betul-betul berlaku. Itulah tujuannya!' }, { label: 'Repo anda dipadam', why: 'Tidak, repo anda selamat. Hanya kunci itu tak berfungsi.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat token: baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Beri setiap token tarikh tamat', good: true, why: 'Token yang hilang akan mati sendiri.' }, { text: 'Tampal token dalam kod supaya cepat', good: false, why: 'Sesiapa yang baca kod boleh guna. Jangan commit token.' }, { text: 'Biar token buka repo yang perlu sahaja', good: true, why: 'Kunci kecil, risiko kecil.' }, { text: 'Hantar token kepada rakan sepasukan dalam chat', good: false, why: 'Setiap orang buat token sendiri.' }, { text: 'Token bocor? Padam di GitHub segera', good: true, why: 'Bila dipadam, token itu terus tak berguna.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh log masuk Git ke GitHub melalui HTTPS, dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Token klasik masih ada, tapi ia boleh capai semua repo anda. GitHub cadangkan token fine-grained. Di macOS dan Linux, pasang Git Credential Manager sendiri. `git config --global credential.helper` tunjuk pembantu yang Git guna. GitHub CLI pun boleh log masuk Git: pelajaran seterusnya!
+</Card>

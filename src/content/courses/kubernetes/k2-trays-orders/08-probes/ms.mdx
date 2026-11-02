@@ -1,0 +1,73 @@
+---
+id: k8s-k2-l08
+world: 2
+title: "Probe liveness, readiness dan startup"
+summary: "Anda akan belajar: cara Kubernetes semak aplikasi anda berjaga, sedia dan sudah bermula."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, KubeReplay, FoodCourtSim, YamlDoctor]
+needs: [k8s-k2-l07]
+scenario: k2-probes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Liveness, readiness and startup probes", url: "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/" }
+  - { label: "Kubernetes: Configure probes", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" }
+---
+
+<Card id="hook" type="hook">
+Seorang tukang masak terlelap depan dapur. Gerai masih nampak buka, jadi pesanan terus masuk. Tiada apa dimasak. Bagaimana pengurus nak tahu?
+
+<Interactive name="Choice" options={[{ label: 'Tanya tukang masak setiap beberapa saat', correct: true, why: 'Tiada jawapan, atau jawapan salah? Ada yang tak kena. Kubernetes tanya soalan begini.' }, { label: 'Tunggu pelanggan merungut', why: 'Masa itu banyak pesanan sudah hilang. Tanya sebelum mereka perasan.' }, { label: 'Semak lampu gerai menyala', why: 'Lampu menyala: proses berjalan. Tukang masak di dalam masih tidur.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Kubernetes tanya setiap container sehingga tiga soalan. Setiap soalan ialah **probe** (semakan). Susun apa yang setiap satu buat.
+
+<Interactive name="SortCards" buckets={[{ id: 'live', label: 'Liveness: berjaga?' }, { id: 'ready', label: 'Readiness: sedia melayan?' }, { id: 'start', label: 'Startup: dah panas?' }]} items={[{ label: 'Gagal: kubelet hidupkan semula container', bucket: 'live', why: 'Aplikasi yang tersangkut dapat permulaan baharu.' }, { label: 'Gagal: tiada pelanggan dari Service, tiada restart', bucket: 'ready', why: 'Dulang berundur sehingga ia sedia semula.' }, { label: 'Selagi ia belum lulus, dua yang lain tunggu', bucket: 'start', why: 'Aplikasi yang lambat mula tak dibunuh semasa ia memanaskan dapur.' }, { label: 'Aplikasi sedang muat menu besar semasa mula', bucket: 'start', why: 'Beri masa dulu. Kemudian liveness ambil alih.' }]} success="Siap! Berjaga, sedia, dah panas: tiga soalan berbeza." />
+</Card>
+
+<Card id="see-liveness" type="see">
+<Interactive name="KubeReplay" scenario="k2-liveness" commands={['kubectl apply -f sleepy.yaml', 'sleep 30', 'kubectl get pod sleepy', 'kubectl get events --field-selector reason=Killing -o jsonpath={.items[0].message}']} label="sleepy minta /healthz daripada nginx, halaman yang tiada. Selepas 3 semakan gagal, container dihidupkan semula: RESTARTS naik dan event kata ia gagal liveness probe." />
+
+**<Term id="liveness-probe">Liveness probe</Term>** bertanya: berjaga? `sleepy` semak `/healthz`, halaman yang nginx tiada. Tiga kali 404 berturut-turut: kubelet hidupkan semula container.
+</Card>
+
+<Card id="try-ready" type="try">
+Tekan "Aplikasi kata belum sedia". Perhati dulang jadi kuning. Kemudian jalankan `kubectl get pods`: READY turun, RESTARTS kekal 0.
+
+<Interactive name="FoodCourtSim" scenario="k2-probes" faults={['readinessFail']} goal={{ serviceEndpoints: { name: 'shop', count: 0 }, typed: 'get pods?' }} hints={['Tekan butang Aplikasi kata belum sedia, kemudian tunggu 15 saat', 'Taip kubectl get pods']} success="0/1 di semua dulang, tiada restart. Nombor pesanan tiada dulang untuk hantar pelanggan." />
+
+<Hint>**<Term id="readiness-probe">Readiness probe</Term>** tak pernah hidupkan semula apa-apa. Ia hanya keluarkan dulang daripada nombor pesanan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ketiga-tiga dulang shop gagal readiness. Apa jadi pada pelanggan yang panggil Service?
+
+<Interactive name="Choice" options={[{ label: 'Tiada siapa layan: tiada dulang yang sedia', correct: true, why: 'Service hanya hantar pelanggan ke dulang yang sedia. Bila tiada, permintaan gagal.' }, { label: 'Dulang hidup semula', why: 'Readiness tak pernah buat restart. Itu kerja liveness probe.' }, { label: 'Mereka masih sampai ke 3 dulang', why: 'Dulang yang belum sedia dikeluarkan daripada nombor pesanan.' }]} />
+</Card>
+
+<Card id="try-startup" type="try">
+**<Term id="startup-probe">Startup probe</Term>** beri masa kepada tukang masak yang lambat. 30 cubaan, 10 saat setiap satu: sehingga 5 minit. Liveness tunggu sampai ia lulus. Baiki salah taip.
+
+<Interactive name="YamlDoctor" file="slow.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: slow\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      startupProbe:\n        httpGet:\n          path: /\n          port: 80\n        periodSeconds: 10\n        failureTreshold: 30\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: slow\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      startupProbe:\n        httpGet:\n          path: /\n          port: 80\n        periodSeconds: 10\n        failureThreshold: 30\n'} keep={['startupProbe:', ': 30']} hint="Baca unknown field perlahan-lahan. Satu huruf tertinggal." success="Siap! Tukang masak yang lambat dapat sehingga 5 minit untuk bersedia." />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-liveness" commands={['kubectl apply -f shy.yaml', 'sleep 20', 'kubectl get pod shy']} label="shy hanya gagal readiness probe: READY 0/1, STATUS Running, RESTARTS 0." />
+
+`shy` hanya gagal readiness. READY 0/1, STATUS Running, RESTARTS 0. Belum sedia bukan bermakna rosak. Ia cuma tak dapat pelanggan.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih probe yang betul: berjaga, sedia atau dah panas.
+</Card>
+
+<Card id="deeper" type="deeper">
+Probe boleh jadi `httpGet`, `tcpSocket`, `exec` atau `grpc`. Pastikan liveness hanya semak aplikasi itu sendiri. Kalau ia semak pangkalan data, satu pangkalan data yang lambat buat setiap dulang restart.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, apply `sleepy.yaml` dan jalankan `kubectl describe pod sleepy`. Baca Events.
+</Card>

@@ -1,0 +1,62 @@
+---
+id: cicd-c4-l01
+world: 4
+title: Kenapa pipeline jadi sasaran
+summary: "Anda akan belajar: kenapa penyerang sasar pipeline anda, dan jalan masuk utama mereka."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TimelineTap, SortCards, SwipeJudge]
+needs: [cicd-c3-m3]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+---
+
+<Card id="hook" type="hook">
+Tali sawat anda boleh buka kotak rempah berkunci. Ia hantar kepada pelanggan setiap hari. Pencuri mahu kunci anda. Ke mana mereka sasar?
+
+<Interactive name="Choice" options={[{ label: 'Ke pipeline: ia pegang kunci dan boleh hantar', correct: true, why: 'Satu langkah licik boleh salin kunci, atau hantar kod jahat kepada semua orang.' }, { label: 'Ke laptop anda sahaja', why: 'Laptop pun penting. Tapi pipeline pegang kunci untuk setiap deploy.' }, { label: 'Tiada: robot tak boleh ditipu', why: 'Robot jalankan apa sahaja kod yang diberi. Itulah titik lemahnya.' }]} />
+</Card>
+
+<Card id="see-keys" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: Ship' }, { text: 'on: push' }, { text: 'permissions:' }, { text: '  contents: write', target: true }, { text: 'jobs:' }, { text: '  ship:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - run: npm publish' }, { text: '        env:' }, { text: '          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}', target: true }, { text: '      - run: npx wrangler deploy' }, { text: '        env:' }, { text: '          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', target: true }]} prompt="Tekan setiap baris yang beri kunci kepada job ini." success="Tiga kunci! Push kod, terbit pakej, deploy laman web." />
+
+Kira kuncinya. Setiap **<Term id="secret">secret</Term>** (rahsia) buka satu pintu. Satu job ini boleh ubah kod, pakej dan laman web sebenar anda.
+</Card>
+
+<Card id="see-supply" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Hari 1', title: 'Anda pinjam pembantu', text: 'Anda tambah `uses: example-org/helper@v2`. Ia jimatkan 30 baris.' }, { when: 'Hari 60', title: 'Pembekal digodam', text: 'Penyerang masuk ke repo pembantu itu. Mereka tukar kod di sebalik `v2`.' }, { when: 'Hari 61', title: 'Run anda seterusnya', text: 'Job anda jalankan pembantu beracun itu. Ia boleh capai setiap kunci job.' }]} />
+
+Setiap action yang anda pinjam ialah pembekal. Racuni satu pembekal, dan setiap dapur yang guna ia jatuh sakit. Ini **<Term id="supply-chain-attack">supply chain attack</Term>** (serangan rantaian bekalan).
+</Card>
+
+<Card id="try-sort" type="try">
+Dunia ini beri satu perisai untuk setiap lubang. Susun tabiat ini dulu. Anda akan jumpa setiap satu lagi.
+
+<Interactive name="SortCards" buckets={[{ id: 'shield', label: 'Perisai: kurangkan risiko' }, { id: 'hole', label: 'Lubang: biar penyerang masuk' }]} items={[{ label: 'Pin action pinjaman pada SHA commit penuh', bucket: 'shield', why: 'Tiada siapa boleh tukar kod di bawah anda.' }, { label: '`permissions: write-all` dalam setiap workflow', bucket: 'hole', why: 'Setiap langkah dapat setiap kunci.' }, { label: 'Uji PR orang asing dengan `pull_request`', bucket: 'shield', why: 'Kod fork tak dapat secret, dan kuncinya baca sahaja.' }, { label: 'Tampal tajuk isu terus ke dalam `run:`', bucket: 'hole', why: 'Tajuk yang licik boleh jadi arahan.' }, { label: 'Cetak token untuk semak ia berfungsi', bucket: 'hole', why: 'Log boleh bocor. Pelajaran 7 tunjuk caranya.' }, { label: 'Self-hosted runner pada repo awam', bucket: 'hole', why: 'PR orang asing boleh jalan pada mesin anda sendiri.' }]} success="Siap! Dua perisai, empat lubang untuk ditutup." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu action pinjaman digodam. Job anda ada `permissions: write-all`. Apa penyerang boleh buat?
+
+<Interactive name="Choice" options={[{ label: 'Apa sahaja yang token benarkan: push kod, padam release', correct: true, why: 'write-all beri setiap kunci. Kod jahat dapat semuanya.' }, { label: 'Tiada: itu token GitHub', why: 'Token itu berfungsi untuk mana-mana kod dalam job, baik atau jahat.' }, { label: 'Baca kod anda sahaja', why: 'Itu betul untuk contents: read. write-all jauh lebih banyak.' }]} />
+</Card>
+
+<Card id="check-ways" type="check">
+Penyerang ada beberapa jalan ke tali sawat. Selamat, atau jalan masuk? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Action pinjaman yang pemiliknya digodam', good: false, why: 'Kodnya jalan dengan kunci job anda.' }, { text: 'Ujian gagal kerana salah taip', good: true, why: 'Menjengkelkan, tapi tiada penyerang masuk. Betulkan salah taip itu.' }, { text: 'PR orang asing yang jalan dengan secret anda', good: false, why: 'Kod mereka boleh salin secret itu.' }, { text: 'Job yang ada `contents: read` sahaja', good: true, why: 'Walaupun ditipu, ia hanya boleh baca.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa penyerang sasar pipeline.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): buka satu workflow dalam repo anda sendiri. Kira secret-nya. Cari baris `permissions:`. Tiada langsung? Pelajaran 4 tunjuk kenapa perlu tambah. Pelajaran seterusnya: serangan sebenar dari Mac 2025.
+</Card>

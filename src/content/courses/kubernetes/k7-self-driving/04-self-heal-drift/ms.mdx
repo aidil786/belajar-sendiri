@@ -1,0 +1,70 @@
+---
+id: k8s-k7-l04
+world: 7
+title: Self-heal dan drift
+summary: "Anda akan belajar: apa itu drift, dan cara self-heal atau Sync kembalikan versi Git."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, GitOpsMirror, Choice, FoodCourtSim, SwipeJudge]
+needs: [k8s-k7-l03]
+scenario: k7-drift
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: automated sync and self-heal", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "Argo CD: diffing (ignore differences)", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-drift" commands={['kubectl get deployment shop']} label="kubectl get deployment shop tunjuk 1/1 sedia, tetapi shop.yaml dalam Git minta 3." />
+
+Git minta 3 dulang. Kluster jalankan 1. Lantai gerai tak lagi sama dengan papan pesanan. Jurang ini dipanggil **<Term id="drift">drift</Term>** (hanyut).
+</Card>
+
+<Card id="try-heal" type="try">
+Self-heal dihidupkan. Buat perubahan manual dengan butang kubectl. Kemudian perhati.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'drift' }} success="Self-heal tunggu 5 saat, kemudian kembalikan 3 dulang ikut Git." />
+
+<Hint>Tekan butang kubectl scale di bawah "Perubahan manual".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang **<Term id="self-heal">self-heal</Term>** (pulih sendiri) dimatikan. Seseorang scale kepada 1 secara manual. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Kekal 1 dan tunjuk OutOfSync sehingga seseorang tekan Sync', correct: true, why: 'Tanpa self-heal, Argo CD laporkan drift tetapi tak undurkannya.' }, { label: 'Argo CD tetap kembalikan 3 serta-merta', why: 'Hanya jika self-heal hidup. Mati bermaksud "beritahu saya, jangan sentuh".' }, { label: 'Argo CD tukar Git supaya tulis 1', why: 'Argo CD tak pernah tulis ke Git anda. Git kekal sebagai kebenaran.' }]} />
+</Card>
+
+<Card id="try-off" type="try">
+Self-heal dimatikan. Buat perubahan manual, kemudian undurkannya sendiri.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} selfHeal={false} task={{ type: 'drift' }} success="Anda tangkap drift itu dan sync semula versi Git." />
+
+<Hint>Selepas perubahan manual, tekan Sync sekarang.</Hint>
+</Card>
+
+<Card id="try-catch" type="try">
+Kluster ini tiada pembantu GitOps. Jadilah pembantu itu. Cari drift, kemudian kembalikan versi dalam fail.
+
+<Interactive name="FoodCourtSim" scenario="k7-drift" board="shop" goal={{ replicas: { name: 'shop', count: 3 }, podsReady: { selector: 'app=shop', count: 3 }, typed: '^kubectl get' }} hints={['Taip kubectl get deployment shop untuk lihat drift itu.', 'Kemudian taip kubectl apply -f shop.yaml']} success="Mahu 3, nampak 3. Anda buat secara manual apa yang Argo CD buat sepanjang hari." />
+
+<Hint>`kubectl get deployment shop` tunjukkannya. `kubectl apply -f shop.yaml` baikinya.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Leret: tabiat baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Baiki production secara manual pukul 2 pagi, dan tak commit langsung.', good: false, why: 'Self-heal akan undurkannya, atau sync seterusnya. Commit pembaikan itu ke Git.' }, { text: 'Bila terdesak, revert commit yang rosak dalam Git.', good: true, why: 'Revert itu pantas, direkod, dan Argo CD akan sync-kannya.' }, { text: 'Matikan self-heal selamanya, supaya pembaikan manual kekal.', good: false, why: 'Nanti drift bertimbun dan Git tak lagi jadi kebenaran.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kesan drift dan kembalikan versi Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Secara lalai, self-heal tunggu 5 saat sebelum sync semula. Sesetengah drift memang sengaja: autoscaler ubah replicas. Beritahu Argo CD untuk abaikan medan itu dengan `ignoreDifferences`. Latihan sebenar (pilihan): pada kluster kind, `kubectl scale` satu Deployment, kemudian `kubectl apply -f` failnya. Lihat bilangannya kembali.
+</Card>

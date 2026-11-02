@@ -1,0 +1,72 @@
+---
+id: linux-l4-l06
+world: 4
+title: "Bash scripts: variables and if"
+summary: "You will learn: to read and run a small script with variables, arguments and if."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, Choice, SortCards, SwipeJudge, Mission]
+needs: [linux-l4-l05]
+scenario: linux-l4-vars
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: shell parameters", url: "https://www.gnu.org/software/bash/manual/html_node/Shell-Parameters.html" }
+  - { label: "Bash manual: conditional constructs", url: "https://www.gnu.org/software/bash/manual/html_node/Conditional-Constructs.html" }
+  - { label: "Bash manual: conditional expressions", url: "https://www.gnu.org/software/bash/manual/html_node/Bash-Conditional-Expressions.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-vars" intro={['./open.sh']} />
+
+The opening checklist refuses to start. It wants something from you. What?
+</Card>
+
+<Card id="see-script" type="see">
+A <Term id="script">script</Term> is a written checklist for the shell. Here is `open.sh`. Tap the line that reads what you type after `./open.sh`.
+
+<Interactive name="SpotLines" lines={[{ text: '#!/bin/bash' }, { text: '# open.sh: open the shop and greet the first worker.' }, { text: 'shop="Kedai Kancil"' }, { text: 'worker=$1', target: true }, { text: 'if [ -z "$worker" ]; then' }, { text: '  echo "Who is opening? Try: ./open.sh Aina"' }, { text: '  exit 1' }, { text: 'fi' }, { text: 'echo "$worker opens $shop."' }]} prompt="Tap the line that reads your word." success="worker=$1 fills a jar with the first word after the script name." />
+</Card>
+
+<Card id="try-jar" type="try">
+A **variable** is a labelled jar. `name=Aina` fills it (no spaces around `=`). `$name` reads it. Try it.
+
+<Interactive name="LinuxSim" scenario="linux-l4-vars" goal={{ typed: '^name=', lastTyped: '^echo .*\\$name' }} hints={['name=Aina', 'echo "Hi $name"']} solution={['name=Aina', 'echo "Hi $name"']} success="The jar said Aina." />
+</Card>
+
+<Card id="predict" type="predict">
+`name=Aina`, then `echo 'Hi $name'` with single quotes. What prints?
+
+<Interactive name="Choice" options={[{ label: 'Hi $name', correct: true, why: 'Single quotes keep text exactly as typed. Use double quotes for jars.' }, { label: 'Hi Aina', why: 'Only double quotes open the jar.' }, { label: 'An error', why: 'It works fine. It just prints the label, not the jar.' }]} />
+</Card>
+
+<Card id="see-tests" type="see">
+`if [ -z "$worker" ]` asks a yes/no question. `-z` means "is it empty?". Sort the questions.
+
+<Interactive name="SortCards" buckets={[{ id: 'files', label: 'About files and folders' }, { id: 'values', label: 'About text and numbers' }]} items={[{ label: '[ -f menu.txt ]: is it a file?', bucket: 'files', why: '-f: a file that exists.' }, { label: '[ -d kedai ]: is it a folder?', bucket: 'files', why: '-d: a folder that exists.' }, { label: '[ -z "$worker" ]: is it empty?', bucket: 'values', why: '-z: empty text.' }, { label: '[ 5 -gt 3 ]: is 5 greater than 3?', bucket: 'values', why: '-gt: greater than, for numbers.' }]} success="Files and folders, or text and numbers." />
+</Card>
+
+<Card id="try-run" type="try">
+Run the checklist with a name. Then make `menu.txt` and run it again. Watch the `if` change its answer.
+
+<Interactive name="LinuxSim" scenario="linux-l4-vars" goal={{ fileExists: ['~/menu.txt'], scriptExitCode: { '~/open.sh': 0 }, lastTyped: '^\\./open\\.sh \\S' }} hints={['./open.sh Aina', 'echo "nasi lemak" > menu.txt', './open.sh Aina']} solution={['./open.sh Aina', 'echo "nasi lemak" > menu.txt', './open.sh Aina']} success="No menu yet!, then The menu is ready. The if read the shelf." />
+</Card>
+
+<Card id="check" type="check">
+Good line or needs work?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'name=Aina', good: true, why: 'No spaces around =.' }, { text: 'name = Aina', good: false, why: 'With spaces, bash runs a command called name.' }, { text: 'echo "Hi $name"', good: true, why: 'Double quotes open the jar.' }, { text: 'if [-f menu.txt]; then', good: false, why: '[ and ] need a space inside: [ -f menu.txt ].' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a script's variables and ifs, and run it with a word.
+</Card>
+
+<Card id="deeper" type="deeper">
+Always quote jars: `"$worker"`. Then a name with spaces stays one word. `$(date +%F)` fills a jar with a command's output. `shellcheck` reads scripts and points at mistakes (`sudo apt install shellcheck`).
+
+<Interactive name="Mission" id="linux-l4-l06-rep" steps={[{ id: 'write', text: 'Write hi.sh: name=$1, then echo "Hi $name". Use any editor.' }, { id: 'x', text: 'Let it run.', command: 'chmod +x hi.sh' }, { id: 'run', text: 'Run it with your name.', command: './hi.sh Aina' }]} success="Your first script with a variable." />
+</Card>

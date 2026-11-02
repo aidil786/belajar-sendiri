@@ -1,0 +1,64 @@
+---
+id: git-w10-l14
+world: 10
+title: Git 3.0 preview
+summary: "You will learn: what Git 3.0 plans to change, what stays the same, and how to get ready."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, TermReplay, SwipeJudge]
+needs: [git-w10-l13]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Upcoming breaking changes (Git 3.0)", url: "https://git-scm.com/docs/BreakingChanges" }
+  - { label: "git init (--object-format, --ref-format)", url: "https://git-scm.com/docs/git-init" }
+  - { label: "Hash function transition", url: "https://git-scm.com/docs/hash-function-transition" }
+  - { label: "git whatchanged", url: "https://git-scm.com/docs/git-whatchanged" }
+---
+
+<Card id="hook" type="hook">
+Git 3.0 is on its way. Will the Git you learned stop working?
+
+<Interactive name="Choice" options={[{ label: 'No. Commands stay; some defaults change', correct: true, why: 'Your skills carry over. New repos just start a little differently.' }, { label: 'Yes, you must learn Git again', why: 'No! Almost every command stays the same.' }, { label: 'It is already out', why: 'Not yet. Git 3.0 has no release date so far.' }]} />
+</Card>
+
+<Card id="see-story" type="see">
+Git 3.0 has **no release date** yet. But its plan is written down. Tap through the story.
+
+<Interactive name="TimelineTap" events={[{ when: '2005', title: 'Git is born', text: 'Ids use SHA-1. Refs are small files.' }, { when: 'Today (2.56)', title: 'New options', text: 'SHA-256 and reftable already work, if you ask for them.' }, { when: 'Last 2.x', title: 'Long-term support', text: 'The last version before 3.0 gets fixes for a long time.' }, { when: 'Git 3.0', title: 'New defaults', text: 'New repos use SHA-256, reftable and a main branch.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+What happens to each one in Git 3.0?
+
+<Interactive name="SortCards" buckets={[{ id: 'new', label: 'New default' }, { id: 'removed', label: 'Removed' }, { id: 'stays', label: 'Stays' }]} items={[{ label: 'New repos use SHA-256 ids', bucket: 'new', why: 'Stronger ids for new repos.' }, { label: 'New repos keep refs in reftable', bucket: 'new', why: 'Faster, safer ref storage by default.' }, { label: 'New repos start on main', bucket: 'new', why: 'The default branch name becomes main.' }, { label: 'git whatchanged', bucket: 'removed', why: 'It was just git log with other defaults.' }, { label: 'git pack-redundant', bucket: 'removed', why: 'An old command almost nobody used.' }, { label: 'git checkout, next to switch and restore', bucket: 'stays', why: 'Many people use it, so all three stay.' }, { label: 'Your old SHA-1 repos', bucket: 'stays', why: 'There is no plan to drop SHA-1 repos.' }]} success="Sorted! A few new defaults, two old commands gone, the rest stays." />
+</Card>
+
+<Card id="see-sha256" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git rev-parse HEAD']} label="git rev-parse HEAD prints a 40-character SHA-1 id: 9e8ddf8fb3a185e7920bc21542abe85b09f07e21." />
+
+Today's ids are SHA-1: 40 characters. **<Term id="sha-256">SHA-256</Term>** ids are 64 characters long. They are much harder to fake.
+</Card>
+
+<Card id="predict" type="predict">
+Git 3.0 arrives. Your old repo uses SHA-1 ids. What happens to it?
+
+<Interactive name="Choice" options={[{ label: 'It keeps working as before', correct: true, why: 'The new default is only for new repos. There is no plan to drop SHA-1 repos.' }, { label: 'Git converts it at once', why: 'Nothing changes by itself. Only new repos start with SHA-256.' }, { label: 'It stops working', why: 'Old repos keep working. Only the defaults for new repos change.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Ready for Git 3.0? Swipe each habit.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Name your first branch main', good: true, why: 'That is the Git 3.0 default for new repos.' }, { text: 'Write scripts that expect 40-character ids', good: false, why: 'SHA-256 ids have 64. Let scripts accept any length.' }, { text: 'Use git whatchanged in scripts', good: false, why: 'It is removed in 3.0. Use git log --raw --no-merges instead.' }, { text: 'Keep using git switch and git restore', good: true, why: 'They stay. So does git checkout.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain Git 3.0's changes and get ready for them.
+</Card>
+
+<Card id="deeper" type="deeper">
+Try the future today: `git init --object-format=sha256` or `git init --ref-format=reftable`. Check that your hosting site supports them first. `safe.bareRepository` becomes `explicit`: Git won't use a <Term id="bare-repository">bare repo</Term> it just stumbles into. Building Git yourself will need Rust. Source: git-scm.com/docs/BreakingChanges.
+</Card>

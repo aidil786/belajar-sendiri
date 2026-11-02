@@ -1,0 +1,73 @@
+---
+id: git-w11-l14
+world: 11
+title: Permission denied (publickey)
+summary: "You will learn: two calm fixes when GitHub says Permission denied (publickey)."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Transcript, Choice, OrderList, Sim]
+needs: [git-w04-l03]
+scenario: w11-l14
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Error: Permission denied (publickey)", url: "https://docs.github.com/en/authentication/troubleshooting-ssh/error-permission-denied-publickey" }
+  - { label: "Testing your SSH connection", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection" }
+  - { label: "git remote set-url", url: "https://git-scm.com/docs/git-remote" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l14" commands={['git push']} fails={['git push']} label="git push answers: git@github.com: Permission denied (publickey). fatal: Could not read from remote repository." />
+
+You type `git push`. GitHub says Permission denied. Your work is safe! GitHub just can't tell who you are. This happens to everyone.
+</Card>
+
+<Card id="see-test" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com answers: git@github.com: Permission denied (publickey)." lines={[{ cmd: 'ssh -T git@github.com' }, { out: 'git@github.com: Permission denied (publickey).', color: 'red' }]} />
+
+Your computer proves who you are with an SSH key. Test the key alone with `ssh -T git@github.com`. Same answer: GitHub doesn't know this key.
+</Card>
+
+<Card id="decide" type="try">
+What's the most likely cause?
+
+<Interactive name="Choice" options={[{ label: "GitHub doesn't have your public key, or it isn't loaded", correct: true, why: 'The key must be on your computer AND on your GitHub account.' }, { label: 'Your repo was deleted', why: 'A missing repo gives a different error. This one is about who you are.' }, { label: 'Your commit is broken', why: 'Commits have nothing to do with it. This is about signing in.' }]} />
+</Card>
+
+<Card id="order-fix" type="try">
+Put the SSH fix in order, first step at the top.
+
+<Interactive name="OrderList" items={['ssh-add -l: is a key loaded?', 'ssh-add ~/.ssh/id_ed25519: load your key', 'Add the public key (.pub) to your GitHub account', 'ssh -T git@github.com: test again']} label="First step at the top" success="Perfect order. Check, load, add, test." />
+
+<Hint>Check first. Test last.</Hint>
+</Card>
+
+<Card id="see-hello" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com answers: Hi you! You've successfully authenticated, but GitHub does not provide shell access." lines={[{ cmd: 'ssh -T git@github.com' }, { out: "Hi you! You've successfully authenticated, but GitHub does not provide shell access.", color: 'green' }]} />
+
+When it works, GitHub greets you by name. "No shell access" is normal. Now `git push` works too.
+</Card>
+
+<Card id="try-https" type="try">
+In a hurry? Switch `origin` to the HTTPS address. Then push again.
+
+<Interactive name="Sim" scenario="w11-l14" panels={['graph']} goal={{ remotes: { origin: 'https://github.com/you/diary.git' }, pushed: ['main'] }} hints={['Type git remote set-url origin https://github.com/you/diary.git', 'Then type git push']} success="Pushed over HTTPS! SSH can wait for a calmer day." />
+
+<Hint>Type `git remote set-url origin https://github.com/you/diary.git`, then `git push`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+On a real computer, HTTPS asks you to sign in. What works as the password?
+
+<Interactive name="Choice" options={[{ label: 'A token, or Git Credential Manager signs you in', correct: true, why: 'GitHub stopped taking account passwords for Git. Tokens or a sign-in helper work.' }, { label: 'Your GitHub account password', why: "GitHub doesn't accept it for Git anymore. Use a token." }, { label: 'Your SSH key', why: 'SSH keys only work with SSH addresses.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fix Permission denied (publickey), two ways.
+</Card>
+
+<Card id="deeper" type="deeper">
+No key yet? Make one with `ssh-keygen -t ed25519 -C "you@example.com"` (World 4). Only the `.pub` file goes to GitHub. Never share the private key. Using `sudo git push`? Drop the `sudo`. Your keys belong to you, not to the admin account.
+</Card>

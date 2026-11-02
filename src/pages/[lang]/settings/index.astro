@@ -1,0 +1,316 @@
+---
+import Base from '~/layouts/Base.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+---
+
+<Base lang={lang} title={t(lang, 'settings.title')} altPath={`/${other}/settings/`}>
+  <div class="container settings" data-settings data-lang={lang}>
+    <h1>{t(lang, 'settings.title')}</h1>
+    <p class="storage-warning" data-storage-warning hidden role="status">{t(lang, 'settings.storageBlocked')}</p>
+
+    <form class="settings-form" data-form>
+      <fieldset>
+        <legend>{t(lang, 'settings.language')}</legend>
+        <div class="choices">
+          <a class="btn btn-ghost" href="/en/settings/" lang="en" aria-current={lang === 'en' ? 'true' : undefined} data-set-lang="en">English</a>
+          <a class="btn btn-ghost" href="/ms/settings/" lang="ms" aria-current={lang === 'ms' ? 'true' : undefined} data-set-lang="ms">Bahasa Melayu</a>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.calm')}</legend>
+        <label class="switch">
+          <input type="checkbox" name="calm" />
+          <span>{t(lang, 'settings.calm')}</span>
+        </label>
+        <p class="help">{t(lang, 'settings.calmHelp')}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.font')}</legend>
+        <label class="radio"><input type="radio" name="font" value="atkinson" /> <span style="font-family: var(--font-body)">{t(lang, 'settings.fontAtkinson')}</span></label>
+        <label class="radio"><input type="radio" name="font" value="lexend" /> <span style="font-family: var(--font-lexend)">{t(lang, 'settings.fontLexend')}</span></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.theme')}</legend>
+        <label class="radio"><input type="radio" name="theme" value="system" /> {t(lang, 'settings.themeSystem')}</label>
+        <label class="radio"><input type="radio" name="theme" value="light" /> {t(lang, 'settings.themeLight')}</label>
+        <label class="radio"><input type="radio" name="theme" value="dark" /> {t(lang, 'settings.themeDark')}</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.sound')}</legend>
+        <label class="switch">
+          <input type="checkbox" name="sound" />
+          <span>{t(lang, 'settings.sound')}</span>
+        </label>
+        <p class="help">{t(lang, 'settings.soundHelp')}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.sprint')}</legend>
+        <label class="switch">
+          <input type="checkbox" name="sprint" />
+          <span>{t(lang, 'settings.sprint')}</span>
+        </label>
+      </fieldset>
+
+      <fieldset id="exam" data-exam-setting>
+        <legend>{t(lang, 'exam.setting')}</legend>
+        <label class="switch">
+          <input type="checkbox" name="examMode" aria-describedby="exam-help" />
+          <span>{t(lang, 'exam.setting')}</span>
+        </label>
+        <p class="help" id="exam-help">{t(lang, 'exam.settingHelp')}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{t(lang, 'settings.name')}</legend>
+        <label class="visually-hidden" for="set-name">{t(lang, 'settings.name')}</label>
+        <input id="set-name" name="name" class="text-input" maxlength="40" autocomplete="given-name" />
+        <p class="help">{t(lang, 'settings.nameHelp')}</p>
+      </fieldset>
+      <p class="saved" data-saved role="status" hidden>{t(lang, 'settings.saved')}</p>
+    </form>
+
+    <section class="offline" data-offline>
+      <h2>{t(lang, 'offline.settings')}</h2>
+      <p class="help">{t(lang, 'offline.settingsHelp')}</p>
+      <button type="button" class="btn btn-ghost" data-offline-save>{t(lang, 'offline.save')}</button>
+      <p class="offline-status" data-offline-status role="status" aria-live="polite"></p>
+      <template
+        data-offline-strings
+        data-progress={t(lang, 'offline.progress')}
+        data-done={t(lang, 'offline.done')}
+        data-some={t(lang, 'offline.some')}
+        data-unavailable={t(lang, 'offline.unavailable')}></template>
+    </section>
+
+    <section class="data">
+      <h2>{t(lang, 'settings.data')}</h2>
+      <p class="help">{t(lang, 'settings.dataHelp')}</p>
+      <div class="choices">
+        <button type="button" class="btn btn-ghost" data-export="progress">{t(lang, 'settings.export')}</button>
+        <button type="button" class="btn btn-ghost" data-export="feedback">{t(lang, 'settings.exportFeedback')}</button>
+      </div>
+      <div class="reset">
+        <button type="button" class="btn btn-ghost" data-reset aria-expanded="false">{t(lang, 'settings.reset')}</button>
+        <div class="reset-confirm" data-reset-confirm hidden>
+          <p><span aria-hidden="true">⚠ </span>{t(lang, 'settings.resetConfirm')}</p>
+          <div class="choices">
+            <button type="button" class="btn" data-reset-yes>{t(lang, 'settings.resetYes')}</button>
+            <button type="button" class="btn btn-ghost" data-reset-no>{t(lang, 'settings.resetNo')}</button>
+          </div>
+        </div>
+        <p data-reset-done hidden role="status">{t(lang, 'settings.resetDone')}</p>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  import { $progress, exportJson, resetProgress, setName, setSettings, storageOk } from '~/stores/progress';
+  const root = document.querySelector<HTMLElement>('[data-settings]')!;
+  const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+  const saved = root.querySelector<HTMLElement>('[data-saved]')!;
+  let savedTimer = 0;
+
+  const fill = () => {
+    const p = $progress.get();
+    const s = p.settings;
+    (form.elements.namedItem('calm') as HTMLInputElement).checked = s.calm;
+    (form.elements.namedItem('sound') as HTMLInputElement).checked = s.sound;
+    (form.elements.namedItem('sprint') as HTMLInputElement).checked = s.sprint;
+    (form.elements.namedItem('examMode') as HTMLInputElement).checked = s.examMode;
+    for (const r of form.querySelectorAll<HTMLInputElement>('input[name="font"]')) r.checked = r.value === s.font;
+    for (const r of form.querySelectorAll<HTMLInputElement>('input[name="theme"]')) r.checked = r.value === s.theme;
+    const name = form.elements.namedItem('name') as HTMLInputElement;
+    if (document.activeElement !== name) name.value = p.name;
+    root.querySelector<HTMLElement>('[data-storage-warning]')!.hidden = storageOk;
+  };
+
+  const flash = () => {
+    saved.hidden = false;
+    window.clearTimeout(savedTimer);
+    savedTimer = window.setTimeout(() => (saved.hidden = true), 1500);
+  };
+
+  form.addEventListener('change', (e) => {
+    const el = e.target as HTMLInputElement;
+    if (el.name === 'calm') setSettings({ calm: el.checked });
+    else if (el.name === 'sound') setSettings({ sound: el.checked });
+    else if (el.name === 'sprint') setSettings({ sprint: el.checked });
+    else if (el.name === 'examMode') setSettings({ examMode: el.checked });
+    else if (el.name === 'font') setSettings({ font: el.value as 'atkinson' | 'lexend' });
+    else if (el.name === 'theme') setSettings({ theme: el.value as 'system' | 'light' | 'dark' });
+    else if (el.name === 'name') setName(el.value);
+    flash();
+  });
+  form.addEventListener('submit', (e) => e.preventDefault());
+  for (const a of root.querySelectorAll<HTMLAnchorElement>('[data-set-lang]')) {
+    a.addEventListener('click', () => setSettings({ lang: a.dataset.setLang as 'en' | 'ms' }));
+  }
+
+  for (const b of root.querySelectorAll<HTMLButtonElement>('[data-export]')) {
+    b.addEventListener('click', () => {
+      const kind = b.dataset.export as 'progress' | 'feedback';
+      const blob = new Blob([exportJson(kind)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `fahamlah-${kind}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
+  const resetBtn = root.querySelector<HTMLButtonElement>('[data-reset]')!;
+  const confirmBox = root.querySelector<HTMLElement>('[data-reset-confirm]')!;
+  resetBtn.addEventListener('click', () => {
+    confirmBox.hidden = false;
+    resetBtn.setAttribute('aria-expanded', 'true');
+    root.querySelector<HTMLButtonElement>('[data-reset-no]')!.focus();
+  });
+  root.querySelector('[data-reset-no]')!.addEventListener('click', () => {
+    confirmBox.hidden = true;
+    resetBtn.setAttribute('aria-expanded', 'false');
+    resetBtn.focus();
+  });
+  root.querySelector('[data-reset-yes]')!.addEventListener('click', () => {
+    resetProgress();
+    confirmBox.hidden = true;
+    root.querySelector<HTMLElement>('[data-reset-done]')!.hidden = false;
+  });
+
+  fill();
+  $progress.listen(fill);
+
+  // "Save all lessons for offline use": the service worker fetches and saves every page.
+  const offline = root.querySelector<HTMLElement>('[data-offline]')!;
+  const saveBtn = offline.querySelector<HTMLButtonElement>('[data-offline-save]')!;
+  const status = offline.querySelector<HTMLElement>('[data-offline-status]')!;
+  const str = offline.querySelector<HTMLElement>('[data-offline-strings]')!.dataset;
+  const fmt = (text = '', params: Record<string, number>) => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in params ? String(params[k]) : m));
+  const activeWorker = async (): Promise<ServiceWorker | null> => {
+    if (!('serviceWorker' in navigator)) return null;
+    const timeout = new Promise<null>((r) => window.setTimeout(() => r(null), 4000));
+    const reg = await Promise.race([navigator.serviceWorker.ready, timeout]);
+    return reg?.active ?? null;
+  };
+  saveBtn.addEventListener('click', async () => {
+    const sw = await activeWorker().catch(() => null);
+    if (!sw) {
+      status.textContent = str.unavailable ?? '';
+      return;
+    }
+    saveBtn.disabled = true;
+    try {
+      const res = await fetch(`/${root.dataset.lang}/lessons.json`, { cache: 'no-cache' });
+      const { pages } = (await res.json()) as { pages: string[] };
+      status.textContent = fmt(str.progress, { done: 0, total: pages.length });
+      const channel = new MessageChannel();
+      channel.port1.onmessage = (e: MessageEvent<{ type: string; done: number; ok: number; total: number }>) => {
+        const { type, done, ok, total } = e.data;
+        if (type === 'progress') status.textContent = fmt(str.progress, { done, total });
+        if (type === 'done') {
+          status.textContent = ok === total ? fmt(str.done, { n: ok }) : fmt(str.some, { done: ok, total });
+          saveBtn.disabled = false;
+        }
+      };
+      sw.postMessage({ type: 'save-pages', urls: pages }, [channel.port2]);
+    } catch {
+      status.textContent = str.unavailable ?? '';
+      saveBtn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .settings {
+    padding-block: var(--space-5);
+    max-width: 44rem;
+  }
+  fieldset {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+    margin: 0 0 var(--space-3);
+    background: var(--color-surface);
+  }
+  legend {
+    font-weight: var(--weight-bold);
+    padding-inline: var(--space-2);
+  }
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .choices a[aria-current='true'] {
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+  }
+  .switch,
+  .radio {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap);
+    cursor: pointer;
+  }
+  .switch input,
+  .radio input {
+    width: 22px;
+    height: 22px;
+    accent-color: var(--color-primary);
+  }
+  .help {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .text-input {
+    width: 100%;
+    min-height: var(--tap);
+    border-radius: var(--radius-s);
+    border: 2px solid var(--color-border-strong);
+    background: var(--color-bg);
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-1);
+  }
+  .saved {
+    font-weight: var(--weight-bold);
+    color: var(--color-success);
+  }
+  .data,
+  .offline {
+    margin-top: var(--space-6);
+  }
+  .offline-status {
+    margin-top: var(--space-2);
+    font-weight: var(--weight-bold);
+  }
+  .offline-status:empty {
+    display: none;
+  }
+  .reset {
+    margin-top: var(--space-4);
+  }
+  .reset-confirm {
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-m);
+    background: var(--c-danger-soft);
+    color: var(--c-danger-ink);
+  }
+  .storage-warning {
+    background: var(--color-kind-soft);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+  }
+</style>

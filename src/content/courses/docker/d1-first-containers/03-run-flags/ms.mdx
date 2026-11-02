@@ -1,0 +1,75 @@
+---
+id: docker-d1-l03
+world: 1
+title: "Pilihan run berguna: -d, --name, --rm"
+summary: "Anda akan belajar: jalankan container di belakang, beri nama, dan biar ia kemas sendiri."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, SortCards, Choice, Mission]
+needs: [docker-d1-l02]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Overriding container defaults", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/overriding-container-defaults/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run nginx:1.30-alpine']} label="docker run nginx:1.30-alpine. nginx bermula di depan anda. Mesejnya penuhi terminal dan prompt tak kembali. Bekas baru dapat nama rawak." />
+
+Anda jalankan nginx. Kini terminal anda tersekat, penuh dengan mesej. Bekas itu pula dapat nama rawak. Jom baiki kedua-duanya.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang lebih baik. **<Term id="detached">-d</Term>** bermaksud detached. Bekas berjalan di belakang, macam periuk nasi. `--name` pilih namanya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Cakap dengan Docker' }, { text: 'run', means: 'isi dan mulakan bekas' }, { text: '-d', means: 'di belakang' }, { text: '--name web', means: 'namakan web' }, { text: 'nginx:1.30-alpine', means: 'daripada pek beku ini' }]} decoys={[{ text: 'ps', means: 'senaraikan bekas' }]} success="Itulah dia: di belakang, dengan nama pilihan anda." />
+</Card>
+
+<Card id="try-sim" type="try">
+Sekarang taip. Terminal anda tetap bebas, dan bekas itu bernama web.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'] }} hints={['Taip docker run -d --name web nginx:1.30-alpine']} success="web berjalan di belakang. Prompt anda terus kembali." />
+
+<Hint>`docker run -d --name web nginx:1.30-alpine`</Hint>
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run --rm alpine:3.22 echo hi', 'docker ps -a']} label="docker run --rm alpine:3.22 echo hi paparkan hi. Kemudian docker ps -a tunjuk senarai kosong: bekas itu buang dirinya sendiri." />
+
+**--rm** buang bekas bila kerjanya selesai. `docker ps -a` tunjuk tiada apa yang tinggal. Sesuai untuk kerja sekali jalan.
+</Card>
+
+<Card id="try-sort" type="try">
+Pilihan mana sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'd', label: '-d' }, { id: 'name', label: '--name' }, { id: 'rm', label: '--rm' }]} items={[{ label: 'Pelayan web yang berjalan sepanjang hari', bucket: 'd', why: 'Di belakang, supaya terminal anda tetap bebas.' }, { label: 'Paparkan tarikh sekali, kemudian kemas', bucket: 'rm', why: 'Kerja sekali jalan. --rm buang bekas selepas itu.' }, { label: 'Cari bekas itu nanti dengan nama yang elok', bucket: 'name', why: 'Nama pilihan anda lebih baik daripada vibrant_ritchie.' }, { label: 'Ujian cepat yang tak diperlukan lagi', bucket: 'rm', why: 'Tiada bekas lama yang tertinggal.' }, { label: 'Terus menaip semasa ia berjalan', bucket: 'd', why: 'Bekas detached pulangkan prompt anda.' }]} success="Anda kenal pilihan-pilihan ini!" />
+</Card>
+
+<Card id="predict" type="predict">
+web sudah wujud. Anda jalankan `docker run -d --name web nginx:1.30-alpine` sekali lagi. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Docker tolak: nama itu sudah diguna', correct: true, why: 'Nama mesti unik. Dua bekas tak boleh kongsi satu nama.' }, { label: 'Bekas kedua bernama web muncul', why: 'Docker tak benarkan dua bekas dengan satu nama.' }, { label: 'web yang lama diganti', why: 'Docker tak pernah padam bekas untuk anda.' }]} />
+</Card>
+
+<Card id="check-conflict" type="check">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker run -d --name web nginx:1.30-alpine']} fails={['docker run -d --name web nginx:1.30-alpine']} label="Bekas bernama web sudah berjalan. docker run --name web dijawab dengan ralat Conflict: nama itu sudah diguna." />
+
+Ralat sebenar kata nama `"/web" is already in use`. Maksudnya: satu nama, satu bekas. Buang bekas lama, atau pilih nama baru.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalan, namakan dan kemas bekas dengan tiga pilihan.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-d` dan `--rm` boleh digabung: bekas di belakang yang kemas sendiri bila berhenti. `docker rename web shop` tukar nama. `-it` beri anda papan kekunci dalam bekas; itu dalam pelajaran 6.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l03-rep" steps={[{ id: 'bg', text: 'Jalankan nginx di belakang, bernama web.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'once', text: 'Jalankan bekas sekali jalan yang kemas sendiri.', command: 'docker run --rm alpine:3.22 echo hi' }, { id: 'list', text: 'Hanya web yang tinggal.', command: 'docker ps -a' }, { id: 'tidy', text: 'Henti dan buang web.', command: 'docker rm -f web' }]} success="Di belakang, nama dan bekas kemas: sudah buat betul-betul." />
+</Card>

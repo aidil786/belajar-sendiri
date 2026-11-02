@@ -1,0 +1,66 @@
+---
+id: docker-d6-l06
+world: 6
+title: "Mod rootless dan Podman"
+summary: "Anda akan belajar: kenapa root dalam container boleh jadi root pada laptop anda, dan cara Docker rootless dan Podman kurangkan risiko itu."
+minutes: 3
+xp: 15
+interactives: [Choice, NamespaceXray, Transcript, SortCards, SwipeJudge, Mission]
+needs: [docker-d6-l05]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Rootless mode", url: "https://docs.docker.com/engine/security/rootless/" }
+  - { label: "Rootless mode: tips", url: "https://docs.docker.com/engine/security/rootless/tips/" }
+  - { label: "Isolate containers with a user namespace", url: "https://docs.docker.com/engine/security/userns-remap/" }
+  - { label: "Podman documentation", url: "https://docs.podman.io/en/latest/" }
+---
+
+<Card id="hook" type="hook">
+Secara lalai, root dalam container ialah root pada laptop juga. Satu pepijat biar aplikasi terlepas dari bekasnya. Apa yang ia boleh buat?
+
+<Interactive name="Choice" options={[{ label: 'Apa sahaja yang root boleh buat pada laptop', correct: true, why: 'Tanpa user namespace, root di dalam ialah root sebenar.' }, { label: 'Hanya sentuh fail dalam bekasnya', why: 'Ia dah terlepas, jadi bekas tak lagi menahannya.' }, { label: 'Tiada apa. Container ialah mesin maya.', why: 'Container ialah proses atas kernel laptop sendiri.' }]} />
+</Card>
+
+<Card id="see-userns" type="see">
+<Interactive name="NamespaceXray" switches={['user']} task={{ type: 'turnOn', switches: ['user'] }} prompt="Hidupkan suis User. Tengok uid pada laptop." success="Root di dalam, pengguna biasa di luar." />
+
+Root di dalam kini jadi uid 100000 di luar. Itulah **<Term id="user-namespace">user namespace</Term>** (namespace pengguna). Docker biarkannya mati kecuali anda minta.
+</Card>
+
+<Card id="see-rootless" type="see">
+<Interactive name="Transcript" title="bash" label="Dari dokumentasi Docker: alat persediaan rootless, dijalankan sebagai pengguna biasa, cipta konteks CLI bernama rootless dan tukar kepadanya." lines={[{ cmd: 'dockerd-rootless-setuptool.sh install' }, { out: '[INFO] Creating CLI context "rootless"\nSuccessfully created context "rootless"\n[INFO] Using CLI context "rootless"\nCurrent context is now "rootless"', color: 'green' }]} />
+
+**<Term id="rootless-mode">Rootless mode</Term>** (mod tanpa root) pergi lebih jauh. Daemon Docker sendiri berjalan sebagai anda, dalam user namespace. Kalau terlepas, ia dapat hak anda sahaja.
+</Card>
+
+<Card id="predict" type="predict">
+Dalam mod rootless, anda taip `docker run -d -p 80:80 nginx:1.30-alpine`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Gagal. Port bawah 1024 perlukan tetapan tambahan.', correct: true, why: 'Pengguna biasa tak boleh buka port rendah. Guna -p 8080:80.' }, { label: 'Berjalan macam biasa', why: 'Docker rootless ada hak anda sahaja, dan port rendah perlukan lebih.' }, { label: 'Docker tukar ke root sekejap', why: 'Ia tak pernah buat begitu. Itulah tujuannya.' }]} />
+</Card>
+
+<Card id="try-podman" type="try">
+**Podman** jalankan image yang sama tanpa daemon langsung. Jalankannya sebagai diri anda, dan ia rootless. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'docker', label: 'Docker' }, { id: 'podman', label: 'Podman' }, { id: 'both', label: 'Kedua-duanya' }]} items={[{ label: 'Ada daemon bernama dockerd', bucket: 'docker', why: 'dockerd ialah kaunter depan yang ambil pesanan anda.' }, { label: 'Mulakan container tanpa daemon', bucket: 'podman', why: 'Setiap container dimulakan terus dari arahan anda.' }, { label: 'Jalankan image OCI dari Docker Hub', bucket: 'both', why: 'Peraturan bersama: kedua-duanya jalankan pek yang sama.' }, { label: 'Kumpulkan container dalam pod', bucket: 'podman', why: 'Podman pinjam idea pod dari Kubernetes.' }, { label: 'Boleh berjalan rootless', bucket: 'both', why: 'Docker dengan mod rootless. Podman bila anda jalankannya sebagai diri sendiri.' }]} success="Siap! Pek sama, dapur berbeza." />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat selamat, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jalankan aplikasi sebagai USER bukan root dalam image.', good: true, why: 'Walaupun tanpa user namespace, aplikasi itu bukan root.' }, { text: 'Masukkan semua rakan sepasukan ke kumpulan docker pada server kongsi.', good: false, why: 'Kumpulan docker kawal daemon yang berjalan sebagai root. Ia macam kunci root.' }, { text: 'Cuba mod rootless pada mesin Linux yang dikongsi.', good: true, why: 'Kalau terlepas, ia dapat hak pengguna itu sahaja.' }, { text: 'Pasang /var/run/docker.sock ke dalam aplikasi web.', good: false, why: 'Aplikasi itu boleh mulakan apa-apa container, dengan kuasa root.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara Docker rootless dan Podman jauhkan kuasa root.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rootless perlukan `newuidmap` dan `newgidmap` (pakej `uidmap`) serta 65,536 id ganti dalam `/etc/subuid` dan `/etc/subgid`. Had seperti `--memory` perlukan cgroup v2 dengan systemd. Port rendah: lihat halaman tips. Untuk Podman, `alias docker=podman` cukup untuk kebanyakan arahan.
+
+<Interactive name="Mission" id="d6-l06-rootless" steps={[{ id: 'vm', text: 'Guna VM Linux untuk latihan, bukan mesin kerja.' }, { id: 'ids', text: 'Semak anda ada id pengguna ganti.', command: 'grep ^$(whoami): /etc/subuid' }, { id: 'install', text: 'Sediakan mod rootless sebagai pengguna biasa.', command: 'dockerd-rootless-setuptool.sh install' }, { id: 'info', text: 'Cari rootless di bawah Security Options.', command: 'docker info' }, { id: 'hello', text: 'Jalankan container rootless pertama.', command: 'docker run --rm hello-world' }]} success="Docker kini berjalan dengan hak anda, bukan root." />
+</Card>

@@ -1,0 +1,73 @@
+---
+id: git-w06-l01
+world: 6
+title: GitHub Flow
+summary: "You will learn: the short branch, PR and merge loop that many teams use."
+minutes: 4
+xp: 20
+interactives: [TermReplay, AreasScene, TimelineTap, OrderList, Mission, Choice, SwipeJudge]
+needs: [git-w05-l07]
+scenario: w06-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "GitHub flow", url: "https://docs.github.com/en/get-started/using-github/github-flow" }
+  - { label: "About pull requests", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w06-l01" commands={['git log --oneline']} label="git log on main. The two newest commits are quick menu change and WIP search, do not ship." />
+
+Your team commits straight to main. Look at the top two commits. Half-done work is now on the live site.
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'Your branch', repo: 'main' }} label="Two commits, Add search box and Style search box, wait on your branch. Then they slide into main, after Add menu page." frames={[{ working: [{ name: 'Add search box', kind: 'commit' }, { name: 'Style search box', kind: 'commit' }], repo: [{ name: 'Add menu page', kind: 'commit' }] }, { working: [], repo: [{ name: 'Add menu page', kind: 'commit' }, { name: 'Add search box', kind: 'commit' }, { name: 'Style search box', kind: 'commit' }] }]} />
+
+**<Term id="github-flow">GitHub Flow</Term>** keeps main safe. Each change gets its own short branch. It joins main only when it is ready.
+</Card>
+
+<Card id="see-steps" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Branch', text: 'Make a branch off main. Give it a clear name.' }, { when: '2', title: 'Commit', text: 'Make small commits. Push them to GitHub.' }, { when: '3', title: 'Pull request', text: 'Open a PR. Ask your team to look.' }, { when: '4', title: 'Review', text: 'Fix what they spot. New commits update the PR.' }, { when: '5', title: 'Merge', text: 'Merge into main. Many teams deploy right after.' }, { when: '6', title: 'Delete', text: 'Delete the branch. Its commits are safe in main.' }]} />
+
+Six steps, then start again. A branch lives for hours or days, not months. Main is always ready to ship.
+</Card>
+
+<Card id="try-order" type="try">
+Put the GitHub Flow steps in order.
+
+<Interactive name="OrderList" items={['Make a branch off main', 'Commit and push', 'Open a pull request', 'Fix review comments', 'Merge into main', 'Delete the branch']} label="First step at the top" success="That's the whole loop!" />
+
+<Hint>It starts with a branch. It ends with a clean-up.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Try it for real on your diary repo. Tick each step as you go.
+
+<Interactive name="Mission" id="w06-github-flow" steps={[{ id: 'branch', text: 'Make a branch for one small change.', command: 'git switch -c docs/about-line' }, { id: 'commit', text: 'Add one line to README.md. Commit it.', command: 'git commit -am "docs: add about line"' }, { id: 'push', text: 'Send your branch to GitHub.', command: 'git push -u origin docs/about-line' }, { id: 'pr', text: 'On GitHub, open a pull request. Read it, then merge it.' }, { id: 'main', text: 'Go back to main.', command: 'git switch main' }, { id: 'pull', text: 'Bring in the merge from GitHub.', command: 'git pull' }, { id: 'tidy', text: 'Delete your local branch. Its work is in main now.', command: 'git branch -d docs/about-line' }]} success="You ran GitHub Flow for real!" />
+
+<Hint>No diary repo on GitHub yet? World 4 shows how. You can skip this card.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your PR is approved and merged. What is true about main now?
+
+<Interactive name="Choice" options={[{ label: 'It has your commits and is ready to ship', correct: true, why: 'In GitHub Flow, main is always ready to deploy.' }, { label: 'It waits for a release branch', why: 'GitHub Flow has no release branch. That is Git Flow.' }, { label: 'Your branch must stay forever', why: 'Delete it. Its commits are already in main.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good GitHub Flow habit? Swipe right if yes, left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'One branch for one change', good: true, why: 'Small branches are quick to review.' }, { text: 'Keep a branch open for three months', good: false, why: 'Long branches drift away from main. Merge often.' }, { text: 'Open a PR before you merge', good: true, why: 'The PR lets your team check it first.' }, { text: 'Push half-done work straight to main', good: false, why: 'Main must always work. Use a branch.' }, { text: 'Delete the branch after merging', good: true, why: 'Its commits live in main now. Stay tidy.' }, { text: 'Merge before anyone looks', good: false, why: 'Ask for a review. Fresh eyes catch bugs.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now ship a change with GitHub Flow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many hosting services build a preview site for each PR. Your team can click around before merging. Also protect main with a rule: no direct pushes. World 5 shows how. GitHub's own guide lists the same six steps.
+</Card>

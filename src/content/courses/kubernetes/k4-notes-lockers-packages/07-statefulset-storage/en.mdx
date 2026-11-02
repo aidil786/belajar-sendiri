@@ -1,0 +1,75 @@
+---
+id: k8s-k4-l07
+world: 4
+title: "Storage for StatefulSets"
+summary: "You will learn: how a StatefulSet gives every pod its own locker, and keeps it."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, Mission]
+needs: [k8s-k4-l06]
+scenario: k4-ledger
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: StatefulSets", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/" }
+  - { label: "StatefulSet: PVC retention", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl get pods -l app=ledger']} label="kubectl get pods shows ledger-0 and ledger-1, both Running." />
+
+Two ledger trays, `ledger-0` and `ledger-1`. Each keeps its own order book. One shared locker would mix the books. How does each get its own?
+</Card>
+
+<Card id="see-template" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'kind: StatefulSet' }, { text: 'spec:' }, { text: '  replicas: 2' }, { text: '  template:' }, { text: '    # ...the tray, which mounts "data" at /data' }, { text: '  volumeClaimTemplates:', target: true }, { text: '    - metadata:' }, { text: '        name: data' }, { text: '      spec:' }, { text: '        accessModes: ["ReadWriteOnce"]' }, { text: '        resources:' }, { text: '          requests:' }, { text: '            storage: 1Gi' }]} prompt="Tap the line where the locker form starts." success="One form, filled in once per tray." />
+
+A StatefulSet carries a locker form: **<Term id="volumeclaimtemplate">volumeClaimTemplates</Term>**. For each tray, it fills in one claim, named after that tray.
+</Card>
+
+<Card id="try-open" type="try">
+Open the ledger. Then list the claims it made.
+
+<Interactive name="FoodCourtSim" scenario="k4-ledger" goal={{ objectExists: ['pvc/data-ledger-0', 'pvc/data-ledger-1'], podsReady: { selector: 'app=ledger', count: 2 }, lastTyped: 'get pvc' }} hints={['Type kubectl apply -f ledger.yaml', 'Wait for both trays, then: kubectl get pvc']} success="data-ledger-0 and data-ledger-1: one locker per tray." />
+
+<Hint>Claim name = form name + tray name.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You scale the ledger to 3 trays. What is the new tray's claim called?
+
+<Interactive name="Choice" options={[{ label: 'data-ledger-2', correct: true, why: 'The form is data, the new tray is ledger-2.' }, { label: 'data-ledger-0 again', why: 'Almost! That one belongs to ledger-0. Each tray gets its own.' }, { label: 'ledger-2 shares nothing, so no claim', why: 'Every tray gets a claim from the form.' }]} />
+</Card>
+
+<Card id="check-scale" type="check">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl scale statefulset ledger --replicas=3', 'kubectl rollout status statefulset/ledger --timeout=180s', 'kubectl get pvc']} label="The ledger scales to 3. get pvc now lists data-ledger-0, data-ledger-1 and data-ledger-2, all Bound." />
+
+`data-ledger-2` appeared, Bound to a new PV. The trays come up in order: 0, then 1, then 2.
+</Card>
+
+<Card id="predict-delete" type="predict">
+`ledger-0` wrote `page 1` in its book. Now you delete the whole StatefulSet. What happens to the claims?
+
+<Interactive name="Choice" options={[{ label: 'They stay, with the data', correct: true, why: 'By default a StatefulSet never deletes its claims.' }, { label: 'They are deleted with it', why: 'Almost! That only happens if you ask for it in the retention policy.' }, { label: 'They move to another namespace', why: 'Claims stay where they are.' }]} />
+</Card>
+
+<Card id="check-delete" type="check">
+<Interactive name="KubeReplay" scenario="k4-ledger-up" commands={['kubectl delete statefulset ledger', 'kubectl get pvc', 'kubectl apply -f ledger.yaml', 'kubectl rollout status statefulset/ledger --timeout=180s', 'kubectl exec ledger-0 -- cat /data/book.txt']} label="The StatefulSet is deleted. get pvc still lists both claims. Applied again, ledger-0 reads page 1 from its old locker." />
+
+The claims waited. The new `ledger-0` got its old locker back, and read `page 1`.
+</Card>
+
+<Card id="win" type="win">
+You can now give every StatefulSet pod its own lasting locker.
+</Card>
+
+<Card id="deeper" type="deeper">
+Want claims cleaned up? Set `persistentVolumeClaimRetentionPolicy`. `whenDeleted` and `whenScaled` each take `Retain` (the default) or `Delete`. It is stable since Kubernetes 1.32. Deleting claims deletes data, so think twice.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-l07-rep" steps={[{ id: 'copy', text: 'In the practice terminal above, cat ledger.yaml. Save it on your machine.' }, { id: 'apply', text: 'Open the ledger.', command: 'kubectl apply -f ledger.yaml' }, { id: 'claims', text: 'See one claim per tray.', command: 'kubectl get pvc' }, { id: 'delete', text: 'Delete the StatefulSet. The claims stay.', command: 'kubectl delete statefulset ledger' }, { id: 'tidy', text: 'Delete the claims too, data and all.', command: 'kubectl delete pvc data-ledger-0 data-ledger-1' }]} success="Real trays, real lockers." />
+</Card>

@@ -1,0 +1,76 @@
+---
+id: k8s-k5-l10
+world: 5
+title: Tangga nyahpepijat
+summary: "Anda akan belajar: cara tenang, langkah demi langkah, untuk cari kenapa pod tak berfungsi."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, OrderList, FoodCourtSim, Choice, CommandBuilder]
+needs: [k8s-k5-l09]
+scenario: k5-ladder
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "Kubernetes: debug running pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/" }
+  - { label: "kubectl debug", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k5-ladder" commands={['kubectl get pods']} label="Dua pod menu, kedua-duanya Running, tapi READY tunjuk 0/1 untuk setiap satu." />
+
+Kedua-dua pod (dulang) menu kata Running. Tapi READY kata 0/1. Pelanggan tak dapat apa-apa. Nak mula dari mana?
+</Card>
+
+<Card id="see-ladder" type="see">
+Jangan teka. Panjat **<Term id="debug-ladder">tangga nyahpepijat</Term>**, satu anak tangga setiap kali. Setiap anak tangga tunjuk lebih sedikit. Susun anak tangga, dari bawah.
+
+<Interactive name="OrderList" items={['get: apa statusnya?', 'describe: apa pod itu kata tentang dirinya?', 'logs: apa yang aplikasi cetak?', 'events: apa yang Kubernetes tampal?', 'exec: cuba dari dalam pod', 'debug: bawa kotak alat sendiri']} label="Anak tangga paling bawah di atas" success="Itulah tangganya. Kebanyakan masalah nampak pada anak tangga 2 atau 3." />
+</Card>
+
+<Card id="try-describe" type="try">
+Anak tangga 1 kata 0/1. Sekarang anak tangga 2: describe pod menu. Baca Events di bahagian bawah.
+
+<Interactive name="FoodCourtSim" scenario="k5-ladder" goal={{ typed: '^(kubectl|k) describe (po|pods?)\\b' }} hints={['Taip kubectl describe pods -l app=menu', 'Skrol ke Events di bahagian bawah.']} success="Jumpa: Readiness probe failed dengan statuscode 404." />
+
+<Hint>Taip `kubectl describe pods -l app=menu`, kemudian baca baris terakhir.</Hint>
+</Card>
+
+<Card id="check-cause" type="check">
+Events kata: `Readiness probe failed: HTTP probe failed with statuscode: 404`. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Probe minta halaman yang tiada', correct: true, why: '404 maksudnya "tiada halaman itu". Aplikasi berjalan, tapi semakan ketuk pintu yang salah.' }, { label: 'Aplikasi rosak', why: 'Ia kata Running dengan 0 restart. Ia tak rosak.' }, { label: 'Image tiada', why: 'Itu akan jadi ErrImagePull. Pod ini bermula dengan baik.' }]} />
+</Card>
+
+<Card id="see-confirm" type="see">
+<Interactive name="KubeReplay" scenario="k5-ladder" commands={['kubectl logs {pod:app=menu} --tail=2', 'kubectl exec {pod:app=menu} -- wget -qO- localhost/ready']} fails={['kubectl exec {pod:app=menu} -- wget -qO- localhost/ready']} label="Log tunjuk kube-probe minta GET /ready dan dapat 404. Dari dalam pod, wget localhost/ready juga dapat 404 Not Found." />
+
+Anak tangga 3 dan 5 setuju. Log tunjuk probe minta `/ready`. Dari dalam, `/ready` pun beri 404. Aplikasi cuma layan `/`.
+</Card>
+
+<Card id="try-fix" type="try">
+`menu-fixed.yaml` semak `/` pula. Apply fail itu. Tunggu sehingga kedua-dua pod sedia.
+
+<Interactive name="FoodCourtSim" scenario="k5-ladder" goal={{ podsReady: { selector: 'app=menu', count: 2 } }} hints={['Taip kubectl apply -f menu-fixed.yaml', 'Biar jam berjalan. Pod baharu ganti yang lama.']} success="2 daripada 2 sedia. Menu melayan semula." />
+
+<Hint>Taip `kubectl apply -f menu-fixed.yaml`, kemudian biar jam berjalan.</Hint>
+</Card>
+
+<Card id="see-debug" type="see">
+Anak tangga teratas: sesetengah image tiada shell dan tiada alat. `kubectl debug` tambah container kotak alat sementara ke dalam pod. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Bercakap dengan kluster' }, { text: 'debug', means: 'tambah container debug sementara' }, { text: '-it', means: 'beri saya terminal langsung' }, { text: '<pod>', means: 'pod yang mahu dilihat' }, { text: '--image=busybox:1.37', means: 'image kotak alat yang kecil' }, { text: '--target=web', means: 'lihat proses container web' }]} decoys={[{ text: '--force', means: 'langkau semakan keselamatan' }]} success="Itulah anak tangga teratas: alat anda sendiri di dalam pod." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panjat tangga nyahpepijat, bukan meneka.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl debug node/dev-worker -it --image=busybox:1.37` buka kotak alat pada gerai itu sendiri. Container debug kekal sehingga pod dipadam. Tersekat pada satu masalah? [Pusat Bantuan Ship It](/ms/ship-it/rescue/) ada aliran langkah demi langkah.
+
+Latihan sebenar (pilihan): rosakkan probe pada kluster kind, kemudian panjat tangga itu.
+</Card>

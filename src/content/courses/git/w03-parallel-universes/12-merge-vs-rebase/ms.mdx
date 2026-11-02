@@ -1,0 +1,69 @@
+---
+id: git-w03-l12
+world: 3
+title: Merge atau rebase? Dan cherry-pick
+summary: "Anda akan belajar: bila guna merge, bila guna rebase, dan cara salin satu commit sahaja."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, SortCards, Choice, GraphPick, SwipeJudge]
+needs: [git-w03-l11]
+scenario: w03-l12-pick
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rebase: recovering from upstream rebase", url: "https://git-scm.com/docs/git-rebase#_recovering_from_upstream_rebase" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git log --oneline --graph --all']} label="Log bercabang: main ada Make heading teal, about ada dua commit. Kedua-duanya tumbuh dari Add style." />
+
+Dua cara bawa about masuk ke main: merge atau rebase. Pasukan anda bertekak. Siapa menang?
+</Card>
+
+<Card id="see-golden" type="see">
+<Interactive name="GraphScene" scenario="w03-l10" commands={['git rebase main']} showLost label="Selepas rebase, salinan baru commit about duduk selepas main. Commit lama tertinggal sebagai titik putus-putus." />
+
+Rebase buat salinan baru. Commit lama kekal pada sesiapa yang memilikinya. Dua versi! Jadi jangan rebase commit yang orang lain dah ada. Itulah **<Term id="golden-rule">peraturan emas</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Yang mana buat perkara ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge' }, { id: 'rebase', label: 'Rebase' }]} items={[{ label: 'Simpan cerita sebenar, dengan sambungan', bucket: 'merge', why: 'Merge commit tunjuk di mana kerja bertemu.' }, { label: 'Buat satu garis lurus', bucket: 'rebase', why: 'Commit anda dimain semula selepas main.' }, { label: 'Selamat pada branch yang orang lain guna', bucket: 'merge', why: 'Merge tak pernah tulis semula commit yang orang dah ada.' }, { label: 'Beri id baru kepada commit anda', bucket: 'rebase', why: 'Commit yang dimain semula ialah salinan baru.' }]} success="Dah susun! Dua-dua alat yang bagus. Cuma ingat peraturan emas." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda dah kongsi about semalam. Aina bina di atasnya hari ini. Patutkah anda rebase about sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Jangan. Merge sahaja.', correct: true, why: 'Aina ada commit lama. Rebase akan pecahkan cerita anda berdua.' }, { label: 'Ya. Rebase sentiasa lebih kemas.', why: 'Kemas, tapi di sini ia langgar peraturan emas.' }, { label: 'Ya, kalau buat cepat-cepat', why: 'Laju tak membantu. Aina masih ada commit lama.' }]} />
+</Card>
+
+<Card id="see-cherry" type="see">
+<Interactive name="GraphScene" scenario="w03-l12-pick" commands={['git cherry-pick experiments~1']} label="Salinan Fix README intro muncul di main. Branch experiments masih ada ketiga-tiga commitnya." />
+
+Kadang-kadang anda cuma perlu satu commit. `git cherry-pick` salin satu commit ke branch anda. Petik satu ceri, bukan seluruh pokok. Itulah **<Term id="cherry-pick">cherry-pick</Term>**.
+</Card>
+
+<Card id="try-pick" type="try">
+Salin pembaikan yang berguna sahaja dari `experiments` ke main.
+
+<Interactive name="GraphPick" scenario="w03-l12-pick" answer="^Fix README intro$" prompt="Ketik commit untuk disalin ke main." then="git cherry-pick {hash}" why="Hanya pembaikan README yang dibawa. Idea-idea liar kekal di belakang." />
+</Card>
+
+<Card id="check-when" type="check">
+Penggunaan cherry-pick yang bagus, atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Salin satu pembaikan bug ke branch release yang lebih lama', good: true, why: 'Satu commit, diperlukan di satu tempat lagi. Sempurna.' }, { text: 'Bawa satu ciri yang dah siap sepenuhnya ke main', good: false, why: 'Merge buat itu sekali gus, dan simpan ceritanya.' }, { text: 'Ambil satu commit bagus dari eksperimen lama', good: true, why: 'Ambil cerinya, tinggalkan pokoknya.' }, { text: 'Salin sepuluh commit satu demi satu daripada merge', good: false, why: 'Itu buat salinan berganda. Guna merge atau rebase.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih merge atau rebase, dan salin satu commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ramai pasukan rebase branch sendiri dulu, kemudian merge. Dua-dua okey asalkan ikut peraturan emas. `git cherry-pick -x` tambah satu baris yang beritahu dari mana salinan itu datang. Bertembung? Baiki fail, `git add`, kemudian `git cherry-pick --continue`. Atau `git cherry-pick --abort`.
+</Card>

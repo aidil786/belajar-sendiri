@@ -1,0 +1,74 @@
+---
+id: aws-a1-boss
+world: 1
+title: A safe first day
+summary: "You will learn: to open an account safely: root locked, MFA on, a budget alarm before anything else."
+minutes: 6
+xp: 50
+interactives: [Choice, OrderList, SwipeJudge, CommandBuilder, Transcript, IdleBill, Mission]
+needs: [aws-a1-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Root user best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html" }
+  - { label: "Managing your costs with AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "aws sts get-caller-identity", url: "https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil opens its real AWS account today. The keys are brand new. What comes first?
+
+<Interactive name="Choice" options={[{ label: 'Lock root with MFA, then set a budget alarm', correct: true, why: 'Locks first, smoke alarm second. Building comes after.' }, { label: 'Start a test server to see how it works', why: 'Not yet. Nothing gets built before the alarm.' }, { label: 'Make root access keys for the terminal', why: 'Never for root. That key opens everything.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Room 1: plan the whole first day. Put it in a safe order.
+
+<Interactive name="OrderList" items={['Sign up: the root user is born', 'Add MFA to the root user', 'Switch on IAM access to billing', 'Make an everyday admin sign-in, with MFA', 'Sign out of root; sign in as the admin', 'Create a zero spend budget', 'Only now, build something small']} label="First step at the top" success="Room 1 cleared! Root is locked before anything is built." />
+
+<Hint>Root does only the root jobs, then leaves.</Hint>
+</Card>
+
+<Card id="try-swipe" type="try">
+Room 2: Kancil’s teammates have ideas. Safe, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep a second MFA device in the office safe.', good: true, why: 'Lose your phone, and the safe still has a way in.' }, { text: 'Save the root password in the shared notes app.', good: false, why: 'Use a password manager, and share it with almost nobody.' }, { text: 'Alarm emails go to the shop’s shared inbox.', good: true, why: 'Someone will see them, even on holiday.' }, { text: 'Skip the alarm: we are on the Free plan.', good: false, why: 'Plans change, and upgrades happen. Set it anyway.' }]} />
+</Card>
+
+<Card id="try-cli" type="try">
+Room 3: set the alarm from the terminal. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws budgets create-budget', means: 'make a new budget' }, { text: '--account-id 111122223333', means: 'the shop’s account' }, { text: '--budget file://budget.json', means: 'the line on the bill' }, { text: '--notifications-with-subscribers file://notify.json', means: 'who gets the email, and when' }]} decoys={[{ text: '--profile root', means: 'never: root has no keys' }]} success="Room 3 cleared! The smoke alarm is on." />
+</Card>
+
+<Card id="see-who" type="see">
+<Interactive name="Transcript" title="bash" label="aws sts get-caller-identity shows the IAM user DevAdmin, not the root user." lines={[{ cmd: 'aws sts get-caller-identity' }, { out: '{\n    "UserId": "AIDASAMPLEUSERID",\n    "Account": "123456789012",\n    "Arn": "arn:aws:iam::123456789012:user/DevAdmin"\n}', color: 'green' }]} />
+
+Room 4: before any change, ask who you are. The Arn ends in `user/DevAdmin`: an everyday admin, not root.
+</Card>
+
+<Card id="predict" type="predict">
+One day the Arn ends in `:root` instead. What should Kancil do?
+
+<Interactive name="Choice" options={[{ label: 'Stop, sign out, and sign in as the admin', correct: true, why: 'Root is for rare jobs only. Switch before you change anything.' }, { label: 'Carry on, it is faster', why: 'Faster today, risky every day. Switch now.' }, { label: 'Make root access keys so it is easier', why: 'Never. Root keeps no keys.' }]} />
+</Card>
+
+<Card id="check-idle" type="check">
+Room 5: a teammate built a test, then “turned it off”. Which leftovers still bill?
+
+<Interactive name="IdleBill" items={['ebsOfStopped', 'securityGroup', 'elasticIpIdle', 'iam', 'loadBalancer', 'vpc']} ordered />
+</Card>
+
+<Card id="try-real" type="try">
+Final room, for real: your own safe first day. No resources, no cost.
+
+<Interactive name="Mission" id="aws-a1-boss-real" steps={[{ id: 'rules', text: 'Read today’s plan rules on aws.amazon.com/free.' }, { id: 'mfa', text: 'Add two MFA devices to the root user.' }, { id: 'billing', text: 'As root, switch on IAM access to billing. Then sign out.' }, { id: 'admin', text: 'Sign in as your everyday admin, with MFA.' }, { id: 'zero', text: 'Create a zero spend budget with your email.' }, { id: 'monthly', text: 'Create a monthly cost budget with a small line.' }, { id: 'who', text: 'In the terminal, check you are not root.', command: 'aws sts get-caller-identity' }]} success="Boss beaten! Your account is locked, and the alarm is on." />
+</Card>
+
+<Card id="win" type="win">
+You can now open an AWS account safely: root locked, alarm on.
+</Card>

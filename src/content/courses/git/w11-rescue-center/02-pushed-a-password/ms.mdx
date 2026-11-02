@@ -1,0 +1,67 @@
+---
+id: git-w11-l02
+world: 11
+title: Saya push kata laluan
+summary: "Anda akan belajar: apa nak buat dulu bila rahsia sampai ke GitHub."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Choice, AreasScene, Sim, SwipeJudge]
+needs: [git-w08-l04]
+scenario: w11-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l02" commands={['git show --stat']} label="git show --stat: commit terbaru, Add weather widget, ada di origin/main. Ia tambah dua fail: .env dan app.js." />
+
+Anda dah push. Kemudian anda perasan: `.env` simpan kunci rahsia anda. Dan kini ia di GitHub. Tarik nafas. Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+Apa yang anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Batalkan kunci lama dan buat yang baru', correct: true, why: 'Ini dipanggil rotate (tukar kunci). Kini salinan yang bocor tak berguna.' }, { label: 'Padam .env dan push semula', why: 'Commit lama masih simpan kunci itu. Mungkin ada orang dah salin.' }, { label: 'Jadikan repo private', why: 'Ia pernah public. Mungkin ada orang dah ada salinan. Tukar kunci dulu.' }]} />
+
+<Hint>Kunci yang bocor mesti berhenti berfungsi sebelum yang lain.</Hint>
+</Card>
+
+<Card id="see-untrack" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git rm --cached .env" label="Arahan git rm --cached .env menaip sendiri. .env kekal atas meja anda. Kad deleted untuk .env masuk ke dalam kotak." frames={[{ working: ['.env', 'app.js'] }, { working: ['.env', 'app.js'], staging: [{ name: '.env', tag: 'deleted' }] }]} />
+
+Kunci dah ditukar. Sekarang kemaskan. `git rm --cached .env` suruh Git berhenti jejak fail itu. Ia kekal dalam komputer anda.
+</Card>
+
+<Card id="try-fix" type="try">
+Berhenti jejak `.env`. Tambah ke `.gitignore`. Commit (titik simpan) dan push.
+
+<Interactive name="Sim" scenario="w11-l02" panels={['areas']} goal={{ lastCommitLacks: ['.env'], filesExist: ['.env'], fileContains: { '.gitignore': '.env' }, pushed: ['main'], clean: true }} hints={['Taip git rm --cached .env', 'Kemudian: echo ".env" >> .gitignore dan git add .gitignore', 'Kemudian: git commit -m "Stop tracking .env" dan git push']} success="Bersih! .env diabaikan, dan pembaikan dah ada di GitHub." />
+
+<Hint>Taip `git rm --cached .env`, kemudian `echo ".env" >> .gitignore`, kemudian `git add .gitignore`. Lepas tu commit dan push.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Commit terbaru anda tiada `.env`. Adakah kunci itu dah hilang dari GitHub?
+
+<Interactive name="Choice" options={[{ label: 'Belum. Commit lama masih tunjuk kunci itu', correct: true, why: 'Sejarah simpan setiap gambar. Sebab itu anda tukar kunci dulu.' }, { label: 'Ya, commit terbaru tiada .env', why: 'Sesiapa boleh buka commit lama dan baca.' }, { label: 'Ya, selepas muat semula halaman', why: 'Muat semula tak ubah apa-apa. Commit lama masih ada.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Langkah bagus, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tukar kunci sebelum buat apa-apa', good: true, why: 'Ini jadikan salinan yang bocor tak berguna.' }, { text: 'Padam .env dalam commit baru sahaja', good: false, why: 'Kunci masih ada dalam commit lama.' }, { text: 'Tambah .env ke .gitignore', good: true, why: 'Git takkan tawarkan fail itu lagi.' }, { text: 'Guna kunci lama, mungkin tak apa', good: false, why: 'Mungkin ada orang dah salin. Tukar sekarang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh uruskan rahsia yang terpush: tukar kunci dulu, kemudian kemaskan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Belum push? Tiada siapa nampak. Berhenti jejak dan abaikan `.env`, kemudian jalankan `git commit --amend --no-edit`. Dah push? Untuk padam kunci dari setiap commit lama, guna git filter-repo. Pelajaran Dunia 8 "Kunci bocor? Tukar dulu" tunjuk caranya. Push protection GitHub boleh sekat sesetengah rahsia sebelum keluar.
+</Card>

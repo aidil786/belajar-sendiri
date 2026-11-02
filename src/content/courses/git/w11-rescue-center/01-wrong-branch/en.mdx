@@ -1,0 +1,66 @@
+---
+id: git-w11-l01
+world: 11
+title: I committed on the wrong branch
+summary: "You will learn: how to move a commit to the branch it belongs on."
+minutes: 3
+xp: 15
+interactives: [GraphScene, Choice, Sim, SortCards]
+needs: [git-w03-l02]
+scenario: w11-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w11-l01-before" commands={['git commit -m "Add about page"']} label="A new commit, Add about page, lands on main. The main label and HEAD move up to it." />
+
+Oops. You committed your about page on `main`. It was meant for its own branch. This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+First question: did you push it? Not yet. So which fix fits?
+
+<Interactive name="Choice" options={[{ label: 'Move the commit to a new branch', correct: true, why: 'Nobody else has it yet, so you can move it freely.' }, { label: 'Revert it on main', why: 'Revert is for pushed commits. This one is still only yours.' }, { label: 'Delete the folder and start again', why: 'No need! Git can move the commit for you.' }]} />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="GraphScene" scenario="w11-l01" commands={['git branch about', 'git reset --hard HEAD~1']} label="A new label, about, appears on the Add about page commit. Then main moves back one commit, to Add style. The commit stays safe on about." />
+
+`git branch about` sticks a new label on your commit. `git reset --hard HEAD~1` moves main back one step. Your commit stays safe on about.
+</Card>
+
+<Card id="try-move" type="try">
+Your turn. Move the commit to a branch called `about`. Then switch to it.
+
+<Interactive name="Sim" scenario="w11-l01" panels={['graph']} goal={{ branchAt: { about: '^Add about page$', main: '^Add style$' }, currentBranch: 'about' }} hints={['First: git branch about', 'Then: git reset --hard HEAD~1', 'Last: git switch about']} success="Fixed! main is clean, and your page lives on about." />
+
+<Hint>Type `git branch about`, then `git reset --hard HEAD~1`, then `git switch about`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Careful: `reset --hard` also wipes changes you haven't committed. When is it safe here?
+
+<Interactive name="Choice" options={[{ label: 'When git status says the working tree is clean', correct: true, why: 'Nothing is waiting, so nothing gets lost. Your commit is safe on about.' }, { label: 'Always, no matter what', why: 'Uncommitted changes would be wiped. Commit or stash them first.' }, { label: 'Never, it deletes the commit', why: 'The about label keeps the commit safe. Only main moves.' }]} />
+</Card>
+
+<Card id="check-pushed" type="check">
+What if you had pushed it? Pick the fix for each case.
+
+<Interactive name="SortCards" buckets={[{ id: 'move', label: 'Move it (branch + reset)' }, { id: 'undo', label: 'Undo it (revert)' }]} items={[{ label: 'Only on my laptop', bucket: 'move', why: 'Only you have it, so moving it is fine.' }, { label: 'Already on GitHub', bucket: 'undo', why: 'Others may have it. Add an undo commit instead.' }, { label: 'A teammate pulled it', bucket: 'undo', why: 'Rewriting would clash with their copy. Revert is calm.' }, { label: 'I just made it, never pushed', bucket: 'move', why: 'Still yours alone. Move it.' }]} success="Sorted! Not pushed: move it. Pushed: undo it with revert." />
+</Card>
+
+<Card id="win" type="win">
+You can now move a commit to the branch it belongs on.
+</Card>
+
+<Card id="deeper" type="deeper">
+Does the right branch exist already? Switch to it and run `git cherry-pick main` to copy the commit. Then take it off main with `git reset --hard HEAD~1`. Already pushed? Run `git revert HEAD` on main and push. Then `git switch -c about` and `git cherry-pick main~1` bring your work over.
+</Card>

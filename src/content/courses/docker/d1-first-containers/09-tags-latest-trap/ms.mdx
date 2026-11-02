@@ -1,0 +1,74 @@
+---
+id: docker-d1-l09
+world: 1
+title: Tag dan perangkap latest
+summary: "Anda akan belajar: apa itu tag, dan kenapa latest boleh mengejutkan anda."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l08]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "What is an image?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" }
+---
+
+<Card id="hook" type="hook">
+Aina jalankan `docker run nginx` pada bulan Januari. Ben jalankan baris yang sama hari ini. Mereka dapat versi nginx yang berbeza! Macam mana?
+
+<Interactive name="Choice" options={[{ label: 'nginx bermaksud nginx:latest, dan latest berubah', correct: true, why: 'Nama sama, tapi pek di sebaliknya sudah bertukar. Kad seterusnya tunjuk caranya.' }, { label: 'Ben tersilap taip', why: 'Teks sama, huruf demi huruf. Pek di sebalik nama itu yang bertukar.' }, { label: 'Docker pilih versi secara rawak', why: 'Bukan rawak. latest menuding ke mana pembuatnya alihkan.' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker pull nginx', 'docker images']} label="docker pull nginx paparkan Using default tag: latest, kemudian tarik nginx:latest. docker images kini senaraikan nginx:1.30-alpine dan nginx:latest bersebelahan." />
+
+**<Term id="tag">Tag</Term>** ialah label selepas titik bertindih, contohnya `1.30-alpine`. Tiada tag? Docker kata `Using default tag: latest`.
+</Card>
+
+<Card id="try-sort" type="try">
+Label mana yang boleh tiba-tiba beri anda versi baru?
+
+<Interactive name="SortCards" buckets={[{ id: 'jump', label: 'Mungkin lompat ke versi baru' }, { id: 'stay', label: 'Kekal pada satu barisan versi' }]} items={[{ label: 'nginx', bucket: 'jump', why: 'Tiada tag bermaksud latest.' }, { label: 'nginx:latest', bucket: 'jump', why: 'Pembuatnya alihkan latest ke setiap keluaran baru.' }, { label: 'nginx:1.30-alpine', bucket: 'stay', why: 'Cuma pembaikan kecil 1.30. Tak pernah 1.31.' }, { label: 'postgres:18-alpine', bucket: 'stay', why: 'Postgres 18 sahaja. Tiada lompatan mengejut ke 19.' }, { label: 'redis:latest', bucket: 'jump', why: 'latest lagi. Ia berubah.' }]} success="Tetapkan tag versi. Lepas itu tiada kejutan." />
+</Card>
+
+<Card id="predict" type="predict">
+Adakah <Term id="latest-tag">latest</Term> sentiasa versi paling baru dan paling selamat?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia cuma nama yang pembuatnya boleh alihkan.', correct: true, why: 'Docker tak menyemaknya. Untuk nginx hari ini, latest ialah 1.31, bukan barisan stabil 1.30.' }, { label: 'Ya. Docker semak setiap hari.', why: 'Docker tak pernah semak latest. Ia cuma nama lalai.' }, { label: 'Ya. latest sentiasa bermaksud stabil.', why: 'Untuk nginx, latest ikut barisan terbaru (1.31), bukan 1.30 yang stabil.' }]} />
+</Card>
+
+<Card id="check-versions" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run -d --name pinned -p 8080:80 nginx:1.30-alpine', 'docker run -d --name newest -p 8081:80 nginx', 'curl -sI localhost:8080 | grep Server', 'curl -sI localhost:8081 | grep Server']} label="Dua bekas, kedua-duanya nginx. pinned jawab Server: nginx/1.30.6. newest, daripada latest, jawab Server: nginx/1.31.8." />
+
+Dua bekas, kedua-duanya "nginx". Satu jawab 1.30.6, satu lagi 1.31.8. Anda uji yang satu, tapi produksi dapat yang lain. Itulah **perangkap latest**.
+</Card>
+
+<Card id="try-pin" type="try">
+Giliran anda. Jalankan web daripada tag yang tetap: nginx 1.30 atas Alpine. Tiada lompatan mengejut.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'], lastTyped: '^docker (container )?run (.* )?nginx:1\\.30-alpine$' }} hints={['Taip docker run -d --name web nginx:1.30-alpine']} success="Sudah ditetapkan! web jalankan nginx 1.30, hari ini dan bulan depan." />
+</Card>
+
+<Card id="check-typo" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker pull nginx:9.9']} fails={['docker pull nginx:9.9']} label="docker pull nginx:9.9 gagal: failed to resolve reference, nginx:9.9 not found." />
+
+Tag yang tak wujud? Ralat sebenar berakhir dengan `nginx:9.9: not found`. Maksudnya: peti sejuk tiada pek dengan label itu.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih tag dengan sengaja dan elak perangkap latest.
+</Card>
+
+<Card id="deeper" type="deeper">
+`1.30-alpine` pun dapat pembaikan kecil, jadi pek itu masih boleh berubah sedikit. Untuk bekukan satu pek yang tepat, guna digest: `nginx@sha256:…`. Dunia D5 terangkan digest. Satu peraturan buat masa ini: jangan guna `latest` dalam produksi.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l09-rep" steps={[{ id: 'pull', text: 'Tarik tag yang tetap.', command: 'docker pull nginx:1.30-alpine' }, { id: 'list', text: 'Lihat tagnya dalam senarai.', command: 'docker images nginx' }, { id: 'hub', text: 'Buka hub.docker.com/_/nginx dan cari tab Tags. Tag mana yang latest hari ini?' }]} success="Anda baca tag macam pakar." />
+</Card>

@@ -1,0 +1,74 @@
+---
+id: linux-l2-l05
+world: 2
+title: "Processes: ps and top"
+summary: "You will learn: to see every program at work on the server and spot the one hogging the CPU."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l2-l04]
+scenario: linux-l2-procs
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ps (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/ps.1.en.html" }
+  - { label: "top (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/top.1.en.html" }
+  - { label: "pgrep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/pgrep.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+The server feels slow. Customers wait 10 seconds for the menu page. What do you check first?
+
+<Interactive name="Choice" options={[{ label: 'Which programs are working hardest', correct: true, why: 'One busy program can slow everything. Find it first.' }, { label: 'Buy a bigger server', why: 'Maybe later. First find out what eats the power.' }, { label: 'Restart the server', why: 'The problem may come straight back. Look before you act.' }]} />
+</Card>
+
+<Card id="see-ps" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-procs" intro={['ps aux']} />
+
+Every program at work is a <Term id="process">process</Term>, like a cook on shift. `ps aux` lists them all. Each has a staff number: its **PID**.
+</Card>
+
+<Card id="spot-cpu" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND' }, { text: 'root          69  0.0  0.1   4296  2796 ?        Ss   08:30   0:00 /usr/sbin/cron -f' }, { text: 'www-data     120  0.0  0.2  15008  3644 ?        S    08:30   0:00 nginx: worker process' }, { text: 'you         1241 99.0  0.1   5817  2573 ?        R    08:55   4:45 bash /home/you/bin/stock-check.sh', target: true }, { text: 'you         1243  0.0  0.2   6400  3756 pts/0    R+   09:00   0:00 ps aux' }]} prompt="Tap the process that eats the CPU. Look at the %CPU column." success="stock-check.sh: 99% of one CPU, for almost 5 minutes." />
+</Card>
+
+<Card id="try-top" type="try">
+`top` shows the same, live, busiest first. Run `top`, look at the top row, then press q.
+
+<Interactive name="LinuxSim" scenario="linux-l2-procs" goal={{ typed: '^top$', noForeground: true }} hints={['Type top and press Enter.', 'Press the q (quit) button to leave top.']} solution={['top', 'q']} success="PID 1241, bash, near 100% CPU. That is the stuck script." />
+
+<Hint>`top` holds the terminal until you press q.</Hint>
+</Card>
+
+<Card id="sort-columns" type="check">
+Which column tells you what?
+
+<Interactive name="SortCards" buckets={[{ id: 'pid', label: 'PID: staff number' }, { id: 'cpu', label: '%CPU: how hard it works' }, { id: 'user', label: 'USER: who runs it' }]} items={[{ label: '1241', bucket: 'pid', why: 'A number that names one process.' }, { label: '99.0', bucket: 'cpu', why: 'Nearly all of one CPU.' }, { label: 'www-data', bucket: 'user', why: 'The web staff runs nginx workers.' }, { label: '0.0', bucket: 'cpu', why: 'Resting, waiting for work.' }]} success="PID names it, %CPU weighs it, USER owns it." />
+</Card>
+
+<Card id="try-pgrep" type="try">
+Long lists are tiring. Ask for the PID by name: `pgrep -f stock-check`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-procs" goal={{ lastTyped: '^pgrep (-f )?.*stock' }} hints={['Type pgrep -f stock-check']} solution={['pgrep -f stock-check']} success="1241. Keep that number: the next lesson stops it." />
+
+<Hint>`-f` searches the whole command line, not just the program name.</Hint>
+</Card>
+
+<Card id="predict-ps" type="predict">
+You type plain `ps`, with no `aux`. Do you see `stock-check.sh`?
+
+<Interactive name="Choice" options={[{ label: 'No. Plain ps shows only this terminal’s programs.', correct: true, why: 'stock-check runs outside your terminal. aux means all users, all terminals.' }, { label: 'Yes. ps always shows everything.', why: 'Only with aux (or -e). Plain ps is short.' }, { label: 'Only if it uses the CPU', why: 'Busy or not, plain ps skips other terminals.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now list the server's processes and find the one hogging the CPU.
+</Card>
+
+<Card id="deeper" type="deeper">
+In `top`, `M` sorts by memory and `P` by CPU. `ps aux | grep nginx` filters the list with a pipe. `htop` is a friendlier top: you install it in lesson 10.
+
+Real rep (optional): on Linux, run `top` for ten seconds, then press q. Which process is busiest?
+</Card>

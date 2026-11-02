@@ -1,0 +1,70 @@
+---
+id: docker-d4-boss
+world: 4
+title: One command, whole shop
+summary: "You will learn: to design, open and close web, API, database and cache with one command."
+minutes: 6
+xp: 50
+interactives: [ComposeCanvas, OrderList, KitchenSim, Choice, SwipeJudge]
+needs: [docker-d4-m1]
+scenario: d4-boss
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker Compose overview", url: "https://docs.docker.com/compose/" }
+  - { label: "Control startup order", url: "https://docs.docker.com/compose/how-tos/startup-order/" }
+  - { label: "Networking in Compose", url: "https://docs.docker.com/compose/how-tos/networking/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Kedai Kancil opens tomorrow. Web, API, database and cache must start with one command. Room 1: design the set meal.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Shows the shop page.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Takes the orders.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: '${DB_PASSWORD:?add DB_PASSWORD to .env}' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '2s', retries: 10 }, means: 'Keeps the orders.' }, { id: 'cache', image: 'redis:8-alpine', healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: '2s', retries: 10 }, means: 'Remembers hot menu items.' }]} goal={{ services: ['web', 'api', 'db', 'cache'], volumes: { db: 'db-data' }, networks: { web: ['front'], api: ['front', 'back'], db: ['back'], cache: ['back'] }, dependsOn: { api: { db: 'service_healthy', cache: 'service_healthy' } } }} prompt="All four dishes. db keeps db-data. web on front, db and cache on back, api on both. api waits for db and cache to be healthy." success="Room 1 cleared! The front line never reaches the database." />
+
+<Hint>api is the only dish on both phone lines.</Hint>
+</Card>
+
+<Card id="predict-order" type="predict">
+Room 2: in what order will Compose start them?
+
+<Interactive name="OrderList" items={['db and cache', 'api', 'web']} label="First to start at the top" success="Room 2 cleared! Waiters start after the dishes they wait for." />
+</Card>
+
+<Card id="try-up" type="try">
+Room 3: open the shop with one command. A red line? Read it kindly, fix it, try again.
+
+<Interactive name="KitchenSim" scenario="d4-boss" keys="compose" goal={{ composeUp: { project: 'kedai-kancil', services: ['web', 'api', 'db', 'cache'] }, reachable: 'localhost:8080' }} hints={['Read the red line: which blank has no value?', 'Type echo "DB_PASSWORD=devpass" > .env', 'Then docker compose up -d again.']} success="Room 3 cleared! Four dishes up, and the page answers." />
+
+<Hint>Start with `docker compose up -d`.</Hint>
+</Card>
+
+<Card id="check-logs" type="check">
+Room 4: the page loads, but orders fail. Which command shows what the API said?
+
+<Interactive name="Choice" options={[{ label: 'docker compose logs api', correct: true, why: 'Logs are the API’s own words. Start there.' }, { label: 'docker compose ps', why: 'ps shows states, not what the API said.' }, { label: 'docker compose config', why: 'config shows the file, not what happened.' }]} />
+</Card>
+
+<Card id="check-close" type="check">
+Room 5: closing time. Swipe right for a safe way to close. Swipe left for a risky one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'docker compose down', good: true, why: 'Boxes and phone lines go. The orders locker stays.' }, { text: 'docker compose stop', good: true, why: 'Everything pauses. Nothing is deleted.' }, { text: 'docker compose down -v', good: false, why: 'It deletes the db-data locker. Every order is gone.' }, { text: 'docker rm -f on each box by hand', good: false, why: 'Slow, easy to miss one, and the phone lines stay.' }]} />
+</Card>
+
+<Card id="try-close" type="try">
+Final room: close for the night. Keep the orders.
+
+<Interactive name="KitchenSim" scenario="d4-boss" keys="compose" intro={['echo "DB_PASSWORD=devpass" > .env', 'docker compose up -d']} goal={{ composeDown: 'kedai-kancil', volumeExists: ['kedai-kancil_db-data'] }} hints={['One command, no -v.', 'Type docker compose down']} success="Boss cleared! The shop is closed and the orders are safe." />
+
+<Hint>`docker compose down`, without `-v`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now open and close a whole shop with one command.
+</Card>
+
+<Card id="deeper" type="deeper">
+The cache's health check runs `redis-cli ping`. Redis answers `PONG` when it is ready. The `back` phone line keeps the database away from web: only api can call it. Want to do this on your own machine? That is Mission 1, with your own `kedai-kancil` repo.
+</Card>

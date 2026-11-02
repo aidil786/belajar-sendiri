@@ -1,0 +1,74 @@
+---
+id: k8s-k8-boss
+world: 8
+title: Terbitkan capstone
+summary: "Anda akan belajar: kongsi Kedai Kancil dengan rajah, video demo dan buktinya."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, MarkdownPlayground, Choice, SwipeJudge, Mission, MissionCheck, OrderList]
+needs: [k8s-k8-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "Creating diagrams (Mermaid)", url: "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams" }
+  - { label: "Pinning items to your profile", url: "https://docs.github.com/en/account-and-profile/how-tos/profile-customization/pinning-items-to-your-profile" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+---
+
+<Card id="hook" type="hook">
+Misi terakhir. Medan selera sedang cari pekerja, dan Kedai Kancil ialah bukti anda. Tapi buat masa ini, tiada siapa boleh nampak. Tekan setiap misi yang anda dah siapkan.
+
+<Interactive name="TimelineTap" events={[{ when: 'M1', title: 'Bungkus', text: 'docker compose up hidupkan seluruh kedai.' }, { when: 'M2', title: 'Hantar', text: 'Pipeline hijau push image ke GHCR.' }, { when: 'M3', title: 'Lancarkan', text: 'Pipeline undurkan satu keluaran yang rosak.' }, { when: 'M4', title: 'Jalankan', text: 'Kedai tahan bila pod dibunuh dan trafik melonjak.' }, { when: 'M5', title: 'Kawal', text: 'Semakan polisi tolak image root.' }, { when: 'M6', title: 'Lepas tangan', text: 'Satu baris dalam Git sampai ke kluster. Tanpa kubectl.' }]} />
+</Card>
+
+<Card id="try-readme" type="try">
+Peringkat 1: draf README. Tambah pautan demo dan bukti misi anda.
+
+<Interactive name="MarkdownPlayground" initial={'# Kedai Kancil\n\nAplikasi kedai kecil, dihantar oleh pipeline ke Kubernetes.\n\n## Cara semuanya bersambung\n\n```mermaid\nflowchart LR\n  browser --> gateway --> web\n  gateway --> api --> db\n```\n'} prompt="Tambah bahagian ## Demo dengan satu pautan. Kemudian tambah bahagian ## Misi dengan tugasan bertanda." goal={{ mustMatch: ['^##\\s+Demo', '\\]\\(https?://', '^##\\s+(Missions|Misi)', '^- \\[x\\] '], hint: ['Mulakan satu baris dengan ## Demo', 'Tambah pautan, contohnya [Tonton demo](https://example.com/demo)', 'Mulakan satu baris dengan ## Misi', 'Tambah tugasan bertanda, contohnya - [x] M1 Bungkus'] }} success="README itu ceritakan semuanya!" />
+
+<Hint>Tugasan bertanda bermula dengan sengkang, ruang, kemudian [x].</Hint>
+</Card>
+
+<Card id="predict-evidence" type="predict">
+Peringkat 2: bukti. Apa bukti terbaik untuk Misi 2?
+
+<Interactive name="Choice" options={[{ label: 'Pautan ke larian pipeline hijau di main', correct: true, why: 'Sesiapa pun boleh klik dan lihat. Itu bukti sebenar.' }, { label: '"Percayalah, ia berfungsi."', why: 'Dakwaan mudah dibuat. Pautan ialah bukti.' }, { label: 'Tangkapan skrin pipeline orang lain', why: 'Jangan sekali-kali tunjuk kerja orang lain sebagai kerja anda. Pautkan larian anda sendiri.' }]} />
+</Card>
+
+<Card id="check-video" type="check">
+Peringkat 3: video demo. Nilai setiap idea.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ubah satu baris dalam Git, kemudian tunjuk kluster mengikutnya', good: true, why: 'Itulah seluruh kursus dalam satu detik.' }, { text: 'Sepuluh minit menaip tanpa suara', good: false, why: 'Pastikan dekat 2 minit. Terangkan setiap langkah.' }, { text: 'Token sebenar kelihatan dalam terminal', good: false, why: 'Sembunyikan setiap rahsia sebelum merakam.' }, { text: 'Padam satu pod dan lihat ia kembali', good: true, why: 'Pulih sendiri, secara langsung. Penonton akan ingat.' }, { text: 'Akhiri dengan apa yang anda nak baiki seterusnya', good: true, why: 'Ia tunjuk anda terus belajar.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Peringkat 4: terbitkan betul-betul. Tanda setiap langkah sambil anda buat. Mungkin ambil beberapa malam, dan itu tak apa.
+
+<Interactive name="Mission" id="k8s-k8-boss-publish" steps={[{ id: 'secrets', text: 'Pastikan repo tiada token atau kata laluan. Jika ada yang tercicir, tukar dulu.' }, { id: 'readme', text: 'Tulis README: satu ayat jelas, rajahnya, dan cara menjalankannya.' }, { id: 'video', text: 'Rakam demo 2 minit. Muat naik dan pautkan dalam README.' }, { id: 'm1', text: 'Bukti misi 1: compose.yaml dan arahan satu baris untuk mula.' }, { id: 'm2', text: 'Bukti misi 2: pautan ke larian pipeline hijau di main.' }, { id: 'm3', text: 'Bukti misi 3: pautan ke larian yang undurkan keluaran rosak.' }, { id: 'm4', text: 'Bukti misi 4: nota anda tentang pod dibunuh dan trafik melonjak.' }, { id: 'm5', text: 'Bukti misi 5: log ketika polisi tolak image root.' }, { id: 'm6', text: 'Bukti misi 6: pautan ke commit satu baris yang Argo CD selaraskan.' }, { id: 'add', text: 'Masukkan README ke dalam kotak.', command: 'git add README.md' }, { id: 'commit', text: 'Commit dengan mesej yang jelas.', command: 'git commit -m "docs: add README with diagram and demo"' }, { id: 'push', text: 'Hantar ke GitHub.', command: 'git push' }, { id: 'public', text: 'Pastikan repo itu public.' }, { id: 'pin', text: 'Pin Kedai Kancil pada profil GitHub anda.' }]} success="Kedai Kancil dah dikenali dunia!" />
+
+<Hint>Misi 4 hingga 6 jalan dalam kluster anda sendiri. Nota dan log anda ialah buktinya.</Hint>
+</Card>
+
+<Card id="check-real" type="check">
+Minta GitHub sahkan. Taip nama pengguna dan nama repo anda.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Kedai Kancil ialah repo public' }, { type: 'file', repo: 'kedai-kancil', path: 'README.md', label: 'Ia ada README' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 1, label: 'Pipelinenya dah jalan sekurang-kurangnya sekali' }]} success="GitHub boleh nampak semuanya. Anda dah berjaya hantar!" />
+</Card>
+
+<Card id="check-launch" type="check">
+Peringkat terakhir: beritahu orang. Susun langkah pelancaran anda ikut urutan.
+
+<Interactive name="OrderList" items={['Semak rahsia buat kali terakhir', 'Jadikan repo itu public', 'Pin pada profil anda', 'Tambah pautan dalam CV anda', 'Kongsi hantaran pendek tentang apa yang anda belajar']} label="Langkah pertama di atas" success="Dah dilancarkan! Kini orang boleh jumpa kerja anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tunjuk perjalanan Ship It anda dalam satu repo public.
+</Card>
+
+<Card id="deeper" type="deeper">
+Belum dapat tawaran kerja? Itu biasa. Hampir semua orang ambil masa untuk dapat kerja. Teruskan kemas kini repo sedikit demi sedikit. Minta kawan ikut README anda dari awal. Bantu satu projek sumber terbuka. Setiap dunia sentiasa terbuka. Asah apa-apa kemahiran yang anda mahu.
+</Card>

@@ -1,0 +1,63 @@
+---
+id: git-w09-l09
+world: 9
+title: Code search
+summary: "You will learn: how to find code across GitHub with search filters."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, SpotLines]
+needs: [git-w09-l08]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About GitHub Code Search", url: "https://docs.github.com/en/search-github/github-code-search/about-github-code-search" }
+  - { label: "Code search syntax", url: "https://docs.github.com/en/search-github/github-code-search/understanding-github-code-search-syntax" }
+  - { label: "gh search code", url: "https://cli.github.com/manual/gh_search_code" }
+---
+
+<Card id="hook" type="hook">
+Your team has 30 repos. Where is `fetchWeather` used? Do you clone them all and look?
+
+<Interactive name="Choice" options={[{ label: 'Search all the code on GitHub at once', correct: true, why: 'GitHub can search across repos in seconds.' }, { label: 'Clone all 30 and look by hand', why: 'That works. But it takes ages.' }, { label: 'Ask in the group chat and wait', why: 'Someone might know. Search knows for sure.' }]} />
+</Card>
+
+<Card id="see-search" type="see">
+**<Term id="code-search">Code search</Term>** looks through code across GitHub. Type in the search box at the top of any page. Sign in first: code search needs an account. Then add filters to zoom in.
+</Card>
+
+<Card id="try-sort" type="try">
+Filters are called <Term id="search-qualifier">qualifiers</Term>. Which one fits each search?
+
+<Interactive name="SortCards" buckets={[{ id: 'repo', label: 'repo:' }, { id: 'path', label: 'path:' }, { id: 'lang', label: 'language:' }]} items={[{ label: 'Only in aina-codes/diary', bucket: 'repo', why: 'repo: takes the owner and the name.' }, { label: 'Only in the tests folder', bucket: 'path', why: 'path: matches the file path.' }, { label: 'Only Python files', bucket: 'lang', why: 'language: picks one language.' }, { label: 'Only in the cli/cli project', bucket: 'repo', why: 'One repo, owner and name.' }, { label: 'Only files under src/', bucket: 'path', why: 'src/ is part of the path.' }, { label: 'Only Go code', bucket: 'lang', why: 'language:go does that.' }]} success="Sorted! Mix them to zoom in fast." />
+
+<Hint>Ask: which project, which folder, or which language?</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You search `symbol:fetchWeather`. What comes back?
+
+<Interactive name="Choice" options={[{ label: 'Where fetchWeather is defined', correct: true, why: 'symbol: finds definitions, like the function itself.' }, { label: 'Every line that calls it', why: 'symbol: shows definitions only, not the calls.' }, { label: 'Files named fetchWeather', why: 'That would be path:.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+You searched `TODO path:src/`. Tap every result that matches.
+
+<Interactive name="SpotLines" lines={[{ text: 'src/app.js: // TODO: add dark mode', target: true }, { text: 'docs/notes.md: TODO: write more' }, { text: 'src/api/weather.js: // TODO: cache results', target: true }, { text: 'test/app.test.js: // TODO: more tests' }]} prompt="Tap every result that matches." success="Right! Only paths with src/ in them match." />
+
+<Hint>Look at the start of each line: the file path.</Hint>
+</Card>
+
+<Card id="check" type="check">
+You want the exact phrase "sparse index", with the space. What do you type?
+
+<Interactive name="Choice" compact options={[{ label: '`"sparse index"`', correct: true, why: 'Quotes find the exact phrase.' }, { label: '`sparse index`', why: 'That finds files with both words, anywhere.' }, { label: '`sparse OR index`', why: 'That finds files with either word.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find code across GitHub in seconds.
+</Card>
+
+<Card id="deeper" type="deeper">
+Only the default branch is searched. Put a regex between slashes: `/fetch.*Weather/`. Use NOT to skip things: `log4j NOT is:fork`. In the terminal, `gh search code` works too. But it uses GitHub's older search engine, so results can differ.
+</Card>

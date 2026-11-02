@@ -1,0 +1,72 @@
+---
+id: linux-l4-l07
+world: 4
+title: "Gelung dan kod keluar"
+summary: "Anda akan belajar: mengulang langkah dengan gelung for, dan membaca kod keluar program."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [linux-l4-l06]
+scenario: linux-l4-loops
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: looping constructs", url: "https://www.gnu.org/software/bash/manual/html_node/Looping-Constructs.html" }
+  - { label: "Bash manual: exit status", url: "https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html" }
+  - { label: "Bash manual: lists (&& and ||)", url: "https://www.gnu.org/software/bash/manual/html_node/Lists.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-loops" intro={['./check.sh; echo $?']} />
+
+Penyemak hidangan kata satu hidangan tiada. Kemudian `echo $?` cetak `1`. Apa maksud 1 itu?
+</Card>
+
+<Card id="see-loop" type="see">
+<Term id="loop">Gelung</Term> ulang langkah untuk setiap item. Ini `check.sh`. Tekan baris yang memulakan gelung.
+
+<Interactive name="SpotLines" lines={[{ text: 'missing=0' }, { text: 'for dish in nasi-lemak roti-canai teh-tarik; do', target: true }, { text: '  if [ -f "menu/$dish.txt" ]; then' }, { text: '    echo "ok: $dish"' }, { text: '  else' }, { text: '    echo "missing: $dish"' }, { text: '    missing=$((missing + 1))' }, { text: '  fi' }, { text: 'done' }, { text: 'exit "$missing"' }]} prompt="Tekan permulaan gelung." success="for dish in …; do … done: langkah berjalan sekali untuk setiap hidangan." />
+</Card>
+
+<Card id="try-loop" type="try">
+Taip gelung anda sendiri, semuanya dalam satu baris.
+
+<Interactive name="LinuxSim" scenario="linux-l4-loops" goal={{ lastTyped: '^for ' }} hints={['for i in 1 2 3; do echo "table $i"; done']} solution={['for i in 1 2 3; do echo "table $i"; done']} success="Tiga meja, satu baris." />
+</Card>
+
+<Card id="see-codes" type="see">
+Setiap program tamat dengan **exit code** (kod keluar): tanda bagus (0) atau nombor untuk masalah. `$?` tunjuk yang terakhir. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '0: semua okey' }, { id: 'bad', label: 'Bukan 0: ada yang tak kena' }]} items={[{ label: 'true, kemudian echo $? cetak 0', bucket: 'ok', why: 'true sentiasa berjaya.' }, { label: 'ls nope, kemudian echo $? cetak 2', bucket: 'bad', why: 'Fail itu tiada.' }, { label: 'check.sh dengan satu hidangan tiada: 1', bucket: 'bad', why: 'Skrip keluar dengan bilangan yang tiada.' }, { label: 'Arahan yang tak wujud: 127', bucket: 'bad', why: '127 bermaksud arahan tak dijumpai.' }]} success="Sifar sahaja tanda bagus." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu hidangan masih tiada. Anda jalankan `./check.sh && echo "Open the shop"`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Senarai dicetak, tetapi bukan Open the shop', correct: true, why: '&& jalankan langkah seterusnya hanya selepas 0.' }, { label: 'Kedua-duanya dicetak', why: 'check.sh tamat dengan 1, jadi && berhenti di situ.' }, { label: 'Tiada apa dicetak', why: 'check.sh masih cetak senarainya dahulu.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Tambah hidangan yang tiada, kemudian jalankan penyemak lagi. Ia patut tamat dengan 0.
+
+<Interactive name="LinuxSim" scenario="linux-l4-loops" goal={{ fileExists: ['~/menu/teh-tarik.txt'], scriptExitCode: { '~/check.sh': 0 } }} hints={['touch menu/teh-tarik.txt', './check.sh; echo $?']} solution={['touch menu/teh-tarik.txt', './check.sh']} success="ok, ok, ok. Kod keluar 0: buka kedai!" />
+</Card>
+
+<Card id="check" type="check">
+Bina: jalankan penyemak, dan hanya jika ia gagal, sebut "Not yet".
+
+<Interactive name="CommandBuilder" pieces={[{ text: './check.sh', means: 'jalankan penyemak' }, { text: '||', means: 'hanya jika ia gagal (bukan 0)' }, { text: 'echo "Not yet"', means: 'sebut Not yet' }]} decoys={[{ text: '&&', means: 'hanya jika ia berjaya (0)' }]} success="|| untuk pelan B. && untuk langkah seterusnya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat gelung untuk setiap item dan baca kod keluar.
+</Card>
+
+<Card id="deeper" type="deeper">
+`while [ … ]; do … done` berulang selagi soalannya kata ya. systemd juga baca kod keluar anda. Servis timer tunjuk failed bila skripnya tamat bukan sifar. Jadi tamatkan skrip dengan nombor yang bermakna.
+
+<Interactive name="Mission" id="linux-l4-l07-rep" steps={[{ id: 'loop', text: 'Kira baris setiap fail .txt di sini.', command: 'for f in *.txt; do wc -l "$f"; done' }, { id: 'code', text: 'Buat silap dengan sengaja dan baca kodnya.', command: 'ls nope; echo $?' }]} success="Gelung dan kod di mesin anda sendiri." />
+</Card>

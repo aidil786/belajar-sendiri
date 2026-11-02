@@ -1,0 +1,75 @@
+---
+id: docker-d3-l03
+world: 3
+title: Bind mounts and tmpfs
+summary: "You will learn: to share a laptop folder with a container, and to keep data in memory only."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, Choice, LockerTest, SortCards, Mission]
+needs: [docker-d3-l02]
+scenario: d3-site
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Bind mounts", url: "https://docs.docker.com/engine/storage/bind-mounts/" }
+  - { label: "Docker docs: tmpfs mounts", url: "https://docs.docker.com/engine/storage/tmpfs/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-site-baked" commands={['curl -s localhost:8080', 'echo "<h1>Kedai Kancil: open today</h1>" > site/index.html', 'cat site/index.html', 'curl -s localhost:8080']} label="The page says Kedai Kancil. The file on the laptop now says open today. curl still shows the old page." />
+
+You fixed the shop page on your laptop. The box still shows the old page. It was baked into the image. Rebuild for every typo?
+</Card>
+
+<Card id="see-bind" type="see">
+A **<Term id="bind-mount">bind mount</Term>** slides your own shelf into the lunchbox. The box sees your laptop folder itself, not a copy. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d --name site', means: 'Start the site box' }, { text: '-p 8080:80', means: 'Open hatch 8080' }, { text: '-v ./site:/usr/share/nginx/html:ro', means: 'Your ./site shelf, where nginx looks; ro = read-only' }, { text: 'nginx:1.30-alpine', means: 'Plain nginx, no baking' }]} decoys={[{ text: '-v site:/usr/share/nginx/html', means: 'No ./ in front: that is a locker named site' }]} success="Right! ./ means a folder on your laptop." />
+</Card>
+
+<Card id="try-bind" type="try">
+Run site with your ./site shelf. Then change index.html and curl again.
+
+<Interactive name="KitchenSim" scenario="d3-site" goal={{ running: ['site'], reachableContains: { 'localhost:8080': 'open today' }, lastTyped: '^curl' }} hints={['Type docker run -d --name site -p 8080:80 -v ./site:/usr/share/nginx/html:ro nginx:1.30-alpine', 'Type echo "<h1>Kedai Kancil: open today</h1>" > site/index.html', 'Type curl localhost:8080']} success="The page changed at once. No rebuild!" />
+
+<Hint>The folder needs `./` in front: `-v ./site:/usr/share/nginx/html:ro`.</Hint>
+</Card>
+
+<Card id="check-ro" type="check">
+site runs with `:ro`. Something in the box tries to save a file in that folder. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It gets "Read-only file system"', correct: true, why: 'ro = read-only. The box can look at your shelf but not change it.' }, { label: 'The file lands on your laptop', why: 'Only without :ro. Then the box could change your real files.' }, { label: 'The file goes into a locker', why: 'There is no locker here. It is your shelf, locked for reading.' }]} />
+</Card>
+
+<Card id="see-tmpfs" type="see">
+<Interactive name="KitchenReplay" scenario="d3-fresh" commands={['docker run -d --name app --tmpfs /tmp/cache alpine:3.22 sleep 3600', 'docker exec app sh -c "echo hot > /tmp/cache/menu.txt"', 'docker exec app cat /tmp/cache/menu.txt', 'docker restart app', 'docker exec app ls /tmp/cache/menu.txt']} fails={['docker exec app ls /tmp/cache/menu.txt']} label="menu.txt is written to /tmp/cache and read back. After docker restart app, ls says No such file or directory." />
+
+**<Term id="tmpfs">tmpfs</Term>** is a note on a whiteboard: memory only. It is fast and never touches the disk. Every stop wipes it.
+</Card>
+
+<Card id="predict" type="predict">
+Four places to keep a file. Guess first, then run it.
+
+<Interactive name="LockerTest" ask={['restart', 'recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="check-sort" type="check">
+Pick the right place for each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'volume', label: 'Locker (volume)' }, { id: 'bind', label: 'Your shelf (bind mount)' }, { id: 'tmpfs', label: 'Whiteboard (tmpfs)' }]} items={[{ label: 'The Postgres data folder', bucket: 'volume', why: 'Docker looks after it, and it outlives every box.' }, { label: 'Your site while you edit it', bucket: 'bind', why: 'Edits on your laptop show up at once.' }, { label: 'A short-lived cache', bucket: 'tmpfs', why: 'Fast, and fine to lose.' }, { label: 'Uploads that must survive updates', bucket: 'volume', why: 'Updates make new boxes. The locker stays.' }, { label: 'A config file you tweak on your laptop', bucket: 'bind', why: 'Change it in your editor; the box sees it.' }]} success="Locker, shelf, whiteboard: each has its job." />
+</Card>
+
+<Card id="win" type="win">
+You can now use bind mounts and tmpfs.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--mount type=bind,src=./site,dst=/data` is the long form. It refuses a folder that doesn't exist; `-v` quietly makes an empty one. On Docker Desktop, volumes are faster than bind mounts.
+
+Real rep (optional), in your own project folder:
+
+<Interactive name="Mission" id="d3-l03-rep" steps={[{ id: 'folder', text: 'Make a site folder with a page.', command: 'mkdir -p site && echo "<h1>Hello</h1>" > site/index.html' }, { id: 'run', text: 'Serve it with a bind mount.', command: 'docker run -d --name site -p 8080:80 -v ./site:/usr/share/nginx/html:ro nginx:1.30-alpine' }, { id: 'edit', text: 'Edit index.html in your editor. Refresh localhost:8080.' }, { id: 'clean', text: 'Remove the box. Your folder stays.', command: 'docker rm -f site' }]} success="You edited a live site with no rebuild." />
+</Card>

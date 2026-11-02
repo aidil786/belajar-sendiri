@@ -1,0 +1,69 @@
+---
+id: docker-d6-l07
+world: 6
+title: "Why Mac and Windows need a Linux VM"
+summary: "You will learn: why Docker Desktop runs a small Linux VM, and what that changes for you."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, SortCards, KitchenReplay, OrderList, Mission]
+needs: [docker-d6-l06]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Desktop: Virtual Machine Manager", url: "https://docs.docker.com/desktop/features/vmm/" }
+  - { label: "Docker Desktop: WSL 2 backend", url: "https://docs.docker.com/desktop/features/wsl/" }
+  - { label: "Docker Desktop on Linux", url: "https://docs.docker.com/desktop/setup/install/linux/" }
+  - { label: "docker version", url: "https://docs.docker.com/reference/cli/docker/version/" }
+---
+
+<Card id="hook" type="hook">
+Aina runs nginx in Docker Desktop on her Mac. She types `ps aux` on the Mac. nginx is not in the list! Why?
+
+<Interactive name="Choice" options={[{ label: 'It runs inside a small Linux VM that Docker Desktop starts', correct: true, why: 'The process is real. It lives in the VM’s Linux, not in macOS.' }, { label: 'On a Mac, containers are not processes', why: 'They are processes, just inside the VM.' }, { label: 'ps on a Mac hides Docker', why: 'ps lists all of macOS. nginx simply isn’t in macOS.' }]} />
+</Card>
+
+<Card id="see-vm" type="see">
+<Interactive name="Transcript" title="zsh" prompt="%" label="On a Mac with Docker Desktop: the docker command is a macOS program (darwin), and the engine it talks to runs Linux." lines={[{ cmd: "docker version --format '{{.Client.Os}} / {{.Server.Os}}'" }, { out: 'darwin / linux' }]} />
+
+Containers borrow a Linux kernel, and macOS has a different one. So Docker Desktop starts a small **<Term id="linux-vm">Linux VM</Term>**. The engine lives there.
+</Card>
+
+<Card id="try-where" type="try">
+Where does the container’s process really run? Sort each setup.
+
+<Interactive name="SortCards" buckets={[{ id: 'direct', label: 'Straight on the computer' }, { id: 'vm', label: 'Inside a small Linux VM' }]} items={[{ label: 'Linux laptop with Docker Engine', bucket: 'direct', why: 'Same kernel, no VM needed.' }, { label: 'Mac with Docker Desktop', bucket: 'vm', why: 'macOS has no Linux kernel, so a VM brings one.' }, { label: 'Windows PC with Docker Desktop (WSL 2)', bucket: 'vm', why: 'WSL 2 runs a real Linux kernel in a light VM.' }, { label: 'Linux laptop with Docker Desktop', bucket: 'vm', why: 'Surprise! Docker Desktop on Linux runs a VM too.' }, { label: 'Linux cloud server with Docker Engine', bucket: 'direct', why: 'Most servers run Linux, so containers run straight on it.' }]} success="Sorted! No Linux kernel nearby? Docker brings a VM." />
+</Card>
+
+<Card id="predict" type="predict">
+Your Mac has 16 GB. Docker Desktop's VM is set to 4 GB. A container wants 6 GB. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It can’t get 6 GB. Boxes live inside the VM’s 4 GB.', correct: true, why: 'The VM is the whole kitchen they can see. Give it more in Docker Desktop’s settings.' }, { label: 'It takes 6 GB from the Mac', why: 'The Mac’s memory is outside the VM. The box only sees the VM’s.' }, { label: 'The container turns into a Mac app', why: 'It stays a Linux process, inside the VM.' }]} />
+</Card>
+
+<Card id="check-version" type="check">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker version']} label="docker version on the practice laptop: both the Client and Server OS/Arch lines say linux/amd64, and the server lists containerd and runc." />
+
+This practice laptop runs Linux, so both `OS/Arch` lines say linux. On a Mac, the Client line says darwin. The Server line still says linux.
+</Card>
+
+<Card id="check-relay" type="check">
+Put a Mac's `docker run -p 8080:80` in order, first at the top.
+
+<Interactive name="OrderList" items={['You type docker run in the Mac terminal', 'The docker command sends the order into the VM', 'dockerd in the Linux VM takes it', 'containerd and runc start the box', 'nginx runs as a Linux process in the VM', 'Docker Desktop passes localhost:8080 from the Mac to the box']} label="First step at the top" success="Same relay as on Linux, with a VM in the middle." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why Docker Desktop needs a Linux VM.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks, for all of Part 1: a real lunchbox has walls. A container has blinkers and portions on one shared stove. A kernel bug can reach every box at once. And meal packs are copied, but image layers are shared, never copied.
+
+Real rep (optional): peek at the hidden kitchen.
+
+<Interactive name="Mission" id="d6-l07-vm" steps={[{ id: 'version', text: 'Compare the Client and Server lines. Which OS is each?', command: 'docker version' }, { id: 'info', text: 'Find OSType and Kernel Version. On a Mac or PC, they come from the VM.', command: 'docker info' }]} success="You found the hidden Linux kitchen." />
+</Card>

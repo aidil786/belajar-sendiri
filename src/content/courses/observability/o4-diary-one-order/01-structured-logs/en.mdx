@@ -1,0 +1,70 @@
+---
+id: obs-o4-l01
+world: 4
+title: "Structured logs"
+summary: "You will learn: to write diary lines that computers can filter and people can still read."
+minutes: 4
+xp: 20
+interactives: [SpotLines, Choice, CommandBuilder, SwipeJudge, OrderList, Mission]
+needs: [obs-o3-boss]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: logs", url: "https://opentelemetry.io/docs/concepts/signals/logs/" }
+  - { label: "Loki: log queries (json, logfmt)", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" prompt="Tap every line about order A1041." lines={[{ text: 'Order received!!' }, { text: 'payment failed for A1041??', target: true }, { text: 'ERROR something went wrong' }, { text: 'user aina paid' }, { text: 'a1041 timeout after 3s', target: true }, { text: 'retrying order #A-1041', target: true }]} success="Three ways to write one order. A search for A1041 finds only one." />
+
+The shop's diary is messy. A customer asks: what happened to order A1041?
+</Card>
+
+<Card id="see-json" type="see">
+```json
+{"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000}
+```
+
+A **<Term id="structured-log">structured log</Term>** writes named fields. Which field finds every problem?
+
+<Interactive name="Choice" compact options={[{ label: 'level', correct: true, why: 'Yes. level="error" finds every error, whatever msg says.' }, { label: 'msg', why: 'Messages change wording. Fields stay the same.' }, { label: 'duration_ms', why: 'That tells how slow, not whether it broke.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build one diary line for a failed payment. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{"level":"error",', means: 'how bad it is' }, { text: '"msg":"payment timeout",', means: 'what happened, in words' }, { text: '"order_id":"A1041",', means: 'which order: now you can find it' }, { text: '"duration_ms":3000}', means: 'how long it waited' }]} decoys={[{ text: '"card_number":"4111 1111 1111 1111",', means: 'never: card numbers must not go in logs' }]} success="A line a computer can filter, with no secrets in it." />
+
+<Hint>Start with the level. Leave out anything secret.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The web team writes `orderId`. The pay team writes `order_id`. You search `order_id = A1041`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'You miss the web team\'s lines', correct: true, why: 'Yes. Agree on field names, once, for every service.' }, { label: 'Both match', why: 'Computers compare names exactly.' }, { label: 'An error', why: 'No error. Just quietly missing lines, which is worse.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Swipe right if the field is fine to log. Swipe left if it should stay out.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'order_id', good: true, why: 'It helps you find one order.' }, { text: 'password', good: false, why: 'Never. Logs are read by many people and tools.' }, { text: 'trace_id', good: true, why: 'It links the line to the order\'s trace.' }, { text: 'card_number', good: false, why: 'Never. Payment data must stay out of logs.' }, { text: 'duration_ms', good: true, why: 'Timings help find slow steps.' }]} />
+</Card>
+
+<Card id="check-levels" type="check">
+<Interactive name="OrderList" items={['debug', 'info', 'warn', 'error']} label="Least serious at the top" success="debug for detail, error for real trouble." />
+
+Sort the levels, from chatty to serious.
+</Card>
+
+<Card id="win" type="win">
+You can now write structured log lines with clear fields and no secrets.
+</Card>
+
+<Card id="deeper" type="deeper">
+logfmt is another structured style: `level=error msg="payment timeout" order_id=A1041`. In containers, write logs to standard output. The platform collects them for you.
+
+<Interactive name="Mission" id="obs-o4-l01-real" steps={[{ id: 'run', text: 'Print one JSON diary line from a throwaway container.', command: 'docker run --name diary-try alpine:3.22 echo \'{"level":"info","msg":"shop open"}\'' }, { id: 'logs', text: 'Docker kept the line. Read it back.', command: 'docker logs diary-try' }, { id: 'clean', text: 'Clean up.', command: 'docker rm diary-try' }]} success="That is how container logs start their journey." />
+</Card>

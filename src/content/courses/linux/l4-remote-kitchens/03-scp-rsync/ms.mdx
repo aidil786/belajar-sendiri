@@ -1,0 +1,80 @@
+---
+id: linux-l4-l03
+world: 4
+title: "Salin fail: scp dan rsync"
+summary: "Anda akan belajar: menghantar fail ke server, dan menghantar apa yang berubah sahaja."
+minutes: 4
+xp: 20
+interactives: [Transcript, CommandBuilder, Choice, OrderList, SortCards, Mission]
+needs: [linux-l4-l02]
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: scp", url: "https://man.openbsd.org/scp" }
+  - { label: "Debian: rsync(1)", url: "https://manpages.debian.org/trixie/rsync/rsync.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop (makmal)" label="rsync -av site/ kedai:shop/ selepas satu perubahan: hanya menu.html dihantar."
+  lines={[{ cmd: 'rsync -av site/ kedai:shop/' }, { out: 'sending incremental file list\n./\nmenu.html\n\nsent 186 bytes  received 44 bytes  460.00 bytes/sec\ntotal size is 58  speedup is 0.25' }]} />
+
+Anda ubah satu harga dalam menu. Hanya `menu.html` dihantar. Fail lain tak berganjak. Bagaimana ia tahu?
+</Card>
+
+<Card id="try-scp" type="try">
+Mula-mula kurier biasa: `scp` salin melalui SSH, setiap kali. Bina "salin menu.txt ke folder rumah saya di kedai".
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'scp', means: 'salin melalui talian SSH' }, { text: 'menu.txt', means: 'fail di sini' }, { text: 'kedai:', means: 'ke kedai: titik bertindih bermaksud mesin lain' }]} decoys={[{ text: 'kedai', means: 'tiada titik bertindih: salinan tempatan bernama kedai!' }]} success="scp menu.txt kedai: mendarat dalam folder rumah anda di sana." />
+</Card>
+
+<Card id="see-rsync" type="see">
+<Interactive name="Transcript" title="laptop (makmal)" label="rsync -av site/ kedai:shop/ yang pertama cipta shop dan hantar index.html, menu.html dan old.html."
+  lines={[{ cmd: 'rsync -av site/ kedai:shop/' }, { out: 'sending incremental file list\ncreated directory shop\n./\nindex.html\nmenu.html\nold.html\n\nsent 313 bytes  received 103 bytes  832.00 bytes/sec\ntotal size is 62  speedup is 0.15' }]} />
+
+<Term id="rsync">rsync</Term> ialah kurier pintar. Ia bandingkan kedua-dua belah dahulu, kemudian bawa apa yang berbeza sahaja. `-a` kekalkan masa dan kebenaran. `-v` senaraikan setiap fail.
+</Card>
+
+<Card id="predict" type="predict">
+Tanpa garis condong: `rsync -av site kedai:copy/`. Ini isi kedua-dua folder di kedai. Apa bezanya?
+
+```
+copy/site/menu.html
+copy/site/index.html
+shop/menu.html
+shop/index.html
+```
+
+<Interactive name="Choice" options={[{ label: 'Tanpa garis condong, folder itu sendiri dihantar', correct: true, why: 'site dihantar sebagai copy/site. Dengan site/ hanya isinya dihantar.' }, { label: 'Tiada beza: kedua-duanya sama', why: 'Tengok lagi: copy ada folder site tambahan.' }, { label: 'Tanpa garis condong, fail dipadam', why: 'Hanya --delete buang fail. Garis condong pilih apa yang dihantar.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Anda mahu folder shop di kedai sama betul dengan folder site anda, yang lebih dibuang. `--delete` boleh buang fail di sana. Susun langkah yang selamat.
+
+<Interactive name="OrderList" items={['rsync -av --delete --dry-run site/ kedai:shop/', 'Baca senarai: setiap baris deleting memang dijangka?', 'rsync -av --delete site/ kedai:shop/', 'curl halaman itu untuk menyemak']} label="Langkah pertama di atas" success="Cubaan kering, baca, kemudian larian sebenar." />
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="Transcript" title="laptop (makmal)" label="rsync -av --delete --dry-run kata deleting old.html dan berakhir dengan (DRY RUN)."
+  lines={[{ cmd: 'rsync -av --delete --dry-run site/ kedai:shop/' }, { out: 'sending incremental file list\ndeleting old.html\n\nsent 104 bytes  received 31 bytes  270.00 bytes/sec\ntotal size is 58  speedup is 0.43 (DRY RUN)', color: 'yellow' }]} />
+
+`--dry-run` beritahu apa yang akan berlaku dan tak ubah apa-apa. Di sini: `deleting old.html`. Memang dijangka? Kemudian jalankan betul-betul.
+</Card>
+
+<Card id="check" type="check">
+scp atau rsync?
+
+<Interactive name="SortCards" buckets={[{ id: 'scp', label: 'scp' }, { id: 'rsync', label: 'rsync' }]} items={[{ label: 'Salin satu fail, sekali', bucket: 'scp', why: 'Cepat dan mudah.' }, { label: 'Kemas kini folder besar setiap hari', bucket: 'rsync', why: 'Hanya perubahan yang dihantar.' }, { label: 'Jadikan folder sama, yang lebih dibuang (selepas cubaan kering)', bucket: 'rsync', why: '--delete, dengan berhati-hati.' }, { label: 'Ambil satu log dari server', bucket: 'scp', why: 'scp kedai:/path/file . pun boleh.' }]} success="Satu fail: scp. Folder yang anda selaraskan: rsync." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar fail ke server, dan selaraskan folder dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Server latihan kita berdiri sendirian. Output ini datang dari dua mesin Debian 13 sebenar. rsync mesti ada di kedua-dua mesin: `sudo apt install rsync`. Salin balik arah sebaliknya dengan `scp kedai:menu.txt .` (titik bermaksud di sini).
+
+<Interactive name="Mission" id="linux-l4-l03-rep" steps={[{ id: 'scp', text: 'Hantar satu fail ke VM anda.', command: 'scp notes.txt myvm:' }, { id: 'dry', text: 'Cubaan kering untuk selaraskan folder.', command: 'rsync -av --dry-run site/ myvm:site/' }, { id: 'real', text: 'Jalankan betul-betul, kemudian ubah satu fail dan jalankan lagi.', command: 'rsync -av site/ myvm:site/' }]} success="Hanya perubahan yang dihantar kali kedua." />
+</Card>

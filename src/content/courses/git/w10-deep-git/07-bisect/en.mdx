@@ -1,0 +1,73 @@
+---
+id: git-w10-l07
+world: 10
+title: Find the bug with bisect
+summary: "You will learn: how to find the commit that broke something, in a few quick tests."
+minutes: 5
+xp: 25
+interactives: [Choice, TermReplay, BisectDetective, Sim, OrderList]
+needs: [git-w10-l06]
+scenario: w10-bisect
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git bisect", url: "https://git-scm.com/docs/git-bisect" }
+---
+
+<Card id="hook" type="hook">
+The shop page shows the price as RM0! Last week it said RM10. Ten commits since then. Which one broke it?
+
+<Interactive name="Choice" options={[{ label: 'Test the middle commit, then halve again', correct: true, why: 'Each test throws away half the suspects. That is bisect.' }, { label: 'Test every commit, oldest first', why: 'That works, but it can take ten tests. Halving needs four at most.' }, { label: 'Undo all ten commits', why: 'You would lose good work too. Find the one bad commit instead.' }]} />
+</Card>
+
+<Card id="see-bisect" type="see">
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9']} label="git bisect start with HEAD as bad and HEAD~9 as good. Git says 4 revisions are left and checks out Add a footer." />
+
+**<Term id="bisect">Bisect</Term>** plays "higher or lower" with your history. Give it one bad and one good commit. Git checks out the middle one for you to test.
+</Card>
+
+<Card id="try-detective" type="try">
+Be the detective. Run the test, then mark the commit good or bad.
+
+<Interactive name="BisectDetective" scenario="w10-bisect" test={{ file: 'index.html', bad: 'RM0', label: 'The test: the price in index.html must not be RM0.' }} success="Caught it! Bisect found the price bug in a few tests." />
+
+<Hint>Test failed? Mark it bad. Test passed? Mark it good.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now there are 1,000 commits between good and bad. About how many tests does bisect need?
+
+<Interactive name="Choice" options={[{ label: 'About 10', correct: true, why: 'Each test halves the list: 1,000, 500, 250… about 10 steps.' }, { label: 'About 500', why: 'Halving is much faster than that.' }, { label: 'All 1,000', why: 'That is testing one by one. Bisect skips most of them.' }]} />
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9', 'git bisect run sh test.sh']} label="git bisect run sh test.sh tests three commits by itself and names Tidy up spacing as the first bad commit." />
+
+Got a test script? `git bisect run sh test.sh` does every step for you. Exit code 0 means good. 1 means bad.
+</Card>
+
+<Card id="try-run" type="try">
+Your turn. Start bisect, let `test.sh` judge, then go back home.
+
+<Interactive name="Sim" scenario="w10-bisect" panels={['graph']} goal={{ bisectFound: '^Tidy up spacing$', bisectActive: false }} hints={['Type git bisect start HEAD HEAD~9', 'Then type git bisect run sh test.sh', 'Last, type git bisect reset']} success="Case closed! Tidy up spacing broke the price. And you are back on main." />
+
+<Hint>`git bisect start HEAD HEAD~9`, then `git bisect run sh test.sh`, then `git bisect reset`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put a bisect hunt in order.
+
+<Interactive name="OrderList" items={['Run git bisect start', 'Mark one bad and one good commit', 'Test the commit Git checks out', 'Mark it good or bad, until Git names the culprit', 'Run git bisect reset']} label="First step at the top" success="That's the hunt! Reset brings you back to your branch." />
+</Card>
+
+<Card id="win" type="win">
+You can now find the commit that broke something, fast.
+</Card>
+
+<Card id="deeper" type="deeper">
+Can't test one commit, say it doesn't build? `git bisect skip` picks a neighbour. `git bisect log` shows your steps. Hunting a fix, not a bug? Use `git bisect old` and `git bisect new` instead of good and bad. In `bisect run`, exit code 125 means skip.
+
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9', 'git bisect skip']} label="After git bisect skip, Git checks out a different commit to test." />
+</Card>

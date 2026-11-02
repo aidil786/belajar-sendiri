@@ -1,0 +1,84 @@
+---
+id: k8s-k4-l01
+world: 4
+title: "ConfigMap: nota di dinding"
+summary: "Anda akan belajar: simpan tetapan dalam ConfigMap dan baca sebagai env var atau fail."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, SortCards, Mission]
+needs: [k8s-k3-boss]
+scenario: k4-notes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: ConfigMaps", url: "https://kubernetes.io/docs/concepts/configuration/configmap/" }
+  - { label: "Configure a Pod to use a ConfigMap", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/" }
+  - { label: "kubectl create configmap", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_configmap/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-notes" commands={['kubectl exec deploy/shop -- printenv GREETING']} label="kubectl exec jalankan printenv GREETING dalam dulang shop. Ia cetak Selamat datang." />
+
+Kedai anda sambut semua orang dengan `Selamat datang`. Bos mahu `Jemput makan`. Perlu bakar image baharu untuk dua perkataan? Ada cara lebih tenang.
+</Card>
+
+<Card id="see-note" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: ConfigMap' }, { text: 'metadata:' }, { text: '  name: settings' }, { text: 'data:' }, { text: '  GREETING: Selamat datang', target: true }, { text: '  SPICY: "3"', target: true }]} prompt="Tekan dua tetapan pada nota." success="GREETING dan SPICY. Teks biasa, di luar image." />
+
+Nota di dinding gerai simpan tetapan. Tukang masak membacanya, dan resepi tak pernah berubah. Dalam Kubernetes, nota itu ialah **<Term id="configmap">ConfigMap</Term>**.
+</Card>
+
+<Card id="try-create" type="try">
+Tampal nota dari terminal. Kemudian buka kedai.
+
+<Interactive name="FoodCourtSim" scenario="k4-notes-new" goal={{ objectExists: ['configmap/settings'], podsReady: { selector: 'app=shop', count: 1 } }} hints={['Taip kubectl create configmap settings --from-literal=GREETING=Hai', 'Kemudian buka kedai: kubectl apply -f shop.yaml']} success="Nota sudah ditampal, dan dulang sedang membacanya." />
+
+<Hint>`--from-literal=GREETING=Hai` tulis satu baris pada nota.</Hint>
+</Card>
+
+<Card id="see-two-ways" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: web' }, { text: '    image: nginx:1.29-alpine' }, { text: '    envFrom:', target: true }, { text: '      - configMapRef:', target: true }, { text: '          name: settings', target: true }, { text: '    volumeMounts:' }, { text: '      - name: notes' }, { text: '        mountPath: /etc/notes' }, { text: 'volumes:' }, { text: '  - name: notes' }, { text: '    configMap:' }, { text: '      name: settings' }]} prompt="Tekan baris yang jadikan nota sebagai env var." success="envFrom salin setiap baris nota ke dalam bekas." />
+
+Dulang baca nota dengan dua cara. `envFrom` jadikan setiap baris satu **environment variable** (pemboleh ubah persekitaran). Volume jadikan setiap baris satu fail dalam `/etc/notes`.
+</Card>
+
+<Card id="try-read" type="try">
+Baca nota dengan dua cara. Mula-mula env var, kemudian fail.
+
+<Interactive name="FoodCourtSim" scenario="k4-notes" goal={{ typed: 'printenv GREETING', lastTyped: 'cat /etc/notes/GREETING' }} hints={['Taip kubectl exec deploy/shop -- printenv GREETING', 'Kemudian: kubectl exec deploy/shop -- cat /etc/notes/GREETING']} success="Perkataan sama, dua pintu: env var dan fail." />
+
+<Hint>Semua selepas `--` berjalan di dalam bekas.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda tukar nota kepada `Jemput makan`. Anda tunggu dua minit. Apa yang dulang nampak?
+
+<Interactive name="Choice" options={[{ label: 'Fail berubah. Env var kekal lama.', correct: true, why: 'Fail ikut nota. Env var dibaca sekali, semasa mula.' }, { label: 'Kedua-duanya berubah.', why: 'Hampir! Env var disalin bila bekas mula. Ia tak berubah selepas itu.' }, { label: 'Tiada yang berubah sehingga image baharu.', why: 'Nota tinggal di luar image. Itulah tujuannya.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k4-notes" commands={['kubectl apply -f settings-v2.yaml', 'sleep 120', 'kubectl exec deploy/shop -- cat /etc/notes/GREETING', 'kubectl exec deploy/shop -- printenv GREETING']} label="Nota baharu di-apply. Dua minit kemudian, fail kata Jemput makan, tetapi printenv masih kata Selamat datang." />
+
+Fail sudah ikut. Env var belum. Mulakan semula dulang untuk baca semula: `kubectl rollout restart deployment/shop`.
+</Card>
+
+<Card id="check-sort" type="check">
+Asingkan setiap fakta: env var atau fail?
+
+<Interactive name="SortCards" buckets={[{ id: 'env', label: 'Env var' }, { id: 'file', label: 'Fail daripada volume' }]} items={[{ label: 'Dibaca sekali, bila bekas mula', bucket: 'env', why: 'Bekas salin env var semasa mula.' }, { label: 'Ikut nota selepas tunggu sekejap', bucket: 'file', why: 'Kubelet kemas kini nota yang di-mount.' }, { label: 'printenv GREETING tunjukkannya', bucket: 'env', why: 'printenv senaraikan env var.' }, { label: 'cat /etc/notes/GREETING tunjukkannya', bucket: 'file', why: 'Ia fail dalam folder mount.' }]} success="Env var: dibaca semasa mula. Fail: ikut nota." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca tetapan daripada ConfigMap, dengan dua cara.
+</Card>
+
+<Card id="deeper" type="deeper">
+ConfigMap muat sehingga 1 MiB. Ia bukan rahsia: sesiapa yang boleh baca ConfigMap nampak isinya. Fail yang di-mount dengan `subPath` tak pernah dikemas kini. `immutable: true` halang perubahan tanpa sengaja.
+
+Latihan sebenar (pilihan), hanya pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l01-rep" steps={[{ id: 'where', text: 'Pastikan anda di kluster latihan.', command: 'kubectl config current-context' }, { id: 'note', text: 'Tampal satu nota.', command: 'kubectl create configmap settings --from-literal=GREETING=Hai' }, { id: 'shop', text: 'Buka kedai.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine' }, { id: 'env', text: 'Beri kedai nota itu sebagai env var.', command: 'kubectl set env deployment/shop --from=configmap/settings' }, { id: 'read', text: 'Baca di dalam bekas.', command: 'kubectl exec deploy/shop -- printenv GREETING' }, { id: 'tidy', text: 'Kemas.', command: 'kubectl delete deployment/shop configmap/settings' }]} success="Nota sebenar, dibaca oleh bekas sebenar." />
+</Card>

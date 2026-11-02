@@ -1,0 +1,811 @@
+# Kubernetes rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Ship It Rescue Center (/<lang>/ship-it/rescue/) lists them under Part 3.
+# Flow ids must be unique across docker, cicd and kubernetes: one page, one #<flow-id> link each.
+# Safe by default: every result that changes the cluster starts with "check the you-are-here sign"
+# (kubectl config current-context). Read-only steps are danger: safe; changes you can undo are
+# careful; anything that can lose data is lose. <pod>, <name> … are placeholders to replace.
+# Facts checked 2026-10-31 against kubernetes.io/docs (debug pods, services, DNS, storage, RBAC,
+# nodes), gateway-api.sigs.k8s.io and argo-cd.readthedocs.io; error words match Kubernetes 1.37.
+flows:
+  - id: k8s-crashloop
+    title: { en: "My pod is in CrashLoopBackOff", ms: "Pod saya dalam CrashLoopBackOff" }
+    start: last
+    steps:
+      - id: last
+        question: { en: "Run kubectl describe pod <pod>. Under Last State, what is the Reason?", ms: "Jalankan kubectl describe pod <pod>. Di bawah Last State, apa Reason-nya?" }
+        answers:
+          - { label: { en: "Error, with an exit code like 1", ms: "Error, dengan exit code seperti 1" }, next: logs }
+          - { label: { en: "OOMKilled (exit code 137)", ms: "OOMKilled (exit code 137)" }, next: r-oom }
+          - { label: { en: "Completed (exit code 0)", ms: "Completed (exit code 0)" }, next: r-completed }
+      - id: logs
+        question: { en: "Run kubectl logs <pod> --previous. What did the crashed run print?", ms: "Jalankan kubectl logs <pod> --previous. Apa yang run yang crash itu cetak?" }
+        answers:
+          - { label: { en: "An error from my app (a missing setting, can't connect)", ms: "Ralat dari aplikasi saya (tetapan tiada, tak boleh sambung)" }, next: r-app }
+          - { label: { en: "exec format error", ms: "exec format error" }, next: r-arch }
+          - { label: { en: "Nothing useful, and Events say Liveness probe failed", ms: "Tiada yang berguna, dan Events kata Liveness probe failed" }, next: r-probe }
+      - id: r-app
+        result:
+          text: { en: "The app starts, hits a problem and exits. Kubernetes keeps restarting it, waiting longer each time (up to 5 minutes). Fix the cause, often a missing env var or Secret. Or go back to the last good version first.", ms: "Aplikasi bermula, jumpa masalah dan keluar. Kubernetes terus hidupkannya semula, dengan tunggu lebih lama setiap kali (sehingga 5 minit). Baiki puncanya, selalunya env var atau Secret yang tiada. Atau kembali ke versi baik terakhir dulu." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign first. Right cluster?", ms: "Semak papan anda-di-sini dulu. Kluster yang betul?" }
+            - { command: "kubectl logs <pod> --previous", en: "Read the last crashed run's words again. Find the first error line.", ms: "Baca semula output run yang crash. Cari baris ralat pertama." }
+            - { command: "kubectl apply -f <file>.yaml --dry-run=server", en: "After fixing the file, let the server check it without changing anything.", ms: "Selepas baiki fail, biar server semak tanpa ubah apa-apa." }
+            - { command: "kubectl rollout undo deployment/<name>", en: "Or go back to the last version that worked. With GitOps, revert in Git instead.", ms: "Atau kembali ke versi terakhir yang berfungsi. Dengan GitOps, revert dalam Git pula." }
+          danger: careful
+          lesson: k8s-k2-l07
+      - id: r-oom
+        result:
+          text: { en: "The container used more memory than its limit, so the kernel stopped it. Raise the limit, or find the leak. See the OOMKilled flow below.", ms: "Container guna memori lebih daripada had, jadi kernel hentikannya. Naikkan had itu, atau cari kebocoran. Lihat aliran OOMKilled di bawah." }
+          commands:
+            - { command: "kubectl get pod <pod> -o jsonpath='{.spec.containers[*].resources}'", en: "Show the memory request and limit the pod has now.", ms: "Tunjuk request dan had memori pod itu sekarang." }
+          danger: safe
+          lesson: k8s-k2-l09
+      - id: r-completed
+        result:
+          text: { en: "The program finished its job and exited cleanly. A Deployment expects it to run forever, so it starts it again. Make the command keep running, or use a Job for one-off work.", ms: "Program itu habis kerjanya dan keluar dengan baik. Deployment jangka ia berjalan selamanya, jadi ia dihidupkan semula. Pastikan arahan itu terus berjalan, atau guna Job untuk kerja sekali sahaja." }
+          commands:
+            - { command: "kubectl get pod <pod> -o jsonpath='{.spec.containers[*].command}'", en: "See which command the container runs.", ms: "Lihat arahan yang container itu jalankan." }
+            - { command: "kubectl create job once --image=<image> --dry-run=client -o yaml", en: "Print a starter Job to the screen. Nothing is created.", ms: "Cetak contoh Job ke skrin. Tiada apa yang dibuat." }
+          danger: safe
+          lesson: k8s-k2-l13
+      - id: r-arch
+        result:
+          text: { en: "The image was built for another CPU type, like arm64 on an amd64 node. Rebuild it for both, then push the new tag.", ms: "Image itu dibina untuk jenis CPU lain, contohnya arm64 pada node amd64. Bina semula untuk kedua-duanya, kemudian push tag baharu." }
+          commands:
+            - { command: "kubectl get nodes -L kubernetes.io/arch", en: "Show each node's CPU type.", ms: "Tunjuk jenis CPU setiap node." }
+            - { command: "docker buildx build --platform linux/amd64,linux/arm64 -t <image>:<new-tag> --push .", en: "On your laptop: build one image for both CPU types and push it.", ms: "Di laptop anda: bina satu image untuk kedua-dua jenis CPU dan push." }
+          danger: safe
+          lesson: k8s-k2-l07
+      - id: r-probe
+        result:
+          text: { en: "The liveness probe fails, so the kubelet restarts a healthy but slow app. Check the probe's path and port. Give slow starters a startupProbe.", ms: "Liveness probe gagal, jadi kubelet hidupkan semula aplikasi yang sihat tapi lambat. Semak path dan port probe itu. Beri aplikasi yang lambat bermula satu startupProbe." }
+          commands:
+            - { command: "kubectl describe pod <pod>", en: "Read the Events. Which path and port does the probe call?", ms: "Baca Events. Path dan port mana yang probe itu panggil?" }
+            - command: |-
+                startupProbe:
+                  httpGet:
+                    path: /health
+                    port: 8080
+                  failureThreshold: 30
+                  periodSeconds: 5
+              en: "Example: allow up to 150 seconds to start, before liveness checks begin."
+              ms: "Contoh: benarkan sehingga 150 saat untuk bermula, sebelum semakan liveness bermula."
+          danger: safe
+          lesson: k8s-k2-l08
+
+  - id: k8s-imagepull
+    title: { en: "My pod is in ImagePullBackOff", ms: "Pod saya dalam ImagePullBackOff" }
+    start: events
+    steps:
+      - id: events
+        question: { en: "Run kubectl describe pod <pod>. What do the Events say after Failed to pull image?", ms: "Jalankan kubectl describe pod <pod>. Apa kata Events selepas Failed to pull image?" }
+        answers:
+          - { label: { en: "… not found", ms: "… not found" }, next: laptop }
+          - { label: { en: "pull access denied, or 401 / 403 Unauthorized", ms: "pull access denied, atau 401 / 403 Unauthorized" }, next: r-private }
+          - { label: { en: "429 Too Many Requests (toomanyrequests)", ms: "429 Too Many Requests (toomanyrequests)" }, next: r-ratelimit }
+      - id: laptop
+        question: { en: "On your laptop, does docker pull <the same image> work?", ms: "Di laptop anda, adakah docker pull <image yang sama> berjaya?" }
+        answers:
+          - { label: { en: "No, it says not found too", ms: "Tidak, ia juga kata not found" }, next: r-typo }
+          - { label: { en: "Yes, it works on my laptop", ms: "Ya, ia berjaya di laptop saya" }, next: r-local }
+      - id: r-typo
+        result:
+          text: { en: "The name or tag does not exist in the registry. Usually a typo, or a tag that was never pushed. Fix the image line, then roll out again.", ms: "Nama atau tag itu tiada dalam registry. Selalunya salah taip, atau tag yang tak pernah di-push. Baiki baris image, kemudian rollout semula." }
+          commands:
+            - { command: "kubectl get deployment <name> -o jsonpath='{.spec.template.spec.containers[*].image}'", en: "Show the exact image name the Deployment asks for.", ms: "Tunjuk nama image tepat yang Deployment itu minta." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you change anything.", ms: "Semak papan anda-di-sini sebelum ubah apa-apa." }
+            - { command: "kubectl set image deployment/<name> <container>=<image>:<good-tag>", en: "Point it at a tag that exists. With GitOps, fix the tag in Git instead.", ms: "Halakan ke tag yang wujud. Dengan GitOps, baiki tag dalam Git pula." }
+          danger: careful
+          lesson: k8s-k2-l07
+      - id: r-local
+        result:
+          text: { en: "Your laptop can pull it, but the node can't. Maybe the image only exists on your laptop, or your laptop is logged in and the node is not. Push it to a registry, or give the pod pull access.", ms: "Laptop anda boleh tarik, tetapi node tak boleh. Mungkin image itu hanya ada di laptop anda, atau laptop anda dah log masuk tetapi node belum. Push ke registry, atau beri pod akses untuk tarik." }
+          commands:
+            - { command: "docker push <image>:<tag>", en: "Put your local image in the registry, so nodes can find it.", ms: "Letak image tempatan anda dalam registry, supaya node boleh jumpa." }
+            - { command: "kind load docker-image <image>:<tag> --name <cluster>", en: "On a kind practice cluster: copy the image straight into the nodes.", ms: "Pada kluster latihan kind: salin image terus ke dalam node." }
+          danger: safe
+          lesson: k8s-k2-l07
+      - id: r-private
+        result:
+          text: { en: "The registry wants a login. Store a read-only token in a Secret, then name it in imagePullSecrets. Never use your real password.", ms: "Registry itu mahu log masuk. Simpan token baca sahaja dalam Secret, kemudian namakannya dalam imagePullSecrets. Jangan guna kata laluan sebenar anda." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign first.", ms: "Semak papan anda-di-sini dulu." }
+            - { command: "kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-username=<you> --docker-password=<read-only-token>", en: "Make a pull Secret. Use a token that can only read packages.", ms: "Buat Secret untuk tarik. Guna token yang hanya boleh baca pakej." }
+            - command: |-
+                spec:
+                  imagePullSecrets:
+                    - name: regcred
+              en: "Under the pod template's spec: pull with that Secret."
+              ms: "Di bawah spec templat pod: tarik dengan Secret itu."
+          danger: careful
+          lesson: k8s-k4-l02
+      - id: r-ratelimit
+        result:
+          text: { en: "Docker Hub limits anonymous pulls. Pulls with a free account get a higher limit. Wait a few hours, pull with an account, or use a copy in another registry.", ms: "Docker Hub hadkan tarikan tanpa log masuk. Tarikan dengan akaun percuma dapat had lebih tinggi. Tunggu beberapa jam, tarik dengan akaun, atau guna salinan dalam registry lain." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign first.", ms: "Semak papan anda-di-sini dulu." }
+            - { command: "kubectl create secret docker-registry hubcred --docker-server=https://index.docker.io/v1/ --docker-username=<you> --docker-password=<access-token>", en: "Pull from Docker Hub as your free account. Use an access token, not your password.", ms: "Tarik dari Docker Hub sebagai akaun percuma anda. Guna access token, bukan kata laluan." }
+            - { command: "kubectl get pods -A -o jsonpath='{..image}'", en: "List every image the cluster uses, to see how many come from Docker Hub.", ms: "Senaraikan semua image yang kluster guna, untuk lihat berapa banyak dari Docker Hub." }
+          danger: careful
+          lesson: k8s-k2-l07
+
+  - id: k8s-pending
+    title: { en: "My pod is stuck in Pending", ms: "Pod saya tersekat dalam Pending" }
+    start: why
+    steps:
+      - id: why
+        question: { en: "Run kubectl describe pod <pod>. What does the FailedScheduling event say?", ms: "Jalankan kubectl describe pod <pod>. Apa kata event FailedScheduling?" }
+        answers:
+          - { label: { en: "Insufficient cpu or Insufficient memory", ms: "Insufficient cpu atau Insufficient memory" }, next: size }
+          - { label: { en: "untolerated taint(s)", ms: "untolerated taint(s)" }, next: r-taint }
+          - { label: { en: "didn't match Pod's node affinity/selector", ms: "didn't match Pod's node affinity/selector" }, next: r-selector }
+          - { label: { en: "unbound immediate PersistentVolumeClaims", ms: "unbound immediate PersistentVolumeClaims" }, next: r-pvc }
+      - id: size
+        question: { en: "Is the pod's request bigger than what one empty node has?", ms: "Adakah request pod itu lebih besar daripada apa yang satu node kosong ada?" }
+        answers:
+          - { label: { en: "Yes, no node is that big", ms: "Ya, tiada node sebesar itu" }, next: r-requests }
+          - { label: { en: "No, the nodes are just full", ms: "Tidak, node cuma dah penuh" }, next: r-full }
+      - id: r-requests
+        result:
+          text: { en: "No stall has a shelf that big. Ask for less: requests are what the pod needs to start, not its best day.", ms: "Tiada gerai dengan rak sebesar itu. Minta kurang: requests ialah apa pod perlu untuk bermula, bukan hari terbaiknya." }
+          commands:
+            - { command: "kubectl describe nodes", en: "Read Allocatable on each node: the most a pod can ask for.", ms: "Baca Allocatable pada setiap node: paling banyak yang pod boleh minta." }
+            - command: |-
+                resources:
+                  requests:
+                    cpu: 250m
+                    memory: 256Mi
+              en: "Example: smaller requests that fit a node. Then apply with --dry-run=server first."
+              ms: "Contoh: requests lebih kecil yang muat dalam node. Kemudian apply dengan --dry-run=server dulu."
+          danger: safe
+          lesson: k8s-k2-l09
+      - id: r-full
+        result:
+          text: { en: "Every stall is busy. Free some room, lower requests that are too generous, or add a node.", ms: "Semua gerai sibuk. Kosongkan sedikit ruang, kurangkan requests yang terlalu besar, atau tambah node." }
+          commands:
+            - { command: "kubectl describe nodes", en: "Under Allocated resources, see how full each node is.", ms: "Di bawah Allocated resources, lihat sepenuh mana setiap node." }
+            - { command: "kubectl top pods -A --sort-by=cpu", en: "Find pods that ask for much but use little (needs metrics-server).", ms: "Cari pod yang minta banyak tapi guna sedikit (perlu metrics-server)." }
+          danger: safe
+          lesson: k8s-k5-l03
+      - id: r-taint
+        result:
+          text: { en: "The free nodes are locked with a taint. Only pods with the right key (a toleration) may sit there. Add the toleration only if the pod really belongs there.", ms: "Node yang kosong dikunci dengan taint. Hanya pod dengan kunci yang betul (toleration) boleh duduk di situ. Tambah toleration hanya jika pod itu memang patut di situ." }
+          commands:
+            - { command: "kubectl describe node <node>", en: "Read the Taints line. Which key, value and effect?", ms: "Baca baris Taints. Key, value dan effect yang mana?" }
+            - command: |-
+                tolerations:
+                  - key: dedicated
+                    operator: Equal
+                    value: gpu
+                    effect: NoSchedule
+              en: "Example toleration for the taint dedicated=gpu:NoSchedule."
+              ms: "Contoh toleration untuk taint dedicated=gpu:NoSchedule."
+          danger: safe
+          lesson: k8s-k5-l05
+      - id: r-selector
+        result:
+          text: { en: "The pod asks for a node label that no free node has. Fix the label in nodeSelector or affinity, or label the right node.", ms: "Pod itu minta label node yang tiada pada mana-mana node kosong. Baiki label dalam nodeSelector atau affinity, atau label node yang betul." }
+          commands:
+            - { command: "kubectl get nodes --show-labels", en: "List the labels every node has.", ms: "Senaraikan label yang setiap node ada." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you label anything.", ms: "Semak papan anda-di-sini sebelum label apa-apa." }
+            - { command: "kubectl label node <node> disk=ssd", en: "Give a node the label the pod asks for (example: disk=ssd).", ms: "Beri node label yang pod itu minta (contoh: disk=ssd)." }
+          danger: careful
+          lesson: k8s-k5-l04
+      - id: r-pvc
+        result:
+          text: { en: "The pod waits for its storage locker. Fix the claim first: see the PVC stuck Pending flow below.", ms: "Pod itu tunggu loker storannya. Baiki claim itu dulu: lihat aliran PVC tersekat Pending di bawah." }
+          commands:
+            - { command: "kubectl get pvc", en: "Which claims are still Pending?", ms: "Claim mana yang masih Pending?" }
+          danger: safe
+          lesson: k8s-k4-l05
+
+  - id: k8s-oomkilled
+    title: { en: "My container was OOMKilled", ms: "Container saya kena OOMKilled" }
+    start: shape
+    steps:
+      - id: shape
+        question: { en: "How does its memory behave before it dies?", ms: "Bagaimana memorinya berkelakuan sebelum ia mati?" }
+        answers:
+          - { label: { en: "It grows and grows until it dies", ms: "Ia naik dan terus naik sehingga mati" }, next: r-leak }
+          - { label: { en: "It needs a lot right from the start", ms: "Ia perlukan banyak sejak awal" }, next: limit }
+          - { label: { en: "I don't know", ms: "Saya tak tahu" }, next: r-measure }
+      - id: limit
+        question: { en: "Did you set a memory limit in your YAML yourself?", ms: "Adakah anda sendiri tetapkan had memori dalam YAML anda?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: r-limit }
+          - { label: { en: "No, but it has one anyway", ms: "Tidak, tapi ia tetap ada had" }, next: r-limitrange }
+      - id: r-leak
+        result:
+          text: { en: "A leak: the app never gives memory back. A bigger limit only buys time. Fix the code, and keep a limit so one tray can't starve the stall.", ms: "Kebocoran: aplikasi tak pernah pulangkan memori. Had lebih besar cuma beli masa. Baiki kod, dan kekalkan had supaya satu dulang tak lapar-kan seluruh gerai." }
+          commands:
+            - { command: "kubectl top pod <pod>", en: "Watch memory now (needs metrics-server). Run it a few times.", ms: "Pantau memori sekarang (perlu metrics-server). Jalankan beberapa kali." }
+            - { command: "kubectl get pod <pod> -w", en: "Watch RESTARTS go up each time it hits the limit. Ctrl+C stops watching.", ms: "Lihat RESTARTS naik setiap kali ia capai had. Ctrl+C untuk berhenti." }
+          danger: safe
+          lesson: k8s-k5-l01
+      - id: r-limit
+        result:
+          text: { en: "The app needs more than you gave it. Raise the limit a little above its real peak, and set the request near normal use.", ms: "Aplikasi itu perlukan lebih daripada yang anda beri. Naikkan had sedikit di atas puncak sebenarnya, dan tetapkan request hampir dengan penggunaan biasa." }
+          commands:
+            - command: |-
+                resources:
+                  requests:
+                    memory: 256Mi
+                  limits:
+                    memory: 512Mi
+              en: "Example. Measure first; don't guess."
+              ms: "Contoh. Ukur dulu; jangan teka."
+            - { command: "kubectl apply -f <file>.yaml --dry-run=server", en: "Let the server check the change first. With GitOps, commit it to Git.", ms: "Biar server semak perubahan dulu. Dengan GitOps, commit ke Git." }
+          danger: careful
+          lesson: k8s-k2-l09
+      - id: r-limitrange
+        result:
+          text: { en: "A LimitRange in the namespace gave it a default limit. Set your own request and limit, within the allowed range.", ms: "LimitRange dalam namespace itu beri had lalai. Tetapkan request dan had anda sendiri, dalam julat yang dibenarkan." }
+          commands:
+            - { command: "kubectl describe limitrange -n <namespace>", en: "See the default and maximum memory for this zone.", ms: "Lihat memori lalai dan maksimum untuk zon ini." }
+          danger: safe
+          lesson: k8s-k5-l07
+      - id: r-measure
+        result:
+          text: { en: "Measure before you change anything. Watch memory while the app does normal work.", ms: "Ukur sebelum ubah apa-apa. Pantau memori semasa aplikasi buat kerja biasa." }
+          commands:
+            - { command: "kubectl describe pod <pod>", en: "Last State shows OOMKilled and exit code 137. Limits shows the cap.", ms: "Last State tunjuk OOMKilled dan exit code 137. Limits tunjuk hadnya." }
+            - { command: "kubectl top pod <pod> --containers", en: "Memory per container, right now (needs metrics-server).", ms: "Memori setiap container, sekarang (perlu metrics-server)." }
+          danger: safe
+          lesson: k8s-k5-l01
+
+  - id: k8s-no-endpoints
+    title: { en: "My Service has no endpoints", ms: "Service saya tiada endpoint" }
+    start: ready
+    steps:
+      - id: ready
+        question: { en: "Run kubectl get pods. Are the pods Running with READY 1/1?", ms: "Jalankan kubectl get pods. Adakah pod Running dengan READY 1/1?" }
+        answers:
+          - { label: { en: "No, they show 0/1", ms: "Tidak, ia tunjuk 0/1" }, next: r-ready }
+          - { label: { en: "Yes, all ready", ms: "Ya, semua sedia" }, next: labels }
+      - id: labels
+        question: { en: "Does the Service's selector match the pods' labels exactly?", ms: "Adakah selector Service sama tepat dengan label pod?" }
+        answers:
+          - { label: { en: "No, they differ", ms: "Tidak, ia berbeza" }, next: r-selector }
+          - { label: { en: "Yes, they match", ms: "Ya, ia sama" }, next: r-namespace }
+      - id: r-ready
+        result:
+          text: { en: "Only ready pods get traffic. The readiness probe is failing. Fix the probe's path or port, or the app.", ms: "Hanya pod yang sedia dapat trafik. Readiness probe sedang gagal. Baiki path atau port probe itu, atau aplikasinya." }
+          commands:
+            - { command: "kubectl describe pod <pod>", en: "Events show Readiness probe failed, and why.", ms: "Events tunjuk Readiness probe failed, dan sebabnya." }
+            - { command: "kubectl get endpointslices -l kubernetes.io/service-name=<service>", en: "Check again after the fix: the pods' addresses appear.", ms: "Semak semula selepas dibaiki: alamat pod muncul." }
+          danger: safe
+          lesson: k8s-k2-l08
+      - id: r-selector
+        result:
+          text: { en: "The order number points at trays that don't exist. One letter is enough to miss. Make the selector and the labels the same.", ms: "Nombor pesanan itu menunjuk ke dulang yang tak wujud. Satu huruf pun cukup untuk terlepas. Samakan selector dan label." }
+          commands:
+            - { command: "kubectl get service <service> -o jsonpath='{.spec.selector}'", en: "Show what the Service looks for.", ms: "Tunjuk apa yang Service itu cari." }
+            - { command: "kubectl get pods --show-labels", en: "Show what the pods really have.", ms: "Tunjuk apa yang pod sebenarnya ada." }
+            - { command: "kubectl apply -f <service>.yaml --dry-run=server", en: "After fixing the file, let the server check it first.", ms: "Selepas baiki fail, biar server semak dulu." }
+          danger: safe
+          lesson: k8s-k3-l04
+      - id: r-namespace
+        result:
+          text: { en: "A Service only picks pods in its own zone. Check that the Service and the pods share one namespace.", ms: "Service hanya pilih pod dalam zonnya sendiri. Semak Service dan pod berada dalam namespace yang sama." }
+          commands:
+            - { command: "kubectl get services -A --field-selector metadata.name=<service>", en: "Find which namespace the Service lives in.", ms: "Cari namespace tempat Service itu berada." }
+            - { command: "kubectl get pods -A -l <key>=<value>", en: "Find the pods with the selector's label, in every namespace.", ms: "Cari pod dengan label selector itu, dalam semua namespace." }
+          danger: safe
+          lesson: k8s-k3-l02
+
+  - id: k8s-gateway-404-503
+    title: { en: "My Gateway returns 404 or 503", ms: "Gateway saya pulangkan 404 atau 503" }
+    start: code
+    steps:
+      - id: code
+        question: { en: "Which error does curl show?", ms: "Ralat mana yang curl tunjuk?" }
+        answers:
+          - { label: { en: "404 Not Found", ms: "404 Not Found" }, next: accepted }
+          - { label: { en: "503 Service Unavailable", ms: "503 Service Unavailable" }, next: r-503 }
+          - { label: { en: "500 Internal Server Error", ms: "500 Internal Server Error" }, next: r-500 }
+      - id: accepted
+        question: { en: "Run kubectl describe httproute <route>. Under Parents, is Accepted True?", ms: "Jalankan kubectl describe httproute <route>. Di bawah Parents, adakah Accepted True?" }
+        answers:
+          - { label: { en: "No, or there is no Parents status at all", ms: "Tidak, atau langsung tiada status Parents" }, next: r-parent }
+          - { label: { en: "Yes, Accepted is True", ms: "Ya, Accepted True" }, next: r-path }
+      - id: r-parent
+        result:
+          text: { en: "The signboard is not attached to the entrance. Check parentRefs: the Gateway's name, its namespace, and that its listener allows routes from your namespace.", ms: "Papan tanda tak dipasang pada pintu masuk. Semak parentRefs: nama Gateway, namespace-nya, dan listener-nya benarkan route dari namespace anda." }
+          commands:
+            - { command: "kubectl get gateway -A", en: "Find the Gateway's real name and namespace.", ms: "Cari nama dan namespace sebenar Gateway itu." }
+            - { command: "kubectl describe gateway <gateway> -n <namespace>", en: "Read allowedRoutes on each listener.", ms: "Baca allowedRoutes pada setiap listener." }
+          danger: safe
+          lesson: k8s-k3-l08
+      - id: r-path
+        result:
+          text: { en: "The route is attached, but no rule matches this request. Compare the hostnames and paths with the URL you called.", ms: "Route dah dipasang, tetapi tiada peraturan yang padan dengan permintaan ini. Banding hostnames dan path dengan URL yang anda panggil." }
+          commands:
+            - { command: "kubectl get httproute <route> -o yaml", en: "Read spec.hostnames and each rule's path match.", ms: "Baca spec.hostnames dan padanan path setiap peraturan." }
+            - { command: "curl -i -H \"Host: <hostname>\" http://<gateway-address>/<path>", en: "Call it with the exact host name the route expects.", ms: "Panggil dengan nama host tepat yang route itu jangka." }
+          danger: safe
+          lesson: k8s-k3-l08
+      - id: r-503
+        result:
+          text: { en: "The route found the Service, but no ready pod stands behind it. See the Service has no endpoints flow above.", ms: "Route jumpa Service itu, tetapi tiada pod sedia di belakangnya. Lihat aliran Service tiada endpoint di atas." }
+          commands:
+            - { command: "kubectl get endpointslices -l kubernetes.io/service-name=<service>", en: "Empty, or not ready? Then the pods are the problem.", ms: "Kosong, atau tak sedia? Maka pod itulah masalahnya." }
+          danger: safe
+          lesson: k8s-k3-l04
+      - id: r-500
+        result:
+          text: { en: "A backendRef names a Service that can't be used: a typo, or another namespace without a ReferenceGrant. The route says ResolvedRefs False.", ms: "backendRef namakan Service yang tak boleh diguna: salah taip, atau namespace lain tanpa ReferenceGrant. Route itu kata ResolvedRefs False." }
+          commands:
+            - { command: "kubectl describe httproute <route>", en: "Look for ResolvedRefs and its reason, like BackendNotFound.", ms: "Cari ResolvedRefs dan sebabnya, seperti BackendNotFound." }
+            - { command: "kubectl get services -n <namespace>", en: "Compare with the Service names that really exist.", ms: "Banding dengan nama Service yang betul-betul wujud." }
+          danger: safe
+          lesson: k8s-k3-l08
+
+  - id: k8s-dns
+    title: { en: "DNS fails inside my pod", ms: "DNS gagal dalam pod saya" }
+    start: what
+    steps:
+      - id: what
+        question: { en: "From a test pod, what fails?", ms: "Dari pod ujian, apa yang gagal?" }
+        answers:
+          - { label: { en: "The short name fails, the full name works", ms: "Nama pendek gagal, nama penuh berjaya" }, next: r-namespace }
+          - { label: { en: "Everything fails, even kubernetes.default", ms: "Semua gagal, termasuk kubernetes.default" }, next: coredns }
+          - { label: { en: "Cluster names work, outside names fail", ms: "Nama dalam kluster berjaya, nama luar gagal" }, next: r-external }
+      - id: coredns
+        question: { en: "Are the CoreDNS pods Running and ready?", ms: "Adakah pod CoreDNS Running dan sedia?" }
+        answers:
+          - { label: { en: "No, they crash or are missing", ms: "Tidak, ia crash atau tiada" }, next: r-coredns }
+          - { label: { en: "Yes, they look fine", ms: "Ya, nampak okey" }, next: r-netpol }
+      - id: r-namespace
+        result:
+          text: { en: "A short name only works inside the same zone. From another namespace, add the namespace to the name.", ms: "Nama pendek hanya berfungsi dalam zon yang sama. Dari namespace lain, tambah namespace pada nama itu." }
+          commands:
+            - { command: "kubectl run dnscheck --rm -it --restart=Never --image=busybox:1.37 -- nslookup <service>.<namespace>", en: "A throwaway pod looks up the full name, then removes itself.", ms: "Pod pakai buang cari nama penuh, kemudian buang dirinya sendiri." }
+          danger: safe
+          lesson: k8s-k3-l05
+      - id: r-coredns
+        result:
+          text: { en: "The cluster's phone book is down. Read its logs first. On a practice cluster, restart it.", ms: "Buku telefon kluster itu rosak. Baca log-nya dulu. Pada kluster latihan, hidupkan semula." }
+          commands:
+            - { command: "kubectl get pods -n kube-system -l k8s-app=kube-dns", en: "Find the CoreDNS pods.", ms: "Cari pod CoreDNS." }
+            - { command: "kubectl logs -n kube-system -l k8s-app=kube-dns", en: "Read what they say.", ms: "Baca apa yang ia kata." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign. Practice cluster only!", ms: "Semak papan anda-di-sini. Kluster latihan sahaja!" }
+            - { command: "kubectl rollout restart deployment/coredns -n kube-system", en: "Start fresh CoreDNS pods, one by one.", ms: "Mulakan pod CoreDNS baharu, satu demi satu." }
+          danger: careful
+          lesson: k8s-k3-l05
+      - id: r-netpol
+        result:
+          text: { en: "A NetworkPolicy may block the way to DNS. With default deny, allow port 53 to kube-system.", ms: "NetworkPolicy mungkin sekat jalan ke DNS. Dengan default deny, benarkan port 53 ke kube-system." }
+          commands:
+            - { command: "kubectl get networkpolicy -n <namespace>", en: "List the policies in your pod's zone.", ms: "Senaraikan polisi dalam zon pod anda." }
+            - command: |-
+                egress:
+                  - to:
+                      - namespaceSelector:
+                          matchLabels:
+                            kubernetes.io/metadata.name: kube-system
+                    ports:
+                      - { protocol: UDP, port: 53 }
+                      - { protocol: TCP, port: 53 }
+              en: "Add this egress rule to the policy: DNS to kube-system is allowed."
+              ms: "Tambah peraturan egress ini pada polisi: DNS ke kube-system dibenarkan."
+          danger: safe
+          lesson: k8s-k3-l11
+      - id: r-external
+        result:
+          text: { en: "Inside names work, so CoreDNS is up. It can't reach the DNS servers outside, or a policy blocks traffic out.", ms: "Nama dalam berfungsi, jadi CoreDNS hidup. Ia tak dapat capai server DNS luar, atau polisi sekat trafik keluar." }
+          commands:
+            - { command: "kubectl run dnscheck --rm -it --restart=Never --image=busybox:1.37 -- nslookup example.com", en: "Try one outside name from a throwaway pod.", ms: "Cuba satu nama luar dari pod pakai buang." }
+            - { command: "kubectl logs -n kube-system -l k8s-app=kube-dns", en: "Look for errors about the upstream servers.", ms: "Cari ralat tentang server upstream." }
+          danger: safe
+          lesson: k8s-k3-l05
+
+  - id: k8s-pvc-pending
+    title: { en: "My PVC is stuck in Pending", ms: "PVC saya tersekat dalam Pending" }
+    start: events
+    steps:
+      - id: events
+        question: { en: "Run kubectl describe pvc <pvc>. What do the Events say?", ms: "Jalankan kubectl describe pvc <pvc>. Apa kata Events?" }
+        answers:
+          - { label: { en: "waiting for first consumer to be created before binding", ms: "waiting for first consumer to be created before binding" }, next: consumer }
+          - { label: { en: "storageclass … not found", ms: "storageclass … not found" }, next: r-sc }
+          - { label: { en: "no persistent volumes available … no storage class is set", ms: "no persistent volumes available … no storage class is set" }, next: r-nosc }
+      - id: consumer
+        question: { en: "Does a pod use this claim yet?", ms: "Adakah sudah ada pod yang guna claim ini?" }
+        answers:
+          - { label: { en: "No pod uses it yet", ms: "Belum ada pod yang guna" }, next: r-wait }
+          - { label: { en: "Yes, and that pod is Pending too", ms: "Ya, dan pod itu juga Pending" }, next: r-pod }
+      - id: r-wait
+        result:
+          text: { en: "Nothing is wrong. This StorageClass makes the locker only when a pod needs it, on that pod's node. Start the pod.", ms: "Tiada yang salah. StorageClass ini hanya buat loker bila pod perlukannya, pada node pod itu. Mulakan pod itu." }
+          commands:
+            - { command: "kubectl get storageclass", en: "VOLUMEBINDINGMODE says WaitForFirstConsumer.", ms: "VOLUMEBINDINGMODE tulis WaitForFirstConsumer." }
+          danger: safe
+          lesson: k8s-k4-l06
+      - id: r-pod
+        result:
+          text: { en: "The pod can't be placed, so the locker waits too. Fix the pod first: see the pod stuck Pending flow above.", ms: "Pod itu tak dapat diletak, jadi loker pun menunggu. Baiki pod dulu: lihat aliran pod tersekat Pending di atas." }
+          commands:
+            - { command: "kubectl describe pod <pod>", en: "Read FailedScheduling in the Events.", ms: "Baca FailedScheduling dalam Events." }
+          danger: safe
+          lesson: k8s-k4-l05
+      - id: r-sc
+        result:
+          text: { en: "The claim names a StorageClass that doesn't exist. A claim's class can't change, so delete this empty claim and make it again.", ms: "Claim itu namakan StorageClass yang tak wujud. Kelas claim tak boleh diubah, jadi padam claim kosong ini dan buat semula." }
+          commands:
+            - { command: "kubectl get storageclass", en: "See the classes that really exist.", ms: "Lihat kelas yang betul-betul wujud." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you delete.", ms: "Semak papan anda-di-sini sebelum padam." }
+            - { command: "kubectl delete pvc <pvc>", en: "Delete the Pending claim. It never held data.", ms: "Padam claim yang Pending. Ia tak pernah simpan data." }
+            - { command: "kubectl apply -f <pvc>.yaml", en: "Make it again with the right storageClassName.", ms: "Buat semula dengan storageClassName yang betul." }
+          danger: careful
+          lesson: k8s-k4-l06
+      - id: r-nosc
+        result:
+          text: { en: "The claim names no class, and the cluster has no default. Name a class in the claim, or mark one class as the default.", ms: "Claim itu tak namakan kelas, dan kluster tiada kelas lalai. Namakan kelas dalam claim, atau tandakan satu kelas sebagai lalai." }
+          commands:
+            - { command: "kubectl get storageclass", en: "A default class shows (default) after its name.", ms: "Kelas lalai tunjuk (default) selepas namanya." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you change anything.", ms: "Semak papan anda-di-sini sebelum ubah apa-apa." }
+            - { command: "kubectl patch storageclass <class> -p '{\"metadata\":{\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'", en: "Make one class the default for new claims.", ms: "Jadikan satu kelas sebagai lalai untuk claim baharu." }
+          danger: careful
+          lesson: k8s-k4-l06
+
+  - id: k8s-rollout-stuck
+    title: { en: "My rollout is stuck", ms: "Rollout saya tersekat" }
+    start: pods
+    steps:
+      - id: pods
+        question: { en: "Run kubectl get pods -l app=<app>. What are the newest pods doing?", ms: "Jalankan kubectl get pods -l app=<app>. Apa yang pod paling baharu sedang buat?" }
+        answers:
+          - { label: { en: "ImagePullBackOff or CrashLoopBackOff", ms: "ImagePullBackOff atau CrashLoopBackOff" }, next: gitops }
+          - { label: { en: "Running, but READY 0/1", ms: "Running, tetapi READY 0/1" }, next: r-ready }
+          - { label: { en: "Pending", ms: "Pending" }, next: r-pending }
+      - id: gitops
+        question: { en: "Is this app run by GitOps (Argo CD or Flux)?", ms: "Adakah aplikasi ini dijalankan oleh GitOps (Argo CD atau Flux)?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: r-revert }
+          - { label: { en: "No, we apply by hand or from CI", ms: "Tidak, kami apply sendiri atau dari CI" }, next: r-undo }
+      - id: r-revert
+        result:
+          text: { en: "The new version is broken; the old pods still serve. Undo in Git, not with kubectl. Self-heal would put the bad version back.", ms: "Versi baharu rosak; pod lama masih melayan. Undur dalam Git, bukan dengan kubectl. Self-heal akan kembalikan versi rosak itu." }
+          commands:
+            - { command: "git revert <bad-commit>", en: "Make a new commit that undoes the bad change.", ms: "Buat commit baharu yang undur perubahan rosak itu." }
+            - { command: "git push", en: "Send it. Argo CD or Flux syncs the old version back.", ms: "Hantar. Argo CD atau Flux sync versi lama semula." }
+          danger: safe
+          lesson: k8s-k7-l04
+      - id: r-undo
+        result:
+          text: { en: "The new version is broken; the old pods still serve. Roll back now, then read the error in peace.", ms: "Versi baharu rosak; pod lama masih melayan. Rollback sekarang, kemudian baca ralat dengan tenang." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign first.", ms: "Semak papan anda-di-sini dulu." }
+            - { command: "kubectl rollout history deployment/<name>", en: "See the revisions you can go back to.", ms: "Lihat revision yang anda boleh kembali." }
+            - { command: "kubectl rollout undo deployment/<name>", en: "Go back to the version before.", ms: "Kembali ke versi sebelumnya." }
+            - { command: "kubectl rollout status deployment/<name> --timeout=120s", en: "Wait until the rollback finishes.", ms: "Tunggu sehingga rollback selesai." }
+          danger: careful
+          lesson: k8s-k2-l05
+      - id: r-ready
+        result:
+          text: { en: "The new pods run but never pass the readiness probe, so the rollout waits. After the progress deadline it reports: exceeded its progress deadline. Fix the probe or the app.", ms: "Pod baharu berjalan tetapi tak pernah lulus readiness probe, jadi rollout menunggu. Selepas progress deadline, ia lapor: exceeded its progress deadline. Baiki probe atau aplikasi." }
+          commands:
+            - { command: "kubectl describe pod <new-pod>", en: "Events show Readiness probe failed, and why.", ms: "Events tunjuk Readiness probe failed, dan sebabnya." }
+            - { command: "kubectl rollout status deployment/<name> --timeout=60s", en: "Ask how the rollout is doing. It changes nothing.", ms: "Tanya keadaan rollout itu. Ia tak ubah apa-apa." }
+          danger: safe
+          lesson: k8s-k2-l08
+      - id: r-pending
+        result:
+          text: { en: "A rolling update needs room for one extra pod. There is none. Free some room, or see the pod stuck Pending flow above.", ms: "Rolling update perlukan ruang untuk satu pod tambahan. Tiada ruang. Kosongkan sedikit ruang, atau lihat aliran pod tersekat Pending di atas." }
+          commands:
+            - { command: "kubectl describe pod <new-pod>", en: "Read FailedScheduling in the Events.", ms: "Baca FailedScheduling dalam Events." }
+          danger: safe
+          lesson: k8s-k2-l05
+
+  - id: k8s-forbidden
+    title: { en: "\"forbidden\": I'm not allowed (RBAC)", ms: "\"forbidden\": saya tak dibenarkan (RBAC)" }
+    start: who
+    steps:
+      - id: who
+        question: { en: "Who got the forbidden error?", ms: "Siapa yang dapat ralat forbidden?" }
+        answers:
+          - { label: { en: "Me, with kubectl", ms: "Saya, dengan kubectl" }, next: where }
+          - { label: { en: "An app or a CI bot (a ServiceAccount)", ms: "Aplikasi atau bot CI (ServiceAccount)" }, next: r-sa }
+      - id: where
+        question: { en: "The error names a namespace. Is it the one you meant?", ms: "Ralat itu namakan satu namespace. Adakah itu yang anda maksudkan?" }
+        answers:
+          - { label: { en: "No, wrong namespace", ms: "Tidak, namespace salah" }, next: r-ns }
+          - { label: { en: "Yes, the right one", ms: "Ya, yang betul" }, next: r-user }
+      - id: r-ns
+        result:
+          text: { en: "Your rights may be fine; you are just in the wrong zone. Switch to the right namespace, or add -n.", ms: "Hak anda mungkin okey; anda cuma dalam zon yang salah. Tukar ke namespace yang betul, atau tambah -n." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign.", ms: "Semak papan anda-di-sini." }
+            - { command: "kubectl config set-context --current --namespace=<namespace>", en: "Make that namespace your default.", ms: "Jadikan namespace itu lalai anda." }
+          danger: safe
+          lesson: k8s-k1-l10
+      - id: r-user
+        result:
+          text: { en: "RBAC only allows what a Role gives. Ask first, then request the one right you need. Never ask for cluster-admin.", ms: "RBAC hanya benarkan apa yang Role beri. Tanya dulu, kemudian minta satu hak yang anda perlukan. Jangan minta cluster-admin." }
+          commands:
+            - { command: "kubectl auth whoami", en: "Who does the cluster think you are?", ms: "Siapa anda pada pandangan kluster?" }
+            - { command: "kubectl auth can-i --list -n <namespace>", en: "Everything you may do in this namespace.", ms: "Semua yang anda boleh buat dalam namespace ini." }
+            - { command: "kubectl create role pod-reader --verb=get,list,watch --resource=pods -n <namespace> --dry-run=client -o yaml", en: "For your admin: a small Role that only reads pods. Printed, not created.", ms: "Untuk admin anda: Role kecil yang hanya baca pod. Dicetak, bukan dibuat." }
+          danger: safe
+          lesson: k8s-k6-l03
+      - id: r-sa
+        result:
+          text: { en: "The bot's ServiceAccount lacks one right. Give it only that one, in its own namespace, with a Role and a RoleBinding.", ms: "ServiceAccount bot itu kurang satu hak. Beri hak itu sahaja, dalam namespace sendiri, dengan Role dan RoleBinding." }
+          commands:
+            - { command: "kubectl auth can-i patch deployments -n <namespace> --as=system:serviceaccount:<namespace>:<sa>", en: "Ask as the bot: may it do this? (yes or no)", ms: "Tanya sebagai bot itu: bolehkah ia buat ini? (yes atau no)" }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you grant anything.", ms: "Semak papan anda-di-sini sebelum beri apa-apa." }
+            - { command: "kubectl create role deployer --verb=get,list,patch --resource=deployments -n <namespace>", en: "A Role with just those rights.", ms: "Role dengan hak itu sahaja." }
+            - { command: "kubectl create rolebinding <sa>-deployer --role=deployer --serviceaccount=<namespace>:<sa> -n <namespace>", en: "Give that Role to the bot, in this namespace only.", ms: "Beri Role itu kepada bot, dalam namespace ini sahaja." }
+          danger: careful
+          lesson: k8s-k6-l02
+
+  - id: k8s-wrong-cluster
+    title: { en: "I ran a command on the wrong cluster", ms: "Saya jalankan arahan pada kluster yang salah" }
+    start: what
+    steps:
+      - id: what
+        question: { en: "What did the command do?", ms: "Apa yang arahan itu buat?" }
+        answers:
+          - { label: { en: "Only looked (get, describe, logs)", ms: "Cuma tengok (get, describe, logs)" }, next: r-look }
+          - { label: { en: "Changed something (apply, scale, set image)", ms: "Ubah sesuatu (apply, scale, set image)" }, next: gitops }
+          - { label: { en: "Deleted something", ms: "Padam sesuatu" }, next: r-deleted }
+      - id: gitops
+        question: { en: "Is that cluster run by GitOps with self-heal on?", ms: "Adakah kluster itu dijalankan oleh GitOps dengan self-heal hidup?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: r-healed }
+          - { label: { en: "No, or I don't know", ms: "Tidak, atau saya tak tahu" }, next: r-undo }
+      - id: r-look
+        result:
+          text: { en: "No harm done: looking changes nothing. Switch back, and check the sign before every command.", ms: "Tiada kerosakan: tengok tak ubah apa-apa. Tukar balik, dan semak papan itu sebelum setiap arahan." }
+          commands:
+            - { command: "kubectl config get-contexts", en: "List every cluster you can reach. The star is where you are.", ms: "Senaraikan semua kluster yang anda boleh capai. Bintang ialah tempat anda sekarang." }
+            - { command: "kubectl config use-context <practice-context>", en: "Move back to your practice cluster.", ms: "Kembali ke kluster latihan anda." }
+          danger: safe
+          lesson: k8s-k1-l09
+      - id: r-healed
+        result:
+          text: { en: "Self-heal puts Git's version back within seconds. Still tell the team what happened. Then check Argo CD shows Synced.", ms: "Self-heal kembalikan versi Git dalam beberapa saat. Tetap beritahu pasukan apa yang berlaku. Kemudian semak Argo CD tunjuk Synced." }
+          commands:
+            - { command: "kubectl get applications -n argocd", en: "Read SYNC STATUS and HEALTH STATUS. Reading is safe.", ms: "Baca SYNC STATUS dan HEALTH STATUS. Membaca itu selamat." }
+            - { command: "kubectl config use-context <practice-context>", en: "Move back to your practice cluster.", ms: "Kembali ke kluster latihan anda." }
+          danger: safe
+          lesson: k8s-k7-l04
+      - id: r-undo
+        result:
+          text: { en: "Tell the team now, before fixing anything. Then undo with the opposite command, or apply the file from Git again.", ms: "Beritahu pasukan sekarang, sebelum baiki apa-apa. Kemudian undur dengan arahan bertentangan, atau apply semula fail dari Git." }
+          commands:
+            - { command: "kubectl config current-context", en: "Be sure which cluster you are on now.", ms: "Pastikan kluster mana anda berada sekarang." }
+            - { command: "kubectl rollout history deployment/<name>", en: "See what changed. Scaling makes no new revision.", ms: "Lihat apa yang berubah. Scale tak buat revision baharu." }
+            - { command: "kubectl rollout undo deployment/<name>", en: "Undo an image or template change.", ms: "Undur perubahan image atau templat." }
+            - { command: "kubectl apply -f <file-from-git>.yaml --dry-run=server", en: "Or check the file from Git first, then apply it without --dry-run.", ms: "Atau semak fail dari Git dulu, kemudian apply tanpa --dry-run." }
+          danger: careful
+          lesson: k8s-k2-l05
+      - id: r-deleted
+        result:
+          text: { en: "Stop and tell the team at once. A deleted pod comes back by itself. A deleted Deployment comes back from Git. A deleted volume claim may take its data with it.", ms: "Berhenti dan beritahu pasukan serta-merta. Pod yang dipadam akan kembali sendiri. Deployment yang dipadam boleh dipulihkan dari Git. Claim volume yang dipadam mungkin bawa datanya sekali." }
+          commands:
+            - { command: "kubectl config current-context", en: "Note exactly which cluster it was, for the team.", ms: "Catat kluster mana sebenarnya, untuk pasukan." }
+            - { command: "kubectl get events -n <namespace> --sort-by=.lastTimestamp", en: "See what happened after the delete.", ms: "Lihat apa yang berlaku selepas padam itu." }
+            - { command: "kubectl apply -f <file-from-git>.yaml --dry-run=server", en: "Check the file from Git. Re-create only with the team's okay.", ms: "Semak fail dari Git. Cipta semula hanya dengan persetujuan pasukan." }
+          danger: lose
+          lesson: k8s-k1-l09
+
+  - id: k8s-node-notready
+    title: { en: "A node is NotReady", ms: "Satu node NotReady" }
+    start: cond
+    steps:
+      - id: cond
+        question: { en: "Run kubectl describe node <node>. What do the Conditions say?", ms: "Jalankan kubectl describe node <node>. Apa kata Conditions?" }
+        answers:
+          - { label: { en: "Kubelet stopped posting node status (Unknown)", ms: "Kubelet stopped posting node status (Unknown)" }, next: where }
+          - { label: { en: "DiskPressure is True", ms: "DiskPressure True" }, next: r-disk }
+          - { label: { en: "MemoryPressure is True", ms: "MemoryPressure True" }, next: r-memory }
+      - id: where
+        question: { en: "Where does this cluster run?", ms: "Di mana kluster ini berjalan?" }
+        answers:
+          - { label: { en: "kind on my laptop (practice)", ms: "kind di laptop saya (latihan)" }, next: r-kind }
+          - { label: { en: "A shared or cloud cluster", ms: "Kluster kongsi atau cloud" }, next: r-managed }
+      - id: r-kind
+        result:
+          text: { en: "Each kind node is a Docker container. If it stopped, the whole stall is gone. A practice cluster is cheap: delete it and make a fresh one.", ms: "Setiap node kind ialah container Docker. Jika ia berhenti, seluruh gerai hilang. Kluster latihan murah sahaja: padam dan buat yang baharu." }
+          commands:
+            - { command: "docker ps -a --filter name=<cluster-name>", en: "See if the node containers are running.", ms: "Lihat sama ada container node sedang berjalan." }
+            - { command: "kind delete cluster --name <cluster-name>", en: "Delete the practice cluster. Everything in it is gone.", ms: "Padam kluster latihan itu. Semua di dalamnya hilang." }
+            - { command: "kind create cluster --name <cluster-name>", en: "Make a fresh one, then apply your files again.", ms: "Buat yang baharu, kemudian apply fail anda semula." }
+          danger: lose
+          lesson: k8s-k1-l07
+      - id: r-managed
+        result:
+          text: { en: "The kubelet on that machine stopped talking. After about 5 minutes, Kubernetes moves its pods elsewhere. Keep new pods off it, and tell whoever runs the machines.", ms: "Kubelet pada mesin itu berhenti berhubung. Selepas lebih kurang 5 minit, Kubernetes pindahkan pod-nya ke tempat lain. Halang pod baharu ke situ, dan beritahu pengurus mesin itu." }
+          commands:
+            - { command: "kubectl get pods -A -o wide --field-selector spec.nodeName=<node>", en: "List the pods that were on that node.", ms: "Senaraikan pod yang ada pada node itu." }
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign before you change anything.", ms: "Semak papan anda-di-sini sebelum ubah apa-apa." }
+            - { command: "kubectl cordon <node>", en: "No new pods on this node. Easy to undo with uncordon.", ms: "Tiada pod baharu pada node ini. Mudah diundur dengan uncordon." }
+          danger: careful
+          lesson: k8s-k5-l10
+      - id: r-disk
+        result:
+          text: { en: "The node's disk is almost full, so the kubelet starts evicting pods. Free space: old images, big logs, emptyDir files.", ms: "Cakera node hampir penuh, jadi kubelet mula usir pod. Kosongkan ruang: image lama, log besar, fail emptyDir." }
+          commands:
+            - { command: "kubectl describe node <node>", en: "Read the Events: evictions and image garbage collection.", ms: "Baca Events: pengusiran dan pembersihan image." }
+            - { command: "docker system df", en: "On a kind laptop: see what fills Docker's disk.", ms: "Pada laptop kind: lihat apa yang penuhkan cakera Docker." }
+          danger: safe
+          lesson: k8s-k5-l10
+      - id: r-memory
+        result:
+          text: { en: "Pods on this node use too much memory. Find the hungry ones and give every container a memory limit.", ms: "Pod pada node ini guna terlalu banyak memori. Cari yang lapar dan beri setiap container had memori." }
+          commands:
+            - { command: "kubectl top pods -A --sort-by=memory", en: "The hungriest pods first (needs metrics-server).", ms: "Pod paling lapar dulu (perlu metrics-server)." }
+          danger: safe
+          lesson: k8s-k2-l09
+
+  # --- K9 Cluster Admin (CKA pack): from inside the nodes. Facts checked 2026-11-01 against
+  # kubernetes.io (kubeadm certs, kubeadm upgrade, static pods, etcd backup, DNS debugging) and etcd.io 3.7.
+  - id: k8s-node-kubelet
+    title: { en: "A node is NotReady, and I can get onto it", ms: "Satu node NotReady, dan saya boleh masuk ke dalamnya" }
+    start: status
+    steps:
+      - id: status
+        question: { en: "Open a shell on the node (ssh <node>, or docker exec -it <node> bash on kind). Run systemctl status kubelet. What does the Active line say?", ms: "Buka shell pada node itu (ssh <node>, atau docker exec -it <node> bash pada kind). Jalankan systemctl status kubelet. Apa kata baris Active?" }
+        answers:
+          - { label: { en: "inactive (dead)", ms: "inactive (dead)" }, next: r-start }
+          - { label: { en: "active (running), but the node is still NotReady", ms: "active (running), tapi node masih NotReady" }, next: journal }
+          - { label: { en: "Something else, like failed or activating (auto-restart)", ms: "Lain, seperti failed atau activating (auto-restart)" }, next: journal }
+      - id: journal
+        question: { en: "Run journalctl -u kubelet -n 20 --no-pager. What do the newest lines (at the bottom) talk about?", ms: "Jalankan journalctl -u kubelet -n 20 --no-pager. Baris terbaru (di bawah) bercakap tentang apa?" }
+        answers:
+          - { label: { en: "Certificates, x509 or expired", ms: "Sijil, x509 atau expired" }, next: r-certs }
+          - { label: { en: "The container runtime (containerd, CRI)", ms: "Container runtime (containerd, CRI)" }, next: r-runtime }
+          - { label: { en: "A config file, a flag or a path", ms: "Fail config, flag atau path" }, next: r-config }
+      - id: r-start
+        result:
+          text: { en: "The kubelet is stopped, so the node stopped reporting. Its pods keep running for a while, but nobody watches them. Start it, and make sure it starts at boot.", ms: "Kubelet berhenti, jadi node berhenti melapor. Pod-nya terus berjalan seketika, tapi tiada siapa menjaganya. Hidupkannya, dan pastikan ia hidup setiap kali boot." }
+          commands:
+            - { command: "systemctl start kubelet", en: "Start the kubelet. Like most systemctl commands, it prints nothing.", ms: "Hidupkan kubelet. Seperti kebanyakan arahan systemctl, ia tak cetak apa-apa." }
+            - { command: "systemctl enable kubelet", en: "Start it at every boot too.", ms: "Hidupkannya setiap kali boot juga." }
+            - { command: "systemctl is-active kubelet", en: "Check: it should say active.", ms: "Semak: ia patut kata active." }
+            - { command: "kubectl get nodes", en: "Back on your laptop: the node turns Ready within seconds.", ms: "Kembali di laptop: node jadi Ready dalam beberapa saat." }
+          danger: careful
+          lesson: k8s-k9-l04
+      - id: r-certs
+        result:
+          text: { en: "The kubelet's ID card (certificate) has a problem, often an expired one. Read the dates, renew what kubeadm manages, then restart the kubelet.", ms: "Kad pengenalan (sijil) kubelet ada masalah, selalunya sudah luput. Baca tarikhnya, baharui yang kubeadm urus, kemudian mulakan semula kubelet." }
+          commands:
+            - { command: "kubeadm certs check-expiration", en: "On the control-plane node: which cards expire when? It only looks.", ms: "Pada node control-plane: kad mana luput bila? Ia cuma melihat." }
+            - { command: "ls -l /var/lib/kubelet/pki", en: "On the NotReady node: the kubelet's own cards.", ms: "Pada node NotReady: kad milik kubelet sendiri." }
+            - { command: "kubeadm certs renew all", en: "On the control-plane node: renew kubeadm's cards. Then restart the control-plane pods.", ms: "Pada node control-plane: baharui kad kubeadm. Kemudian mulakan semula pod control-plane." }
+            - { command: "systemctl restart kubelet", en: "On the NotReady node: restart the kubelet so it reads its cards again.", ms: "Pada node NotReady: mulakan semula kubelet supaya ia baca kadnya semula." }
+          danger: careful
+          lesson: k8s-k9-l10
+      - id: r-runtime
+        result:
+          text: { en: "The kubelet can't talk to the stove (containerd). Check the runtime first, then the kubelet.", ms: "Kubelet tak boleh bercakap dengan dapur masak (containerd). Semak runtime dulu, kemudian kubelet." }
+          commands:
+            - { command: "systemctl status containerd", en: "Is the runtime running?", ms: "Adakah runtime itu berjalan?" }
+            - { command: "systemctl start containerd", en: "Start it if it stopped.", ms: "Hidupkannya jika ia berhenti." }
+            - { command: "crictl ps", en: "crictl asks containerd directly. A list means containerd answers.", ms: "crictl tanya containerd terus. Ada senarai bermakna containerd menjawab." }
+            - { command: "systemctl restart kubelet", en: "Then restart the kubelet.", ms: "Kemudian mulakan semula kubelet." }
+          danger: careful
+          lesson: k8s-k9-l05
+      - id: r-config
+        result:
+          text: { en: "A setting the kubelet reads is wrong: a typo in a file, a flag or a missing path. Find the line the journal names, fix it, then restart.", ms: "Satu tetapan yang kubelet baca salah: salah ejaan dalam fail, flag atau path yang tiada. Cari baris yang journal sebut, baikinya, kemudian mulakan semula." }
+          commands:
+            - { command: "systemctl cat kubelet", en: "Show the kubelet's unit and its drop-in files, wherever they live.", ms: "Tunjuk unit kubelet dan fail drop-in-nya, di mana pun ia berada." }
+            - { command: "cat /var/lib/kubelet/config.yaml", en: "The kubelet's main settings file on kubeadm nodes.", ms: "Fail tetapan utama kubelet pada node kubeadm." }
+            - { command: "cat /var/lib/kubelet/kubeadm-flags.env", en: "The extra flags kubeadm gave the kubelet.", ms: "Flag tambahan yang kubeadm beri kepada kubelet." }
+            - { command: "systemctl daemon-reload && systemctl restart kubelet", en: "After the fix: reload systemd, then restart the kubelet.", ms: "Selepas dibaiki: muat semula systemd, kemudian mulakan semula kubelet." }
+          danger: careful
+          lesson: k8s-k9-l04
+
+  - id: k8s-control-plane-down
+    title: { en: "A control-plane pod is down (scheduler, controller manager, API server)", ms: "Satu pod control-plane tak berjalan (scheduler, controller manager, API server)" }
+    start: api
+    steps:
+      - id: api
+        question: { en: "Run kubectl get nodes on your laptop. Does it answer?", ms: "Jalankan kubectl get nodes di laptop anda. Adakah ia menjawab?" }
+        answers:
+          - { label: { en: "Yes, it answers", ms: "Ya, ia menjawab" }, next: which }
+          - { label: { en: "No: it can't connect to the server (refused, EOF or a timeout)", ms: "Tidak: ia tak boleh sambung ke server (refused, EOF atau timeout)" }, next: r-apiserver }
+      - id: which
+        question: { en: "Run kubectl get pods -n kube-system -l tier=control-plane. What do you see?", ms: "Jalankan kubectl get pods -n kube-system -l tier=control-plane. Apa yang anda nampak?" }
+        answers:
+          - { label: { en: "One of them is missing from the list", ms: "Salah satu tiada dalam senarai" }, next: r-moved }
+          - { label: { en: "One is in CrashLoopBackOff", ms: "Satu dalam CrashLoopBackOff" }, next: r-crash }
+          - { label: { en: "One is in ErrImagePull or ImagePullBackOff", ms: "Satu dalam ErrImagePull atau ImagePullBackOff" }, next: r-image }
+      - id: r-apiserver
+        result:
+          text: { en: "kubectl can't reach the API server, so look from inside. On the control-plane node, crictl talks to containerd directly. Find the API server or etcd container and read its last words.", ms: "kubectl tak sampai ke API server, jadi lihat dari dalam. Pada node control-plane, crictl bercakap terus dengan containerd. Cari container API server atau etcd dan baca kata-kata terakhirnya." }
+          commands:
+            - { command: "ssh <control-plane-node>", en: "Get onto the control-plane node. On kind: docker exec -it <node> bash.", ms: "Masuk ke node control-plane. Pada kind: docker exec -it <node> bash." }
+            - { command: "crictl ps -a --name kube-apiserver", en: "Is it running, or exiting again and again?", ms: "Adakah ia berjalan, atau keluar berulang kali?" }
+            - { command: "crictl logs <container-id>", en: "Read why it stopped. Copy the ID from the line above.", ms: "Baca kenapa ia berhenti. Salin ID dari baris di atas." }
+            - { command: "ls /etc/kubernetes/manifests", en: "Are all four manifest files there?", ms: "Adakah keempat-empat fail manifest ada?" }
+          danger: safe
+          lesson: k8s-k9-l05
+      - id: r-moved
+        result:
+          text: { en: "The kubelet runs only what sits in /etc/kubernetes/manifests. A file moved out means its pod is gone. Put it back, and the kubelet starts it within seconds.", ms: "Kubelet hanya jalankan apa yang ada dalam /etc/kubernetes/manifests. Fail yang dialih keluar bermakna pod-nya hilang. Letak semula, dan kubelet hidupkannya dalam beberapa saat." }
+          commands:
+            - { command: "ls /etc/kubernetes/manifests", en: "On the control-plane node: which file is missing?", ms: "Pada node control-plane: fail mana yang tiada?" }
+            - { command: "ls /root /tmp", en: "Look where it may have gone.", ms: "Lihat ke mana ia mungkin pergi." }
+            - { command: "mv /root/kube-scheduler.yaml /etc/kubernetes/manifests/", en: "Example: put the scheduler's file back.", ms: "Contoh: letak semula fail scheduler." }
+            - { command: "kubectl get pods -n kube-system -l tier=control-plane", en: "Back on the laptop: is it listed again?", ms: "Kembali di laptop: adakah ia tersenarai semula?" }
+          danger: careful
+          lesson: k8s-k9-l03
+      - id: r-crash
+        result:
+          text: { en: "The component starts and quits. Its log names the reason, often a typo in a flag or a path. Keep a copy outside the folder, fix the line, and the kubelet restarts it.", ms: "Komponen itu bermula dan keluar. Log-nya sebut sebabnya, selalunya salah ejaan dalam flag atau path. Simpan salinan di luar folder, baiki baris itu, dan kubelet mulakannya semula." }
+          commands:
+            - { command: "kubectl logs -n kube-system <pod>", en: "Read its last words, for example unknown flag.", ms: "Baca kata-kata terakhirnya, contohnya unknown flag." }
+            - { command: "cp /etc/kubernetes/manifests/kube-scheduler.yaml /root/kube-scheduler.yaml.bak", en: "A copy outside the folder. The kubelet would also run a copy left inside it.", ms: "Salinan di luar folder. Kubelet juga akan jalankan salinan yang ditinggal di dalamnya." }
+            - { command: "grep -n bind /etc/kubernetes/manifests/kube-scheduler.yaml", en: "Find the line the log talks about.", ms: "Cari baris yang log itu sebut." }
+            - { command: "sed -i 's/<typo>/<fix>/' /etc/kubernetes/manifests/kube-scheduler.yaml", en: "Fix the word in place. This changes the control plane.", ms: "Baiki perkataan itu terus dalam fail. Ini ubah control plane." }
+          danger: careful
+          lesson: k8s-k9-l03
+      - id: r-image
+        result:
+          text: { en: "The image tag in the manifest doesn't exist: a typo, or a version never released. Fix the tag, and the kubelet pulls it again.", ms: "Tag image dalam manifest itu tiada: salah ejaan, atau versi yang tak pernah dikeluarkan. Baiki tag itu, dan kubelet tarik semula." }
+          commands:
+            - { command: "grep image: /etc/kubernetes/manifests/<component>.yaml", en: "Read the tag it asks for.", ms: "Baca tag yang ia minta." }
+            - { command: "kubeadm version -o short", en: "The control plane's images usually match this version.", ms: "Image control plane biasanya sama dengan versi ini." }
+            - { command: "crictl images", en: "Which images are already on this node?", ms: "Image mana yang sudah ada pada node ini?" }
+            - { command: "sed -i 's/<bad-tag>/<good-tag>/' /etc/kubernetes/manifests/<component>.yaml", en: "Fix the tag in place. This changes the control plane.", ms: "Baiki tag itu terus dalam fail. Ini ubah control plane." }
+          danger: careful
+          lesson: k8s-k9-l03
+
+  - id: k8s-etcd-restore
+    title: { en: "I need to bring objects back from an etcd snapshot", ms: "Saya perlu pulihkan objek dari snapshot etcd" }
+    start: have
+    steps:
+      - id: have
+        question: { en: "Do you have an etcd snapshot from before the loss?", ms: "Adakah anda ada snapshot etcd dari sebelum kehilangan itu?" }
+        answers:
+          - { label: { en: "No", ms: "Tiada" }, next: r-none }
+          - { label: { en: "Yes, a file like /opt/backup.db", ms: "Ada, fail seperti /opt/backup.db" }, next: check }
+      - id: check
+        question: { en: "Run etcdutl --write-out=table snapshot status <file>. What does it print?", ms: "Jalankan etcdutl --write-out=table snapshot status <file>. Apa yang ia cetak?" }
+        answers:
+          - { label: { en: "A table with HASH and REVISION", ms: "Jadual dengan HASH dan REVISION" }, next: where }
+          - { label: { en: "Error: stat …: no such file or directory", ms: "Error: stat …: no such file or directory" }, next: r-nofile }
+      - id: where
+        question: { en: "Where does etcd run?", ms: "Di mana etcd berjalan?" }
+        answers:
+          - { label: { en: "A kubeadm node where I can run etcdutl (like the exam)", ms: "Node kubeadm yang boleh jalankan etcdutl (seperti peperiksaan)" }, next: r-restore }
+          - { label: { en: "A kind cluster on my laptop", ms: "Kluster kind di laptop saya" }, next: r-kind }
+      - id: r-none
+        result:
+          text: { en: "Without a snapshot, etcd can't go back in time. Re-apply what Git still has. Then save snapshots on a schedule, and keep them off the cluster.", ms: "Tanpa snapshot, etcd tak boleh kembali ke masa lalu. Apply semula apa yang Git masih ada. Kemudian simpan snapshot ikut jadual, di luar kluster." }
+          commands:
+            - { command: "kubectl config current-context", en: "Check the you-are-here sign first. Right cluster?", ms: "Semak papan anda-di-sini dulu. Kluster yang betul?" }
+            - { command: "kubectl apply -f <folder>/", en: "Put back what your files in Git still describe.", ms: "Pasang semula apa yang fail anda dalam Git masih terangkan." }
+            - { command: "etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db", en: "From now on: a fresh snapshot on a schedule. Copy it off the node.", ms: "Mulai sekarang: snapshot baharu ikut jadual. Salin keluar dari node." }
+          danger: careful
+          lesson: k8s-k9-l09
+      - id: r-nofile
+        result:
+          text: { en: "That path is wrong, or the copy is on another machine. Find it, copy it to the control-plane node, then check it again.", ms: "Path itu salah, atau salinan itu ada di mesin lain. Cari, salin ke node control-plane, kemudian semak semula." }
+          commands:
+            - { command: "ls -l /opt", en: "Look in the folder you meant.", ms: "Lihat dalam folder yang anda maksudkan." }
+            - { command: "etcdutl --write-out=table snapshot status <file>", en: "Check the copy once it is there.", ms: "Semak salinan itu bila ia sudah ada." }
+          danger: safe
+          lesson: k8s-k9-l09
+      - id: r-restore
+        result:
+          text: { en: "Restore into a new, empty folder, then point etcd at it. The kubelet restarts etcd, and the API is down for a moment. Everything made after the snapshot is lost.", ms: "Pulihkan ke folder baharu yang kosong, kemudian tunjukkan etcd ke situ. Kubelet mulakan semula etcd, dan API tak menjawab seketika. Semua yang dibuat selepas snapshot itu hilang." }
+          commands:
+            - { command: "etcdutl --data-dir /var/lib/etcd-restore snapshot restore <file>", en: "Unpack the copy into a new folder. Never into the live one.", ms: "Buka salinan itu ke folder baharu. Jangan ke folder yang sedang digunakan." }
+            - { command: "cp /etc/kubernetes/manifests/etcd.yaml /root/etcd.yaml.bak", en: "Keep a copy of the manifest, outside the folder.", ms: "Simpan salinan manifest, di luar folder itu." }
+            - { command: "sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml", en: "Point etcd's data at the new folder.", ms: "Tunjukkan data etcd ke folder baharu." }
+            - { command: "kubectl get deployments", en: "After a minute: are your objects back?", ms: "Selepas seminit: adakah objek anda kembali?" }
+          danger: lose
+          lesson: k8s-k9-l09
+      - id: r-kind
+        result:
+          text: { en: "kind nodes have no etcdutl; etcd runs in a pod. Practise restores on an exam-style playground instead. On kind, a fresh cluster plus your YAML is often quicker.", ms: "Node kind tiada etcdutl; etcd berjalan dalam pod. Latih pemulihan di playground gaya peperiksaan. Pada kind, kluster baharu dan YAML anda selalunya lebih cepat." }
+          commands:
+            - { command: "kubectl -n kube-system exec etcd-<cluster>-control-plane -- etcdutl --write-out=table snapshot status /var/lib/etcd/backup.db", en: "Check a snapshot inside the etcd pod.", ms: "Semak snapshot dalam pod etcd." }
+            - { command: "kind delete cluster --name <cluster>", en: "Throw the practice cluster away. Everything in it is gone.", ms: "Buang kluster latihan itu. Semua di dalamnya hilang." }
+            - { command: "kind create cluster --name <cluster>", en: "Make a fresh one, then apply your files again.", ms: "Buat yang baharu, kemudian apply fail anda semula." }
+          danger: lose
+          lesson: k8s-k9-l09

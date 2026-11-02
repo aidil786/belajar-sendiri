@@ -1,0 +1,86 @@
+---
+id: k8s-k1-l04
+world: 1
+title: Mahu 3, Nampak 2
+summary: "Anda akan belajar: cara Kubernetes pulihkan dirinya sendiri."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, ManagersBoard, Choice, FoodCourtSim, SpotLines, Mission]
+needs: [k8s-k1-l03]
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+  - { label: "Deployments", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+  - { label: "kubectl scale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-night" commands={['kubectl get nodes']} label="Medan selera waktu malam. Gerai dev-worker padam: statusnya NotReady. Dua dulang ada di atasnya." />
+
+Server aplikasi anda mati pukul 3 pagi. Semua orang tidur. Siapa nak baiki?
+</Card>
+
+<Card id="see-want" type="see">
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={[]} label="Papan pengurus tulis Mahu 3: pesanan untuk shop minta 3 dulang." />
+
+Anda beritahu Kubernetes apa yang anda mahu: 3 salinan, sentiasa. Ini dipanggil **<Term id="desired-state">desired state</Term>**.
+</Card>
+
+<Card id="see-loop" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get deployment shop']} label="kubectl get deployment shop tunjuk READY 3/3. Tiga dulang hijau di atas gerai." />
+
+**<Term id="controller">Controller (pengawal)</Term>** periksa berulang kali. Mahu 3. Nampak 3. Semua okey.
+</Card>
+
+<Card id="predict" type="predict">
+Satu gerai tutup, dan satu dulang hilang. Apa jadi lepas ni?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa-apa', why: 'Controller masih memeriksa. Ia nampak 2 dulang sahaja.' }, { label: 'Dulang baharu muncul', correct: true, why: 'Ya! Mahu 3, nampak 2: controller pesan satu dulang lagi.' }, { label: 'Semua bermula semula', why: 'Dulang lain terus menjual. Hanya yang hilang dibuat semula.' }]} />
+</Card>
+
+<Card id="see-gap" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl delete pod {pod:app=shop}', 'kubectl get pods']} label="Satu pod shop dipadam. Serta-merta pod baharu dengan nama baharu muncul, jadi ada 3 semula." />
+
+Mahu 3. Nampak 2. Buat 1 lagi. Itu sahaja rahsianya.
+</Card>
+
+<Card id="try-delete" type="try">
+Tekan “delete” pada mana-mana pod (dulang). Lihat apa Kubernetes buat.
+
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={['deletePod']} goal={{ healed: 2 }} success="Setiap kekurangan diisi. Pesanan masih tulis 3." label="Papan tunjuk Mahu 3, Nampak 3. Padam satu pod: Nampak 2, kemudian Buat 1 lagi. Kiraan kekurangan dibaiki naik." />
+
+<Hint>Tekan “Padam satu pod” dua kali. Perhatikan kotak Buat dan kiraan kekurangan dibaiki.</Hint>
+</Card>
+
+<Card id="try-scale" type="try">
+Sekarang tukar pesanan. Taip `kubectl scale deployment shop --replicas=5`.
+
+<Interactive name="FoodCourtSim" scenario="k1-want3" board="shop" goal={{ replicas: { name: 'shop', count: 5 }, podsReady: { selector: 'app=shop', count: 5 } }} hints={['Taip kubectl scale deployment shop --replicas=5 dan tekan Enter.', 'Kemudian tunggu sekejap, atau tekan +1s, sehingga 5 dulang hijau.']} success="Mahu 5, nampak 5. Anda tukar pesanan, dan dulang pun ikut." />
+
+<Hint>scale tukar nombor pada papan pesanan. Controller buat yang selebihnya.</Hint>
+</Card>
+
+<Card id="check-name" type="check">
+<Interactive name="SpotLines" prompt="Tekan pod yang baharu." lines={[{ text: 'NAME                   READY   STATUS    RESTARTS   AGE' }, { text: 'shop-747bf9cf8-gnjxm   1/1     Running   0          29s' }, { text: 'shop-747bf9cf8-wrfvr   1/1     Running   0          7s', target: true }, { text: 'shop-747bf9cf8-zbn9j   1/1     Running   0          29s' }]} success="Ya: nama baharu, dan AGE baru 7 saat." />
+
+Pod baharu ada nama baharu. Kubernetes ganti pod, bukan baiki pod lama.
+
+<Hint>Lihat lajur AGE. Dulang mana yang paling muda?</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara Kubernetes pulihkan dirinya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Gelung ini dipanggil <Term id="reconciliation">reconciliation</Term>. Jika container sahaja yang crash, kubelet hidupkan semula dalam pod yang sama. Lihat lajur RESTARTS. Bila node mati, Kubernetes tunggu lebih kurang 5 minit. Kemudian ia ganti pod-podnya.
+
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl delete pod {pod:app=shop} --wait=false', 'kubectl get pods -w']} label="Satu pod dipadam. kubectl get pods -w memerhati: pod lama tunjuk Terminating, pod baharu jadi Pending, kemudian Running, kemudian sedia 1/1." />
+
+<Interactive name="Mission" id="k8s-k1-l04-real" steps={[{ id: 'order', text: 'Di kluster kind anda sendiri, pesan 3 dulang.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'look', text: 'Lihat dulang dan nama-namanya.', command: 'kubectl get pods' }, { id: 'delete', text: 'Padam satu. Salin nama sebenar dari senarai dahulu.', command: 'kubectl delete pod <nama pod shop>' }, { id: 'again', text: 'Lihat semula: 3 dulang, satu dengan nama baharu.', command: 'kubectl get pods' }]} success="Anda tengok kluster sebenar pulihkan dirinya!" />
+</Card>

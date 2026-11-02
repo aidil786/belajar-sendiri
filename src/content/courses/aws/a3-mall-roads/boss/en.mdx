@@ -1,0 +1,72 @@
+---
+id: aws-a3-boss
+world: 3
+title: "Draw the mall's roads"
+summary: "You will learn: to plan a whole VPC for Kedai Kancil, with public and private rows, and let only the web in."
+minutes: 6
+xp: 50
+interactives: [Choice, SubnetPlanner, SortCards, SecurityGroupGate, IdleBill]
+needs: [aws-a3-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon VPC: Example: VPC with servers in private subnets and NAT", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html" }
+  - { label: "Amazon VPC: Security group rules", url: "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html" }
+  - { label: "Amazon VPC: Subnet CIDR blocks", url: "https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html" }
+  - { label: "Amazon VPC pricing", url: "https://aws.amazon.com/vpc/pricing/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil moves into the mall. A web front, app servers and an order database. Your rules: only the web faces the street, and every wing has a spare. Ready?
+
+<Interactive name="Choice" options={[{ label: 'Plan the land first, then the doors', correct: true, why: 'Yes. Rows first, road signs next, guards last.' }, { label: 'Launch servers first, plan later', why: 'Moving servers between rows later is painful. Plan first.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Room 1: three wings. One public row and one private row in each. Public rows need 20 addresses. Private rows need 200.
+
+<Interactive name="SubnetPlanner" vpc="10.20.0.0/16" azs={['ap-southeast-5a', 'ap-southeast-5b', 'ap-southeast-5c']} need={{ public: 20, private: 200 }} success="Room 1 cleared! Six rows, no overlaps, room to grow." />
+
+<Hint>Pick /27 for public rows and /24 for private rows. The planner finds a free block.</Hint>
+</Card>
+
+<Card id="try-roads" type="try">
+Room 2: road signs and residents. Sort each one into its row.
+
+<Interactive name="SortCards" buckets={[{ id: 'public', label: 'Public row' }, { id: 'private', label: 'Private row' }]} items={[{ label: 'Route 0.0.0.0/0 → internet gateway', bucket: 'public', why: 'That sign is what makes a row public.' }, { label: 'Route 0.0.0.0/0 → NAT gateway', bucket: 'private', why: 'Back rooms go out through the one-way door.' }, { label: 'The load balancer', bucket: 'public', why: 'Shoppers must reach it from the street.' }, { label: 'The order database', bucket: 'private', why: 'Only the app talks to it.' }, { label: 'The NAT gateway itself', bucket: 'public', why: 'It needs the street to fetch things.' }]} success="Room 2 cleared! Every sign points the right way." />
+</Card>
+
+<Card id="try-web" type="try">
+Room 3: the load balancer's door. Shoppers in on HTTPS from anywhere. No SSH for anyone.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Shopper', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'phone', label: 'Shopper on a phone', ip: '203.0.113.77', client: 'linux', protocol: 'tcp', port: 443, want: 'in' }, { id: 'ssh', label: 'Stranger (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="Room 3 cleared! The street gets in on 443 only." />
+
+<Hint>One rule: TCP 443 from 0.0.0.0/0.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Room 4: the database needs a security patch from the internet. How does it get it?
+
+<Interactive name="Choice" options={[{ label: 'Out through the NAT gateway', correct: true, why: 'It starts the trip, so the reply comes back. Nobody can start one in.' }, { label: 'Give it a public IP', why: 'Its row has no road to the street. And it would invite strangers.' }, { label: 'Open port 5432 to the world', why: 'That lets strangers in. Patches go out, not in.' }]} />
+</Card>
+
+<Card id="try-db" type="try">
+Room 5: the database's door. Only servers in the app group, `sg-app`, may use port 5432. Not even the load balancer.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-app', 'sg-lb']} visitors={[{ id: 'app', label: 'App server', ip: '10.20.1.15', groups: ['sg-app'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'lb', label: 'Load balancer', ip: '10.20.0.5', groups: ['sg-lb'], protocol: 'tcp', port: 5432, want: 'out' }, { id: 'stranger', label: 'Stranger', ip: '192.0.2.77', protocol: 'tcp', port: 5432, want: 'out' }]} success="Room 5 cleared! Only the app may talk to the orders." />
+
+<Hint>One rule: TCP 5432 from `sg-app`.</Hint>
+</Card>
+
+<Card id="check-bill" type="check">
+Last room: the bill. Which parts of your plan cost money while the shop sleeps?
+
+<Interactive name="IdleBill" items={['natGateway', 'loadBalancer', 'vpc', 'securityGroup', 'networkAcl', 'internetGateway']} ordered success="Boss cleared! You know your roads, your guards and your bill." />
+</Card>
+
+<Card id="win" type="win">
+You can now plan Kedai Kancil's whole VPC: rows, road signs, guards and the bill.
+</Card>

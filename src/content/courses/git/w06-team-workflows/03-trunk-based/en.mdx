@@ -1,0 +1,65 @@
+---
+id: git-w06-l03
+world: 6
+title: Trunk-based and feature flags
+summary: "You will learn: how teams merge tiny changes every day and hide unfinished work."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, AreasScene, SpotLines, SortCards, Choice, SwipeJudge]
+needs: [git-w06-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+  - { label: "Feature flags", url: "https://trunkbaseddevelopment.com/feature-flags/" }
+  - { label: "Managing a merge queue", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Week 1', title: 'Start big', text: 'You open one branch for a whole new checkout.' }, { when: 'Weeks 2–5', title: 'Main moves on', text: 'Your team merges 200 changes into main.' }, { when: 'Week 6', title: 'Merge day', text: 'You merge at last. Conflicts everywhere!' }]} />
+
+Your branch lived for six weeks. Main did not wait for you. Tap to see how merge day went.
+</Card>
+
+<Card id="see-trunk" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'Tiny branch', repo: 'main (trunk)' }} label="Small commits leave a tiny branch one at a time and join main: first Add cart button, then Show cart total." frames={[{ working: [{ name: 'Add cart button', kind: 'commit' }], repo: [{ name: 'Add menu', kind: 'commit' }] }, { working: [{ name: 'Show cart total', kind: 'commit' }], repo: [{ name: 'Add menu', kind: 'commit' }, { name: 'Add cart button', kind: 'commit' }] }, { working: [], repo: [{ name: 'Add menu', kind: 'commit' }, { name: 'Add cart button', kind: 'commit' }, { name: 'Show cart total', kind: 'commit' }] }]} />
+
+In **<Term id="trunk-based">trunk-based development</Term>**, everyone merges tiny changes into main. Often. At least once a day. Main is called the trunk.
+</Card>
+
+<Card id="try-flag" type="try">
+Half-built work can merge too, switched off. A **<Term id="feature-flag">feature flag</Term>** is an on/off switch in your code. Tap the line that checks it.
+
+<Interactive name="SpotLines" lines={[{ text: 'if (flags.newCheckout) {', target: true }, { text: '  showNewCheckout();' }, { text: '} else {' }, { text: '  showOldCheckout();' }, { text: '}' }]} prompt="Tap the line that checks the switch." success="That's the flag! When it is off, customers get the old checkout." />
+</Card>
+
+<Card id="try-sort" type="try">
+Ship it switched on, or hide it behind a flag?
+
+<Interactive name="SortCards" buckets={[{ id: 'on', label: 'Ship it on' }, { id: 'flag', label: 'Hide behind a flag' }]} items={[{ label: 'Half-built new checkout', bucket: 'flag', why: 'Not done yet. Keep it switched off.' }, { label: 'Typo fix on the menu', bucket: 'on', why: 'Small and finished. Just ship it.' }, { label: 'Dark mode, not tested yet', bucket: 'flag', why: 'Test it first. Then switch it on.' }, { label: 'Fix for a crash', bucket: 'on', why: 'Customers need it now.' }, { label: 'A big redesign, built bit by bit', bucket: 'flag', why: 'Each bit merges daily, hidden until it is all done.' }]} success="Sorted! Flags hide what is not ready yet." />
+
+<Hint>Is it finished and safe? Ship it on. Not ready? Hide it.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The new checkout is in main. Its flag is off. A customer pays. What do they see?
+
+<Interactive name="Choice" options={[{ label: 'The old checkout', correct: true, why: 'The flag is off, so the old code runs.' }, { label: 'The half-built checkout', why: 'Only switched-on flags show new code.' }, { label: 'An error page', why: 'The new code is there, just switched off. Nothing breaks.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good trunk-based habit? Swipe right if yes, left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Merge into main at least once a day', good: true, why: 'Small, frequent merges mean small conflicts.' }, { text: 'Keep a branch for two months', good: false, why: 'Long branches lead to painful merges.' }, { text: 'Hide unfinished work behind a flag', good: true, why: 'It merges early but stays switched off.' }, { text: 'Skip the tests to merge faster', good: false, why: 'Main must always work. Automatic tests guard it.' }, { text: 'Delete old flags once a feature is done', good: true, why: 'Old flags pile up and confuse everyone.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain trunk-based development and feature flags.
+</Card>
+
+<Card id="deeper" type="deeper">
+Very small teams may commit straight to main. Bigger teams use tiny branches and quick PRs. A merge queue helps busy repos. It tests each PR with the latest main, then merges it. Flags can also switch a feature on for a few users first.
+</Card>

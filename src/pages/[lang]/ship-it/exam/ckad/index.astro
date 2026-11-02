@@ -1,0 +1,76 @@
+---
+// CKAD practice: hands-on tasks in FoodCourtSim (CkadPractice, client:only), each with its starting
+// cluster looked up here. Practice, not the real exam.
+import Base from '~/layouts/Base.astro';
+import CkadPractice, { type CkadView } from '~/components/ship-it/CkadPractice';
+import type { KubeScenario } from '~/engine/foodcourt-sim';
+import { LANGS, t, type Lang } from '~/i18n';
+import { findScenario } from '~/content/courses/scenarios';
+import { CKAD_DOCS, CKAD_DOMAINS, CKAD_MINUTES, CKAD_SET_SIZE, CKAD_URL, ckadTasks } from '~/content/exams/ckad';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const tasks: CkadView[] = ckadTasks.map((x) => ({
+  id: x.id,
+  domain: x.domain,
+  task: x[lang].task,
+  hint: x[lang].hint,
+  docs: x.docs,
+  scenario: findScenario<KubeScenario>('kubernetes', x.scenario),
+  goal: x.goal,
+}));
+const domains = CKAD_DOMAINS.map((d) => ({ id: d.id, weight: d.weight, name: d.name[lang] }));
+const hubHref = `/${lang}/ship-it/exam/`;
+---
+
+<Base lang={lang} title={`${t(lang, 'mock.ckadTitle')} · ${t(lang, 'mock.hubTitle')}`} description={t(lang, 'mock.ckadText')} altPath={`/${other}/ship-it/exam/ckad/`}>
+  <div class="container exam-page" data-exam-page="ckad">
+    <p class="crumb">
+      <a href={`/${lang}/ship-it/`}>{t(lang, 'shipit.title')}</a><span aria-hidden="true">{' › '}</span><a href={hubHref}>{t(lang, 'mock.hubTitle')}</a>
+    </p>
+    <header>
+      <h1>{t(lang, 'mock.ckadTitle')}</h1>
+      <p class="exam-summary">{t(lang, 'mock.ckadText')}</p>
+      <p class="exam-not-real" data-not-real>
+        {t(lang, 'mock.notReal')}
+        <a href={CKAD_URL} rel="noopener">{t(lang, 'certs.official', { code: 'CKAD' })} →</a>
+      </p>
+    </header>
+    <CkadPractice client:only="react" lang={lang} tasks={tasks} domains={domains} size={CKAD_SET_SIZE} fullMinutes={CKAD_MINUTES} examDocs={CKAD_DOCS} hubHref={hubHref}>
+      <p slot="fallback" class="exam-loading">{t(lang, 'mock.loading')}</p>
+    </CkadPractice>
+  </div>
+</Base>
+
+<style>
+  .exam-page {
+    padding-block: var(--space-5);
+    max-width: calc(var(--card-max) + 2 * var(--gutter));
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .exam-summary {
+    font-size: var(--text-l);
+  }
+  .exam-not-real {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    border-left: 4px solid var(--deco-remote);
+    padding-left: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .exam-not-real a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    font-weight: var(--weight-bold);
+  }
+  .exam-loading {
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,79 @@
+---
+id: cicd-c2-l01
+world: 2
+title: Build an image in Actions
+summary: "You will learn: how the belt packs your app into an image on every push."
+minutes: 5
+xp: 25
+interactives: [Choice, ConveyorBelt, SpotLines, YamlBuilder, SortCards, Mission]
+needs: [cicd-c1-l09]
+scenario: c2-build
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "docker/build-push-action", url: "https://github.com/docker/build-push-action" }
+  - { label: "docker/setup-buildx-action", url: "https://github.com/docker/setup-buildx-action" }
+---
+
+<Card id="hook" type="hook">
+Aina packed the Kedai Kancil image on her laptop. Ben packed one on his. They act differently. Which pack should the shop trust?
+
+<Interactive name="Choice" options={[{ label: 'One packed by the belt, the same way every time', correct: true, why: 'A fresh runner and the same recipe on every push. No more "works on my laptop".' }, { label: "Aina's, because she pushed first", why: 'First is not safest. Her laptop may hold old files.' }, { label: 'Whichever image is smaller', why: 'Small is nice, but you still cannot tell how either was made.' }]} />
+</Card>
+
+<Card id="see-belt" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-build" event="push-main" label="A push to main starts the belt. Station 1 sets up Buildx. Station 2 builds the image kedai-kancil:ci. Both turn green." />
+
+Press Run. A fresh worker packs a frozen meal pack: your image. Every push, the same way.
+</Card>
+
+<Card id="see-buildx" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'steps:' }, { text: '  - uses: docker/setup-buildx-action@v4', target: true }, { text: '  - uses: docker/build-push-action@v7' }, { text: '    with:' }, { text: '      tags: kedai-kancil:ci' }]} prompt="Tap the line that starts the packing machine." success="Yes! Buildx first, then the build." />
+
+**<Term id="buildx">Buildx</Term>** is Docker's packing machine. `setup-buildx-action` starts it on the runner. Then `build-push-action` uses it to pack your image.
+</Card>
+
+<Card id="predict" type="predict">
+There is no `actions/checkout` step. How does the build get your code?
+
+<Interactive name="Choice" options={[{ label: 'build-push-action fetches it from Git by itself', correct: true, why: 'By default it reads your repo at this commit. No checkout step needed.' }, { label: 'It cannot, so the build fails', why: 'The run above was green. The action pulls the code straight from Git.' }, { label: "It copies it from Aina's laptop", why: 'Laptops stay out of it. Everything happens on the runner.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Your turn. Build the image on every push to main and every PR.
+
+<Interactive name="YamlBuilder" workflow="Image" goal={{ order: ['push', 'pr', 'perms', 'job', 'buildx', 'build'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Every merge into main.' },
+  { id: 'pr', kind: 'trigger', label: 'On pull request', yaml: 'pull_request:', means: 'Every PR gets built too.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The job only reads your code.' },
+  { id: 'job', kind: 'job', label: 'Job: image', yaml: 'image:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'buildx', kind: 'step', label: 'Set up Buildx', yaml: '- uses: docker/setup-buildx-action@v4', means: 'Start the packing machine.' },
+  { id: 'build', kind: 'step', label: 'Build the image', yaml: '- uses: docker/build-push-action@v7\n  with:\n    tags: kedai-kancil:ci', means: 'Pack the image and name it.' },
+  { id: 'push-img', kind: 'step', label: 'Push to the freezer', yaml: '- run: docker push kedai-kancil:ci', means: 'Upload the image.', why: 'Not yet! Pushing needs a login and a key. That comes in lesson 3.' },
+  { id: 'laptop', kind: 'step', label: 'Load my laptop image', yaml: '- run: docker load -i laptop-image.tar', means: 'Use an image made by hand.', why: 'The belt builds from the recipe. A laptop pack could hold anything.' }]}
+  success="Your belt packs a fresh image on every push and PR." />
+
+<Hint>When, token, where, then two steps: Buildx first, then the build.</Hint>
+</Card>
+
+<Card id="check" type="check">
+The job is done. What stays, and what is gone?
+
+<Interactive name="SortCards" buckets={[{ id: 'stays', label: 'Stays after the job' }, { id: 'gone', label: 'Gone after the job' }]} items={[{ label: 'The image you built', bucket: 'gone', why: 'The runner is wiped. To keep the image, push it (lesson 3).' }, { label: 'The run log', bucket: 'stays', why: 'GitHub keeps the log on the run page.' }, { label: 'The runner itself', bucket: 'gone', why: 'Each job gets a fresh runner. Then it is thrown away.' }, { label: 'Your workflow file', bucket: 'stays', why: 'It lives in your repo, saved in Git.' }]} success="Right! A build alone keeps nothing. Next: label it, then push it." />
+</Card>
+
+<Card id="win" type="win">
+You can now make the belt build your image on every push.
+</Card>
+
+<Card id="deeper" type="deeper">
+`build-push-action` reads your code straight from Git, at this commit. Files made by earlier steps are not in it. Need them? Add a checkout step and `context: .` to the build.
+
+Real rep (optional). Use a public practice repo with a Dockerfile, never a work repo.
+
+<Interactive name="Mission" id="c2-l01-rep" steps={[{ id: 'repo', text: 'Open a public practice repo that has a Dockerfile.' }, { id: 'file', text: 'Save the workflow you built as .github/workflows/image.yml.' }, { id: 'push', text: 'Commit and push it.', command: 'git add .github && git commit -m "Build image in CI" && git push' }, { id: 'watch', text: 'Open the Actions tab. Watch both steps turn green.' }]} success="Your first real image build on a runner!" />
+</Card>

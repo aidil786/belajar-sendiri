@@ -1,0 +1,89 @@
+---
+id: k8s-k3-l10
+world: 3
+title: TLS dengan cert-manager
+summary: "Anda akan belajar: hidang HTTPS di Gateway, dengan sijil yang diperbaharui sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KubeReplay, OrderList, FoodCourtSim, YamlDoctor, Mission]
+needs: [k8s-k3-l09]
+scenario: k3-tls
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "cert-manager: sokongan Gateway API", url: "https://cert-manager.io/docs/usage/gateway/" }
+  - { label: "Gateway API: TLS", url: "https://gateway-api.sigs.k8s.io/guides/tls/" }
+  - { label: "Kubernetes: Secret TLS", url: "https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets" }
+---
+
+<Card id="hook" type="hook">
+Pelanggan taip nombor kad di halaman kedai anda. Pelayar kata "Not secure". Siapa boleh baca nombor itu di tengah jalan?
+
+<Interactive name="Choice" options={[{ label: 'Sesiapa di laluan itu, contohnya pemilik Wi-Fi kafe', correct: true, why: 'HTTP biasa bergerak sebagai teks yang boleh dibaca, macam poskad.' }, { label: 'Kedai anda sahaja', why: 'Tanpa penyulitan, sesiapa di tengah boleh membacanya.' }, { label: 'Tiada siapa: internet itu peribadi', why: 'HTTP biasa macam poskad. Sesiapa yang pegang boleh baca.' }]} />
+</Card>
+
+<Card id="see-tls" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Hello', text: 'Pelayar minta sijil daripada pintu masuk.' }, { when: '2', title: 'Semak', text: 'Pihak berkuasa yang dipercayai tandatangan sijil untuk kedai.example, dan ia belum tamat tempoh.' }, { when: '3', title: 'Kunci', text: 'Pelayar dan pintu masuk setuju pada satu kunci rahsia.' }, { when: '4', title: 'Bermeterai', text: 'Setiap pesanan kini bergerak berkunci.' }]} />
+
+**<Term id="tls">TLS</Term>** meterai dulang: tiada siapa boleh baca atau tukar pesanan di tengah jalan. Ia huruf S dalam HTTPS.
+</Card>
+
+<Card id="see-listener" type="see">
+<Interactive name="KubeReplay" scenario="k3-tls" commands={['kubectl get secret kedai-tls', 'kubectl apply -f tls.yaml', 'kubectl get gateway entrance']} label="Secret kedai-tls jenis kubernetes.io/tls dengan 2 item data. Selepas apply, pintu masuk masih PROGRAMMED True." />
+
+Pintu masuk dapat pintu kedua: HTTPS di port 443. Ia tunjuk sijil yang disimpan dalam Secret `kedai-tls`.
+
+```yaml
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: kedai.example
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: kedai-tls
+```
+</Card>
+
+<Card id="see-cert-manager" type="see">
+Sijil ada tarikh tamat. **<Term id="cert-manager">cert-manager</Term>** dapatkan dan perbaharui sijil untuk anda. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Anda tambah annotation cert-manager pada Gateway', 'cert-manager baca listener HTTPS serta hostname', 'Ia minta sijil daripada Let’s Encrypt', 'Ia buktikan anda pemilik kedai.example', 'Ia simpan sijil dalam Secret kedai-tls', 'Ia perbaharui sijil sebelum tamat tempoh']} label="Langkah pertama di atas" success="Itulah kitarannya. Anda tak perlu sentuh sijil itu sendiri." />
+</Card>
+
+<Card id="try-https" type="try">
+Secret dah sedia. Dalam kluster latihan ini, satu pembantu buatnya, macam cert-manager. Buka pintu HTTPS dengan `tls.yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k3-tls" goal={{ reachable: { url: 'https://172.18.0.200/', host: 'kedai.example' } }} hints={['Taip cat tls.yaml untuk membacanya dulu.', 'Taip kubectl apply -f tls.yaml', 'Semak: kubectl get gateway entrance']} success="Pintu masuk kini hidang HTTPS di port 443 untuk kedai.example." />
+
+<Hint>`kubectl apply -f tls.yaml` kemas kini pintu masuk. Yang lain tak berubah.</Hint>
+</Card>
+
+<Card id="check-doctor" type="check">
+Pintu HTTPS ini tak boleh apply. Baca ralatnya, kemudian baiki.
+
+<Interactive name="YamlDoctor" file="tls.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: eg\n  listeners:\n    - name: https\n      protocol: HTTPS\n      hostname: kedai.example\n      tls:\n        mode: Terminate\n        certificateRefs:\n          - name: kedai-tls\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: entrance\nspec:\n  gatewayClassName: eg\n  listeners:\n    - name: https\n      protocol: HTTPS\n      port: 443\n      hostname: kedai.example\n      tls:\n        mode: Terminate\n        certificateRefs:\n          - name: kedai-tls\n'} keep={['protocol: HTTPS', 'name: kedai-tls', 'hostname: kedai.example']} hint="Setiap listener perlukan port. HTTPS biasanya guna 443." success="Berjaya! Pintu perlukan nombor: 443 untuk HTTPS." />
+
+Maksudnya: listener ini tiada port.
+</Card>
+
+<Card id="predict" type="predict">
+Sijil itu hampir tamat tempoh. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'cert-manager perbaharuinya awal, sendiri', correct: true, why: 'Secara lalai ia perbaharui bila dua pertiga hayat sijil dah berlalu.' }, { label: 'Laman rosak sampai seseorang perasan', why: 'Itu cara lama. cert-manager jaga tarikh untuk anda.' }, { label: 'Kubernetes perbaharuinya', why: 'Kubernetes hanya simpan Secret. cert-manager yang perbaharui.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hidang HTTPS dengan sijil yang diperbaharui sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+cert-manager 1.15 ke atas baca Gateway bila nilai Helm `config.gatewayAPI.enabled` ialah true. Listener perlukan hostname, `mode: Terminate` dan nama certificateRefs. Cuba pelayan staging Let's Encrypt dulu: hadnya lebih longgar.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang dengan controller Gateway:
+
+<Interactive name="Mission" id="k3-l10-rep" steps={[{ id: 'install', text: 'Pasang cert-manager dari cert-manager.io, dengan sokongan Gateway API dihidupkan.' }, { id: 'issuer', text: 'Di kind tiada domain awam. Buat ClusterIssuer self-signed sebagai ganti.' }, { id: 'gateway', text: 'Tambah annotation pada Gateway anda dan satu listener HTTPS.' }, { id: 'ready', text: 'Tunggu READY True pada Certificate yang cert-manager buat.', command: 'kubectl get certificate' }]} success="Pintu masuk anda ada kunci sebenar!" />
+</Card>

@@ -1,0 +1,57 @@
+---
+id: obs-o4-l04
+world: 4
+title: "Traces and spans"
+summary: "You will learn: to read one order as a trace made of spans, and see which step was slow."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, SortCards]
+needs: [obs-o4-l03]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: traces", url: "https://opentelemetry.io/docs/concepts/signals/traces/" }
+  - { label: "OpenTelemetry Collector", url: "https://opentelemetry.io/docs/collector/" }
+  - { label: "OpenTelemetry Demo", url: "https://opentelemetry.io/docs/demo/" }
+---
+
+<Card id="hook" type="hook">
+Order A1043 took almost 2 seconds. It passed through kedai-api and kedai-pay. Which step ate the time?
+
+<Interactive name="Choice" options={[{ label: "One number can't tell you", correct: true, why: 'Right. You need the order step by step, with times. That is a trace.' }, { label: 'kedai-api, it took 2 seconds', why: 'kedai-api may just be waiting for someone else.' }, { label: 'The database, always', why: 'Maybe. Guessing is how nights get long.' }]} />
+</Card>
+
+<Card id="see-trace" type="see">
+<Interactive name="TimelineTap" events={[{ when: '0 ms', title: 'POST /order starts', text: 'kedai-api gets the order. The parent span begins.' }, { when: '50 ms', title: 'pay card starts', text: 'kedai-api calls the pay service. A child span begins.' }, { when: '1850 ms', title: 'pay card ends', text: 'The child took 1.8 seconds.' }, { when: '1950 ms', title: 'POST /order ends', text: 'The whole order took 1.95 seconds.' }]} />
+
+A trace is the whole order. Each step is a **<Term id="trace-span">span</Term>**, with a start and an end. Tap through it.
+</Card>
+
+<Card id="see-real" type="see">
+<Interactive name="SpotLines" prompt="This is the real Collector's debug output for that order. Tap the line that links the child to its parent." lines={[{ text: 'Span #0' }, { text: '    Trace ID       : 7d1f6c2a9e4b4f0a8c3e5b6d2a1f9e07' }, { text: '    Parent ID      : ' }, { text: '    ID             : a1b2c3d4e5f60718' }, { text: '    Name           : POST /order' }, { text: 'Span #1' }, { text: '    Trace ID       : 7d1f6c2a9e4b4f0a8c3e5b6d2a1f9e07' }, { text: '    Parent ID      : a1b2c3d4e5f60718', target: true }, { text: '    ID             : b2c3d4e5f6071829' }, { text: '    Name           : pay card' }]} success="Yes. The child's Parent ID is the parent's ID." />
+
+Both spans share one **<Term id="trace-id">trace ID</Term>**: the order number.
+</Card>
+
+<Card id="predict" type="predict">
+`pay card` took 1.8 of the 1.95 seconds. Where do you look next?
+
+<Interactive name="Choice" options={[{ label: "Inside pay card: kedai-pay's own spans", correct: true, why: 'Yes. Follow the slow span down to its children.' }, { label: 'At POST /order again', why: 'It was mostly waiting. The time went into its child.' }, { label: 'At the fast 50 ms before the call', why: 'Small. Chase the biggest bar first.' }]} />
+</Card>
+
+<Card id="check-kind" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'server', label: 'Kind: Server' }, { id: 'client', label: 'Kind: Client' }]} items={[{ label: 'kedai-api receives POST /order', bucket: 'server', why: 'It answers a request: Server.' }, { label: 'kedai-api calls kedai-pay', bucket: 'client', why: 'It makes a request: Client.' }, { label: 'kedai-pay receives that call', bucket: 'server', why: 'The other end of the call: Server.' }, { label: 'kedai-pay sends SQL to the database', bucket: 'client', why: 'It asks the database: Client.' }]} success="Every call has two ends: a Client span and a Server span." />
+
+The real output said `Kind: Server` and `Kind: Client`. Sort these spans.
+</Card>
+
+<Card id="win" type="win">
+You can now read a trace and find the slow span.
+</Card>
+
+<Card id="deeper" type="deeper">
+Spans also carry attributes (`http.route: /order`), events, and a status. A failed step sets the status to Error. Real rep: the official OpenTelemetry Demo runs a whole online shop on your laptop. See opentelemetry.io/docs/demo.
+</Card>

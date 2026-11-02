@@ -1,0 +1,79 @@
+---
+id: cicd-c2-l01
+world: 2
+title: Bina image dalam Actions
+summary: "Anda akan belajar: cara tali sawat bungkus aplikasi anda jadi image pada setiap push."
+minutes: 5
+xp: 25
+interactives: [Choice, ConveyorBelt, SpotLines, YamlBuilder, SortCards, Mission]
+needs: [cicd-c1-l09]
+scenario: c2-build
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "docker/build-push-action", url: "https://github.com/docker/build-push-action" }
+  - { label: "docker/setup-buildx-action", url: "https://github.com/docker/setup-buildx-action" }
+---
+
+<Card id="hook" type="hook">
+Aina bungkus image (pek beku) Kedai Kancil di laptopnya. Ben bungkus satu lagi di laptop dia. Kedua-duanya berkelakuan lain. Pek mana yang kedai patut percaya?
+
+<Interactive name="Choice" options={[{ label: 'Pek yang dibungkus oleh tali sawat, cara sama setiap kali', correct: true, why: 'Runner baru dan resipi sama pada setiap push. Tiada lagi "jalan di laptop saya".' }, { label: 'Pek Aina, sebab dia push dulu', why: 'Yang pertama tak semestinya paling selamat. Laptopnya mungkin ada fail lama.' }, { label: 'Image yang paling kecil', why: 'Kecil memang bagus, tapi anda tetap tak tahu cara ia dibuat.' }]} />
+</Card>
+
+<Card id="see-belt" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-build" event="push-main" label="Push ke main mulakan tali sawat. Stesen 1 sediakan Buildx. Stesen 2 bina image kedai-kancil:ci. Kedua-duanya jadi hijau." />
+
+Tekan Run. Pekerja baru bungkus pek makanan beku: image anda. Setiap push, cara yang sama.
+</Card>
+
+<Card id="see-buildx" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'steps:' }, { text: '  - uses: docker/setup-buildx-action@v4', target: true }, { text: '  - uses: docker/build-push-action@v7' }, { text: '    with:' }, { text: '      tags: kedai-kancil:ci' }]} prompt="Ketik baris yang hidupkan mesin pembungkus." success="Ya! Buildx dulu, kemudian build." />
+
+**<Term id="buildx">Buildx</Term>** ialah mesin pembungkus Docker. `setup-buildx-action` hidupkannya di runner. Kemudian `build-push-action` gunanya untuk bungkus image anda.
+</Card>
+
+<Card id="predict" type="predict">
+Tiada langkah `actions/checkout`. Macam mana build dapat kod anda?
+
+<Interactive name="Choice" options={[{ label: 'build-push-action ambil sendiri dari Git', correct: true, why: 'Secara lalai ia baca repo anda pada commit ini. Tak perlu langkah checkout.' }, { label: 'Tak boleh, jadi build gagal', why: 'Run tadi hijau. Action itu tarik kod terus dari Git.' }, { label: 'Ia salin dari laptop Aina', why: 'Laptop tak terlibat. Semuanya berlaku di runner.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Giliran anda. Bina image pada setiap push ke main dan setiap PR.
+
+<Interactive name="YamlBuilder" workflow="Image" goal={{ order: ['push', 'pr', 'perms', 'job', 'buildx', 'build'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Setiap merge ke main.' },
+  { id: 'pr', kind: 'trigger', label: 'Bila ada pull request', yaml: 'pull_request:', means: 'Setiap PR pun dibina.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Job ini cuma baca kod anda.' },
+  { id: 'job', kind: 'job', label: 'Job: image', yaml: 'image:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baru.' },
+  { id: 'buildx', kind: 'step', label: 'Sediakan Buildx', yaml: '- uses: docker/setup-buildx-action@v4', means: 'Hidupkan mesin pembungkus.' },
+  { id: 'build', kind: 'step', label: 'Bina image', yaml: '- uses: docker/build-push-action@v7\n  with:\n    tags: kedai-kancil:ci', means: 'Bungkus image dan beri nama.' },
+  { id: 'push-img', kind: 'step', label: 'Push ke peti sejuk', yaml: '- run: docker push kedai-kancil:ci', means: 'Muat naik image.', why: 'Belum lagi! Push perlu log masuk dan kunci. Itu dalam pelajaran 3.' },
+  { id: 'laptop', kind: 'step', label: 'Muat image dari laptop', yaml: '- run: docker load -i laptop-image.tar', means: 'Guna image yang dibuat sendiri.', why: 'Tali sawat bina dari resipi. Pek dari laptop boleh mengandungi apa sahaja.' }]}
+  success="Tali sawat anda bungkus image baru pada setiap push dan PR." />
+
+<Hint>Bila, token, di mana, kemudian dua langkah: Buildx dulu, kemudian build.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Job dah selesai. Apa yang kekal, dan apa yang hilang?
+
+<Interactive name="SortCards" buckets={[{ id: 'stays', label: 'Kekal selepas job' }, { id: 'gone', label: 'Hilang selepas job' }]} items={[{ label: 'Image yang anda bina', bucket: 'gone', why: 'Runner dikosongkan. Untuk simpan image, push dia (pelajaran 3).' }, { label: 'Log run', bucket: 'stays', why: 'GitHub simpan log di halaman run.' }, { label: 'Runner itu sendiri', bucket: 'gone', why: 'Setiap job dapat runner baru. Lepas itu ia dibuang.' }, { label: 'Fail workflow anda', bucket: 'stays', why: 'Ia tinggal dalam repo anda, disimpan dalam Git.' }]} success="Betul! Build sahaja tak simpan apa-apa. Seterusnya: label, kemudian push." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh suruh tali sawat bina image anda pada setiap push.
+</Card>
+
+<Card id="deeper" type="deeper">
+`build-push-action` baca kod anda terus dari Git, pada commit ini. Fail yang dibuat oleh langkah awal tiada di situ. Perlukannya? Tambah langkah checkout dan `context: .` pada build.
+
+Latihan sebenar (pilihan). Guna repo latihan awam yang ada Dockerfile, jangan repo kerja.
+
+<Interactive name="Mission" id="c2-l01-rep" steps={[{ id: 'repo', text: 'Buka repo latihan awam yang ada Dockerfile.' }, { id: 'file', text: 'Simpan workflow yang anda bina sebagai .github/workflows/image.yml.' }, { id: 'push', text: 'Commit dan push.', command: 'git add .github && git commit -m "Build image in CI" && git push' }, { id: 'watch', text: 'Buka tab Actions. Tengok kedua-dua langkah jadi hijau.' }]} success="Build image sebenar pertama anda di runner!" />
+</Card>

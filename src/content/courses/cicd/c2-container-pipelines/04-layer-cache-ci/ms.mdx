@@ -1,0 +1,72 @@
+---
+id: cicd-c2-l04
+world: 2
+title: Cache layer dalam CI
+summary: "Anda akan belajar: simpan lapisan kek lapis antara run, supaya build jadi laju."
+minutes: 4
+xp: 20
+interactives: [Choice, KekLapisBuilder, SpotLines, ConveyorBelt, SwipeJudge, Mission]
+needs: [cicd-c2-l03]
+scenario: c2-layer-cache
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: cache management with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/cache/" }
+  - { label: "Docker docs: GitHub Actions cache backend", url: "https://docs.docker.com/build/cache/backends/gha/" }
+---
+
+<Card id="hook" type="hook">
+Di laptop anda, build semula ambil 10 saat. Di tali sawat, setiap build ambil 4 minit. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Setiap runner bermula baru, tanpa layer dari kali lepas', correct: true, why: 'Laptop anda simpan layer lama. Runner baru bermula dengan dapur kosong.' }, { label: 'Komputer GitHub perlahan', why: 'Komputer itu okey. Cuma ia bermula tanpa layer yang disimpan.' }, { label: 'Dockerfile itu salah', why: 'Dockerfile sama kedua-dua kali. Bezanya ialah cache.' }]} />
+</Card>
+
+<Card id="see-cake" type="try">
+Walaupun ada cache, resipi ini bakar `npm ci` semula selepas setiap perubahan kod. Alihkan baris supaya layer (lapisan) itu kekal dalam cache bila `src/cart.js` berubah.
+
+<Interactive name="KekLapisBuilder" edit="src/cart.js" goal={{ cached: ['install'] }} lines={[
+  { id: 'from', text: 'FROM node:24-alpine', size: '181MB' }, { id: 'workdir', text: 'WORKDIR /app', size: '8.19kB' },
+  { id: 'copy-all', text: 'COPY . .', size: '36.9kB' }, { id: 'copy-pkg', text: 'COPY package.json package-lock.json ./', size: '53.2kB' },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: '12.8MB' }, { id: 'cmd', text: 'CMD ["node", "server.js"]' }]} />
+
+<Hint>Salin fail pakej dan pasang dulu. Salin kod paling akhir.</Hint>
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    tags: kedai-kancil:ci' }, { text: '    cache-from: type=gha' }, { text: '    cache-to: type=gha,mode=max', target: true }]} prompt="Ketik baris yang simpan layer hari ini untuk lain kali." success="Ya! cache-to simpan. cache-from baca." />
+
+**<Term id="layer-cache">Cache layer</Term>** boleh disimpan dalam cache GitHub Actions. `cache-from` baca layer lama. `cache-to` simpan yang baru. `mode=max` simpan peringkat tengah juga.
+</Card>
+
+<Card id="try-cache" type="try">
+Tekan Run. Kemudian tekan Run sekali lagi, dan tengok stesen build.
+
+<Interactive name="ConveyorBelt" scenario="c2-layer-cache" task={{ type: 'cacheHit' }} success="Cache hit! Build kedua ambil jalan pintas dan guna semula layer." />
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang anda tambah satu pakej, jadi `package.json` berubah. Apa yang dibakar semula di tali sawat?
+
+<Interactive name="Choice" options={[{ label: 'Semuanya dari COPY package*.json ke atas', correct: true, why: 'Layer itu berubah, jadi setiap layer di atasnya dibakar semula. FROM masih dari cache.' }, { label: 'Tiada, cache ada semuanya', why: 'Cache hanya padan dengan layer yang inputnya tak berubah.' }, { label: 'Semuanya, termasuk FROM', why: 'Layer di bawah perubahan masih datang dari cache.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat cache yang bagus? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Salin fail pakej dan pasang dulu, sebelum salin kod', good: true, why: 'Kod kerap berubah. Letak ia dekat bahagian atas kek.' }, { text: 'Salin semua kod dulu, kemudian jalankan npm ci', good: false, why: 'Setiap perubahan kod akan jalankan npm ci semula.' }, { text: 'Sediakan Buildx sebelum langkah build', good: true, why: 'Builder Buildx boleh simpan cache ke GitHub.' }, { text: 'Bakar secret ke dalam layer supaya ia di-cache', good: false, why: 'Jangan sesekali. Sesiapa yang ada image atau cache boleh baca layer.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan cache layer antara run.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub padam cache yang lama tak diguna. Setiap repo juga ada had saiz. `type=registry` simpan cache dalam GHCR pula. Dua image? Beri setiap satu `scope` sendiri, contohnya `type=gha,scope=api`.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="c2-l04-rep" steps={[{ id: 'add', text: 'Dalam repo latihan awam, tambah cache-from dan cache-to dengan type=gha.' }, { id: 'run1', text: 'Push sekali. Catat berapa lama langkah build ambil.' }, { id: 'run2', text: 'Ubah satu baris kod dan push lagi. Bandingkan masanya.' }]} success="Anda dah nampak cache berfungsi betul-betul!" />
+</Card>

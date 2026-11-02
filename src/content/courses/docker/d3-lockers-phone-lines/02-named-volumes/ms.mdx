@@ -1,0 +1,74 @@
+---
+id: docker-d3-l02
+world: 3
+title: "Loker: named volume"
+summary: "Anda akan belajar: simpan data dalam volume, iaitu loker di luar container."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, LockerTest, Choice, Mission]
+needs: [docker-d3-l01]
+scenario: d3-pg-orders
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Volumes", url: "https://docs.docker.com/engine/storage/volumes/" }
+  - { label: "Docker docs: docker volume", url: "https://docs.docker.com/reference/cli/docker/volume/" }
+  - { label: "Postgres image on Docker Hub", url: "https://hub.docker.com/_/postgres" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-pg-novolume" commands={['docker exec db psql -U postgres -c "select * from orders;"', 'docker rm -f db', 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine', 'docker exec db psql -U postgres -c "select * from orders"']} fails={['docker exec db psql -U postgres -c "select * from orders"']} label="Jadual orders tunjuk satu pesanan, nasi lemak. db dibuang dan dimulakan semula. Kini psql kata: relation orders does not exist." />
+
+Kancil tukar bekas pangkalan data dengan yang baru. Kemudian: `ERROR: relation "orders" does not exist`. Maksudnya: pangkalan data baru tiada jadual orders.
+</Card>
+
+<Card id="see-volume" type="see">
+**<Term id="volume">Volume</Term>** (loker data) ialah loker di luar bekas. Docker simpan loker itu sampai anda padam. Tekan kepingan untuk bina pangkalan data yang ada loker.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d', means: 'Mulakan bekas di belakang' }, { text: '--name db', means: 'Namakan ia db' }, { text: '-e POSTGRES_PASSWORD=secret', means: 'Postgres perlukan kata laluan' }, { text: '-v pgdata:/var/lib/postgresql', means: 'Loker pgdata, dibuka di folder data' }, { text: 'postgres:18-alpine', means: 'Pek beku yang digunakan' }]} decoys={[{ text: '-v pgdata:/var/lib/postgresql/data', means: 'Folder Postgres versi lama. Postgres 18 menolaknya.' }]} success="Betul! -v nama:folder beri bekas itu satu loker." />
+</Card>
+
+<Card id="try-volume" type="try">
+Mulakan db dengan loker pgdata. Kemudian buat jadual orders.
+
+<Interactive name="KitchenSim" scenario="d3-fresh" goal={{ running: ['db'], volumeExists: ['pgdata'], tableInVolume: { pgdata: 'orders' } }} hints={['Taip docker run -d --name db -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Kemudian taip docker exec db psql -U postgres -c "create table orders (id int, dish text)"']} success="Jadual orders kini tinggal dalam loker pgdata." />
+
+<Hint>`-v pgdata:/var/lib/postgresql` buat loker itu kalau belum ada.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Teka dulu, kemudian jalankan. Fail mana yang masih ada?
+
+<Interactive name="LockerTest" mounts={['writable', { kind: 'volume', name: 'kedai-data', target: '/data', file: 'orders.db' }]} ask={['recreate', 'volumeRm']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="try-survive" type="try">
+Buang db. Mulakan semula dengan loker yang sama. Kemudian tengok pesanan.
+
+<Interactive name="KitchenSim" scenario="d3-pg-orders" goal={{ running: ['db'], tableInVolume: { pgdata: 'orders' }, typed: '^docker (container )?rm ', lastTyped: 'select', lastExit: 0 }} hints={['Taip docker rm -f db', 'Taip docker run -d --name db -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Taip docker exec db psql -U postgres -c "select * from orders"']} success="Nasi lemak masih ada. Loker itu yang simpan!" />
+
+<Hint>Guna `-v pgdata:/var/lib/postgresql` yang sama macam tadi.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Arahan mana yang padam pesanan buat selamanya?
+
+<Interactive name="Choice" options={[{ label: '`docker rm -f db`', why: 'Bekas dibuang. Loker pgdata kekal.' }, { label: '`docker volume rm pgdata`', correct: true, why: 'Ya. Ia kosongkan loker buat selamanya. Docker menolak selagi ada bekas yang guna.' }, { label: '`docker restart db`', why: 'Bekas sama, loker sama. Tiada yang hilang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan data dalam loker di luar container.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ralat sebenar: `volume is in use`. Maksudnya: buang bekas itu dulu. Tanpa `-v`, Postgres dapat loker tanpa nama. Bekas baru dapat loker baru, jadi `docker volume ls` kumpul sisa.
+
+<Interactive name="KitchenReplay" scenario="d3-pg-orders" commands={['docker volume ls', 'docker volume rm pgdata']} fails={['docker volume rm pgdata']} label="docker volume ls senaraikan pgdata. docker volume rm pgdata ditolak: volume itu sedang digunakan oleh container db." />
+
+Latihan sebenar (pilihan), dengan Docker anda sendiri:
+
+<Interactive name="Mission" id="d3-l02-rep" steps={[{ id: 'make', text: 'Buat satu loker.', command: 'docker volume create practice-data' }, { id: 'write', text: 'Tulis ke dalamnya dari bekas yang akan dibuang.', command: 'docker run --rm -v practice-data:/data alpine:3.22 sh -c "echo hi > /data/note.txt"' }, { id: 'read', text: 'Baca dari bekas yang baru.', command: 'docker run --rm -v practice-data:/data alpine:3.22 cat /data/note.txt' }, { id: 'clean', text: 'Kemas. Hati-hati: ini padam data!', command: 'docker volume rm practice-data' }]} success="Loker anda simpan nota itu antara bekas." />
+</Card>

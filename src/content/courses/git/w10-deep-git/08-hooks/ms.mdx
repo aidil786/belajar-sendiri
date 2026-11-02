@@ -1,0 +1,77 @@
+---
+id: git-w10-l08
+world: 10
+title: Hook
+summary: "Anda akan belajar: cara Git jalankan semakan anda sendiri sebelum commit, dan cara kongsinya."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Transcript, OrderList, Sim, SwipeJudge]
+needs: [git-w10-l07]
+scenario: w10-hooks
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "githooks", url: "https://git-scm.com/docs/githooks" }
+  - { label: "git config (core.hooksPath)", url: "https://git-scm.com/docs/git-config" }
+  - { label: "git commit (--no-verify)", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+Anda asyik commit (titik simpan) dengan `console.log` yang tertinggal. Rakan sepasukan mengeluh. Boleh Git halang anda sebelum commit?
+
+<Interactive name="Choice" options={[{ label: 'Boleh, dengan skrip yang Git jalankan pada saat yang tepat', correct: true, why: 'Skrip itu dipanggil hook. Jom kenal di kad seterusnya.' }, { label: 'Tak boleh, Git simpan apa sahaja yang anda add', why: 'Secara lalai, ya. Tapi Git boleh jalankan semakan anda dulu.' }, { label: 'Hanya GitHub boleh semak', why: 'Git dalam komputer anda pun boleh semak, sebelum apa-apa keluar.' }]} />
+</Card>
+
+<Card id="see-moments" type="see">
+**<Term id="hook">Hook</Term>** (cangkuk) ialah skrip yang Git jalankan sendiri pada saat tertentu. Hook tinggal dalam `.git/hooks`. Ketik setiap saat.
+
+<Interactive name="TimelineTap" events={[{ when: 'Sebelum commit', title: 'pre-commit', text: 'Semak perubahan dalam kotak. Kalau gagal, tiada commit dibuat.' }, { when: 'Selepas mesej', title: 'commit-msg', text: 'Semak mesej commit. Kalau gagal, tiada commit dibuat.' }, { when: 'Sebelum push', title: 'pre-push', text: 'Semakan terakhir sebelum apa-apa keluar dari komputer anda.' }]} />
+</Card>
+
+<Card id="see-pre-commit" type="see">
+<Interactive name="Transcript" title="bash" label="Hook pre-commit: kalau baris dalam kotak tambah console.log, ia cetak Please remove console.log first dan keluar dengan 1. Selepas chmod +x, git commit berhenti dengan mesej itu." lines={[{ cmd: 'cat .git/hooks/pre-commit' }, { out: '#!/bin/sh\n# Stop the commit if a staged line adds console.log\nif git diff --cached | grep -q "^+.*console.log"; then\n  echo "Please remove console.log first."\n  exit 1\nfi' }, { cmd: 'chmod +x .git/hooks/pre-commit' }, { cmd: 'git commit -m "Add menu"' }, { out: 'Please remove console.log first.', color: 'yellow' }]} />
+
+Hook mesti boleh dilaksanakan: `chmod +x`. Kalau ia tamat dengan `exit 1`, Git hentikan commit. `exit 0` benarkan ia lalu.
+</Card>
+
+<Card id="try-order" type="try">
+Susun kitaran hidup hook pre-commit.
+
+<Interactive name="OrderList" items={['Tulis skrip dalam .git/hooks/pre-commit', 'Jadikan ia boleh dilaksanakan dengan chmod +x', 'Jalankan git commit', 'Git jalankan hook dulu', 'Hook keluar dengan 0, jadi commit dibuat']} label="Langkah pertama di atas" success="Betul! Git jalankan hook sebelum setiap commit." />
+</Card>
+
+<Card id="see-commit-msg" type="see">
+<Interactive name="Transcript" title="bash" label="Hook commit-msg: kalau fail mesej tak bermula dengan feat, fix atau docs, ia cetak tip dan keluar dengan 1. git commit -m stuff berhenti dengan tip itu." lines={[{ cmd: 'cat .git/hooks/commit-msg' }, { out: '#!/bin/sh\n# $1 is the file that holds the message\nif ! grep -qE "^(feat|fix|docs): " "$1"; then\n  echo "Start the message with feat:, fix: or docs:"\n  exit 1\nfi' }, { cmd: 'git commit -m "stuff"' }, { out: 'Start the message with feat:, fix: or docs:', color: 'yellow' }]} />
+
+Hook `commit-msg` semak mesej. Git beri fail mesej kepadanya sebagai `$1`. Di sini, "stuff" tak lepas.
+</Card>
+
+<Card id="predict" type="predict">
+Anda tambah hook dalam `.git/hooks`. Mei clone repo itu. Adakah hook itu berjalan dalam komputernya?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Clone tak salin .git/hooks', correct: true, why: 'Hook kekal dalam komputer anda. Itu selamat: tiada siapa boleh hantar skrip yang berjalan sendiri.' }, { label: 'Ya, hook ikut setiap push', why: '.git/hooks tak pernah dihantar. Hanya commit yang dihantar.' }, { label: 'Hanya kalau dia clone dari GitHub', why: 'Dari mana dia clone tak penting. Hook tak pernah disalin.' }]} />
+</Card>
+
+<Card id="try-share" type="try">
+Untuk kongsi hook, commit dalam folder seperti `.githooks`. Kemudian setiap orang tetapkan `core.hooksPath`. Baca hook itu, kemudian tetapkannya.
+
+<Interactive name="Sim" scenario="w10-hooks" panels={[]} goal={{ typed: 'config (--local )?core\\.hooks[Pp]ath (\\./)?\\.githooks' }} hints={['Taip cat .githooks/pre-commit', 'Kemudian taip git config core.hooksPath .githooks']} success="Siap! Git sebenar anda kini cari hook dalam .githooks. Terminal latihan ini tak pernah jalankan hook." />
+
+<Hint>Taip `cat .githooks/pre-commit`. Kemudian `git config core.hooksPath .githooks`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pastikan hook laju', good: true, why: 'Hook yang lambat buat setiap commit jadi lambat.' }, { text: 'Kongsi hook dalam folder, dengan core.hooksPath', good: true, why: 'Semua orang dapat semakan yang sama.' }, { text: 'Harap hook sebagai satu-satunya jaring keselamatan', good: false, why: 'Sesiapa boleh langkau dengan --no-verify. Jalankan semakan dalam CI juga.' }, { text: 'Langkau hook dengan --no-verify setiap kali', good: false, why: 'Jadi semakan itu tak pernah membantu. Langkau hanya bila betul-betul kecemasan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh suruh Git semak kerja anda sebelum setiap commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Repo baru dapat contoh hook dalam `.git/hooks`, yang berakhir dengan `.sample`. Buang hujung itu untuk mencuba. Hook boleh ditulis dalam apa-apa bahasa: baris pertama namakannya. `git commit --no-verify` langkau pre-commit dan commit-msg. `git hook run pre-commit` jalankan hook secara manual.
+</Card>

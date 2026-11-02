@@ -1,0 +1,63 @@
+---
+id: git-w05-l11
+world: 5
+title: Conflicts in a PR
+summary: "You will learn: why a pull request gets a conflict, and how to fix it."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, MarkdownPlayground, OrderList, SwipeJudge]
+needs: [git-w05-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About merge conflicts", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/about-merge-conflicts" }
+  - { label: "Resolving a merge conflict on GitHub", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github" }
+  - { label: "git merge (conflicts)", url: "https://git-scm.com/docs/git-merge#_how_conflicts_are_presented" }
+---
+
+<Card id="hook" type="hook">
+You and Ravi both changed the README's second line. His PR merged first. Now your PR says it has a <Term id="conflict">conflict</Term>. Did you break something?
+
+<Interactive name="Choice" options={[{ label: 'No. Git just needs you to pick what stays', correct: true, why: 'Two changes hit the same line. Git will not guess. You choose.' }, { label: 'Yes. Close the PR and start again', why: 'No need! A conflict is normal, and quick to fix.' }, { label: 'Yes. Ravi must undo his work', why: 'His work is fine. You just combine the two changes.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Git marks the clash with **<Term id="conflict-markers">conflict markers</Term>**. Your line sits on top. Main's line sits below. Tap the three marker lines.
+
+<Interactive name="SpotLines" lines={[{ text: '# Club Site' }, { text: '<<<<<<< my-tagline', target: true }, { text: 'Code, snacks and friends. Every Friday!' }, { text: '=======', target: true }, { text: 'We meet every Friday after school.' }, { text: '>>>>>>> main', target: true }]} prompt="Tap every marker line." success="Found all three: start, middle and end of the clash." />
+</Card>
+
+<Card id="try-fix" type="try">
+Now fix it. Keep the words you want. Delete all three marker lines.
+
+<Interactive name="MarkdownPlayground" initial={'# Club Site\n<<<<<<< my-tagline\nCode, snacks and friends. Every Friday!\n=======\nWe meet every Friday after school.\n>>>>>>> main\n'} prompt="No markers left, and at least one line about Friday." goal={{ mustMatch: ['^# Club Site(?![\\s\\S]*(?:<{7}|={7}|>{7}))', 'Friday'], hint: ['Delete the lines that start with <<<<<<<, ======= and >>>>>>>. Keep the # Club Site title.', 'Keep at least one line about Friday.'] }} success="Clean! The README reads well again." />
+
+<Hint>You can keep one line, or both. Just remove the three marker lines.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+GitHub's web editor fixes simple line clashes. Here, main deleted a file that your branch changed. Can the web editor fix that?
+
+<Interactive name="Choice" options={[{ label: 'No. Fix it on your computer, then push', correct: true, why: 'The web editor only handles lines that clash. Other conflicts need your own Git.' }, { label: 'Yes, the web editor fixes any conflict', why: 'It only fixes clashing lines inside a file.' }, { label: 'No. That PR can never merge', why: 'It can. Fix it on your computer with Git, then push.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the steps to fix a conflict on GitHub in order. First at the top.
+
+<Interactive name="OrderList" items={['Open the conflict from the PR', 'Pick the words to keep', 'Delete the conflict markers', 'Mark the file as resolved', 'Commit the merge']} label="First step at the top" success="Conflict solved! Now the PR can merge." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Fewer conflicts next time. Good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep PRs small and merge them soon', good: true, why: 'Small, quick PRs rarely clash.' }, { text: 'Bring the newest main into your branch often', good: true, why: 'You meet clashes early, while they are tiny.' }, { text: 'Leave a PR open for three months', good: false, why: 'Main moves on, and the clashes pile up.' }, { text: 'Two people edit the same line without talking', good: false, why: 'Say who works on what. Issues help with that.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fix a conflict in a pull request without panic.
+</Card>
+
+<Card id="deeper" type="deeper">
+On GitHub, fixing a conflict makes a merge commit. It merges main into your PR branch. Not just the clashing lines: all of main comes in. On your computer, switch to your branch and merge main into it. Fix the files, then `git add` and `git commit`. Push, and the PR updates. World 3 shows merging in detail.
+</Card>

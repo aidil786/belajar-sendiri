@@ -1,0 +1,87 @@
+---
+id: cicd-c4-l06
+world: 4
+title: Script injection
+summary: "You will learn: how a stranger's title can become a command, and the env: fix."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotTheHole, YamlBuilder, SwipeJudge]
+needs: [cicd-c4-l05]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Script injections", url: "https://docs.github.com/en/actions/concepts/security/script-injections" }
+  - { label: "Secure use: good practices against script injection", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Your robot thanks everyone who opens an issue:
+
+```yaml
+- run: echo "Thanks for ${{ github.event.issue.title }}"
+```
+
+Who writes that title?
+
+<Interactive name="Choice" options={[{ label: 'Anyone on the internet', correct: true, why: 'On a public repo, any stranger can open an issue.' }, { label: 'Only your team', why: 'Anyone can open an issue on a public repo.' }, { label: 'GitHub', why: 'GitHub only passes it on. A person writes it.' }]} />
+</Card>
+
+<Card id="see-paste" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'A stranger opens an issue', text: 'The title is: `Hi"; env; echo "`' }, { when: '2', title: 'GitHub fills in the blank', text: 'Before bash starts, `${{ }}` is swapped for the title. Quotes and all.' }, { when: '3', title: 'Bash runs three commands', text: 'The script is now `echo "Thanks for Hi"; env; echo ""`. The `env` part prints every variable.' }]} />
+
+Tap through it. The title became code. An order slip with a hidden instruction: that is **<Term id="script-injection">script injection</Term>**.
+</Card>
+
+<Card id="predict" type="predict">
+The fix: pass the title through `env:` first. Bash then sees plain data, never code.
+
+```yaml
+- run: echo "Thanks for $TITLE"
+  env:
+    TITLE: ${{ github.event.issue.title }}
+```
+
+Same sneaky title. What does bash print now?
+
+<Interactive name="Choice" options={[{ label: '`Thanks for Hi"; env; echo "`', correct: true, why: 'Just text. The quotes are part of the title now.' }, { label: 'Every variable, like before', why: 'The title stays inside $TITLE. Bash never reads it as code.' }, { label: 'An error', why: 'Nothing breaks. The odd title is printed as it is.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Tap every line where a stranger's text becomes code.
+
+<Interactive name="SpotTheHole" file=".github/workflows/greet.yml" workflow={['name: Greet', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  greet:', '    runs-on: ubuntu-latest', '    steps:', '      - run: echo "PR number ${{ github.event.pull_request.number }}"',
+  { text: '      - run: echo "Branch ${{ github.head_ref }}"', hole: { kind: 'injection', fixCode: '      - run: echo "Branch $BRANCH"\n        env:\n          BRANCH: ${{ github.head_ref }}' } },
+  '      - run: echo "Title $TITLE"', '        env:', '          TITLE: ${{ github.event.pull_request.title }}',
+  { text: '      - run: echo "Hello ${{ github.event.pull_request.body }}"', hole: { kind: 'injection', fixCode: '      - run: echo "Hello $BODY"\n        env:\n          BODY: ${{ github.event.pull_request.body }}' } }]} success="Both found! Branch names and PR bodies come from strangers too." />
+
+<Hint>Look inside `run:` lines. A number is safe. Names and text are not.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Build the safe welcome robot. Pass the title through `env:`.
+
+<Interactive name="YamlBuilder" workflow="Welcome" goal={{ order: ['issues', 'read', 'job', 'safe'] }} blocks={[
+  { id: 'issues', kind: 'trigger', label: 'On a new issue', yaml: 'issues:\n  types: [opened]', means: 'Run when someone opens an issue.' },
+  { id: 'read', kind: 'permissions', label: 'Read code only', yaml: 'contents: read', means: 'The key can only read.' },
+  { id: 'job', kind: 'job', label: 'Job: thank', yaml: 'thank:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'unsafe', kind: 'step', label: 'Say thanks (title pasted in)', yaml: '- run: echo "Thanks for ${{ github.event.issue.title }}"', means: 'The title is pasted into the script.', why: 'A sneaky title would become a command. Pass it through env.' },
+  { id: 'safe', kind: 'step', label: 'Say thanks (title in env)', yaml: '- run: echo "Thanks for $TITLE"\n  env:\n    TITLE: ${{ github.event.issue.title }}', means: 'The title arrives as plain data.' }]}
+  success="Safe! The title is data, not code." />
+</Card>
+
+<Card id="check" type="check">
+Safe straight inside `run:`, or should it go through `env:`? Swipe each value.
+
+<Interactive name="SwipeJudge" cards={[{ text: '${{ github.event.issue.title }}', good: false, why: 'Anyone can write a title.' }, { text: '${{ github.event.pull_request.number }}', good: true, why: 'A number cannot hold a command. env: is still a fine habit.' }, { text: '${{ github.event.comment.body }}', good: false, why: 'Anyone can write a comment.' }, { text: '${{ github.head_ref }}', good: false, why: 'Branch names can hold sneaky characters too.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now stop a stranger's text from turning into a command.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tools catch this for you. actionlint warns that a value "is potentially untrusted". CodeQL has a check too. Another fix: a small JavaScript action that takes the value as an input. Real rep: search your workflows for `github.event` inside `run:` lines.
+</Card>

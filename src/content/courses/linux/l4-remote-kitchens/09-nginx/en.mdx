@@ -1,0 +1,82 @@
+---
+id: linux-l4-l09
+world: 4
+title: "A small web server with nginx"
+summary: "You will learn: to put up your own page with nginx, add a site, and test before you reload."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, OrderList, Choice, Mission]
+needs: [linux-l4-l08]
+scenario: linux-l4-nginx-page
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+  - { label: "nginx: server names and listen", url: "https://nginx.org/en/docs/http/request_processing.html" }
+  - { label: "Debian wiki: nginx", url: "https://wiki.debian.org/Nginx" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-page" intro={['curl -s localhost | grep title']} network />
+
+Your shop's front counter shows a stranger's poster: `Welcome to nginx!`. Time to put up your own sign.
+</Card>
+
+<Card id="see-site" type="see">
+A <Term id="web-server">web server</Term> is the front counter: it hands out pages from a folder. Here is nginx's default site. Tap the line that names the folder.
+
+<Interactive name="SpotLines" lines={[{ text: 'server {' }, { text: '	listen 80 default_server;' }, { text: '	root /var/www/html;', target: true }, { text: '	index index.html index.htm index.nginx-debian.html;' }, { text: '	server_name _;' }, { text: '	location / {' }, { text: '		try_files $uri $uri/ =404;' }, { text: '	}' }, { text: '}' }]} prompt="Tap the folder pages come from." success="root /var/www/html: the shelf nginx serves from. index.html comes first." />
+</Card>
+
+<Card id="try-page" type="try">
+Write your sign into `/var/www/html/index.html`. root owns that folder, so use `sudo tee`. Then `curl localhost`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-page" goal={{ reachable: { localhost: { status: 200, contains: 'Kedai Kancil' } } }} hints={["echo '<h1>Kedai Kancil</h1>' | sudo tee /var/www/html/index.html", 'curl localhost']} solution={["echo '<h1>Kedai Kancil</h1>' | sudo tee /var/www/html/index.html"]} success="Your own sign is up. No reload needed: nginx reads pages fresh." />
+</Card>
+
+<Card id="see-door" type="see">
+A second door, on port 8080, waits in `sites-available`. Sites in `sites-enabled` are on. Put the steps in order. Its file is below.
+
+<Interactive name="OrderList" items={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx', 'curl localhost:8080']} label="First step at the top" success="Link it, test it, reload, check." />
+
+```nginx
+server {
+	listen 8080;
+	root /var/www/html;
+	index index.html;
+}
+```
+</Card>
+
+<Card id="try-door" type="try">
+Now do it. Watch `ss -tln`: port 8080 opens only after the reload.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx" goal={{ portListening: [8080], reachable: { 'localhost:8080': 200 } }} hints={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx, then curl localhost:8080']} solution={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx']} success="Two doors: 80 and 8080, same shelf." />
+</Card>
+
+<Card id="predict" type="predict">
+A site file has a typo, and you reload anyway. What happens to the shop?
+
+<Interactive name="Choice" options={[{ label: 'The reload fails; nginx keeps serving with the old settings', correct: true, why: 'Lucky! But a full restart would stop it. Always run nginx -t first.' }, { label: 'nginx stops, and the shop goes dark', why: 'A reload keeps the old workers. A restart is the risky one.' }, { label: 'nginx fixes the typo', why: 'nginx never fixes files. It tells you the line.' }]} />
+</Card>
+
+<Card id="try-typo" type="try">
+Someone added a site with a typo. `sudo nginx -t` names the file and line. Fix it, test, then reload.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-typo" goal={{ portListening: [8080], serviceActive: ['nginx'] }} hints={['sudo nginx -t', 'cat /etc/nginx/sites-available/kedai: the root line has no ;', "sudo sed -i 's#root /var/www/html$#root /var/www/html;#' /etc/nginx/sites-available/kedai"]} solution={["sudo sed -i 's#root /var/www/html$#root /var/www/html;#' /etc/nginx/sites-available/kedai", 'sudo nginx -t', 'sudo systemctl reload nginx']} success="test is successful, reload done, 8080 open." />
+
+<Hint>The error names line 4. The missing `;` is at the end of line 3.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now serve your own page with nginx and change it safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+nginx can also pass orders to an app on the intercom: `proxy_pass http://127.0.0.1:3000;` (remember World L3). For HTTPS, Let's Encrypt's certbot gets a certificate and renews it. Open the door in ufw too: `sudo ufw allow 'Nginx Full'`.
+
+<Interactive name="Mission" id="linux-l4-l09-rep" steps={[{ id: 'install', text: 'On a throwaway VM: install nginx.', command: 'sudo apt install nginx' }, { id: 'page', text: 'Put up your sign.', command: "echo '<h1>Hello from my VM</h1>' | sudo tee /var/www/html/index.html" }, { id: 'test', text: 'Test the settings.', command: 'sudo nginx -t' }, { id: 'look', text: 'From your laptop, open http://YOUR-VM-IP in a browser.' }]} success="Your own page on your own server." />
+</Card>

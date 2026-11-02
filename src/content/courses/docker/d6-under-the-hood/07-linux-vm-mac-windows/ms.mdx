@@ -1,0 +1,69 @@
+---
+id: docker-d6-l07
+world: 6
+title: "Kenapa Mac dan Windows perlu VM Linux"
+summary: "Anda akan belajar: kenapa Docker Desktop jalankan VM Linux yang kecil, dan apa kesannya untuk anda."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, SortCards, KitchenReplay, OrderList, Mission]
+needs: [docker-d6-l06]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Desktop: Virtual Machine Manager", url: "https://docs.docker.com/desktop/features/vmm/" }
+  - { label: "Docker Desktop: WSL 2 backend", url: "https://docs.docker.com/desktop/features/wsl/" }
+  - { label: "Docker Desktop on Linux", url: "https://docs.docker.com/desktop/setup/install/linux/" }
+  - { label: "docker version", url: "https://docs.docker.com/reference/cli/docker/version/" }
+---
+
+<Card id="hook" type="hook">
+Aina jalankan nginx dalam Docker Desktop pada Mac. Dia taip `ps aux` pada Mac itu. nginx tiada dalam senarai! Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Ia berjalan dalam VM Linux kecil yang Docker Desktop mulakan', correct: true, why: 'Proses itu wujud. Ia tinggal dalam Linux VM itu, bukan dalam macOS.' }, { label: 'Pada Mac, container bukan proses', why: 'Ia tetap proses, cuma di dalam VM.' }, { label: 'ps pada Mac sorok Docker', why: 'ps senaraikan semua dalam macOS. nginx memang tiada dalam macOS.' }]} />
+</Card>
+
+<Card id="see-vm" type="see">
+<Interactive name="Transcript" title="zsh" prompt="%" label="Pada Mac dengan Docker Desktop: arahan docker ialah program macOS (darwin), dan enjin yang ia hubungi berjalan atas Linux." lines={[{ cmd: "docker version --format '{{.Client.Os}} / {{.Server.Os}}'" }, { out: 'darwin / linux' }]} />
+
+Container pinjam kernel Linux, dan macOS ada kernel lain. Jadi Docker Desktop mulakan **<Term id="linux-vm">Linux VM</Term>** (mesin maya Linux) yang kecil. Enjin tinggal di situ.
+</Card>
+
+<Card id="try-where" type="try">
+Di mana proses container sebenarnya berjalan? Susun setiap susunan.
+
+<Interactive name="SortCards" buckets={[{ id: 'direct', label: 'Terus pada komputer' }, { id: 'vm', label: 'Dalam VM Linux kecil' }]} items={[{ label: 'Laptop Linux dengan Docker Engine', bucket: 'direct', why: 'Kernel sama, tak perlu VM.' }, { label: 'Mac dengan Docker Desktop', bucket: 'vm', why: 'macOS tiada kernel Linux, jadi VM bawakannya.' }, { label: 'PC Windows dengan Docker Desktop (WSL 2)', bucket: 'vm', why: 'WSL 2 jalankan kernel Linux sebenar dalam VM ringan.' }, { label: 'Laptop Linux dengan Docker Desktop', bucket: 'vm', why: 'Kejutan! Docker Desktop pada Linux pun jalankan VM.' }, { label: 'Server awan Linux dengan Docker Engine', bucket: 'direct', why: 'Kebanyakan server guna Linux, jadi container berjalan terus.' }]} success="Siap! Tiada kernel Linux berdekatan? Docker bawa VM." />
+</Card>
+
+<Card id="predict" type="predict">
+Mac anda ada 16 GB. VM Docker Desktop ditetapkan 4 GB. Satu container mahu 6 GB. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia tak dapat 6 GB. Bekas tinggal dalam 4 GB VM itu.', correct: true, why: 'VM itulah seluruh dapur yang mereka nampak. Tambah dalam tetapan Docker Desktop.' }, { label: 'Ia ambil 6 GB dari Mac', why: 'Memori Mac di luar VM. Bekas nampak memori VM sahaja.' }, { label: 'Container itu jadi aplikasi Mac', why: 'Ia kekal proses Linux, di dalam VM.' }]} />
+</Card>
+
+<Card id="check-version" type="check">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker version']} label="docker version pada laptop latihan: baris OS/Arch Client dan Server kedua-duanya tulis linux/amd64, dan server senaraikan containerd dan runc." />
+
+Laptop latihan ini guna Linux, jadi kedua-dua baris `OS/Arch` tulis linux. Pada Mac, baris Client tulis darwin. Baris Server tetap tulis linux.
+</Card>
+
+<Card id="check-relay" type="check">
+Susun `docker run -p 8080:80` pada Mac, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Anda taip docker run dalam terminal Mac', 'Arahan docker hantar pesanan ke dalam VM', 'dockerd dalam VM Linux terima pesanan', 'containerd dan runc mulakan bekas', 'nginx berjalan sebagai proses Linux dalam VM', 'Docker Desktop salurkan localhost:8080 dari Mac ke bekas']} label="Langkah pertama di atas" success="Larian berganti sama macam Linux, dengan VM di tengah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa Docker Desktop perlukan VM Linux.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat, untuk seluruh Bahagian 1: bekas makanan sebenar ada dinding. Container cuma ada penutup mata dan catuan atas satu dapur gas yang dikongsi. Pepijat kernel boleh sampai ke semua bekas serentak. Pek makanan disalin, tapi lapisan image dikongsi, tak pernah disalin.
+
+Latihan sebenar (pilihan): intai dapur yang tersorok.
+
+<Interactive name="Mission" id="d6-l07-vm" steps={[{ id: 'version', text: 'Banding baris Client dan Server. OS apa setiap satu?', command: 'docker version' }, { id: 'info', text: 'Cari OSType dan Kernel Version. Pada Mac atau PC, ia datang dari VM.', command: 'docker info' }]} success="Anda jumpa dapur Linux yang tersorok." />
+</Card>

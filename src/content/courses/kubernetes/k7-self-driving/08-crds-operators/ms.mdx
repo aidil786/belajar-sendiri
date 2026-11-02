@@ -1,0 +1,77 @@
+---
+id: k8s-k7-l08
+world: 7
+title: CRD dan operator
+summary: "Anda akan belajar: cara CRD ajar kluster jenis objek baharu, dan cara operator menjalankannya dengan gelung yang sama."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, ManagersBoard, Choice, SortCards, OrderList]
+needs: [k8s-k7-l07]
+scenario: k7-crd
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: custom resources", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" }
+  - { label: "Kubernetes: operator pattern", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/operator/" }
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-crd" commands={['kubectl apply -f app.yaml']} fails={['kubectl apply -f app.yaml']} label="kubectl apply -f app.yaml gagal: resource mapping not found, tiada padanan untuk kind Application dalam versi argoproj.io/v1alpha1, pasang CRD dulu." />
+
+Dalam bahasa mudah: kluster ini tak pernah dengar tentang `Application`. Belum ada sesiapa yang ajar jenis itu.
+</Card>
+
+<Card id="see-crd" type="see">
+Kluster tahu jenis terbina dalam, seperti Pod dan Deployment. **<Term id="crd">CRD</Term>** ajar kluster satu jenis baharu, macam tambah hidangan dalam menu. Pasang Argo CD akan tambah `Application` dengan cara ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'built', label: 'Terbina dalam' }, { id: 'crd', label: 'Ditambah oleh CRD' }]} items={[{ label: 'Deployment', bucket: 'built', why: 'Semua kluster tahu.' }, { label: 'Service', bucket: 'built', why: 'Semua kluster tahu.' }, { label: 'Application (Argo CD)', bucket: 'crd', why: 'Argo CD yang pasang.' }, { label: 'Rollout (Argo Rollouts)', bucket: 'crd', why: 'Argo Rollouts yang pasang.' }, { label: 'HTTPRoute (Gateway API)', bucket: 'crd', why: 'Kejutan! Jenis Gateway API ialah CRD yang anda pasang.' }]} success="Tersusun! CRD cuma perkataan baharu untuk kluster." />
+</Card>
+
+<Card id="try-board" type="try">
+Jenis baharu perlukan pengurus juga. Setiap pengurus jalankan gelung yang sama. Padam satu dulang dan perhati pengurus ini.
+
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={['deletePod']} goal={{ healed: 1 }} label="Mahu 3, nampak 3. Padam satu pod: nampak 2, buat 1 lagi." />
+
+<Hint>Tekan butang padam pada satu dulang.</Hint>
+</Card>
+
+<Card id="see-operator" type="see">
+**<Term id="operator">Operator</Term>** ialah jenis baharu bersama pengurusnya sendiri. Yang di bawah ini jalankan Postgres. Siapa yang buat 3 pod pangkalan data?
+
+<Interactive name="Choice" options={[{ label: 'Controller milik operator, yang baca objek ini', correct: true, why: 'Mahu 3. Nampak 0. Buat 3. Ia juga uruskan failover.' }, { label: 'Objek itu buat sendiri', why: 'Objek cuma hajat di papan. Controller yang bertindak.' }, { label: 'Anda, dengan kubectl run', why: 'Itulah gunanya: operator buat untuk anda.' }]} />
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: kedai-db
+spec:
+  instances: 3
+  storage:
+    size: 1Gi
+```
+</Card>
+
+<Card id="try-order" type="try">
+Susun langkah sediakan operator.
+
+<Interactive name="OrderList" items={['Pasang CRD: kluster belajar jenis baharu', 'Jalankan operator: controllernya mula memantau', 'Apply objek anda: kind Cluster, 3 instance', 'Operator buat pod, Service dan storan']} label="Langkah pertama di atas" success="Begitulah Argo CD berfungsi juga: CRD dan controller." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda buang operator tetapi kekalkan objek `Cluster`. Satu pod pangkalan data mati. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Tiada yang ganti. Tiada controller pantau jenis itu sekarang', correct: true, why: 'Objek itu masih di papan. Tiada siapa membacanya.' }, { label: 'Controller Deployment akan gantikannya', why: 'Ia hanya urus Deployment, bukan jenis Cluster.' }, { label: 'CRD akan gantikannya', why: 'CRD cuma ajar satu perkataan. Ia tak buat kerja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan CRD dan operator sebagai gelung yang sama, diguna semula.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get crds` senaraikan jenis yang kluster anda dah belajar. `kubectl explain` juga berfungsi padanya, jika CRD ada skema. Operator popular: cert-manager, CloudNativePG dan Prometheus Operator. Latihan sebenar (pilihan): pasang Argo CD pada kind, kemudian jalankan `kubectl get crds`. Cari `applications.argoproj.io`.
+</Card>

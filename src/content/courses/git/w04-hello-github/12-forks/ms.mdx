@@ -1,0 +1,70 @@
+---
+id: git-w04-l12
+world: 4
+title: Fork dan menyelaraskan
+summary: "Anda akan belajar: cara salin projek orang lain ke akaun anda dan pastikan salinan anda terkini."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, TermReplay, Sim, OrderList, SwipeJudge]
+needs: [git-w04-l11]
+scenario: w04-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Fork a repository", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo" }
+  - { label: "Syncing a fork", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork" }
+  - { label: "git remote", url: "https://git-scm.com/docs/git-remote" }
+---
+
+<Card id="hook" type="hook">
+Laman resipi Mei ada salah ejaan. Anda tak boleh push ke repo dia. Macam mana nak bantu?
+
+<Interactive name="Choice" options={[{ label: 'Salin repo dia ke akaun anda, baiki di situ, kemudian tawarkan semula', correct: true, why: 'Salinan itu ialah fork. Tawaran itu ialah pull request (Dunia 5).' }, { label: 'Push juga', why: 'GitHub tolak. Itu repo dia.' }, { label: 'Putus asa', why: 'Tak perlu! Sumber terbuka alu-alukan bantuan macam anda.' }]} />
+</Card>
+
+<Card id="see-fork" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Fork', text: 'Salinan mei/recipes masuk ke akaun anda: you/recipes.' }, { when: '2', title: 'Clone', text: 'Salin fork anda ke laptop.' }, { when: '3', title: 'Push', text: 'Push pembaikan ke fork anda. Ia milik anda, jadi boleh.' }, { when: '4', title: 'Pull request', text: 'Minta Mei ambil perubahan anda. Itu Dunia 5!' }]} />
+
+**<Term id="fork">Fork</Term>** (salinan sendiri) ialah salinan repo orang lain, milik anda, di GitHub. Tekan setiap langkah.
+</Card>
+
+<Card id="see-upstream" type="see">
+<Interactive name="TermReplay" scenario="w04-l12" commands={['git remote add upstream https://github.com/mei/recipes.git', 'git remote -v']} label="Selepas tambah upstream, git remote -v senaraikan dua remote: origin ialah fork anda, upstream ialah repo Mei." />
+
+Clone anda kenal `origin`: fork anda. Tambah repo Mei sebagai remote kedua. Nama biasanya ialah <Term id="upstream">upstream</Term>.
+</Card>
+
+<Card id="predict" type="predict">
+Mei tambah resipi roti canai dalam repo dia. Adakah fork anda dapat dengan sendirinya?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Anda yang selaraskan.', correct: true, why: 'Fork ialah salinan. Ia tak kemas kini sendiri.' }, { label: 'Ya, serta-merta', why: 'Malangnya tidak. Salinan anda kekal macam dulu.' }, { label: 'Hanya jika Mei minta GitHub', why: 'Mei tak boleh push ke fork anda. Anda selaraskan sendiri.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Selaraskan fork anda: tambah upstream, fetch, merge, kemudian push ke fork anda.
+
+<Interactive name="Sim" scenario="w04-l12" panels={['graph']} goal={{ pushed: ['main'], serverHas: { url: 'https://github.com/you/recipes.git', branch: 'main', hasMessage: 'roti canai' } }} hints={['Mula dengan git remote add upstream https://github.com/mei/recipes.git', 'Kemudian git fetch upstream dan git merge upstream/main', 'Akhir sekali, git push']} success="Fork anda kini ada resipi roti canai. Dah selaras!" />
+
+<Hint>Empat arahan: remote add, fetch, merge, push.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+GitHub juga beri fork anda butang **Sync fork**. Dalam laptop, ini langkahnya. Susun mengikut urutan.
+
+<Interactive name="OrderList" items={['git remote add upstream <alamat Mei>', 'git fetch upstream', 'git merge upstream/main', 'git push']} label="Langkah pertama di atas" success="Tambah sekali. Kemudian fetch, merge, push setiap kali Mei tambah sesuatu." />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat fork: baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Selaraskan fork sebelum mula kerja baru', good: true, why: 'Anda bina di atas versi terbaru.' }, { text: 'Buat branch baru dalam fork untuk setiap pembaikan', good: true, why: 'Satu pembaikan, satu branch, satu pull request.' }, { text: 'Jangan selaraskan langsung', good: false, why: 'Fork anda ketinggalan dan susah untuk merge.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh fork projek dan pastikan salinan anda selaras.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub CLI pun boleh. `gh repo fork --clone` fork dan clone sekali gus. `gh repo sync` kemas kini fork daripada repo induknya. Fork ingat repo asalnya, jadi pull request tahu arah tujunya.
+</Card>

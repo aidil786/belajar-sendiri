@@ -1,0 +1,83 @@
+---
+id: cicd-c1-l03
+world: 1
+title: Stations on the belt
+summary: "You will learn: the six stations of a pipeline, and why their order matters."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, TimelineTap, OrderList, YamlBuilder, SwipeJudge]
+needs: [cicd-c1-l02]
+scenario: c1-shop-line
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Workflow syntax: jobs and needs", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c1-wrong-order" />
+
+This line ships first and tastes last. Press Run. The test fails, but the bug is already live. Ouch!
+</Card>
+
+<Card id="see-stations" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Lint', text: 'Is the recipe card neat? Spots typos and messy code in seconds.' }, { when: '2', title: 'Test', text: 'The taste-test. Does the code do what it should?' }, { when: '3', title: 'Build', text: 'Cook and pack it: turn code into something you can ship.' }, { when: '4', title: 'Scan', text: 'Check the pack for bad ingredients: known security holes.' }, { when: '5', title: 'Publish', text: 'Put the pack in the shop freezer: a registry.' }, { when: '6', title: 'Deploy', text: 'The delivery van takes it to real users.' }]} />
+
+Tap each station. Each one is a **<Term id="stage">stage</Term>**. Cheap checks come first. The van leaves last.
+</Card>
+
+<Card id="try-order" type="try">
+Put the stations in order. The first station goes at the top.
+
+<Interactive name="OrderList" items={['Lint', 'Test', 'Build', 'Scan', 'Publish', 'Deploy']} label="First station at the top" success="That's the line! Check, cook, check again, then ship." />
+
+<Hint>Quick checks first. Nothing ships until it is checked.</Hint>
+</Card>
+
+<Card id="see-line" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-shop-line" />
+
+Here is the whole line in one job. Press Run and watch every station turn green. Tap any station to read its log.
+</Card>
+
+<Card id="try-build" type="try">
+Your turn. Build a line that stops after build.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'install', 'lint', 'test', 'build'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run on every push to main.' },
+  { id: 'job', kind: 'job', label: 'Job: line', yaml: 'line:\n  runs-on: ubuntu-latest', means: 'Get a fresh Linux runner.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto the runner.' },
+  { id: 'install', kind: 'step', label: 'Install packages', yaml: '- run: npm ci', means: 'Install the exact packages.' },
+  { id: 'lint', kind: 'step', label: 'Lint', yaml: '- run: npm run lint', means: 'Check the code is neat.' },
+  { id: 'test', kind: 'step', label: 'Test', yaml: '- run: npm test', means: 'Taste-test the code.' },
+  { id: 'build', kind: 'step', label: 'Build', yaml: '- run: npm run build', means: 'Cook and pack the site.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Ship it to users.', why: 'This line stops after build. The van comes later.' }]}
+  success="A tidy line: get ready, lint, test, build." />
+
+<Hint>Get ready first: check out, then install. Then lint, test, build.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+This time, the image has a bad ingredient.
+
+<Interactive name="ConveyorBelt" scenario="c1-scan-stop" task={{ type: 'predict' }} success="Scan caught it! Nothing reached the freezer." />
+</Card>
+
+<Card id="check" type="check">
+Good line, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Lint before the tests', good: true, why: 'Lint takes seconds. Typos show up first.' }, { text: 'Deploy, then run the tests', good: false, why: 'Users get the bug before the test finds it.' }, { text: 'Scan before you publish', good: true, why: 'A bad pack never reaches the freezer.' }, { text: 'Publish first, scan later', good: false, why: 'Others can pull the bad pack before the scan ends.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now name the six stations and put them in order.
+</Card>
+
+<Card id="deeper" type="deeper">
+Not every project needs every station. A small static site has no image to scan or publish. Stations can also run side by side. Jobs without `needs:` start at the same time. Jobs with `needs:` wait for the jobs they name.
+
+Real rep (optional): open your own workflow file. Write the station name next to each step as a comment.
+</Card>

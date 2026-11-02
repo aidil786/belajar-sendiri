@@ -1,0 +1,67 @@
+---
+id: git-w05-boss
+world: 5
+title: "Team sim: review and merge"
+summary: "You will learn: to review a teammate's PR from red check to merged, kindly."
+minutes: 6
+xp: 50
+interactives: [Choice, PracticeRepo]
+needs: [git-w05-l14]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+  - { label: "About status checks", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks" }
+  - { label: "About merge methods on GitHub", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github" }
+  - { label: "Linking a pull request to an issue", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue" }
+---
+
+<Card id="hook" type="hook">
+Mei asks you to review PR #12: the new events page. Its check shows a red ✗. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Open the check and read why it failed', correct: true, why: 'The log says what broke. Then your review can be useful.' }, { label: 'Merge it anyway. Probably fine', why: 'A red check means something broke. Look first.' }, { label: 'Close the PR', why: 'Too harsh! Most failures are small. Find out why.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Room 1: open the failing run. Find the step that failed, and read its log.
+
+<Interactive name="PracticeRepo" screen="run" at={31} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 12, title: 'Add events page', body: 'Adds the events page with our next events.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.htm">Sign up</a>', '+<p>Coding night: next month</p>'] }] }]} runs={[{ id: 31, workflow: 'CI', event: 'pull_request', branch: 'events-page', status: 'fail', jobs: [{ name: 'test', steps: [{ name: 'Check out code', status: 'pass', log: ['Fetching the repository', 'Done'] }, { name: 'Check links', status: 'fail', log: ['Checking 4 pages...', 'events.html line 3: signup.htm not found', '1 broken link', 'Error: Process completed with exit code 1.'] }, { name: 'Build preview', status: 'skipped' }] }] }]} task={{ type: 'findFailingStep', run: 31 }} success="Found it! events.html links to signup.htm. The real page is signup.html." />
+
+<Hint>Steps with ✓ passed. Tap the one with ✗.</Hint>
+</Card>
+
+<Card id="try-review" type="try">
+Room 2: review Mei's PR. Request changes, kindly. Say which link to fix.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 9, title: 'Add a club events page', body: 'List our next events with dates.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Add events page', body: 'Adds the events page with our next events.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.htm">Sign up</a>', '+<p>Coding night: next month</p>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }} task={{ type: 'requestChanges', pr: 12 }} success="Sent! Clear and kind. Mei knows exactly what to fix." />
+
+<Hint>Write something like "Great page! The sign-up link says signup.htm. Can you make it signup.html?" Pick Request changes, then Submit review.</Hint>
+</Card>
+
+<Card id="try-approve" type="try">
+Room 3: Mei pushed a fix, and the check is green. Look at Files changed. Happy? Approve it.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 9, title: 'Add a club events page', body: 'List our next events with dates.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Add events page', body: 'Adds the events page with our next events.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.html">Sign up</a>', '+<p>Coding night: next month</p>'] }], reviews: [{ author: 'you', state: 'changes', body: 'Great page! The sign-up link says signup.htm. Can you make it signup.html?' }], comments: [{ author: 'mei', body: 'Good catch! Fixed the link. The check is green now.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }} task={{ type: 'approve', pr: 12 }} success="Approved! Your change request is cleared." />
+
+<Hint>In "Your review", pick Approve, then press Submit review.</Hint>
+</Card>
+
+<Card id="try-merge" type="try">
+Room 4: approved and green. This team squashes every PR. Squash and merge it. Then check issue #9.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 9, title: 'Add a club events page', body: 'List our next events with dates.', state: 'open', author: 'aina', labels: ['enhancement'] }]} pulls={[{ number: 12, title: 'Add events page', body: 'Adds the events page with our next events.\n\nCloses #9', author: 'mei', from: 'events-page', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'events.html', diff: ['@@ -0,0 +1,4 @@', '+<h1>Events</h1>', '+<p>Open Day: Friday, 3 pm</p>', '+<a href="signup.html">Sign up</a>', '+<p>Coding night: next month</p>'] }], reviews: [{ author: 'you', state: 'changes', body: 'Great page! The sign-up link says signup.htm. Can you make it signup.html?' }, { author: 'you', state: 'approved', body: 'Link works now. Lovely page, thanks Mei!' }], comments: [{ author: 'mei', body: 'Good catch! Fixed the link. The check is green now.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }, { id: 'linearHistory', label: 'Keep history in a straight line', on: true }] }} task={{ type: 'merge', pr: 12, method: 'squash' }} success="Merged! Open the Issues tab: #9 closed by itself." />
+
+<Hint>Under "How to merge", pick "Squash and merge". Then press "Merge pull request".</Hint>
+</Card>
+
+<Card id="check-closes" type="check">
+Nobody touched issue #9. Why did it close?
+
+<Interactive name="Choice" options={[{ label: 'The PR said "Closes #9" and merged into main', correct: true, why: 'A closing keyword plus a merge into the default branch closes the issue.' }, { label: 'Squash merges always close issues', why: 'Any merge method works. The keyword did it.' }, { label: 'Mei closed it by hand', why: 'Nobody touched it. The keyword did the work.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now review, fix and merge a teammate's PR like a pro.
+</Card>

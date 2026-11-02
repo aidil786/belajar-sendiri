@@ -1,0 +1,63 @@
+---
+id: git-w05-l09
+world: 5
+title: Link PRs to issues
+summary: "You will learn: how \"Closes #12\" makes an issue close by itself when a PR merges."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, SpotLines, Choice, SwipeJudge]
+needs: [git-w05-l08]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Linking a pull request to an issue", url: "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue" }
+---
+
+<Card id="hook" type="hook">
+Mei's events page was merged last week. But issue #9 is still open! Someone must close it by hand. Do it now.
+
+<Interactive name="PracticeRepo" screen="issue" at={9} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 9, title: 'Add a club events page', body: 'List our next events with dates.', state: 'open', author: 'aina', labels: ['enhancement'], comments: [{ author: 'aina', body: 'The events page is live. Is this issue done?' }] }]} pulls={[{ number: 12, title: 'Add events page', body: 'Adds the events page.', author: 'mei', from: 'events-page', to: 'main', state: 'merged' }]} task={{ type: 'close', issue: 9 }} success="Closed. But remembering this every time is a pain. There is a trick!" />
+
+<Hint>Press "Close issue" under the comment box.</Hint>
+</Card>
+
+<Card id="see-keyword" type="see">
+A **<Term id="closing-keyword">closing keyword</Term>** goes in the PR description. When the PR merges into main, the issue closes by itself. Tap the magic line.
+
+<Interactive name="SpotLines" lines={[{ text: 'Adds a photo gallery page.' }, { text: 'Closes #16', target: true }, { text: 'Thanks @mei for the photos!' }]} prompt="Tap the line that will close an issue." success="Closes #16 will close issue 16 when this PR merges." />
+</Card>
+
+<Card id="try-link" type="try">
+Your gallery PR fixes issue #16. Edit the description, so merging closes #16.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 16, title: 'Add a photo gallery', body: 'Show photos from our last event.', state: 'open', author: 'mei', labels: ['enhancement'] }]} pulls={[{ number: 18, title: 'Add a photo gallery', body: 'Adds a gallery page with 6 photos.', author: 'you', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1 @@', '+<h1>Gallery</h1>'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'linkIssue', pr: 18, issue: 16 }} success="Linked! The merge box now says merging closes #16." />
+
+<Hint>Press "Edit description". Add a new line: Closes #16. Then Save.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ravi's PR says "Fixes #20". It merges into a branch called `test`, not main. What happens to issue #20?
+
+<Interactive name="Choice" options={[{ label: 'It stays open', correct: true, why: 'Keywords only work when the PR merges into the default branch, usually main.' }, { label: 'It closes', why: 'Only merges into the default branch close issues.' }, { label: 'It gets deleted', why: 'Merging never deletes issues. It can only close them.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Will this line close issue #9 on merge? Swipe right for yes, left for no.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'Fixes #9', good: true, why: 'fix, fixes and fixed all work.' }, { text: 'Related to #9', good: false, why: 'This only links to the issue. It will not close it.' }, { text: 'resolves #9', good: true, why: 'Small letters work too.' }, { text: 'Closes 9', good: false, why: 'It needs the # sign: Closes #9.' }]} />
+</Card>
+
+<Card id="try-merge" type="try">
+Time to merge your gallery PR. Then peek at the Issues tab.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} issues={[{ number: 16, title: 'Add a photo gallery', body: 'Show photos from our last event.', state: 'open', author: 'mei', labels: ['enhancement'] }]} pulls={[{ number: 18, title: 'Add a photo gallery', body: 'Adds a gallery page with 6 photos.\n\nCloses #16', author: 'you', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1 @@', '+<h1>Gallery</h1>'] }], reviews: [{ author: 'mei', state: 'approved', body: 'Love the photos!' }] }]} task={{ type: 'merge', pr: 18 }} success="Merged! Open Issues: #16 closed by itself." />
+</Card>
+
+<Card id="win" type="win">
+You can now link a PR to an issue, so it closes by itself.
+</Card>
+
+<Card id="deeper" type="deeper">
+All nine keywords: close, closes, closed, fix, fixes, fixed, resolve, resolves, resolved. For an issue in another repo, write `Fixes owner/repo#100`. For several issues, repeat the keyword: `Closes #10, closes #11`. A keyword in a commit message works too, once it reaches the default branch.
+</Card>

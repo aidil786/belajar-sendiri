@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l08
+world: 5
+title: Log dan event
+summary: "Anda akan belajar: cara baca buku nota tukang masak (log) dan papan notis pengurus (event)."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, SortCards]
+needs: [k8s-k5-l07]
+scenario: k5-logs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: logging architecture", url: "https://kubernetes.io/docs/concepts/cluster-administration/logging/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+  - { label: "kubectl events", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_events/" }
+---
+
+<Card id="hook" type="hook">
+Seorang pelanggan kata pesanan 42 lambat sampai. Pod (dulang) dapur kata Running. Di mana anda lihat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Dalam apa yang tukang masak tulis', correct: true, why: 'Aplikasi cetak apa yang berlaku. Itulah petunjuk terbaik.' }, { label: 'Restart pod itu', why: 'Petunjuk akan hilang, dan pepijat mungkin kembali.' }, { label: 'Jalankan kubectl get pods sekali lagi', why: 'Ia masih kata Running. Anda perlu cerita di dalamnya.' }]} />
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KubeReplay" scenario="k5-logs" commands={['kubectl logs kitchen']} label="kubectl logs kitchen cetak tiga baris: order 41 ready, order 42 oven too cold, order 42 ready." />
+
+**<Term id="logs">Log</Term>** ialah buku nota tukang masak: semua yang container cetak. `kubectl logs kitchen` membacanya. Itu petunjuknya: ketuhar terlalu sejuk.
+</Card>
+
+<Card id="try-tail" type="try">
+Tukang masak yang sibuk tulis buku nota yang panjang. Tunjuk baris terakhir sahaja dengan `--tail=1`.
+
+<Interactive name="FoodCourtSim" scenario="k5-logs" goal={{ lastTyped: '^(kubectl|k) logs .*--tail[= ]1(\\s|$)' }} hints={['Taip kubectl logs kitchen --tail=1']} success="Baris terbaru sahaja: order 42 ready." />
+
+<Hint>Taip `kubectl logs kitchen --tail=1`.</Hint>
+</Card>
+
+<Card id="see-previous" type="see">
+<Interactive name="KubeReplay" scenario="k2-crashloop" commands={['kubectl get pods', 'kubectl logs {pod:app=oops} --previous']} label="Pod oops dalam CrashLoopBackOff. Larian sebelumnya cetak: starting the kitchen, kemudian oh no, no gas." />
+
+`CrashLoopBackOff`: pod asyik rosak, jadi Kubernetes tunggu lebih lama antara setiap restart. Setiap restart mula buku nota baharu. `--previous` baca buku nota larian yang rosak.
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam pod kitchen. Pod baharu ambil tempatnya. Bolehkah anda masih baca log pod lama?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia pergi bersama pod lama.', correct: true, why: 'kubectl logs baca dari gerai. Simpan log di tempat lain kalau perlu kemudian.' }, { label: 'Ya, pod baharu ada log itu', why: 'Pod baharu mula buku nota yang bersih.' }, { label: 'Ya, dengan --previous', why: '--previous untuk restart dalam pod yang sama.' }]} />
+</Card>
+
+<Card id="see-events" type="see">
+<Interactive name="KubeReplay" scenario="k5-logs" commands={['kubectl get events --field-selector involvedObject.name=kitchen']} label="Empat event untuk pod kitchen: Scheduled ke dev-worker, image sudah ada, Created, Started." />
+
+**<Term id="event">Event</Term>** ialah papan notis pengurus: diletak, ditarik, dimulakan, dan amaran. Kubernetes yang tulis, bukan aplikasi anda. Ia hilang selepas masa yang singkat.
+</Card>
+
+<Card id="check-sort" type="check">
+Buku nota atau papan notis? Asingkan setiap baris.
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Log (aplikasi tulis)' }, { id: 'events', label: 'Event (Kubernetes tulis)' }]} items={[{ label: 'order 42 oven too cold', bucket: 'logs', why: 'Tukang masak yang cetak.' }, { label: 'Successfully assigned default/kitchen to dev-worker', bucket: 'events', why: 'Scheduler yang tampal.' }, { label: 'Readiness probe failed: HTTP probe failed with statuscode: 404', bucket: 'events', why: 'Kubelet tampal selepas satu probe.' }, { label: '"GET / HTTP/1.1" 200', bucket: 'logs', why: 'nginx cetak untuk setiap pelawat.' }]} success="Siap! Aplikasi anda tulis log. Kubernetes tulis event." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca log pod dan event zon.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl logs -f kitchen` ikut baris baharu. `-c cook` pilih satu container. `--since=10m` tunjuk baris terkini sahaja. `kubectl events --for pod/kitchen` tunjuk event satu pod. Secara lalai, API server simpan event selama sejam. Untuk simpan log lebih lama, hantar ke stor log (pelajaran seterusnya).
+</Card>

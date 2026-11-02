@@ -1,0 +1,81 @@
+---
+id: git-w10-l05
+world: 10
+title: Sintaks revision
+summary: "Anda akan belajar: cara namakan mana-mana commit, atau sekumpulan commit, tanpa salin id."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, GraphPick, Choice, Sim, SpotLines]
+needs: [git-w10-l04]
+scenario: w10-revisions
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitrevisions", url: "https://git-scm.com/docs/gitrevisions" }
+  - { label: "git rev-parse", url: "https://git-scm.com/docs/git-rev-parse" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git log --oneline --graph --all']} label="Graf: main ada tujuh commit, dengan branch menu yang dah di-merge. Branch prices ada satu commit tambahan." />
+
+Anda perlukan commit (titik simpan) dua langkah ke belakang. Salin id yang panjang memang memenatkan. Ada cara lebih pendek?
+</Card>
+
+<Card id="see-tilde" type="see">
+<Interactive name="GraphScene" scenario="w10-revisions" commands={['git switch --detach HEAD~2']} label="HEAD lompat dua commit ke belakang di sepanjang main, ke Merge menu." />
+
+**<Term id="revision">Revision</Term>** ialah apa-apa cara untuk namakan commit. `HEAD~2` maksudnya dua langkah ke belakang dari HEAD. Setiap langkah ikut parent pertama.
+</Card>
+
+<Card id="try-pick" type="try">
+Kira langkah ke belakang di sepanjang main.
+
+<Interactive name="GraphPick" scenario="w10-revisions" answer="^Say we open daily$" prompt="Ketik commit yang dinamakan oleh HEAD~3." why="Tiga langkah ke belakang: Link the menu, Merge menu, kemudian Say we open daily." />
+
+<Hint>Merge itu ada dua parent. `~` sentiasa ambil yang pertama, di main.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`HEAD~2` ialah merge, jadi ia ada dua parent. `^2` pilih yang kedua. Commit mana ialah `HEAD~2^2`?
+
+<Interactive name="Choice" options={[{ label: 'Add onde-onde, hujung branch menu', correct: true, why: 'Parent kedua ialah branch yang di-merge masuk.' }, { label: 'Say we open daily', why: 'Itu parent pertama, HEAD~2^1. Sama dengan HEAD~3.' }, { label: 'Add shop page', why: 'Itu lebih jauh. ^2 ambil satu langkah, masuk ke branch yang di-merge.' }]} />
+</Card>
+
+<Card id="try-visit" type="try">
+Lawati "Add menu page" dengan `git switch --detach`. Namakan ia dari HEAD, guna `~` dan `^`.
+
+<Interactive name="Sim" scenario="w10-revisions" panels={['graph']} goal={{ headDetached: true, headAtMessage: '^Add menu page$' }} hints={['Mula di HEAD~2^2. Itu Add onde-onde.', 'Add onde-onde ada satu parent. Ambil satu langkah lagi dengan ~1.', 'Taip git switch --detach HEAD~2^2~1']} success="Anda jalan di graf guna nama! HEAD~2^2~1 ialah Add menu page." />
+
+<Hint>Mula dari `HEAD~2^2`. Kemudian satu langkah lagi ke belakang.</Hint>
+</Card>
+
+<Card id="see-two-dots" type="see">
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git log --oneline main..prices', 'git log --oneline prices..main']} label="main..prices senaraikan Add a price. prices..main senaraikan Add about page." />
+
+`A..B` (dua titik) senaraikan commit dalam B yang tiada dalam A. Tukar sisinya, dan anda nampak kerja tambahan sisi lain.
+</Card>
+
+<Card id="try-three-dots" type="try">
+`A...B` (tiga titik) senaraikan commit di mana-mana sisi, tapi bukan kedua-duanya. `--left-right` tandakan sisi: `<` untuk A, `>` untuk B.
+
+<Interactive name="SpotLines" scenario="w10-revisions" commands={['git log --oneline --left-right main...prices']} targets="^>" prompt="Ketik commit yang hanya ada dalam prices." success="Ya! Tanda > ialah sisi kanan: prices." />
+</Card>
+
+<Card id="check" type="check">
+Sebelum merge, anda semak apa yang `prices` akan bawa masuk ke `main`. Arahan mana?
+
+<Interactive name="Choice" options={[{ label: '`git log main..prices`', correct: true, why: 'Commit dalam prices yang main belum ada.' }, { label: '`git log prices..main`', why: 'Itu arah sebaliknya: apa yang main ada tapi prices tiada.' }, { label: '`git log main...prices`', why: 'Tiga titik juga tunjuk commit baru di main.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan mana-mana commit tanpa salin idnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`HEAD^` sama dengan `HEAD~1`. `HEAD@{1}` ialah tempat HEAD berada satu langkah tadi, daripada reflog. `v1.0^{}` ialah commit yang tag tunjuk. `git rev-parse` tukar mana-mana revision kepada id penuh. `git diff main...prices` tunjuk apa yang prices ubah sejak ia berpecah.
+
+<Interactive name="TermReplay" scenario="w10-revisions" commands={['git rev-parse --short HEAD~2^2', 'git diff main...prices']} label="rev-parse cetak id pendek Add onde-onde. git diff main...prices tunjuk satu baris dalam menu.html dapat RM1." />
+</Card>

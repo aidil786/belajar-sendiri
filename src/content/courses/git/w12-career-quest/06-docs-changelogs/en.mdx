@@ -1,0 +1,68 @@
+---
+id: git-w12-l06
+world: 12
+title: Docs and changelogs
+summary: "You will learn: how to tell users what changed, with a changelog."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, SortCards, Choice, Sim, SwipeJudge]
+needs: [git-w12-l05]
+scenario: w12-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Keep a Changelog", url: "https://keepachangelog.com/en/1.1.0/" }
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w12-l06" commands={['git log --oneline']} label="git log --oneline shows three commits: fix again, stuff and wip." />
+
+Your notes app got an update. A button moved. Users ask: what changed? Your log only says "wip" and "stuff".
+</Card>
+
+<Card id="see-changelog" type="see">
+<Interactive name="SpotLines" lines={[{ text: '# Changelog' }, { text: '## [1.1.0] - 2026-10-30', target: true }, { text: '### Added' }, { text: '- Dark mode switch.' }, { text: '### Fixed' }, { text: '- Notes save on phones again.' }]} prompt="Tap the line that names this version and its date." success="Yes! Version number first, then the date: year-month-day." />
+
+A **<Term id="changelog">changelog</Term>** is a diary for users. Each version lists what was added, changed or fixed. The newest version sits on top.
+</Card>
+
+<Card id="try-sort" type="try">
+A popular style, Keep a Changelog, groups entries under headings. Sort each entry.
+
+<Interactive name="SortCards" buckets={[{ id: 'added', label: 'Added' }, { id: 'changed', label: 'Changed' }, { id: 'fixed', label: 'Fixed' }]} items={[{ label: 'New "export to PDF" button', bucket: 'added', why: 'A brand-new feature goes under Added.' }, { label: 'New Malay translation', bucket: 'added', why: 'Something new for users: Added.' }, { label: 'Search is now twice as fast', bucket: 'changed', why: 'An old feature works differently: Changed.' }, { label: 'Settings moved to the top menu', bucket: 'changed', why: 'It existed before. Now it moved: Changed.' }, { label: 'No more crash on empty notes', bucket: 'fixed', why: 'A bug went away: Fixed.' }, { label: 'Dates show the right time zone', bucket: 'fixed', why: 'It was broken. Now it works: Fixed.' }]} success="Sorted! Users can scan that in seconds." />
+
+<Hint>New thing? Added. Different thing? Changed. Broken thing that works now? Fixed.</Hint>
+</Card>
+
+<Card id="predict-unreleased" type="predict">
+You fix a bug today. The next version ships next week. Where does the note go?
+
+<Interactive name="Choice" options={[{ label: 'Under an Unreleased heading, at the top', correct: true, why: 'It waits there. On release day, it moves under the new version.' }, { label: 'At the bottom of the file', why: 'Newest goes on top, so readers see it first.' }, { label: 'Nowhere. The commit message is enough', why: 'Commits are for developers. Users read the changelog.' }]} />
+</Card>
+
+<Card id="try-commit" type="try">
+Your `CHANGELOG.md` is written. Save it in a commit. Start the message with `docs:`.
+
+<Interactive name="Sim" scenario="w12-l06" panels={['areas']} goal={{ lastCommitHas: ['CHANGELOG.md'], lastMessage: '^docs(\\(.+\\))?: \\S' }} hints={['First put it in the box: git add CHANGELOG.md', 'Then save it: git commit -m "docs: add changelog"']} success="Saved! Your users finally get a clear story." />
+
+<Hint>Two steps: `git add CHANGELOG.md`, then `git commit -m "docs: add changelog"`.</Hint>
+</Card>
+
+<Card id="check-docs" type="check">
+Good docs grow with the code. Judge each habit.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Update the README in the same PR as the feature', good: true, why: 'Docs and code stay in step.' }, { text: 'The only docs say: "read the code"', good: false, why: 'Newcomers get lost. Explain the basics in words.' }, { text: 'Add a "How to run it" section', good: true, why: 'It is the first question every visitor has.' }, { text: 'Write the changelog from memory a year later', good: false, why: 'Details get lost. Add entries as you go.' }, { text: 'Explain why, not only what', good: true, why: 'The why is what future you forgets.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep a changelog that users understand.
+</Card>
+
+<Card id="deeper" type="deeper">
+Conventional Commits help here. `feat:` commits often become Added. `fix:` commits become Fixed. World 6 covers this style. Some tools draft a changelog from your commits. A human should still edit it. Keep a Changelog also has Deprecated, Removed and Security headings.
+</Card>

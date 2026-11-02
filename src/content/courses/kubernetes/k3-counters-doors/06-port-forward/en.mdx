@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l06
+world: 3
+title: Debug with port-forward
+summary: "You will learn: to open a private tunnel from your laptop to one pod."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k3-l05]
+scenario: k3-forward
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: use port forwarding", url: "https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/" }
+  - { label: "kubectl port-forward", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_port-forward/" }
+---
+
+<Card id="hook" type="hook">
+The shop page looks odd. You want to see it in your own browser. But you don't want to open a door to the whole street. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Open a private tunnel from my laptop to the shop', correct: true, why: 'Yes! Only you can use it, and it closes when you stop.' }, { label: 'Make it a LoadBalancer for a minute', why: 'That opens it to the internet. Too big for a quick look.' }, { label: 'Type a pod IP into my browser', why: 'Pod IPs only work inside the cluster.' }]} />
+</Card>
+
+<Card id="see-forward" type="see">
+<Interactive name="KubeReplay" scenario="k3-forward" commands={['kubectl port-forward svc/shop 8080:80', 'curl -s localhost:8080']} label="port-forward says Forwarding from 127.0.0.1:8080 to 80. curl localhost:8080 gets the shop page." />
+
+A **<Term id="port-forward">port-forward</Term>** is a private staff hatch. `localhost:8080` on your laptop leads to port 80 of one shop tray.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command: laptop port 8080 to the shop's port 80.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'talk to the cluster' }, { text: 'port-forward', means: 'open a private hatch' }, { text: 'svc/shop', means: 'to a tray behind the shop Service' }, { text: '8080:80', means: 'laptop port first, then the tray’s port' }]} decoys={[{ text: '80:8080', means: 'backwards: laptop 80, tray 8080' }, { text: '--address 0.0.0.0', means: 'opens it to your whole network' }]} success="That's the hatch: laptop first, tray second." />
+</Card>
+
+<Card id="try-forward" type="try">
+Now open the hatch, then visit it with `curl`.
+
+<Interactive name="FoodCourtSim" scenario="k3-forward" goal={{ portForward: 8080, reachable: { url: 'http://localhost:8080' }, lastTyped: '^curl' }} hints={['Type kubectl port-forward svc/shop 8080:80', 'Then type curl localhost:8080']} success="Kedai Kancil, on your own laptop. Nobody else can see it." />
+
+<Hint>On a real laptop, port-forward keeps running. Use a second terminal for `curl`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You press Ctrl+C in the port-forward terminal. Then you open `localhost:8080` again. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Failed to connect: the hatch is closed', correct: true, why: 'The tunnel lives only while the command runs.' }, { label: 'The shop page still loads', why: 'Ctrl+C stops the tunnel. Nothing listens on 8080 now.' }, { label: 'The shop pod stops too', why: 'The pod keeps running. Only your hatch closed.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Hatch or real door? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'pf', label: 'port-forward' }, { id: 'door', label: 'A real door (Service, Gateway)' }]} items={[{ label: 'Peek at one pod from your laptop', bucket: 'pf', why: 'Private and quick.' }, { label: 'Check a database without opening it', bucket: 'pf', why: 'Only you get in, and only for now.' }, { label: 'Test the app before you write a Gateway', bucket: 'pf', why: 'A hatch is perfect for a first look.' }, { label: 'Let customers in all day', bucket: 'door', why: 'A hatch closes with your terminal. Customers need a real door.' }, { label: 'Share the shop with your team online', bucket: 'door', why: 'A hatch only lives on your laptop.' }]} success="Hatches for you, doors for customers." />
+</Card>
+
+<Card id="win" type="win">
+You can now open a private hatch to any pod for debugging.
+</Card>
+
+<Card id="deeper" type="deeper">
+`svc/shop` picks one tray when the hatch opens and sticks to it. If that tray goes away, the hatch breaks: run it again. `--address 0.0.0.0` lets anyone on your Wi-Fi in. Use it only on purpose.
+
+Real rep (optional), on a throwaway kind cluster with the shop Service:
+
+<Interactive name="Mission" id="k3-l06-rep" steps={[{ id: 'open', text: 'Open the hatch. Leave this terminal running.', command: 'kubectl port-forward svc/shop 8080:80' }, { id: 'visit', text: 'Open http://localhost:8080 in your browser.' }, { id: 'close', text: 'Press Ctrl+C. Reload the page: the hatch is closed.' }]} success="You opened and closed a real hatch!" />
+</Card>

@@ -1,0 +1,61 @@
+---
+id: git-w07-l06
+world: 7
+title: Matrix, cache, artifak
+summary: "Anda akan belajar: cara uji banyak susunan serentak, jimat masa, dan simpan fail dari larian."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, TimelineTap, SortCards]
+needs: [git-w07-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Running variations of jobs (matrix)", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations" }
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+  - { label: "Workflow artifacts", url: "https://docs.github.com/en/actions/tutorials/store-and-share-data" }
+---
+
+<Card id="hook" type="hook">
+Laman anda mesti jalan pada Node 22 dan Node 24. Salin seluruh job ujian dua kali? Kemudian baiki setiap pepijat dua kali? Apa rancangan terbaik?
+
+<Interactive name="Choice" options={[{ label: 'Salin job itu dan tukar satu nombor', why: 'Ia jalan, tapi sekarang anda baiki semuanya dua kali.' }, { label: 'Tulis satu job dan senaraikan kedua-dua versi', correct: true, why: 'Satu resipi, dua larian. Anda akan lihat caranya selepas ini.' }, { label: 'Uji pada Node 24 sahaja', why: 'Nanti pengguna Node 22 yang jumpa pepijat.' }]} />
+</Card>
+
+<Card id="see-matrix" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'test:' }, { text: '  runs-on: ubuntu-latest' }, { text: '  strategy:' }, { text: '    matrix:' }, { text: '      node: [22, 24]', target: true }, { text: '  steps:' }, { text: '    - uses: actions/setup-node@v7' }, { text: '      with:' }, { text: '        node-version: ${{ matrix.node }}' }]} prompt="Ketik baris yang senaraikan versi." success="Ya! Dua item, jadi dua salinan job." />
+
+**<Term id="matrix">Matrix</Term>** ialah satu resipi job dan satu senarai. GitHub jalankan satu salinan untuk setiap item. `${{ matrix.node }}` ialah item untuk salinan itu.
+</Card>
+
+<Card id="predict" type="predict">
+Anda tambah senarai kedua, `os:`, dengan Linux dan Windows. Berapa job berjalan?
+
+<Interactive name="Choice" compact options={[{ label: '2', why: 'Setiap versi berjalan pada setiap sistem: 2 × 2.' }, { label: '3', why: 'Matrix mendarab, bukan menambah: 2 × 2.' }, { label: '4', correct: true, why: 'Setiap pasangan berjalan: 2 versi × 2 sistem = 4 job.' }]} />
+</Card>
+
+<Card id="see-cache" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Larian 1', title: 'Membeli-belah', text: 'npm muat turun setiap pakej. Lambat. Muat turun itu disimpan.' }, { when: 'Larian 2', title: 'Dari rak', text: 'Fail lock sama, jadi muat turun yang disimpan datang balik. Laju!' }, { when: 'Larian 3', title: 'Pakej baru', text: 'Fail lock berubah. npm muat turun semula dan simpan salinan baru.' }]} />
+
+**<Term id="cache">Cache</Term>** ialah almari dapur. Larian pertama membeli dan menyimpan. Larian seterusnya ambil dari rak. `cache: npm` dalam setup-node hidupkannya.
+</Card>
+
+<Card id="see-artifact" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: actions/upload-artifact@v7' }, { text: '  with:' }, { text: '    name: site' }, { text: '    path: dist/', target: true }]} prompt="Ketik baris yang beritahu folder mana nak disimpan." success="Betul! Semua dalam dist/ masuk ke dalam bekas." />
+
+**<Term id="artifact">Artifact</Term>** (artifak) ialah bekas bungkus. Job masukkan fail ke dalamnya. Selepas larian, anda boleh muat turun fail itu. Secara lalai, GitHub simpan 90 hari.
+</Card>
+
+<Card id="try-sort" type="try">
+Almari dapur atau bekas bungkus? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'cache', label: 'Cache (laju)' }, { id: 'artifact', label: 'Artifact (simpan)' }]} items={[{ label: 'Muat turun npm, untuk larian seterusnya yang lebih laju', bucket: 'cache', why: 'Ia wujud hanya untuk jimat masa.' }, { label: 'Laman yang dah dibina, untuk dimuat turun dan disemak', bucket: 'artifact', why: 'Anda nak fail itu sendiri. Bungkus.' }, { label: 'Laporan ujian, untuk dibaca selepas gagal', bucket: 'artifact', why: 'Kursus ini simpan satu bila ujiannya sendiri gagal.' }, { label: 'Muat turun yang disimpan, ikut kunci package-lock.json', bucket: 'cache', why: 'Fail lock baru bermaksud kunci baru, jadi cache baru.' }]} success="Siap! Cache jimat masa. Artifact simpan fail." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh guna matrix, cache muat turun dan simpan artifact.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bila satu job matrix gagal, GitHub batalkan yang lain. Tetapkan `fail-fast: false` untuk lihat setiap keputusan. Untuk folder lain, `actions/cache@v6` ambil `path` dan `key`. GitHub buang entri cache yang tiada siapa guna selama 7 hari.
+</Card>

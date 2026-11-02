@@ -1,0 +1,82 @@
+---
+id: linux-l3-boss
+world: 3
+title: "Kenapa pelanggan tak sampai ke kedai?"
+summary: "Anda akan belajar: memanjat tangga tak dapat sambung sendiri dan membaiki empat anak tangga."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SpotLines, Transcript, CommandBuilder, OrderList, Mission]
+needs: [linux-l3-l10]
+scenario: linux-l3-boss-name
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "hosts(5)", url: "https://man7.org/linux/man-pages/man5/hosts.5.html" }
+  - { label: "nginx: listen", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html#listen" }
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "systemctl(1)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+---
+
+<Card id="hook" type="hook">
+Boss! Pelanggan menelefon: "menu.kedai tak boleh dibuka!" Anda log masuk ke kedai. Anak tangga mana anda semak dahulu?
+
+<Interactive name="Choice" options={[{ label: 'Nama: adakah menu.kedai jadi nombor?', correct: true, why: 'Mula dari bawah tangga.' }, { label: 'Mulakan semula server', why: 'Anda akan hilang petunjuk. Panjat dahulu.' }, { label: 'Firewall', why: 'Mungkin nanti. Semak anak tangga di bawahnya dahulu.' }]} />
+</Card>
+
+<Card id="try-name" type="try">
+Anak tangga 1, nama. Tanya `getent hosts menu.kedai`, baca `/etc/hosts`, kemudian baikinya. Nombor kedai sendiri ialah 10.0.0.5.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-name" goal={{ resolves: { 'menu.kedai': '10.0.0.5' } }} hints={['getent hosts menu.kedai tak jumpa apa-apa. cat /etc/hosts tunjuk salah eja: kedia.', "Tambah baris yang betul: echo '10.0.0.5 menu.kedai' | sudo tee -a /etc/hosts"]} solution={["echo '10.0.0.5 menu.kedai' | sudo tee -a /etc/hosts"]} success="Anak tangga 1 dibaiki: menu.kedai ialah 10.0.0.5." />
+
+<Hint>Tengok baik-baik baris terakhir /etc/hosts.</Hint>
+</Card>
+
+<Card id="see-port" type="see">
+Anak tangga 2, nombor pintu. `curl localhost` ditolak serta-merta. Ini `ss -tln`. Tekan di mana nginx menjawab sekarang.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:8080      0.0.0.0:*', target: true }]} prompt="Tekan baris untuk kaunter web." success="Ada orang alihkan kaunter web ke 8080. Pelanggan dail 80." />
+</Card>
+
+<Card id="try-port" type="try">
+Alihkan nginx kembali ke port 80. Tukar baris `listen`, uji dengan `sudo nginx -t`, kemudian mulakan semula nginx.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-port" goal={{ portListening: [80], reachable: { localhost: 200 } }} hints={['grep listen /etc/nginx/sites-available/default', "sudo sed -i 's/listen 8080 default_server/listen 80 default_server/' /etc/nginx/sites-available/default", 'sudo nginx -t, kemudian sudo systemctl restart nginx']} solution={["sudo sed -i 's/listen 8080 default_server/listen 80 default_server/' /etc/nginx/sites-available/default", 'sudo nginx -t', 'sudo systemctl restart nginx']} success="Anak tangga 2 dibaiki: nginx menjawab di 80 semula." />
+</Card>
+
+<Card id="see-guard" type="see">
+<Interactive name="Transcript" title="kedai" label="sudo ufw status: Status active. Hanya OpenSSH dibenarkan, dari Anywhere."
+  lines={[{ cmd: 'sudo ufw status' }, { out: 'Status: active\n\nTo                         Action      From\n--                         ------      ----\nOpenSSH                    ALLOW       Anywhere' }]} />
+
+Anak tangga 3. Dari laptop di luar, curl kata `Connection timed out after 5004 milliseconds`. Maksudnya: pengawal buang panggilan itu. Port 80 tiada dalam senarai pengawal.
+</Card>
+
+<Card id="try-guard" type="try">
+Bina arahan yang benarkan pelanggan web masuk, dan pengawal kekal bertugas.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sudo', means: 'sebagai root: pengawal hanya terima arahan root' }, { text: 'ufw', means: 'bercakap dengan pengawal' }, { text: 'allow', means: 'benarkan pemanggil masuk' }, { text: '80/tcp', means: 'di sambungan web' }]} decoys={[{ text: 'disable', means: 'suruh pengawal balik: semuanya terbuka' }, { text: 'deny', means: 'halang pemanggil' }]} success="Anak tangga 3 dibaiki: sudo ufw allow 80/tcp. SSH masih dibenarkan juga." />
+</Card>
+
+<Card id="try-service" type="try">
+Anak tangga 4. Semalam kedai dihidupkan semula, dan nginx kekal mati. Hidupkan sekarang, dan pastikan ia hidup setiap kali boot.
+
+<Interactive name="LinuxSim" scenario="linux-l3-boss-service" goal={{ serviceActive: ['nginx'], serviceEnabled: ['nginx'], reachable: { localhost: 200 } }} hints={['systemctl is-active nginx; systemctl is-enabled nginx', 'sudo systemctl enable --now nginx']} solution={['sudo systemctl enable --now nginx']} success="Anak tangga 4 dibaiki: nginx berjalan, dan kembali selepas setiap boot." />
+</Card>
+
+<Card id="check-order" type="check">
+Tulis laporan malam ini. Susun pembaikan ikut tertib tangga.
+
+<Interactive name="OrderList" items={['Tambah menu.kedai dalam /etc/hosts', 'Alihkan nginx kembali ke port 80', 'Benarkan 80/tcp dalam ufw', 'Enable dan hidupkan nginx']} label="Pembaikan pertama di atas" success="Nama, port, firewall, servis. Pelanggan boleh memesan semula!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki talian ke server, satu anak tangga demi satu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kad tangga anda: `getent hosts` (nama), `ping` (jalan), `curl -v --connect-timeout 5` (pintu), `sudo ss -tlnp` dan `systemctl status` (pekerja), kod status dan `journalctl` (jawapan).
+
+<Interactive name="Mission" id="linux-l3-boss-rep" steps={[{ id: 'vm', text: 'Di VM pakai buang dengan nginx dan ufw, rosakkan satu anak tangga dengan sengaja.' }, { id: 'stop', text: 'Contohnya, hentikan pekerja.', command: 'sudo systemctl stop nginx' }, { id: 'climb', text: 'Dari laptop anda, panjat tangga sampai jumpa.', command: 'curl -sv --connect-timeout 5 http://YOUR-VM-IP' }, { id: 'fix', text: 'Baikinya dan semak semula.', command: 'sudo systemctl start nginx' }]} success="Panjatan sebenar, di server sebenar." />
+</Card>

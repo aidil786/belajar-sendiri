@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l09
+world: 3
+title: "Ingress, dan kenapa ingress-nginx bersara"
+summary: "Anda akan belajar: apa itu Ingress, kenapa ingress-nginx bersara, dan apa perlu dibuat sekarang."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, SortCards, YamlDoctor, SwipeJudge, Mission]
+needs: [k8s-k3-l08]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Blog Kubernetes: persaraan Ingress NGINX", url: "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/" }
+  - { label: "Kubernetes: Ingress", url: "https://kubernetes.io/docs/concepts/services-networking/ingress/" }
+  - { label: "Gateway API: berpindah dari Ingress", url: "https://gateway-api.sigs.k8s.io/guides/migrating-from-ingress/" }
+---
+
+<Card id="hook" type="hook">
+Kluster pasukan baharu anda penuh dengan fail Ingress. Anda baca ingress-nginx dah bersara. Adakah kluster itu rosak sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: Ingress masih berfungsi, tapi satu controller popular tiada pembaikan lagi', correct: true, why: 'API Ingress masih ada dalam Kubernetes. ingress-nginx berhenti dapat kemas kini.' }, { label: 'Ya: Ingress dibuang dari Kubernetes', why: 'API Ingress masih ada dalam Kubernetes 1.37.' }, { label: 'Ya: setiap ingress-nginx berhenti pada hari persaraan', why: 'Pemasangan lama terus berjalan. Cuma tiada lagi pembaikan keselamatan.' }]} />
+</Card>
+
+<Card id="see-history" type="see">
+<Interactive name="TimelineTap" events={[{ when: '2015', title: 'Ingress tiba', text: 'API beta: satu objek untuk pintu dan laluannya.' }, { when: '2020', title: 'Ingress stabil', text: 'networking.k8s.io/v1, dalam Kubernetes 1.19.' }, { when: '2023', title: 'Gateway API v1.0', text: 'Gateway, GatewayClass dan HTTPRoute jadi stabil.' }, { when: 'Nov 2025', title: 'Berita persaraan', text: 'Kubernetes umumkan ingress-nginx akan bersara.' }, { when: 'Mac 2026', title: 'ingress-nginx bersara', text: 'Tiada lagi keluaran, pembaikan pepijat atau tampalan keselamatan.' }]} />
+
+**<Term id="ingress">Ingress</Term>** ialah cara lama untuk masuk. Satu objek pegang pintu dan laluannya. Controller berasingan, seperti ingress-nginx, buat kerjanya.
+</Card>
+
+<Card id="see-compare" type="see">
+Kerja sama, dua gaya. Susun setiap ciri.
+
+<Interactive name="SortCards" buckets={[{ id: 'ing', label: 'Ingress' }, { id: 'gw', label: 'Gateway API' }]} items={[{ label: 'Satu objek: pintu dan laluan bersama', bucket: 'ing', why: 'Ingress masukkan semua dalam satu objek.' }, { label: 'Pintu dan papan tanda ialah objek berasingan', bucket: 'gw', why: 'Gateway dan HTTPRoute, dijaga oleh pasukan berbeza.' }, { label: 'Ciri tambahan tersorok dalam annotation', bucket: 'ing', why: 'Setiap controller cipta annotation sendiri.' }, { label: 'Padanan header dan weight trafik terbina dalam', bucket: 'gw', why: 'Ia sebahagian daripada spec HTTPRoute.' }, { label: 'pathType: Prefix', bucket: 'ing', why: 'Ingress sebut Prefix.' }, { label: 'type: PathPrefix', bucket: 'gw', why: 'HTTPRoute sebut PathPrefix.' }]} success="Pintu sama, reka bentuk lebih baharu." />
+</Card>
+
+<Card id="try-doctor" type="try">
+Ingress ini dari catatan blog lama. Ia tak boleh apply di Kubernetes 1.37. Baiki baris pertama.
+
+<Interactive name="YamlDoctor" file="ingress.yaml" manifest={'apiVersion: extensions/v1beta1\nkind: Ingress\nmetadata:\n  name: shop\nspec:\n  rules:\n    - http:\n        paths:\n          - path: /\n            pathType: Prefix\n            backend:\n              service:\n                name: shop\n                port:\n                  number: 80\n'} solution={'apiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: shop\nspec:\n  rules:\n    - http:\n        paths:\n          - path: /\n            pathType: Prefix\n            backend:\n              service:\n                name: shop\n                port:\n                  number: 80\n'} keep={['pathType: Prefix', 'name: shop']} hint="Ingress dah pindah ke networking.k8s.io/v1." success="Berjaya! extensions/v1beta1 dibuang dalam Kubernetes 1.22." />
+
+Maksudnya: Kubernetes tak kenal lagi Ingress di bawah kumpulan lama itu.
+</Card>
+
+<Card id="check-why" type="check">
+Kenapa ingress-nginx bersara?
+
+<Interactive name="Choice" options={[{ label: 'Terlalu sedikit penyelenggara, dan snippet config yang berisiko', correct: true, why: 'Hanya satu atau dua orang jaga projek itu pada masa lapang. Snippet biar pengguna masukkan tetapan NGINX mentah.' }, { label: 'Kubernetes buang API Ingress', why: 'API Ingress masih ada.' }, { label: 'NGINX sendiri berhenti berfungsi', why: 'NGINX okey. Ini satu controller komuniti sahaja.' }]} />
+</Card>
+
+<Card id="check-next" type="check">
+Kluster anda masih guna ingress-nginx. Nilai setiap rancangan.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rancang perpindahan ke Gateway API.', good: true, why: 'Itulah cadangan projek Kubernetes.' }, { text: 'Simpan ingress-nginx selamanya. Ia masih berjalan.', good: false, why: 'Tiada pembaikan keselamatan bermaksud risiko terus bertambah.' }, { text: 'Semak controller mana kluster anda guna.', good: true, why: 'Anda hanya boleh merancang bila dah tahu.' }, { text: 'Padam semua Ingress hari ini, baru fikir.', good: false, why: 'Pindahkan trafik dengan selamat dulu. Alat ingress2gateway boleh bantu tukar.' }, { text: 'Mulakan aplikasi baharu di Gateway API.', good: true, why: 'Tak perlu pindah lagi nanti.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca Ingress, dan terangkan perpindahan ke Gateway API.
+</Card>
+
+<Card id="deeper" type="deeper">
+Hati-hati dengan nama: NGINX Ingress Controller milik F5 ialah projek berasingan. Kalau mesti kekal dengan Ingress, pilih controller lain yang masih dijaga dari dokumentasi Kubernetes. Ingress masih muncul dalam peperiksaan dan kluster lama, jadi berbaloi dibaca.
+
+Latihan sebenar (pilihan), di kluster yang anda boleh periksa (hak admin):
+
+<Interactive name="Mission" id="k3-l09-rep" steps={[{ id: 'check', text: 'Cari pod ingress-nginx, semakan dari catatan persaraan itu.', command: 'kubectl get pods --all-namespaces --selector app.kubernetes.io/name=ingress-nginx' }, { id: 'classes', text: 'Senaraikan controller Ingress yang kluster anda kenal.', command: 'kubectl get ingressclass' }]} success="Kini anda kenal pintu depan kluster anda." />
+</Card>

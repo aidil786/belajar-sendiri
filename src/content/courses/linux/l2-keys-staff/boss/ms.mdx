@@ -1,0 +1,80 @@
+---
+id: linux-l2-boss
+world: 2
+title: Servis yang tak mahu hidup
+summary: "Anda akan belajar: hidupkan semula web server yang rosak sendiri: status, log, baiki, uji, mula."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SpotLines, OrderList, Mission]
+needs: [linux-l2-l10]
+scenario: linux-l2-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "systemctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/systemctl.1.en.html" }
+  - { label: "journalctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/journalctl.1.en.html" }
+  - { label: "sed (Debian 13 man page)", url: "https://manpages.debian.org/trixie/sed/sed.1.en.html" }
+  - { label: "nginx: command-line parameters (nginx -t)", url: "https://nginx.org/en/docs/switches.html" }
+  - { label: "nginx: core module (listen)", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html#listen" }
+---
+
+<Card id="hook" type="hook">
+Boss: Isnin, 8 pagi. Pelanggan kata laman menu tak boleh dibuka. Anda cuba `curl -sS localhost` dan dapat `curl: (7) Failed to connect to localhost port 80 after 0 ms: Could not connect to server`. Di mana anda tengok dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tanya systemd: adakah nginx berjalan?', correct: true, why: 'Maksud ralat curl itu: tiada siapa jawab di port 80. Semak pekerja dulu.' }, { label: 'Pasang semula nginx', why: 'Besar dan lambat, dan tetapan masih rosak. Cari punca dulu.' }, { label: 'Hidupkan semula server', why: 'nginx akan gagal lagi semasa but. Tengok dulu sebelum bertindak.' }]} />
+</Card>
+
+<Card id="try-status" type="try">
+Langkah 1: tanya pengurus syif sama ada nginx bekerja. Kemudian baca diarinya.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss" goal={{ typed: '^systemctl (is-active|status) nginx', lastTyped: '^sudo journalctl ' }} hints={['Tanya: systemctl is-active nginx', 'Baca sebabnya: sudo journalctl -u nginx -n 5']} solution={['systemctl is-active nginx', 'sudo journalctl -u nginx -n 5']} success="failed, dan diari beritahu sebabnya. Baca baris [emerg]." />
+
+<Hint>Lampu merah di Servis pun kata failed.</Hint>
+</Card>
+
+<Card id="spot-cause" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'Nov 01 08:55:04 kedai nginx[1244]: 2026/11/01 08:55:04 [emerg] 1244#1244: unknown directive "lisen" in /etc/nginx/sites-enabled/default:22', target: true }, { text: 'Nov 01 08:55:04 kedai nginx[1244]: nginx: configuration file /etc/nginx/nginx.conf test failed' }, { text: 'Nov 01 08:55:04 kedai systemd[1]: nginx.service: Control process exited, code=exited, status=1/FAILURE' }, { text: 'Nov 01 08:55:04 kedai systemd[1]: Failed to start nginx.service - A high performance web server and a reverse proxy server.' }]} prompt="Langkah 2: ketik baris yang namakan masalah sebenar." success="unknown directive lisen: seseorang taip lisen, bukan listen, di baris 22." />
+</Card>
+
+<Card id="try-fix" type="try">
+Langkah 3: baiki salah taip itu, kemudian uji tetapan: `sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default`, kemudian `sudo nginx -t`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss" goal={{ fileNotContains: { '/etc/nginx/sites-available/default': 'lisen' }, lastTyped: '^sudo nginx -t' }} hints={["Tukar perkataan itu: sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'Uji: sudo nginx -t']} solution={["sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'sudo nginx -t']} success="syntax is ok, test is successful. Tetapan sudah sihat." />
+
+<Hint>`sed -i 's/lama/baru/' fail` tukar satu perkataan di dalam fail itu sendiri.</Hint>
+</Card>
+
+<Card id="predict-back" type="predict">
+`nginx -t` kata `test is successful`. Adakah laman menu sudah kembali?
+
+<Interactive name="Choice" options={[{ label: 'Belum. nginx masih berhenti.', correct: true, why: 'nginx -t cuma semak atas kertas. Seseorang mesti mulakan pekerja itu.' }, { label: 'Ya. Ujian yang lulus terus menghidupkannya.', why: 'Ujian tak ubah apa-apa. systemctl yang mulakan servis.' }, { label: 'Hanya selepas but semula', why: 'Tak perlu but semula. Satu arahan start sudah cukup.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Langkah 4: tetapan sudah dibaiki. Mulakan nginx, kemudian semak laman itu macam pelanggan.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss-2" goal={{ serviceActive: ['nginx'], reachable: { localhost: 200 } }} hints={['Mulakan: sudo systemctl start nginx', 'Semak: curl -sI localhost']} solution={['sudo systemctl start nginx', 'curl -sI localhost']} success="HTTP/1.1 200 OK. Laman menu sudah kembali. Doktor Servis!" />
+
+<Hint>Tengok lampu bertukar hijau.</Hint>
+</Card>
+
+<Card id="order-ladder" type="check">
+Tulis tangga "tak mahu hidup" untuk orang syif seterusnya.
+
+<Interactive name="OrderList" items={['curl: betulkah ia mati?', 'systemctl is-active atau status: apa kata systemd?', 'sudo journalctl -u: kenapa ia berhenti?', 'Baiki fail, kemudian uji (nginx -t)', 'sudo systemctl start, kemudian curl lagi']} label="Langkah pertama di atas" success="Semak, tanya, baca, baiki, uji, mula. Anda boleh selamatkan mana-mana servis sekarang." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hidupkan semula servis yang rosak sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tangga yang sama sesuai untuk mana-mana servis: ssh, cron, pangkalan data. Banyak program ada ujian sendiri, macam `nginx -t`. Sudah baiki? `sudo systemctl enable nginx` pastikan ia juga kembali selepas but semula.
+
+Latihan sebenar (pilihan), hanya di VM pakai buang yang ada nginx:
+
+<Interactive name="Mission" id="linux-l2-boss-rep" steps={[{ id: 'break', text: 'Rosakkan dengan sengaja (VM pakai buang sahaja!).', command: "sudo sed -i 's/listen 80/lisen 80/' /etc/nginx/sites-available/default" }, { id: 'restart', text: 'Tengok ia gagal.', command: 'sudo systemctl restart nginx' }, { id: 'read', text: 'Baca sebabnya.', command: 'sudo journalctl -u nginx -n 5' }, { id: 'fix', text: 'Baikinya.', command: "sudo sed -i 's/lisen 80/listen 80/' /etc/nginx/sites-available/default" }, { id: 'test', text: 'Uji, kemudian mulakan.', command: 'sudo nginx -t && sudo systemctl restart nginx' }]} success="Penyelamatan sebenar, oleh anda sendiri." />
+</Card>

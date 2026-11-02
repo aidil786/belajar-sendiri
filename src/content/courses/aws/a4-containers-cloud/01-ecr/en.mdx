@@ -1,0 +1,69 @@
+---
+id: aws-a4-l01
+world: 4
+title: "ECR: your image shelf"
+summary: "You will learn: to keep Kedai Kancil's images in a private shelf inside AWS, and push to it safely."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, CommandBuilder, IamJudge, SwipeJudge, Transcript]
+needs: [aws-a3-boss]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon ECR: What is it?", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html" }
+  - { label: "Amazon ECR: Private registry authentication", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html" }
+  - { label: "Amazon ECR: Push a Docker image", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html" }
+  - { label: "Amazon ECR: Lifecycle policies", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html" }
+  - { label: "AWS CLI: aws ecr get-login-password", url: "https://docs.aws.amazon.com/cli/latest/reference/ecr/get-login-password.html" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil's image sits in a public freezer far away. Now the shop moves into the AWS mall. Where should the image live?
+
+<Interactive name="Choice" options={[{ label: 'A private shelf inside the same mall', correct: true, why: 'Yes. Close by, private, and guarded by your IAM keys.' }, { label: 'Stay public on the internet', why: 'Anyone could pull it, and every pull travels far.' }, { label: 'Copy it onto each server by hand', why: 'Slow and messy. A registry does this for you.' }]} />
+</Card>
+
+<Card id="see-name" type="see">
+**<Term id="ecr">ECR</Term>** is that private shelf: a <Term id="registry" course="docker">registry</Term>, like in Docker World D5. Its image names are long addresses. Put the parts in order.
+
+<Interactive name="OrderList" items={['111122223333', '.dkr.ecr', '.ap-southeast-5', '.amazonaws.com', '/kedai-kancil', ':1.0']} label="Left to right" success="Account, ECR, Region, AWS, repository, tag. A full shelf address." />
+</Card>
+
+<Card id="try-login" type="try">
+Docker needs a login before it can push. The AWS CLI hands over a short-lived password. Build the safe login.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ecr get-login-password --region ap-southeast-5', means: 'get a short-lived ECR password' }, { text: '|', means: 'pipe it into the next command' }, { text: 'docker login', means: 'log in with Docker' }, { text: '--username AWS', means: 'ECR’s user name is always AWS' }, { text: '--password-stdin', means: 'read the password from the pipe' }, { text: '111122223333.dkr.ecr.ap-southeast-5.amazonaws.com', means: 'your shelf’s address' }]} decoys={[{ text: '-p MyPassword123', means: 'a password typed on the command line' }]} success="That's the official way: the password never shows on screen." />
+
+<Hint>Same pipe as Docker World D5: the password comes in through `--password-stdin`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+That ECR password is a token. How long does it work?
+
+<Interactive name="Choice" options={[{ label: '12 hours', correct: true, why: 'Then it expires. Run the login again. Nothing old lies around.' }, { label: 'Forever', why: 'Never forever. A leaked token stops working after 12 hours.' }, { label: 'One push only', why: 'It lasts 12 hours, for as many pushes as you like.' }]} />
+</Card>
+
+<Card id="check-key" type="check">
+The CI role tries to push a new image. Read its key. Will AWS allow it?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil' }} policies={[{ name: 'ecr-pull-only', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'], Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil' }] } }]} success="Right. This key can pull, never push." />
+</Card>
+
+<Card id="check-habits" type="check">
+Good shelf habits, or risky? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Scan each image when it is pushed', good: true, why: 'ECR can scan on push. Holes show up before you ship.' }, { text: 'Keep every old image forever', good: false, why: 'You pay for every GB stored. A lifecycle policy deletes old ones.' }, { text: 'Turn on tag immutability', good: true, why: 'Then 1.0 can never be swapped for something else.' }, { text: 'Deploy :latest to production', good: false, why: 'Remember D5: latest moves. Ship a version or a digest.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep images on a private ECR shelf, and push to it safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Making a shelf is one command. Here is the official example. Deleting one with `--force` deletes every image inside, so check the name twice.
+
+<Interactive name="Transcript" title="bash" label="aws ecr create-repository makes project-a/sample-repo and prints its ARN." lines={[{ cmd: 'aws ecr create-repository --repository-name project-a/sample-repo' }, { out: '{\n    "repository": {\n        "registryId": "123456789012",\n        "repositoryName": "project-a/sample-repo",\n        "repositoryArn": "arn:aws:ecr:us-west-2:123456789012:repository/project-a/sample-repo"\n    }\n}' }]} />
+</Card>

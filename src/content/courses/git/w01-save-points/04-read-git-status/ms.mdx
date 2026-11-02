@@ -1,0 +1,66 @@
+---
+id: git-w01-l04
+world: 1
+title: Baca git status
+summary: "Anda akan belajar: cara baca git status, versi panjang dan pendek."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, SpotLines, Choice]
+needs: [git-w01-l03]
+scenario: w01-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'staging']} effect="wobble" label="Lima fail bergoyang. index.html dan about.html dalam kotak. style.css, notes.txt dan todo.txt dalam folder kerja." frames={[{ working: [{ name: 'style.css', tag: 'changed' }, { name: 'notes.txt', tag: 'new' }, { name: 'todo.txt', tag: 'new' }], staging: ['index.html', 'about.html'] }]} />
+
+Lima fail berubah. Ada yang dalam kotak. Ada yang tidak. Fail mana yang akan disimpan oleh commit (titik simpan) seterusnya?
+</Card>
+
+<Card id="see-colors" type="see">
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status']} pulse label="git status: about.html dan index.html hijau di bawah Changes to be committed. style.css, notes.txt dan todo.txt merah." />
+
+`git status` susun perubahan anda ikut kumpulan. Baris **hijau** ada dalam kotak. Baris merah belum masuk kotak.
+</Card>
+
+<Card id="try-green" type="try">
+Tekan setiap baris hijau: fail yang ada dalam kotak.
+
+<Interactive name="SpotLines" scenario="w01-l04" commands={['git status']} targets="\.html$" prompt="Tekan setiap baris yang ada dalam kotak." success="Ya! about.html dan index.html ada dalam kotak." />
+
+<Hint>Tengok di bawah "Changes to be committed".</Hint>
+</Card>
+
+<Card id="see-short" type="see">
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status -s']} pulse label="git status -s papar satu baris pendek bagi setiap fail. Huruf hijau di kiri, huruf merah di kanan, dan ?? untuk fail baru." />
+
+`git status -s` beri versi **pendek**. Setiap baris bermula dengan dua huruf. Huruf kiri: kotak. Huruf kanan: folder anda.
+</Card>
+
+<Card id="try-untracked" type="try">
+Cari fail **untracked** (tidak dijejak): fail baru yang Git belum perhatikan. Ia bermula dengan `??`.
+
+<Interactive name="SpotLines" scenario="w01-l04" commands={['git status -s']} targets="^\?\?" prompt="Tekan setiap baris untracked." success="Betul! ?? maksudnya Git belum perhatikan fail ini." />
+
+<Hint>Cari dua tanda soal di awal baris.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Anda jalankan `git add style.css`. Macam mana baris pendeknya berubah?
+
+<Interactive name="Choice" options={[{ label: 'M pindah ke kiri, dan jadi hijau', correct: true, why: 'Huruf kiri maksudnya kotak. Perubahan itu kini dalam kotak.' }, { label: 'M kekal di kanan, warna merah', why: 'Huruf kanan maksudnya folder. Selepas git add, perubahan masuk kotak.' }, { label: 'Ia jadi ??', why: '?? hanya untuk fail baru yang Git tak pernah jejak.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca git status, versi panjang dan pendek.
+</Card>
+
+<Card id="deeper" type="deeper">
+Huruf yang anda akan jumpa: `A` ditambah, `M` diubah, `D` dipadam, `R` ditukar nama. `MM`: sebahagian dalam kotak, sebahagian masih dalam folder. `git status -sb` tambah nama <Term id="branch">branch</Term> (cabang) di atas.
+
+<Interactive name="TermReplay" scenario="w01-l04" commands={['git status -sb']} label="git status -sb: satu baris ## main, kemudian baris status pendek." />
+</Card>

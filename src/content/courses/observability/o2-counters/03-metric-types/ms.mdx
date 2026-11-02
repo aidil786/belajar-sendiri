@@ -1,0 +1,74 @@
+---
+id: obs-o2-l03
+world: 2
+title: Counter, gauge, histogram, summary
+summary: "Anda akan belajar: empat jenis metrik, dan kenapa counter boleh tiba-tiba jatuh ke 0."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, PromQLPlayground, SortCards, Transcript, Mission]
+needs: [obs-o2-l02]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: metric types", url: "https://prometheus.io/docs/concepts/metric_types/" }
+  - { label: "Prometheus: histograms and summaries", url: "https://prometheus.io/docs/practices/histograms/" }
+  - { label: "Prometheus: metric and label naming", url: "https://prometheus.io/docs/practices/naming/" }
+---
+
+<Card id="hook" type="hook">
+Counter pesanan Bangsar tunjuk 225. Seminit kemudian ia tunjuk 0. Adakah pelanggan batalkan semua pesanan?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Mesin kaunter mula semula, jadi counter mula dari 0.', correct: true, why: 'Ya. Counter tinggal dalam memori aplikasi. Mula semula padamkannya.' }, { label: 'Ya. 225 pesanan dibatalkan.', why: 'Counter tak pernah turun kerana pembatalan. Ada yang mula semula.' }, { label: 'Prometheus hilang data', why: 'Prometheus simpan nombor lama. Aplikasi yang mula dari 0.' }]} />
+</Card>
+
+<Card id="see-types" type="see">
+<Interactive name="SpotLines" prompt="Tekan counter." lines={[{ text: '# TYPE go_goroutines gauge' }, { text: '# TYPE prometheus_engine_query_duration_seconds summary' }, { text: '# TYPE prometheus_http_request_duration_seconds histogram' }, { text: '# TYPE prometheus_http_requests_total counter', target: true }]} success="Ya. Counter, dan namanya berakhir dengan _total." />
+
+Setiap metrik ada jenis. **<Term id="counter">Counter</Term>** (pembilang) hanya naik, seperti pesanan yang siap. Baris ini daripada Prometheus sebenar.
+</Card>
+
+<Card id="try-gauge" type="try">
+Tunjuk pelanggan yang menunggu. Kemudian luncurkan masa.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total', 'kedai_customers_waiting']} prompt="Tekan kedai_customers_waiting, kemudian Run. Tengok graf naik dan turun." goal={{ typed: 'kedai_customers_waiting', resultCount: 2 }} hints={['Tekan cip kedai_customers_waiting, kemudian tekan Run.']} solution="kedai_customers_waiting" success="Naik dan turun sepanjang hari. Itulah gauge." />
+
+Nombor yang naik dan turun ialah **<Term id="gauge">gauge</Term>** (meter).
+</Card>
+
+<Card id="try-sort" type="try">
+Counter atau gauge? Susun setiap nombor.
+
+<Interactive name="SortCards" buckets={[{ id: 'counter', label: 'Counter' }, { id: 'gauge', label: 'Gauge' }]} items={[{ label: 'Pesanan siap sejak buka kedai', bucket: 'counter', why: 'Hanya naik.' }, { label: 'Bait yang dihantar setakat ini', bucket: 'counter', why: 'Hanya naik.' }, { label: 'Ralat setakat ini', bucket: 'counter', why: 'Hanya naik.' }, { label: 'Pelanggan menunggu sekarang', bucket: 'gauge', why: 'Naik dan turun.' }, { label: 'Suhu peti sejuk', bucket: 'gauge', why: 'Naik dan turun.' }, { label: 'Memori kosong', bucket: 'gauge', why: 'Naik dan turun.' }]} success="Setakat ini = counter. Sekarang = gauge." />
+</Card>
+
+<Card id="see-histogram" type="see">
+<Interactive name="Transcript" title="bash" label="Histogram sebenar daripada Prometheus: baris baldi dengan label le dari 0.1 hingga +Inf, kemudian sum dan count." lines={[{ cmd: "curl -s localhost:9090/metrics | grep -E '^prometheus_http_request_duration_seconds_(bucket|sum|count)\\{handler=\"/metrics\"'" }, { out: 'prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.2"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.4"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="1"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="3"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="8"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 3\nprometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 3\nprometheus_http_request_duration_seconds_sum{handler="/metrics"} 0.024123016999999997\nprometheus_http_request_duration_seconds_count{handler="/metrics"} 3' }]} />
+
+**<Term id="histogram">Histogram</Term>** kira permintaan ke dalam baldi. `le` bermaksud “kurang atau sama”. Semua 3 permintaan di sini ambil 0.1 s atau kurang.
+</Card>
+
+<Card id="try-bucket" type="try">
+Baldi kira semua yang di bawahnya. `le="0.25"` kata 100. `le="0.5"` kata 114. Berapa yang ambil antara 0.25 s dan 0.5 s?
+
+<Interactive name="Choice" options={[{ label: '14', correct: true, why: 'Ya. 114 − 100 = 14 permintaan dalam julat itu.' }, { label: '114', why: '114 termasuk 100 yang lebih laju juga.' }, { label: '214', why: 'Baldi bertindih: tolak, jangan tambah.' }]} />
+</Card>
+
+<Card id="check-summary" type="check">
+**<Term id="summary">Summary</Term>** kira kuantil dalam aplikasi. Histogram atau summary? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'h', label: 'Histogram' }, { id: 's', label: 'Summary' }]} items={[{ label: 'Baris baldi dengan label le', bucket: 'h', why: 'Baldi ialah bentuk histogram.' }, { label: 'Anda boleh jumlahkan banyak server', bucket: 'h', why: 'Jumlahkan baldi, kemudian kira kuantil.' }, { label: 'Baris dengan quantile="0.9"', bucket: 's', why: 'Aplikasi dah kira sendiri.' }, { label: 'Kuantil dari dua server tak boleh dijumlahkan', bucket: 's', why: 'Purata dua p90 bukan p90.' }]} success="Histogram boleh dijumlah. Summary tidak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan counter, gauge, histogram dan summary.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nama membantu: counter berakhir dengan `_total`; unit masuk dalam nama, seperti `_seconds` atau `_bytes`. Prometheus 3 juga ada native histogram, dengan baldi terbina dalam. Anda hidupkannya dengan `scrape_native_histograms`. Kursus ini guna baldi `le` klasik.
+
+<Interactive name="Mission" id="obs-o2-l03-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'types', text: 'Senaraikan setiap jenis metrik yang Prometheus tunjuk tentang dirinya.', command: "curl -s localhost:9090/metrics | grep '^# TYPE'" }, { id: 'find', text: 'Cari satu counter, satu gauge, satu histogram dan satu summary.' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="Empat jenis, dijumpai di dunia sebenar." />
+</Card>

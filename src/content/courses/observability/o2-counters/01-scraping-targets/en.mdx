@@ -1,0 +1,100 @@
+---
+id: obs-o2-l01
+world: 2
+title: Scraping and targets
+summary: "You will learn: how Prometheus collects numbers by visiting targets, and how to read up."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, YamlPlayground, PromQLPlayground, SpotLines, Mission]
+needs: [obs-o1-boss]
+scenario: o2-targets
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/" }
+  - { label: "Prometheus: configuration", url: "https://prometheus.io/docs/prometheus/latest/configuration/configuration/" }
+  - { label: "Prometheus: jobs and instances", url: "https://prometheus.io/docs/concepts/jobs_instances/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil’s helpers each keep a counter. How should the control room get the numbers?
+
+<Interactive name="Choice" options={[{ label: 'A clerk walks round every 15 s and copies each counter', correct: true, why: 'Yes. That is Prometheus: it pulls the numbers itself.' }, { label: 'Each helper phones the numbers in', why: 'That is push. Prometheus mostly pulls instead.' }, { label: 'Someone types them in at night', why: 'Too slow, and too easy to get wrong.' }]} />
+</Card>
+
+<Card id="see-target" type="see">
+<Interactive name="Transcript" title="bash" label="curl reads a machine's metrics page. Three lines about node_load1 come back." lines={[{ cmd: "curl -s localhost:9100/metrics | grep 'node_load1 '" }, { out: '# HELP node_load1 1m load average.\n# TYPE node_load1 gauge' }, { out: 'node_load1 11.37', color: 'green' }]} />
+
+A **<Term id="target">target</Term>** shows its numbers as plain text at `/metrics`. This one is a machine, at port 9100.
+</Card>
+
+<Card id="try-config" type="try">
+Tell Prometheus about the machine. Add a second job called `node`.
+
+<Interactive name="YamlPlayground" file="prometheus.yml" initial={'global:\n  scrape_interval: 15s\n\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n'} prompt="Add a job named node with the target node-exporter:9100." expect={[{ path: 'scrape_configs', type: 'list', count: 2, hint: 'Add a second item under scrape_configs: two spaces, a dash, then job_name: node.' }, { path: 'scrape_configs.1.job_name', equals: 'node', hint: 'Name the new job node.' }, { path: 'scrape_configs.1.static_configs.0.targets.0', equals: 'node-exporter:9100', hint: 'Copy the static_configs lines, with node-exporter:9100 as the target.' }]} solution={'global:\n  scrape_interval: 15s\n\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["node-exporter:9100"]\n'} hint="Copy the last three lines. Change the name and the target." success="Two jobs. Prometheus will visit both every 15 seconds." />
+
+Each visit is a **<Term id="scrape">scrape</Term>**.
+</Card>
+
+<Card id="try-up" type="try">
+Your first <Term id="promql">PromQL</Term> query is one word. For every target, Prometheus writes `up`: 1 if the scrape worked, 0 if not.
+
+<Interactive name="PromQLPlayground" scenario="o2-targets" prompt="Type up and press Run." goal={{ typed: '^\\s*up\\s*$', resultCount: 4 }} hints={['Just two letters: up']} solution="up" success="Four targets. One of them says 0." />
+</Card>
+
+<Card id="predict" type="predict">
+At 12m, shop-2 shows `up` = 0. What does that mean?
+
+<Interactive name="Choice" options={[{ label: 'Prometheus could not scrape it', correct: true, why: 'Yes. The app is down, or the road to it is blocked.' }, { label: 'shop-2 had zero orders', why: 'up is about the visit, not the orders.' }, { label: 'Prometheus itself is down', why: 'Then nothing would answer your query at all.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+A config mistake. Real error first: tap the line that says what is wrong.
+
+<Interactive name="SpotLines" prompt="Tap the line that names the problem." lines={[{ text: '$ promtool check config prometheus.yml' }, { text: 'Checking prometheus.yml' }, { text: '  FAILED: parsing YAML file prometheus.yml: not a valid duration string: "15"', color: 'red', target: true }]} success="Plain words: a time needs a unit. Write 15s, not 15." />
+
+<Hint>Look for FAILED.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now point Prometheus at a target and read `up`.
+</Card>
+
+<Card id="deeper" type="deeper">
+The job name becomes the `job` label, and host:port becomes `instance`. Every scrape also writes `scrape_duration_seconds`. Real rep: a small control room on your laptop. Save these two files in a folder.
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+```
+
+```yaml
+# compose.yaml
+services:
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.13.5
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+    ports:
+      - "9100:9100"
+```
+
+<Interactive name="Mission" id="obs-o2-l01-real" steps={[{ id: 'folder', text: 'Make a folder and save the two files in it.', command: 'mkdir kedai-watch && cd kedai-watch' }, { id: 'up', text: 'Start Prometheus and node exporter.', command: 'docker compose up -d' }, { id: 'check', text: 'Check the config with the promtool inside the image.', command: 'docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml' }, { id: 'curl', text: 'Read the machine’s numbers yourself.', command: "curl -s localhost:9100/metrics | grep 'node_load1 '" }, { id: 'targets', text: 'Open http://localhost:9090/targets. Both targets should say UP.' }, { id: 'query', text: 'On the query page, run up. You see two lines with 1.' }, { id: 'stop', text: 'Stop it when you are done. Keep the folder: later lessons use it.', command: 'docker compose down' }]} success="Your own control room scraped two real targets." />
+</Card>

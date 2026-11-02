@@ -1,0 +1,63 @@
+---
+id: docker-d0-l08
+world: 0
+title: "YAML part 1: keys and lists"
+summary: "You will learn: how to write YAML keys, values and lists that a computer reads exactly as you mean."
+minutes: 4
+xp: 20
+interactives: [Choice, YamlPlayground, SortCards, SwipeJudge]
+needs: [docker-d0-l07]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "YAML 1.2 spec", url: "https://yaml.org/spec/1.2.2/" }
+  - { label: "Compose file reference (it is YAML)", url: "https://docs.docker.com/reference/compose-file/" }
+---
+
+<Card id="hook" type="hook">
+Compose files, CI pipelines and Kubernetes all use YAML. A computer reads your note word by word. Which note can it read?
+
+<Interactive name="Choice" options={[{ label: '`dish: nasi lemak`', correct: true, why: 'One label, a colon, a space, then the value. Neat!' }, { label: 'Nasi lemak (extra sambal!!) or maybe laksa?', why: 'A friend gets it. A computer gets lost.' }, { label: 'NASI LEMAK!!!', why: 'Shouting has no shape. Which part is the label?' }]} />
+</Card>
+
+<Card id="see-key" type="see">
+**<Term id="yaml">YAML</Term>** is a neat recipe card for computers. Each line is a key, a colon, a space, then the value. The box shows how a computer reads it.
+
+<Interactive name="YamlPlayground" file="order.yaml" initial={'dish: nasi lemak\nprice: 5\nspicy: true\n'} prompt="Change the dish to laksa. Watch the box below." />
+</Card>
+
+<Card id="see-list" type="see">
+A **list** is lines that start with a dash and a space. Key or list item? Sort each line.
+
+<Interactive name="SortCards" buckets={[{ id: 'key', label: 'Key: value' }, { id: 'list', label: 'List item' }]} items={[{ label: '`dish: laksa`', bucket: 'key', why: 'A key, a colon, a space, a value.' }, { label: '`- sambal`', bucket: 'list', why: 'A dash and a space start a list item.' }, { label: '`price: 5`', bucket: 'key', why: 'The key is price. The value is 5.' }, { label: '`- egg`', bucket: 'list', why: 'Another dash, another item.' }, { label: '`spicy: true`', bucket: 'key', why: 'A key with a true/false value.' }, { label: '`- cucumber`', bucket: 'list', why: 'One more item on the list.' }]} success="Keys have a colon. List items start with a dash." />
+</Card>
+
+<Card id="try-list" type="try">
+The list sits under its key, two spaces in. Add one more side dish.
+
+<Interactive name="YamlPlayground" file="order.yaml" initial={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n'} prompt="Add cucumber as a third side." expect={[{ path: 'sides', type: 'list', count: 3, includes: 'cucumber', hint: 'Add a new line under egg: two spaces, a dash, a space, then cucumber.' }]} solution={'dish: nasi lemak\nsides:\n  - sambal\n  - egg\n  - cucumber\n'} hint="Copy the egg line, then change the word." success="Three sides! The computer sees a list of 3." />
+</Card>
+
+<Card id="predict" type="predict">
+`price: 5` and `price: "5"`. Does a computer read them the same?
+
+<Interactive name="Choice" options={[{ label: 'No: one is a number, one is text', correct: true, why: 'Quotes make it text. Without quotes, 5 is a number.' }, { label: 'Yes, exactly the same', why: 'Not quite. The quotes turn the number into text.' }, { label: 'Quotes are not allowed in YAML', why: 'They are allowed. They keep a value as text.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Will a computer read each line the way you mean? Swipe right if yes.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'dish: laksa', good: true, why: 'Key, colon, space, value. Perfect.' }, { text: 'dish:laksa', good: false, why: 'It needs a space after the colon: dish: laksa.' }, { text: '- sambal', good: true, why: 'Dash, space, item. A neat list item.' }, { text: '-sambal', good: false, why: 'No space after the dash, so it is just the word -sambal.' }, { text: 'name: "Kedai Kancil"', good: true, why: 'Quotes are fine. The value is text.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now write YAML keys, values and lists.
+</Card>
+
+<Card id="deeper" type="deeper">
+A line that starts with `#` is a comment: computers skip it. A short list can sit on one line: `sides: [sambal, egg]`. YAML files end in `.yaml` or `.yml`.
+
+Real rep (optional): open any `compose.yaml` or workflow file on GitHub. Find one key and one list.
+</Card>

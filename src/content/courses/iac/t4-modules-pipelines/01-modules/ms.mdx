@@ -1,0 +1,68 @@
+---
+id: iac-t4-l01
+world: 4
+title: "Modul: gerai yang boleh diguna semula"
+summary: "Anda akan belajar: cara tulis satu reka bentuk gerai dan binanya banyak kali, dengan modul."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, TofuSim, SortCards, Mission]
+needs: [iac-t3-boss]
+scenario: t4-kiosk
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: modul", url: "https://opentofu.org/docs/language/modules/" }
+  - { label: "OpenTofu: cipta modul", url: "https://opentofu.org/docs/language/modules/develop/" }
+  - { label: "Terraform: modul", url: "https://developer.hashicorp.com/terraform/language/modules" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil ada tiga kiosk. Setiap satu disalin dan ditampal dalam `main.tf`. Kini setiap papan tanda perlu ayat baharu. Berapa tempat anda perlu ubah?
+
+<Interactive name="Choice" options={[{ label: 'Tiga, dan harap tiada yang terlepas', correct: true, why: 'Salinan tak kenal satu sama lain. Terlepas satu, kiosk jadi berbeza.' }, { label: 'Satu: OpenTofu sambungkan salinan', why: 'Ia anggap setiap salinan benda berasingan.' }, { label: 'Tiada: plan baiki semuanya', why: 'Plan cuma bina apa yang fail tulis.' }]} />
+</Card>
+
+<Card id="see-module" type="see">
+<Interactive name="SpotLines" prompt="Ini modules/kiosk/main.tf. Tekan input dan output-nya." lines={[{ text: 'variable "name" {', target: true }, { text: '  type = string' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "sign" {' }, { text: '  filename = "${var.name}.txt"' }, { text: '  content  = "Kiosk: ${var.name}\\n"' }, { text: '}' }, { text: '' }, { text: 'output "file" {', target: true }, { text: '  value = local_file.sign.filename' }, { text: '}' }]} success="Nama masuk, nama fail keluar. Bahagian tengah itulah reka bentuknya." />
+
+**<Term id="module">Modul</Term>** ialah reka bentuk gerai yang boleh diguna semula: satu folder fail `.tf`. Variable masuk, output keluar.
+</Card>
+
+<Card id="predict" type="predict">
+Anda salin satu blok `module` dalam `main.tf` dan namakannya `roti`. Kemudian anda jalankan `tofu plan`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ralat: Module not installed. Jalankan tofu init.', correct: true, why: 'init sediakan modul, sama seperti provider.' }, { label: 'Ia plan satu kiosk baharu', why: 'Belum lagi. Blok module baharu perlukan tofu init dahulu.' }, { label: 'Ia salin folder modules/kiosk', why: 'Folder itu diguna seadanya. Tiada apa disalin.' }]} />
+</Card>
+
+<Card id="try-add" type="try">
+Tambah kiosk ketiga. Dalam `main.tf`, salin satu blok module. Namakan `roti`, dengan `name = "roti-canai"`. Kemudian plan, init dan apply.
+
+<Interactive name="TofuSim" scenario="t4-kiosk" goal={{ resourceInState: ['module.roti.local_file.sign'] }} hints={['Salin blok module "nasi". Tukar nasi kepada roti, dan nasi-lemak kepada roti-canai.', 'tofu plan kata Module not installed: jalankan tofu init.', 'Kemudian tofu apply dan yes.']} success="Tiga kiosk, satu reka bentuk. Ubah reka bentuk sekali, ketiga-tiganya ikut." />
+
+<Hint>Hanya nama blok dan `name` berubah. `source` kekal sama.</Hint>
+</Card>
+
+<Card id="check-spot" type="check">
+Ini `tofu state list` sekarang. Cari kiosk baharu dalam daftar.
+
+<Interactive name="SpotLines" prompt="Tekan alamat milik module roti." lines={[{ text: 'module.nasi.local_file.sign' }, { text: 'module.roti.local_file.sign', target: true }, { text: 'module.teh.local_file.sign' }]} success="Alamat dalam modul bermula dengan module.<nama>." />
+</Card>
+
+<Card id="check-sort" type="check">
+Di mana setiap baris duduk: dalam modul, atau dalam pelan yang memanggilnya?
+
+<Interactive name="SortCards" buckets={[{ id: 'module', label: 'Dalam modules/kiosk' }, { id: 'caller', label: 'Dalam main.tf (pemanggil)' }]} items={[{ label: 'variable "name"', bucket: 'module', why: 'Modul isytihar input-nya.' }, { label: 'source = "./modules/kiosk"', bucket: 'caller', why: 'Pemanggil beritahu di mana reka bentuknya.' }, { label: 'name = "roti-canai"', bucket: 'caller', why: 'Pemanggil isi input itu.' }, { label: 'resource "local_file" "sign"', bucket: 'module', why: 'Reka bentuk itu sendiri.' }, { label: 'module.teh.file', bucket: 'caller', why: 'Pemanggil baca output modul.' }]} success="Modul ialah reka bentuk. Pemanggil tempah salinannya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bungkus reka bentuk dalam modul dan binanya banyak kali.
+</Card>
+
+<Card id="deeper" type="deeper">
+Modul boleh panggil modul lain. Pastikan ia kecil dan ringkas: satu tugas jelas setiap satu. Modul dengan satu resource dan sepuluh input biasanya cuma tambah kerja menaip. `tofu init` sediakan modul juga. `tofu get` muat turun modul sahaja.
+
+<Interactive name="Mission" id="iac-t4-l01-rep" steps={[{ id: 'module', text: 'Dalam folder latihan, buat modules/kiosk/main.tf seperti dalam pelajaran ini.' }, { id: 'call', text: 'Dalam main.tf, panggil ia dua kali dengan dua nama.' }, { id: 'build', text: 'Sediakan dan bina.', command: 'tofu init && tofu apply' }, { id: 'look', text: 'Lihat alamat modul.', command: 'tofu state list' }]} success="Anda bina dua kiosk dari satu reka bentuk." />
+</Card>

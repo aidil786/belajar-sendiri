@@ -1,0 +1,81 @@
+---
+id: k8s-k9-l04
+world: 9
+title: "The kubelet: systemctl and journalctl"
+summary: "You will learn: how to check, restart and read the kubelet from inside a node."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, CommandBuilder, SortCards, Mission]
+needs: [k8s-k9-l03]
+scenario: k9-kubelet
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubelet", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/" }
+  - { label: "Troubleshooting clusters", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "systemctl (systemd)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+  - { label: "journalctl (systemd)", url: "https://www.freedesktop.org/software/systemd/man/latest/journalctl.html" }
+---
+
+<Card id="hook" type="hook">
+A machine rebooted at 3 a.m. Soon its stall was Ready again. Nobody typed a thing. Who started its supervisor, the kubelet?
+
+<Interactive name="Choice" options={[{ label: 'The machine’s own service manager', correct: true, why: 'Yes. The kubelet is a service that starts at boot.' }, { label: 'The API server', why: 'The office can’t reach a stall whose kubelet is down. It can only wait.' }, { label: 'kubectl', why: 'kubectl talks to the office, never to a machine’s services.' }]} />
+</Card>
+
+<Card id="see-status" type="see">
+<Interactive name="KubeReplay" scenario="k9-kubelet" picture={false} commands={['ssh dev-worker', 'systemctl status kubelet']} label="Inside dev-worker: systemctl status kubelet says loaded and enabled, active (running), with the kubelet's last journal lines under it." />
+
+That service manager is **<Term id="systemd">systemd</Term>**, the machine’s power room. `systemctl status kubelet` asks it: is the supervisor on duty, and since when?
+</Card>
+
+<Card id="try-spot" type="try">
+Read it like an admin. Tap two lines: “starts at boot” and “runs now”.
+
+<Interactive name="SpotLines" prompt="Tap the 2 lines that matter most." lines={[{ text: '● kubelet.service - kubelet: The Kubernetes Node Agent' }, { text: '     Loaded: loaded (/etc/systemd/system/kubelet.service; enabled; preset: enabled)', target: true }, { text: '    Drop-In: /etc/systemd/system/kubelet.service.d' }, { text: '             └─10-kubeadm.conf, 11-kind.conf' }, { text: '     Active: active (running) since Sat 2026-10-31 00:55:03 UTC; 5min ago', target: true }, { text: '       Docs: http://kubernetes.io/docs/' }, { text: '   Main PID: 342 (kubelet)' }]} success="enabled = it starts at boot. active (running) = it works right now." />
+
+<Hint>Look for the words enabled and running.</Hint>
+</Card>
+
+<Card id="try-restart" type="try">
+After a kubelet setting changes, you restart it. Type `ssh dev-worker`, then `systemctl restart kubelet`. Then read its **<Term id="journal">journal</Term>**: `journalctl -u kubelet -n 5 --no-pager`. Careful: a restart changes the node.
+
+<Interactive name="FoodCourtSim" scenario="k9-kubelet" goal={{ typed: '^systemctl restart kubelet(\\.service)?$', lastTyped: '^journalctl\\b.*(-u ?|--unit[= ])kubelet' }} hints={['Type ssh dev-worker', 'Then systemctl restart kubelet', 'Then journalctl -u kubelet -n 5 --no-pager']} success="The diary shows a fresh start, with a new process number in kubelet[…]." />
+
+<Hint>A restart is a short stop and a start. The node stays Ready.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Build the command for the kubelet’s last 20 diary lines.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'journalctl', means: 'open the machine’s diary' }, { text: '-u kubelet', means: 'only the kubelet’s pages' }, { text: '-n 20', means: 'the last 20 lines' }, { text: '--no-pager', means: 'print it all, don’t wait for keys' }]} decoys={[{ text: '-u containerd', means: 'the stove’s pages, not the supervisor’s' }, { text: '-f', means: 'keep watching for new lines until Ctrl+C' }]} success="That’s the one you will type most on the exam." />
+
+<Hint>Start with journalctl, then the unit, then how many lines.</Hint>
+</Card>
+
+<Card id="predict-stop" type="predict">
+You stop the kubelet on dev-worker. What happens to its trays right away?
+
+<Interactive name="Choice" options={[{ label: 'They keep running', correct: true, why: 'Yes. containerd keeps cooking. The supervisor only stops reporting.' }, { label: 'They all stop at once', why: 'The stove does not need the supervisor to keep cooking.' }, { label: 'They move to another stall at once', why: 'Kubernetes waits first. About 5 minutes later, it moves them.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Does it only look, or does it change the stall? Sort the commands.
+
+<Interactive name="SortCards" buckets={[{ id: 'look', label: 'Only looks' }, { id: 'change', label: 'Changes the stall (careful)' }]} items={[{ label: 'systemctl status kubelet', bucket: 'look', why: 'It reads the service’s state.' }, { label: 'systemctl is-active kubelet', bucket: 'look', why: 'One word back: active or inactive.' }, { label: 'journalctl -u kubelet -n 20', bucket: 'look', why: 'It reads the diary.' }, { label: 'systemctl stop kubelet', bucket: 'change', why: 'The stall goes NotReady soon after.' }, { label: 'systemctl restart kubelet', bucket: 'change', why: 'A short stop, then a start.' }, { label: 'systemctl enable kubelet', bucket: 'change', why: 'It changes what starts at boot.' }]} success="Look first. Change second." />
+
+<Hint>Status, is-active and journalctl never change anything.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now check, restart and read the kubelet.
+</Card>
+
+<Card id="deeper" type="deeper">
+`cat /etc/systemd/system/kubelet.service` shows `Restart=always`: if the kubelet crashes, systemd starts it again. A planned `systemctl stop` stays stopped. `journalctl -u kubelet -f` follows new lines live; press Ctrl+C to leave.
+
+<Interactive name="Mission" id="k8s-k9-l04-real" steps={[{ id: 'where', text: 'Use your throwaway kind cluster only.', command: 'kubectl config current-context' }, { id: 'status', text: 'Ask systemd about a stall’s supervisor.', command: 'docker exec dev-worker systemctl status kubelet --no-pager' }, { id: 'diary', text: 'Read its last 20 diary lines.', command: 'docker exec dev-worker journalctl -u kubelet -n 20 --no-pager' }, { id: 'unit', text: 'Read its service file and drop-ins.', command: 'docker exec dev-worker systemctl cat kubelet' }]} success="You read a real kubelet’s status and diary!" />
+</Card>

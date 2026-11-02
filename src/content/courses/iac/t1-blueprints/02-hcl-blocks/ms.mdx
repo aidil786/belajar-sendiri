@@ -1,0 +1,76 @@
+---
+id: iac-t1-l02
+world: 1
+title: Blok HCL
+summary: "Anda akan belajar: cara baca blok, dan cara satu blok guna blok lain."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, CommandBuilder, TofuSim, SortCards]
+needs: [iac-t1-l01]
+scenario: t1-blocks
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: configuration syntax", url: "https://opentofu.org/docs/language/syntax/configuration/" }
+  - { label: "OpenTofu: resources", url: "https://opentofu.org/docs/language/resources/" }
+  - { label: "OpenTofu: references to named values", url: "https://opentofu.org/docs/language/expressions/references/" }
+---
+
+<Card id="hook" type="hook">
+Ini pelan yang kecil. Apa yang ia minta OpenTofu buat?
+
+```hcl
+resource "random_pet" "stall" {
+  length = 2
+}
+```
+
+<Interactive name="Choice" options={[{ label: 'Nama gerai rawak, dua perkataan', correct: true, why: 'random_pet buat nama lucu seperti lucky-civet. length = 2 bermaksud dua perkataan.' }, { label: 'Haiwan peliharaan bernama stall', why: 'stall cuma label kita. random_pet buat nama rawak.' }, { label: 'Dua gerai', why: 'length ialah bilangan perkataan dalam satu nama.' }]} />
+</Card>
+
+<Card id="see-blocks" type="see">
+Tekan dua baris di mana blok baru bermula.
+
+<Interactive name="SpotLines" lines={[{ text: 'resource "random_pet" "stall" {', target: true }, { text: '  length = 2' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "sign" {', target: true }, { text: '  filename = "sign.txt"' }, { text: '  content  = "Welcome to ${random_pet.stall.id}\\n"' }, { text: '}' }]} success="Dua blok. Setiap satu bermula dengan jenis dan dua label, kemudian {." />
+
+Pelan dibina daripada **<Term id="block">block (blok)</Term>**. Bahasa ini dipanggil HCL.
+</Card>
+
+<Card id="try-build" type="try">
+Bina baris pertama sebuah blok. Ia buat fail, dan anda namakannya `menu`.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'resource', means: 'jenis blok: bina sesuatu' }, { text: '"local_file"', means: 'jenis benda: sebuah fail' }, { text: '"menu"', means: 'nama anda sendiri untuknya' }, { text: '{', means: 'tetapan bermula di sini' }]} decoys={[{ text: 'output', means: 'blok yang kongsi nilai' }, { text: 'menu.txt', means: 'nama fail, tanpa tanda petik' }]} success="resource, jenis, nama anda, kemudian {. Itulah setiap blok resource." />
+</Card>
+
+<Card id="predict" type="predict">
+Papan tanda guna `${random_pet.stall.id}`. Itu **<Term id="reference">reference (rujukan)</Term>**: jenis, nama, kemudian nilai. Apa itu `stall` di sini?
+
+<Interactive name="Choice" options={[{ label: 'Nama kita sendiri untuk blok random_pet', correct: true, why: 'Jenis random_pet, nama stall, nilai id. Alamat itu cari blok tersebut.' }, { label: 'Nama yang OpenTofu pilih', why: 'Nama yang dipilih ialah nilai id. stall ialah label kita.' }, { label: 'Fail bernama stall', why: 'Tiada fail di sini. Ia tunjuk ke blok random_pet.' }]} />
+</Card>
+
+<Card id="try-edit" type="try">
+Buka `main.tf`. Tukar `Welcome to` jadi `Selamat datang ke`. Kemudian taip `tofu apply` dan `yes`.
+
+<Interactive name="TofuSim" scenario="t1-blocks" goal={{ fileContains: { 'sign.txt': 'Selamat datang' } }} hints={['Tekan tab main.tf. Tukar perkataan Welcome to.', 'Biarkan bahagian ${random_pet.stall.id} seperti asal.', 'Kemudian taip tofu apply, dan yes.']} success="Papan tanda beri salam dalam bahasa Melayu, dengan nama rawak gerai." />
+
+<Hint>Edit perkataan dalam tanda petik sahaja, sebelum `${`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Asingkan bahagian sebuah blok.
+
+<Interactive name="SortCards" buckets={[{ id: 'type', label: 'Jenis blok' }, { id: 'label', label: 'Label' }, { id: 'arg', label: 'Argument (tetapan)' }]} items={[{ label: '`resource`', bucket: 'type', why: 'Perkataan pertama kata jenis blok itu.' }, { label: '`"local_file"`', bucket: 'label', why: 'Label pertama: jenis resource.' }, { label: '`"sign"`', bucket: 'label', why: 'Label kedua: nama anda sendiri.' }, { label: '`filename = "sign.txt"`', bucket: 'arg', why: 'nama = nilai, di dalam kurungan.' }, { label: '`length = 2`', bucket: 'arg', why: 'Satu tetapan di dalam kurungan.' }]} success="Jenis, label, argument. Kini anda boleh baca HCL." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca blok dan ikut reference.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baris yang bermula dengan `#` ialah komen. OpenTofu baca setiap fail `.tf` dalam folder sebagai satu pelan. Nama fail cuma untuk manusia. Dalam string, `\n` ialah baris baru dan `${ }` letak nilai di dalam teks.
+
+Tetapan di dalam blok dipanggil **<Term id="argument">argument</Term>**. Dokumen setiap provider senaraikan argument yang resource-nya terima.
+</Card>

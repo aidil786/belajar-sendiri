@@ -1,0 +1,79 @@
+---
+id: git-w09-boss
+world: 9
+title: "Hantar dengan gh dan Codespace"
+summary: "Anda akan belajar: cara hantar pembaikan sebenar dari Codespace, dengan gh."
+minutes: 8
+xp: 50
+interactives: [TimelineTap, Transcript, OrderList, CommandBuilder, Choice, Mission, MissionCheck]
+needs: [git-w09-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Creating a codespace for a repository", url: "https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository" }
+  - { label: "gh codespace create", url: "https://cli.github.com/manual/gh_codespace_create" }
+  - { label: "gh pr create", url: "https://cli.github.com/manual/gh_pr_create" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Hentian 1', title: 'Codespace', text: 'Buka komputer di awan untuk repo anda.' }, { when: 'Hentian 2', title: 'Branch', text: 'Buat branch untuk pembaikan itu.' }, { when: 'Hentian 3', title: 'Baiki', text: 'Ubah satu benda kecil.' }, { when: 'Hentian 4', title: 'Commit dan push', text: 'Simpan, kemudian hantar ke atas.' }, { when: 'Hentian 5', title: 'Pull request', text: 'Buka dengan gh pr create.' }]} />
+
+Masa boss! Hantar satu pembaikan kecil ke repo sebenar anda. Alatan anda hanya Codespace dan `gh`. Ini laluannya. Ketik setiap hentian.
+</Card>
+
+<Card id="see-codespace" type="see">
+<Interactive name="Transcript" title="bash" label="Di komputer anda sendiri: gh codespace create buat Codespace untuk repo diary anda. Kemudian gh codespace code --web buka ia dalam pelayar." lines={[{ cmd: 'gh codespace create --repo NAMA-ANDA/diary' }, { cmd: 'gh codespace code --web' }]} />
+
+Hentian 1: buka Codespace pada repo diary anda. Jalankan dua arahan ini, atau guna butang Code di GitHub. Codespace perlukan akaun GitHub dan ada had penggunaan.
+</Card>
+
+<Card id="try-order" type="try">
+Dalam Codespace, apa seterusnya? Susun hentian ikut urutan.
+
+<Interactive name="OrderList" items={['Buat branch: git switch -c fix-typo', 'Baiki salah ejaan dalam README.md', 'Commit pembaikan itu', 'Push branch itu', 'Jalankan gh pr create']} label="Langkah pertama di atas" success="Laluan betul! Sekarang bina arahan terakhir." />
+
+<Hint>Pull request perlukan branch yang dah di-push dulu.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang buka pull request. Biar ia guna semula mesej commit anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'Guna GitHub CLI' }, { text: 'pr', means: 'kerja dengan pull request' }, { text: 'create', means: 'buat yang baru' }, { text: '--fill', means: 'guna mesej commit anda' }]} decoys={[{ text: 'issue', means: 'issue, bukan pull request' }, { text: 'git', means: 'Git tak boleh buka pull request' }]} success="Itulah arahannya! Ia buka pull request anda." />
+</Card>
+
+<Card id="see-pr" type="see">
+<Interactive name="Transcript" title="bash" label="git push hantar branch fix-typo ke GitHub. Kemudian gh pr create --fill buka pull request dan cetak pautannya." lines={[{ cmd: 'git push -u origin fix-typo' }, { cmd: 'gh pr create --fill' }, { out: 'https://github.com/NAMA-ANDA/diary/pull/1', color: 'cyan' }]} />
+
+Hentian 4 dan 5: push, kemudian `gh pr create`. Ia cetak pautan ke pull request baru anda. Codespace lalai dah ada `gh`, siap log masuk untuk repo ini.
+</Card>
+
+<Card id="predict" type="predict">
+Anda guna `--fill`. Dari mana datangnya tajuk dan isi pull request itu?
+
+<Interactive name="Choice" options={[{ label: 'Mesej commit anda', correct: true, why: 'gh salin maklumat commit anda. Guna --title dan --body untuk tulis sendiri.' }, { label: 'GitHub reka sendiri', why: 'gh guna apa yang anda tulis dalam commit.' }, { label: 'Ia kekal kosong', why: '--fill isikan dari commit anda.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang buat betul-betul. Tick setiap langkah semasa anda buat.
+
+<Interactive name="Mission" id="w09-boss-ship" title="Misi: hantar" steps={[{ id: 'repo', text: 'Ada repo diary yang awam. Belum ada? Buat satu.', command: 'gh repo create diary --public --add-readme' }, { id: 'codespace', text: 'Buka Codespace pada repo diary anda.', command: 'gh codespace create --repo NAMA-ANDA/diary' }, { id: 'branch', text: 'Dalam terminalnya, buat branch.', command: 'git switch -c fix-typo' }, { id: 'fix', text: 'Baiki satu benda kecil dalam README.md. Simpan fail itu.' }, { id: 'commit', text: 'Commit pembaikan itu.', command: 'git commit -am "docs: fix typo in README"' }, { id: 'push', text: 'Push branch itu.', command: 'git push -u origin fix-typo' }, { id: 'pr', text: 'Buka pull request.', command: 'gh pr create --fill' }, { id: 'stop', text: 'Dah siap? Hentikan Codespace untuk jimat had anda.', command: 'gh codespace stop' }]} success="Dah hantar! Pembaikan sebenar, dari awan." />
+
+<Hint>Satu langkah pada satu masa. Tick setiap satu bila dah siap.</Hint>
+</Card>
+
+<Card id="check-pr" type="check">
+Boleh GitHub nampak kerja anda? Taip nama pengguna anda dan semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'diary', label: 'Repo diary anda awam' }, { type: 'pullRequest', repo: '{user}/diary', label: 'GitHub nampak pull request anda dalam diary' }]} success="Boss tewas! Pull request anda dah ada di GitHub." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar pembaikan dari Codespace, dengan gh.
+</Card>
+
+<Card id="deeper" type="deeper">
+Puas hati? Merge dari terminal dengan `gh pr merge`. Bila semua kerja dah di-push, `gh codespace delete` buang Codespace itu. Tiada Codespace? Tekan `.` pada repo anda untuk github.dev. Commit ke branch baru di sana, kemudian buka pull request dalam pelayar.
+</Card>

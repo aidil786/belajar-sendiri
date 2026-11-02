@@ -1,0 +1,61 @@
+---
+id: git-w01-boss
+world: 1
+title: "Laman diari: 5 commit kemas"
+summary: "Anda akan belajar: bina laman diari, satu commit kemas pada satu masa."
+minutes: 6
+xp: 50
+interactives: [AreasScene, Challenge, Choice, Mission, LogCheck]
+needs: [git-w01-l12]
+scenario: w01-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Lima fail bergoyang dalam folder diari: README.md, index.html, style.css, about.html dan satu fail sampah, debug.log." frames={[{ working: ['README.md', 'index.html', 'style.css', 'about.html', { name: 'debug.log', tag: 'notReady' }] }]} />
+
+Laman diari anda dah siap. Empat fail sebenar dan satu log sampah. Boleh anda simpan sebagai lima commit (titik simpan) yang kemas?
+</Card>
+
+<Card id="see-plan" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} label="Fail-fail keluar dari folder kerja. Lima commit beratur dalam repository: Add README, Add home page, Add purple style, Ignore log files, Add about page." frames={[{ working: ['README.md', 'index.html', 'style.css', '.gitignore', 'about.html'], repo: [] }, { working: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }, { name: 'Add purple style', kind: 'commit' }, { name: 'Ignore log files', kind: 'commit' }, { name: 'Add about page', kind: 'commit' }] }]} />
+
+Ini **rancangannya**: satu perubahan bagi setiap commit. Setiap mesej pendek dan bermula dengan kata kerja.
+</Card>
+
+<Card id="try-build" type="try">
+Bina laman ini dalam lima peringkat. Setiap mesej mesti kemas. Tersilap? Tekan "Mula semula".
+
+<Interactive name="Challenge" stages={[{ title: 'Mulakan repo', text: 'Jadikan diari itu repo. Kemudian commit `README.md`.', scenario: 'w01-boss-1', goal: { repoAt: '/home/you/diary', commits: 1, cleanMessages: 1, lastCommitHas: ['README.md'] }, hints: ['Mula dengan git init.', 'Kemudian git add README.md dan git commit -m "Add README"'] }, { title: 'Laman utama', text: 'Commit `index.html` sahaja. Tinggalkan `style.css` untuk peringkat seterusnya.', scenario: 'w01-boss-2', goal: { commits: 2, cleanMessages: 2, lastCommitHas: ['index.html'], lastCommitLacks: ['style.css'] }, hints: ['git add index.html masukkan fail itu sahaja ke dalam kotak.', 'Kemudian git commit -m "Add home page"'] }, { title: 'Gaya', text: '`style.css` baru, dan `index.html` kini ada pautan kepadanya. Itu satu perubahan: commit kedua-duanya bersama.', scenario: 'w01-boss-3', goal: { commits: 3, cleanMessages: 3, lastCommitHas: ['style.css'], clean: true }, hints: ['git add style.css index.html', 'Kemudian git commit -m "Add purple style"'] }, { title: 'Abaikan log', text: 'Sorokkan semua fail `.log` dengan `.gitignore`. Kemudian commit `.gitignore` itu.', scenario: 'w01-boss-4', goal: { commits: 4, cleanMessages: 4, lastCommitHas: ['.gitignore'], lastCommitLacks: ['debug.log'], noUntracked: true }, hints: ['Tulis peraturannya: echo "*.log" > .gitignore', 'Kemudian git add .gitignore dan git commit -m "Ignore log files"'] }, { title: 'Laman about', text: 'Commit `about.html` dan pautan barunya dalam `index.html`. Kemudian nikmati `git log --oneline`.', scenario: 'w01-boss-5', goal: { commits: 5, cleanMessages: 5, lastCommitHas: ['about.html'], clean: true, noUntracked: true }, hints: ['git add about.html index.html', 'Kemudian git commit -m "Add about page"'] }]} />
+
+<Hint>Tersekat? Jalankan `git status`. Ia beritahu apa yang belum disimpan.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Kenapa `style.css` dan pautan dalam `index.html` berkongsi satu commit?
+
+<Interactive name="Choice" options={[{ label: 'Ia satu perubahan: tambah gaya', correct: true, why: 'Pautan itu tak berguna tanpa style.css. Bersama, ia jadi satu perubahan.' }, { label: 'Git perlukan dua fail dalam setiap commit', why: 'Satu commit boleh ada satu fail atau banyak.' }, { label: 'Supaya commit jadi lebih sedikit', why: 'Kurang commit bukan matlamatnya. Satu perubahan bagi setiap commit, itu matlamatnya.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Pilihan: bina sekali lagi dalam komputer anda sendiri. Rancangan sama, Git sebenar.
+
+<Interactive name="Mission" id="w01-boss-diary" steps={[{ id: 'folder', text: 'Buat folder untuk laman anda.', command: 'mkdir diary-site' }, { id: 'cd', text: 'Masuk ke dalamnya.', command: 'cd diary-site' }, { id: 'init', text: 'Jadikan ia repo.', command: 'git init' }, { id: 'readme-add', text: 'Tulis `README.md` dalam editor anda. Masukkan ke dalam kotak.', command: 'git add README.md' }, { id: 'readme-commit', text: 'Simpan dengan mesej yang kemas.', command: 'git commit -m "Add README"' }, { id: 'pages', text: 'Buat `index.html`, `style.css` dan `about.html`. Commit setiap perubahan secara berasingan.' }, { id: 'ignore', text: 'Sorokkan fail log. Kemudian add dan commit `.gitignore` anda.', command: 'echo "*.log" > .gitignore' }, { id: 'log', text: 'Papar sejarah anda dan salin.', command: 'git log --oneline' }]} success="Diari sebenar anda ada sejarah yang kemas!" />
+</Card>
+
+<Card id="check-log" type="check">
+Tampal `git log --oneline` sebenar anda di bawah. Semakan berlaku dalam halaman ini sahaja. Tiada apa-apa yang dihantar.
+
+<Interactive name="LogCheck" min={5} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina projek dengan commit yang kecil dan kemas.
+</Card>

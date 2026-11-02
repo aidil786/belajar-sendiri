@@ -1,0 +1,71 @@
+---
+id: cicd-c1-l06
+world: 1
+title: Bina sekali, naikkan melalui persekitaran
+summary: "Anda akan belajar: kenapa build yang staging uji ialah build yang production dapat."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, OrderList, ConveyorBelt, SwipeJudge]
+needs: [cicd-c1-l05]
+scenario: c1-promote
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Store and share data with artifacts", url: "https://docs.github.com/en/actions/tutorials/store-and-share-data" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Managing environments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments" }
+---
+
+<Card id="hook" type="hook">
+Staging jalan dengan sempurna. Kemudian production rosak. Kod yang sama! Apa yang berubah?
+
+<Interactive name="Choice" options={[{ label: 'Production dapat build baru, yang dibuat kemudian', correct: true, why: 'Build yang kemudian boleh tarik pakej lebih baru. Staging uji benda lain.' }, { label: 'Tiada apa. Komputer memang rawak.', why: 'Komputer buat apa yang disuruh. Ada sesuatu yang berbeza.' }, { label: 'Staging menipu', why: 'Staging jujur tentang build yang ia dapat. Production dapat build lain.' }]} />
+</Card>
+
+<Card id="see-envs" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Dev', text: 'Dapur rumah anda: laptop anda sendiri. Cuba apa sahaja.' }, { when: '2', title: 'Staging', text: 'Bilik rasa: salinan kedai. Semak sebelum pengguna sebenar.' }, { when: '3', title: 'Production', text: 'Kedai sebenar. Pengguna sebenar, duit sebenar.' }]} />
+
+Ketik setiap tempat. Setiap tempat aplikasi anda berjalan ialah **<Term id="environment" course="git">environment</Term>** (persekitaran).
+</Card>
+
+<Card id="try-order" type="try">
+Masak sekali dan tutup pek. Pek bertutup itu ialah **<Term id="artifact" course="git">artifact</Term>** (artifak). Susun perjalanannya.
+
+<Interactive name="OrderList" items={['Build dan tutup artifact', 'Deploy ke staging', 'Semak staging', 'Hantar artifact yang sama ke production']} label="Langkah pertama di atas" success="Satu pek, dua hentian. Production dapat tepat apa yang staging semak." />
+</Card>
+
+<Card id="see-promote" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-promote" />
+
+Tekan Run. Build berlaku sekali sahaja. Staging dan production dapat pek yang sama. Memindahkan pek ke tempat seterusnya dipanggil **<Term id="promote">promote</Term>** (naikkan).
+</Card>
+
+<Card id="predict-rebuild" type="predict">
+Kenapa tak buat build baru khas untuk production?
+
+<Interactive name="Choice" options={[{ label: 'Ia mungkin berbeza daripada build yang staging uji', correct: true, why: 'Pakej atau alat baru boleh menyusup masuk. Jadi staging tak buktikan apa-apa.' }, { label: 'Build sangat mahal', why: 'Build murah. Risikonya ialah ia berbeza.' }, { label: 'GitHub tak benarkan', why: 'GitHub benarkan. Cuma ia bukan tabiat yang selamat.' }]} />
+</Card>
+
+<Card id="predict-stop" type="predict">
+Semakan kesihatan staging jumpa masalah.
+
+<Interactive name="ConveyorBelt" scenario="c1-promote-smoke" task={{ type: 'predict' }} success="Staging tangkap ia. Production tak pernah dapat pek buruk itu." />
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Build sekali, kemudian deploy artifact yang sama ke semua tempat', good: true, why: 'Apa yang anda uji ialah apa yang pengguna dapat.' }, { text: 'Build semula untuk production dari commit yang sama', good: false, why: 'Pakej boleh berubah antara build.' }, { text: 'Simpan alamat web setiap tempat di luar build', good: true, why: 'Pek yang sama boleh jalan di staging dan production.' }, { text: 'Masukkan kata laluan staging ke dalam build', good: false, why: 'Kini production bawa secret staging. Simpan secret ikut environment.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh build sekali dan promote artifact yang sama.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alamat web dan kunci berbeza ikut tempat. Ia masuk semasa deploy. Dalam GitHub, `environment:` pada job pilih secret dan peraturan tempat itu. Image container buat ini senang: satu image, banyak tempat (Dunia C2).
+
+Latihan sebenar (pilihan): cari di mana repo anda build. Ada job deploy yang build lagi? Hantar build itu dengan `actions/upload-artifact` dan `actions/download-artifact`.
+</Card>

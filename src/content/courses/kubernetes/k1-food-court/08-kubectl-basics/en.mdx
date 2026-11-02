@@ -1,0 +1,83 @@
+---
+id: k8s-k1-l08
+world: 1
+title: Drive it with kubectl
+summary: "You will learn: the six kubectl commands you will use every day."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder, SortCards, Mission]
+needs: [k8s-k1-l07]
+scenario: k1-kubectl
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+  - { label: "Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+  - { label: "kubectl exec", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_exec/" }
+---
+
+<Card id="hook" type="hook">
+Your boss says the shop is acting weird. You have one tool: kubectl. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Look: kubectl get pods', correct: true, why: 'Always look first. Looking changes nothing.' }, { label: 'Delete every pod and hope', why: 'Never delete before you look. You might lose the clue.' }, { label: 'Restart your laptop', why: 'Your laptop is fine. The trays live in the cluster.' }]} />
+</Card>
+
+<Card id="see-get" type="see">
+<Interactive name="KubeReplay" scenario="k1-first-pod" commands={['kubectl apply -f tray.yaml', 'kubectl get pods']} label="kubectl apply -f tray.yaml creates pod/tray. kubectl get pods shows it Pending, 0/1: still getting ready." />
+
+**<Term id="kubectl">kubectl</Term>** is your walkie-talkie to the office. `kubectl apply -f tray.yaml` puts up the order in that file. `kubectl get pods` lists your trays. Pending means still getting ready.
+</Card>
+
+<Card id="try-describe" type="try">
+A tray looks odd? Ask for its whole story. Type `kubectl describe pod tray`. Read the Events at the end.
+
+<Interactive name="FoodCourtSim" scenario="k1-kubectl" goal={{ typed: '^(kubectl|k) describe (pods?|po)( |/)tray\\b' }} hints={['Type kubectl describe pod tray and press Enter.']} success="Scheduled, pulled, created, started. The Events tell the story." />
+
+<Hint>describe ends with Events: what happened to this tray, in order.</Hint>
+</Card>
+
+<Card id="predict-logs" type="predict">
+The kitchen app printed a message. Which command shows it?
+
+<Interactive name="Choice" options={[{ label: '`kubectl logs kitchen`', correct: true, why: 'Yes. logs shows what the app printed.' }, { label: '`kubectl describe pod kitchen`', why: 'describe tells Kubernetes’ story, not the app’s words.' }, { label: '`kubectl get pod kitchen`', why: 'get shows one status line.' }]} />
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KubeReplay" scenario="k1-kubectl" commands={['kubectl logs kitchen', 'kubectl exec kitchen -- hostname']} label="kubectl logs kitchen prints: Kedai Kancil is open. kubectl exec kitchen -- hostname prints: kitchen." />
+
+`kubectl logs kitchen` shows what the app printed. `kubectl exec kitchen -- hostname` runs one command inside the tray.
+</Card>
+
+<Card id="try-exec" type="try">
+Build a command that asks the kitchen pod its name, from inside.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'talk to the cluster' }, { text: 'exec', means: 'run a command inside a pod' }, { text: 'kitchen', means: 'which pod' }, { text: '--', means: 'kubectl’s part ends here' }, { text: 'hostname', means: 'the command to run inside' }]} decoys={[{ text: 'logs', means: 'show what the app printed' }, { text: 'delete', means: 'remove the pod' }]} success="kubectl exec kitchen -- hostname prints: kitchen." />
+</Card>
+
+<Card id="try-delete" type="try">
+Now tidy up. Read the pink bar first: kind-dev, default. Then delete the tray with `kubectl delete pod tray`.
+
+<Interactive name="FoodCourtSim" scenario="k1-kubectl" goal={{ objectMissing: ['pod/tray'] }} hints={['Type kubectl delete pod tray and press Enter.']} success="Gone. No standing order made this tray, so nobody brings it back." />
+
+<Hint>Only the tray goes. The kitchen pod stays.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Which commands only look, and which change the cluster?
+
+<Interactive name="SortCards" buckets={[{ id: 'look', label: 'Only looks (safe)' }, { id: 'change', label: 'Changes something (careful)' }]} items={[{ label: '`kubectl get pods`', bucket: 'look', why: 'A list. Nothing changes.' }, { label: '`kubectl describe pod tray`', bucket: 'look', why: 'A story. Nothing changes.' }, { label: '`kubectl logs kitchen`', bucket: 'look', why: 'What the app printed. Nothing changes.' }, { label: '`kubectl apply -f tray.yaml`', bucket: 'change', why: 'It creates or changes objects.' }, { label: '`kubectl delete pod tray`', bucket: 'change', why: 'It removes things. Read the pink bar first.' }]} success="Look freely. Change carefully." />
+</Card>
+
+<Card id="win" type="win">
+You can now look, change and clean up with kubectl.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get pods -w` keeps watching. `kubectl logs -f kitchen` follows new lines. `kubectl exec -it kitchen -- sh` opens a shell inside. The practice terminal only explains that one.
+
+<Interactive name="Mission" id="k8s-k1-l08-real" steps={[{ id: 'run', text: 'On your kind cluster, put out one tray.', command: 'kubectl run tray --image=nginx:1.29-alpine' }, { id: 'get', text: 'List your trays.', command: 'kubectl get pods' }, { id: 'describe', text: 'Read its story.', command: 'kubectl describe pod tray' }, { id: 'logs', text: 'Read what nginx printed.', command: 'kubectl logs tray' }, { id: 'delete', text: 'Check the context, then tidy up.', command: 'kubectl delete pod tray' }]} success="Six commands, on a real cluster!" />
+</Card>

@@ -1,0 +1,65 @@
+---
+id: k8s-k7-l06
+world: 7
+title: Promote with pull requests
+summary: "You will learn: how one image moves from staging to production with a reviewed pull request."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PracticeRepo, OrderList, SortCards]
+needs: [k8s-k7-l05]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kustomize: images", url: "https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/" }
+  - { label: "Argo CD: best practices (separate config repo)", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/" }
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+---
+
+<Card id="hook" type="hook">
+Shop 1.5.0 ran fine on staging all day. Now production should get it. What is the GitOps way?
+
+<Interactive name="Choice" options={[{ label: 'Open a pull request that changes the prod tag', correct: true, why: 'A teammate reviews it. Merging it is the release.' }, { label: 'kubectl set image on the prod cluster', why: 'That is drift. Self-heal would undo it.' }, { label: 'Build a fresh image for prod', why: 'Build once. Promote the exact image you tested.' }]} />
+</Card>
+
+<Card id="see-week" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Mon', title: 'Build once', text: 'CI builds shop:1.5.0 and pushes it.' }, { when: 'Mon', title: 'Staging', text: 'PR #12 sets the staging tag to 1.5.0.' }, { when: 'Tue', title: 'Test', text: 'Staging runs 1.5.0. Tests and people check it.' }, { when: 'Wed', title: 'Production', text: 'PR #13 sets the prod tag to 1.5.0.' }, { when: 'Any day', title: 'Undo', text: 'Revert PR #13. The old tag comes back.' }]} />
+
+One image, two folders. To **<Term id="promote" course="cicd">promote</Term>** is to move the same image to the next environment.
+</Card>
+
+<Card id="try-merge" type="try">
+Mei opened the promotion PR. Rules say it needs one approval. Review it, then merge.
+
+<Interactive name="PracticeRepo" screen="pull" at={13} repo={{ owner: 'kedai-kancil', name: 'gitops', files: [{ path: 'README.md', content: '# Kedai Kancil GitOps\n\nOne folder per environment. Argo CD watches each one.\n' }, { path: 'envs/staging/kustomization.yaml', content: 'resources:\n  - ../../base\nimages:\n  - name: ghcr.io/kedai-kancil/shop\n    newTag: 1.5.0\n' }, { path: 'envs/prod/kustomization.yaml', content: 'resources:\n  - ../../base\nimages:\n  - name: ghcr.io/kedai-kancil/shop\n    newTag: 1.4.0\n' }] }} pulls={[{ number: 13, title: 'Promote shop 1.5.0 to prod', body: 'Staging ran 1.5.0 for a day. No errors.\n\nSame image, now for prod.', author: 'mei', from: 'promote-1.5.0', to: 'main', state: 'open', checks: [{ name: 'kustomize build', status: 'pass' }], files: [{ path: 'envs/prod/kustomization.yaml', diff: ['@@ -3,3 +3,3 @@', ' images:', '   - name: ghcr.io/kedai-kancil/shop', '-    newTag: 1.4.0', '+    newTag: 1.5.0'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Checks must pass', on: true }] }} task={{ type: 'merge', pr: 13 }} success="Merged! Argo CD will sync prod to 1.5.0. One line, reviewed." />
+
+<Hint>Approve the PR first. Then merge it.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Put a safe promotion in order.
+
+<Interactive name="OrderList" items={['Staging runs the new tag', 'Checks on staging pass', 'Open a PR for the prod folder', 'A teammate approves it', 'Merge: Argo CD syncs prod']} label="First step at the top" success="That's a promotion with a paper trail." />
+</Card>
+
+<Card id="predict" type="predict">
+Prod breaks right after the merge. What is the fastest safe undo?
+
+<Interactive name="Choice" options={[{ label: 'Revert the PR. Argo CD syncs the old tag back', correct: true, why: 'Fast, recorded, and Git stays the truth.' }, { label: 'kubectl rollout undo on prod', why: 'Self-heal may put 1.5.0 straight back. Undo in Git.' }, { label: 'Delete the prod folder', why: 'With prune on, that could delete the whole app.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Some settings differ per environment. Others stay the same in the shared base. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'env', label: 'Per environment' }, { id: 'base', label: 'Shared base' }]} items={[{ label: 'Image tag (1.4.0 or 1.5.0)', bucket: 'env', why: 'Promotion changes this, one environment at a time.' }, { label: 'Replicas (2 on staging, 5 on prod)', bucket: 'env', why: 'Prod needs more trays.' }, { label: 'The container port 80', bucket: 'base', why: 'The app listens on the same port everywhere.' }, { label: 'The app name, shop', bucket: 'base', why: 'Same app, same name.' }]} success="Sorted! Small folders per environment, one shared base." />
+</Card>
+
+<Card id="win" type="win">
+You can now promote one image between environments with a pull request.
+</Card>
+
+<Card id="deeper" type="deeper">
+Prefer one folder per environment over one branch per environment. Folders are easy to compare and never need merging back. Some teams automate promotion with tools like Kargo. Real rep (optional): make `envs/staging` and `envs/prod` overlays for Kedai Kancil. Run `kubectl kustomize envs/prod` to see the result.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: iac-t2-l07
+world: 2
+title: "Data sources: read what exists"
+summary: "You will learn: to read something that already exists with a data source, without owning it."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, TofuSim, SpotLines]
+needs: [iac-t2-l06]
+scenario: t2-recipe
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: data sources", url: "https://opentofu.org/docs/language/data-sources/" }
+---
+
+<Card id="hook" type="hook">
+The chef writes today's recipe in `recipe.txt` by hand. Your blueprint needs its words for the menu. Should OpenTofu build `recipe.txt`?
+
+<Interactive name="Choice" options={[{ label: 'No. Just read it. The chef owns it.', correct: true, why: 'If OpenTofu owned it, destroy would delete the chef\'s recipe.' }, { label: 'Yes. OpenTofu should own every file.', why: 'Then OpenTofu would fight the chef over every change.' }, { label: 'Copy the recipe into the .tf file by hand', why: 'Then the menu is out of date the moment the chef changes it.' }]} />
+</Card>
+
+<Card id="see-data" type="see">
+A **<Term id="data-source">data source</Term>** reads something that already exists. Resource or data?
+
+<Interactive name="SortCards" buckets={[{ id: 'resource', label: 'resource block' }, { id: 'data', label: 'data block' }]} items={[{ label: 'Makes a thing and looks after it', bucket: 'resource', why: 'Resources are built and owned.' }, { label: 'Reads a thing someone else made', bucket: 'data', why: 'A data block only looks.' }, { label: 'tofu destroy deletes it', bucket: 'resource', why: 'OpenTofu removes what it owns.' }, { label: 'tofu destroy leaves it alone', bucket: 'data', why: 'OpenTofu never owned it.' }]} success="Resources are built. Data is read." />
+</Card>
+
+<Card id="try-read" type="try">
+The menu copies the recipe. Type `tofu apply`, then `yes`. Then `cat menu.txt`.
+
+<Interactive name="TofuSim" scenario="t2-recipe" goal={{ fileContains: { 'menu.txt': 'Nasi lemak' }, lastTyped: '^cat menu\\.txt' }} hints={['Type tofu apply, then yes.', 'Then type cat menu.txt']} success="Today: Nasi lemak with sambal. Read from the chef's file." />
+
+```hcl
+data "local_file" "recipe" {
+  filename = "recipe.txt"
+}
+```
+</Card>
+
+<Card id="predict" type="predict">
+The chef changes `recipe.txt` to Roti canai. You run a plan. What happens to `menu.txt`?
+
+<Interactive name="Choice" options={[{ label: 'It is replaced with the new words', correct: true, why: 'The data source reads again on every plan. New recipe, new menu.' }, { label: 'Nothing. OpenTofu read it once.', why: 'Data sources read fresh on every plan.' }, { label: 'OpenTofu changes the recipe back', why: 'It never changes what a data block reads.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Be the chef: `echo "Roti canai with dhal" > recipe.txt`. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t2-recipe-built" goal={{ fileContains: { 'menu.txt': 'Roti' } }} hints={['Type echo "Roti canai with dhal" > recipe.txt', 'Then tofu apply. The menu is replaced. Type yes.']} success="The menu follows the recipe. The recipe stays the chef's." />
+
+<Hint>First the `echo` line, then `tofu apply`, then `yes`.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+The chef deleted `recipe.txt`. Plan stops. Tap the line that says why.
+
+<Interactive name="SpotLines" lines={[{ text: 'Error: Read local file data source error' }, { text: '' }, { text: '  with data.local_file.recipe,' }, { text: '  on main.tf line 1, in data "local_file" "recipe":' }, { text: '   1: data "local_file" "recipe" {' }, { text: '' }, { text: 'The file at given path cannot be read.' }, { text: '' }, { text: '+Original Error: open recipe.txt: no such file or directory', target: true }]} success="no such file or directory. A data source can't read what isn't there." />
+</Card>
+
+<Card id="win" type="win">
+You can now read existing things with a data source.
+</Card>
+
+<Card id="deeper" type="deeper">
+In the cloud, data sources look up things like an existing network. The plan shows them as `Reading...`. A resource that must wait for another can add `depends_on`. Usually a reference is enough.
+</Card>

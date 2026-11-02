@@ -1,0 +1,78 @@
+---
+id: cicd-c3-l08
+world: 3
+title: "OIDC: tiada kunci jangka panjang"
+summary: "Anda akan belajar: cara workflow dapat kunci cloud jangka pendek untuk satu job, bukan simpan kunci selama-lamanya."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, OrderList, YamlBuilder, Choice, SwipeJudge]
+needs: [cicd-c3-l07]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenID Connect in GitHub Actions", url: "https://docs.github.com/en/actions/concepts/security/openid-connect" }
+  - { label: "OIDC reference (id-token: write, claims)", url: "https://docs.github.com/en/actions/reference/security/oidc" }
+  - { label: "aws-actions/configure-aws-credentials", url: "https://github.com/aws-actions/configure-aws-credentials" }
+  - { label: "Cloudflare: Workers in GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '2023', title: 'Kunci dibuat', text: 'Kunci cloud yang tak pernah luput masuk ke secret repo.' }, { when: '2025', title: 'Disalin', text: 'Rakan sepasukan tampal kunci itu dalam skrip ujian, sekali sahaja.' }, { when: '2026', title: 'Bocor', text: 'Skrip itu akhirnya terbuka kepada umum. Kunci masih berfungsi.' }]} />
+
+Kunci yang tak pernah luput ialah kunci yang menunggu untuk bocor. Tekan kisahnya. Bagaimana kalau kunci hanya tahan untuk satu job?
+</Card>
+
+<Card id="see-badge" type="see">
+**<Term id="oidc">OIDC</Term>** tukar kunci tersimpan dengan pas pelawat. Pas itu sah untuk satu job, kemudian cair. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Job minta ID token daripada GitHub', 'Ia tunjuk token itu kepada cloud', 'Cloud semak repo dan environment', 'Cloud pinjamkan kunci jangka pendek', 'Kunci luput bila job tamat']} label="Langkah pertama di atas" success="Ya! Tiada apa disimpan, jadi tiada kunci lama yang boleh bocor." />
+</Card>
+
+<Card id="try-yaml" type="try">
+Bina deploy OIDC ke AWS. Tiada kunci dalam secrets.
+
+<Interactive name="YamlBuilder" workflow="Deploy to AWS" goal={{ order: ['push', 'perms', 'job', 'checkout', 'build', 'login', 'upload'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baharu.' },
+  { id: 'perms', kind: 'permissions', label: 'Minta pas, baca kod', yaml: 'id-token: write\ncontents: read', means: 'Benarkan job minta ID token. Baca kod.' },
+  { id: 'readonly', kind: 'permissions', label: 'Baca kod sahaja', yaml: 'contents: read', means: 'Token hanya boleh baca kod.', why: 'Tanpa id-token: write, job tak boleh minta pas.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Deploy ke production. Cloud boleh semak nama ini.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod ke runner.' },
+  { id: 'build', kind: 'step', label: 'Pasang dan build', yaml: '- run: npm ci && npm run build', means: 'Build laman ke dalam dist/.' },
+  { id: 'login', kind: 'step', label: 'Log masuk AWS dengan pas', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    role-to-assume: arn:aws:iam::123456789012:role/shop-deploy\n    aws-region: ap-southeast-5', means: 'Tukar pas dengan role jangka pendek.' },
+  { id: 'keys', kind: 'step', label: 'Log masuk AWS dengan kunci tersimpan', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}\n    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}\n    aws-region: ap-southeast-5', means: 'Log masuk dengan kunci dalam secrets.', why: 'Itulah kunci jangka panjang yang kita mahu buang.' },
+  { id: 'upload', kind: 'step', label: 'Muat naik laman', yaml: '- run: aws s3 sync ./dist s3://kedai-kancil-shop', means: 'Salin fail yang dah dibina ke storan cloud.' }]}
+  success="Tiada kunci tersimpan! Pas itu yang buat kerja." />
+
+<Hint>Trigger, permission yang benarkan pas, job, kemudian langkah-langkahnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda terlupa `id-token: write`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Langkah log masuk AWS gagal: tiada pas untuk ditunjuk', correct: true, why: 'Tanpa permission itu, GitHub tak beri ID token.' }, { label: 'Ia guna kunci tersimpan', why: 'Tiada kunci tersimpan. Itulah tujuannya.' }, { label: 'Ia tetap berjaya', why: 'Cloud perlukan pas. Tiada pas, tiada kunci.' }]} />
+</Card>
+
+<Card id="check-trust" type="check">
+Cloud yang tentukan siapa dipercayai. Peraturan percaya ini bagus, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Percaya repo you/shop sahaja, environment production.', good: true, why: 'Tepat satu repo dan satu pintu boleh dapat kunci.' }, { text: 'Percaya mana-mana repo di GitHub.', good: false, why: 'Nanti workflow sesiapa pun boleh dapat kunci cloud anda!' }, { text: 'Percaya setiap branch repo anda untuk production.', good: false, why: 'Branch ujian boleh deploy. Sebut nama environment pula.' }, { text: 'Beri role cloud hak yang perlu sahaja.', good: true, why: 'Muat naik ke satu bucket, tak lebih.' }]} />
+</Card>
+
+<Card id="check-cloudflare" type="check">
+Satu hal yang jujur: Wrangler Cloudflare masih perlukan token API dalam CI. Macam mana nak simpan?
+
+<Interactive name="Choice" options={[{ label: 'Hak yang kecil, sebagai environment secret production', correct: true, why: 'Sedikit hak, satu pintu, deploy disemak. Pilihan terbaik seterusnya.' }, { label: 'Dalam fail workflow', why: 'Jangan sesekali. Sesiapa yang baca repo akan dapat.' }, { label: 'Satu token untuk semua akaun anda', why: 'Hadkan kepada satu akaun, dengan hak paling sedikit.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh deploy ke cloud tanpa kunci tersimpan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cloud baca claim di dalam pas itu. Subject menamakan repo dan environment, contohnya `repo:you/shop:environment:production`. Repo yang dibuat selepas 15 Julai 2026 guna format baharu dengan id. Jadi salin peraturan tepat dari dokumentasi cloud anda.
+
+Latihan sebenar (pilihan): ikut panduan GitHub OIDC cloud anda pada akaun ujian.
+</Card>

@@ -1,0 +1,90 @@
+---
+id: docker-d4-l04
+world: 4
+title: "Wait until healthy: depends_on"
+summary: "You will learn: to make one dish wait until another is really ready."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, OrderList, KitchenReplay, ComposeCanvas, Choice, KitchenSim, Mission]
+needs: [docker-d4-l03]
+scenario: d4-healthy
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Control startup order", url: "https://docs.docker.com/compose/how-tos/startup-order/" }
+  - { label: "Compose file reference: depends_on", url: "https://docs.docker.com/reference/compose-file/services/#depends_on" }
+  - { label: "Compose file reference: healthcheck", url: "https://docs.docker.com/reference/compose-file/services/#healthcheck" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'db starts', text: 'Postgres wakes up. It needs a few seconds.' }, { when: '2', title: 'api starts', text: 'The API calls db straight away.' }, { when: '3', title: 'No answer', text: 'db is not ready yet. The API gives up and stops.' }, { when: '4', title: 'db is ready', text: 'Too late. Nobody is calling any more.' }]} />
+
+Morning rush. The API starts too early. It calls a database that is still waking up. Tap each moment.
+</Card>
+
+<Card id="see-order" type="see">
+```yaml
+  web:
+    depends_on: [api]
+  api:
+    depends_on: [db]
+```
+
+<Interactive name="OrderList" items={['db', 'api', 'web']} label="First to start at the top" success="db, then api, then web." />
+
+**<Term id="depends-on">depends_on</Term>** sets the start order. A dish starts after the dishes it depends on. Put the start order right.
+</Card>
+
+<Card id="see-healthy" type="see">
+```yaml
+  api:
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:18-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      retries: 10
+```
+
+<Interactive name="KitchenReplay" scenario="d4-healthy" commands={['docker compose up -d']} label="db shows Healthy first. Only then do api and web start." />
+
+Started is not ready. A health check is a taste test. `pg_isready` asks db: ready yet? `service_healthy` makes api wait for a yes.
+</Card>
+
+<Card id="try-wait" type="try">
+Right now api waits only until db has started. Make it wait until db is healthy. Then order the set meal.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Shows the shop page.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Takes the orders.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '2s', retries: 10 }, means: 'Keeps the orders. Has a taste test.' }]} start={[{ id: 'web', dependsOn: { api: 'service_started' } }, { id: 'api', dependsOn: { db: 'service_started' } }, { id: 'db', volume: 'db-data' }]} volumes={['db-data']} goal={{ dependsOn: { api: { db: 'service_healthy' } } }} success="api now waits for db's yes." />
+
+<Hint>Open api's "Waits for" list. Pick healthy for db.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Someone deleted db's password. Postgres exits at once. What does `docker compose up -d` do now?
+
+<Interactive name="Choice" options={[{ label: 'It stops. api and web never start.', correct: true, why: 'db never gets healthy, so its waiters stay Created.' }, { label: 'It starts api anyway', why: 'service_healthy means: wait for a yes. No yes, no start.' }, { label: 'It waits forever', why: 'db has exited, so Compose stops with an error at once.' }]} />
+</Card>
+
+<Card id="check-sick" type="check">
+Run it and read the red line. Then ask db's logs why.
+
+<Interactive name="KitchenSim" scenario="d4-sick-db" keys="compose" goal={{ typed: '^docker compose up', lastTyped: '^docker compose logs (-f )?db' }} hints={['Type docker compose up -d first.', 'Then type docker compose logs db']} success="Postgres says it plainly: no password. So db never got healthy." />
+
+Real words: `dependency failed to start`. Plain words: db stopped, so the dishes waiting for it never started.
+</Card>
+
+<Card id="win" type="win">
+You can now make a dish wait until another is healthy.
+</Card>
+
+<Card id="deeper" type="deeper">
+Three conditions: `service_started` (the short list form), `service_healthy`, and `service_completed_successfully` for a one-off job, like making tables. Add `restart: true` and Compose also restarts api after it restarts db. `docker compose up -d --wait` returns only when every dish is running or healthy. CI uses it.
+
+<Interactive name="Mission" id="d4-l04-rep" steps={[{ id: 'up', text: 'Give your db a healthcheck and start the project.', command: 'docker compose up -d' }, { id: 'ps', text: 'Look for (healthy) next to db.', command: 'docker compose ps' }, { id: 'wait', text: 'Try the CI way: come back only when all are ready.', command: 'docker compose up -d --wait' }]} success="Your dishes now wait for each other kindly." />
+</Card>

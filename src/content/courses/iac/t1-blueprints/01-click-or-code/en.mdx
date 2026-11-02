@@ -1,0 +1,64 @@
+---
+id: iac-t1-l01
+world: 1
+title: Clicking vs writing it down
+summary: "You will learn: why teams write their servers down as a blueprint."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, TofuSim, SortCards, Mission]
+needs: []
+scenario: t1-sign
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "What is OpenTofu?", url: "https://opentofu.org/docs/intro/" }
+  - { label: "Installing OpenTofu", url: "https://opentofu.org/docs/intro/install/" }
+  - { label: "What is Terraform?", url: "https://developer.hashicorp.com/terraform/intro" }
+---
+
+<Card id="hook" type="hook">
+You set up Kedai Kancil's stall by clicking 40 buttons on a website. The boss says: "Make the same one in Penang." What goes wrong?
+
+<Interactive name="Choice" options={[{ label: 'You miss one click, so the two stalls differ', correct: true, why: 'Nobody remembers 40 clicks. A written list never forgets.' }, { label: 'Nothing. Clicking is always exact.', why: 'People skip steps. The copy ends up a little different.' }, { label: 'The website refuses to make two', why: 'It will make two. The trouble is making them the same.' }]} />
+</Card>
+
+<Card id="see-loop" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1. Draw', title: 'Write the blueprint', text: 'A text file says what the shop needs: a sign, a menu, a server.' }, { when: '2. Inspect', title: 'Read the plan', text: 'The tool compares the blueprint with what is built. It lists every change first.' }, { when: '3. Build', title: 'Apply', text: 'You say yes. The tool builds exactly what the blueprint says.' }, { when: '4. Change', title: 'Edit and repeat', text: 'Need a change? Edit the file, not the website. Then inspect and build again.' }]} />
+
+An architect draws first, then builds. Writing your setup down like this is **<Term id="infrastructure-as-code">infrastructure as code</Term>**. Tap each step.
+</Card>
+
+<Card id="try-build" type="try">
+This file, `main.tf`, is a blueprint. It asks for one thing: `sign.txt`. Type `tofu apply`, then `yes`.
+
+<Interactive name="TofuSim" scenario="t1-sign" intro={['tofu init']} goal={{ resourceInState: ['local_file.sign'], filesExist: ['sign.txt'] }} hints={['Type tofu apply and press Enter.', 'OpenTofu asks a question. Type yes and press Enter.']} success="Built! sign.txt exists, exactly as the blueprint says." />
+
+<Hint>Type `tofu apply`. When it asks, type `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your friend runs the same `main.tf` on her own laptop. What does she get?
+
+<Interactive name="Choice" options={[{ label: 'The same sign.txt, word for word', correct: true, why: 'Same blueprint, same building. That is the whole point.' }, { label: 'A slightly different sign', why: 'Nothing is left to memory. The file says every word.' }, { label: 'Nothing, because you built it first', why: 'Her laptop has its own folder. She builds her own copy.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Clicking or a blueprint? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'click', label: 'Clicking by hand' }, { id: 'code', label: 'A blueprint in files' }]} items={[{ label: 'Same result every time', bucket: 'code', why: 'The file never forgets a step.' }, { label: 'A teammate can review it before anything is built', bucket: 'code', why: 'Text can go in a pull request.' }, { label: 'Hard to say who changed what', bucket: 'click', why: 'Clicks leave no history. Git keeps every change to a file.' }, { label: 'Quick for a one-off look around', bucket: 'click', why: 'Fine for exploring. Write it down once it matters.' }, { label: 'Undo by going back to an older version', bucket: 'code', why: 'Git has every old version of the blueprint.' }]} success="Files win whenever it must be the same twice." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why teams draw a blueprint instead of clicking.
+</Card>
+
+<Card id="deeper" type="deeper">
+These lessons use OpenTofu (the `tofu` command). Terraform (`terraform`) reads the same files; lesson 8 compares them. Other tools exist too. The idea stays the same: draw, inspect, build.
+
+Real rep (optional), on your own computer. The local provider only writes files, so nothing costs money.
+
+<Interactive name="Mission" id="iac-t1-l01-rep" steps={[{ id: 'install', text: 'Install OpenTofu. Follow the steps for your system on opentofu.org.' }, { id: 'folder', text: 'Make an empty folder and go into it.', command: 'mkdir kedai && cd kedai' }, { id: 'file', text: 'Make main.tf with the sign block from this lesson. Copy it from the editor.' }, { id: 'init', text: 'Get the provider.', command: 'tofu init' }, { id: 'apply', text: 'Build it. Type yes when asked.', command: 'tofu apply' }, { id: 'look', text: 'Read your sign.', command: 'cat sign.txt' }]} success="That was real OpenTofu!" />
+</Card>

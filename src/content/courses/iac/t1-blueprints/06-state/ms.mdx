@@ -1,0 +1,68 @@
+---
+id: iac-t1-l06
+world: 1
+title: "State: daftar bangunan"
+summary: "Anda akan belajar: cara OpenTofu ingat apa yang dibina, dan kenapa fail state penting."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SwipeJudge]
+needs: [iac-t1-l05]
+scenario: t1-built
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state", url: "https://opentofu.org/docs/language/state/" }
+  - { label: "OpenTofu: purpose of state", url: "https://opentofu.org/docs/language/state/purpose/" }
+  - { label: "tofu state", url: "https://opentofu.org/docs/cli/commands/state/" }
+---
+
+<Card id="hook" type="hook">
+Semalam OpenTofu bina `sign.txt`. Hari ini anda jalankan plan lagi. Macam mana OpenTofu tahu `sign.txt` itu miliknya?
+
+<Interactive name="Choice" options={[{ label: 'Ia tulis dalam satu fail daftar', correct: true, why: 'Setiap binaan dicatat. Plan seterusnya baca catatan itu.' }, { label: 'Ia teka dari nama fail', why: 'Meneka boleh ambil fail yang salah. OpenTofu simpan catatan.' }, { label: 'Ia tanya komputer siapa buat fail itu', why: 'Komputer tak jejak perkara itu. OpenTofu simpan catatan sendiri.' }]} />
+</Card>
+
+<Card id="try-list" type="try">
+Daftar itu ialah fail **<Term id="state">state (daftar bangunan)</Term>**, `terraform.tfstate`. Taip `tofu state list` untuk baca isinya.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ lastTyped: '^tofu state list' }} hints={['Taip tofu state list dan tekan Enter.']} success="Dua catatan: papan tanda dan nama gerai. Sama dengan sebelah hijau gambar." />
+
+<Hint>Taip `tofu state list`.</Hint>
+</Card>
+
+<Card id="see-show" type="see">
+`tofu state show random_pet.stall` paparkan satu catatan. Tekan baris dengan nama yang OpenTofu pilih.
+
+<Interactive name="SpotLines" lines={[{ text: '# random_pet.stall:' }, { text: 'resource "random_pet" "stall" {' }, { text: '    id        = "lucky-civet"', target: true }, { text: '    length    = 2' }, { text: '    separator = "-"' }, { text: '}' }]} success="id ialah nama yang dipilih. Pelan tak pernah sebut; hanya state yang tahu." />
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang padam `sign.txt` dengan tangan. Daftar masih senaraikannya. Apa `tofu plan` akan kata?
+
+<Interactive name="Choice" options={[{ label: '1 to add: buat papan tanda semula', correct: true, why: 'Plan semak fail sebenar, nampak ia hilang, dan rancang untuk bina.' }, { label: 'No changes', why: 'Sebelum merancang, OpenTofu tengok benda sebenar. Ia perasan.' }, { label: 'Ralat: daftar rosak', why: 'Tiada ralat. Daftar kata apa yang patut ada, jadi ia rancang untuk baiki.' }]} />
+</Card>
+
+<Card id="try-drift" type="try">
+Cuba. Taip `rm sign.txt`, kemudian `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ planSummary: { add: 1, change: 0, destroy: 0 } }} hints={['Taip rm sign.txt dulu.', 'Kemudian taip tofu plan.']} success="1 to add. OpenTofu perasan dan akan bina papan tanda semula." />
+
+<Hint>`rm sign.txt`, kemudian `tofu plan`.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Tabiat baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Simpan terraform.tfstate dengan selamat, ada salinan', good: true, why: 'Kalau hilang, OpenTofu lupa apa yang ia bina.' }, { text: 'Edit terraform.tfstate dengan tangan untuk baiki nama', good: false, why: 'Satu koma salah boleh rosakkannya. Dunia T3 tunjuk arahan yang selamat.' }, { text: 'Padam terraform.tfstate untuk mula semula', good: false, why: 'OpenTofu lupa, kemudian cuba bina semuanya sekali lagi.' }, { text: 'Letak fail state dalam repo Git awam', good: false, why: 'State boleh simpan rahsia. Pasukan simpan di tempat kongsi yang berkunci (Dunia T3).' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca state dan terangkan kenapa ia penting.
+</Card>
+
+<Card id="deeper" type="deeper">
+State ialah JSON. Nombor `serial` naik selepas setiap perubahan, dan `terraform.tfstate.backup` simpan versi sebelumnya. `tofu show` paparkan seluruh state dengan cara yang mudah dibaca. Dalam pasukan, state disimpan dalam backend kongsi yang berkunci. Jadi dua orang tak boleh bina serentak. Dunia T3 terangkan.
+</Card>

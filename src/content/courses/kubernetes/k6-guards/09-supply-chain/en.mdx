@@ -1,0 +1,66 @@
+---
+id: k8s-k6-l09
+world: 6
+title: "Supply-chain recap"
+summary: "You will learn: how a sealed image travels from your pipeline to the cluster, and how gate 3 checks the seal."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, SpotLines, SwipeJudge]
+needs: [k8s-k6-l08]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GitHub: enforce artifact attestations in Kubernetes", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/enforce-artifact-attestations" }
+  - { label: "Sigstore: verifying signatures", url: "https://docs.sigstore.dev/cosign/verifying/verify/" }
+  - { label: "Kubernetes: verify signed artifacts", url: "https://kubernetes.io/docs/tasks/administer-cluster/verify-signed-artifacts/" }
+  - { label: "SLSA", url: "https://slsa.dev/" }
+---
+
+<Card id="hook" type="hook">
+A pack in the shop freezer has your name and your tag. But someone swapped what is inside. How does the cluster find out?
+
+<Interactive name="Choice" options={[{ label: "Check the seal your pipeline put on it", correct: true, why: "A swapped pack cannot carry your pipeline's seal." }, { label: 'Read the tag', why: 'A tag can be moved to any pack.' }, { label: 'Look at the image size', why: 'Size proves nothing. A poisoned pack can weigh the same.' }]} />
+</Card>
+
+<Card id="see-chain" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Build', text: 'CI builds the image from your recipe.' }, { when: '2', title: 'SBOM', text: 'An ingredients list of every package goes with it.' }, { when: '3', title: 'Sign', text: 'Your pipeline seals it, with a short-lived ID. No stored key.' }, { when: '4', title: 'Push', text: 'The pack and its seal go to the registry.' }, { when: '5', title: 'Check', text: 'At gate 3, a policy checks the seal before any tray runs.' }]} />
+
+Recap from [World D5: Ship & Shield](/en/docker/#world-5) and Part 2. The seal is an **<Term id="image-signature">image signature</Term>**. Tap each step.
+</Card>
+
+<Card id="try-sort" type="try">
+An <Term id="sbom" course="cicd">SBOM</Term> and a seal prove different things. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'sbom', label: 'SBOM: what is inside' }, { id: 'sig', label: 'Seal: who made it, unchanged' }]} items={[{ label: 'Every package and its version', bucket: 'sbom', why: 'The ingredients list.' }, { label: 'Which packages have a known hole (CVE)', bucket: 'sbom', why: 'Scanners read the list to find holes.' }, { label: 'Your pipeline made this exact pack', bucket: 'sig', why: 'The seal names the workflow that signed.' }, { label: 'Nobody changed it after the build', bucket: 'sig', why: 'Any change breaks the seal.' }]} success="Sorted! Inside versus origin." />
+</Card>
+
+<Card id="predict" type="predict">
+The policy wants your pipeline's seal. Someone pushes a new image under the same tag, `shop:1.4.0`. What happens at gate 3?
+
+<Interactive name="Choice" options={[{ label: 'Refused: the new pack has no seal', correct: true, why: 'A seal belongs to the digest, the exact pack. The swapped pack has none.' }, { label: 'Allowed: the tag was signed', why: 'Seals sign the digest, not the tag name.' }, { label: 'The old pack runs instead', why: 'Kubernetes pulls what the tag points at now. The check stops it.' }]} />
+</Card>
+
+<Card id="see-gate" type="see">
+GitHub's guide uses Sigstore's policy controller at gate 3. A label on the zone switches it on. Tap that label.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Namespace' }, { text: 'metadata:' }, { text: '  name: kedai' }, { text: '  labels:' }, { text: '    pod-security.kubernetes.io/enforce: restricted' }, { text: '    policy.sigstore.dev/include: "true"', target: true }]} prompt="Tap the label that turns on seal checks." success="Yes! Pod Security checks the locks. This label checks the seals." />
+</Card>
+
+<Card id="check" type="check">
+Can this image line point at a different pack tomorrow? Pinned is good. Movable needs work.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'ghcr.io/kedai/shop@sha256:…', good: true, why: 'A digest is the pack’s fingerprint. It cannot move.' }, { text: 'ghcr.io/kedai/shop:latest', good: false, why: 'latest moves with every push.' }, { text: 'ghcr.io/kedai/shop:1.4.0', good: false, why: 'A tag can be moved. A seal check or a digest makes it sure.' }, { text: 'ghcr.io/kedai/shop:1.4.0@sha256:…', good: true, why: 'With both, the digest wins. The tag is just for humans.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how a sealed image reaches the cluster safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+More in World D5's lesson "SBOM, provenance and signing". SLSA lives in Part 2's Pipeline Shields. Kyverno and Gatekeeper can check seals too. Kubernetes signs its own release images with Sigstore. You can check them before you install.
+
+<Interactive name="Mission" id="k6-l09-rep" steps={[{ id: 'attest', text: 'In a public practice repo, attest your image in CI, like Part 2 lesson "SBOM and provenance in CI".' }, { id: 'verify', text: 'Check the seal from your laptop.', command: 'gh attestation verify oci://ghcr.io/YOUR-NAME/YOUR-REPO:main -R YOUR-NAME/YOUR-REPO' }, { id: 'swap', text: 'Push an unsigned build under a new tag. Verify it: no seal found.' }]} success="You can tell a sealed pack from a stranger's." />
+</Card>

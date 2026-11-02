@@ -1,0 +1,69 @@
+---
+id: k8s-k5-l03
+world: 5
+title: VPA dan autoskala node
+summary: "Anda akan belajar: bila pod perlu pinggan lebih besar, dan bila medan selera perlu gerai baharu."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, SortCards, SchedulerTetris]
+needs: [k8s-k5-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: autoscaling workloads", url: "https://kubernetes.io/docs/concepts/workloads/autoscaling/" }
+  - { label: "Kubernetes: node autoscaling", url: "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" }
+  - { label: "Vertical Pod Autoscaler", url: "https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" }
+---
+
+<Card id="hook" type="hook">
+Pod (dulang) pangkalan data anda asyik kehabisan memori. Pangkalan data tak boleh disalin begitu sahaja. Lebih banyak pod tak membantu. Apa yang membantu?
+
+<Interactive name="Choice" options={[{ label: 'Beri pod itu pinggan lebih besar', correct: true, why: 'Lebih memori untuk pod yang sama. Itu skala ke atas, bukan ke luar.' }, { label: 'Tambah 5 lagi pod pangkalan data', why: 'Pangkalan data tak mudah disalin. Mereka tak akan kongsi satu set data.' }, { label: 'Restart setiap jam', why: 'Ia akan kehabisan lagi.' }]} />
+</Card>
+
+<Card id="see-vpa" type="see">
+**<Term id="vpa">VerticalPodAutoscaler</Term>** (VPA) ubah saiz pinggan: requests pod itu. Ia satu add-on, bukan terbina dalam. Susun gelungnya.
+
+<Interactive name="OrderList" items={['Perhati apa yang pod betul-betul guna', 'Cadang saiz request yang lebih sesuai', 'Beri pod saiz itu']} label="Langkah pertama di atas" success="Ya. VPA ubah saiz pod di tempat jika boleh. Jika tidak, ia ganti pod." />
+</Card>
+
+<Card id="try-which" type="try">
+Tiga pembantu. Yang mana sesuai untuk setiap masalah?
+
+<Interactive name="SortCards" buckets={[{ id: 'hpa', label: 'HPA: lebih banyak pod' }, { id: 'vpa', label: 'VPA: pinggan lebih besar' }, { id: 'node', label: 'Node autoscaler: lebih banyak gerai' }]} items={[{ label: 'Barisan makan tengah hari jadi dua kali ganda', bucket: 'hpa', why: 'Ramai pelanggan: salin pod.' }, { label: 'Satu pod pangkalan data asyik kehabisan memori', bucket: 'vpa', why: 'Satu pod perlu ruang lebih, bukan salinan lebih.' }, { label: 'Pod baharu tunggu Pending: tiada gerai ada ruang', bucket: 'node', why: 'Pod okey. Medan selera yang penuh.' }, { label: 'Request 2 CPU, guna sebenar 0.1 CPU', bucket: 'vpa', why: 'Pinggan terlalu besar. Kecilkan request.' }]} success="Siap! Ke luar, ke atas, atau medan selera lebih besar." />
+</Card>
+
+<Card id="try-full" type="try">
+Letak pod di atas node (gerai). Satu tak muat di mana-mana. Pod yang menunggu begitu kejutkan **<Term id="node-autoscaler">node autoscaler</Term>**. Ia buka gerai baharu.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'stall-b', cpu: '2', memory: '4Gi' }]} pods={[{ name: 'tray-1', cpu: '1500m', memory: '1Gi' }, { name: 'tray-2', cpu: '1500m', memory: '1Gi' }, { name: 'tray-3', cpu: '1500m', memory: '1Gi' }]} task={{ type: 'placeAll', pending: ['tray-3'] }} success="tray-3 kekal Pending. Node autoscaler akan tambah gerai untuknya." />
+</Card>
+
+<Card id="check-reads" type="check">
+Macam mana node autoscaler putuskan untuk tambah gerai?
+
+<Interactive name="Choice" options={[{ label: 'Daripada requests pod yang tak dapat dijadualkan', correct: true, why: 'Ia merancang ikut requests, bukan guna sebenar. Request yang jujur jaga bil.' }, { label: 'Daripada carta guna CPU sebenar', why: 'Guna sebenar tak tentukan. Requests pod Pending yang tentukan.' }, { label: 'Daripada bilangan Service', why: 'Service tak perlu gerai. Pod yang perlu.' }]} />
+</Card>
+
+<Card id="check-facts" type="check">
+Betul atau tidak? Asingkan setiap ayat.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Betul' }, { id: 'no', label: 'Tidak betul' }]} items={[{ label: 'Cluster Autoscaler dan Karpenter ialah dua node autoscaler', bucket: 'yes', why: 'Kedua-duanya ditaja kumpulan SIG Autoscaling Kubernetes.' }, { label: 'Node autoscaler bercakap dengan cloud anda untuk tambah mesin', bucket: 'yes', why: 'Gerai ialah mesin sebenar. Seseorang perlu menyewanya.' }, { label: 'kind tambah node sendiri bila pod menunggu', bucket: 'no', why: 'kind ada node yang anda minta semasa anda membinanya.' }, { label: 'VPA terbina dalam setiap kluster', bucket: 'no', why: 'Ia satu add-on. Anda pasang sendiri, dan ia perlu metrics-server.' }]} success="Semua siap!" />
+</Card>
+
+<Card id="predict" type="predict">
+Anda hidupkan HPA dan VPA, kedua-duanya ikut CPU, untuk Deployment yang sama. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Mereka bergaduh: satu tambah pod, satu lagi ubah saiz', correct: true, why: 'Dokumen VPA beri amaran tentang ini. Guna metrik berbeza, atau satu sahaja.' }, { label: 'Mereka bekerjasama dengan sempurna', why: 'Kedua-duanya bertindak pada nombor CPU yang sama. Mereka batalkan satu sama lain.' }, { label: 'Kubernetes tolak yang kedua', why: 'Tiada yang halang anda. Sebab itu anda perlu tahu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih: lebih banyak pod, pinggan lebih besar, atau lebih banyak gerai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sejak Kubernetes 1.35, anda boleh ubah saiz CPU dan memori pod yang sedang berjalan. Mod `InPlaceOrRecreate` dalam VPA guna ciri ini. Jika saiz tak dapat diubah, VPA ganti pod. Untuk barisan dan event, lihat KEDA, satu projek CNCF. Karpenter boleh pilih saiz mesin sendiri. Cluster Autoscaler biasanya besarkan kumpulan mesin yang anda sediakan.
+</Card>

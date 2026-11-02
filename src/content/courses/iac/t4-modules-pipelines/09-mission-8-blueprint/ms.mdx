@@ -1,0 +1,119 @@
+---
+id: iac-t4-m8
+world: 4
+title: "Misi capstone 8: Pelan Kedai Kancil"
+summary: "Anda akan belajar: tulis kaunter web Kedai Kancil sebagai pelan, binanya di Docker sendiri, dan plan dalam pull request."
+minutes: 5
+xp: 100
+interactives: [Choice, Mission, YamlBuilder, MissionCheck]
+needs: [iac-t4-l08]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pasang OpenTofu", url: "https://opentofu.org/docs/intro/install/" }
+  - { label: "Provider Docker (kreuzwerker/docker) di OpenTofu Registry", url: "https://search.opentofu.org/provider/kreuzwerker/docker/latest" }
+  - { label: "Dokumentasi provider Docker (Terraform Registry)", url: "https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs" }
+  - { label: "Dapatkan Docker", url: "https://docs.docker.com/get-started/get-docker/" }
+  - { label: "opentofu/setup-opentofu", url: "https://github.com/opentofu/setup-opentofu" }
+---
+
+<Card id="hook" type="hook">
+Misi 8: tulis kaunter web Kedai Kancil sebagai pelan. Docker di laptop anda sendiri ialah tapak binaan. Apa yang `tofu plan` pertama anda akan tunjuk?
+
+<Interactive name="Choice" options={[{ label: '2 to add: image dan container', correct: true, why: 'Larian sebenar pelan ini kata begitu: Plan: 2 to add.' }, { label: '0 to add: Docker sudah ada nginx', why: 'OpenTofu cuma percaya daftarnya, dan daftar itu bermula kosong.' }, { label: '1 to add: container sahaja', why: 'Image juga satu resource, jadi ia dibina dahulu.' }]} />
+</Card>
+
+<Card id="try-setup" type="try">
+Langkah 1: alat dan folder. Kemudian tulis `providers.tf` (di bawah). Ia guna provider Docker, versi 4.6 atau 4.x yang lebih baharu.
+
+<Interactive name="Mission" id="iac-m8-setup" steps={[{ id: 'tofu', text: 'Pasang OpenTofu 1.13 (pautan dalam Nak tahu lebih). Semak.', command: 'tofu version' }, { id: 'docker', text: 'Hidupkan Docker di laptop. Semak ia menjawab.', command: 'docker info' }, { id: 'folder', text: 'Buat folder projek dan repo Git.', command: 'mkdir kedai-blueprint && cd kedai-blueprint && git init' }, { id: 'providers', text: 'Simpan providers.tf dengan baris di bawah.' }]} success="Alat sedia, folder sedia." />
+
+```hcl
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 4.6"
+    }
+  }
+}
+
+provider "docker" {}
+```
+</Card>
+
+<Card id="try-write" type="try">
+Langkah 2: pelan. Baris mana yang buka kedai pada port 8080 laptop anda?
+
+<Interactive name="Choice" compact options={[{ label: 'external = 8080', correct: true, why: 'external ialah sebelah laptop. internal = 80 ialah nginx di dalam.' }, { label: 'internal = 80', why: 'Itu port di dalam container.' }, { label: 'keep_locally = true', why: 'Itu simpan image selepas destroy.' }]} />
+
+Simpan ini sebagai `main.tf`. Tambah `outputs.tf` juga: `output "url" { value = "http://localhost:8080" }`.
+
+```hcl
+resource "docker_image" "web" {
+  name         = "nginx:1.30-alpine"
+  keep_locally = true
+}
+
+resource "docker_container" "web" {
+  name  = "kedai-kancil-web"
+  image = docker_image.web.image_id
+
+  ports {
+    internal = 80
+    external = 8080
+  }
+}
+```
+</Card>
+
+<Card id="try-build" type="try">
+Langkah 3: bina di laptop anda. Plan dahulu, sentiasa.
+
+<Interactive name="Mission" id="iac-m8-build" steps={[{ id: 'init', text: 'Dapatkan provider Docker. Ia tulis fail lock.', command: 'tofu init' }, { id: 'tidy', text: 'Semak susun atur dan salah taip.', command: 'tofu fmt -check && tofu validate' }, { id: 'plan', text: 'Baca plan: 2 to add, 0 to destroy.', command: 'tofu plan' }, { id: 'apply', text: 'Bina. Taip yes selepas membaca.', command: 'tofu apply' }, { id: 'open', text: 'Buka http://localhost:8080 dalam pelayar. Kedai Kancil sudah dibuka!' }]} success="Dibina dari pelan, di laptop anda sendiri." />
+</Card>
+
+<Card id="try-ci" type="try">
+Langkah 4: workflow plan. Binanya, kemudian simpan sebagai `.github/workflows/plan.yml`.
+
+<Interactive name="YamlBuilder" workflow="Plan" goal={{ order: ['pr', 'read', 'job', 'checkout', 'setup', 'fmt', 'init', 'validate', 'plan'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'Pada pull request ke main', yaml: 'pull_request:\n  branches: [main]', means: 'Plan setiap perubahan yang dicadangkan.' },
+  { id: 'read', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Job cuma baca kod.' },
+  { id: 'job', kind: 'job', label: 'Job: plan', yaml: 'plan:\n  runs-on: ubuntu-latest', means: 'Runner ini sudah ada Docker.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n  with:\n    persist-credentials: false', means: 'Salin pelan, di-pin pada satu commit.' },
+  { id: 'setup', kind: 'step', label: 'Pasang OpenTofu', yaml: '- uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2\n  with:\n    tofu_version: 1.13.5\n    tofu_wrapper: false', means: 'Versi sama seperti laptop anda.' },
+  { id: 'fmt', kind: 'step', label: 'Semak susun atur', yaml: '- run: tofu fmt -check', means: 'Merah jika ada fail perlukan tofu fmt.' },
+  { id: 'init', kind: 'step', label: 'Init', yaml: '- run: tofu init -input=false', means: 'Provider dari fail lock anda.' },
+  { id: 'validate', kind: 'step', label: 'Validate', yaml: '- run: tofu validate', means: 'Tangkap salah taip.' },
+  { id: 'plan', kind: 'step', label: 'Plan', yaml: '- run: tofu plan -input=false', means: 'Tunjuk apa perubahan itu akan buat.' },
+  { id: 'apply', kind: 'step', label: 'Apply', yaml: '- run: tofu apply -auto-approve', means: 'Bina sekarang.', why: 'Misi ini cuma plan dalam CI. Laptop anda yang membina.' }]} success="Itulah plan.yml anda. Simpan dalam .github/workflows/." />
+</Card>
+
+<Card id="try-pr" type="try">
+Langkah 5: push, kemudian buka pull request yang tukar port.
+
+<Interactive name="Mission" id="iac-m8-pr" steps={[{ id: 'ignore', text: 'Jauhkan daftar dan muat turun dari Git.', command: 'printf "*.tfstate\\n*.tfstate.*\\n.terraform/\\n" > .gitignore' }, { id: 'commit', text: 'Commit pelan, fail lock dan workflow.', command: 'git add . && git commit -m "Blueprint Kedai Kancil"' }, { id: 'push', text: 'Buat repo awam kosong bernama kedai-blueprint di GitHub. Push main ke sana (guna nama pengguna anda).', command: 'git remote add origin https://github.com/YOUR-NAME/kedai-blueprint.git && git push -u origin main' }, { id: 'branch', text: 'Di branch baharu, tukar external kepada 8081. Commit dan push.', command: 'git switch -c port-8081' }, { id: 'pr', text: 'Buka pull request. Tunggu semakan plan, kemudian baca log-nya.' }]} success="Pelan anda kini dapat plan pada setiap pull request." />
+</Card>
+
+<Card id="check-api" type="check">
+Biar API awam GitHub sahkan. Taip nama pengguna anda, kemudian semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-blueprint', label: 'Repo kedai-blueprint anda awam' }, { type: 'file', repo: 'kedai-blueprint', path: 'main.tf', label: 'Ia ada main.tf' }, { type: 'file', repo: 'kedai-blueprint', path: '.terraform.lock.hcl', label: 'Ia ada fail lock' }, { type: 'file', repo: 'kedai-blueprint', path: '.github/workflows/plan.yml', label: 'Ia ada workflow plan' }, { type: 'workflowRuns', repo: 'kedai-blueprint', min: 1, label: 'Workflow sudah berjalan sekurang-kurangnya sekali' }, { type: 'pullRequest', repo: '{user}/kedai-blueprint', min: 1, label: 'Anda buka pull request di situ' }]} success="GitHub nampak pelan anda dan semakan plan-nya!" />
+</Card>
+
+<Card id="check-self" type="check">
+API tak nampak semua. Semak ini sendiri, kemudian kemas.
+
+<Interactive name="Mission" id="iac-m8-self" steps={[{ id: 'plan', text: 'Log CI tunjuk plan dengan 2 to add. (CI tiada daftar, jadi ia plan semuanya.)' }, { id: 'state', text: 'terraform.tfstate tiada dalam repo anda. Fail lock ada.' }, { id: 'secret', text: 'Tiada kata laluan atau kunci dalam mana-mana fail.' }, { id: 'destroy', text: 'Robohkan di laptop anda. Baca plan, kemudian yes.', command: 'tofu destroy' }, { id: 'gone', text: 'Semak container itu sudah tiada.', command: 'docker ps -a --filter name=kedai-kancil-web' }]} success="Misi 8 selesai: Kedai Kancil ada pelan dan robot penyemak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis pelan servis sebenar, binanya, dan plan setiap perubahan dalam CI.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keselamatan: laptop anda sendiri sahaja, port 8080 mesti kosong, dan `tofu destroy` di hujung. Pasang OpenTofu: [opentofu.org/docs/intro/install](https://opentofu.org/docs/intro/install/). Dengan kind pula, provider `kubernetes` berfungsi dengan cara sama. Di mana cerita ini tak tepat: CI buat plan dengan daftar kosong. Pasukan sebenar beri CI backend bersama (T3·1), supaya plan-nya sepadan dengan bangunan.
+</Card>

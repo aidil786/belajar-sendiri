@@ -1,0 +1,72 @@
+---
+id: git-w03-l05
+world: 3
+title: Three-way merge
+summary: "You will learn: how Git joins two branches that both moved on."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, GraphPick, Sim, Choice, SortCards]
+needs: [git-w03-l04]
+scenario: w03-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git merge-base", url: "https://git-scm.com/docs/git-merge-base" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git log --oneline --graph --all']} label="The log forks. main has Make heading teal. about has Add about page and Say what I like. Both grow from Add style." />
+
+This time main moved on too. The note can't just slide forward. What will Git do?
+</Card>
+
+<Card id="see-merge" type="see">
+<Interactive name="GraphScene" scenario="w03-l05" commands={['git merge about']} label="A new commit appears on main. Two lines run into it: one from main, one from about." />
+
+Git makes a new **<Term id="merge-commit">merge commit</Term>**. It has two parents, one from each branch. Both stories join here.
+</Card>
+
+<Card id="try-base" type="try">
+Git compares three commits: your tip, their tip, and where they split. That spot is the <Term id="merge-base">merge base</Term>. Find it.
+
+<Interactive name="GraphPick" scenario="w03-l05" answer="^Add style$" prompt="Tap the last commit both branches share." why="Add style is where the two branches split." />
+</Card>
+
+<Card id="see-three" type="see">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git merge about']} label="git merge about prints: Merge made by the 'ort' strategy. Then about.html with 2 new lines." />
+
+Base, yours and theirs: three commits go in. That's a **<Term id="three-way-merge">three-way merge</Term>**. The word ort is the name of Git's merge engine.
+</Card>
+
+<Card id="try-merge" type="try">
+Your turn. You are on main. Merge `about`.
+
+<Interactive name="Sim" scenario="w03-l05" panels={['graph']} goal={{ currentBranch: 'main', mergeCommit: true }} hints={['Type git merge about and press Enter.']} success="Merged! Look at the graph: two lines join into one." />
+
+<Hint>Type `git merge about`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+How many parents does a merge commit have?
+
+<Interactive name="Choice" compact options={[{ label: '2', correct: true, why: 'One from each branch it joins.' }, { label: '1', why: 'Normal commits have one. A merge joins two.' }, { label: '0', why: 'Only the very first commit has no parent.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Fast-forward, or a new merge commit?
+
+<Interactive name="SortCards" buckets={[{ id: 'ff', label: 'Fast-forward' }, { id: 'merge', label: 'Merge commit' }]} items={[{ label: "main didn't change since the branch started", bucket: 'ff', why: 'Nothing new on main, so the note can slide.' }, { label: 'Both branches got new commits', bucket: 'merge', why: 'Two stories need a join.' }, { label: 'You add `--no-ff`', bucket: 'merge', why: '--no-ff always makes a merge commit.' }, { label: 'The branch is just a few commits ahead of main', bucket: 'ff', why: 'main is right behind it. Slide!' }]} success="Sorted! A slide when you can, a join when you must." />
+</Card>
+
+<Card id="win" type="win">
+You can now merge branches that both moved on.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git show` on a merge commit prints a Merge: line with both parents. `git log --merges` lists only merge commits. Git suggests the message Merge branch 'about'. In a real terminal, your editor opens with it ready.
+
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git merge about', 'git show HEAD']} label="git show HEAD on the merge: a Merge line with two short hashes, then the message Merge branch 'about'." />
+</Card>

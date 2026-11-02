@@ -1,0 +1,75 @@
+---
+id: docker-d1-l08
+world: 1
+title: Settings with -e
+summary: "You will learn: to hand a container its settings with -e, and to read what it asks for."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, KitchenSim, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [docker-d1-l07]
+scenario: d1-env
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run: set environment variables", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Overriding container defaults", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/overriding-container-defaults/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-pg" commands={['docker run -d --name db postgres:18-alpine', 'docker ps -a']} label="docker run starts a Postgres box called db. A moment later docker ps -a shows db Exited (1)." />
+
+You start a database box, db. A second later it says `Exited (1)`. Something is missing. But what?
+</Card>
+
+<Card id="try-logs" type="try">
+Ask db why. Read its logs.
+
+<Interactive name="KitchenSim" scenario="d1-env" goal={{ lastTyped: '^docker (container )?logs (.* )?db$' }} hints={['Type docker logs db']} success="db needs POSTGRES_PASSWORD. It won't start without one." />
+
+<Hint>Type `docker logs db`.</Hint>
+</Card>
+
+<Card id="see-e" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run --rm -e NAME=Aina alpine:3.22 printenv NAME']} label="docker run with -e NAME=Aina starts a box. Inside, printenv NAME prints Aina." />
+
+`-e` sticks a note on the lunchbox lid. The note is an **environment variable**: `NAME=Aina` sets NAME to Aina. The app inside reads it.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that gives db its password.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'run', means: 'fill and start a box' }, { text: '-d', means: 'in the background' }, { text: '--name db', means: 'call it db' }, { text: '-e POSTGRES_PASSWORD=secret', means: 'a note: the password is secret' }, { text: 'postgres:18-alpine', means: 'from the Postgres meal pack' }]} decoys={[{ text: '-p POSTGRES_PASSWORD=secret', means: '-p is for hatches, not notes' }]} success="That's the one. The note goes before the meal pack." />
+</Card>
+
+<Card id="try-sim" type="try">
+Fix db. Remove the broken box. Then start a new one with a password.
+
+<Interactive name="KitchenSim" scenario="d1-env" goal={{ running: ['db'], containerEnv: { db: ['POSTGRES_PASSWORD'] } }} hints={['The old db is in the way. Type docker rm db', 'Then: docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine']} success="db is Up. It found its password note." />
+</Card>
+
+<Card id="predict" type="predict">
+You gave db `-e POSTGRES_PASSWORD=secret`. Does the postgres meal pack change?
+
+<Interactive name="Choice" options={[{ label: 'No. Only this box gets the note.', correct: true, why: 'The pack stays frozen. Each new box needs its own -e.' }, { label: 'Yes. Every new box gets it now.', why: 'Notes go on one lid. The pack never changes.' }, { label: 'Yes. Docker saves it into the image.', why: 'Settings live on the box, not in the meal pack.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Will Postgres find its password? Swipe each one.
+
+<Interactive name="SwipeJudge" cards={[{ text: '-e POSTGRES_PASSWORD=secret', good: true, why: 'Name, equals sign, value. Perfect.' }, { text: '-e POSTGRES_PASSWORD = secret', good: false, why: 'No spaces around the = sign.' }, { text: '-e postgres_password=secret', good: false, why: 'Names care about capitals. Postgres looks for POSTGRES_PASSWORD.' }, { text: '--env POSTGRES_PASSWORD=secret', good: true, why: '--env is the long name for -e.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now hand a container its settings with -e.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker inspect -f '{{.Config.Env}}' db` lists every note on a box. Anyone who can run Docker can read them. So keep real passwords out of `-e` on shared machines. World D3 shows safer ways. `-e NAME` with no value copies NAME from your laptop.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l08-rep" steps={[{ id: 'note', text: 'Give a box a note and read it back.', command: 'docker run --rm -e NAME=you alpine:3.22 printenv NAME' }, { id: 'db', text: 'Start Postgres with a practice password.', command: 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine' }, { id: 'logs', text: 'Wait for: ready to accept connections.', command: 'docker logs db' }, { id: 'tidy', text: 'Tidy up.', command: 'docker rm -f db' }]} success="Your first real database box!" />
+</Card>

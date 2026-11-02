@@ -1,0 +1,60 @@
+---
+id: aws-a2-l08
+world: 2
+title: Permission boundary dan SCP
+summary: "Anda akan belajar: dua pagar yang hadkan kunci, dan kenapa pagar tak pernah buka pintu sendiri."
+minutes: 3
+xp: 15
+interactives: [IamJudge, SortCards, SwipeJudge, Choice]
+needs: [aws-a2-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Permissions boundaries", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html" }
+  - { label: "Service control policies (SCPs)", url: "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html" }
+  - { label: "SCP evaluation", url: "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html" }
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+---
+
+<Card id="hook" type="hook">
+Polisi bucket laman itu sendiri kata role CI boleh muat naik. Tetapi role itu ada pagar yang benarkan ECR sahaja. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-site/index.html' }} policies={[{ name: 'kedai-site', kind: 'resource', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111122223333:role/ci-deployer' }, Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-site/*' }] } }, { name: 'ecr-only', kind: 'boundary', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:*', Resource: '*' }] } }]} success="Ditolak. Pagar itu bertahan, walaupun bucket kata ya." />
+</Card>
+
+<Card id="see-sort" type="see">
+Pagar itu ialah **<Term id="permissions-boundary">permissions boundary</Term>**: had paling tinggi untuk satu pengguna atau role. <Term id="scp">SCP</Term> pula pagar sekeliling seluruh akaun. Susun fakta ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'boundary', label: 'Permissions boundary' }, { id: 'scp', label: 'SCP' }]} items={[{ label: 'Pagar sekeliling satu pengguna atau role', bucket: 'boundary', why: 'Dipasang pada orang atau robot itu sendiri.' }, { label: 'Pagar sekeliling seluruh akaun', bucket: 'scp', why: 'Dipasang dalam AWS Organizations, pada akaun atau kumpulan akaun.' }, { label: 'Perlukan AWS Organizations', bucket: 'scp', why: 'Tiada organisasi, tiada SCP.' }, { label: 'Tak hadkan management account', bucket: 'scp', why: 'SCP langkau akaun teratas organisasi.' }, { label: 'Benarkan ketua pasukan buat role dengan selamat', bucket: 'boundary', why: 'Role baru mesti kekal dalam pagar.' }]} success="Satu pagar untuk setiap pemegang kunci, satu pagar untuk setiap akaun." />
+</Card>
+
+<Card id="try-swipe" type="try">
+Pagar menghadkan. Kunci membuka. Betul, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Boundary sahaja sudah benarkan role baca S3.', good: false, why: 'Pagar tak buka apa-apa. Role masih perlukan Allow.' }, { text: 'SCP boleh halang admin dalam akaun ahli.', good: true, why: 'Admin pun tak boleh panjat pagar akaun.' }, { text: 'SCP hadkan management account juga.', good: false, why: 'SCP tak pernah kena pada management account. Jaga ia baik-baik.' }, { text: 'Deny dalam SCP kalahkan setiap Allow di bawahnya.', good: true, why: 'Deny menang, di mana pun ia ditulis.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+SCP organisasi anda benarkan `s3:*`. Aina tiada polisi IAM untuk S3. Boleh dia baca bucket menu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: SCP tak pernah beri apa-apa', correct: true, why: 'Ia cuma kata sejauh mana kunci boleh pergi. Aina masih tiada kunci.' }, { label: 'Ya: SCP benarkan S3', why: 'SCP ialah pagar, bukan kunci. Seseorang masih perlu beri dia Allow.' }, { label: 'Hanya dalam management account', why: 'Kunci datang dari polisi IAM, dalam setiap akaun.' }]} />
+</Card>
+
+<Card id="check-region" type="check">
+Akaun kedai mesti kekal di Region Malaysia. Satu SCP di root menguatkuasakannya. Aina muat naik ke bucket di `us-east-1`. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-backup/today.json', context: { 'aws:RequestedRegion': 'us-east-1' } }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-*' }] } }, { name: 'FullAWSAccess', kind: 'scp', level: 'root', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: '*', Resource: '*' }] } }, { name: 'malaysia-only', kind: 'scp', level: 'root', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: '*', Resource: '*', Condition: { StringNotEquals: { 'aws:RequestedRegion': 'ap-southeast-5' } } }] } }]} success="Ditolak. Pagar akaun simpan semuanya di Malaysia." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan kunci dan pagar, dan ramal bila pagar kata tidak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: kunci besi buka mangganya selamanya. AWS semak setiap permintaan dari awal, terhadap semua kunci dan pagar serentak. Robot pula boleh pinjam kunci untuk beberapa minit sahaja.
+
+SCP sebenar selalunya kecualikan servis global daripada peraturan Region. Baca contoh SCP dalam panduan Organizations sebelum menulisnya.
+</Card>

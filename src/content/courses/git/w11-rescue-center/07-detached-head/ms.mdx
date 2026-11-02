@@ -1,0 +1,59 @@
+---
+id: git-w11-l07
+world: 11
+title: Saya dalam HEAD terlerai
+summary: "Anda akan belajar: cara keluar dari HEAD terlerai tanpa hilang commit."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, Choice, Sim]
+needs: [git-w02-l07]
+scenario: w11-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l07" commands={['git status']} label="git status kata: HEAD detached from satu hash. Nothing to commit, working tree clean." />
+
+Git kata HEAD terlerai (detached). Bunyinya menakutkan! Maksudnya cuma HEAD duduk atas commit (titik simpan), bukan atas branch (cabang). Ini berlaku pada semua orang.
+</Card>
+
+<Card id="see-leave" type="see">
+<Interactive name="GraphScene" scenario="w11-l07" commands={['git switch main']} showLost label="HEAD lompat balik ke main. Commit Try a new title jadi titik putus-putus: tiada branch yang pegang." />
+
+Anda buat commit semasa terlerai. Keluar sekarang, dan ia tertinggal. Tiada branch yang pegang.
+</Card>
+
+<Card id="decide" type="try">
+Anda nak simpan commit itu. Apa yang anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Beri ia branch: git switch -c new-title', correct: true, why: 'Label branch jaga commit itu.' }, { label: 'git switch main terus', why: 'Commit itu akan tertinggal. Label dulu.' }, { label: 'git reset --hard', why: 'Itu padam perubahan. Tak perlu di sini.' }]} />
+</Card>
+
+<Card id="try-keep" type="try">
+Simpan commit anda. Buat branch bernama `new-title`, di sini juga.
+
+<Interactive name="Sim" scenario="w11-l07" panels={['graph']} goal={{ currentBranch: 'new-title', branchAt: { 'new-title': '^Try a new title$' } }} hints={['Taip git switch -c new-title']} success="Selamat! Commit anda tinggal di branch new-title." />
+
+<Hint>Taip `git switch -c new-title`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Cerita baru: anda cuma tengok-tengok. Tiada commit baru. Macam mana nak balik?
+
+<Interactive name="Choice" options={[{ label: 'git switch main', correct: true, why: 'Tiada yang perlu disimpan, jadi balik saja.' }, { label: 'git switch -c main', why: 'main dah wujud. Tukar saja ke situ.' }, { label: 'Tutup terminal', why: 'HEAD kekal terlerai. Guna git switch main.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh keluar dari HEAD terlerai tanpa hilang commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dah keluar, dan commit itu hilang? Reflog ingat. Sejurus selepas keluar, `git branch new-title HEAD@{1}` bawa ia balik. Git juga papar hash commit itu semasa anda keluar. `git branch new-title` dengan hash itu pun boleh.
+</Card>

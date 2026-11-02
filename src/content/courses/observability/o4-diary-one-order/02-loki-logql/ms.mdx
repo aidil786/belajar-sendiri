@@ -1,0 +1,72 @@
+---
+id: obs-o4-l02
+world: 4
+title: "Asas Loki dan LogQL"
+summary: "Anda akan belajar: pilih diari ikut labelnya dan tapis barisnya dengan LogQL."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, CommandBuilder, SpotLines, Mission]
+needs: [obs-o4-l01]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Loki overview", url: "https://grafana.com/docs/loki/latest/get-started/overview/" }
+  - { label: "LogQL: log queries", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+  - { label: "LogQL: metric queries", url: "https://grafana.com/docs/loki/latest/query/metric_queries/" }
+  - { label: "logcli", url: "https://grafana.com/docs/loki/latest/query/logcli/" }
+---
+
+<Card id="hook" type="hook">
+Lima servis simpan lima diari, di lima mesin. Satu bayaran tamat masa entah di mana. Nak mula dari mana?
+
+<Interactive name="Choice" options={[{ label: 'Hantar semua diari ke satu tempat, kemudian tanya sekali', correct: true, why: 'Betul. Satu rak diari, satu soalan.' }, { label: 'Log masuk ke setiap mesin dan cari', why: 'Lambat, dan mesin itu mungkin dah tiada.' }, { label: 'Tunggu pelanggan terangkan', why: 'Mereka cuma tahu ia gagal. Diari tahu kenapa.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="Transcript" title="bash" label="logcli labels senaraikan label app dan service_name. logcli labels app senaraikan kedai-api dan kedai-pay." lines={[{ cmd: 'logcli labels' }, { out: 'app\nservice_name' }, { cmd: 'logcli labels app' }, { out: 'kedai-api\nkedai-pay', color: 'green' }]} />
+
+**<Term id="loki">Loki</Term>** simpan setiap diari di satu rak. Ia indeks label sahaja, contohnya `app`. Bukan setiap perkataan.
+</Card>
+
+<Card id="try-build" type="try">
+Minta baris kedai-api yang ada "timeout". Ketik kepingan mengikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{app="kedai-api"}', means: 'pilih diari ikut labelnya' }, { text: '|=', means: 'simpan baris yang ada…' }, { text: '"timeout"', means: '…teks ini' }]} decoys={[{ text: '!=', means: 'buang baris yang ada teks itu' }]} success="Itulah query LogQL pertama anda." />
+
+<Hint>Kurungan kerinting dulu: ia pilih diari. Kemudian penapis.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+<Interactive name="SpotLines" prompt={'Baris mana yang {app="kedai-api"} | json | level="error" pulangkan?'} lines={[{ text: '{"level":"info","msg":"order received","order_id":"A1042"}' }, { text: '{"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000}', target: true }, { text: '{"level":"info","msg":"order received","order_id":"A1041"}' }, { text: '{"level":"info","msg":"order paid","order_id":"A1040","duration_ms":180}' }]} success={'Betul. | json baca medan; level="error" simpan satu baris.'} />
+
+**<Term id="logql">LogQL</Term>** dibaca macam paip. `| json` tukar medan jadi label. Kemudian anda boleh tapis padanya.
+</Card>
+
+<Card id="check-real" type="check">
+<Interactive name="Transcript" title="bash" label="Loki sebenar pulangkan baris yang sama untuk kedua-dua query: payment timeout untuk pesanan A1041 pada 17:45:22." lines={[{ cmd: 'logcli query --quiet \'{app="kedai-api"} |= "timeout"\'' }, { out: '2026-11-01T17:45:22Z {} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}', color: 'green' }, { cmd: 'logcli query --quiet \'{app="kedai-api"} | json | level="error"\'' }, { out: '2026-11-01T17:45:22Z {} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}', color: 'green' }]} />
+
+Loki 3.7 sebenar setuju: satu baris, dua cara bertanya. Perhatikan `trace_id`nya. Anda akan perlukannya nanti.
+</Card>
+
+<Card id="check-error" type="check">
+```text
+parse error : queries require at least one regexp or equality matcher that does not have an empty-compatible value. For instance, app=~".*" does not meet this requirement, but app=~".+" will
+```
+
+Anda minta `{app=~".*"}`: "semua diari". Loki tolak. Pembetulan mana yang berfungsi?
+
+<Interactive name="Choice" options={[{ label: '{app=~"kedai-.*"}', correct: true, why: 'Betul. Ia tak boleh padan label kosong, jadi Loki tahu nak cari di mana.' }, { label: '{app=~".*"} |= ""', why: 'Pemilih itu sendiri mesti kecilkan pilihan diari dulu.' }, { label: '{}', why: 'Kurungan kosong tak pilih apa-apa. Loki perlukan satu pemadan sebenar.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih diari ikut label dan tapis barisnya dengan LogQL.
+</Card>
+
+<Card id="deeper" type="deeper">
+LogQL boleh mengira juga: `sum by (app) (count_over_time({app=~"kedai-.*"} | json | level=~"error|warn" [10m]))` kira baris bermasalah setiap app. Kekalkan label sedikit dan tetap, contohnya `app`. Jangan letak `order_id` dalam label: setiap nilai buat <Term id="log-stream">log stream</Term> baharu.
+
+<Interactive name="Mission" id="obs-o4-l02-real" steps={[{ id: 'net', text: 'Buat rangkaian kecil untuk percubaan ini.', command: 'docker network create logs-try' }, { id: 'loki', text: 'Mulakan Loki di situ. Tunggu lebih kurang 20 saat.', command: 'docker run -d --name loki-try --network logs-try -p 3100:3100 grafana/loki:3.7.9' }, { id: 'push', text: 'Tolak satu baris diari.', command: 'curl -s -H "Content-Type: application/json" -X POST http://localhost:3100/loki/api/v1/push --data-raw "{\\"streams\\":[{\\"stream\\":{\\"app\\":\\"try\\"},\\"values\\":[[\\"$(date +%s)000000000\\",\\"hello loki\\"]]}]}"' }, { id: 'ask', text: 'Minta semula dengan logcli.', command: 'docker run --rm --network logs-try grafana/logcli:3.7.9 --addr=http://loki-try:3100 query --quiet \'{app="try"}\'' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f loki-try && docker network rm logs-try' }]} success="Anda dah simpan dan jumpa baris log sebenar!" />
+</Card>

@@ -1,0 +1,71 @@
+---
+id: iac-t2-l03
+world: 2
+title: Outputs
+summary: "You will learn: to share built values with outputs, and read them with tofu output."
+minutes: 3
+xp: 15
+interactives: [Choice, TofuSim, CommandBuilder, SwipeJudge]
+needs: [iac-t2-l02]
+scenario: t2-outputs
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: output values", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "tofu output", url: "https://opentofu.org/docs/cli/commands/output/" }
+---
+
+<Card id="hook" type="hook">
+OpenTofu picked a random stall name. The menu printer needs that name. Where does your teammate find it?
+
+<Interactive name="Choice" options={[{ label: 'In an output the blueprint shares after apply', correct: true, why: 'Outputs hand built values to people and scripts.' }, { label: 'By digging in terraform.tfstate', why: 'Possible, but messy. Outputs give a clean answer.' }, { label: 'They guess it', why: 'Random means nobody can guess. Share it.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Build it, then read the outputs: `tofu apply`, `yes`, then `tofu output`.
+
+<Interactive name="TofuSim" scenario="t2-outputs" open="outputs.tf" goal={{ outputExists: ['stall_name'], lastTyped: '^tofu output' }} hints={['Type tofu apply, then yes.', 'Then type tofu output.']} success="stall_name = the name OpenTofu picked. Anyone can read it now." />
+
+An **<Term id="output-value">output</Term>** is a value the blueprint shares after apply.
+</Card>
+
+<Card id="see-raw" type="see">
+A script needs just the name, with no quotes. Build that command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'talk to OpenTofu' }, { text: 'output', means: 'read the outputs' }, { text: '-raw', means: 'only the value, no quotes' }, { text: 'stall_name', means: 'which output' }]} decoys={[{ text: 'apply', means: 'build things' }, { text: '-json', means: 'every output as JSON' }]} success="tofu output -raw stall_name prints only the name." />
+</Card>
+
+<Card id="predict" type="predict">
+You add only a new output block, nothing else. What does the plan say?
+
+<Interactive name="Choice" options={[{ label: '0 to add, 0 to change, 0 to destroy', correct: true, why: 'Nothing real changes. The plan lists it under Changes to Outputs.' }, { label: '1 to add', why: 'An output is not a resource. Nothing gets built.' }, { label: 'Everything is replaced', why: 'Outputs only read values. They never rebuild anything.' }]} />
+</Card>
+
+<Card id="try-add" type="try">
+Open `outputs.tf`. Add the output below. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t2-outputs" open="outputs.tf" goal={{ outputEquals: { sign_filename: 'sign.txt' } }} hints={['Add a new block under the first one, in outputs.tf.', 'output "sign_filename" { value = local_file.sign.filename }', 'Then tofu apply, and yes.']} success="sign_filename = sign.txt. You shared a second value." />
+
+```hcl
+output "sign_filename" {
+  value = local_file.sign.filename
+}
+```
+</Card>
+
+<Card id="check-swipe" type="check">
+A good output or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The stall name, for the menu printer', good: true, why: 'A built value someone needs.' }, { text: 'A file name a script reads', good: true, why: 'tofu output -raw hands it over cleanly.' }, { text: 'The database password, with nothing hiding it', good: false, why: 'Mark secret outputs sensitive = true. They are still in the state (World T3).' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now share built values with outputs.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu output -json` prints every output as JSON for other programs. `sensitive = true` on an output hides it on screen; `tofu output -raw` still shows it. Outputs also pass values out of modules (World T4).
+</Card>

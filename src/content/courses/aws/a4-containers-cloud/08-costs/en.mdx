@@ -1,0 +1,65 @@
+---
+id: aws-a4-l08
+world: 4
+title: "Costs: what eats money"
+summary: "You will learn: what keeps billing while you sleep, which choices save money for a demo, and what to do when the alarm rings."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, IdleBill, Choice, SortCards, SwipeJudge]
+needs: [aws-a4-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Cost Explorer", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" }
+  - { label: "AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "Cost allocation tags", url: "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html" }
+  - { label: "Amazon EC2 data transfer pricing", url: "https://aws.amazon.com/ec2/pricing/on-demand/#Data_Transfer" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Day 1', title: 'Practice', text: 'Aina builds a VPC with NAT, a load balancer and an EKS cluster.' }, { when: 'Day 2', title: 'Done!', text: 'She deletes the pods and closes the laptop.' }, { when: 'Day 30', title: 'The bill', text: 'NAT, load balancer and cluster billed every hour, all month.' }]} />
+
+Empty is not deleted. Tap the story. What still ran after the pods were gone?
+</Card>
+
+<Card id="see-idle" type="see">
+Some parts bill by the hour, busy or idle. Others are free until used. Judge each one.
+
+<Interactive name="IdleBill" items={['natGateway', 'eksCluster', 'loadBalancer', 'elasticIpIdle', 'ecrImages', 'ecsCluster', 'vpc', 'iam']} ordered />
+</Card>
+
+<Card id="see-transfer" type="see">
+Moving data has a price too. **<Term id="data-transfer">Data transfer out</Term>** is the big one. Which direction usually costs?
+
+<Interactive name="Choice" options={[{ label: 'Out of AWS, to the internet', correct: true, why: 'Billed per GB. Big downloads add up. Check the pricing page.' }, { label: 'In from the internet', why: 'Data coming in is usually free. Leaving is what costs.' }, { label: 'Neither, data is free', why: 'Data out and between wings are billed. Watch big files.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+A demo and a real shop need different choices. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'demo', label: 'Fine for a one-day demo' }, { id: 'prod', label: 'Worth paying for in production' }]} items={[{ label: 'One small Fargate task with a public IP', bucket: 'demo', why: 'No NAT, no load balancer. Cheapest way to see it work.' }, { label: 'A load balancer across two wings', bucket: 'prod', why: 'Real shoppers need a spare wing.' }, { label: 'RDS with Multi-AZ', bucket: 'prod', why: 'A standby doubles the database cost. Worth it for real orders.' }, { label: 'ECS instead of an EKS cluster', bucket: 'demo', why: 'No cluster fee. Use EKS when you need Kubernetes.' }]} success="Demo: smallest and simplest. Production: spares where it matters." />
+</Card>
+
+<Card id="predict" type="predict">
+Your budget alarm emails you on day 10: 80% spent. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Open Cost Explorer, find the top service, delete what is unused', correct: true, why: 'Look first, then clean. The biggest line is usually the culprit.' }, { label: 'Close the account at once', why: 'Almost! Closing does not stop every charge right away. Find and delete first.' }, { label: 'Ignore it until month end', why: 'Every hour adds more. Act today.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Money-safe habits, or risky? Swipe right for safe.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tag everything with project=kedai-kancil', good: true, why: 'Cost Explorer can then show what the project costs.' }, { text: 'The free tier covers it, so skip the clean-up', good: false, why: 'Free tier rules change and have limits. Clean up anyway.' }, { text: 'Delete practice resources the same day', good: true, why: 'Hourly things stop billing only when gone.' }, { text: 'Check the bill again the next morning', good: true, why: 'Charges show up with a delay. Make sure it stopped.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now spot what eats money, and act fast when the alarm rings.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a mall bills monthly rent. AWS bills by the hour, second or GB, and the bill arrives late. A quiet unit can still cost money. That is why the budget alarm comes first, and clean-up comes last.
+</Card>

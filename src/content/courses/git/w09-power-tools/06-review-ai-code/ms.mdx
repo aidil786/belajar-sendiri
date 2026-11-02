@@ -1,0 +1,71 @@
+---
+id: git-w09-l06
+world: 9
+title: Semak kod tulisan AI
+summary: "Anda akan belajar: lima tanda bahaya yang perlu dicari sebelum merge kod tulisan AI."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, SwipeJudge, PracticeRepo]
+needs: [git-w09-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About Copilot code review", url: "https://docs.github.com/en/copilot/concepts/agents/code-review" }
+  - { label: "About Copilot coding agent", url: "https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent" }
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+---
+
+<Card id="hook" type="hook">
+AI tulis 40 baris dalam lima saat. Ia pun boleh jalan. Rakan sepasukan anda kata: "Hantar saja!" Anda setuju?
+
+<Interactive name="Choice" options={[{ label: 'Belum. Baca macam kod rakan sepasukan', correct: true, why: 'Kod yang laju tetap perlu disemak dengan teliti.' }, { label: 'Ya, AI itu pandai', why: 'AI boleh salah, dan masih nampak yakin.' }, { label: 'Tanya AI sama ada ia betul', why: 'Ia mungkin kata ya, tapi masih salah.' }]} />
+</Card>
+
+<Card id="see-flags" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Tanda 1', title: 'Rahsia ditaip terus', text: 'Kunci atau kata laluan ada terus dalam kod.' }, { when: 'Tanda 2', title: 'Tiada ujian', text: 'Kod baru, tapi tiada apa yang semak ia berfungsi.' }, { when: 'Tanda 3', title: 'Anda tak boleh terangkan', text: 'Kalau anda tak boleh terangkan satu baris, jangan merge.' }, { when: 'Tanda 4', title: 'Nama rekaan', text: 'Fungsi atau pakej yang sebenarnya tak wujud.' }, { when: 'Tanda 5', title: 'Kod salinan', text: 'Kod dari projek lain mungkin datang dengan syarat lesen.' }]} />
+
+Baca kod AI macam mana-mana pull request. Perhatikan lima **tanda bahaya**. Ketik setiap satu.
+</Card>
+
+<Card id="try-spot" type="try">
+Ini sebahagian perubahan dari AI. Ketik baris yang tak boleh di-merge (cantum) langsung.
+
+<Interactive name="SpotLines" lines={[{ text: '+import { sendMail } from "./mail.js";' }, { text: '+const API_KEY = "fake_demo_key_123";', target: true }, { text: '+export function signUp(email) {' }, { text: '+  return sendMail(email, API_KEY);' }, { text: '+}' }]} prompt="Ketik baris yang tak boleh di-merge langsung." success="Jumpa! Kunci patut duduk dalam secrets, bukan dalam kod." />
+
+<Hint>Cari sesuatu yang patut kekal rahsia.</Hint>
+</Card>
+
+<Card id="try-swipe" type="try">
+Sedia untuk merge, atau perlu baiki? Leret setiap dapatan.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pull request ini tambah ujian untuk fungsi baru', good: true, why: 'Ujian buktikan ia berfungsi, hari ini dan akan datang.' }, { text: 'Baris 12 berfungsi, tapi tiada siapa boleh terangkan', good: false, why: 'Tanya, atau tulis semula. Anda mesti faham apa yang anda merge.' }, { text: 'Satu blok besar sama sebiji dengan projek lain', good: false, why: 'Semak lesennya sebelum anda guna.' }, { text: 'Perubahannya kecil dan buat satu perkara', good: true, why: 'Perubahan kecil mudah disemak dengan baik.' }, { text: 'Ia pasang pakej yang tiada siapa pernah dengar', good: false, why: 'AI boleh reka nama pakej. Pastikan ia wujud dan selamat.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Untuk jumlahkan harga, AI tulis `prices.sum()` dalam JavaScript. Apa yang berlaku bila ia dijalankan?
+
+<Interactive name="Choice" options={[{ label: 'Ralat: array tiada method sum', correct: true, why: 'AI reka nama itu. Semak dokumentasi sebelum percaya.' }, { label: 'Ia jumlahkan semua harga', why: 'Bunyinya betul. Tapi array JavaScript tiada method sum.' }, { label: 'Ia pulangkan 0', why: 'Tak. Ia berhenti dengan ralat: prices.sum is not a function.' }]} />
+</Card>
+
+<Card id="try-review" type="try">
+Giliran anda. Baca fail dalam pull request #14. Kemudian minta perubahan di tab Perbualan.
+
+<Interactive name="PracticeRepo" screen="pull-files" at={14} repo={{ owner: 'aina-codes', name: 'diary', description: 'Laman web diari kecil saya.' }} pulls={[{ number: 14, title: 'Tambah langganan surat berita', body: 'Tambah borang langganan yang e-mel pembaca baru.', author: 'coding-agent', from: 'agent/newsletter', to: 'main', state: 'open', checks: [{ name: 'build', status: 'pass' }], reviews: [{ author: 'ai-review', state: 'commented', body: 'Nampak bagus. Tiada masalah dijumpai.' }], files: [{ path: 'signup.js', diff: ['@@ -0,0 +1,5 @@', '+import { sendMail } from "./mail.js";', '+const API_KEY = "fake_demo_key_123";', '+export function signUp(email) {', '+  return sendMail(email, API_KEY);', '+}'] }] }]} task={{ type: 'requestChanges', pr: 14 }} success="Perubahan diminta. Kunci itu tak sampai ke main." />
+
+<Hint>Buka Perbualan. Tulis apa yang perlu dibaiki, pilih Minta perubahan, kemudian Hantar review.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Semakan AI kata "Tiada masalah dijumpai." Betulkah?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Semakan AI boleh terlepas, jadi manusia tetap semak', correct: true, why: 'Ia sepasang mata tambahan yang berguna. Bukan keputusan akhir.' }, { label: 'Betul. AI dah semak', why: 'Ia terlepas kunci yang jelas di depan mata.' }, { label: 'Betul. Build dah lulus', why: 'Build yang lulus masih boleh bocorkan kunci.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kesan masalah dalam kod tulisan AI sebelum ia dihantar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Layan kod AI macam kod dari rakan sepasukan baru. Baca, jalankan, uji. Copilot ada tetapan yang boleh sekat cadangan yang sama dengan kod awam. Tanya pasukan anda peraturan mana yang terpakai. Orang yang merge kod itu yang bertanggungjawab, bukan AI.
+</Card>

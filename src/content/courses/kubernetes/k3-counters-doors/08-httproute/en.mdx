@@ -1,0 +1,81 @@
+---
+id: k8s-k3-l08
+world: 3
+title: "HTTPRoute: signboards to stalls"
+summary: "You will learn: to send each path to the right Service with HTTPRoute rules."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, YamlDoctor, RequestTracer, SortCards, Mission]
+needs: [k8s-k3-l07]
+scenario: k3-routes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Gateway API: HTTPRoute", url: "https://gateway-api.sigs.k8s.io/api-types/httproute/" }
+  - { label: "Gateway API: HTTP routing guide", url: "https://gateway-api.sigs.k8s.io/guides/http-routing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-routes" commands={['curl -s http://172.18.0.200/api/menu']} label="curl asks the entrance for /api/menu. The shop's nginx answers 404 Not Found." />
+
+The menu API lives at `/api`. But every order lands at the shop counter. The shop has no `/api/menu`, so it says 404.
+</Card>
+
+<Card id="see-match" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'An order arrives', text: 'GET /api/menu reaches the entrance.' }, { when: '2', title: 'Read the signs', text: 'One sign says / goes to shop. Another says /api goes to api.' }, { when: '3', title: 'Most specific wins', text: '/api is longer than /, so the /api sign wins.' }, { when: '4', title: 'Served', text: 'The api Service gets the order.' }]} />
+
+An **<Term id="httproute">HTTPRoute</Term>** holds the signboards. Each rule is a path, then a Service. The most specific sign wins.
+</Card>
+
+<Card id="try-routes" type="try">
+`routes.yaml` adds this sign. Apply it, then ask for `/api/menu` again.
+
+```yaml
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: api
+          port: 80
+```
+
+<Interactive name="FoodCourtSim" scenario="k3-routes" goal={{ reachable: { url: 'http://172.18.0.200/api/menu', contains: 'nasi lemak' } }} hints={['Type kubectl apply -f routes.yaml', 'Then type curl -s http://172.18.0.200/api/menu']} success="nasi lemak ready! The /api sign sends orders to the api." />
+</Card>
+
+<Card id="check-doctor" type="check">
+Mei wrote her own /api sign. It won't apply. Fix it.
+
+<Interactive name="YamlDoctor" file="route.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: api\n      backendRefs:\n        - name: api\n          port: 80\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} keep={['name: kedai-api', 'name: api']} hint="Paths start at the root, with a slash." success="Applied! Every path starts with /." />
+
+Plain words: a path must start with `/`.
+</Card>
+
+<Card id="predict-500" type="predict">
+Which mistake makes the entrance answer 500? Try the breaks, one at a time.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/api', service: 'api', port: 80 }, { path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 8080, selector: { app: 'api' } }, { name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'api-6d8f7b9c5d-k2x8p', labels: { app: 'api' }, containerPort: 8080 }, { name: 'api-6d8f7b9c5d-w9q4z', labels: { app: 'api' }, containerPort: 8080 }, { name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/api/menu' } }} breaks={['path', 'listener', 'serviceName']} task={{ type: 'outcome', want: '500' }} />
+
+<Hint>A sign that points to a Service that doesn't exist.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Two signs: `PathPrefix /api` and `PathPrefix /`. Where does each order go?
+
+<Interactive name="SortCards" buckets={[{ id: 'api', label: '/api sign: api' }, { id: 'shop', label: '/ sign: shop' }]} items={[{ label: '/api', bucket: 'api', why: 'An exact hit on the /api sign.' }, { label: '/api/menu', bucket: 'api', why: '/api plus more parts: the /api sign wins.' }, { label: '/apiary', bucket: 'shop', why: 'PathPrefix matches whole parts. /apiary is not /api/…' }, { label: '/', bucket: 'shop', why: 'Only the / sign matches.' }, { label: '/menu', bucket: 'shop', why: 'Only the / sign matches.' }]} success="Right! Whole parts, and the longest sign wins." />
+</Card>
+
+<Card id="win" type="win">
+You can now send each path to the right Service.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rules can also match hostnames and headers. Two `backendRefs` with weights, like 90 and 10, make a canary. Filters can redirect HTTP to HTTPS. `kubectl describe httproute` shows `ResolvedRefs`: a missing Service shows `BackendNotFound`.
+
+Real rep (optional), on your kind cluster with a Gateway controller:
+
+<Interactive name="Mission" id="k3-l08-rep" steps={[{ id: 'two', text: 'Run two small apps, each with a Service.' }, { id: 'rule', text: 'Write one HTTPRoute with a / rule and an /api rule.' }, { id: 'try', text: 'curl / and /api/menu. Each should reach its own app.' }, { id: 'check', text: 'Read the route’s conditions.', command: 'kubectl describe httproute' }]} success="Your signboards point the right way!" />
+</Card>

@@ -1,0 +1,65 @@
+---
+id: k8s-k6-l08
+world: 6
+title: "Audit logs"
+summary: "You will learn: to find out who did what in your cluster, and how much the logbook should write."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k6-l07]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Auditing", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/" }
+  - { label: "Audit annotations", url: "https://kubernetes.io/docs/reference/labels-annotations-taints/audit-annotations/" }
+  - { label: "Audit event API (audit.k8s.io/v1)", url: "https://kubernetes.io/docs/reference/config-api/apiserver-audit.v1/" }
+---
+
+<Card id="hook" type="hook">
+Friday, 3 a.m.: someone deleted the shop Deployment. Who did it?
+
+<Interactive name="Choice" options={[{ label: 'Read the audit log', correct: true, why: "The guard's logbook says who asked, for what, and when." }, { label: 'Run kubectl get events', why: 'Events say what happened to objects, not who asked. By default they vanish after an hour.' }, { label: 'Ask in the team chat', why: 'Maybe. A logbook never forgets and never feels shy.' }]} />
+</Card>
+
+<Card id="see-event" type="see">
+An **<Term id="audit-log">audit log</Term>** is the guard's logbook. Every request becomes one event. Here is one, trimmed. Tap the line that says who.
+
+<Interactive name="SpotLines" lines={[{ text: '"level": "Metadata",' }, { text: '"stage": "ResponseComplete",' }, { text: '"verb": "delete",' }, { text: '"user": { "username": "mei@kedai.example", "groups": ["devs", "system:authenticated"] },', target: true }, { text: '"objectRef": { "resource": "deployments", "namespace": "shop", "name": "shop", "apiGroup": "apps" },' }, { text: '"responseStatus": { "code": 200 },' }, { text: '"annotations": { "authorization.k8s.io/decision": "allow" }' }]} prompt="Tap the line that says who did it." success="Mei, from the devs group. Gate 2 allowed it." />
+</Card>
+
+<Card id="try-order" type="try">
+Each rule in the audit policy picks a level: how much the guard writes. Put the levels from least to most.
+
+<Interactive name="OrderList" items={['None: write nothing', 'Metadata: who, what, when', 'Request: also what was sent', 'RequestResponse: also what came back']} label="Least detail at the top" success="That's the ladder. More detail, bigger logs." />
+</Card>
+
+<Card id="try-sort" type="try">
+Pick a level for each kind of request.
+
+<Interactive name="SortCards" buckets={[{ id: 'meta', label: 'Metadata' }, { id: 'full', label: 'RequestResponse' }, { id: 'none', label: 'None' }]} items={[{ label: 'Anything about Secrets', bucket: 'meta', why: 'A body would copy the secret into the log.' }, { label: 'Changes to pods in your app zone', bucket: 'full', why: 'You want the full story of what changed.' }, { label: 'Constant health checks on /healthz', bucket: 'none', why: 'Thousands of boring lines. Skip them.' }]} success="Sorted! Who for secrets, everything for changes, nothing for noise." />
+</Card>
+
+<Card id="predict" type="predict">
+Your policy logs Secrets at RequestResponse. What did you just do?
+
+<Interactive name="Choice" options={[{ label: 'Copied every secret into the log file', correct: true, why: 'The body of a Secret is the secret. Use Metadata for Secrets.' }, { label: 'Made Secrets safer', why: 'Now the secret lives in two places. That is less safe.' }, { label: 'Nothing: Secrets are never logged', why: 'They are, if your policy says so.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good logbook habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ship audit logs off the cluster to safe storage', good: true, why: 'A thief with admin rights could edit a log on the node.' }, { text: 'Start the API server with no audit policy file', good: false, why: 'No policy file means no events at all.' }, { text: "On managed Kubernetes, switch on the provider's control plane logs", good: true, why: 'You cannot reach the API server there. The provider writes the log.' }, { text: 'Log every request at RequestResponse', good: false, why: 'Huge logs, with secrets inside. Pick a level per rule.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read the guard's logbook, and choose what it writes.
+</Card>
+
+<Card id="deeper" type="deeper">
+The API server needs `--audit-policy-file` and `--audit-log-path`. Without a policy file, nothing is logged. Pod Security adds notes too, like `pod-security.kubernetes.io/audit-violations`. kind can turn auditing on with a little extra config. Its docs have an Auditing page.
+
+<Interactive name="Mission" id="k6-l08-rep" steps={[{ id: 'docs', text: 'Read the Kubernetes Auditing page. Find the example policy.' }, { id: 'cluster', text: 'Make a throwaway kind cluster with auditing on. Follow the Auditing page in the kind docs.' }, { id: 'act', text: 'Delete a test pod.', command: 'kubectl run audit-me --image=nginx:1.29-alpine && kubectl delete pod audit-me' }, { id: 'find', text: 'Find the delete event in the log. Who, what, when?' }]} success="You read a real logbook!" />
+</Card>

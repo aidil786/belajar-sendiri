@@ -1,0 +1,74 @@
+---
+id: docker-d2-l13
+world: 2
+title: "amd64 atau arm64? buildx"
+summary: "Anda akan belajar: kenapa pek boleh gagal pada CPU lain, dan cara buildx bakar untuk dua sekali gus."
+minutes: 4
+xp: 20
+interactives: [Transcript, SortCards, CommandBuilder, Choice, KitchenSim, Mission]
+needs: [docker-d2-l12]
+scenario: d2-l13
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Multi-platform builds", url: "https://docs.docker.com/build/building/multi-platform/" }
+  - { label: "docker buildx build", url: "https://docs.docker.com/reference/cli/docker/buildx/build/" }
+  - { label: "docker image ls (--tree)", url: "https://docs.docker.com/reference/cli/docker/image/ls/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Pada komputer amd64, menjalankan versi arm64 hello:1.0 gagal: exec /bin/cat: exec format error." lines={[{ cmd: 'docker run --rm --platform linux/arm64 hello:1.0' }, { out: 'exec /bin/cat: exec format error', color: 'red' }]} />
+
+Aina bakar pek itu di Mac yang guna cip Apple. Server pula guna cip Intel. Ia terus berhenti. Ralat sebenar: `exec format error`. Maksudnya: dimasak untuk jenis CPU lain.
+</Card>
+
+<Card id="try-sort" type="try">
+Setiap image dibina untuk satu **<Term id="platform">platform</Term>**: satu OS dan satu jenis CPU. CPU mana yang ada pada setiap mesin?
+
+<Interactive name="SortCards" buckets={[{ id: 'amd', label: 'amd64 (Intel, AMD)' }, { id: 'arm', label: 'arm64' }]} items={[{ label: 'Kebanyakan laptop Windows', bucket: 'amd', why: 'Kebanyakan PC guna cip Intel atau AMD.' }, { label: 'Mac dengan cip Apple (M1 dan lebih baharu)', bucket: 'arm', why: 'Cip Apple ialah arm64.' }, { label: 'Raspberry Pi 5', bucket: 'arm', why: 'Cipnya arm64.' }, { label: 'Runner ubuntu-latest GitHub', bucket: 'amd', why: 'Ia jalan atas mesin x64 (amd64).' }, { label: 'Server AWS Graviton', bucket: 'arm', why: 'Cip Graviton ialah arm64.' }]} success="Dua keluarga besar. Pek anda mesti padan dengan mesin." />
+</Card>
+
+<Card id="see-buildx" type="see">
+<Interactive name="Transcript" title="bash" label="docker buildx build untuk linux/amd64 dan linux/arm64. Setiap langkah jalan dua kali, sekali untuk setiap platform, kemudian satu nama diberi kepada kedua-duanya." lines={[{ cmd: 'docker buildx build --platform linux/amd64,linux/arm64 -t hello:1.0 .' }, { out: '[+] Building 1.9s (10/10) FINISHED                               docker:default\n => [linux/amd64 1/2] FROM docker.io/library/alpine:3.22@sha256:2e0b81d60  0.3s\n => [linux/arm64 1/2] FROM docker.io/library/alpine:3.22@sha256:2e0b81d60  0.4s\n => [linux/amd64 2/2] COPY hello.txt /hello.txt                            0.0s\n => [linux/arm64 2/2] COPY hello.txt /hello.txt                            0.0s\n => exporting to image                                                     0.2s' }]} />
+
+`buildx` bakar untuk dua platform sekali gus. Setiap langkah jalan dua kali, sekali untuk setiap CPU. Kedua-dua pek kongsi satu nama.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang bakar `hello:1.0` untuk kedua-dua keluarga CPU.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker buildx build', means: 'bakar dengan buildx' }, { text: '--platform linux/amd64,linux/arm64', means: 'untuk kedua-dua keluarga CPU' }, { text: '-t hello:1.0', means: 'satu nama untuk kedua-duanya' }, { text: '.', means: 'folder ini' }]} decoys={[{ text: '-p 8080:80', means: '-p buka tingkap semasa berjalan, bukan semasa build' }]} success="Satu arahan, dua pek, satu nama." />
+</Card>
+
+<Card id="predict" type="predict">
+`hello:1.0` kini ada dua pek di dalamnya. Sebuah Raspberry Pi pull image itu. Apa yang ia dapat?
+
+<Interactive name="Choice" options={[{ label: 'Pek arm64, dipilih sendiri', correct: true, why: 'Docker baca senarai di dalam image dan ambil yang sesuai dengan CPUnya.' }, { label: 'Pek amd64, dan ia gagal', why: 'Tak perlu gagal. Senarai itu ada pek arm64 juga.' }, { label: 'Kedua-dua pek, dua kali ganda muat turun', why: 'Ia muat turun yang boleh dijalankan sahaja.' }]} />
+</Card>
+
+<Card id="check-tree" type="check">
+<Interactive name="Transcript" title="bash" label="docker images --tree tunjuk hello:1.0 dengan dua pek di dalam: linux/amd64 dan linux/arm64." lines={[{ cmd: 'docker images --tree hello' }, { out: 'IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA\nhello:1.0            31ab2ae30f0b       16.9MB         7.93MB\n├─ linux/amd64       7ce15f9d7cf4       12.8MB          3.8MB\n└─ linux/arm64       7c100815fc45       4.13MB         4.13MB' }]} />
+
+`docker images --tree` tunjuk satu nama dengan dua pek di dalam. Senarai itu dipanggil image index.
+</Card>
+
+<Card id="try-amd" type="try">
+Laptop latihan anda amd64. Bina untuknya dengan sengaja sebagai `hello:amd64`, kemudian jalankan.
+
+<Interactive name="KitchenSim" scenario="d2-l13" goal={{ imageExists: 'hello:amd64', lastTyped: '^docker run\\b.*hello:amd64' }} hints={['Taip docker build --platform linux/amd64 -t hello:amd64 .', 'Kemudian docker run --rm hello:amd64']} success="CPU padan, pek pun gembira." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina image untuk amd64 dan arm64.
+</Card>
+
+<Card id="deeper" type="deeper">
+Untuk jalankan langkah bagi CPU lain, Docker boleh guna emulator bernama QEMU. Ia perlahan, jadi pasukan besar selalu bina setiap platform di mesinnya sendiri.
+
+Di mana cerita ini tak tepat: tukang masak dapat kek sama dari resepi sama. Dockerfile mungkin tidak. `RUN apk add curl` boleh ambil curl yang lebih baharu bulan depan. Tetapkan versi untuk kekalkan rasa.
+
+<Interactive name="Mission" id="d2-l13-rep" steps={[{ id: 'arch', text: 'Semak jenis CPU anda sendiri.', command: 'docker version --format "{{.Server.Arch}}"' }, { id: 'build', text: 'Bina mana-mana projek kecil untuk kedua-dua platform.', command: 'docker buildx build --platform linux/amd64,linux/arm64 -t hello:1.0 .' }, { id: 'tree', text: 'Tengok kedua-dua pek.', command: 'docker images --tree hello' }]} success="Satu nama, dua CPU, semuanya milik anda." />
+</Card>

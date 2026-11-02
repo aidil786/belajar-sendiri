@@ -1,0 +1,67 @@
+---
+id: aws-a1-l04
+world: 1
+title: Pengguna root, MFA dan keselamatan akaun
+summary: "Anda akan belajar: kenapa pengguna root mesti disimpan, dan cara MFA menjaganya."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, SortCards, SwipeJudge, Mission]
+needs: [aws-a1-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS account root user", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html" }
+  - { label: "Root user best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html" }
+  - { label: "MFA for the root user", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-mfa-for-root.html" }
+---
+
+<Card id="hook" type="hook">
+Pusat beli-belah beri anda satu kunci induk. Ia buka unit, peti besi dan bil anda. Di mana patut ia disimpan?
+
+<Interactive name="Choice" options={[{ label: 'Dikunci, guna untuk kerja yang jarang sahaja', correct: true, why: 'Kunci yang buka semua patut hampir tak pernah keluar dari laci.' }, { label: 'Di gugusan kunci, untuk guna setiap hari', why: 'Hilang sekali, dan orang lain miliki semuanya.' }, { label: 'Disalin untuk setiap staf', why: 'Lebih banyak salinan, lebih banyak cara untuk hilang.' }]} />
+</Card>
+
+<Card id="see-root" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Daftar', title: 'Kunci induk dibuat', text: 'Emel dan kata laluan anda jadi pengguna root.' }, { when: 'Log masuk pertama', title: 'Tambah MFA', text: 'AWS wajibkan MFA untuk root. Anda dapat 14 hari, paling lama.' }, { when: 'Hari yang sama', title: 'Buat admin harian', text: 'Log masuk berasingan untuk kerja harian. Pelajaran 6 tunjuk caranya.' }, { when: 'Selepas itu', title: 'Simpan root', text: 'Guna hanya untuk beberapa kerja yang memerlukannya.' }]} />
+
+**<Term id="root-user">Pengguna root</Term>** ialah kunci induk itu. Ketik setiap langkah hari pertama.
+</Card>
+
+<Card id="see-mfa" type="see">
+**<Term id="mfa">MFA (pengesahan pelbagai faktor)</Term>** tambah kunci kedua. Selepas kata laluan, anda tunjuk sesuatu yang anda pegang. Kunci kedua mana AWS paling suka?
+
+<Interactive name="Choice" options={[{ label: 'Passkey atau kunci keselamatan', correct: true, why: 'AWS syorkan ini. Laman log masuk palsu tak boleh menipunya.' }, { label: 'Kata laluan kedua yang lebih panjang', why: 'Dua kata laluan masih satu jenis kunci.' }, { label: 'Kata laluan sama, ditaip dua kali', why: 'Sesiapa yang tahu boleh taip dua kali.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Hanya beberapa kerja perlukan kunci induk. Susun setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'root', label: 'Pengguna root sahaja' }, { id: 'admin', label: 'Admin harian anda' }]} items={[{ label: 'Tutup akaun', bucket: 'root', why: 'Akaun berdiri sendiri perlukan root untuk ditutup.' }, { label: 'Tukar emel atau kata laluan root', bucket: 'root', why: 'Hanya kunci induk boleh tukar dirinya sendiri.' }, { label: 'Benarkan pengguna IAM lihat bil', bucket: 'root', why: 'Root hidupkan akses bil, sekali sahaja.' }, { label: 'Cipta penggera bajet', bucket: 'admin', why: 'Bila akses bil sudah hidup, admin boleh buat.' }, { label: 'Mulakan server kecil', bucket: 'admin', why: 'Kerja bina harian tak perlukan root.' }, { label: 'Buat log masuk untuk rakan sepasukan', bucket: 'admin', why: 'Admin boleh beri kunci.' }]} success="Root buat kerja yang jarang. Yang lain guna admin anda." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda mahu guna baris arahan AWS sebagai root. Patutkah anda buat access key untuk root?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Jangan sekali-kali buat access key root.', correct: true, why: 'Kunci root yang dicuri buka semuanya. Guna log masuk jangka pendek.' }, { label: 'Ya, tapi simpan dalam fail teks', why: 'Fail boleh disalin, diselaraskan dan dikongsi. Bukan untuk root.' }, { label: 'Ya, semua orang buat', why: 'AWS sangat tidak menggalakkannya.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Tabiat selamat, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Guna emel pasukan yang dikongsi untuk pengguna root.', good: true, why: 'Sentiasa ada orang yang boleh baca mesej AWS.' }, { text: 'Daftar dua peranti MFA, disimpan berasingan.', good: true, why: 'Hilang satu, yang satu lagi masih jalan.' }, { text: 'Hantar kata laluan root dalam sembang pasukan.', good: false, why: 'Sembang boleh disalin. Jangan kongsi dengan yang tak perlu.' }, { text: 'Log masuk sebagai root setiap hari untuk semak bil.', good: false, why: 'Beri admin anda akses bil.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan pengguna root di sebalik MFA.
+</Card>
+
+<Card id="deeper" type="deeper">
+Anda boleh daftar sehingga lapan peranti MFA untuk root. Pastikan emel dan nombor telefon akaun terkini: itulah cara anda pulihkan MFA yang hilang.
+
+Latihan sebenar (hanya kalau anda sudah ada akaun AWS; tiada sumber, tiada kos):
+
+<Interactive name="Mission" id="aws-a1-l04-rep" steps={[{ id: 'sign', text: 'Log masuk sebagai pengguna root, sekali.' }, { id: 'mfa', text: 'Tambah passkey atau kunci keselamatan sebagai MFA.' }, { id: 'mfa2', text: 'Tambah peranti MFA kedua, disimpan di tempat lain.' }, { id: 'billing', text: 'Hidupkan akses IAM kepada maklumat bil (tetapan akaun).' }, { id: 'keys', text: 'Pastikan root tiada access key. Padam kalau ada.' }, { id: 'out', text: 'Log keluar. Simpan kata laluan dalam pengurus kata laluan.' }]} success="Kunci induk sudah disimpan." />
+</Card>

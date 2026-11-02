@@ -1,0 +1,61 @@
+---
+id: git-w07-l10
+world: 7
+title: Kemas kini Dependabot
+summary: "Anda akan belajar: cara Dependabot pastikan pakej dan action anda sentiasa terkini."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, TermReplay, SpotLines, Choice, SortCards]
+scenario: w07-l10
+needs: [git-w07-l09]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Configuring Dependabot version updates", url: "https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuring-dependabot-version-updates" }
+  - { label: "Dependabot options reference", url: "https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="pulls" repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 15, title: 'Bump some-dev/tool from 2.1.0 to 2.2.0', body: 'Bumps some-dev/tool from 2.1.0 to 2.2.0.', author: 'dependabot', from: 'dependabot/github_actions/some-dev/tool-2.2.0', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }, { number: 14, title: 'Bump example-date-lib from 1.0.3 to 1.2.0', body: 'Bumps example-date-lib from 1.0.3 to 1.2.0.', author: 'dependabot', from: 'dependabot/npm_and_yarn/example-date-lib-1.2.0', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }]} />
+
+Pagi Isnin. Dua pull request muncul semalaman. Anda tak buka pun. Robot yang buka. Robot mana?
+</Card>
+
+<Card id="see-version" type="see">
+<Interactive name="TermReplay" scenario="w07-l10" commands={['cat .github/dependabot.yml']} label="cat .github/dependabot.yml: version 2, kemudian dua kemas kini, npm dan github-actions, kedua-duanya di folder akar, setiap minggu." />
+
+Itulah **<Term id="dependabot">Dependabot</Term>**. Version updates (kemas kini versi) pastikan pakej sentiasa baru, walaupun tiada lubang. Anda hidupkan dengan satu fail: `.github/dependabot.yml`.
+</Card>
+
+<Card id="try-spot" type="try">
+Baris mana yang pastikan action workflow anda terkini? Ketik baris itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'version: 2' }, { text: 'updates:' }, { text: '  - package-ecosystem: "npm"' }, { text: '    directory: "/"' }, { text: '  - package-ecosystem: "github-actions"', target: true }, { text: '    directory: "/"' }, { text: '    schedule:' }, { text: '      interval: "weekly"' }]} prompt="Ketik baris untuk action workflow anda." success="Ya! Dependabot kini semak setiap baris uses:." />
+</Card>
+
+<Card id="see-pins" type="see">
+Ingat SHA yang disematkan? Dependabot kemas kini itu juga. Satu action yang disematkan dapat versi baru. Apa yang pull request Dependabot ubah?
+
+<Interactive name="Choice" options={[{ label: 'SHA dan komen versi, serentak', correct: true, why: 'Ia alihkan pin dan pastikan komen itu tepat.' }, { label: 'Komen sahaja', why: 'Komen untuk manusia. SHA yang berjalan, jadi itu berubah juga.' }, { label: 'Tiada apa. Pin beku selamanya.', why: 'Dependabot buka PR untuk alihkan pin. Anda yang putuskan.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Amaran keselamatan (Dunia 8) atau version update? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'alert', label: 'Amaran keselamatan' }, { id: 'version', label: 'Version update' }]} items={[{ label: 'Pakej yang anda guna ada lubang yang diketahui', bucket: 'alert', why: 'Amaran adalah tentang lubang keselamatan.' }, { label: 'Versi lebih baru dah keluar. Tiada yang rosak.', bucket: 'version', why: 'Version update pastikan anda terkini, ada lubang atau tidak.' }, { label: 'Dihidupkan oleh .github/dependabot.yml', bucket: 'version', why: 'Fail itu sediakan version update.' }, { label: 'Datang dari GitHub Advisory Database', bucket: 'alert', why: 'Senarai besar lubang itu yang suap amaran.' }]} success="Siap! Amaran memberi amaran. Version update menyegarkan." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu pull request Dependabot buat CI anda gagal. Apa sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Jangan merge. Cari apa yang versi baru itu rosakkan.', correct: true, why: 'CI baru selamatkan anda. Baca log, kemudian baiki atau tunggu.' }, { label: 'Merge sahaja. Yang baru sentiasa lebih baik.', why: 'Tidak kalau ia rosakkan laman anda. ✗ itu amaran.' }, { label: 'Padam dependabot.yml', why: 'Nanti anda terlepas setiap kemas kini akan datang. Baiki yang ini.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar Dependabot pastikan projek anda terkini.
+</Card>
+
+<Card id="deeper" type="deeper">
+`interval` boleh jadi daily, weekly, monthly dan lain-lain. Version update tengok branch lalai anda. Terlalu banyak PR kecil? `groups:` himpunkan banyak kemas kini dalam satu PR. PR Dependabot jalankan CI anda, sama macam PR kawan sepasukan.
+</Card>

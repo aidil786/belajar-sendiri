@@ -1,0 +1,65 @@
+---
+id: git-w07-l07
+world: 7
+title: Semakan status dan lencana
+summary: "Anda akan belajar: cara semakan jaga branch main, dan cara lencana menunjukkannya."
+minutes: 3
+xp: 15
+interactives: [Choice, PracticeRepo, MarkdownPlayground]
+needs: [git-w07-l06]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About status checks", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks" }
+  - { label: "Adding a workflow status badge", url: "https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge" }
+  - { label: "Available rules for rulesets", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets" }
+---
+
+<Card id="hook" type="hook">
+Pull request Mei tunjuk ✗ merah di sebelah "CI / test". Butang merge masih boleh ditekan. Apa patut anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Merge sahaja. Butang itu jalan.', why: 'Butang itu jalan, tapi ✗ itu tanda ada yang rosak.' }, { label: 'Cari tahu apa yang gagal dulu', correct: true, why: '✗ itu satu mesej. Baca sebelum merge.' }, { label: 'Tutup pull request itu', why: 'Tak perlu. Baiki, push semula, dan semakan berjalan lagi.' }]} />
+</Card>
+
+<Card id="see-check" type="see">
+✗ itu ialah **<Term id="status-check">status check</Term>** (semakan status). Setiap job workflow laporkan satu: lulus, gagal, atau masih berjalan. Cari sebab yang ini gagal. Ketik langkah yang ada ✗.
+
+<Interactive name="PracticeRepo" screen="run" at={52} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 52, workflow: 'CI', event: 'pull_request', branch: 'contact-page', status: 'fail', jobs: [{ name: 'test', steps: [{ name: 'Ambil kod', status: 'pass', log: ['Repo disalin ke runner.'] }, { name: 'Pasang pakej', status: 'pass', log: ['npm ci', 'Semua pakej dipasang.'] }, { name: 'Jalankan ujian', status: 'fail', log: ['npm test', 'FAIL contact.test.js', 'Expected the title "Contact"', 'Received "Contcat"', 'Error: Process completed with exit code 1.'] }] }] }]} task={{ type: 'findFailingStep', run: 52 }} />
+</Card>
+
+<Card id="predict" type="predict">
+Pasukan boleh jadikan semakan sebagai peraturan. Peraturan itu hidup, dan satu semakan gagal. Anda tekan merge. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'GitHub sekat merge itu', correct: true, why: 'Peraturan itu jaga main sampai setiap semakan wajib lulus.' }, { label: 'Ia merge dengan amaran', why: 'Tanpa peraturan, ya. Dengan peraturan, merge disekat.' }, { label: 'GitHub baiki ujian yang gagal', why: 'GitHub cuma menyekat. Anda baiki ujian, kemudian push semula.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+Jadikan ia peraturan untuk `main`. Hidupkan suis yang wajibkan semakan lulus.
+
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'aina-codes', name: 'diary' }} settings={{ rules: [{ id: 'requireReview', label: 'Wajibkan satu review yang meluluskan', on: false }, { id: 'requireChecks', label: 'Wajibkan status check lulus sebelum merge', on: false }] }} task={{ type: 'toggleRule', rule: 'requireChecks', on: true }} success="Siap! Kini main hanya terima perubahan yang ada ✓." />
+</Card>
+
+<Card id="try-badge" type="try">
+**<Term id="badge">Status badge</Term>** (lencana status) ialah papan tanda kecil dalam README. Ia tunjuk sama ada workflow anda lulus. Tambah satu `!` sebelum `[CI]`. Pautan itu jadi gambar.
+
+<Interactive name="MarkdownPlayground" initial={'# My Diary\n\n[CI](https://github.com/aina-codes/diary/actions/workflows/ci.yml/badge.svg)\n\nA tiny diary website.\n'} prompt="Tukar pautan itu jadi gambar lencana." goal={{ mustMatch: ['^!\\[CI\\]\\(https://github\\.com/aina-codes/diary/actions/workflows/ci\\.yml/badge\\.svg\\)'], hint: ['Taip ! betul-betul sebelum [CI], tanpa ruang.'] }} success="Lencana ditambah! Pelawat terus nampak CI lulus." />
+
+<Hint>Gambar dalam Markdown nampak macam pautan dengan `!` di depan.</Hint>
+</Card>
+
+<Card id="check-merge" type="check">
+Peraturan itu dah hidup. Dua pull request menunggu. Merge yang selamat.
+
+<Interactive name="PracticeRepo" screen="pulls" repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 7, title: 'Add contact page', body: 'Tambah halaman hubungi.', author: 'mei', from: 'contact-page', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'fail' }] }, { number: 8, title: 'Fix typo on home page', body: 'Dulu tertulis "Dairy". Kini "Diary".', author: 'sam', from: 'fix-typo', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }]} settings={{ rules: [{ id: 'requireChecks', label: 'Wajibkan status check lulus sebelum merge', on: true }] }} task={{ type: 'merge', pr: 8 }} success="Dah merge! #7 tunggu sampai semakannya lulus." />
+
+<Hint>Buka setiap pull request. Lihat semakannya.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh guna semakan untuk jaga main, dan tunjuk lencana.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peraturan ini duduk dalam ruleset atau branch protection. Anda pilih semakan mana yang wajib, ikut nama. Tambah `?branch=main` pada pautan lencana untuk tunjuk status main sahaja.
+</Card>

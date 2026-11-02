@@ -1,0 +1,66 @@
+---
+id: git-w03-l06
+world: 3
+title: Baca penanda konflik
+summary: "Anda akan belajar: kenapa merge berhenti, dan cara baca penanda konflik Git."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, SpotLines, Choice]
+needs: [git-w03-l05]
+scenario: w03-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge: how conflicts are presented", url: "https://git-scm.com/docs/git-merge#_how_conflicts_are_presented" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake']} label="git merge cake papar: Auto-merging index.html. CONFLICT (content): Merge conflict in index.html. Automatic merge failed." />
+
+Anda merge `cake` ke main, dan Git berhenti. CONFLICT! Adakah anda dah rosakkan diari?
+</Card>
+
+<Card id="see-why" type="see">
+<Interactive name="GraphScene" scenario="w03-l06" commands={['git merge cake']} label="main dan cake masing-masing ada commit baru. Merge berhenti: lencana merah Conflict dengan tanda amaran muncul di bawah HEAD." />
+
+Tiada apa yang rosak. Kedua-dua branch tulis hari 2 yang berbeza pada baris sama. Itulah **<Term id="conflict">konflik</Term>**. Git tak boleh teka, jadi ia tanya anda.
+</Card>
+
+<Card id="see-markers" type="see">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'cat index.html']} label="index.html kini ada kedua-dua baris hari 2, di antara tiga baris penanda." />
+
+Git tulis kedua-dua versi ke dalam fail. **<Term id="conflict-markers">Penanda konflik</Term>** memagarinya. Baris anda di atas. Baris mereka di bawah.
+</Card>
+
+<Card id="try-spot" type="try">
+Cari pagarnya.
+
+<Interactive name="SpotLines" scenario="w03-l06" commands={['git merge cake', 'cat index.html']} targets="^(<<<<<<<|=======|>>>>>>>)" prompt="Ketik tiga baris penanda." success="Jumpa! Anda padam baris-baris ini bila baiki fail." />
+
+<Hint>Ia bermula dengan tujuh `<`, tujuh `=` atau tujuh `>`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Baris hari 2 mana yang datang dari branch anda, main?
+
+<Interactive name="Choice" options={[{ label: 'Baris antara `<<<<<<< HEAD` dan `=======`', correct: true, why: 'HEAD ialah branch anda. Versinya datang dulu.' }, { label: 'Baris antara `=======` dan `>>>>>>> cake`', why: 'Bahagian itu dari cake, branch yang anda merge masuk.' }, { label: 'Tiada. Git dah padam baris anda.', why: 'Git tak buang kerja anda di sini. Kedua-dua baris ada dalam fail.' }]} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'git status']} pulse label="git status kata: You have unmerged paths. Di bawah Unmerged paths: both modified: index.html." />
+
+Keliru di tengah merge? Jalankan `git status`. Ia senaraikan fail yang perlu dibaiki sebagai both modified. Ia siap beritahu langkah seterusnya.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca penanda konflik tanpa panik.
+</Card>
+
+<Card id="deeper" type="deeper">
+Semasa konflik, `git diff` tunjuk kedua-dua pihak sekali gus. Nak tengok baris sebelum mana-mana perubahan? Jalankan `git config --global merge.conflictStyle diff3`. Lepas itu, bahagian yang bermula dengan `|||||||` tunjuk baris asal.
+
+<Interactive name="TermReplay" scenario="w03-l06" commands={['git merge cake', 'git diff']} label="git diff semasa konflik: diff gabungan dengan kedua-dua baris hari 2 dan penanda." />
+</Card>

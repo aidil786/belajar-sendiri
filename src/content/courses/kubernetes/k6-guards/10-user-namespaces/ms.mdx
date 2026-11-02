@@ -1,0 +1,64 @@
+---
+id: k8s-k6-l10
+world: 6
+title: "User namespace"
+summary: "Anda akan belajar: cara satu baris biar aplikasi jadi root dalam pod, tapi orang biasa pada node."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, SortCards, YamlDoctor, SwipeJudge]
+needs: [k8s-k6-l09]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "User namespaces", url: "https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/" }
+  - { label: "Use a user namespace with a pod", url: "https://kubernetes.io/docs/tasks/configure-pod-container/user-namespaces/" }
+---
+
+<Card id="hook" type="hook">
+Satu aplikasi lama berkeras mahu jadi root dalam bekasnya. Zon restricted anda kata tidak. Adakah anda buntu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: beri ia user namespace sendiri', correct: true, why: 'Root di dalam, orang biasa di luar. Ia stabil sejak Kubernetes 1.36.' }, { label: 'Ya: matikan pengawal', why: 'Jangan sekali-kali lemahkan seluruh zon untuk satu aplikasi.' }, { label: 'Jalankan di laptop anda sahaja', why: 'Kalau begitu ia langsung tiada dalam kluster anda.' }]} />
+</Card>
+
+<Card id="see-line" type="see">
+Dalam **<Term id="user-namespace">user namespace</Term>** sendiri, tukang masak ialah bos dalam gerai. Di luar, node nampak orang biasa sahaja. Satu baris menghidupkannya. Tekan baris itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Pod' }, { text: 'metadata:' }, { text: '  name: legacy' }, { text: 'spec:' }, { text: '  hostUsers: false', target: true }, { text: '  containers:' }, { text: '    - name: app' }, { text: '      image: busybox:1.37' }]} prompt="Tekan baris yang beri pod pengguna sendiri." success="Betul! hostUsers: false bermaksud: jangan kongsi pengguna node." />
+</Card>
+
+<Card id="try-sort" type="try">
+Pod user namespace tak boleh kongsi ruang lain milik node. Asingkan setiap tetapan.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Dibenarkan dengan hostUsers: false' }, { id: 'no', label: 'Tidak dibenarkan' }]} items={[{ label: 'Berjalan sebagai root di dalam', bucket: 'ok', why: 'Itulah tujuannya. Root di dalam jadi orang biasa di luar.' }, { label: 'Volume emptyDir', bucket: 'ok', why: 'Volume biasa berfungsi.' }, { label: '`hostNetwork: true`', bucket: 'no', why: 'Ia akan kongsi rangkaian node semula.' }, { label: '`hostPID: true`', bucket: 'no', why: 'Ia akan nampak proses node.' }, { label: '`hostIPC: true`', bucket: 'no', why: 'Ia akan kongsi ruang mesej node.' }]} success="Siap! Pengguna sendiri bermakna tiada ruang host." />
+</Card>
+
+<Card id="predict" type="predict">
+Zon kedai kuatkuasakan restricted. Satu pod tetapkan `hostUsers: false` dan `runAsUser: 0`, serta semua kunci lain. Adakah pengawal benarkan masuk?
+
+<Interactive name="Choice" options={[{ label: 'Ya: pengawal longgarkan semakan root', correct: true, why: 'Root di dalam tak pernah jadi root pada node, jadi runAsNonRoot dan runAsUser tak disemak.' }, { label: 'Tidak: restricted sentiasa tolak root', why: 'Bukan untuk pod user namespace. Dokumen longgarkan dua semakan itu.' }, { label: 'Hanya pada node Windows', why: 'User namespace untuk Linux sahaja.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+Mei tulis baris itu, tapi API server menolaknya. Baiki.
+
+<Interactive name="YamlDoctor" file="legacy.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: legacy\nspec:\n  hostUsers: "false"\n  containers:\n    - name: app\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: legacy\nspec:\n  hostUsers: false\n  containers:\n    - name: app\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} keep={['hostUsers: false']} keepHint="Simpan hostUsers. Itulah tujuan pod ini." hint="Tanda petik jadikan ia perkataan. hostUsers mahu true atau false, tanpa tanda petik." success="Berjaya! true/false sebenar, bukan perkataan." />
+</Card>
+
+<Card id="check" type="check">
+Adakah user namespace perlukan ini? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Node Linux dengan kernel 6.3 atau lebih baharu', good: true, why: 'Kernel lama tiada apa yang volume pod perlukan.' }, { text: 'containerd 2.0+ atau CRI-O 1.25+', good: true, why: 'Runtime mesti tahu cara sediakan pemetaan itu.' }, { text: 'Node Windows', good: false, why: 'User namespace untuk Linux sahaja.' }, { text: 'hostNetwork: true pada pod yang sama', good: false, why: 'Tidak dibenarkan bersama hostUsers: false.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri aplikasi yang mesti root user namespace sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: pengawal sebenar guna budi bicara. Pintu Kubernetes hanya ikut peraturan bertulis. RBAC langsung tiada senarai "tolak". Pintu semak permintaan, bukan apa container buat kemudian. securityContext dan kernel Linux jaga bahagian itu. Buku log hanya berguna kalau ada orang membacanya.
+
+<Interactive name="Mission" id="k6-l10-rep" steps={[{ id: 'check', text: 'Dalam kluster buang sahaja dengan Kubernetes 1.36 atau lebih baharu, semak node anda: kernel Linux 6.3+ dan containerd 2.0+.' }, { id: 'apply', text: 'Simpan legacy.yaml yang dibaiki dari pelajaran ini dan apply.', command: 'kubectl apply -f legacy.yaml' }, { id: 'inside', text: 'Tanya pod itu siapa dia. Di dalam, ia root.', command: 'kubectl exec legacy -- id' }]} success="Bos di dalam, orang biasa di luar!" />
+</Card>

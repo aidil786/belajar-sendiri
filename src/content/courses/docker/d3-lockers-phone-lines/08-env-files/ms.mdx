@@ -1,0 +1,69 @@
+---
+id: docker-d3-l08
+world: 3
+title: Tetapan dalam fail env
+summary: "Anda akan belajar: beri container banyak tetapan sekali gus dengan --env-file."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l07]
+scenario: d3-envfile
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: docker run --env-file", url: "https://docs.docker.com/reference/cli/docker/container/run/#env" }
+  - { label: "Docker docs: Environment variables in Compose", url: "https://docs.docker.com/compose/how-tos/environment-variables/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-envfile" commands={['docker run --rm -e SHOP_NAME=Kedai -e TZ=Asia/Kuala_Lumpur -e CURRENCY=MYR -e OPEN_HOUR=8 alpine:3.22 env']} label="Satu baris docker run yang panjang dengan empat -e. env cetak empat tetapan itu dalam bekas." />
+
+Empat tetapan, empat `-e`. Satu salah taip dan kedai rosak. Sejarah shell anda pun simpan setiap nilai.
+</Card>
+
+<Card id="see-envfile" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris yang Docker langkau." success="Ya! Baris yang mula dengan # ialah nota untuk manusia." lines={[{ text: '# Kedai Kancil settings', target: true }, { text: 'SHOP_NAME=Kedai Kancil' }, { text: 'TZ=Asia/Kuala_Lumpur' }, { text: 'CURRENCY=MYR' }, { text: 'OPEN_HOUR=8' }]} />
+
+**<Term id="env-file">Fail env</Term>** ialah kad tetapan: satu `NAMA=nilai` setiap baris. `--env-file shop.env` serahkan seluruh kad kepada bekas.
+</Card>
+
+<Card id="try-envfile" type="try">
+Mulakan app dengan seluruh kad tetapan, shop.env.
+
+<Interactive name="KitchenSim" scenario="d3-envfile" goal={{ running: ['app'], containerEnv: { app: ['SHOP_NAME', 'TZ', 'CURRENCY', 'OPEN_HOUR'] } }} hints={['Taip docker run -d --name app --env-file shop.env alpine:3.22 sleep 3600', 'Semak: docker exec app printenv SHOP_NAME']} success="app dapat keempat-empat tetapan daripada satu kad." />
+
+<Hint>Cuba `cat shop.env` dulu untuk baca kad itu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+quoted.env tulis `SHOP_NAME="Kedai Kancil"`. Apa yang aplikasi dapat?
+
+<Interactive name="Choice" options={[{ label: '"Kedai Kancil", dengan tanda petik sekali', correct: true, why: 'docker run simpan setiap aksara selepas =. Jangan letak tanda petik.' }, { label: 'Kedai Kancil, tanpa tanda petik', why: 'Shell akan buang tanda petik. Fail env bukan shell.' }, { label: 'Ralat', why: 'Tanda petik dibenarkan. Ia cuma kekal dalam nilai.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KitchenReplay" scenario="d3-envfile" commands={['cat spaces.env', 'docker run --rm --env-file spaces.env alpine:3.22 env']} fails={['docker run --rm --env-file spaces.env alpine:3.22 env']} label="spaces.env ada SHOP_NAME = Kedai Kancil. docker run menolak: variable 'SHOP_NAME ' contains whitespaces." />
+
+Ralat sebenar: `variable 'SHOP_NAME ' contains whitespaces`. Maksudnya: jangan letak ruang kosong di tepi tanda =.
+</Card>
+
+<Card id="check" type="check">
+Baris ini sesuai untuk fail env, atau tidak?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'TZ=Asia/Kuala_Lumpur', good: true, why: 'NAMA=nilai, tanpa ruang. Tepat.' }, { text: 'SHOP_NAME = Kedai', good: false, why: 'Ruang di tepi = buat docker run berhenti.' }, { text: '# opening hours', good: true, why: 'Nota untuk manusia. Docker langkau.' }, { text: 'export CURRENCY=MYR', good: false, why: 'export ialah bahasa shell. docker run menolaknya.' }, { text: 'OPEN_HOUR=8', good: true, why: 'Kemas dan ringkas.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri container tetapannya dalam satu fail.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baris yang ada `NAMA` sahaja salin nilai itu dari laptop anda, kalau ada. Compose baca fail `.env` dengan peraturannya sendiri: Dunia D4. Fail env anda ada kata laluan? Jauhkan dari Git: masukkan dalam `.gitignore`.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d3-l08-rep" steps={[{ id: 'card', text: 'Tulis satu kad tetapan.', command: 'printf "SHOP_NAME=Kedai Kancil\\nTZ=Asia/Kuala_Lumpur\\n" > shop.env' }, { id: 'use', text: 'Serahkan kepada bekas.', command: 'docker run --rm --env-file shop.env alpine:3.22 env' }, { id: 'ignore', text: 'Jauhkan fail env dari Git.', command: 'echo "*.env" >> .gitignore' }]} success="Satu kad, banyak tetapan, tiada apa dalam Git." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: k8s-k2-l11
+world: 2
+title: "DaemonSet: satu setiap gerai"
+summary: "Anda akan belajar: cara DaemonSet jalankan satu pod di setiap node, dan kenapa ia langkau sesetengah node."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, YamlDoctor, SortCards]
+needs: [k8s-k2-l10]
+scenario: k2-daemonset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: DaemonSet", url: "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" }
+  - { label: "Kubernetes: Taints and tolerations", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" }
+---
+
+<Card id="hook" type="hook">
+Setiap gerai perlukan tepat seorang pencuci. Bila gerai baharu dibuka, ia pun perlukan seorang. Bolehkah Deployment dengan `replicas: 3` janjikan itu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia kira dulang, bukan gerai.', correct: true, why: 'Ia mungkin letak dua pencuci di satu gerai dan tiada di gerai lain.' }, { label: 'Ya, sentiasa', why: 'Deployment hanya jaga bilangan. Di mana dulang mendarat ditentukan oleh scheduler.' }, { label: 'Ya, kalau anda kira gerai sendiri', why: 'Nanti setiap gerai baharu perlukan anda. Kubernetes ada cara lebih baik.' }]} />
+</Card>
+
+<Card id="see-ds" type="see">
+<Interactive name="KubeReplay" scenario="k2-daemonset" commands={['kubectl apply -f sweeper.yaml', 'kubectl rollout status daemonset/sweeper --timeout=120s', 'kubectl get pods -o wide']} label="DaemonSet sweeper buat satu pod di dev-worker dan satu di dev-worker2." />
+
+**<Term id="daemonset">DaemonSet</Term>** letak satu dulang di setiap gerai. Lihat lajur NODE: seorang sweeper setiap worker. Gerai baharu dapat sweeper sendiri secara automatik.
+</Card>
+
+<Card id="predict" type="predict">
+Kluster ini ada 3 node. Kenapa hanya ada 2 sweeper?
+
+<Interactive name="Choice" options={[{ label: 'Control plane ada kunci: taint', correct: true, why: 'Dulang biasa jauhkan diri. Dulang perlukan anak kunci, iaitu toleration, untuk duduk di situ (Dunia K5).' }, { label: 'DaemonSet itu rosak', why: 'Ia okey. Ia langkau gerai yang dikunci untuknya.' }, { label: 'Scheduler kehabisan CPU', why: 'Sweeper tak minta CPU. Ada benda lain yang halang.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Giliran anda. Apply `sweeper.yaml`. Kemudian jalankan `kubectl get daemonset sweeper`. DESIRED patut tunjuk 2.
+
+<Interactive name="FoodCourtSim" scenario="k2-daemonset" goal={{ podsReady: { selector: 'app=sweeper', count: 2, exact: true }, typed: 'get (ds|daemonsets?)' }} hints={['Taip kubectl apply -f sweeper.yaml', 'Taip kubectl get daemonset sweeper']} success="2 dikehendaki, 2 sedia: seorang sweeper di setiap gerai worker." />
+
+<Hint>`kubectl get ds` ialah bentuk pendek.</Hint>
+</Card>
+
+<Card id="try-doctor" type="try">
+DaemonSet tiada `replicas`. Bilangan gerai yang tentukan. Baca ralat sebenar, kemudian baiki fail.
+
+<Interactive name="YamlDoctor" file="sweeper.yaml" manifest={'apiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: sweeper\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: sweeper\n  template:\n    metadata:\n      labels:\n        app: sweeper\n    spec:\n      containers:\n        - name: broom\n          image: busybox:1.37\n'} solution={'apiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: sweeper\nspec:\n  selector:\n    matchLabels:\n      app: sweeper\n  template:\n    metadata:\n      labels:\n        app: sweeper\n    spec:\n      containers:\n        - name: broom\n          image: busybox:1.37\n'} keep={['kind: DaemonSet', 'image: busybox']} hint="Padam baris yang Kubernetes tak kenal." success="Siap! Seorang sweeper setiap gerai, tak perlu bilangan." />
+</Card>
+
+<Card id="check" type="check">
+Deployment atau DaemonSet? Susun setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'ds', label: 'DaemonSet' }]} items={[{ label: '3 salinan laman web kedai', bucket: 'deploy', why: 'Anda mahu bilangan, di mana-mana pun ia mendarat.' }, { label: 'Pengumpul log di setiap node', bucket: 'ds', why: 'Setiap gerai ada log sendiri untuk dikumpul.' }, { label: 'kube-proxy, pembantu rangkaian di setiap node', bucket: 'ds', why: 'Setiap node perlukannya. Ia berjalan sebagai DaemonSet.' }, { label: 'Diskala dengan --replicas', bucket: 'deploy', why: 'DaemonSet tiada bilangan replika. Gerai yang tentukan.' }]} success="Siap! Bilangan dulang: Deployment. Satu setiap gerai: DaemonSet." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan satu pod di setiap node dengan DaemonSet.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam kluster kind, `kube-proxy` dan `kindnet` ialah DaemonSet dalam `kube-system`. Mereka ada toleration, jadi mereka berjalan di control plane juga. `nodeSelector` hadkan DaemonSet kepada sesetengah gerai sahaja.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, jalankan `kubectl get daemonsets -n kube-system`.
+</Card>

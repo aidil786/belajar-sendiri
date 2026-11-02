@@ -1,0 +1,76 @@
+---
+id: aws-a1-l02
+world: 1
+title: Regions and Availability Zones
+summary: "You will learn: where AWS keeps its computers, and how to switch on the Malaysia Region."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, CommandBuilder, Transcript, SwipeJudge]
+needs: [aws-a1-l01]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Regions", url: "https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html" }
+  - { label: "AWS Availability Zones", url: "https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-availability-zones.html" }
+  - { label: "Enable or disable Regions in your account", url: "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-regions.html" }
+  - { label: "aws account enable-region", url: "https://docs.aws.amazon.com/cli/latest/reference/account/enable-region.html" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil’s shoppers live in Kuala Lumpur. AWS has malls all over the world. Which mall should the shop rent in?
+
+<Interactive name="Choice" options={[{ label: 'Asia Pacific (Malaysia), code ap-southeast-5', correct: true, why: 'Closest to the shoppers, so pages load fast.' }, { label: 'US East (N. Virginia), code us-east-1', why: 'It works, but every click travels across the world.' }, { label: 'It does not matter', why: 'Distance adds waiting time. Rules about where data lives can matter too.' }]} />
+</Card>
+
+<Card id="see-region" type="see">
+Each city mall is a **Region**. Inside, the mall has wings, each with its own power and cooling. A wing is an <Term id="availability-zone">Availability Zone</Term> (AZ). Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'region', label: 'Region (the mall)' }, { id: 'az', label: 'Availability Zone (a wing)' }]} items={[{ label: 'ap-southeast-5', bucket: 'region', why: 'A Region code: the Malaysia mall.' }, { label: 'ap-southeast-5a', bucket: 'az', why: 'The Region code plus a letter is a zone.' }, { label: 'apse5-az1', bucket: 'az', why: 'An AZ ID: the same wing in every account.' }, { label: 'A whole city’s set of buildings', bucket: 'region', why: 'A Region is a place on the map.' }, { label: 'One part with its own power', bucket: 'az', why: 'If one wing goes dark, the others still run.' }]} success="Mall and wings! The Malaysia Region has 3 wings." />
+</Card>
+
+<Card id="see-optin" type="see">
+Some malls are shut until you ask. Malaysia is an **opt-in Region**: newer Regions start switched off. Pick the true sentence.
+
+<Interactive name="Choice" options={[{ label: 'You switch it on once; it can take minutes or hours', correct: true, why: 'AWS copies your account’s keys there first. Then it is ready.' }, { label: 'Opting in costs money', why: 'Switching a Region on or off is free. You pay for what you build.' }, { label: 'Every Region is already on', why: 'Older Regions are. Regions opened after March 2019 need opting in.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that switches on the Malaysia Region.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws', means: 'talk to AWS' }, { text: 'account', means: 'about your account' }, { text: 'enable-region', means: 'switch a Region on' }, { text: '--region-name ap-southeast-5', means: 'the Malaysia Region' }]} decoys={[{ text: '--region us-east-1', means: 'which endpoint to call, not what to switch on' }, { text: 'delete-region', means: 'there is no such command' }]} success="That opens the Malaysia mall for your account." />
+
+<Hint>Tool, topic, action, then the Region’s name.</Hint>
+</Card>
+
+<Card id="see-status" type="see">
+<Interactive name="Transcript" title="bash" label="enable-region prints nothing when it works. get-region-opt-status then says ENABLING." lines={[{ cmd: 'aws account enable-region --region-name ap-southeast-5' }, { cmd: 'aws account get-region-opt-status --region-name ap-southeast-5' }, { out: '{\n    "RegionName": "ap-southeast-5",\n    "RegionOptStatus": "ENABLING"\n}', color: 'yellow' }]} />
+
+No output means it worked. The second command asks how it is going: **ENABLING**. Ask again later until it says ENABLED.
+</Card>
+
+<Card id="predict" type="predict">
+Kedai Kancil runs its shop in two wings. One wing loses power. What do shoppers see?
+
+<Interactive name="Choice" options={[{ label: 'The shop still works from the other wing', correct: true, why: 'That is why you spread over two or more AZs.' }, { label: 'The whole Region goes down', why: 'Wings are built apart, with their own power, so one can fail alone.' }, { label: 'AWS moves your shop to another country', why: 'Nothing moves by itself. You choose where things run.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Good plan, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pick the Region closest to your shoppers.', good: true, why: 'Shorter trips make faster pages.' }, { text: 'Run the shop in one wing only.', good: false, why: 'One power cut and the shop is closed.' }, { text: 'Check which Region your terminal points at.', good: true, why: 'Things you make land in that Region.' }, { text: 'Assume a Region is on because it is on the map.', good: false, why: 'Opt-in Regions stay off until you enable them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick a Region, spread over AZs, and switch on Malaysia.
+</Card>
+
+<Card id="deeper" type="deeper">
+The letter in `ap-southeast-5a` is a name. The AZ ID (`apse5-az1`) is the real place, the same in every account. In some old Regions, older accounts get their letters shuffled.
+
+Prices differ between Regions. Some services reach new Regions later, so check the service page first.
+
+Real rep: wait for lesson 5. Set your budget alarm before you touch any Region.
+</Card>

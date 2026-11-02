@@ -1,0 +1,59 @@
+---
+id: git-w11-l07
+world: 11
+title: I'm in detached HEAD
+summary: "You will learn: how to leave a detached HEAD without losing commits."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, Choice, Sim]
+needs: [git-w02-l07]
+scenario: w11-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l07" commands={['git status']} label="git status says: HEAD detached from a hash. Nothing to commit, working tree clean." />
+
+Git says HEAD is detached. Sounds scary! It only means HEAD sits on a commit, not on a branch. This happens to everyone.
+</Card>
+
+<Card id="see-leave" type="see">
+<Interactive name="GraphScene" scenario="w11-l07" commands={['git switch main']} showLost label="HEAD jumps back to main. The commit Try a new title turns into a dashed dot: no branch holds it." />
+
+You made a commit while detached. Leave now, and it gets left behind. No branch holds it.
+</Card>
+
+<Card id="decide" type="try">
+You want to keep that commit. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Give it a branch: git switch -c new-title', correct: true, why: 'A branch label keeps the commit safe.' }, { label: 'git switch main right away', why: 'The commit would be left behind. Label it first.' }, { label: 'git reset --hard', why: 'That wipes changes. Not needed here.' }]} />
+</Card>
+
+<Card id="try-keep" type="try">
+Keep your commit. Make a branch called `new-title`, right here.
+
+<Interactive name="Sim" scenario="w11-l07" panels={['graph']} goal={{ currentBranch: 'new-title', branchAt: { 'new-title': '^Try a new title$' } }} hints={['Type git switch -c new-title']} success="Safe! Your commit lives on the new-title branch." />
+
+<Hint>Type `git switch -c new-title`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+New story: you only looked around. No new commits. How do you get home?
+
+<Interactive name="Choice" options={[{ label: 'git switch main', correct: true, why: 'Nothing to keep, so just go back.' }, { label: 'git switch -c main', why: 'main exists already. Just switch to it.' }, { label: 'Close the terminal', why: 'HEAD stays detached. Use git switch main.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now leave a detached HEAD without losing commits.
+</Card>
+
+<Card id="deeper" type="deeper">
+Already left, and the commit is gone? The reflog remembers. Right after leaving, `git branch new-title HEAD@{1}` brings it back. Git also prints the commit's hash when you leave. `git branch new-title` plus that hash works too.
+</Card>

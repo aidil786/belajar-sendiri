@@ -1,0 +1,199 @@
+---
+import { safeJson } from '~/lib/safe-json';
+// The lesson frame. Same layout every lesson: progress on top, one card in the
+// middle, one big Next button. Cards come from the MDX file in the default slot;
+// the other language's cards come in the "peek" slot.
+import { dict, t, type Lang } from '~/i18n';
+import Icon from '~/components/ui/Icon.astro';
+import LangToggle from '~/components/ui/LangToggle.astro';
+import Mascot from '~/components/ui/Mascot.astro';
+import type { BadgeRule } from '~/lib/badges';
+import type { Hat } from '~/lib/catalog';
+import './lesson.css';
+
+interface Props {
+  lang: Lang;
+  lessonId: string;
+  kind: 'lesson' | 'boss';
+  title: string;
+  summary: string;
+  minutes: number;
+  xp: number;
+  mapHref: string;
+  altPath: string;
+  next: { href: string; title: string } | null;
+  badgeRules: BadgeRule[];
+  /** Badge id → name (this course's badges). */
+  badgeNames: Record<string, string>;
+  docs: { label: string; url: string }[];
+  bmReviewed: boolean;
+  worldLabel: string;
+  /** Kancil's hat in this course (Ship It). */
+  hat?: Hat | undefined;
+  /** "Checked with Kubernetes 1.37 on 31 Oct 2026" (Ship It lessons). */
+  checked?: string | undefined;
+}
+const p = Astro.props;
+const { lang } = p;
+const all = dict(lang);
+const strings = Object.fromEntries(
+  Object.entries(all).filter(([k]) => /^(lesson\.|praise\.|win\.|badge\.|vote\.thanks)/.test(k)),
+);
+const data = {
+  lessonId: p.lessonId,
+  kind: p.kind,
+  minutes: p.minutes,
+  xp: p.xp,
+  lang,
+  badgeRules: p.badgeRules,
+  badgeNames: p.badgeNames,
+  strings,
+};
+---
+
+<div class="lesson-shell" data-player-root data-lesson-id={p.lessonId}>
+  <div
+    class="progress"
+    role="progressbar"
+    aria-label={t(lang, 'lesson.progress')}
+    aria-valuemin="1"
+    aria-valuemax="1"
+    aria-valuenow="1"
+    data-progress
+  >
+    <div class="progress-fill" data-progress-fill></div>
+  </div>
+
+  <header class="lesson-bar">
+    <a class="lesson-map" href={p.mapHref}>
+      <Icon name="map" size={20} />
+      <span>{t(lang, 'nav.map')}</span>
+    </a>
+    <p class="lesson-count" data-count aria-live="polite">&nbsp;</p>
+    <LangToggle lang={lang} altPath={p.altPath} />
+  </header>
+
+  <div class="lesson-head">
+    <p class="lesson-world">{p.kind === 'boss' ? `${p.worldLabel} · ${t(lang, 'lesson.boss')}` : p.worldLabel}</p>
+    <h1>{p.title}</h1>
+    <p class="lesson-summary">{p.summary}</p>
+    {lang === 'ms' && !p.bmReviewed && <p class="lesson-note">{t(lang, 'lesson.bmNotReviewed')}</p>}
+    {p.checked && <p class="lesson-note lesson-checked" data-checked>{p.checked}</p>}
+  </div>
+
+  <div class="player" data-player>
+    <slot />
+  </div>
+  <script is:inline>
+    // Pick the starting card before first paint: #c=<id>, else the saved card, else the first.
+    (function () {
+      const player = document.querySelector('[data-player]');
+      const root = document.querySelector('[data-player-root]');
+      if (!player || !root) return;
+      const cards = player.querySelectorAll('.lesson-card');
+      let id = null;
+      const m = /[#&]c=([\w-]+)/.exec(location.hash);
+      if (m) id = m[1];
+      if (!id) {
+        try {
+          const prog = JSON.parse(localStorage.getItem('fahamlah:v1') || '{}');
+          const l = prog.lessons && prog.lessons[root.dataset.lessonId];
+          if (l) id = l.cardId;
+        } catch {}
+      }
+      let found = false;
+      for (let i = 0; i < cards.length; i++) {
+        if (cards[i].dataset.cardId === id) {
+          cards[i].classList.add('is-active');
+          found = true;
+        }
+      }
+      if (!found && cards[0]) cards[0].classList.add('is-active');
+      player.dataset.ready = 'true';
+    })();
+  </script>
+  <noscript><style>.player .lesson-card { display: block !important; }</style></noscript>
+
+  <div class="peek-panel" data-peek-panel hidden>
+    <p class="peek-title" lang={lang === 'en' ? 'ms' : 'en'}>{t(lang, 'lesson.peekTitle')}</p>
+    <div class="peek-body" data-peek-body lang={lang === 'en' ? 'ms' : 'en'}></div>
+  </div>
+  <div hidden data-peek-store>
+    <slot name="peek" />
+  </div>
+
+  <section class="win-extras" data-win-extras hidden aria-label={t(lang, 'lesson.step.win')}>
+    <div class="win-burst calm-hide" aria-hidden="true">
+      <Icon name="star" size={56} />
+      {Array.from({ length: 10 }, (_, i) => <span class={`confetti c${i}`} />)}
+    </div>
+    <p class="win-xp calm-hide" data-win-xp></p>
+    <p class="win-repeat" data-win-repeat hidden>{t(lang, 'lesson.alreadyDone')}</p>
+    <ul class="win-badges" data-win-badges></ul>
+    <fieldset class="vote" data-vote>
+      <legend>{t(lang, 'vote.title')}</legend>
+      <div class="vote-options">
+        {
+          (['fun', 'confusing', 'boring'] as const).map((v) => (
+            <button type="button" class="btn btn-ghost vote-btn" data-vote-value={v} aria-pressed="false">
+              {t(lang, `vote.${v}`)}
+            </button>
+          ))
+        }
+      </div>
+      <p class="vote-thanks" data-vote-thanks hidden role="status">{t(lang, 'vote.thanks')}</p>
+    </fieldset>
+    <div class="win-links">
+      {
+        p.next && (
+          <a class="btn btn-big" href={p.next.href} data-next-lesson>
+            {t(lang, 'lesson.nextLesson', { title: p.next.title })}
+          </a>
+        )
+      }
+      <a class="btn btn-ghost" href={p.mapHref}>{t(lang, 'lesson.backToMap')}</a>
+    </div>
+    {
+      p.docs.length > 0 && (
+        <p class="win-docs">
+          {t(lang, 'lesson.officialDocs')}:{' '}
+          {p.docs.map((d, i) => (
+            <>
+              {i > 0 && ' · '}
+              <a href={d.url} rel="noopener" target="_blank">
+                {d.label}
+              </a>
+            </>
+          ))}
+        </p>
+      )
+    }
+  </section>
+
+  <nav class="controls" aria-label={t(lang, 'lesson.progress')}>
+    <div class="controls-inner">
+      <div class="controls-mascot"><Mascot lang={lang} size={52} hat={p.hat} /></div>
+      <button type="button" class="btn btn-ghost ctl-back" data-back>
+        <Icon name="arrowLeft" size={20} /><span class="ctl-label">{t(lang, 'lesson.back')}</span>
+      </button>
+      <button type="button" class="btn btn-quiet ctl-small" data-hint-btn hidden aria-expanded="false">
+        ? <span class="ctl-label">{t(lang, 'lesson.hint')}</span>
+      </button>
+      <button type="button" class="btn btn-quiet ctl-small" data-peek-btn aria-expanded="false">
+        {t(lang, 'lesson.peek')}
+      </button>
+      <button type="button" class="btn btn-big ctl-next" data-next>
+        <span data-next-label>{t(lang, 'lesson.next')}</span>
+        <Icon name="arrowRight" size={22} />
+      </button>
+    </div>
+    <p class="visually-hidden">{t(lang, 'lesson.keys')}</p>
+  </nav>
+
+  <script type="application/json" data-lesson-data set:html={safeJson(data)} />
+</div>
+
+<script>
+  import { initPlayer } from './player';
+  initPlayer();
+</script>

@@ -1,0 +1,79 @@
+---
+id: linux-l2-l06
+world: 2
+title: Isyarat, kill dan job
+summary: "Anda akan belajar: hentikan program dengan sopan atau tegas, dan jalankan kerja panjang di belakang."
+minutes: 5
+xp: 25
+interactives: [Choice, LinuxSim, OrderList, SortCards, Mission]
+needs: [linux-l2-l05]
+scenario: linux-l2-signals
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kill (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/kill.1.en.html" }
+  - { label: "pkill (Debian 13 man page)", url: "https://manpages.debian.org/trixie/procps/pkill.1.en.html" }
+  - { label: "signal(7): the list of signals", url: "https://man7.org/linux/man-pages/man7/signal.7.html" }
+  - { label: "Bash manual: Job Control Basics", url: "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Basics.html" }
+---
+
+<Card id="hook" type="hook">
+Skrip pemasa ketuhar tersangkut dalam gelung. Ia berjalan di luar terminal anda, jadi Ctrl+C tak sampai kepadanya. Macam mana nak hentikan?
+
+<Interactive name="Choice" options={[{ label: 'Hantar mesej dengan kill', correct: true, why: 'kill hantar isyarat kepada PID: nota yang kata berhenti.' }, { label: 'Cabut plag server', why: 'Setiap servis akan jatuh sekali. Terlalu besar.' }, { label: 'Tunggu sampai ia penat', why: 'Gelung tak pernah penat. Ia berjalan sampai ada yang hentikan.' }]} />
+</Card>
+
+<Card id="see-term" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-signals" intro={['pgrep -f oven-timer', 'pkill -f oven-timer', 'pgrep -f oven-timer']} />
+
+`pkill` hantar <Term id="signal">signal (isyarat)</Term> bernama TERM: "tolong berhenti". Skrip ini abaikannya, jadi pgrep masih jumpa PID 1241. Tengok senarai program sibuk.
+</Card>
+
+<Card id="order-ladder" type="check">
+Hentikan program ialah satu tangga: sopan dulu, tegas akhir sekali. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Ctrl+C, jika ia pegang terminal anda', 'kill PID: isyarat TERM yang sopan', 'Tunggu beberapa saat, kemudian semak dengan pgrep', 'kill -9 PID: KILL, jalan terakhir']} label="Langkah pertama di atas" success="Minta baik-baik, tunggu, semak, kemudian paksa. Macam bos yang baik." />
+</Card>
+
+<Card id="try-kill9" type="try">
+Cara sopan gagal. Guna jalan terakhir: **kill -9**. Hentikan pemasa ketuhar itu terus.
+
+<Interactive name="LinuxSim" scenario="linux-l2-signals" goal={{ processGone: ['oven-timer'] }} hints={['Cari PIDnya: pgrep -f oven-timer', 'Kemudian: kill -9 1241 (atau pkill -9 -f oven-timer)']} solution={['pgrep -f oven-timer', 'kill -9 1241']} success="Hilang. Senarai program sibuk kosong dan CPU boleh berehat." />
+
+<Hint>`-9` ialah isyarat KILL. Program tak boleh abaikannya.</Hint>
+</Card>
+
+<Card id="predict-nine" type="predict">
+Kenapa tak terus guna `kill -9` setiap kali?
+
+<Interactive name="Choice" options={[{ label: 'Program tiada peluang simpan atau mengemas', correct: true, why: 'TERM biar ia tutup fail dengan kemas. KILL hentikan ia di tengah ayat.' }, { label: 'kill -9 perlukan kata laluan', why: 'Tiada kata laluan. Anda boleh hentikan program sendiri.' }, { label: 'Ia lebih lambat', why: 'Ia serta-merta. Sebab itulah ia kasar.' }]} />
+</Card>
+
+<Card id="try-jobs" type="try">
+Kerja panjang tak perlu menghalang anda. Mulakan satu di belakang dengan `&`: `sleep 300 &`. Kemudian taip `jobs`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-jobs" goal={{ jobs: 1, lastTyped: '^jobs' }} hints={['Taip sleep 300 & (dengan &)', 'Kemudian taip jobs']} solution={['sleep 300 &', 'jobs']} success="[1] Running: job itu bekerja di belakang sambil anda terus menaip." />
+
+<Hint>**Job** ialah program yang terminal ini mulakan. `&` hantar ia ke belakang.</Hint>
+</Card>
+
+<Card id="sort-front-back" type="check">
+Adakah program itu pegang terminal anda (depan), atau biar anda menaip (belakang)?
+
+<Interactive name="SortCards" buckets={[{ id: 'front', label: 'Depan: pegang terminal' }, { id: 'back', label: 'Belakang: anda boleh terus menaip' }]} items={[{ label: 'sleep 300', bucket: 'front', why: 'Tiada &, jadi ia pegang prompt sampai habis.' }, { label: 'sleep 300 &', bucket: 'back', why: '& mulakan ia di belakang.' }, { label: 'fg %1', bucket: 'front', why: 'fg bawa job 1 balik ke depan.' }, { label: 'Ctrl+Z, kemudian bg', bucket: 'back', why: 'Ctrl+Z jeda ia. bg biar ia sambung di belakang.' }]} success="& dan bg: belakang. fg: depan. Ctrl+Z menjeda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hentikan program dengan sopan atau tegas, dan urus job.
+</Card>
+
+<Card id="deeper" type="deeper">
+Isyarat ada nombor. 15 ialah TERM, pilihan asal kill. 9 ialah KILL. Ctrl+C hantar 2, INT. `kill %1` hentikan job 1. Kerja yang mesti berjalan sepanjang hari patut jadi servis: pelajaran 8.
+
+Latihan sebenar (pilihan), di Linux anda sendiri:
+
+<Interactive name="Mission" id="linux-l2-l06-rep" steps={[{ id: 'start', text: 'Mulakan kerja panjang.', command: 'sleep 100' }, { id: 'pause', text: 'Jeda: tekan Ctrl+Z.' }, { id: 'back', text: 'Biar ia berjalan di belakang.', command: 'bg' }, { id: 'list', text: 'Senaraikan job anda.', command: 'jobs' }, { id: 'stop', text: 'Hentikannya.', command: 'kill %1' }]} success="Job sebenar, isyarat sebenar!" />
+</Card>

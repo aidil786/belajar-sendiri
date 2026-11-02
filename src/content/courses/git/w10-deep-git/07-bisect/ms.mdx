@@ -1,0 +1,73 @@
+---
+id: git-w10-l07
+world: 10
+title: Cari pepijat dengan bisect
+summary: "Anda akan belajar: cara cari commit yang merosakkan sesuatu, dalam beberapa ujian pantas."
+minutes: 5
+xp: 25
+interactives: [Choice, TermReplay, BisectDetective, Sim, OrderList]
+needs: [git-w10-l06]
+scenario: w10-bisect
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git bisect", url: "https://git-scm.com/docs/git-bisect" }
+---
+
+<Card id="hook" type="hook">
+Laman kedai tunjuk harga RM0! Minggu lepas ia RM10. Ada sepuluh commit (titik simpan) sejak itu. Yang mana merosakkannya?
+
+<Interactive name="Choice" options={[{ label: 'Uji commit di tengah, kemudian belah dua lagi', correct: true, why: 'Setiap ujian buang separuh suspek. Itulah bisect.' }, { label: 'Uji setiap commit, dari yang paling lama', why: 'Boleh, tapi mungkin perlu sepuluh ujian. Belah dua perlukan empat sahaja paling banyak.' }, { label: 'Undur kesemua sepuluh commit', why: 'Kerja yang elok pun hilang. Cari satu commit yang rosak sahaja.' }]} />
+</Card>
+
+<Card id="see-bisect" type="see">
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9']} label="git bisect start dengan HEAD sebagai bad dan HEAD~9 sebagai good. Git kata tinggal 4 revision dan checkout Add a footer." />
+
+**<Term id="bisect">Bisect</Term>** main "tinggi atau rendah" dengan sejarah anda. Beri satu commit rosak (bad) dan satu yang elok (good). Git checkout commit di tengah untuk anda uji.
+</Card>
+
+<Card id="try-detective" type="try">
+Jadilah detektif. Jalankan ujian, kemudian tandakan commit itu good atau bad.
+
+<Interactive name="BisectDetective" scenario="w10-bisect" test={{ file: 'index.html', bad: 'RM0', label: 'Ujian: harga dalam index.html tak boleh RM0.' }} success="Tertangkap! Bisect jumpa pepijat harga dalam beberapa ujian." />
+
+<Hint>Ujian gagal? Tandakan bad. Ujian lulus? Tandakan good.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang ada 1,000 commit antara good dan bad. Lebih kurang berapa ujian bisect perlukan?
+
+<Interactive name="Choice" options={[{ label: 'Lebih kurang 10', correct: true, why: 'Setiap ujian belah dua senarai: 1,000, 500, 250… lebih kurang 10 langkah.' }, { label: 'Lebih kurang 500', why: 'Belah dua jauh lebih pantas daripada itu.' }, { label: 'Kesemua 1,000', why: 'Itu uji satu per satu. Bisect langkau kebanyakannya.' }]} />
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9', 'git bisect run sh test.sh']} label="git bisect run sh test.sh uji tiga commit sendiri dan namakan Tidy up spacing sebagai commit rosak yang pertama." />
+
+Ada skrip ujian? `git bisect run sh test.sh` buat setiap langkah untuk anda. Kod keluar 0 maksudnya good. 1 maksudnya bad.
+</Card>
+
+<Card id="try-run" type="try">
+Giliran anda. Mulakan bisect, biar `test.sh` menilai, kemudian balik ke branch anda.
+
+<Interactive name="Sim" scenario="w10-bisect" panels={['graph']} goal={{ bisectFound: '^Tidy up spacing$', bisectActive: false }} hints={['Taip git bisect start HEAD HEAD~9', 'Kemudian taip git bisect run sh test.sh', 'Akhir sekali, taip git bisect reset']} success="Kes selesai! Tidy up spacing rosakkan harga. Dan anda kembali di main." />
+
+<Hint>`git bisect start HEAD HEAD~9`, kemudian `git bisect run sh test.sh`, kemudian `git bisect reset`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah memburu dengan bisect.
+
+<Interactive name="OrderList" items={['Jalankan git bisect start', 'Tandakan satu commit bad dan satu good', 'Uji commit yang Git checkout', 'Tandakan good atau bad, sehingga Git namakan pesalah', 'Jalankan git bisect reset']} label="Langkah pertama di atas" success="Itulah pemburuannya! Reset bawa anda balik ke branch anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari commit yang merosakkan sesuatu, dengan pantas.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tak boleh uji satu commit, contohnya ia tak boleh dibina? `git bisect skip` pilih commit jiran. `git bisect log` tunjuk langkah anda. Memburu pembaikan, bukan pepijat? Guna `git bisect old` dan `git bisect new`, bukan good dan bad. Dalam `bisect run`, kod keluar 125 maksudnya langkau.
+
+<Interactive name="TermReplay" scenario="w10-bisect" commands={['git bisect start HEAD HEAD~9', 'git bisect skip']} label="Selepas git bisect skip, Git checkout commit lain untuk diuji." />
+</Card>

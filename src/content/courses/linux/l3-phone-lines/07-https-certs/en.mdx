@@ -1,0 +1,75 @@
+---
+id: linux-l3-l07
+world: 3
+title: "HTTPS and certificates"
+summary: "You will learn: what a certificate is, how to read its dates, and what its errors mean."
+minutes: 4
+xp: 20
+interactives: [Transcript, SpotLines, OrderList, LinuxSim, Choice, SortCards, Mission]
+needs: [linux-l3-l06]
+scenario: linux-l3-https
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSL: s_client", url: "https://docs.openssl.org/3.5/man1/openssl-s_client/" }
+  - { label: "OpenSSL: x509", url: "https://docs.openssl.org/3.5/man1/openssl-x509/" }
+  - { label: "curl: SSL certificate checks", url: "https://curl.se/docs/sslcerts.html" }
+  - { label: "Let's Encrypt: how it works", url: "https://letsencrypt.org/how-it-works/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop" label="curl to https://kedai.example fails: curl: (60) SSL certificate problem: certificate has expired."
+  lines={[{ cmd: 'curl -sS https://kedai.example' }, { out: 'curl: (60) SSL certificate problem: certificate has expired\nMore details here: https://curl.se/docs/sslcerts.html', color: 'red' }]} />
+
+Monday morning. Customers see a scary warning. The real error says `certificate has expired`. Plain words: the shop's ID card ran out.
+</Card>
+
+<Card id="see-card" type="see">
+A <Term id="certificate">certificate</Term> is the server's ID card: its name, who signed it, and its dates. `curl -v` shows it. Tap the end date.
+
+<Interactive name="SpotLines" lines={[{ text: '* Server certificate:' }, { text: '*  subject: CN=kedai.example' }, { text: '*  start date: Nov  1 12:47:46 2026 GMT' }, { text: '*  expire date: Jan 30 12:47:46 2027 GMT', target: true }, { text: '*  subjectAltName: host "kedai.example" matched cert\'s "kedai.example"' }, { text: '*  issuer: CN=Kancil Practice CA' }, { text: '*  SSL certificate verify ok.' }]} prompt="Tap the line with the end date." success="This card is good until 30 January 2027." />
+</Card>
+
+<Card id="see-ca" type="see">
+<Term id="https">HTTPS</Term> is HTTP in a sealed envelope. A trusted office, the **certificate authority**, signs ID cards. Put the check in order.
+
+<Interactive name="OrderList" items={['curl says hello and asks for the ID card', 'The shop shows its certificate', 'curl checks the signer, the name and the dates', 'Both agree on a secret key', 'The order travels sealed']} label="First step at the top" success="Check the card first, then talk in secret." />
+</Card>
+
+<Card id="try-443" type="try">
+kedai has no sealed line yet. Prove it: call `https://localhost`, then look at `ss -tln`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-https" goal={{ lastTyped: '^curl .*https://localhost' }} hints={['Type curl -sS https://localhost', 'Then ss -tln: no 443 in the list.']} solution={['curl -sS https://localhost']} success="Nobody listens on 443. HTTPS needs its own counter and a certificate." />
+</Card>
+
+<Card id="see-dates" type="see">
+<Interactive name="Transcript" title="laptop" label="openssl reads kedai.example's certificate: subject CN=kedai.example, issuer Kancil Practice CA, notAfter Jan 30 2027. checkend 2592000 says Certificate will not expire."
+  lines={[{ cmd: 'openssl s_client -connect kedai.example:443 < /dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates' }, { out: 'subject=CN=kedai.example\nissuer=CN=Kancil Practice CA\nnotBefore=Nov  1 12:47:46 2026 GMT\nnotAfter=Jan 30 12:47:46 2027 GMT' }, { cmd: 'openssl s_client -connect kedai.example:443 < /dev/null 2>/dev/null | openssl x509 -noout -checkend 2592000' }, { out: 'Certificate will not expire', color: 'green' }]} />
+
+`openssl s_client` fetches the ID card like a browser. `x509` reads it. `-checkend 2592000` asks: still good in 30 days?
+</Card>
+
+<Card id="predict" type="predict">
+`curl https://203.0.113.10` says `no alternative certificate subject name matches`. Why?
+
+<Interactive name="Choice" options={[{ label: 'The card lists names, not that number', correct: true, why: 'It says kedai.example. Call the shop by its name.' }, { label: 'The card ran out', why: 'That error says certificate has expired.' }, { label: 'The shop is down', why: 'It answered and showed a card. The name did not match.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Real errors, plain fixes. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'renew', label: 'Renew the card' }, { id: 'signer', label: 'Unknown signer' }, { id: 'name', label: 'Wrong name' }]} items={[{ label: 'certificate has expired', bucket: 'renew', why: 'Get a new certificate. Then set up auto-renew.' }, { label: 'unable to get local issuer certificate', bucket: 'signer', why: 'curl does not trust who signed it. Often a home-made CA.' }, { label: 'no alternative certificate subject name matches', bucket: 'name', why: 'You called a name or number the card does not list.' }, { label: 'Verify return code: 10 (certificate has expired)', bucket: 'renew', why: 'openssl says the same thing: out of date.' }]} success="Read the error's last words. They name the fix." />
+</Card>
+
+<Card id="win" type="win">
+You can now read a certificate's dates and name its errors.
+</Card>
+
+<Card id="deeper" type="deeper">
+These outputs came from our own practice lab. It has a home-made CA, so we told the laptop to trust it. Real shops get free certificates from Let's Encrypt and renew them automatically. `curl -k` skips every check: use it only to look, never in scripts.
+
+<Interactive name="Mission" id="linux-l3-l07-rep" steps={[{ id: 'dates', text: 'Read a real certificate\'s dates.', command: 'openssl s_client -connect example.com:443 < /dev/null 2>/dev/null | openssl x509 -noout -dates' }, { id: 'v', text: 'Watch curl check a real card.', command: 'curl -sv -o /dev/null https://example.com' }]} success="You checked a real ID card." />
+</Card>

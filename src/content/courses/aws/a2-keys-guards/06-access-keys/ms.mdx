@@ -1,0 +1,66 @@
+---
+id: aws-a2-l06
+world: 2
+title: "Access key: elakkan, tukar selalu"
+summary: "Anda akan belajar: kenapa access key berisiko, apa patut diguna, dan cara tukar kunci dengan selamat."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, OrderList, CommandBuilder, SwipeJudge]
+needs: [aws-a2-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Manage access keys for IAM users", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html" }
+  - { label: "aws iam list-access-keys", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/list-access-keys.html" }
+  - { label: "aws iam update-access-key", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/update-access-key.html" }
+  - { label: "aws iam delete-access-key", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/delete-access-key.html" }
+---
+
+<Card id="hook" type="hook">
+Laptop dicuri dari kereta Kancil. Di dalamnya: satu kunci AWS lama dalam fail. Kunci itu tak pernah luput. Apa sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Matikan kunci itu segera, kemudian padam', correct: true, why: 'Kunci yang tak luput terus berfungsi untuk pencuri sehingga anda bertindak.' }, { label: 'Tunggu: pencuri mungkin tak jumpa', why: 'Penyerang cari kunci dalam cakera curi dahulu.' }, { label: 'Tukar kata laluan laptop', why: 'Fail kunci itu berfungsi tanpa kata laluan laptop.' }]} />
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="Transcript" title="bash" label="list-access-keys tunjuk dua kunci untuk pengguna Bob: satu Active, satu Inactive, dengan tarikh dicipta." lines={[{ cmd: 'aws iam list-access-keys --user-name Bob' }, { out: '{\n    "AccessKeyMetadata": [\n        {\n            "UserName": "Bob",\n            "Status": "Active",\n            "CreateDate": "2013-06-04T18:17:34Z",\n            "AccessKeyId": "AKIAIOSFODNN7EXAMPLE"\n        },\n        {\n            "UserName": "Bob",\n            "Status": "Inactive",\n            "CreateDate": "2013-06-06T20:42:26Z",\n            "AccessKeyId": "AKIAI44QH8DHBEXAMPLE"\n        }\n    ]\n}' }]} />
+
+**<Term id="access-key">Access key</Term>** ialah satu ID dan satu rahsia. Ia kekal sehingga anda padam. Seorang pengguna boleh ada dua sahaja.
+</Card>
+
+<Card id="try-rotate" type="try">
+Tukar kunci lama dengan kunci baru dipanggil rotate. Susun langkah yang selamat.
+
+<Interactive name="OrderList" items={['Cipta kunci kedua yang baru', 'Pindahkan setiap aplikasi ke kunci baru', 'Tukar kunci lama kepada Inactive', 'Tunggu dan pastikan tiada yang rosak', 'Padam kunci lama']} label="Langkah pertama di atas" success="Kunci baru dahulu, kunci lama dimatikan, kemudian dibuang. Tiada kejutan." />
+</Card>
+
+<Card id="try-off" type="try">
+Matikan kunci lama Bob. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws iam update-access-key', means: 'ubah status kunci' }, { text: '--access-key-id AKIAIOSFODNN7EXAMPLE', means: 'kunci mana' }, { text: '--status Inactive', means: 'matikan, tapi simpan' }, { text: '--user-name Bob', means: 'kunci siapa' }]} decoys={[{ text: '--status Active', means: 'hidupkan: sebaliknya' }]} success="Dimatikan. Ia tak paparkan apa-apa bila berjaya." />
+</Card>
+
+<Card id="predict" type="predict">
+Selepas anda matikan kunci lama, satu skrip lama rosak. Boleh anda baiki cepat?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: tukar kunci itu kembali ke Active, kemudian pindahkan skrip', correct: true, why: 'Kunci Inactive boleh dihidupkan semula. Sebab itu anda tunggu sebelum padam.' }, { label: 'Tak boleh: kunci Inactive hilang selamanya', why: 'Hanya padam yang kekal. Inactive cuma berhenti sekejap.' }, { label: 'Buat kunci ketiga', why: 'Seorang pengguna boleh pegang dua kunci sahaja.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Lebih baik daripada kunci jangka panjang, atau masih berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Di laptop saya: aws login atau aws sso login.', good: true, why: 'Pas jangka pendek. Tiada yang disimpan lama.' }, { text: 'Di server: role, bukan fail kunci.', good: true, why: 'Server pinjam kunci yang diperbaharui sendiri.' }, { text: 'Kunci dalam repo Git peribadi tak apa.', good: false, why: 'Repo peribadi boleh diklon, di-fork dan bocor.' }, { text: 'Access key root untuk skrip.', good: false, why: 'Jangan. Root tak simpan kunci langsung.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh elakkan access key, dan tukar satu dengan selamat bila terpaksa.
+</Card>
+
+<Card id="deeper" type="deeper">
+AWS tunjuk bahagian rahsia sekali sahaja, semasa kunci dibuat. Hilang? Padam kunci itu dan buat yang baru.
+
+`aws iam get-access-key-last-used` beritahu bila kunci terakhir berfungsi. Tak diguna berbulan-bulan? Padam. Padam itu kekal, jadi matikan dahulu.
+</Card>

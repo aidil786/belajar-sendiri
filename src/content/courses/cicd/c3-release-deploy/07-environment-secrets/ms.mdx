@@ -1,0 +1,66 @@
+---
+id: cicd-c3-l07
+world: 3
+title: "Secret ikut persekitaran"
+summary: "Anda akan belajar: cara beri staging dan production kunci sendiri, supaya satu kebocoran tak buka kedua-duanya."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, ConveyorBelt, SwipeJudge]
+needs: [cicd-c3-l06]
+scenario: c3-env-secret
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deployments and environments: environment secrets", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Cloudflare: create an API token", url: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" }
+---
+
+<Card id="hook" type="hook">
+Staging dan production kongsi satu token deploy. Satu skrip ujian staging tersilap. Apa yang boleh rosak?
+
+<Interactive name="Choice" options={[{ label: 'Production juga: kunci yang sama buka kedua-duanya', correct: true, why: 'Satu kunci buka setiap pintu yang ia muat.' }, { label: 'Staging sahaja', why: 'Skrip itu pegang kunci yang muat untuk production juga.' }, { label: 'Tiada apa: token selamat', why: 'Token hanya selamat setakat apa yang ia boleh buka.' }]} />
+</Card>
+
+<Card id="see-boxes" type="see">
+Beri setiap dapur kotak rempah berkunci sendiri. **<Term id="environment-secret">Environment secret</Term>** hanya terbuka untuk job yang menyebut environment itu. Susun <Term id="secret">secret</Term> ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'repo', label: 'Repository secret (setiap job)' }, { id: 'env', label: 'Environment secret (satu environment)' }]} items={[{ label: 'Token deploy production', bucket: 'env', why: 'Hanya job production patut memegangnya.' }, { label: 'Token deploy staging', bucket: 'env', why: 'Staging dapat kunci sendiri yang lebih lemah.' }, { label: 'Token baca sahaja untuk servis ujian', bucket: 'repo', why: 'Setiap job mungkin perlu, dan ia tak ubah apa-apa.' }, { label: 'Kunci yang hanya job release boleh guna', bucket: 'env', why: 'Letak dalam environment yang job itu sebut.' }]} success="Siap! Kunci yang kuat duduk dalam kotak sendiri." />
+</Card>
+
+<Card id="try-fix" type="try">
+Token itu kini hanya ada dalam environment production. Deploy jadi merah. Baca ralat sebenar. Kemudian pilih pembaikan untuk baris kuning.
+
+<Interactive name="ConveyorBelt" scenario="c3-env-secret" task={{ type: 'green' }} fixes={[
+  { label: 'Tambah environment: production', text: '    runs-on: ubuntu-latest\n    environment: production' },
+  { label: 'Tambah environment: staging', text: '    runs-on: ubuntu-latest\n    environment: staging', correct: false, why: 'Hijau, tapi itu kunci staging. Production perlukan kunci sendiri.' },
+  { label: 'Tambah permissions: write-all', text: '    runs-on: ubuntu-latest\n    permissions: write-all', why: 'Permissions token bukan secret. Kotak rempah tetap berkunci.' }]}
+  success="Hijau! Job itu sebut production, jadi kotak production terbuka." />
+
+<Hint>Secret sesuatu environment hanya sampai kepada job yang menyebutnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Production juga ada penyemak wajib. Bila job deploy boleh baca secret production?
+
+<Interactive name="Choice" options={[{ label: 'Hanya selepas penyemak lulus', correct: true, why: 'Sebelum itu, job menunggu dan kotak kekal berkunci.' }, { label: 'Sebaik sahaja job bermula', why: 'Job tunggu di pintu dulu. Tiada kelulusan, tiada kunci.' }, { label: 'Tak pernah, dalam mana-mana job', why: 'Job yang sebut production dapat secret itu, selepas diluluskan.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat kunci: bagus, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Token berbeza untuk staging dan untuk production.', good: true, why: 'Kebocoran staging tak boleh sentuh production.' }, { text: 'Satu token untuk semua. Lebih mudah.', good: false, why: 'Satu kebocoran buka setiap pintu.' }, { text: 'Beri setiap token hak yang ia perlukan sahaja.', good: true, why: 'Token Cloudflare boleh dihadkan kepada satu akaun, malah satu Worker.' }, { text: 'Cetak token sekali, untuk pastikan ia berfungsi.', good: false, why: 'Log selalu dikongsi. Jangan cetak secret, walaupun sekali.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan kunci setiap environment dalam kotak sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Runner self-hosted juga boleh baca environment secret. Kawal ia baik-baik (Dunia C4). Untuk repo peribadi, environment secret perlukan GitHub Pro, Team atau Enterprise.
+
+Latihan sebenar (pilihan): dalam repo ujian awam, buat environment staging dan production. Beri setiap satu token ujian sendiri dengan `gh secret set CLOUDFLARE_API_TOKEN --env staging`.
+</Card>

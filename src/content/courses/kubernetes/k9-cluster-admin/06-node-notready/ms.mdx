@@ -1,0 +1,86 @@
+---
+id: k8s-k9-l06
+world: 9
+title: "Node NotReady: tangganya"
+summary: "Anda akan belajar: tangga langkah demi langkah untuk cari kenapa node NotReady, dan baikinya."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, FoodCourtSim, OrderList, SwipeJudge, Mission]
+needs: [k8s-k9-l05]
+scenario: k9-notready
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Troubleshooting kluster", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "Node: status dan keadaan node", url: "https://kubernetes.io/docs/reference/node/node-status/" }
+  - { label: "kubelet", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-notready" commands={['kubectl get nodes']} label="kubectl get nodes: dev-worker NotReady. Dua gerai lagi Ready." />
+
+Pukul 3 pagi lagi: `dev-worker` NotReady. Jangan teka. Panjat satu tangga, satu anak tangga setiap kali, dari atas.
+</Card>
+
+<Card id="try-conditions" type="try">
+Anak tangga 2 ialah `kubectl describe node dev-worker`. Baca **<Term id="node-conditions">node conditions (keadaan node)</Term>**. Tekan baris Ready.
+
+<Interactive name="SpotLines" prompt="Tekan baris untuk keadaan Ready." lines={[{ text: 'Taints:             node.kubernetes.io/unreachable:NoSchedule' }, { text: '                    node.kubernetes.io/unreachable:NoExecute' }, { text: 'Conditions:' }, { text: '  Type            Status   LastHeartbeatTime                LastTransitionTime               Reason             Message' }, { text: '  MemoryPressure  Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  DiskPressure    Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  PIDPressure     Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  Ready           Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.', target: true }]} success="Unknown: pejabat tak dengar lagi daripada penyelia gerai ini." />
+
+<Hint>Baca lajur Type. Cari Ready.</Hint>
+</Card>
+
+<Card id="predict-next" type="predict">
+“Kubelet stopped posting node status” bermaksud kubelet berhenti melapor. Di mana anak tangga seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Di dalam dev-worker: servis kubelet', correct: true, why: 'Ya. Penyelia senyap. Pergi tanya mesinnya.' }, { label: 'Padam pod di dev-worker', why: 'Dulang bukan masalahnya. Penyelianya yang bermasalah.' }, { label: 'Mulakan semula API server', why: 'Pejabat okey. Cuma satu gerai senyap.' }]} />
+</Card>
+
+<Card id="try-climb" type="try">
+Turun ke bawah. Taip `ssh dev-worker`, kemudian `systemctl status kubelet`. Kemudian baca diari: `journalctl -u kubelet -n 10 --no-pager`.
+
+<Interactive name="FoodCourtSim" scenario="k9-notready" goal={{ typed: '^systemctl status kubelet(\\.service)?$', lastTyped: '^journalctl\\b.*(-u ?|--unit[= ])kubelet' }} hints={['Taip ssh dev-worker', 'Kemudian systemctl status kubelet', 'Kemudian journalctl -u kubelet -n 10 --no-pager']} success="inactive (dead), dan diari berakhir dengan “Stopped kubelet.service”." />
+
+<Hint>Lihat baris Active dahulu. Kemudian baris terakhir diari.</Hint>
+</Card>
+
+<Card id="check-journal" type="check">
+Ini baris terakhir diari. Tekan dua baris di mana systemd hentikan kubelet.
+
+<Interactive name="SpotLines" prompt="Tekan 2 baris daripada systemd tentang berhenti." lines={[{ text: 'Oct 31 01:00:22 dev-worker systemd[1]: Stopping kubelet.service - kubelet: The Kubernetes Node Agent...', target: true }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.255184     342 eviction_manager.go:224] "Eviction manager: monitoring loop exiting" err="context canceled"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.258272     342 podcertificatemanager.go:351] "podcertificate.IssuingManager shut down"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.260284     342 volume_manager.go:341] "Shutting down Kubelet Volume Manager"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.263372     342 tlsconfig.go:258] "Shutting down DynamicServingCertificateController"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.266284     342 dynamic_cafile_content.go:175] "Shutting down controller" name="client-ca-bundle::/etc/kubernetes/pki/ca.crt"' }, { text: 'Oct 31 01:00:22 dev-worker systemd[1]: kubelet.service: Deactivated successfully.' }, { text: 'Oct 31 01:00:22 dev-worker systemd[1]: Stopped kubelet.service - kubelet: The Kubernetes Node Agent.', target: true }]} success="Berhenti dengan tenang, sengaja diminta. Bukan ranap." />
+
+<Hint>Cari systemd[1] dan perkataan Stopping dan Stopped.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Sekarang baiki: `systemctl start kubelet`. Kemudian `exit`, dan perhatikan gerai dengan `kubectl get nodes -w`.
+
+<Interactive name="FoodCourtSim" scenario="k9-notready" goal={{ nodeReady: { name: 'dev-worker' } }} hints={['Taip ssh dev-worker', 'Kemudian systemctl start kubelet', 'Kemudian exit, dan kubectl get nodes -w']} success="Penyelia kembali bertugas, jadi dev-worker Ready semula." />
+
+<Hint>Hidupkan kubelet itu selamat. Ia cuma bawa penyelia kembali.</Hint>
+</Card>
+
+<Card id="check-ladder" type="check">
+Susun seluruh tangga, anak tangga atas dahulu.
+
+<Interactive name="OrderList" items={['Gerai mana? kubectl get nodes', 'Kenapa? kubectl describe node dev-worker', 'Masuk ke dalam: ssh dev-worker', 'Penyelia bertugas? systemctl status kubelet', 'Apa yang ia tulis? journalctl -u kubelet', 'Baiki: systemctl start kubelet', 'Tengok ia jadi Ready: kubectl get nodes -w']} label="Anak tangga atas di atas" success="Itulah tangganya. Ia berkesan untuk banyak malam NotReady." />
+</Card>
+
+<Card id="check-moves" type="check">
+Langkah yang baik pada node NotReady? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Baca systemctl status sebelum ubah apa-apa', good: true, why: 'Lihat dahulu. Status selalunya beritahu cara baiki.' }, { text: 'Padam node dengan kubectl delete node', good: false, why: 'Rekod gerai hilang. Mesinnya masih rosak.' }, { text: 'But semula mesin dahulu, baru lihat', good: false, why: 'Anda mungkin hilang petunjuk. Lihat dahulu, baru putuskan.' }, { text: 'Selepas baiki, semak systemctl is-enabled kubelet', good: true, why: 'enabled bermaksud ia hidup semula selepas but seterusnya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panjat tangga NotReady dan pulihkan node.
+</Card>
+
+<Card id="deeper" type="deeper">
+Malam NotReady yang lain guna tangga yang sama. Mungkin dapur (containerd) mati. Mungkin belum ada rangkaian Pod, atau cakera penuh. `kubectl describe` tunjuk di mana nak lihat. Diari tunjuk kenapa. Berlatih rosakkan gerai di kluster pakai buang sahaja.
+
+<Interactive name="Mission" id="k8s-k9-l06-real" steps={[{ id: 'where', text: 'Pastikan anda di kluster kind pakai buang.', command: 'kubectl config current-context' }, { id: 'stop', text: 'Hati-hati, kluster pakai buang sahaja: hentikan satu penyelia.', command: 'docker exec dev-worker systemctl stop kubelet' }, { id: 'wait', text: 'Tunggu lebih kurang seminit. Kemudian lihat.', command: 'kubectl get nodes' }, { id: 'why', text: 'Baca keadaannya.', command: 'kubectl describe node dev-worker' }, { id: 'fix', text: 'Hidupkan penyelia semula.', command: 'docker exec dev-worker systemctl start kubelet' }, { id: 'watch', text: 'Tengok ia jadi Ready. Tekan Ctrl+C untuk berhenti.', command: 'kubectl get nodes -w' }]} success="Anda rosakkan dan baiki node sebenar, dengan selamat!" />
+</Card>

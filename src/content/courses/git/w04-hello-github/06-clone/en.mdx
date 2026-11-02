@@ -1,0 +1,61 @@
+---
+id: git-w04-l06
+world: 4
+title: Clone a project
+summary: "You will learn: how to copy a whole project from GitHub to your computer."
+minutes: 3
+xp: 15
+interactives: [Choice, TermReplay, Sim, SpotLines, SortCards]
+needs: [git-w04-l05]
+scenario: w04-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git clone", url: "https://git-scm.com/docs/git-clone" }
+  - { label: "Cloning a repository", url: "https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository" }
+---
+
+<Card id="hook" type="hook">
+Your laptop broke. The new one is empty. Luckily, your diary is safe on GitHub. How do you get it back?
+
+<Interactive name="Choice" options={[{ label: 'Clone it from the GitHub address', correct: true, why: 'One command brings back every file and every commit.' }, { label: 'git init, then type it all again', why: 'No need! Your history waits on GitHub.' }, { label: 'Download each file from the website', why: 'You would get the files, but no history.' }]} />
+</Card>
+
+<Card id="see-clone" type="see">
+<Interactive name="TermReplay" scenario="w04-l06" commands={['git clone https://github.com/you/diary.git', 'cd diary', 'git log --oneline']} label="git clone makes a diary folder. Inside, git log shows all three commits, with origin/main next to main." />
+
+**<Term id="clone">Clone</Term>** copies the whole project: every file and every commit. It even saves the address as `origin` for you.
+</Card>
+
+<Card id="try-type" type="try">
+Clone your diary onto the new laptop. Then step into its folder.
+
+<Interactive name="Sim" scenario="w04-l06" panels={['graph']} goal={{ repoAt: '/home/you/diary', cwd: '/home/you/diary' }} hints={['Type git clone https://github.com/you/diary.git', 'Then type cd diary']} success="Welcome back, diary! Every commit made it." />
+
+<Hint>Clone first. Then `cd diary`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You just cloned. Which remotes does the new repo have?
+
+<Interactive name="Choice" compact options={[{ label: '`origin`', correct: true, why: 'Clone saves the address as origin, all by itself.' }, { label: 'None', why: 'Clone adds one for you. No git remote add needed.' }, { label: '`github`', why: 'Close! But the name Git picks is origin.' }]} />
+</Card>
+
+<Card id="check-lines" type="check">
+<Interactive name="SpotLines" scenario="w04-l06" commands={['git clone https://github.com/you/diary.git', 'cd diary', 'git branch -a']} targets="remotes/" prompt="Tap every line about GitHub's copy." success="Lines with remotes/ are your laptop's memory of GitHub." />
+</Card>
+
+<Card id="check-sort" type="check">
+What comes with a clone? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Comes with clone' }, { id: 'no', label: 'Stays behind' }]} items={[{ label: 'Every commit', bucket: 'yes', why: 'The whole history comes along.' }, { label: 'All the files', bucket: 'yes', why: 'Your working folder fills up.' }, { label: 'The origin remote', bucket: 'yes', why: 'Clone saves the address for you.' }, { label: 'Your old laptop’s unpushed commits', bucket: 'no', why: 'They never reached GitHub.' }, { label: 'Issues from the website', bucket: 'no', why: 'Issues live on GitHub, not in Git.' }]} success="Sorted! A clone brings everything that was pushed." />
+</Card>
+
+<Card id="win" type="win">
+You can now clone any project from GitHub.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git clone <url> my-diary` picks the folder name. With an SSH key, clone the SSH address instead. Cloning someone else's public repo works too. To change it, you'll need a fork (lesson 12).
+</Card>

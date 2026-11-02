@@ -1,0 +1,68 @@
+---
+id: docker-d4-l09
+world: 4
+title: Skala satu servis
+summary: "Anda akan belajar: jalankan lebih banyak salinan satu service, dan bila ia tak boleh."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, KitchenSim, SwipeJudge]
+needs: [docker-d4-l08]
+scenario: d4-scale
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up --scale", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "Compose Deploy Specification: replicas", url: "https://docs.docker.com/reference/compose-file/deploy/#replicas" }
+  - { label: "Compose file reference: container_name", url: "https://docs.docker.com/reference/compose-file/services/#container_name" }
+---
+
+<Card id="hook" type="hook">
+Waktu makan tengah hari! Seorang tukang masak API tak menang tangan. Anda mahu tiga. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Hidupkan tiga salinan api dengan satu pilihan', correct: true, why: 'Compose boleh jalankan banyak salinan satu service.' }, { label: 'Salin blok api tiga kali', why: 'Boleh jalan, tapi sekarang tiga blok mesti sama. Ada cara lebih mudah.' }, { label: 'Beli laptop lebih besar', why: 'Lebih ramai tukang masak membantu di sini, bukan dapur lebih besar.' }]} />
+</Card>
+
+<Card id="see-scale" type="see">
+<Interactive name="KitchenReplay" scenario="d4-scale" commands={['docker compose up -d --scale api=3', 'docker compose ps']} label="Tiga bekas api, bernombor api-1 hingga api-3, dan satu bekas web." />
+
+**<Term id="compose-scale">Scale</Term>** (skala) satu service bermaksud jalankan lebih banyak salinannya. `--scale api=3` minta tiga. Compose beri nombor: `api-1`, `api-2`, `api-3`.
+</Card>
+
+<Card id="try-scale" type="try">
+Waktu sibuk dah tamat. Simpan dua tukang masak api sahaja.
+
+<Interactive name="KitchenSim" scenario="d4-scale" keys="compose" intro={['docker compose up -d --scale api=3']} goal={{ running: ['kedai-kancil-api-1', 'kedai-kancil-api-2'], notExists: ['kedai-kancil-api-3'] }} hints={['Arahan sama, nombor lebih kecil.', 'Taip docker compose up -d --scale api=2']} success="Tinggal dua tukang masak. Compose buang bekas yang lebih." />
+
+<Hint>`docker compose up -d --scale api=2`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang anda skala web jadi dua. Kedua-dua salinan mahu tingkap 8080 di laptop. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Bekas web kedua gagal', correct: true, why: 'Satu port laptop untuk satu bekas. Kata sebenar seterusnya.' }, { label: 'Mereka berkongsi tingkap 8080', why: 'Dua bekas tak boleh pegang port laptop yang sama.' }, { label: 'Compose pilih 8081 untuk anda', why: 'Compose tak pernah tukar nombor tingkap anda.' }]} />
+</Card>
+
+<Card id="check-port" type="check">
+<Interactive name="KitchenReplay" scenario="d4-scale" commands={['docker compose up -d', 'docker compose up -d --scale web=2']} fails={['docker compose up -d --scale web=2']} label="web-2 dibuat, kemudian gagal: Bind for 0.0.0.0:8080 failed: port is already allocated." />
+
+Kata sebenar: `port is already allocated`. Maksudnya: web-1 dah pegang tingkap 8080.
+</Card>
+
+<Card id="check-swipe" type="check">
+Boleh hidangan ini diskala di satu laptop? Kanan untuk ya, kiri untuk tidak.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'api tanpa ports', good: true, why: 'Tiada tingkap tetap, jadi salinannya tak bertembung.' }, { text: 'web dengan ports "8080:80"', good: false, why: 'Setiap salinan mahu tingkap 8080.' }, { text: 'db dengan container_name: kedai-db', good: false, why: 'Nama bekas mesti unik. Nama tetap hanya benarkan satu bekas.' }, { text: 'api dengan expose: 3000', good: true, why: 'expose buka pintu pada talian telefon sahaja, bukan di laptop.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan lebih banyak salinan satu service.
+</Card>
+
+<Card id="deeper" type="deeper">
+`deploy: replicas: 3` dalam fail buat perkara sama seperti pilihan itu. Panggil `api` pada talian telefon kini jumpa ketiga-tiga bekas. Docker tak betul-betul bahagikan kerja antara mereka. Proxy yang buat begitu, atau Kubernetes dalam Bahagian 3. Compose jalan di satu mesin sahaja.
+
+Latihan sebenar (pilihan): dalam projek yang ada service api tanpa ports, jalankan `docker compose up -d --scale api=3`, kemudian `docker compose ps`.
+</Card>

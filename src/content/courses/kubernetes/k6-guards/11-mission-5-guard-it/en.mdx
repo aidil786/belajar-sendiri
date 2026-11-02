@@ -1,0 +1,89 @@
+---
+id: k8s-k6-m5
+world: 6
+title: "Capstone mission 5: Guard it"
+summary: "You will learn: to give Kedai Kancil badges, locks, fences and seals, then prove the cluster refuses a root or unsigned image."
+minutes: 5
+xp: 100
+interactives: [KubeReplay, Mission, SpotLines, MissionCheck]
+needs: [k8s-k6-boss]
+scenario: k6-mission
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "GitHub: enforce artifact attestations in Kubernetes", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/enforce-artifact-attestations" }
+  - { label: "Helm 4: helm upgrade", url: "https://helm.sh/docs/helm/helm_upgrade/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k6-mission" commands={['kubectl apply -f root.yaml --dry-run=server']} fails={['kubectl apply -f root.yaml --dry-run=server']} namespace="kedai" label="A dry run of a root nginx pod in the kedai zone is forbidden: it violates PodSecurity restricted." />
+
+Mission 5: Guard it. Your goal: your own cluster refuses a root or unsigned image, like this. Four jobs: badges, locks, fences, seals.
+</Card>
+
+<Card id="try-badges" type="try">
+Step 1: badges and locks. kubectl can write the YAML for you with `--dry-run=client -o yaml`.
+
+<Interactive name="Mission" id="k6-m5-badges" steps={[
+  { id: 'sa', text: "Start `k8s/base/rbac.yaml` with the CI bot's badge.", command: 'kubectl create serviceaccount ci-bot -n kedai --dry-run=client -o yaml > k8s/base/rbac.yaml' },
+  { id: 'role', text: 'Add its job card.', command: 'echo "---" >> k8s/base/rbac.yaml && kubectl create role deployer -n kedai --verb=get,list,patch --resource=deployments --dry-run=client -o yaml >> k8s/base/rbac.yaml' },
+  { id: 'bind', text: 'Add the pin.', command: 'echo "---" >> k8s/base/rbac.yaml && kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=kedai:ci-bot --dry-run=client -o yaml >> k8s/base/rbac.yaml' },
+  { id: 'dry', text: 'Dry run the guard on your kind cluster. Read which pods would break.', command: 'kubectl label --dry-run=server --overwrite ns kedai pod-security.kubernetes.io/enforce=restricted' },
+  { id: 'locks', text: 'Add the four locks to every container in your Deployments. Your mission 1 images should already run as non-root.' },
+  { id: 'label', text: 'Put the label `pod-security.kubernetes.io/enforce: restricted` on your kedai Namespace file.' },
+  { id: 'apply', text: 'List `rbac.yaml` in `k8s/base/kustomization.yaml`. Apply your overlay, as in mission 4.' },
+  { id: 'ask', text: 'Ask as the bot. Secrets must say no.', command: 'kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:kedai:ci-bot' }]}
+  success="Badges and locks are in Git." />
+</Card>
+
+<Card id="see-zone" type="see">
+Your kedai zone will carry two guard labels. One checks locks. One checks seals.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Namespace' }, { text: 'metadata:' }, { text: '  name: kedai' }, { text: '  labels:' }, { text: '    pod-security.kubernetes.io/enforce: restricted', target: true }, { text: '    policy.sigstore.dev/include: "true"' }]} prompt="Tap the label that refuses a root tray." success="Yes! The other label waits for step 2." />
+</Card>
+
+<Card id="try-fences-seals" type="try">
+Step 2: fences and seals. The seal commands come from GitHub's guide, written for Helm 4.
+
+<Interactive name="Mission" id="k6-m5-fences" steps={[
+  { id: 'deny', text: 'Make `k8s/base/networkpolicy.yaml`. Start with a deny-all fence, like lesson 6.' },
+  { id: 'gates', text: 'Add one small gate per hop: entrance to web, web to API, API to database.' },
+  { id: 'probe', text: "From another zone, call your API Service. It should time out. Use your Service's name.", command: 'kubectl run probe --rm -it --restart=Never --image=busybox:1.37 -- wget -qO- -T 2 http://api.kedai' },
+  { id: 'attest', text: 'Check that mission 2 attests your images, with `push-to-registry: true` (Part 2, "SBOM and provenance in CI").' },
+  { id: 'controller', text: "Install Sigstore's policy controller.", command: 'helm upgrade policy-controller --install --rollback-on-failure --create-namespace --namespace artifact-attestations oci://ghcr.io/sigstore/helm-charts/policy-controller --version 0.10.5' },
+  { id: 'trust', text: "Add GitHub's trust root and policy. Use your GitHub name.", command: 'helm upgrade trust-policies --install --rollback-on-failure --namespace artifact-attestations oci://ghcr.io/github/artifact-attestations-helm-charts/trust-policies --version v0.7.0 --set policy.enabled=true --set policy.organization=YOUR-NAME' },
+  { id: 'exempt', text: 'Images from elsewhere, like Postgres from Docker Hub, need `policy.exemptImages`. The guide shows how.' },
+  { id: 'switch', text: 'Switch seal checks on for kedai. Add the label to your Namespace file too.', command: 'kubectl label namespace kedai policy.sigstore.dev/include=true' }]}
+  success="Fences up. Seals checked." />
+</Card>
+
+<Card id="check-api" type="check">
+Let GitHub's public API confirm your files. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your Kedai Kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/base/rbac.yaml', label: 'It has k8s/base/rbac.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'k8s/base/networkpolicy.yaml', label: 'It has k8s/base/networkpolicy.yaml' }]} success="GitHub sees your guards!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see inside your cluster. Check these yourself.
+
+<Interactive name="Mission" id="k6-m5-self" steps={[
+  { id: 'bot', text: 'The bot may patch deployments in kedai. It may not read secrets.', command: 'kubectl auth can-i patch deployments -n kedai --as=system:serviceaccount:kedai:ci-bot' },
+  { id: 'root', text: 'A root tray is refused, even on a dry run.', command: 'kubectl run root-test -n kedai --image=nginx:1.29-alpine --dry-run=server' },
+  { id: 'unsigned', text: 'An image without your attestation is refused, even with all four locks.' },
+  { id: 'shop', text: 'Your shop still answers through the Gateway.' }]}
+  success="Mission 5 done: Kedai Kancil is guarded." />
+</Card>
+
+<Card id="win" type="win">
+You can now guard Kedai Kancil with badges, locks, fences and seals.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safety: use your kind cluster only, never a work cluster. Read the pink "you are here" bar before each label or delete. Stuck pods? Run `kubectl get events -n kedai`. Kyverno or Gatekeeper can check seals too, if your team already uses one.
+</Card>

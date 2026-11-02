@@ -1,0 +1,78 @@
+---
+id: iac-t3-l02
+world: 3
+title: "Locking: seorang pembina pada satu masa"
+summary: "Anda akan belajar: kenapa daftar dapat tanda sibuk, dan apa perlu buat bila ia tersekat."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, SpotLines, OrderList, CommandBuilder, SwipeJudge, Mission]
+needs: [iac-t3-l01]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state locking", url: "https://opentofu.org/docs/language/state/locking/" }
+  - { label: "tofu force-unlock", url: "https://opentofu.org/docs/cli/commands/force-unlock/" }
+  - { label: "tofu plan (-lock, -lock-timeout)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: locking backend s3", url: "https://opentofu.org/docs/language/settings/backends/s3/" }
+---
+
+<Card id="hook" type="hook">
+`tofu apply` Aina sudah separuh jalan. Ben mulakan apply sendiri pada daftar yang sama. Apa patut jadi pada larian Ben?
+
+<Interactive name="Choice" options={[{ label: 'Ia berhenti: daftar sedang sibuk', correct: true, why: 'Dua pembina tulis satu daftar serentak boleh koyakkannya.' }, { label: 'Kedua-duanya jalan, yang laju menang', why: 'Daftar boleh jadi separuh setiap satu. Itu merosakkannya.' }, { label: 'Larian Ben padam kerja Aina', why: 'Kunci hentikan Ben sebelum dia tulis apa-apa.' }]} />
+</Card>
+
+<Card id="see-lock" type="see">
+<Interactive name="Transcript" title="bash" label="Ralat sebenar. tofu plan Ben berhenti dengan Error acquiring the state lock. Lock Info tunjuk ID, path terraform.tfstate, operasi OperationTypeApply dan Who: root@aina-laptop." lines={[{ cmd: 'tofu plan' }, { out: 'Error: Error acquiring the state lock', color: 'red' }, { out: '\nError message: resource temporarily unavailable\nLock Info:\n  ID:        94da26d5-0aeb-a021-8eda-d41c2046f8f1\n  Path:      terraform.tfstate\n  Operation: OperationTypeApply\n  Who:       root@aina-laptop\n  Version:   1.13.5\n  Created:   2026-11-01 13:13:45.403003532 +0000 UTC\n  Info:\n\nOpenTofu acquires a state lock to protect the state from being written\nby multiple users at the same time. Please resolve the issue above and try\nagain. For most commands, you can disable locking with the "-lock=false"\nflag, but this is not recommended.' }]} />
+
+**<Term id="state-lock">State lock</Term>** (kunci state) ialah tanda "sibuk" pada daftar. Plan Ben terus berhenti. Tiada apa berubah.
+</Card>
+
+<Card id="try-who" type="try">
+Siapa sedang membina sekarang? Tekan baris itu.
+
+<Interactive name="SpotLines" prompt="Tekan baris yang namakan siapa pegang kunci." lines={[{ text: 'Lock Info:' }, { text: '  ID:        94da26d5-0aeb-a021-8eda-d41c2046f8f1' }, { text: '  Path:      terraform.tfstate' }, { text: '  Operation: OperationTypeApply' }, { text: '  Who:       root@aina-laptop', target: true }, { text: '  Version:   1.13.5' }, { text: '  Created:   2026-11-01 13:13:45.403003532 +0000 UTC' }]} success="Laptop Aina pegang kunci. Tanya dia dahulu." />
+
+<Hint>Cari perkataan Who.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Larian Ben terkena kunci. Susun langkah seterusnya.
+
+<Interactive name="OrderList" items={['Baca Who dan Created dalam ralat', 'Tanya orang itu, atau semak pipeline', 'Tunggu larian mereka habis, kemudian cuba lagi', 'Hanya jika larian mereka mati: force-unlock dengan ID']} label="Langkah pertama di atas" success="Tanya, tunggu, baru buka kunci." />
+</Card>
+
+<Card id="predict" type="predict">
+Ben tergesa-gesa. Bolehkah dia tambah `-lock=false` sahaja?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: nanti dua larian boleh tulis serentak', correct: true, why: 'Tanda sibuk itu lindungi daftar. Langkau ia boleh koyakkan daftar.' }, { label: 'Ya, ia cuma amaran', why: 'Ia ralat, dan larian sudah berhenti. Dokumentasi kata -lock=false tidak disyorkan.' }, { label: 'Ya, jika dia menaip laju', why: 'Laju tak membantu. Dua penulis masih boleh bertembung.' }]} />
+</Card>
+
+<Card id="try-unlock" type="try">
+Laptop Aina rosak semasa apply. Kuncinya tertinggal. Bina pembetulan yang berhati-hati.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'bercakap dengan OpenTofu' }, { text: 'force-unlock', means: 'buang tanda sibuk yang tersekat' }, { text: 'LOCK_ID', means: 'ID daripada ralat' }]} decoys={[{ text: '-lock=false', means: 'abaikan tanda: berisiko' }, { text: 'destroy', means: 'padam semuanya: jangan untuk ini' }]} success="tofu force-unlock LOCK_ID. Hati-hati: hanya untuk larian yang betul-betul mati." />
+
+<Hint>Tiga kepingan: alatnya, arahannya, kemudian ID.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Leret: kerja berpasukan yang bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tunggu apply Aina habis, kemudian plan semula', good: true, why: 'Kunci buat kerjanya. Sekarang daftar sudah bebas.' }, { text: 'Tambah -lock=false untuk lepasi ralat', good: false, why: 'Dua penulis serentak boleh rosakkan daftar.' }, { text: 'Force-unlock semasa pipeline masih apply', good: false, why: 'Larian itu masih hidup. Kini dua larian boleh menulis.' }, { text: 'Guna -lock-timeout=5m supaya larian tunggu giliran', good: true, why: 'OpenTofu terus cuba selama 5 minit sebelum mengalah.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca ralat kunci dan bebaskan kunci tersekat dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kebanyakan backend bersama ada kunci: `s3` dengan `use_lockfile = true`, `gcs`, `azurerm`, `pg`. Dokumentasi Terraform kata kunci DynamoDB untuk `s3` sudah lapuk; OpenTofu kekalkan kedua-duanya. Backend tempatan guna kunci fail komputer sendiri. Begitulah ralat sebenar ini berlaku: dua larian pada satu mesin.
+
+Latihan sebenar (pilihan): dua terminal, satu folder, satu daftar.
+
+<Interactive name="Mission" id="iac-t3-l02-rep" steps={[{ id: 'build', text: 'Dalam folder latihan dengan satu resource terraform_data, bina sekali.', command: 'tofu init && tofu apply -auto-approve' }, { id: 'change', text: 'Tukar input-nya. Di terminal 1, mulakan apply. Biarkan di "Enter a value".', command: 'tofu apply' }, { id: 'clash', text: 'Di terminal 2, jalankan plan. Baca ralat kunci.', command: 'tofu plan' }, { id: 'free', text: 'Kembali ke terminal 1, taip no. Plan semula di terminal 2: ia berjaya.' }]} success="Anda nampak kunci sebenar, dan ia lepas sendiri." />
+</Card>

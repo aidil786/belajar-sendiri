@@ -1,0 +1,78 @@
+---
+id: iac-t3-l01
+world: 3
+title: Backend state jauh
+summary: "Anda akan belajar: di mana pasukan simpan satu daftar bersama, dan cara pindahkannya ke sana."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Transcript, OrderList, Mission]
+needs: [iac-t2-boss]
+scenario: t3-register
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state", url: "https://opentofu.org/docs/language/state/" }
+  - { label: "OpenTofu: remote state", url: "https://opentofu.org/docs/language/state/remote/" }
+  - { label: "OpenTofu: tetapan backend", url: "https://opentofu.org/docs/language/settings/backends/configuration/" }
+  - { label: "OpenTofu: backend s3", url: "https://opentofu.org/docs/language/settings/backends/s3/" }
+  - { label: "Terraform: backend s3", url: "https://developer.hashicorp.com/terraform/language/backend/s3" }
+---
+
+<Card id="hook" type="hook">
+Aina bina Kedai Kancil dari laptopnya. Hari ini Ben jalankan `tofu apply` dengan pelan yang sama, di laptopnya. Foldernya tiada fail state. Apa yang plan dia mahu buat?
+
+<Interactive name="Choice" options={[{ label: 'Bina semuanya semula, sebagai baharu', correct: true, why: 'Daftar Ben kosong, jadi OpenTofu sangka belum ada apa-apa dibina.' }, { label: 'Tiada apa-apa: semuanya sudah dibina', why: 'OpenTofu hanya percaya daftarnya sendiri. Daftar Ben kosong.' }, { label: 'Baca daftar Aina melalui Wi-Fi', why: 'Fail state tempatan tidak pernah keluar dari laptop Aina.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Di mana daftar itu sekarang? Taip `ls`. Kemudian baca: `cat terraform.tfstate`.
+
+<Interactive name="TofuSim" scenario="t3-register" goal={{ typed: '^ls', lastTyped: '^cat terraform\\.tfstate' }} hints={['Taip ls dan tekan Enter.', 'Kemudian taip cat terraform.tfstate']} success="Itu dia: satu fail JSON, di satu laptop sahaja." />
+
+<Hint>`ls` senaraikan fail. `cat` paparkan satu fail.</Hint>
+</Card>
+
+<Card id="see-backend" type="see">
+<Interactive name="SpotLines" prompt="Tekan dua baris yang beritahu ke mana daftar pergi." lines={[{ text: 'terraform {' }, { text: '  backend "s3" {' }, { text: '    bucket       = "kedai-kancil-state"', target: true }, { text: '    key          = "shop/terraform.tfstate"', target: true }, { text: '    region       = "ap-southeast-5"' }, { text: '    use_lockfile = true' }, { text: '    encrypt      = true' }, { text: '  }' }, { text: '}' }]} success="Bucket itu raknya. Key itu nama fail di atas rak." />
+
+**<Term id="backend">Backend</Term>** (tempat simpan daftar) ialah rumah untuk daftar. Backend bersama ada dalam talian. Jadi seluruh pasukan baca daftar yang sama.
+</Card>
+
+<Card id="try-sort" type="try">
+Susun setiap fakta: fail di satu laptop, atau backend bersama?
+
+<Interactive name="SortCards" buckets={[{ id: 'laptop', label: 'Fail di laptop' }, { id: 'shared', label: 'Backend bersama' }]} items={[{ label: 'Hanya seorang boleh nampak', bucket: 'laptop', why: 'Ia duduk dalam satu folder, di satu mesin.' }, { label: 'Seluruh pasukan baca daftar yang sama', bucket: 'shared', why: 'Semua orang halakan pelan ke tempat yang sama.' }, { label: 'Hilang jika laptop rosak', bucket: 'laptop', why: 'Tiada salinan di tempat lain.' }, { label: 'Boleh simpan versi lama, jika dihidupkan', bucket: 'shared', why: 'Versioning bucket simpan salinan lama.' }, { label: 'Mudah ter-commit ke Git', bucket: 'laptop', why: 'Ia duduk betul-betul sebelah fail .tf anda.' }, { label: 'Perlu akaun dan peraturan akses', bucket: 'shared', why: 'Hanya pasukan dan pipeline patut boleh capai.' }]} success="Backend bersama: satu daftar, selamat, untuk seluruh pasukan." />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="Transcript" title="bash" label="tofu init sebenar selepas blok backend ditambah. OpenTofu tanya sama ada mahu salin state sedia ada, jawapannya yes, dan backend siap. tofu state list kemudian tunjuk terraform_data.bell." lines={[{ cmd: 'tofu init' }, { out: 'Initializing the backend...\nDo you want to copy existing state to the new backend?\n  Pre-existing state was found while migrating the previous "local" backend to the\n  newly configured "local" backend. No existing state was found in the newly\n  configured "local" backend. Do you want to copy this state to the new "local"\n  backend? Enter "yes" to copy and "no" to start with an empty state.\n\n  Enter a value: yes' }, { out: 'Successfully configured the backend "local"! OpenTofu will automatically\nuse this backend unless the backend configuration changes.', color: 'green' }, { cmd: 'tofu state list' }, { out: 'terraform_data.bell' }]} />
+
+Hari pindah. Tambah blok backend, kemudian jalankan `tofu init`. Ia tanya dulu sebelum salin daftar. Larian sebenar ini pindahkannya ke folder baharu.
+</Card>
+
+<Card id="predict" type="predict">
+Susun langkah pindah mengikut urutan.
+
+<Interactive name="OrderList" items={['Sediakan tempat bersama dahulu (satu bucket)', 'Tambah blok backend dalam pelan', 'Jalankan tofu init dan jawab yes', 'Jalankan tofu plan: "No changes" maksudnya berjaya', 'Commit blok backend, jangan sekali-kali fail state']} label="Langkah pertama di atas" success="Rak dahulu, kemudian papan tanda yang tunjuk ke sana." />
+</Card>
+
+<Card id="check" type="check">
+Bolehkah anda kongsi `terraform.tfstate` melalui Git sahaja?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Kongsi dengan backend.', correct: true, why: 'Git tiada kunci, dan fail itu boleh simpan kata laluan (pelajaran 7).' }, { label: 'Ya, Git simpan setiap versi', why: 'Dua orang boleh push dua daftar berbeza. Git tak boleh halang.' }, { label: 'Ya, dalam repo peribadi', why: 'Rahsia akan kekal dalam sejarah selamanya. Guna backend.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan di mana pasukan simpan daftarnya, dan cara pindahkannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Backend lain: `gcs`, `azurerm`, `pg`, `kubernetes`, `http` dan banyak lagi. Terraform juga ada HCP Terraform (blok `cloud`). OpenTofu juga boleh sulitkan state sendiri. Selepas pindah, OpenTofu kosongkan fail tempatan lama dan simpan salinan `.backup`.
+
+Latihan sebenar (pilihan): pindahkan daftar di mesin anda sendiri. Tanpa cloud, tanpa kos.
+
+<Interactive name="Mission" id="iac-t3-l01-rep" steps={[{ id: 'folder', text: 'Buat folder kosong. Tambah main.tf dengan satu resource terraform_data.' }, { id: 'build', text: 'Bina, dengan daftar dalam folder ini.', command: 'tofu init && tofu apply' }, { id: 'block', text: 'Tambah backend.tf: blok terraform dengan backend "local" dan path = "register/kedai.tfstate".' }, { id: 'move', text: 'Pindahkan daftar. Jawab yes.', command: 'tofu init' }, { id: 'check', text: 'Semak ia sudah pindah.', command: 'tofu state list && ls register' }]} success="Anda pindahkan daftar. Backend cloud berfungsi dengan cara yang sama." />
+</Card>

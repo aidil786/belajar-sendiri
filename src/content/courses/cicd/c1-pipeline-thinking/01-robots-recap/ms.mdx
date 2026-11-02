@@ -1,0 +1,83 @@
+---
+id: cicd-c1-l01
+world: 1
+title: Ulang kaji Robot
+summary: "Anda akan belajar: apa yang anda ingat daripada Robot, dan pelajaran mana yang boleh dilangkau."
+minutes: 5
+xp: 25
+interactives: [Choice, ConveyorBelt, SortCards, Placement, SwipeJudge, Mission]
+needs: []
+scenario: c1-first-pipeline
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+---
+
+<Card id="hook" type="hook">
+Selamat datang ke dapur pusat! Bos anda kata: “Setiap perubahan mesti diuji dan dihantar sendiri.” Anda mula dari mana?
+
+<Interactive name="Choice" options={[{ label: 'Lukis stesen dulu, kemudian tulis YAML', correct: true, why: 'Ya! Dunia ini tentang reka tali sawat dahulu.' }, { label: 'Terus tulis banyak YAML', why: 'YAML lebih senang bila anda tahu tugas setiap stesen.' }, { label: 'Uji dengan tangan setiap Jumaat', why: 'Jumaat dah terlambat. Robot boleh uji setiap perubahan.' }]} />
+</Card>
+
+<Card id="see-belt" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-first-pipeline" events={['push-main', 'pr']} />
+
+**<Term id="pipeline">Pipeline</Term>** (tali sawat) ada beberapa stesen. Setiap push naik tali sawat ini: bersedia, lint, test, build. Tekan Run dan tengok.
+</Card>
+
+<Card id="try-sort" type="try">
+Ulang kaji pantas dari Robot. Setiap baris ini tentang bila, di mana, atau apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'when', label: 'Bila ia jalan' }, { id: 'where', label: 'Di mana ia jalan' }, { id: 'what', label: 'Apa ia buat' }]} items={[{ label: '`on: push`', bucket: 'when', why: 'on: ialah pencetus: bila robot bangun.' }, { label: '`pull_request:`', bucket: 'when', why: 'Satu lagi pencetus: setiap pull request.' }, { label: '`runs-on: ubuntu-latest`', bucket: 'where', why: 'Ia minta runner Linux yang baru.' }, { label: '`runs-on: windows-latest`', bucket: 'where', why: 'Kunci yang sama, kali ini runner Windows.' }, { label: '`- run: npm test`', bucket: 'what', why: 'Satu step: arahan yang runner taip.' }, { label: '`- uses: actions/checkout@v7`', bucket: 'what', why: 'Satu step yang pinjam action siap.' }]} success="Siap! Bila, di mana, apa." />
+
+<Hint>`on:` ialah bila. `runs-on:` ialah di mana. Step ialah apa.</Hint>
+</Card>
+
+<Card id="predict-fork" type="predict">
+Orang asing buka pull request dari fork. Adakah run mereka dapat secret anda?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Fork tiada secret dan token baca sahaja.', correct: true, why: 'Betul. Kod orang asing tak nampak kotak rempah berkunci anda.' }, { label: 'Ya, semuanya', why: 'Nanti sesiapa pun boleh curi. GitHub tahan secret daripada fork.' }, { label: 'Hanya jika ujian lulus', why: 'Ujian lulus tak ubah apa-apa. Run dari fork tak pernah dapat secret anda.' }]} />
+</Card>
+
+<Card id="try-placement" type="try">
+Sekarang ujian pantas. Setiap jawapan betul tandakan pelajaran yang boleh dilangkau. Tak pasti? Tekan “Saya belum tahu”. Tiada pemasa.
+
+<Interactive name="Placement" questions={[
+  { q: 'Fail workflow duduk di mana dalam repo?', options: [{ label: '`.github/workflows/`', correct: true }, { label: '`src/robots/`' }, { label: '`.git/hooks/`' }], marks: ['git-w07-l02'] },
+  { q: 'Pencetus mana jalankan workflow untuk setiap pull request?', options: [{ label: '`schedule`' }, { label: '`pull_request`', correct: true }, { label: '`workflow_dispatch`' }], marks: ['git-w07-l03'] },
+  { q: 'Deploy anda perlukan token API. Ia patut disimpan di mana?', options: [{ label: 'Terus dalam fail YAML' }, { label: 'Dalam README' }, { label: 'Dalam secret repo', correct: true }], marks: ['git-w07-l05'] },
+  { q: 'Setiap perubahan yang lulus terus live, tanpa butang. Apa namanya?', options: [{ label: 'Continuous deployment', correct: true }, { label: 'Continuous delivery' }, { label: 'Semakan kod' }], marks: ['cicd-c1-l02'] },
+  { q: 'Susunan stesen mana yang masuk akal?', options: [{ label: 'build → deploy → test → lint' }, { label: 'lint → test → build → scan → publish → deploy', correct: true }, { label: 'deploy → scan → lint → test' }], marks: ['cicd-c1-l03'] },
+  { q: 'Satu ujian lulus, kemudian gagal, tanpa ubah kod. Apa namanya?', options: [{ label: 'Ujian pantas' }, { label: 'Flaky test', correct: true }, { label: 'Unit test' }], marks: ['cicd-c1-l04'] },
+  { q: 'Jenis ujian mana yang patut paling banyak?', options: [{ label: 'Unit test', correct: true }, { label: 'End-to-end test' }, { label: 'Ujian dengan tangan' }], marks: ['cicd-c1-l05'] },
+  { q: 'Staging lulus. Production patut dapat apa?', options: [{ label: 'Build baru daripada kod yang sama' }, { label: 'Build yang sama yang staging dah uji', correct: true }, { label: 'Fail dalam laptop anda' }], marks: ['cicd-c1-l06'] },
+  { q: 'Anda merge ke main setiap hari, tapi satu ciri belum siap. Macam mana nak sorok?', options: [{ label: 'Simpan dalam branch berbulan-bulan' }, { label: 'Langkau ujiannya' }, { label: 'Letak di sebalik feature flag', correct: true }], marks: ['cicd-c1-l07'] },
+  { q: 'Yang mana satu metrik penghantaran DORA?', options: [{ label: 'Change fail rate', correct: true }, { label: 'Baris kod sehari' }, { label: 'Jam dalam mesyuarat' }], marks: ['cicd-c1-l08'] },
+  { q: 'Dalam GitLab, apa nama fail pipeline?', options: [{ label: '`Jenkinsfile`' }, { label: '`.gitlab-ci.yml`', correct: true }, { label: '`azure-pipelines.yml`' }], marks: ['cicd-c1-l09'] },
+  { q: 'Satu job push image ke GHCR dengan `GITHUB_TOKEN`. Ia perlukan permission apa?', options: [{ label: '`packages: write`', correct: true }, { label: '`contents: write`' }, { label: '`pages: write`' }], marks: ['cicd-c2-l03'] },
+  { q: 'Ujian anda perlukan pangkalan data Postgres sebenar dalam CI. Apa yang beri anda satu?', options: [{ label: 'Satu secret' }, { label: 'Laptop anda sendiri' }, { label: 'Service container', correct: true }], marks: ['cicd-c2-l07'] }
+]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Pusingan ulang kaji terakhir. Tabiat baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Beri setiap job permission yang ia perlukan sahaja', good: true, why: 'Kurang kunci, kurang yang boleh dicuri.' }, { text: 'Tampal token API terus dalam fail workflow', good: false, why: 'Sesiapa yang baca repo boleh salin. Guna secret.' }, { text: 'Cache muat turun npm antara run', good: true, why: 'Run seterusnya lebih cepat bersedia.' }, { text: 'Matikan semakan merah supaya cepat merge', good: false, why: 'Pepijat masih ada. Baiki ia.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca workflow dan langkau apa yang anda dah tahu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Terlepas beberapa? Robot ialah [Dunia 7: Robot](/ms/git/#world-7) dalam kursus Git. Pelajaran bertanda tetap terbuka, jadi anda masih boleh lawat.
+
+Latihan sebenar (pilihan): tengok satu run sebenar di GitHub.
+
+<Interactive name="Mission" id="cicd-c1-real-run" steps={[{ id: 'open', text: 'Buka satu repo anda yang ada workflow. Repo diari dari kursus Git pun boleh.' }, { id: 'actions', text: 'Buka tab Actions dan pilih run paling baru.' }, { id: 'stations', text: 'Namakan setiap step sebagai stesen: bersedia, lint, test atau build.' }]} success="Anda dah baca tali sawat sebenar!" />
+</Card>

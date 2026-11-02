@@ -1,0 +1,68 @@
+---
+id: git-w03-l03
+world: 3
+title: "Cara lama: git checkout"
+summary: "Anda akan belajar: baca panduan lama yang guna git checkout untuk branch."
+minutes: 3
+xp: 15
+interactives: [TermReplay, GraphScene, CommandBuilder, Sim, SortCards, Choice]
+needs: [git-w03-l02]
+scenario: w03-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "Git 3.0 breaking changes", url: "https://git-scm.com/docs/BreakingChanges" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l03" commands={['git checkout -b fix-typo']} label="git checkout -b fix-typo papar: Switched to a new branch 'fix-typo'." />
+
+Panduan lama kata `git checkout -b`. Kawan anda kata `git switch -c`. Siapa yang betul?
+</Card>
+
+<Card id="see-same" type="see">
+<Interactive name="GraphScene" scenario="w03-l03" commands={['git checkout dark-mode']} label="HEAD melompat dari main ke nota dark-mode, sama macam git switch." />
+
+Dua-dua betul! `git checkout dark-mode` sama macam `git switch dark-mode`. Dan `git checkout -b` sama macam `git switch -c`.
+</Card>
+
+<Card id="try-build" type="try">
+Bina cara lama untuk buat `fix-typo` dan terus pindah ke situ.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'checkout', means: 'cara lama untuk tukar' }, { text: '-b', means: 'buat branch baru dulu' }, { text: 'fix-typo', means: 'namanya' }]} decoys={[{ text: '-c', means: 'flag itu untuk git switch' }, { text: '--detach', means: 'lawat commit, tanpa branch' }]} success="Itulah cara lama untuk buat branch dan terus pindah." />
+
+<Hint>checkout buat branch dengan `-b`.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Anda di dark-mode. Kembali ke main, guna cara lama.
+
+<Interactive name="Sim" scenario="w03-l03b" panels={['graph']} goal={{ currentBranch: 'main', typed: '^git checkout ' }} hints={['Taip git checkout main dan tekan Enter.']} success="Dah kembali ke main, dengan arahan lama." />
+
+<Hint>Taip `git checkout main`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+`git checkout` lama buat dua kerja. Arahan baru mana yang buat setiap kerja sekarang?
+
+<Interactive name="SortCards" buckets={[{ id: 'switch', label: 'git switch' }, { id: 'restore', label: 'git restore' }]} items={[{ label: '`git checkout main`', bucket: 'switch', why: 'Pindah ke branch ialah kerja switch.' }, { label: '`git checkout -b fix-typo`', bucket: 'switch', why: 'Buat dan pindah: git switch -c.' }, { label: '`git checkout -- index.html`', bucket: 'restore', why: 'Buang perubahan fail ialah kerja restore.' }, { label: '`git checkout HEAD~1 -- style.css`', bucket: 'restore', why: 'Versi lama sesuatu fail: git restore --source.' }]} success="Dah susun! Satu kerja setiap satu: switch untuk branch, restore untuk fail." />
+</Card>
+
+<Card id="predict" type="predict">
+Git 3.0 akan datang. Adakah ia akan buang `git checkout`?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia kekal, bersama switch dan restore.', correct: true, why: 'Ramai sangat orang guna. Ketiga-tiga arahan kekal.' }, { label: 'Ya, ia hilang dalam Git 3.0', why: 'Pasukan Git kata checkout, switch dan restore semuanya kekal.' }, { label: 'Ia hanya berfungsi di Windows', why: 'Ia berfungsi di mana-mana, macam semua arahan Git.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca panduan lama yang guna git checkout.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git checkout` buat dua kerja: branch dan fail. Campuran itu mengelirukan orang. Jadi Git 2.23 tambah `git switch` untuk branch dan `git restore` untuk fail. Hati-hati: `git checkout -- file` buang perubahan anda, macam `git restore`. Lebih baik guna arahan baru. Namanya sendiri terangkan kerjanya.
+</Card>

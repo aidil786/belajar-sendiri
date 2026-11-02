@@ -1,0 +1,73 @@
+---
+id: k8s-k3-l02
+world: 3
+title: "Service: satu nombor pesanan"
+summary: "Anda akan belajar: beri sekumpulan pod satu alamat tetap dengan Service."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, LabelMatchmaker, FoodCourtSim, YamlDoctor, Mission]
+needs: [k8s-k3-l01]
+scenario: k3-counter
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Service", url: "https://kubernetes.io/docs/concepts/services-networking/service/" }
+  - { label: "kubectl expose", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_expose/" }
+---
+
+<Card id="hook" type="hook">
+Dulang kedai datang dan pergi, IP pun sama. Client perlukan satu alamat yang sentiasa berfungsi. Apa yang anda nak beri?
+
+<Interactive name="Choice" options={[{ label: 'Satu nombor tetap untuk semua dulang kedai', correct: true, why: 'Ya! Macam satu nombor pesanan, gerai mana pun yang masak.' }, { label: 'Senarai IP setiap dulang', why: 'Senarai itu basi sebaik dulang diganti.' }, { label: 'IP dulang yang paling baharu', why: 'Dulang itu pun akan diganti satu hari nanti.' }]} />
+</Card>
+
+<Card id="see-service" type="see">
+<Interactive name="KubeReplay" scenario="k3-counter" commands={['kubectl apply -f service.yaml', 'kubectl get service shop']} label="service.yaml buat Service bernama shop. Ia dapat satu CLUSTER-IP untuk ketiga-tiga dulang kedai." />
+
+**<Term id="service">Service</Term>** (nombor pesanan) ialah satu nombor untuk sekumpulan pod. Alamat CLUSTER-IP kekal walaupun dulang datang dan pergi.
+</Card>
+
+<Card id="try-labels" type="try">
+Service cari dulangnya ikut label. Satu dulang kedai hilang pelekat. Pulangkan semula.
+
+<Interactive name="LabelMatchmaker" pods={[{ name: 'shop-1', labels: { app: 'shop' } }, { name: 'shop-2', labels: { app: 'shop' } }, { name: 'shop-3', labels: {} }, { name: 'menu-1', labels: { app: 'menu' } }]} labels={['app=shop', 'app=menu']} selector={{ app: 'shop' }} task={{ type: 'select', pods: ['shop-1', 'shop-2', 'shop-3'] }} success="Ketiga-tiga dulang kedai jawab nombor pesanan shop." />
+
+<Hint>Service pilih setiap dulang yang ada `app=shop`.</Hint>
+</Card>
+
+<Card id="try-expose" type="try">
+Giliran anda. `kubectl expose deployment shop --port=80` beri kedai satu nombor pesanan. Kemudian panggil ia ikut nama dari client.
+
+<Interactive name="FoodCourtSim" scenario="k3-counter" goal={{ serviceEndpoints: { name: 'shop', count: 3 }, reachable: { url: 'http://shop', from: 'client' }, lastTyped: 'wget' }} hints={['Taip kubectl expose deployment shop --port=80', 'Kemudian taip kubectl exec client -- wget -qO- -T 5 http://shop']} success="Nombor pesanan shop menjawab. Client guna nama, bukan IP." />
+
+<Hint>Dua arahan: `kubectl expose …`, kemudian `kubectl exec client -- wget -qO- -T 5 http://shop`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam satu dulang kedai. Adakah `http://shop` masih menjawab?
+
+<Interactive name="Choice" options={[{ label: 'Ya: pesanan pergi ke dulang yang tinggal', correct: true, why: 'Service ikut label. Dulang baharu masuk bila ia sedia.' }, { label: 'Tidak: Service rosak sampai anda baiki', why: 'Service tak terikat pada satu dulang. Ia ikut label.' }, { label: 'Hanya selepas anda hidupkan semula Service', why: 'Tiada apa nak dihidupkan semula. Ia kemas kini sendiri.' }]} />
+</Card>
+
+<Card id="check-doctor" type="check">
+Fail Service ini tak boleh apply. Baca kata-kata kubectl, kemudian baiki.
+
+<Interactive name="YamlDoctor" file="service.yaml" manifest={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n      targetport: 80\n'} solution={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop\nspec:\n  selector:\n    app: shop\n  ports:\n    - port: 80\n      targetPort: 80\n'} keep={['port: 80', 'app: shop']} hint="Nama medan peka huruf besar. Lihat baris terakhir." success="Berjaya! port ialah nombor pesanan. targetPort ialah port dulang itu sendiri." />
+
+Maksudnya: kubectl tak kenal medan bernama `targetport`.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri pod satu alamat tetap dengan Service.
+</Card>
+
+<Card id="deeper" type="deeper">
+`port` dan `targetPort` boleh berbeza: port 80 boleh bawa ke port 8080 dulang. Di setiap gerai, kube-proxy hantar pesanan ke dulang sedia secara rawak. Simulasi latihan ini bergilir-gilir. Jenis biasa ini dipanggil ClusterIP: dalam kluster sahaja.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l02-rep" steps={[{ id: 'expose', text: 'Beri kedai satu nombor pesanan.', command: 'kubectl expose deployment shop --port=80' }, { id: 'client', text: 'Mulakan dulang client untuk membuat panggilan.', command: 'kubectl run client --image=busybox:1.37 -- sleep 3600' }, { id: 'call', text: 'Panggil kedai ikut namanya.', command: 'kubectl exec client -- wget -qO- -T 5 http://shop' }]} success="Aplikasi anda jumpa kedai ikut nama!" />
+</Card>

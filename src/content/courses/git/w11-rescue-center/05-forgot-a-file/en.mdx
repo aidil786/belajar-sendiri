@@ -1,0 +1,64 @@
+---
+id: git-w11-l05
+world: 11
+title: I forgot a file
+summary: "You will learn: how to add a forgotten file to your last commit."
+minutes: 3
+xp: 15
+interactives: [AreasScene, Choice, CommandBuilder, Sim, TermReplay]
+needs: [git-w02-l03]
+scenario: w11-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git commit --amend", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="A commit, Add day 2 page, sits in the repository. day2.css glows on your desk, left behind." frames={[{ working: [{ name: 'day2.css', glow: true, tag: 'new' }], repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 page', kind: 'commit' }] }]} />
+
+You committed your day 2 page. But its style file is still on your desk! This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="decide" type="try">
+You haven't pushed yet. What's the neatest fix?
+
+<Interactive name="Choice" options={[{ label: 'Add the file into the last commit', correct: true, why: 'One tidy commit, as if you never forgot.' }, { label: 'A new commit: "oops forgot css"', why: 'It works, but adds noise. Save that for pushed commits.' }, { label: 'Start over with reset --hard', why: 'That wipes work. No need!' }]} />
+</Card>
+
+<Card id="build" type="try">
+First, `git add day2.css` puts the file in the box. Now build the command that tucks the box into your last commit.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'commit', means: 'save the box' }, { text: '--amend', means: 'into the last commit' }, { text: '--no-edit', means: 'keep the same message' }]} decoys={[{ text: 'revert', means: 'undo a commit' }, { text: '--hard', means: 'wipe changes' }]} success="That's it! git commit --amend --no-edit." />
+</Card>
+
+<Card id="try-fix" type="try">
+Now do it for real. Add `day2.css` to the last commit.
+
+<Interactive name="Sim" scenario="w11-l05" panels={['areas']} goal={{ commits: 4, lastCommitHas: ['day2.html', 'day2.css'], lastMessage: '^Add day 2 page$', clean: true, noUntracked: true }} hints={['Type git add day2.css', 'Then type git commit --amend --no-edit']} success="Tidy! One commit holds both day 2 files." />
+
+<Hint>Type `git add day2.css`, then `git commit --amend --no-edit`.</Hint>
+</Card>
+
+<Card id="check-stat" type="check">
+<Interactive name="TermReplay" scenario="w11-l05" commands={['git add day2.css', 'git commit --amend --no-edit', 'git show --stat']} label="After the amend, git show --stat lists day2.css and day2.html in the Add day 2 page commit." />
+
+Check with `git show --stat`. Both files sit in one commit. Same message as before.
+</Card>
+
+<Card id="predict" type="predict">
+New story: you had pushed the commit already. What now?
+
+<Interactive name="Choice" options={[{ label: 'Make a small new commit with the file', correct: true, why: 'Shared history stays the same. Nobody else has to fix anything.' }, { label: 'Amend anyway', why: "Amend makes a new commit. Teammates' copies would clash." }, { label: 'Leave the file out forever', why: 'Your page needs it! Just commit it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now add a forgotten file to your last commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Amend makes a brand-new commit with a new hash. That is why it's only for commits you haven't pushed. Forgot a file several commits ago? Just commit it now with a clear message. Simple wins.
+</Card>

@@ -1,0 +1,100 @@
+---
+id: k8s-k3-l11
+world: 3
+title: NetworkPolicies and CNI plugins
+summary: "You will learn: to lock pod doors by default, and let in only the pods you choose."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, RequestTracer, Choice, FoodCourtSim, YamlDoctor, SortCards, SwipeJudge, Mission]
+needs: [k8s-k3-l10]
+scenario: k3-policy
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "Kubernetes: network plugins", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-policy" commands={['kubectl exec stranger -- wget -qO- -T 5 http://shop']} label="A pod called stranger asks the shop for its page, and gets it." />
+
+A stranger tray walks straight into the shop kitchen. By default, every door in the cluster is open.
+</Card>
+
+<Card id="see-lock" type="see">
+A **<Term id="networkpolicy">NetworkPolicy</Term>** is a guest list on a pod's door. Nobody on the list? The door stays shut. Turn on the lock, then send an order.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-hjttw', labels: { app: 'shop' }, containerPort: 80 }], policy: { name: 'shop-lock', allowGateway: true }, request: { path: '/' } }} breaks={['policy', 'ready']} task={{ type: 'outcome', want: 'timeout' }} />
+
+<Hint>The lock drops packets. Nobody says no, so the customer just waits.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You apply this policy. Can the client still reach the shop?
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+```
+
+<Interactive name="Choice" options={[{ label: 'No: it picks every pod and lets nobody in', correct: true, why: 'An empty podSelector means every pod in the namespace.' }, { label: 'Yes: it doesn’t name the client', why: 'It locks the shop’s door. The guest list is empty.' }, { label: 'Yes: Services skip policies', why: 'The lock is on the tray’s door, even behind a Service.' }]} />
+</Card>
+
+<Card id="try-allow" type="try">
+Every door is locked now. Let only the client back in with `allow-client.yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k3-policy-locked" goal={{ reachable: { url: 'http://shop', from: 'client' }, unreachable: { url: 'http://shop', from: 'stranger' } }} hints={['Type kubectl apply -f allow-client.yaml', 'Test it: kubectl exec client -- wget -qO- -T 5 http://shop', 'And: kubectl exec stranger -- wget -qO- -T 5 http://shop']} success="The client gets in. The stranger waits outside." />
+
+Its guest list:
+
+```yaml
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: client
+      ports:
+        - port: 80
+```
+</Card>
+
+<Card id="check-doctor" type="check">
+This lock won't apply. Read kubectl's words, then fix it.
+
+<Interactive name="YamlDoctor" file="deny-all.yaml" manifest={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: deny-all\nspec:\n  podSelector: {}\n  policyTypes:\n    - ingress\n'} solution={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: deny-all\nspec:\n  podSelector: {}\n  policyTypes:\n    - Ingress\n'} keep={['podSelector: \\{\\}', 'name: deny-all']} hint="kubectl lists the two words it knows. Copy the capital letter." success="Applied! Ingress and Egress start with a capital." />
+
+Plain words: Kubernetes knows `Ingress` and `Egress`, with capitals only.
+</Card>
+
+<Card id="see-cni" type="see">
+A policy is only words. The **<Term id="cni">CNI</Term>** plugin, the food court's walkways, makes them real. Which plugins do that?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Enforces NetworkPolicy' }, { id: 'no', label: 'Not on its own' }]} items={[{ label: 'Calico', bucket: 'yes', why: 'Calico enforces policies, and adds its own extras.' }, { label: 'Cilium', bucket: 'yes', why: 'Cilium enforces policies with eBPF.' }, { label: 'kindnet in kind 0.24 or newer', bucket: 'yes', why: 'kind added policy support in v0.24.' }, { label: 'Flannel', bucket: 'no', why: 'Flannel only moves packets. Pair it with a policy engine.' }]} success="Check your CNI before you trust a lock." />
+</Card>
+
+<Card id="check-habits" type="check">
+Judge each habit.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Start a namespace with deny-all, then allow by label.', good: true, why: 'Closed by default, open on purpose.' }, { text: 'Use pod IPs on the guest list.', good: false, why: 'IPs change. Labels stay.' }, { text: 'Trust a policy without checking your CNI.', good: false, why: 'Without support, the policy does nothing at all.' }, { text: 'Test from one allowed pod and one blocked pod.', good: true, why: 'Then you know the lock really works.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now lock pod doors, and let in only the right pods.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a Service is not a real counter. Nobody stands there; each stall just rewrites addresses. A locked door makes no sound: dropped packets vanish, so you see a timeout. Policies add up: any matching allow rule opens the door. Egress rules can block DNS too.
+
+Real rep (optional), on kind 0.24 or newer:
+
+<Interactive name="Mission" id="k3-l11-rep" steps={[{ id: 'deny', text: 'Apply a deny-all policy in a practice namespace.' }, { id: 'blocked', text: 'wget from a client pod times out.' }, { id: 'allow', text: 'Allow app=client to the shop on port 80.' }, { id: 'check', text: 'The client gets in. Another pod still times out.', command: 'kubectl get networkpolicy' }]} success="Your kitchen doors are locked properly!" />
+</Card>

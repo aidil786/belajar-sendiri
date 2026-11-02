@@ -1,0 +1,71 @@
+---
+id: git-w01-l10
+world: 1
+title: Buang dan tukar nama
+summary: "Anda akan belajar: cara padam, berhenti jejak dan tukar nama fail cara Git."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w01-l09]
+scenario: w01-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "git mv", url: "https://git-scm.com/docs/git-mv" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Empat fail bergoyang. Tiga daripadanya bercahaya: old-notes.txt, aboutme.html dan debug.log." frames={[{ working: ['index.html', { name: 'old-notes.txt', glow: true }, { name: 'aboutme.html', glow: true }, { name: 'debug.log', glow: true }] }]} />
+
+Diari anda perlu dikemas. Ada fail nota lama. Ada laman dengan nama janggal. Ada log yang tersimpan secara tak sengaja. Macam mana nak beritahu Git?
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git rm old-notes.txt', 'git status -s']} pulse label="git rm old-notes.txt papar rm old-notes.txt. Kemudian git status -s tunjuk D hijau di depan old-notes.txt." />
+
+`git rm` padam fail dan masukkan **pemadaman** itu ke dalam kotak. Commit (titik simpan) seterusnya akan simpan fail itu sebagai dah tiada.
+</Card>
+
+<Card id="try-rm" type="try">
+Padam `old-notes.txt` cara Git.
+
+<Interactive name="Sim" scenario="w01-l10" panels={['areas']} goal={{ staged: ['old-notes.txt'], filesMissing: ['old-notes.txt'] }} hints={['Taip git rm old-notes.txt']} success="Hilang dari folder anda, dan pemadaman itu ada dalam kotak." />
+
+<Hint>Taip `git rm old-notes.txt`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `git rm --cached debug.log`. Adakah `debug.log` masih dalam folder anda?
+
+<Interactive name="Choice" options={[{ label: 'Ya. Git cuma berhenti menjejaknya.', correct: true, why: '--cached hanya keluarkan fail itu daripada Git. Fail itu kekal.' }, { label: 'Tidak, ia dipadam', why: 'Itu git rm biasa. --cached simpan fail itu.' }, { label: 'Ia masuk ke dalam kotak', why: 'Hanya pemadamannya masuk kotak. Fail itu kekal dalam folder anda.' }]} />
+</Card>
+
+<Card id="see-cached" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git rm --cached debug.log', 'git status -s', 'ls']} pulse label="git rm --cached debug.log. Status tunjuk D hijau untuk debug.log, tapi ls masih senaraikan debug.log dalam folder." />
+
+`git rm --cached` maksudnya: **berhenti jejak**, tapi simpan fail itu. Sesuai untuk benda yang tersimpan secara tak sengaja. `.gitignore` anda akan terus sorokkannya.
+</Card>
+
+<Card id="see-mv" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git mv aboutme.html about.html', 'git status -s']} pulse label="git mv aboutme.html about.html. Status tunjuk R aboutme.html -> about.html berwarna hijau." />
+
+`git mv` tukar nama fail dan beritahu Git dalam satu langkah. Huruf `R` dalam status maksudnya **renamed** (ditukar nama).
+</Card>
+
+<Card id="try-mv" type="try">
+Tukar nama `aboutme.html` jadi `about.html`. Kemudian commit.
+
+<Interactive name="Sim" scenario="w01-l10" panels={['areas', 'graph']} goal={{ filesExist: ['about.html'], filesMissing: ['aboutme.html'], lastCommitHas: ['about.html'], lastCommitLacks: ['aboutme.html'] }} hints={['Taip git mv aboutme.html about.html', 'Sekarang simpan: git commit -m "Rename about page"']} success="Dah tukar nama dan simpan. Git tahu ia laman yang sama." />
+
+<Hint>`git mv aboutme.html about.html`, kemudian `git commit -m "Rename about page"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh padam, berhenti jejak dan tukar nama fail cara Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Terpadam atau tertukar nama fail tanpa Git? Tak apa. Jalankan `git add -A`. Git masukkan pemadaman ke dalam kotak. Biasanya ia kenal pasti pertukaran nama juga. Untuk satu folder penuh, guna `git rm -r` dengan nama folder itu.
+</Card>

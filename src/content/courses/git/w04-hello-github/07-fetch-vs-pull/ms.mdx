@@ -1,0 +1,72 @@
+---
+id: git-w04-l07
+world: 4
+title: Fetch lawan pull
+summary: "Anda akan belajar: cara dapatkan commit baru pasukan, dan intai dulu sebelum mencantumnya."
+minutes: 4
+xp: 20
+interactives: [Courier, TermReplay, Choice, GraphScene, SortCards, Sim]
+needs: [git-w04-l06]
+scenario: w04-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git fetch", url: "https://git-scm.com/docs/git-fetch" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "Getting changes from a remote repository", url: "https://docs.github.com/en/get-started/using-git/getting-changes-from-a-remote-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Courier" scenario="w04-team" commands={['@teammate']} teammate={{ name: 'Aisyah', dir: '/home/aisyah/diary', commits: [{ file: 'index.html', append: '<p>Day 2: Aisyah says hi!</p>\n', message: "Add Aisyah's day 2" }] }} label="Bungkusan Aisyah sampai di GitHub. GitHub kini ada commit barunya. Laptop anda masih tunjuk gambar lama." />
+
+Aisyah baru push catatan diarinya. Laptop anda langsung tak tahu. Macam mana nak tahu?
+</Card>
+
+<Card id="see-fetch" type="see">
+<Interactive name="TermReplay" scenario="w04-l07" commands={['git fetch', 'git status']} label="git fetch muat turun main ke origin/main. git status kata branch anda ketinggalan 1 commit di belakang origin/main." />
+
+**<Term id="fetch">Fetch</Term>** (ambil berita) muat turun berita terbaru. Ia gerakkan `origin/main` sahaja. Main dan fail anda tak berubah.
+</Card>
+
+<Card id="try-courier" type="try">
+Fetch dulu dan tengok laptop anda. Kemudian pull catatan Aisyah ke dalam main.
+
+<Interactive name="Courier" scenario="w04-l07" actions={['fetch', 'pull']} goal={{ typed: '^git fetch$', branchAt: { main: 'Aisyah' } }} hints={['Tekan Fetch dulu. Tengok hanya origin/main bergerak.', 'Sekarang tekan Fetch, kemudian Pull.']} success="Catatannya kini dalam main anda. Intai, kemudian cantum: bagus!" />
+
+<Hint>Fetch mengintai. Pull mencantum.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `git fetch`. Adakah `index.html` anda berubah?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Fetch tak pernah sentuh fail anda.', correct: true, why: 'Ia cuma kemas kini origin/main. Anda tentukan bila nak cantum.' }, { label: 'Ya. Kini ada hari Aisyah di dalamnya.', why: 'Belum lagi. Itu perlukan pull (atau merge).' }, { label: 'Ia dipadam', why: 'Fetch selamat. Ia tak pernah padam kerja anda.' }]} />
+</Card>
+
+<Card id="see-tracking" type="see">
+<Interactive name="GraphScene" scenario="w04-l07" commands={['git fetch']} label="Selepas git fetch, satu commit ungu muncul dengan label origin/main. Label main kekal satu commit di belakang." />
+
+`origin/main` ialah **<Term id="remote-tracking-branch">branch penjejak remote</Term>**. Ia ingatan laptop anda tentang GitHub. Ia hanya bergerak bila anda fetch, pull atau push.
+</Card>
+
+<Card id="check-sort" type="check">
+Fetch atau pull? Asingkan setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'fetch', label: 'git fetch' }, { id: 'pull', label: 'git pull' }]} items={[{ label: 'Hanya muat turun berita', bucket: 'fetch', why: 'Fetch tak pernah ubah branch anda.' }, { label: 'Ubah fail anda', bucket: 'pull', why: 'Pull cantum commit baru ke dalam branch anda.' }, { label: 'Selamat dijalankan bila-bila masa', bucket: 'fetch', why: 'Tiada apa milik anda yang bergerak.' }, { label: 'Fetch dan cantum, sekali gus', bucket: 'pull', why: 'Itulah tepat kerja pull.' }, { label: 'Gerakkan branch main anda', bucket: 'pull', why: 'Selepas pull, main ada commit baru.' }]} success="Siap! Fetch mengintai. Pull mencantum." />
+</Card>
+
+<Card id="try-type" type="try">
+Taip sendiri: fetch, tengok dengan `git status`, kemudian pull.
+
+<Interactive name="Sim" scenario="w04-l07" panels={['graph']} goal={{ typed: '^git fetch', branchAt: { main: 'Aisyah' } }} hints={['Mula dengan git fetch', 'Kemudian git status, kemudian git pull']} success="Main dan origin/main kini tunjuk commit yang sama." />
+
+<Hint>`git status` beritahu berapa jauh anda ketinggalan.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh fetch untuk mengintai dan pull untuk mengejar.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git pull` ialah `git fetch` dan merge (atau rebase: pelajaran seterusnya). Selepas fetch, `git log --oneline main..origin/main` senaraikan apa yang baru. `git fetch --prune` lupakan branch remote yang dah dipadam di GitHub.
+</Card>

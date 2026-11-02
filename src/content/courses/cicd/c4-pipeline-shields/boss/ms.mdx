@@ -1,0 +1,86 @@
+---
+id: cicd-c4-boss
+world: 4
+title: Cari lubang
+summary: "Anda akan belajar: cari dan baiki 5 lubang keselamatan dalam workflow yang nampak sebenar, kemudian buktikan ia masih berfungsi."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, SpotTheHole, Choice, YamlBuilder, ConveyorBelt, SwipeJudge]
+needs: [cicd-c4-l09]
+scenario: c4-boss
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "Script injections", url: "https://docs.github.com/en/actions/concepts/security/script-injections" }
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Bilik 1', title: 'Cari', text: 'Cari 5 lubang dalam workflow yang disalin.' }, { when: 'Bilik 2', title: 'Baiki', text: 'Bina versi selamat, blok demi blok.' }, { when: 'Bilik 3', title: 'Buktikan', text: 'Jalankannya. Hijau, dengan kunci yang ia perlukan sahaja.' }]} />
+
+Mei salin workflow "PR helper" dari sebuah blog. Ia jalan hijau setiap hari. Sebelum ia jaga repo kedai awam anda, cari dan baiki 5 lubangnya.
+</Card>
+
+<Card id="try-spot" type="try">
+Bilik 1: tekan setiap lubang. Setiap satu tunjuk serangan dan pembaikannya.
+
+<Interactive name="SpotTheHole" scenario="c4-boss" success="Kelima-lima jumpa! Terlalu banyak kunci, PC anda sendiri, kod orang asing, tag yang bergerak, tajuk yang licik." />
+
+<Hint>Semak pencetus, permissions, runs-on, setiap baris uses: dan setiap baris run:.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Fail lama itu jalan hijau setiap hari. Adakah ia selamat?
+
+<Interactive name="Choice" options={[{ label: 'Tak: hijau bermaksud ia berjalan, bukan selamat', correct: true, why: 'Setiap lubang di sini jalan hijau. Itulah yang buat ia bahaya.' }, { label: 'Ya: GitHub akan hentikan workflow jahat', why: 'GitHub jalankan mana-mana fail yang sah. Keselamatan tugas anda.' }, { label: 'Ya, sebab tiada siapa merungut', why: 'Kebocoran berlaku senyap. Tiada siapa merungut sehingga terlambat.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bilik 2: bina PR helper yang selamat. Setiap umpan ialah salah satu lubang.
+
+<Interactive name="YamlBuilder" workflow="PR helper" goal={{ order: ['pr', 'read', 'job', 'checkout', 'pin', 'title', 'test'] }} blocks={[
+  { id: 'prt', kind: 'trigger', label: 'Pada pull_request_target', yaml: 'pull_request_target:', means: 'Jalan dengan secret dan kunci tulis anda, walaupun untuk fork.', why: 'Ia serahkan kunci anda kepada kod orang asing. Guna pull_request.' },
+  { id: 'pr', kind: 'trigger', label: 'Pada pull_request', yaml: 'pull_request:', means: 'PR fork tak dapat secret, dan kuncinya baca sahaja.' },
+  { id: 'read', kind: 'permissions', label: 'Baca kod sahaja', yaml: 'contents: read', means: 'Kunci itu hanya boleh baca kod anda.' },
+  { id: 'lots', kind: 'permissions', label: 'Tulis banyak', yaml: 'contents: write\npull-requests: write\npackages: write', means: 'Kunci itu boleh ubah kod, PR dan pakej.', why: 'Job ini hanya baca dan uji. Baca sudah cukup.' },
+  { id: 'self', kind: 'job', label: 'Job pada PC pejabat anda', yaml: 'check:\n  runs-on: self-hosted', means: 'Jalan pada mesin anda sendiri.', why: 'Pada repo awam, PR orang asing boleh jalan pada mesin anda.' },
+  { id: 'job', kind: 'job', label: 'Job pada runner hos', yaml: 'check:\n  runs-on: ubuntu-latest', means: 'Mesin baharu, dibersihkan selepas job.' },
+  { id: 'checkout', kind: 'step', label: 'Check out kod', yaml: '- uses: actions/checkout@v7\n  with:\n    persist-credentials: false', means: 'Salin kod. Jauhkan kunci dari konfigurasi Git.' },
+  { id: 'tag', kind: 'step', label: 'Semakan saiz (tag)', yaml: '- uses: example-org/size-check@v3', means: 'Pinjam semakan saiz melalui tag.', why: 'Tag boleh dialih. Pin SHA penuh.' },
+  { id: 'pin', kind: 'step', label: 'Semakan saiz (dipin)', yaml: '- uses: example-org/size-check@0123456789abcdef0123456789abcdef01234567 # v3.1.0', means: 'Pinjam semakan saiz melalui SHA penuh (SHA contoh).' },
+  { id: 'inline', kind: 'step', label: 'Cetak tajuk (ditampal)', yaml: '- run: echo "Checking ${{ github.event.pull_request.title }}"', means: 'Tampal tajuk terus ke dalam skrip.', why: 'Tajuk licik jadi arahan. Hantar melalui env.' },
+  { id: 'title', kind: 'step', label: 'Cetak tajuk (dalam env)', yaml: '- run: echo "Checking $TITLE"\n  env:\n    TITLE: ${{ github.event.pull_request.title }}', means: 'Tajuk sampai sebagai data biasa.' },
+  { id: 'test', kind: 'step', label: 'Pasang dan uji', yaml: '- run: npm ci && npm test', means: 'Pasang pakej, kemudian jalankan ujian.' }]}
+  success="Bilik 2 selesai! Lima lubang, lima perisai." />
+
+<Hint>Pencetus selamat, kunci baca, runner hos. Kemudian checkout, semakan yang dipin, tajuk dalam env, dan ujian.</Hint>
+</Card>
+
+<Card id="try-prove" type="try">
+Bilik 3: Mei tambah langkah yang label PR "tested". Merah! Beri job itu kunci yang ia perlukan sahaja. Kemudian buktikan ia hijau.
+
+<Interactive name="ConveyorBelt" scenario="c4-boss-label" task={{ type: 'green' }} fixes={[
+  { label: 'contents: read + pull-requests: write', text: 'permissions:\n  contents: read\n  pull-requests: write', why: 'Baca kod, label PR. Tiada lebih.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'Hijau, tapi anda baru buka semula lubang 1.', correct: false },
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Label milik PR, bukan kod anda.' }]} success="Bilik 3 selesai! Hijau, dengan satu kunci tambahan sahaja." />
+
+<Hint>Label tinggal pada pull request.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Semakan terakhir. Dah dibaiki, atau masih lubang? Leret setiap baris.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'on: pull_request', good: true, why: 'PR fork tak dapat secret, dan kuncinya baca sahaja.' }, { text: 'permissions: write-all', good: false, why: 'Setiap langkah dapat setiap kunci. Guna contents: read.' }, { text: 'runs-on: ubuntu-latest', good: true, why: 'Mesin hos baharu untuk setiap job.' }, { text: 'uses: example-org/size-check@v3', good: false, why: 'Tag boleh bergerak. Pin SHA penuh.' }, { text: 'TITLE: ${{ github.event.pull_request.title }}', good: true, why: 'Di bawah env:, tajuk itu data, bukan kod.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari dan baiki lubang dalam mana-mana workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): jalankan actionlint pada workflow anda sendiri. Kemudian buru lima lubang itu sendiri: pencetus, `permissions:`, `runs-on:`, setiap `uses:` dan setiap `run:`. Baiki satu lubang bagi setiap pull request, supaya setiap perubahan mudah disemak.
+</Card>

@@ -1,0 +1,75 @@
+---
+id: k8s-k9-l12
+world: 9
+title: Baiki CoreDNS dan kube-proxy
+summary: "Anda akan belajar: bezakan masalah buku telefon (CoreDNS) daripada masalah pelari (kube-proxy), dan baiki yang pertama."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SortCards, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l11]
+scenario: k9-dns
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: debugging DNS resolution", url: "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/" }
+  - { label: "Kubernetes: DNS for Services and Pods", url: "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" }
+  - { label: "Kubernetes: debug Services", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/" }
+  - { label: "kube-proxy", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/" }
+---
+
+<Card id="hook" type="hook">
+Dari dulang client, panggil shop guna IP Service-nya berjaya. Panggil guna nama `shop` gagal. Apa yang rosak?
+
+<Interactive name="Choice" options={[{ label: 'Tukar nama kepada alamat (DNS)', correct: true, why: 'Alamat berfungsi, jadi jalannya okey. Cuma carian nama yang gagal.' }, { label: 'Dulang shop', why: 'Dulang yang sama menjawab bila anda guna alamat.' }, { label: 'kube-proxy', why: 'kube-proxy bawa panggilan guna alamat. Bahagian itu berfungsi.' }]} />
+</Card>
+
+<Card id="see-phonebook" type="see">
+<Interactive name="KubeReplay" scenario="k9-dns" picture={false} commands={['kubectl exec client -- nslookup shop', 'kubectl get svc -n kube-system']} label="nslookup tanya server 10.96.0.10 dan dapat alamat Service shop. kubectl get svc -n kube-system tunjuk Service kube-dns di 10.96.0.10." />
+
+Setiap dulang tanya buku telefon di 10.96.0.10. Nombor itu ialah Service kube-dns. Di belakangnya ada dulang **<Term id="coredns">CoreDNS</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Bahagian mana yang anda syak? Susun setiap petunjuk.
+
+<Interactive name="SortCards" buckets={[{ id: 'dns', label: 'CoreDNS (nama)' }, { id: 'proxy', label: 'kube-proxy (IP Service)' }]} items={[{ label: 'Nama gagal, IP Service berfungsi', bucket: 'dns', why: 'Cuma carian nama yang rosak.' }, { label: 'Tiada dulang CoreDNS dalam kube-system', bucket: 'dns', why: 'Tiada siapa jawab nombor buku telefon itu.' }, { label: 'IP Service gagal, IP dulang sendiri berfungsi', bucket: 'proxy', why: 'kube-proxy tukar IP Service kepada IP dulang.' }, { label: 'Hanya dulang di satu gerai tak sampai ke Service', bucket: 'proxy', why: 'kube-proxy berjalan bagi setiap gerai. Semak yang di gerai itu.' }]} success="Siap! Nama tunjuk ke CoreDNS. IP Service tunjuk ke kube-proxy." />
+</Card>
+
+<Card id="try-fix" type="try">
+Seseorang kecilkan CoreDNS kepada 0 “untuk jimat”. Pulihkan buku telefon: 2 dulang sedia. Nota: kluster latihan ini masih jawab nama sementara itu. Kluster sebenar tidak.
+
+<Interactive name="FoodCourtSim" scenario="k9-coredns-down" goal={{ podsReady: { selector: 'k8s-app=kube-dns', count: 2, namespace: 'kube-system' }, serviceEndpoints: { name: 'kube-dns', namespace: 'kube-system', min: 1 } }} hints={['Lihat: kubectl get pods -n kube-system -l k8s-app=kube-dns', 'Kemudian kubectl get deployment coredns -n kube-system', 'Baiki: kubectl scale deployment coredns -n kube-system --replicas=2']} success="Dua dulang CoreDNS jawab nombor buku telefon semula." />
+
+<Hint>CoreDNS ialah Deployment dalam `kube-system`. Besarkan semula kepada 2.</Hint>
+</Card>
+
+<Card id="see-proxy" type="see">
+<Interactive name="KubeReplay" scenario="k9-dns" picture={false} commands={['kubectl get pods -n kube-system -l k8s-app=kube-proxy -o wide']} label="Tiga pod kube-proxy, satu di setiap node: dev-control-plane, dev-worker dan dev-worker2." />
+
+**<Term id="kube-proxy">kube-proxy</Term>** ialah pelari di setiap gerai. Ia tukar IP Service kepada alamat dulang sebenar. DaemonSet pastikan satu bagi setiap gerai.
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam dulang kube-proxy di dev-worker2. Apa berlaku seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'DaemonSet buat yang baharu di dev-worker2', correct: true, why: 'Ya. DaemonSet mahu tepat satu di setiap gerai.' }, { label: 'dev-worker2 berjalan tanpanya mulai sekarang', why: 'DaemonSet nampak ruang kosong itu dan isinya.' }, { label: 'Gerai lain jalankan dua', why: 'Setiap gerai dapat tepat satu. Yang baharu ke dev-worker2.' }]} />
+</Card>
+
+<Card id="check-ladder" type="check">
+Nama gagal. Susun tangga DNS ikut urutan, seperti panduan rasmi.
+
+<Interactive name="OrderList" items={['kubectl exec client -- nslookup shop', 'kubectl exec client -- cat /etc/resolv.conf', 'kubectl get pods -n kube-system -l k8s-app=kube-dns', 'kubectl logs -n kube-system -l k8s-app=kube-dns', 'kubectl get endpointslice -l kubernetes.io/service-name=kube-dns -n kube-system']} label="Anak tangga pertama di atas" success="Tanya, baca tetapan, semak dulang, baca log-nya, semak nombor pesanan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan masalah CoreDNS daripada masalah kube-proxy.
+</Card>
+
+<Card id="deeper" type="deeper">
+CoreDNS baca peraturannya (Corefile) dari ConfigMap `coredns`. Di mana cerita ini tak tepat: medan selera sebenar satu bangunan. Gerai kluster boleh berada di bilik, atau cloud, berbeza. Dan kluster latihan ini masih jawab nama walaupun CoreDNS tidak berjalan.
+
+<Interactive name="Mission" id="k8s-k9-l12-real" steps={[{ id: 'off', text: 'Pada kluster kind latihan, matikan buku telefon.', command: 'kubectl -n kube-system scale deployment coredns --replicas=0' }, { id: 'ask', text: 'Tanya satu nama. Baca bagaimana ia gagal.', command: 'kubectl run dnstest --image=busybox:1.37 --rm -it --restart=Never -- nslookup kubernetes.default' }, { id: 'on', text: 'Hidupkan semula.', command: 'kubectl -n kube-system scale deployment coredns --replicas=2' }]} success="Anda rosakkan dan baiki buku telefon kluster sebenar!" />
+</Card>

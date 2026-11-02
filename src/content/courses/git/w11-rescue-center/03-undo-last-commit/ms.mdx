@@ -1,0 +1,66 @@
+---
+id: git-w11-l03
+world: 11
+title: Undur commit terakhir saya
+summary: "Anda akan belajar: cara undur commit terakhir dengan selamat, dah push atau belum."
+minutes: 3
+xp: 15
+interactives: [TermReplay, Choice, GraphScene, Sim]
+needs: [git-w02-l06]
+scenario: w11-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l03" commands={['git log --oneline']} label="git log --oneline: Add day 2 entry di atas, atas Add style, Add day 1 page dan Add README." />
+
+Anda commit (titik simpan) hari 2 terlalu awal. Ia belum siap. Boleh tarik balik commit itu? Boleh! Ini berlaku pada semua orang.
+</Card>
+
+<Card id="decide" type="try">
+Anda belum push. Anda nak simpan perubahan itu. Undur yang mana?
+
+<Interactive name="Choice" options={[{ label: 'git reset --soft HEAD~1', correct: true, why: 'Commit pergi. Perubahan anda tunggu dalam kotak.' }, { label: 'git reset --hard HEAD~1', why: 'Itu padam perubahan sekali. Hati-hati!' }, { label: 'git revert HEAD', why: 'Revert untuk commit yang dah push. Ia tambah satu commit lagi.' }]} />
+</Card>
+
+<Card id="see-soft" type="see">
+<Interactive name="GraphScene" scenario="w11-l03" commands={['git reset --soft HEAD~1']} label="main dan HEAD undur satu commit, ke Add style. Add day 2 entry keluar dari garis." />
+
+`git reset --soft HEAD~1` tarik balik commit terakhir. Tiada yang hilang: perubahan duduk dalam kotak, sedia untuk nanti.
+</Card>
+
+<Card id="try-soft" type="try">
+Tarik balik commit hari 2. Simpan perubahan dalam kotak.
+
+<Interactive name="Sim" scenario="w11-l03" panels={['areas']} goal={{ commits: 3, staged: ['index.html'] }} hints={['Taip git reset --soft HEAD~1']} success="Dah undur! index.html tunggu dalam kotak." />
+
+<Hint>Taip `git reset --soft HEAD~1`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Cerita baru: commit itu dah push. Kawan sepasukan dah ada. Undur yang mana selamat?
+
+<Interactive name="Choice" options={[{ label: 'git revert HEAD', correct: true, why: 'Ia tambah commit undur. Orang lain tak perlu baiki apa-apa.' }, { label: 'git reset --soft HEAD~1', why: 'Itu tulis semula sejarah yang orang lain dah ada. Salinan mereka bertembung.' }, { label: 'Padam repo', why: 'Tak perlu! Revert tenang dan selamat.' }]} />
+</Card>
+
+<Card id="try-revert" type="try">
+Undur commit yang dah push dengan cara selamat. Kemudian push commit undur itu.
+
+<Interactive name="Sim" scenario="w11-l03-pushed" panels={['graph']} goal={{ lastIsRevert: true, pushed: ['main'] }} hints={['Taip git revert HEAD', 'Kemudian taip git push']} success="Undur yang selamat! GitHub pun dah ada commit revert itu." />
+
+<Hint>Taip `git revert HEAD`, kemudian `git push`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh undur commit terakhir, dah push atau belum.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--soft` simpan perubahan dalam kotak. `git reset HEAD~1` biasa simpan perubahan atas meja, di luar kotak. `--hard` padam perubahan, jadi guna hanya untuk perubahan yang betul-betul tak mahu. Commit itu masih boleh dicari. Lihat "Reflog, jaring keselamatan anda" dalam Dunia 2.
+</Card>

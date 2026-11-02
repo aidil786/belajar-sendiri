@@ -1,0 +1,79 @@
+---
+id: linux-l1-l04
+world: 1
+title: "Make, copy, move: mkdir, cp, mv"
+summary: "You will learn: to build folders, copy files as a backup, and move or rename them."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, Mission]
+needs: [linux-l1-l03]
+scenario: linux-l1-make
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "mkdir (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mkdir.1.en.html" }
+  - { label: "cp (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cp.1.en.html" }
+  - { label: "mv (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mv.1.en.html" }
+  - { label: "touch (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/touch.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+The promo draft lies loose on the floor. The only menu has no spare. If someone spills teh tarik on `today.txt`, the shop has no menu. What first?
+
+<Interactive name="Choice" options={[{ label: 'Make a copy of the menu', correct: true, why: 'A backup first. Then you can change things calmly.' }, { label: 'Edit the menu right away', why: 'Without a copy, one slip loses it. Back up first.' }, { label: 'Leave it all as it is', why: 'The mess grows. A few commands tidy it in a minute.' }]} />
+</Card>
+
+<Card id="see-mkdir" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-make" intro={['mkdir boxes', 'ls']} />
+
+`mkdir boxes` builds a new room called `boxes`. The picture shows it at once. **mkdir** means "make directory".
+</Card>
+
+<Card id="predict-parents" type="predict">
+`store` has no `2026` room yet. You type `mkdir store/2026/nov`. What happens?
+
+<Interactive name="Choice" options={[{ label: "mkdir: cannot create directory ‘store/2026/nov’: No such file or directory", correct: true, why: 'Plain words: the room 2026 is missing, so nov has nowhere to go. mkdir -p builds the missing rooms too.' }, { label: 'It builds 2026 and nov', why: 'Only with -p. Plain mkdir builds one room and needs its parent.' }, { label: 'It builds a file called nov', why: 'mkdir only ever makes folders.' }]} />
+</Card>
+
+<Card id="try-mkdir" type="try">
+Build the November shelf, with any missing rooms: `mkdir -p store/2026/nov`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-make" goal={{ dirExists: ['~/kedai/store/2026/nov'] }} hints={['Type mkdir -p store/2026/nov']} solution={['mkdir -p store/2026/nov']} success="Two rooms in one go: 2026, and nov inside it." />
+
+<Hint>`-p` means "make the parents too".</Hint>
+</Card>
+
+<Card id="sort-cp-mv" type="check">
+`cp` makes a copy: the first file stays. `mv` moves or renames: nothing stays behind. Which one?
+
+<Interactive name="SortCards" buckets={[{ id: 'cp', label: 'cp: copy' }, { id: 'mv', label: 'mv: move or rename' }]} items={[{ label: 'Back up today.txt before editing', bucket: 'cp', why: 'You want two files: the menu and its backup.' }, { label: 'Rename draft.txt to promo.txt', bucket: 'mv', why: 'Renaming is moving to a new name.' }, { label: 'Put promo.txt into the menu room', bucket: 'mv', why: 'It should leave the floor, not stay there too.' }, { label: 'A spare menu for the night stall', bucket: 'cp', why: 'The shop keeps its own menu.' }]} success="Two files after: cp. One file after: mv." />
+</Card>
+
+<Card id="try-cp-mv" type="try">
+Back up the menu as `menu/today.bak`. Then rename `draft.txt` to `promo.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-make" goal={{ fileExists: ['~/kedai/menu/today.bak', '~/kedai/promo.txt'], fileMissing: ['~/kedai/draft.txt'] }} hints={['Copy: cp menu/today.txt menu/today.bak', 'Rename: mv draft.txt promo.txt']} solution={['cp menu/today.txt menu/today.bak', 'mv draft.txt promo.txt']} success="A backup in the menu room, and the promo has its real name." />
+
+<Hint>The order is always: from, then to.</Hint>
+</Card>
+
+<Card id="check-folder" type="check">
+You type `cp kitchen kitchen-copy`. The server says `cp: -r not specified; omitting directory 'kitchen'`. What now?
+
+<Interactive name="Choice" options={[{ label: 'cp -r kitchen kitchen-copy', correct: true, why: 'A folder holds many files. -r copies it and everything inside.' }, { label: 'mv kitchen kitchen-copy', why: 'That renames the kitchen. No copy is left.' }, { label: 'mkdir kitchen-copy', why: 'That makes an empty room. The recipes stay behind.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now build folders, back up files, and move them.
+</Card>
+
+<Card id="deeper" type="deeper">
+Careful: `cp` and `mv` replace a file with the same name without asking. `cp -i` and `mv -i` ask first on a real machine. `touch notes.txt` makes an empty file.
+
+Real rep (optional), in a practice folder on your own machine:
+
+<Interactive name="Mission" id="linux-l1-l04-rep" steps={[{ id: 'make', text: 'Build a practice shop.', command: 'mkdir -p practice/menu' }, { id: 'file', text: 'Make an empty menu file in it.', command: 'touch practice/menu/today.txt' }, { id: 'copy', text: 'Back it up.', command: 'cp practice/menu/today.txt practice/menu/today.bak' }, { id: 'look', text: 'Check both are there.', command: 'ls practice/menu' }]} success="Real folders, real backup!" />
+</Card>

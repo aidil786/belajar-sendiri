@@ -1,0 +1,126 @@
+---
+// World map for one course: every island, every one open from day 1.
+// Family parts (Ship It, Level Up) also show their part name, Kancil's outfit and a gentle "best after" tip.
+// The finish line (Career Quest) is always the last island; an extra pack (K9) sits before it.
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import WorldIsland from '~/components/ui/WorldIsland.astro';
+import Mascot from '~/components/ui/Mascot.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { familyTitle, getCourse, getCourses, partLabel, requiresHints } from '~/lib/course';
+import { mapOrder, ROOT_COURSE } from '~/lib/catalog';
+
+export async function getStaticPaths() {
+  const courses = await getCollection('courses');
+  return courses.flatMap((c) => LANGS.map((lang) => ({ params: { lang, course: c.data.id } })));
+}
+const { lang, course: courseId } = Astro.params as { lang: Lang; course: string };
+const course = await getCourse(courseId);
+const all = await getCourses();
+const other = lang === 'en' ? 'ms' : 'en';
+const isRoot = courseId === ROOT_COURSE;
+const heading = isRoot ? t(lang, 'map.title') : t(lang, 'map.titleCourse', { course: course.title[lang] });
+const intro = course.intro ? course.intro[lang] : `${t(lang, 'map.intro')} ${t(lang, 'map.anyOrder')}`;
+const part = partLabel(lang, course);
+const hints = requiresHints(lang, course, all);
+const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status !== 'ready') && w.boss?.status !== 'ready');
+---
+
+<Base lang={lang} title={isRoot ? `${t(lang, 'map.title')}: ${course.title[lang]}` : heading} altPath={`/${other}/${courseId}/`}>
+  <div class="container map" data-map data-progress-template={t(lang, 'map.progress')}>
+    <header class="map-head">
+      <div class="map-head-text">
+        {
+          course.family && (
+            <p class="map-part">
+              <a href={`/${lang}/${course.family}/`}>{familyTitle(lang, course.family)}</a> · {part}
+            </p>
+          )
+        }
+        <h1 class="accent">{heading}</h1>
+        {course.story && <p class="map-story">{course.story[lang]}</p>}
+        <p>{intro}</p>
+        {hints.map((h) => <p class="map-hint">{h}</p>)}
+        {nothingReady && <p class="map-soon" role="status">{t(lang, 'catalog.soonNote')}</p>}
+      </div>
+      {course.hat && <div class="map-mascot" aria-hidden="true"><Mascot lang={lang} hat={course.hat} size={96} /></div>}
+    </header>
+    <div class="map-grid pop-in">
+      {mapOrder(course.worlds).map((w, i) => <WorldIsland lang={lang} courseId={courseId} world={w} index={i + 1} />)}
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { applyMapMarks } from '~/lib/mapMarks';
+  import { $progress } from '~/stores/progress';
+  const el = document.querySelector<HTMLElement>('[data-map]');
+  applyMapMarks(el?.dataset.progressTemplate ?? '{done}/{total}');
+
+  // Keep the map short: open the lesson list of the world in the link (#world-5)
+  // and of the learner's current world. Every world stays one tap away.
+  const openWorlds = () => {
+    const target = /^#world-(\d+)$/.exec(location.hash)?.[0]?.slice(1);
+    const resume = $progress.get().resume?.lessonId;
+    const current = resume ? document.querySelector(`[data-lesson-row="${CSS.escape(resume)}"]`)?.closest('[data-island]')?.id : undefined;
+    if (!target && !current) return; // first visit: keep the default (first worlds open)
+    for (const isl of document.querySelectorAll<HTMLElement>('[data-island]')) {
+      const list = isl.querySelector<HTMLDetailsElement>('details.island-lessons');
+      if (list) list.open = isl.id === target || isl.id === current;
+    }
+    if (target) document.getElementById(target)?.scrollIntoView();
+  };
+  openWorlds();
+  window.addEventListener('hashchange', openWorlds);
+</script>
+
+<style>
+  .map {
+    padding-block: var(--space-5);
+  }
+  .map-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+  .map-head-text {
+    max-width: var(--measure);
+  }
+  .map-part {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .map-story {
+    font-weight: var(--weight-bold);
+  }
+  .map-hint {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .map-soon {
+    display: inline-block;
+    background: var(--c-staging-soft);
+    color: var(--c-staging-ink);
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .map-mascot {
+    flex: none;
+  }
+  @media (max-width: 520px) {
+    .map-mascot {
+      display: none;
+    }
+  }
+  .map-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    align-items: start;
+  }
+</style>

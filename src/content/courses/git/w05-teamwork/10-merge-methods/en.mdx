@@ -1,0 +1,62 @@
+---
+id: git-w05-l10
+world: 5
+title: Merge, squash or rebase?
+summary: "You will learn: the three ways to merge a pull request, and when to pick each."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice, PracticeRepo, SortCards]
+needs: [git-w05-l09]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About merge methods on GitHub", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github" }
+  - { label: "About pull request merges", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} label="main has two neat commits. After a plain merge, it also gets wip, oops, fix typo, fix again, and one more: Merge pull request #18." frames={[{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'wip', kind: 'commit' }, { name: 'oops', kind: 'commit' }, { name: 'fix typo', kind: 'commit' }, { name: 'fix again', kind: 'commit' }, { name: 'Merge pull request #18', kind: 'commit' }] }]} />
+
+Mei's PR has 4 messy commits. A plain merge copies them all onto main. Then it adds a **merge commit** on top. Is that what you want?
+</Card>
+
+<Card id="predict-squash" type="predict">
+This time you pick **<Term id="squash-merge">squash and merge</Term>**. What lands on main?
+
+<Interactive name="Choice" options={[{ label: 'One new commit with all the changes', correct: true, why: 'Squash squeezes every commit of the PR into one tidy commit.' }, { label: 'All 4 commits, plus a merge commit', why: 'That is the plain merge. Squash squeezes them into one.' }, { label: 'Nothing, until Mei cleans up', why: 'Squash does the cleaning for you, as it merges.' }]} reveal={{ zones: ['repo'], zoneLabels: { repo: 'main' }, label: 'main gets just one new commit: Add photo gallery (#18). The four messy commits are squashed inside it.', frames: [{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'Add photo gallery (#18)', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} label="Ravi's PR has three neat commits. They land on main one by one: Add gallery page, Add photos, Add captions. No merge commit." frames={[{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'Add gallery page', kind: 'commit', glow: true }, { name: 'Add photos', kind: 'commit', glow: true }, { name: 'Add captions', kind: 'commit', glow: true }] }]} />
+
+Ravi's commits are already neat. **<Term id="rebase-merge">Rebase and merge</Term>** copies each one onto main. No merge commit. History stays one straight line.
+</Card>
+
+<Card id="try-squash" type="try">
+Back to Mei's messy PR. Squash and merge it.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 18, title: 'Add photo gallery', body: 'Adds the gallery page.\n\n4 commits: wip, oops, fix typo, fix again', author: 'mei', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Gallery</h1>', '+<img src="day1.jpg" alt="Our first meeting">'] }], reviews: [{ author: 'aina', state: 'approved', body: 'Lovely! Please squash those commits.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'merge', pr: 18, method: 'squash' }} success="Squashed! main gets one neat commit: Add photo gallery (#18)." />
+
+<Hint>Under "How to merge", pick "Squash and merge". Then press "Merge pull request".</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Which merge method fits? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge commit' }, { id: 'squash', label: 'Squash' }, { id: 'rebase', label: 'Rebase' }]} items={[{ label: 'Keeps every commit, adds one more', bucket: 'merge', why: 'The merge commit ties the branch in.' }, { label: 'Turns the PR into one tidy commit', bucket: 'squash', why: 'Squash squeezes them all into one.' }, { label: 'Copies each commit, no extra one', bucket: 'rebase', why: 'Rebase replays each commit on top of main.' }, { label: 'Best when the commits are messy', bucket: 'squash', why: 'wip and oops vanish into one clean commit.' }, { label: 'Shows exactly when the branch joined', bucket: 'merge', why: 'The merge commit marks the moment.' }, { label: 'One straight line, every commit kept', bucket: 'rebase', why: 'No merge commit, no squashing.' }]} success="You can pick the right merge for any PR!" />
+</Card>
+
+<Card id="predict-linear" type="predict">
+A branch rule says: keep history in one straight line. Which method is blocked?
+
+<Interactive name="Choice" compact options={[{ label: 'Merge commit', correct: true, why: 'A merge commit joins two lines. Squash and rebase keep one line.' }, { label: 'Squash', why: 'Squash adds one commit in a straight line. It is allowed.' }, { label: 'Rebase', why: 'Rebase keeps a straight line too. It is allowed.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick merge, squash or rebase for each pull request.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rebase and merge makes new commits, with new hashes. Squash loses each small commit's own message and author time. A repo can switch off the methods it does not want. With a merge queue, the queue picks the method for you.
+</Card>

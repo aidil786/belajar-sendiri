@@ -1,0 +1,81 @@
+---
+id: k8s-k2-l13
+world: 2
+title: "Job dan CronJob"
+summary: "Anda akan belajar: jalankan tugas sekali dengan Job, dan ikut jadual dengan CronJob."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim, SortCards]
+needs: [k8s-k2-l12]
+scenario: k2-jobs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Jobs", url: "https://kubernetes.io/docs/concepts/workloads/controllers/job/" }
+  - { label: "Kubernetes: CronJob", url: "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/" }
+  - { label: "kubectl create job", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_job/" }
+---
+
+<Card id="hook" type="hook">
+Selepas tutup kedai, seseorang kira pinggan sekali, kemudian balik. Anda jadikan pengira itu Deployment. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia kira berulang-ulang, selamanya', correct: true, why: 'Deployment hidupkan semula apa sahaja yang berhenti. Kiraan mesti berhenti bila siap.' }, { label: 'Ia kira sekali, kemudian rehat', why: 'Deployment tak pernah benarkan dulang berehat. Ia mulakannya semula.' }, { label: 'Tiada apa bermula', why: 'Ia bermula dengan baik. Masalahnya ia tak pernah berhenti.' }]} />
+</Card>
+
+<Card id="see-job" type="see">
+<Interactive name="KubeReplay" scenario="k2-jobs" commands={['kubectl apply -f tally.yaml', 'kubectl wait --for=condition=complete job/tally --timeout=60s', 'kubectl get job tally', 'kubectl logs job/tally']} label="Job tally jalan sekali. Statusnya Complete dengan 1/1 completions. Lognya kata counting plates, 42 plates." />
+
+**<Term id="job">Job</Term>** jalankan tugas sehingga siap, kemudian berhenti. STATUS tunjuk Complete. COMPLETIONS tunjuk 1/1.
+</Card>
+
+<Card id="predict" type="predict">
+Pod Job itu siap dengan baik. Apa `kubectl get pods` tunjuk untuknya?
+
+<Interactive name="Choice" options={[{ label: '`Completed`, READY 0/1', correct: true, why: 'Siap dan berehat. Tiada apa hidupkan semula, dan anda masih boleh baca lognya.' }, { label: '`CrashLoopBackOff`', why: 'Ia tak crash. Ia tamat dengan kod keluar 0.' }, { label: '`Running`, selamanya', why: 'Pod Job berhenti bila tugasnya siap.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+Job tak boleh guna `restartPolicy: Always`. Baca ralat sebenar. Pilih salah satu nilai yang ia senaraikan.
+
+<Interactive name="YamlDoctor" file="tally.yaml" manifest={'apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: tally\nspec:\n  template:\n    spec:\n      restartPolicy: Always\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: ["sh", "-c", "echo 42 plates"]\n'} solution={'apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: tally\nspec:\n  template:\n    spec:\n      restartPolicy: Never\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: ["sh", "-c", "echo 42 plates"]\n'} keep={['kind: Job', 'restartPolicy:']} hint="Never atau OnFailure. Kedua-duanya benarkan tugas tamat." success="Siap! Kiraan jalan sekali, kemudian berehat." />
+</Card>
+
+<Card id="see-cron" type="see">
+**<Term id="cronjob">CronJob</Term>** buat Job ikut jadual. Lima medannya ialah minit, jam, hari, bulan dan hari dalam minggu.
+
+```yaml
+spec:
+  schedule: "30 23 * * *"
+```
+
+Bila ia berjalan?
+
+<Interactive name="Choice" options={[{ label: 'Setiap hari pukul 23:30', correct: true, why: 'Minit 30, jam 23, mana-mana hari, mana-mana bulan, mana-mana hari minggu.' }, { label: 'Setiap 30 minit', why: 'Itu */30 dalam medan minit.' }, { label: 'Pada 23 haribulan setiap bulan', why: 'Hari ialah medan ketiga. Di sini *, jadi setiap hari.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Tak perlu tunggu malam ini. Apply `nightly.yaml`. Kemudian mulakan satu kiraan sekarang: `kubectl create job tally-now --from=cronjob/nightly`.
+
+<Interactive name="FoodCourtSim" scenario="k2-jobs" goal={{ podStatus: { selector: 'job-name=tally-now', status: 'Completed' } }} hints={['Taip kubectl apply -f nightly.yaml', 'Taip kubectl create job tally-now --from=cronjob/nightly']} success="Dikira sekarang juga, dengan resepi malam ini. Jadualnya kekal sama." />
+
+<Hint>`--from=cronjob/nightly` salin templat job daripada CronJob itu.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Deployment, Job atau CronJob? Susun setiap tugas.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'job', label: 'Job' }, { id: 'cron', label: 'CronJob' }]} items={[{ label: 'Layan pelanggan kedai sepanjang hari', bucket: 'deploy', why: 'Ia mesti terus berjalan. Yang berhenti dihidupkan semula.' }, { label: 'Ubah saiz semua gambar menu sekali', bucket: 'job', why: 'Satu tugas, kemudian siap.' }, { label: 'Sandarkan pesanan setiap malam', bucket: 'cron', why: 'Tugas sama, ikut jadual.' }, { label: 'Hantar e-mel jualan setiap Isnin', bucket: 'cron', why: 'Hari minggu dalam medan kelima buat ini.' }]} success="Siap! Sentiasa hidup, sekali, atau ikut jadual." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan tugas sekali, atau ikut jadual.
+</Card>
+
+<Card id="deeper" type="deeper">
+Job yang gagal cuba lagi, sehingga `backoffLimit` kali (6 secara lalai). Tanpa `timeZone`, CronJob ikut jam kluster, selalunya UTC. CronJob simpan 3 Job berjaya terakhir dan buang yang lebih lama.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, jalankan `kubectl get cronjobs` dan `kubectl get jobs`.
+</Card>

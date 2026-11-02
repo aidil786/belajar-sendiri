@@ -1,0 +1,67 @@
+---
+id: linux-l4-l02
+world: 4
+title: "Nama pendek: ~/.ssh/config"
+summary: "Anda akan belajar: memanggil server dengan nama pendek melalui dail laju anda sendiri."
+minutes: 3
+xp: 15
+interactives: [Transcript, SpotLines, LinuxSim, Choice, SwipeJudge, Mission]
+needs: [linux-l4-l01]
+scenario: linux-l4-sshconfig
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: ssh_config", url: "https://man.openbsd.org/ssh_config" }
+  - { label: "OpenSSH: ssh -G", url: "https://man.openbsd.org/ssh#G" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop (makmal)" label="ssh you@10.0.0.5 hostname cetak kedai. ssh kedai hostname pun cetak kedai."
+  lines={[{ cmd: 'ssh you@10.0.0.5 hostname' }, { out: 'kedai' }, { cmd: 'ssh kedai hostname' }, { out: 'kedai' }]} />
+
+Dapur yang sama, dua cara memanggil. Siapa mahu ingat nombor? Yang kedua guna dail laju.
+</Card>
+
+<Card id="see-config" type="see">
+Dail laju anda ialah <Term id="ssh-config">~/.ssh/config</Term>. `Host` ialah nama pendek. Tekan baris dengan alamat sebenar.
+
+<Interactive name="SpotLines" lines={[{ text: 'Host kedai' }, { text: '    HostName 10.0.0.5', target: true }, { text: '    User you' }, { text: '    IdentityFile ~/.ssh/id_ed25519' }]} prompt="Tekan alamat sebenar." success="HostName ialah nombor sebenar. User ialah siapa anda log masuk. IdentityFile ialah kunci yang mana." />
+</Card>
+
+<Card id="try-fix" type="try">
+Dail laju ini tiada nama pengguna anda. Dan sesiapa boleh mengubahnya! Tambah baris `    User you`, kemudian `chmod 600` fail itu.
+
+<Interactive name="LinuxSim" scenario="linux-l4-sshconfig" goal={{ fileContains: { '~/.ssh/config': 'User you' }, fileMode: { '~/.ssh/config': '600' } }} hints={["echo '    User you' >> ~/.ssh/config", 'chmod 600 ~/.ssh/config']} solution={["echo '    User you' >> ~/.ssh/config", 'chmod 600 ~/.ssh/config']} success="Entri dail laju yang lengkap, hanya anda boleh baca." />
+</Card>
+
+<Card id="see-g" type="see">
+<Interactive name="Transcript" title="laptop (makmal)" label="ssh -G kedai tunjuk apa yang ssh akan guna: user you, hostname 10.0.0.5, port 22, identityfile ~/.ssh/id_ed25519."
+  lines={[{ cmd: "ssh -G kedai | grep -E '^(hostname|user|port|identityfile) '" }, { out: 'user you\nhostname 10.0.0.5\nport 22\nidentityfile ~/.ssh/id_ed25519' }]} />
+
+`ssh -G` tunjuk apa yang ssh benar-benar akan guna, tanpa memanggil. Bagus untuk cari salah taip.
+</Card>
+
+<Card id="predict" type="predict">
+Fail config anda `-rw-rw-rw-` (666): sesiapa boleh mengubahnya. Apa yang ssh buat?
+
+<Interactive name="Choice" options={[{ label: 'Ia menolak: Bad owner or permissions', correct: true, why: 'Orang boleh halakan kedai ke server palsu. chmod 600 membaikinya.' }, { label: 'Ia jalan seperti biasa', why: 'ssh semak siapa boleh ubah fail itu dahulu.' }, { label: 'Ia padam fail itu', why: 'ssh tak pernah padam. Ia cuma enggan menggunakannya.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Betul atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Nama pendek kedai hanya berfungsi di laptop ini.', good: true, why: 'Ia tinggal dalam ~/.ssh/config anda sendiri.' }, { text: 'scp dan rsync juga boleh guna nama pendek itu.', good: true, why: 'Mereka memanggil melalui ssh, jadi mereka baca dail laju.' }, { text: 'Port 22 mesti sentiasa ditulis dalam fail.', good: false, why: '22 ialah lalai. Tambah Port hanya untuk nombor lain.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panggil server dengan nama pendek.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baris lain: `Port 2222` untuk sambungan lain, `Host *` untuk tetapan yang sesuai bagi setiap server. Ralat sebenar untuk fail longgar ialah `Bad owner or permissions on /home/you/.ssh/config`. Output makmal datang dari mesin Debian 13 sebenar.
+
+<Interactive name="Mission" id="linux-l4-l02-rep" steps={[{ id: 'add', text: 'Tambah VM anda dalam ~/.ssh/config dengan Host, HostName dan User.' }, { id: 'lock', text: 'Kunci fail itu.', command: 'chmod 600 ~/.ssh/config' }, { id: 'check', text: 'Semak apa yang ssh akan guna.', command: 'ssh -G myvm | head' }, { id: 'call', text: 'Panggil dengan nama.', command: 'ssh myvm' }]} success="Dail laju anda sendiri berfungsi." />
+</Card>

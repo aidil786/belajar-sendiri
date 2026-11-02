@@ -1,0 +1,74 @@
+---
+id: docker-d3-l04
+world: 3
+title: Sandar dan pulihkan volume
+summary: "Anda akan belajar: salin volume ke dalam satu fail di laptop, dan bawa ia balik."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l03]
+scenario: d3-backup
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Back up, restore, or migrate volumes", url: "https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes" }
+  - { label: "Docker docs: docker volume inspect", url: "https://docs.docker.com/reference/cli/docker/volume/inspect/" }
+  - { label: "PostgreSQL: pg_dump", url: "https://www.postgresql.org/docs/current/app-pgdump.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-backup" commands={['docker volume ls', 'docker volume inspect -f "{{.Mountpoint}}" kedai-data']} label="docker volume ls tunjuk kedai-data. Mountpoint-nya /var/lib/docker/volumes/kedai-data/_data, jauh di dalam folder Docker sendiri." />
+
+Laptop anda makin lama. Pesanan ada dalam loker kedai-data, jauh dalam folder Docker. Di Docker Desktop, ia tersorok dalam VM Linux. Macam mana nak salin keluar?
+</Card>
+
+<Card id="see-backup" type="see">
+**Backup** (salinan sandaran) bungkus seluruh loker dalam satu beg di rak anda. Satu bekas pembantu yang kecil buat kerja ini, lalu pergi. Tekan kepingan ikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run --rm', means: 'Bekas pembantu, dibuang selepas siap' }, { text: '-v kedai-data:/from', means: 'Buka loker di /from' }, { text: '-v "$PWD":/to', means: 'Buka folder laptop ini di /to' }, { text: 'alpine:3.22', means: 'Pek beku kecil yang ada tar' }, { text: 'tar czf /to/backup.tar.gz', means: 'Bungkus satu beg zip ke /to' }, { text: '-C /from .', means: 'Semua isi /from' }]} decoys={[{ text: 'tar xzf /to/backup.tar.gz', means: 'Buka beg. Itu untuk pulihkan.' }]} success="Itulah arahan backup!" />
+</Card>
+
+<Card id="try-backup" type="try">
+Sandarkan kedai-data ke dalam backup.tar.gz, dalam folder ini.
+
+<Interactive name="KitchenSim" scenario="d3-backup" goal={{ filesExist: ['backup.tar.gz'], lastExit: 0 }} hints={['Taip docker run --rm -v kedai-data:/from -v "$PWD":/to alpine:3.22 tar czf /to/backup.tar.gz -C /from .', 'Kemudian taip ls untuk tengok beg itu.']} success="backup.tar.gz ada di laptop anda. Pesanan selamat." />
+
+<Hint>`"$PWD"` maksudnya folder ini. Kekalkan tanda petik.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Untuk pulihkan, anda buka beg itu ke dalam loker. Huruf tar yang mana?
+
+<Interactive name="Choice" options={[{ label: '`tar xzf`', correct: true, why: 'x = extract: buka beg.' }, { label: '`tar czf`', why: 'c buat beg baru. Ia akan tindih backup anda!' }, { label: '`tar tzf`', why: 't cuma senaraikan isi beg.' }]} />
+</Card>
+
+<Card id="try-restore" type="try">
+Laptop baru! Loker itu dah tiada. Tinggal backup.tar.gz sahaja. Buka ke dalam loker kedai-data yang baru.
+
+<Interactive name="KitchenSim" scenario="d3-restore" goal={{ fileInVolume: { 'kedai-data': ['orders.txt', 'menu/drinks.txt'] } }} hints={['Taip docker run --rm -v kedai-data:/to -v "$PWD":/from alpine:3.22 tar xzf /from/backup.tar.gz -C /to', 'Semak: docker run --rm -v kedai-data:/data alpine:3.22 cat /data/orders.txt']} success="Dah pulih! Pesanan dan menu kembali." />
+
+<Hint>Bekas pembantu yang sama. Tukar folder: beg itu kini di /from.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Tabiat backup yang baik, atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Simpan satu salinan beg di luar laptop ini.', good: true, why: 'Backup di cakera yang sama akan rosak bersama cakera itu.' }, { text: 'Salin folder pangkalan data semasa ia sedang menulis.', good: false, why: 'Mungkin dapat fail separuh siap. Hentikan dulu, atau guna alat dump-nya.' }, { text: 'Cuba pulihkan sekali-sekala.', good: true, why: 'Backup yang tak pernah dipulihkan cuma satu harapan.' }, { text: 'Letak tarikh dalam nama fail.', good: true, why: 'backup-2026-10-31.tar.gz beritahu hari mana yang disimpan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sandarkan volume dan pulihkannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Untuk Postgres, `pg_dump` simpan data dengan selamat semasa ia berjalan. `--volumes-from db` pinjam semua loker db, senang untuk backup.
+
+<Interactive name="KitchenReplay" scenario="d3-backup" commands={['docker run --rm -v kedai-data:/from -v "$PWD":/to alpine:3.22 tar czvf /to/backup.tar.gz -C /from .']} label="Dengan v ditambah, tar senaraikan setiap fail yang dibungkus: ./, ./menu/, ./menu/drinks.txt, ./orders.txt." />
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d3-l04-rep" steps={[{ id: 'backup', text: 'Sandarkan satu volume anda.', command: 'docker run --rm -v practice-data:/from -v "$PWD":/to alpine:3.22 tar czf /to/backup.tar.gz -C /from .' }, { id: 'restore', text: 'Pulihkan ke volume baru.', command: 'docker run --rm -v practice-copy:/to -v "$PWD":/from alpine:3.22 tar xzf /from/backup.tar.gz -C /to' }, { id: 'check', text: 'Tengok isi salinan itu.', command: 'docker run --rm -v practice-copy:/data alpine:3.22 ls -la /data' }]} success="Disandar dan dipulihkan betul-betul." />
+</Card>

@@ -1,0 +1,66 @@
+---
+id: git-w11-l01
+world: 11
+title: Saya commit di branch yang salah
+summary: "Anda akan belajar: cara pindahkan commit ke branch yang sepatutnya."
+minutes: 3
+xp: 15
+interactives: [GraphScene, Choice, Sim, SortCards]
+needs: [git-w03-l02]
+scenario: w11-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w11-l01-before" commands={['git commit -m "Add about page"']} label="Commit baru, Add about page, masuk ke main. Label main dan HEAD naik ke situ." />
+
+Alamak. Anda commit (titik simpan) halaman about di `main`. Sepatutnya ia dalam branch (cabang) sendiri. Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+Soalan pertama: dah push? Belum lagi. Jadi, cara baiki yang mana sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Pindahkan commit ke branch baru', correct: true, why: 'Belum ada orang lain yang ada, jadi anda bebas pindahkan.' }, { label: 'Revert di main', why: 'Revert untuk commit yang dah push. Yang ini masih milik anda seorang.' }, { label: 'Padam folder dan mula semula', why: 'Tak perlu! Git boleh pindahkan commit itu.' }]} />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="GraphScene" scenario="w11-l01" commands={['git branch about', 'git reset --hard HEAD~1']} label="Label baru, about, muncul pada commit Add about page. Kemudian main undur satu commit, ke Add style. Commit itu kekal selamat di about." />
+
+`git branch about` lekatkan label baru pada commit anda. `git reset --hard HEAD~1` undurkan main satu langkah. Commit anda kekal selamat di about.
+</Card>
+
+<Card id="try-move" type="try">
+Giliran anda. Pindahkan commit ke branch bernama `about`. Kemudian tukar ke branch itu.
+
+<Interactive name="Sim" scenario="w11-l01" panels={['graph']} goal={{ branchAt: { about: '^Add about page$', main: '^Add style$' }, currentBranch: 'about' }} hints={['Mula-mula: git branch about', 'Kemudian: git reset --hard HEAD~1', 'Akhir sekali: git switch about']} success="Siap! main bersih, dan halaman anda tinggal di about." />
+
+<Hint>Taip `git branch about`, kemudian `git reset --hard HEAD~1`, kemudian `git switch about`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Hati-hati: `reset --hard` juga padam perubahan yang belum di-commit. Bila ia selamat di sini?
+
+<Interactive name="Choice" options={[{ label: 'Bila git status kata working tree clean', correct: true, why: 'Tiada yang menunggu, jadi tiada yang hilang. Commit anda selamat di about.' }, { label: 'Sentiasa, tak kira apa', why: 'Perubahan yang belum di-commit akan dipadam. Commit atau stash dulu.' }, { label: 'Tak pernah, ia padam commit itu', why: 'Label about jaga commit itu. Hanya main yang bergerak.' }]} />
+</Card>
+
+<Card id="check-pushed" type="check">
+Kalau anda dah push? Pilih cara baiki untuk setiap keadaan.
+
+<Interactive name="SortCards" buckets={[{ id: 'move', label: 'Pindahkan (branch + reset)' }, { id: 'undo', label: 'Batalkan (revert)' }]} items={[{ label: 'Hanya dalam laptop saya', bucket: 'move', why: 'Hanya anda yang ada, jadi boleh pindahkan.' }, { label: 'Dah ada di GitHub', bucket: 'undo', why: 'Orang lain mungkin dah ada. Tambah commit undur.' }, { label: 'Kawan sepasukan dah pull', bucket: 'undo', why: 'Tulis semula akan bertembung dengan salinan dia. Revert lebih tenang.' }, { label: 'Baru buat, belum push', bucket: 'move', why: 'Masih milik anda seorang. Pindahkan.' }]} success="Tersusun! Belum push: pindahkan. Dah push: batalkan dengan revert." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pindahkan commit ke branch yang sepatutnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Branch yang betul dah wujud? Tukar ke branch itu dan jalankan `git cherry-pick main` untuk salin commit. Kemudian buang dari main dengan `git reset --hard HEAD~1`. Dah push? Jalankan `git revert HEAD` di main dan push. Kemudian `git switch -c about` dan `git cherry-pick main~1` bawa kerja anda ke situ.
+</Card>

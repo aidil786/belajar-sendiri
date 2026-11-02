@@ -1,0 +1,70 @@
+---
+id: cicd-c2-l10
+world: 2
+title: Stop the line on critical CVEs
+summary: "You will learn: to scan every image and stop the line on a critical hole."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, ConveyorBelt, SpotLines, SwipeJudge, Mission]
+needs: [cicd-c2-l09]
+scenario: c2-cve-no-exit
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "aquasecurity/trivy-action", url: "https://github.com/aquasecurity/trivy-action" }
+  - { label: "Docker Scout in GitHub Actions", url: "https://docs.docker.com/scout/integrations/ci/gha/" }
+  - { label: "About CVE records", url: "https://www.cve.org/About/Overview" }
+---
+
+<Card id="hook" type="hook">
+The food inspector finds a recalled ingredient in tonight's packs. What should the belt do?
+
+<Interactive name="Choice" options={[{ label: 'Stop the line before the packs ship', correct: true, why: 'Customers never get the bad pack. Fix it, then run again.' }, { label: 'Ship now, fix it next week', why: 'Then customers get the bad pack tonight.' }, { label: 'Hide the report', why: 'The bad ingredient is still in the pack.' }]} />
+</Card>
+
+<Card id="see-cve" type="see">
+A **<Term id="cve">CVE</Term>** is a public ID for a known hole, like `CVE-2099-0001`. Scanners give each one a severity. Put them in order, mildest first.
+
+<Interactive name="OrderList" items={['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']} label="Mildest at the top" success="CRITICAL is the one that stops the line." />
+</Card>
+
+<Card id="predict" type="predict">
+Trivy scans for CRITICAL holes, and the image has one. Tap the station that will stop the line. Or tap "Nothing stops it".
+
+<Interactive name="ConveyorBelt" scenario="c2-cve-no-exit" task={{ type: 'predict' }} success="Sneaky, right? The scan found it, but the line kept going." />
+
+<Hint>Read the last lines of the Trivy step. What is missing?</Hint>
+</Card>
+
+<Card id="see-exit" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: aquasecurity/trivy-action@v0.36.0' }, { text: '  with:' }, { text: '    image-ref: kedai-kancil:scan' }, { text: '    severity: CRITICAL' }, { text: "    exit-code: '1'", target: true }]} prompt="Tap the line that turns a finding into a red station." success="Yes! A finding now fails the step." />
+
+Trivy ends with exit code 0 unless you ask. `exit-code: '1'` makes a finding fail the step. Red station, line stops.
+</Card>
+
+<Card id="try-watch" type="try">
+Same image, now with `exit-code: '1'`. Press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-cve-stop" success="The scan stopped the line. No bad pack ships." />
+</Card>
+
+<Card id="check" type="check">
+Good scan habit? Swipe right for yes, left for "needs work".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Scan the exact image you are about to push', good: true, why: 'Scan what ships, not something like it.' }, { text: 'Fail on CRITICAL, and report the rest', good: true, why: 'A clear rule. The team still sees the smaller holes.' }, { text: 'Turn the scan off when it goes red', good: false, why: 'Update the package or the base image instead.' }, { text: 'Scan once a year', good: false, why: 'New CVEs appear every day. Scan every build.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now stop the line on a critical hole.
+</Card>
+
+<Card id="deeper" type="deeper">
+`ignore-unfixed: true` skips holes that have no fix yet. Docker Scout does the same job with `docker/scout-action`. Old images get new CVEs too. Scan them again on a schedule.
+
+Real rep (optional), with Trivy installed from its official docs:
+
+<Interactive name="Mission" id="c2-l10-rep" steps={[{ id: 'scan', text: 'Scan a small official image.', command: 'trivy image --severity CRITICAL --exit-code 1 alpine:3.22' }, { id: 'code', text: 'Check the exit code: 0 means no critical holes.', command: 'echo $?' }, { id: 'ci', text: "Add the Trivy step with exit-code: '1' to a practice repo." }]} success="You can read a scan like a food inspector!" />
+</Card>

@@ -1,0 +1,274 @@
+# Linux & Networking rescue flows (same shape as src/content/courses/git/rescue.yaml; `group` is not used here).
+# The Level Up Rescue Center (/<lang>/level-up/rescue/) lists them under Part 1.
+# Flow ids must be unique across linux, iac, observability and aws: one page, one #<flow-id> link each.
+# Start ids with `linux-` (e.g. linux-permission-denied). About 5 flows (docs/LEVEL-UP-PLAN.md §7, wave B).
+flows:
+  # --- Linux flows (add below this line) ---
+  # Checked 2026-11-01 on Debian 13 (the truth machine and a two-machine SSH lab). The errors quoted are
+  # the real ones (OpenSSH 10.0, curl 8.14, nginx 1.26, systemd 257, ufw 0.36).
+  - id: linux-permission-denied
+    title: { en: "\"Permission denied\"", ms: "\"Permission denied\" (kebenaran ditolak)" }
+    start: what
+    steps:
+      - id: what
+        question: { en: "What were you doing when it said Permission denied?", ms: "Apa yang anda buat bila ia kata Permission denied?" }
+        answers:
+          - { label: { en: "Running my script: ./script.sh", ms: "Menjalankan skrip saya: ./script.sh" }, next: r-exec }
+          - { label: { en: "Reading or changing a file", ms: "Membaca atau mengubah fail" }, next: owner }
+          - { label: { en: "Logging in with ssh", ms: "Log masuk dengan ssh" }, next: r-ssh }
+      - id: owner
+        question: { en: "Run ls -l on the file. Who owns it?", ms: "Jalankan ls -l pada fail itu. Siapa pemiliknya?" }
+        answers:
+          - { label: { en: "root, or another user", ms: "root, atau pengguna lain" }, next: r-sudo }
+          - { label: { en: "Me", ms: "Saya" }, next: r-mode }
+      - id: r-exec
+        result:
+          text: { en: "The file has no x (run) key. Give it one, then run it again.", ms: "Fail itu tiada kunci x (jalankan). Beri satu, kemudian jalankan semula." }
+          commands:
+            - { command: "ls -l script.sh", en: "Look for x in the first column.", ms: "Cari x dalam lajur pertama." }
+            - { command: "chmod +x script.sh", en: "Let it run as a program.", ms: "Benarkan ia berjalan sebagai program." }
+            - { command: "./script.sh", en: "Run it again.", ms: "Jalankan semula." }
+          danger: safe
+          lesson: linux-l2-l03
+      - id: r-sudo
+        result:
+          text: { en: "The file belongs to someone else. Use sudo only when you are sure. Or make the file yours, if it should be.", ms: "Fail itu milik orang lain. Guna sudo hanya bila anda pasti. Atau jadikan fail itu milik anda, jika patut." }
+          commands:
+            - { command: "ls -l notes.txt", en: "See the owner and the group.", ms: "Lihat pemilik dan kumpulannya." }
+            - { command: "sudo cat /var/log/nginx/error.log", en: "Read one root file, once, as root.", ms: "Baca satu fail root, sekali, sebagai root." }
+            - { command: "sudo chown you:you notes.txt", en: "Make it yours. Only for your own work files.", ms: "Jadikan milik anda. Untuk fail kerja anda sendiri sahaja." }
+          danger: careful
+          lesson: linux-l2-l04
+      - id: r-mode
+        result:
+          text: { en: "It is yours, but its mode says no. Give yourself read and write back.", ms: "Ia milik anda, tetapi modnya kata tidak. Beri semula kebenaran baca dan tulis kepada diri anda." }
+          commands:
+            - { command: "ls -l notes.txt", en: "The first three letters after - are yours.", ms: "Tiga huruf pertama selepas - ialah milik anda." }
+            - { command: "chmod u+rw notes.txt", en: "Owner: read and write.", ms: "Pemilik: baca dan tulis." }
+          danger: safe
+          lesson: linux-l2-l03
+      - id: r-ssh
+        result:
+          text: { en: "Permission denied (publickey) means the server does not know your padlock, or your key file is too open.", ms: "Permission denied (publickey) maksudnya server tak kenal mangga anda, atau fail kunci anda terlalu terbuka." }
+          commands:
+            - { command: "ls -l ~/.ssh", en: "The private key must be -rw------- (600).", ms: "Kunci persendirian mesti -rw------- (600)." }
+            - { command: "chmod 600 ~/.ssh/id_ed25519", en: "Lock your key. ssh ignores a key others can read.", ms: "Kunci fail kunci anda. ssh abaikan kunci yang orang lain boleh baca." }
+            - { command: "ssh-copy-id you@SERVER-IP", en: "Hang your padlock, while a password login still works.", ms: "Gantung mangga anda, semasa log masuk kata laluan masih berfungsi." }
+            - { command: "ssh -v you@SERVER-IP", en: "Watch which keys ssh offers.", ms: "Tengok kunci mana yang ssh tawarkan." }
+          danger: safe
+          lesson: linux-l4-l01
+
+  - id: linux-command-not-found
+    title: { en: "\"command not found\"", ms: "\"command not found\" (arahan tak dijumpai)" }
+    start: what
+    steps:
+      - id: what
+        question: { en: "What did you type?", ms: "Apa yang anda taip?" }
+        answers:
+          - { label: { en: "A program, like ufw or tree", ms: "Satu program, seperti ufw atau tree" }, next: apt }
+          - { label: { en: "My own script, like backup.sh", ms: "Skrip saya sendiri, seperti backup.sh" }, next: r-path }
+      - id: apt
+        question: { en: "Run apt search with its name. Is it listed?", ms: "Jalankan apt search dengan namanya. Adakah ia tersenarai?" }
+        answers:
+          - { label: { en: "Yes", ms: "Ya" }, next: r-install }
+          - { label: { en: "No, nothing close", ms: "Tidak, tiada yang hampir" }, next: r-typo }
+      - id: r-install
+        result:
+          text: { en: "The program is not installed yet. Install it from Debian's shelf.", ms: "Program itu belum dipasang. Pasang dari rak Debian." }
+          commands:
+            - { command: "sudo apt update", en: "Refresh the shelf list first.", ms: "Segarkan senarai rak dahulu." }
+            - { command: "sudo apt install tree", en: "Install it. Use your program's name.", ms: "Pasangnya. Guna nama program anda." }
+            - { command: "type tree", en: "Check the shell can find it now.", ms: "Semak shell boleh jumpa sekarang." }
+          danger: careful
+          lesson: linux-l2-l10
+      - id: r-path
+        result:
+          text: { en: "The shell looks for programs only in the PATH folders. For a script in this folder, start with ./", ms: "Shell cari program dalam folder PATH sahaja. Untuk skrip dalam folder ini, mulakan dengan ./" }
+          commands:
+            - { command: "./backup.sh", en: "Run the one right here.", ms: "Jalankan yang ada di sini." }
+            - { command: "echo $PATH", en: "See where the shell looks.", ms: "Lihat di mana shell mencari." }
+            - { command: "export PATH=\"$HOME/bin:$PATH\"", en: "Add your own bin folder, for this session.", ms: "Tambah folder bin anda sendiri, untuk sesi ini." }
+          danger: safe
+          lesson: linux-l2-l07
+      - id: r-typo
+        result:
+          text: { en: "Check the spelling. Type the first letters and press Tab: the shell finishes real names only.", ms: "Semak ejaan. Taip huruf pertama dan tekan Tab: shell hanya lengkapkan nama yang wujud." }
+          commands:
+            - { command: "type systemctl", en: "Ask the shell what a name is.", ms: "Tanya shell apa sesuatu nama itu." }
+            - { command: "apt search firewall", en: "Search by what it does, not its name.", ms: "Cari ikut apa yang ia buat, bukan namanya." }
+          danger: safe
+          lesson: linux-l1-l09
+
+  - id: linux-cant-connect
+    title: { en: "I can't connect: refused, timed out, or port in use", ms: "Tak dapat bersambung: ditolak, tamat masa, atau port sudah dipakai" }
+    start: error
+    steps:
+      - id: error
+        question: { en: "What does the error say?", ms: "Apa kata ralat itu?" }
+        answers:
+          - { label: { en: "Could not resolve host / Name or service not known", ms: "Could not resolve host / Name or service not known" }, next: r-dns }
+          - { label: { en: "Could not connect to server / Connection refused (at once)", ms: "Could not connect to server / Connection refused (serta-merta)" }, next: inside }
+          - { label: { en: "Connection timed out (after a long wait)", ms: "Connection timed out (selepas lama menunggu)" }, next: r-timeout }
+          - { label: { en: "Address already in use (when a program starts)", ms: "Address already in use (bila program bermula)" }, next: r-inuse }
+      - id: inside
+        question: { en: "On the server itself, does curl localhost:PORT work?", ms: "Di server itu sendiri, adakah curl localhost:PORT berjaya?" }
+        answers:
+          - { label: { en: "No, refused there too", ms: "Tidak, ditolak di sana juga" }, next: r-refused }
+          - { label: { en: "Yes, only outside fails", ms: "Ya, hanya dari luar gagal" }, next: r-bind }
+      - id: r-dns
+        result:
+          text: { en: "The name has no number. Check /etc/hosts and DNS.", ms: "Nama itu tiada nombor. Semak /etc/hosts dan DNS." }
+          commands:
+            - { command: "getent hosts kedai.example", en: "What programs really see: /etc/hosts first, then DNS.", ms: "Apa yang program benar-benar nampak: /etc/hosts dahulu, kemudian DNS." }
+            - { command: "dig +short kedai.example", en: "Ask DNS only.", ms: "Tanya DNS sahaja." }
+            - { command: "cat /etc/hosts", en: "Look for a typo in the shop's own list.", ms: "Cari salah taip dalam senarai kedai sendiri." }
+          danger: safe
+          lesson: linux-l3-l05
+      - id: r-refused
+        result:
+          text: { en: "Nobody listens on that port. Find out who should, then start it.", ms: "Tiada yang mendengar di port itu. Cari siapa yang patut, kemudian hidupkannya." }
+          commands:
+            - { command: "sudo ss -tlnp", en: "Every listening port, with its program.", ms: "Setiap port yang mendengar, dengan programnya." }
+            - { command: "systemctl status nginx", en: "Is the service running? Use your service's name.", ms: "Adakah servis itu berjalan? Guna nama servis anda." }
+            - { command: "sudo systemctl start nginx", en: "Start it.", ms: "Hidupkannya." }
+          danger: careful
+          lesson: linux-l3-l03
+      - id: r-bind
+        result:
+          text: { en: "Inside works, outside fails: the app listens on the intercom (127.0.0.1) only, or a firewall stands between.", ms: "Dalam berjaya, luar gagal: aplikasi mendengar di interkom (127.0.0.1) sahaja, atau ada firewall di tengah." }
+          commands:
+            - { command: "sudo ss -tlnp", en: "127.0.0.1:PORT means intercom only. 0.0.0.0:PORT means every line.", ms: "127.0.0.1:PORT bermaksud interkom sahaja. 0.0.0.0:PORT bermaksud setiap talian." }
+            - { command: "sudo ufw status verbose", en: "Is the port on the guard's list?", ms: "Adakah port itu dalam senarai pengawal?" }
+          danger: safe
+          lesson: linux-l3-l04
+      - id: r-timeout
+        result:
+          text: { en: "Silence usually means a firewall drops the call. Check the server's firewall and any cloud firewall in front of it.", ms: "Senyap selalunya bermaksud firewall buang panggilan. Semak firewall server dan firewall cloud di depannya." }
+          commands:
+            - { command: "curl -v --connect-timeout 5 http://SERVER-IP", en: "Wait 5 seconds, not 2 minutes.", ms: "Tunggu 5 saat, bukan 2 minit." }
+            - { command: "sudo ufw status verbose", en: "On the server: read the guard's list.", ms: "Di server: baca senarai pengawal." }
+            - { command: "sudo ufw allow 80/tcp", en: "Let web callers in. Keep the guard on.", ms: "Benarkan pemanggil web masuk. Pengawal kekal bertugas." }
+          danger: careful
+          lesson: linux-l3-l08
+      - id: r-inuse
+        result:
+          text: { en: "Another program already holds that port. Find it. Then stop it, or give your program another port.", ms: "Program lain sudah pegang port itu. Cari ia. Kemudian hentikannya, atau beri program anda port lain." }
+          commands:
+            - { command: "sudo ss -tlnp 'sport = :80'", en: "Who holds port 80? Use your port.", ms: "Siapa pegang port 80? Guna port anda." }
+            - { command: "sudo systemctl stop nginx", en: "Example: stop the old holder, if it should not run.", ms: "Contoh: hentikan pemegang lama, jika ia tak patut berjalan." }
+          danger: careful
+          lesson: linux-l3-l03
+
+  - id: linux-disk-full
+    title: { en: "\"No space left on device\"", ms: "\"No space left on device\" (cakera penuh)" }
+    start: df
+    steps:
+      - id: df
+        question: { en: "Run df -h /. What does Use% say?", ms: "Jalankan df -h /. Apa kata Use%?" }
+        answers:
+          - { label: { en: "100%, or close to it", ms: "100%, atau hampir" }, next: where }
+          - { label: { en: "There is free space, yet it still says no space", ms: "Masih ada ruang, tetapi ia tetap kata tiada ruang" }, next: r-slots }
+      - id: where
+        question: { en: "Run sudo du -sh /var/log/* and du -sh ~/*. Where is the fat shelf?", ms: "Jalankan sudo du -sh /var/log/* dan du -sh ~/*. Di mana rak yang gemuk?" }
+        answers:
+          - { label: { en: "Logs in /var/log", ms: "Log dalam /var/log" }, next: r-logs }
+          - { label: { en: "Somewhere else: backups, downloads, old files", ms: "Tempat lain: sandaran, muat turun, fail lama" }, next: r-other }
+      - id: r-logs
+        result:
+          text: { en: "A log grew huge. Trim the journal, delete only the one file you are sure about, then find out why it grew.", ms: "Satu log jadi sangat besar. Kecilkan journal, padam hanya satu fail yang anda pasti, kemudian cari kenapa ia membesar." }
+          commands:
+            - { command: "sudo du -sh /var/log/*", en: "Which log folder is fat?", ms: "Folder log mana yang gemuk?" }
+            - { command: "sudo journalctl --vacuum-size=200M", en: "Keep only the newest 200 MB of the journal.", ms: "Simpan 200 MB journal yang terbaru sahaja." }
+            - { command: "sudo rm /var/log/kedai/debug.log", en: "Example: delete one file you are sure about. No undo.", ms: "Contoh: padam satu fail yang anda pasti. Tiada undo." }
+          danger: lose
+          lesson: linux-l4-l04
+      - id: r-other
+        result:
+          text: { en: "Find the biggest files first. Move or delete them only when you know what they are.", ms: "Cari fail paling besar dahulu. Alih atau padam hanya bila anda tahu apa ia." }
+          commands:
+            - { command: "sudo find / -xdev -size +1G", en: "Files over 1 GB on this disk.", ms: "Fail melebihi 1 GB dalam cakera ini." }
+            - { command: "du -sh ~/* | sort -h | tail -n 5", en: "Your five fattest folders.", ms: "Lima folder anda yang paling gemuk." }
+          danger: careful
+          lesson: linux-l4-l04
+      - id: r-slots
+        result:
+          text: { en: "Two common causes. Millions of tiny files use up the file slots (inodes). Or a deleted file is still open: restart the program that wrote it.", ms: "Dua punca biasa. Berjuta fail kecil habiskan slot fail (inode). Atau fail yang dipadam masih dibuka: mulakan semula program yang menulisnya." }
+          commands:
+            - { command: "df -i /", en: "IUse% near 100% means no file slots left.", ms: "IUse% hampir 100% bermaksud slot fail sudah habis." }
+            - { command: "sudo systemctl restart nginx", en: "Example: restart the writer, so the space comes back.", ms: "Contoh: mulakan semula penulisnya, supaya ruang kembali." }
+          danger: careful
+          lesson: linux-l4-l04
+
+  - id: linux-service-wont-start
+    title: { en: "A service won't start", ms: "Servis tak mahu hidup" }
+    start: status
+    steps:
+      - id: status
+        question: { en: "Run systemctl status with its name. What does Active say?", ms: "Jalankan systemctl status dengan namanya. Apa kata Active?" }
+        answers:
+          - { label: { en: "failed", ms: "failed" }, next: logs }
+          - { label: { en: "inactive (dead), and it never comes back after a reboot", ms: "inactive (dead), dan ia tak kembali selepas reboot" }, next: r-enable }
+      - id: logs
+        question: { en: "Read the log: sudo journalctl -xeu NAME. What does it say?", ms: "Baca log: sudo journalctl -xeu NAME. Apa katanya?" }
+        answers:
+          - { label: { en: "A settings error, like unknown directive", ms: "Ralat tetapan, seperti unknown directive" }, next: r-config }
+          - { label: { en: "Address already in use", ms: "Address already in use" }, next: r-port }
+          - { label: { en: "Permission denied", ms: "Permission denied" }, next: r-perm }
+      - id: r-config
+        result:
+          text: { en: "A typo in a settings file. The test names the file and the line. Fix it, test again, then start.", ms: "Salah taip dalam fail tetapan. Ujian itu namakan fail dan barisnya. Baiki, uji lagi, kemudian hidupkan." }
+          commands:
+            - { command: "sudo nginx -t", en: "nginx's own test. Other programs have one too.", ms: "Ujian nginx sendiri. Program lain pun ada." }
+            - { command: "sudo systemctl start nginx", en: "Start it after the test says ok.", ms: "Hidupkan selepas ujian kata ok." }
+            - { command: "systemctl status nginx", en: "Look for active (running).", ms: "Cari active (running)." }
+          danger: careful
+          lesson: linux-l4-l09
+      - id: r-port
+        result:
+          text: { en: "Another program holds its port. Find it, then stop one of them or change a port.", ms: "Program lain pegang portnya. Cari ia, kemudian hentikan satu atau tukar port." }
+          commands:
+            - { command: "sudo ss -tlnp", en: "Who holds which port?", ms: "Siapa pegang port mana?" }
+            - { command: "sudo systemctl stop apache2", en: "Example: another web server on port 80.", ms: "Contoh: web server lain di port 80." }
+          danger: careful
+          lesson: linux-l3-l03
+      - id: r-perm
+        result:
+          text: { en: "The service's user may not read a file it needs. Check the owner and the mode.", ms: "Pengguna servis itu tak boleh baca fail yang diperlukan. Semak pemilik dan modnya." }
+          commands:
+            - { command: "ls -l /var/www/html", en: "nginx's workers run as www-data. Can it read the files?", ms: "Pekerja nginx berjalan sebagai www-data. Bolehkah ia baca fail itu?" }
+            - { command: "sudo chmod 644 /var/www/html/index.html", en: "Owner writes, everyone reads.", ms: "Pemilik tulis, semua orang baca." }
+          danger: careful
+          lesson: linux-l2-l02
+      - id: r-enable
+        result:
+          text: { en: "It works but is not enabled, so it stays off after a reboot.", ms: "Ia berfungsi tetapi tidak enabled, jadi ia kekal mati selepas reboot." }
+          commands:
+            - { command: "systemctl is-enabled nginx", en: "disabled means: not started at boot.", ms: "disabled bermaksud: tak dimulakan semasa boot." }
+            - { command: "sudo systemctl enable --now nginx", en: "Start now, and at every boot.", ms: "Hidupkan sekarang, dan setiap kali boot." }
+          danger: safe
+          lesson: linux-l2-l08
+
+  - id: linux-ssh-host-changed
+    title: { en: "ssh: \"REMOTE HOST IDENTIFICATION HAS CHANGED!\"", ms: "ssh: \"REMOTE HOST IDENTIFICATION HAS CHANGED!\" (kad pengenalan server berubah)" }
+    start: rebuilt
+    steps:
+      - id: rebuilt
+        question: { en: "Was the server rebuilt or reinstalled lately?", ms: "Adakah server itu dibina atau dipasang semula baru-baru ini?" }
+        answers:
+          - { label: { en: "Yes, we rebuilt it", ms: "Ya, kami bina semula" }, next: r-forget }
+          - { label: { en: "No, nothing changed that I know of", ms: "Tidak, tiada perubahan yang saya tahu" }, next: r-stop }
+      - id: r-forget
+        result:
+          text: { en: "A rebuilt server gets a new ID card. Forget the old one, then check the new fingerprint with the owner.", ms: "Server yang dibina semula dapat kad pengenalan baharu. Lupakan yang lama, kemudian semak fingerprint baharu dengan pemiliknya." }
+          commands:
+            - { command: "ssh-keygen -R 10.0.0.5", en: "Remove the old ID card from known_hosts. Use your server's address.", ms: "Buang kad pengenalan lama dari known_hosts. Guna alamat server anda." }
+            - { command: "ssh you@10.0.0.5", en: "Compare the new fingerprint, then answer yes.", ms: "Bandingkan fingerprint baharu, kemudian jawab yes." }
+          danger: safe
+          lesson: linux-l4-l01
+      - id: r-stop
+        result:
+          text: { en: "Do not connect yet. Someone may be in the middle. Ask the owner for the server's fingerprint first.", ms: "Jangan sambung dahulu. Mungkin ada orang di tengah. Minta fingerprint server daripada pemiliknya dahulu." }
+          commands:
+            - { command: "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub", en: "The owner runs this on the server's own console, and reads you the result.", ms: "Pemilik jalankan ini di konsol server itu sendiri, dan bacakan hasilnya." }
+          danger: safe
+          lesson: linux-l4-l01

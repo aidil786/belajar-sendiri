@@ -1,0 +1,69 @@
+---
+id: obs-o2-l08
+world: 2
+title: Histograms and histogram_quantile
+summary: "You will learn: how to find p95 from histogram buckets, and why an average can hide slow customers."
+minutes: 5
+xp: 25
+interactives: [Choice, CommandBuilder, PromQLPlayground, Mission]
+needs: [obs-o2-l07]
+scenario: o2-checkout
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL functions: histogram_quantile()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile" }
+  - { label: "Prometheus: histograms and summaries", url: "https://prometheus.io/docs/practices/histograms/" }
+---
+
+<Card id="hook" type="hook">
+The average checkout takes 0.39 s. Yet customers say checkout is slow. How can both be true?
+
+<Interactive name="Choice" options={[{ label: 'The average hides a slow group', correct: true, why: 'Yes. Many fast checkouts pull the average down. The slow ones are still slow.' }, { label: 'Customers are wrong', why: 'Customers feel the slow ones. Trust them, then measure better.' }, { label: 'The average is broken', why: 'The maths is fine. It just answers a different question.' }]} />
+</Card>
+
+<Card id="see-recipe" type="see">
+A **<Term id="quantile">p95</Term>** says: 95% of checkouts were this fast or faster. Build the recipe.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'histogram_quantile(0.95,', means: 'the time 95% of checkouts beat' }, { text: 'sum by (le)', means: 'add up the shops, keep the buckets' }, { text: '(rate(kedai_checkout_duration_seconds_bucket[5m])))', means: 'bucket counts per second' }]} decoys={[{ text: 'sum by (instance)', means: 'drops le, so the buckets are lost' }, { text: 'avg(', means: 'an average of buckets means nothing' }]} success="That is the p95 recipe. Keep le!" />
+
+<Hint>Outside to inside: the quantile, then the sum, then the rate.</Hint>
+</Card>
+
+<Card id="try-p95" type="try">
+Now run it. Then slide from 8m to 20m.
+
+<Interactive name="PromQLPlayground" scenario="o2-checkout" initial="rate(kedai_checkout_duration_seconds_bucket[5m])" prompt="Wrap it: histogram_quantile(0.95, sum by (le) (…)). Then Run." goal={{ usesFunction: ['histogram_quantile'], labelNames: [], resultEquals: [{ labels: {}, value: 1.857, tolerance: 0.001 }] }} hints={['Add sum by (le) ( before rate and ) after it.', 'Then wrap that in histogram_quantile(0.95, … )']} solution="histogram_quantile(0.95, sum by (le) (rate(kedai_checkout_duration_seconds_bucket[5m])))" success="p95 went from 0.47 s to 1.86 s. Checkout got slow." />
+</Card>
+
+<Card id="predict" type="predict">
+At 20m, p95 is 1.86 s. What does that mean?
+
+<Interactive name="Choice" options={[{ label: '95% of checkouts took 1.86 s or less', correct: true, why: 'Yes. The slowest 5% took longer.' }, { label: 'Every checkout took 1.86 s', why: 'p95 is a line, not everyone’s time.' }, { label: 'The slowest checkout took 1.86 s', why: 'That would be the maximum. 5% were even slower.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+A teammate wrote this. Run it: no answer. Fix it so each shop gets its own p95.
+
+<Interactive name="PromQLPlayground" scenario="o2-checkout" initial="histogram_quantile(0.95, sum by (instance) (rate(kedai_checkout_duration_seconds_bucket[5m])))" prompt="Keep le next to instance in the by list, then Run." goal={{ usesFunction: ['histogram_quantile'], labelNames: ['instance'], resultCount: 2 }} hints={['Change by (instance) to by (le, instance).']} solution="histogram_quantile(0.95, sum by (le, instance) (rate(kedai_checkout_duration_seconds_bucket[5m])))" success="Two shops, two p95s." />
+
+<Hint>No `le`, no buckets, no answer.</Hint>
+</Card>
+
+<Card id="check" type="check">
+shop-1’s p95 is 2.29 s. shop-2’s is 0.42 s. Where do you look first?
+
+<Interactive name="Choice" options={[{ label: 'shop-1', correct: true, why: 'Yes. Its slowest customers wait over 2 seconds.' }, { label: 'shop-2', why: '0.42 s is quick. shop-1 is the slow one.' }, { label: 'Neither: the average looks fine', why: 'Averages hide slow customers. p95 found them.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find p95 with `histogram_quantile` and keep `le` in the sum.
+</Card>
+
+<Card id="deeper" type="deeper">
+`histogram_quantile` guesses inside a bucket, in a straight line. So pick bucket edges near your SLO, like 0.5 s. The average is `rate(…_sum[5m])` divided by `rate(…_count[5m])`. Real rep: p90 for Prometheus’s own web pages.
+
+<Interactive name="Mission" id="obs-o2-l08-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack. Wait two minutes.', command: 'docker compose up -d' }, { id: 'p90', text: 'At http://localhost:9090, run: histogram_quantile(0.9, sum by (le, handler) (rate(prometheus_http_request_duration_seconds_bucket[1m])))' }, { id: 'look', text: 'Which handler is slowest? Open a few pages and run it again.' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="p90 from a real histogram." />
+</Card>

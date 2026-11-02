@@ -1,0 +1,90 @@
+---
+id: obs-o2-l09
+world: 2
+title: Recording rules
+summary: "You will learn: how to save a busy query as a new series, name it well and check the rule file."
+minutes: 3
+xp: 15
+interactives: [Choice, YamlPlayground, PromQLPlayground, SwipeJudge, SpotLines, Mission]
+needs: [obs-o2-l08]
+scenario: o2-rules
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: recording rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/" }
+  - { label: "Prometheus: rule naming", url: "https://prometheus.io/docs/practices/rules/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+50 people open the same dashboard. Every 15 s, each one runs the same heavy query. How do you help Prometheus?
+
+<Interactive name="Choice" options={[{ label: 'Work it out once, on a timer, and save the answer', correct: true, why: 'Yes. Then 50 screens read one saved series.' }, { label: 'Ask people to look less', why: 'Dashboards are there to be looked at.' }, { label: 'Buy a bigger server', why: 'That costs money, and the waste stays.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+A **<Term id="recording-rule">recording rule</Term>** saves a query’s answer as a new series. Give this rule its query.
+
+<Interactive name="YamlPlayground" file="rules.yml" initial={'groups:\n  - name: kedai\n    rules:\n      - record: stall:kedai_orders:rate5m\n'} prompt="Add an expr line under record, with the per-stall orders query." expect={[{ path: 'groups.0.rules.0.expr', type: 'text', equals: 'sum by (stall) (rate(kedai_orders_total[5m]))', hint: 'Under record, add 8 spaces, then expr: sum by (stall) (rate(kedai_orders_total[5m]))' }]} solution={'groups:\n  - name: kedai\n    rules:\n      - record: stall:kedai_orders:rate5m\n        expr: sum by (stall) (rate(kedai_orders_total[5m]))\n'} hint="expr lines up with record: 8 spaces in." success="Saved. Prometheus will run it every evaluation." />
+</Card>
+
+<Card id="try-query" type="try">
+The rule has run. Ask for its saved series, like any other metric.
+
+<Interactive name="PromQLPlayground" scenario="o2-rules" prompt="Show the saved rate for cendol only. Tap the chip, then add a filter." goal={{ typed: 'stall:kedai_orders:rate5m', resultEquals: [{ labels: { stall: 'cendol' }, value: 0.25 }] }} hints={['After the chip, type {stall="cendol"}']} solution={'stall:kedai_orders:rate5m{stall="cendol"}'} success="Same answer as before, but cheap: no rate() at query time." />
+</Card>
+
+<Card id="see-name" type="see">
+Rule names follow `level:metric:operations`. Good name? Swipe right for good.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'stall:kedai_orders:rate5m', good: true, why: 'By stall, kedai_orders, a 5m rate.' }, { text: 'job:http_requests:rate5m', good: true, why: 'By job, http_requests, a 5m rate.' }, { text: 'my_query_1', good: false, why: 'Nobody knows what it holds.' }, { text: 'fast_orders', good: false, why: 'Say the level, the metric and what you did.' }]} />
+</Card>
+
+<Card id="check-real" type="check">
+Check rule files before you load them. Real error first: tap the line that says what is wrong.
+
+<Interactive name="SpotLines" prompt="Tap the line that names the problem." lines={[{ text: '$ promtool check rules rules-bad.yml' }, { text: 'Checking rules-bad.yml' }, { text: '  FAILED:' }, { text: 'rules-bad.yml: 5:15: group "node", rule 1, "instance:node_cpu_busy:ratio_rate1m": could not parse expression: 1:29: parse error: expected type range vector in call to function "rate", got instant vector', color: 'red', target: true }]} success="Plain words: line 5 calls rate() without a window. Add [1m]." />
+
+<Hint>It names the line, the rule, then the parse error.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+promtool says `SUCCESS: 1 rules found`. When does the new series appear?
+
+<Interactive name="Choice" options={[{ label: 'After Prometheus loads the file and runs the rule', correct: true, why: 'Yes. List it under rule_files, restart or reload, then wait one evaluation.' }, { label: 'Right away, back to last year', why: 'Rules only record from now on. Old data stays as it was.' }, { label: 'Never: promtool only checks', why: 'promtool checks. Prometheus runs the rule once it loads the file.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now save a busy query as a recording rule and check it.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a clerk writes a counter down once. Prometheus copies every number every 15 s, changed or not. It keeps them 15 days by default, then throws them away. And a real counter never resets; an app’s does.
+
+Real rep: save `rules.yml`, then add the lines below to your other two files.
+
+```yaml
+# rules.yml
+groups:
+  - name: kedai
+    rules:
+      - record: instance:node_cpu_busy:ratio_rate1m
+        expr: 1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
+```
+
+```yaml
+# prometheus.yml: add at the top level, after global
+rule_files:
+  - rules.yml
+```
+
+```yaml
+# compose.yaml: add under the prometheus volumes
+      - ./rules.yml:/etc/prometheus/rules.yml:ro
+```
+
+<Interactive name="Mission" id="obs-o2-l09-real" steps={[{ id: 'files', text: 'Save rules.yml, and add the new lines to prometheus.yml and compose.yaml.' }, { id: 'up', text: 'Start the stack.', command: 'docker compose up -d' }, { id: 'check', text: 'Check the rules. Look for SUCCESS: 1 rules found.', command: 'docker compose exec prometheus promtool check rules /etc/prometheus/rules.yml' }, { id: 'query', text: 'After a minute, run instance:node_cpu_busy:ratio_rate1m at http://localhost:9090.' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="Your first recording rule runs on a real Prometheus." />
+</Card>

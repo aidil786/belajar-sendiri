@@ -1,0 +1,60 @@
+---
+id: aws-a2-l08
+world: 2
+title: Permission boundaries and SCPs
+summary: "You will learn: the two fences that limit keys, and why a fence never opens a door by itself."
+minutes: 3
+xp: 15
+interactives: [IamJudge, SortCards, SwipeJudge, Choice]
+needs: [aws-a2-l07]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Permissions boundaries", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html" }
+  - { label: "Service control policies (SCPs)", url: "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html" }
+  - { label: "SCP evaluation", url: "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html" }
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+---
+
+<Card id="hook" type="hook">
+The site bucket’s own policy says the CI role may upload. But the role has a fence that only allows ECR. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-site/index.html' }} policies={[{ name: 'kedai-site', kind: 'resource', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111122223333:role/ci-deployer' }, Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-site/*' }] } }, { name: 'ecr-only', kind: 'boundary', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:*', Resource: '*' }] } }]} success="Denied. The fence held, even though the bucket said yes." />
+</Card>
+
+<Card id="see-sort" type="see">
+That fence is a **<Term id="permissions-boundary">permissions boundary</Term>**: the most one user or role may ever do. An <Term id="scp">SCP</Term> is a fence around whole accounts. Sort the facts.
+
+<Interactive name="SortCards" buckets={[{ id: 'boundary', label: 'Permissions boundary' }, { id: 'scp', label: 'SCP' }]} items={[{ label: 'Fence around one user or role', bucket: 'boundary', why: 'Set on the person or robot itself.' }, { label: 'Fence around whole accounts', bucket: 'scp', why: 'Set in AWS Organizations, on accounts or groups of them.' }, { label: 'Needs AWS Organizations', bucket: 'scp', why: 'No organization, no SCPs.' }, { label: 'Does not limit the management account', bucket: 'scp', why: 'SCPs skip the organization’s top account.' }, { label: 'Lets a team lead make roles safely', bucket: 'boundary', why: 'New roles must stay inside the fence.' }]} success="One fence per keyholder, one fence per account." />
+</Card>
+
+<Card id="try-swipe" type="try">
+Fences limit. Keys open. True, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A boundary alone lets a role read S3.', good: false, why: 'A fence opens nothing. The role still needs an Allow.' }, { text: 'An SCP can stop admins in member accounts.', good: true, why: 'Even an admin cannot climb the account’s fence.' }, { text: 'An SCP limits the management account too.', good: false, why: 'SCPs never apply to the management account. Guard it well.' }, { text: 'A Deny in an SCP beats every Allow below it.', good: true, why: 'Deny wins, wherever it is written.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Your organization’s SCP allows `s3:*`. Aina has no IAM policy for S3. Can she read the menu bucket?
+
+<Interactive name="Choice" options={[{ label: 'No: an SCP never grants anything', correct: true, why: 'It only says how far keys may go. Aina still has no key.' }, { label: 'Yes: the SCP allows S3', why: 'SCPs are fences, not keys. Someone must still give her an Allow.' }, { label: 'Only in the management account', why: 'Keys come from IAM policies, in every account.' }]} />
+</Card>
+
+<Card id="check-region" type="check">
+The shop’s accounts must stay in the Malaysia Region. An SCP at the root enforces it. Aina uploads to a bucket in `us-east-1`. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-backup/today.json', context: { 'aws:RequestedRegion': 'us-east-1' } }} policies={[{ name: 'menu-writer', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:PutObject', Resource: 'arn:aws:s3:::kedai-*' }] } }, { name: 'FullAWSAccess', kind: 'scp', level: 'root', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: '*', Resource: '*' }] } }, { name: 'malaysia-only', kind: 'scp', level: 'root', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Deny', Action: '*', Resource: '*', Condition: { StringNotEquals: { 'aws:RequestedRegion': 'ap-southeast-5' } } }] } }]} success="Denied. The account’s fence keeps everything in Malaysia." />
+</Card>
+
+<Card id="win" type="win">
+You can now tell keys from fences, and predict when a fence says no.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a metal key opens its lock forever. AWS checks every request fresh, against every key and fence at once. And a robot can borrow a key for just minutes.
+
+Real SCPs often exempt global services from a Region rule. Read the SCP examples in the Organizations guide before you write one.
+</Card>

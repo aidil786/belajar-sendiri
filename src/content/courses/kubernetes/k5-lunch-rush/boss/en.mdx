@@ -1,0 +1,80 @@
+---
+id: k8s-k5-boss
+world: 5
+title: Lunch rush
+summary: "You will learn: to survive a traffic spike with an HPA, then climb the debug ladder to find what slows the shop."
+minutes: 6
+xp: 50
+interactives: [Choice, FoodCourtSim, OrderList, SwipeJudge]
+needs: [k8s-k5-l12]
+scenario: k5-boss-rush
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Kubernetes: HPA walkthrough", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" }
+  - { label: "Kubernetes: debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl top", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/" }
+---
+
+<Card id="hook" type="hook">
+11:55. The food court opens in five minutes. Your shop has 3 trays and metrics-server. Boss mission: survive lunch, then find what slows it down. What do you set up first?
+
+<Interactive name="Choice" options={[{ label: 'An HPA: 3 to 10 trays, aiming at 50% CPU', correct: true, why: 'It adds trays as the queue grows, and removes them later.' }, { label: 'A PodDisruptionBudget', why: 'Useful for planned work. It does not add trays at lunch.' }, { label: 'A taint on every stall', why: 'Locks keep trays out. You need more trays in.' }]} />
+</Card>
+
+<Card id="try-rush" type="try">
+Room 1: make the HPA. Then press Lunch rush. Survive with at least 6 ready trays.
+
+<Interactive name="FoodCourtSim" scenario="k5-boss-rush" faults={['traffic']} goal={{ hpaReplicas: { name: 'shop', min: 6 }, podsReady: { selector: 'app=shop', count: 6 } }} hints={['Type kubectl autoscale deployment shop --cpu=50% --min=3 --max=10', 'Press Lunch rush, then let the clock run (+30s helps).', 'kubectl get hpa shop shows how busy the trays are.']} success="Room 1 cleared! The HPA met the rush with more trays." />
+
+<Hint>One command makes the HPA. The Lunch rush button brings the customers.</Hint>
+</Card>
+
+<Card id="predict-wait" type="predict">
+Next day, the HPA asks for 10 trays. Only 6 start. 4 stay Pending. What could hold them back?
+
+<Interactive name="Choice" options={[{ label: 'No stall has room for their requests', correct: true, why: 'Pending means the scheduler found no stall that fits.' }, { label: 'The HPA is broken', why: 'It asked for 10. Its part worked. Placing them is the scheduler’s job.' }, { label: 'The trays are too busy to start', why: 'Pending trays have not started at all. They wait for a stall.' }]} />
+</Card>
+
+<Card id="try-ladder" type="try">
+Room 2: before you climb, check your ladder. Bottom rung at the top.
+
+<Interactive name="OrderList" items={['get', 'describe', 'logs', 'events', 'exec', 'debug']} label="Bottom rung at the top" success="Ladder ready. Up you go." />
+</Card>
+
+<Card id="try-slow" type="try">
+Room 3: the rush is on, and 4 trays wait. Climb the ladder. Find who holds the stalls, then free them. Goal: 10 ready shop trays.
+
+<Interactive name="FoodCourtSim" scenario="k5-boss-slow" goal={{ podsReady: { selector: 'app=shop', count: 10 } }} hints={['Rung 1: kubectl get pods. Some shop trays are Pending.', 'Notice board: kubectl get events --field-selector reason=FailedScheduling says Insufficient memory.', 'Who holds the memory? Try kubectl top pods, then kubectl logs deploy/loadtest.', 'A load test someone forgot! kubectl scale deployment loadtest --replicas=0']} success="10 of 10 ready! You found the forgotten load test and freed the stalls." />
+
+<Hint>Pending? Read the events. Then use `kubectl top pods` to find the hungry trays.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+`kubectl top` showed loadtest using about 5.7Gi each. But its YAML requests 7Gi each. Which number blocked the shop trays?
+
+<Interactive name="Choice" options={[{ label: 'The 7Gi requests', correct: true, why: 'The scheduler books stall space by requests, not by real use.' }, { label: 'The 5.7Gi real use', why: 'Almost! Real use matters for memory limits. Placing trays uses requests.' }, { label: 'Neither. The HPA blocked them.', why: 'The HPA asked for 10. The stalls were booked full.' }]} />
+</Card>
+
+<Card id="check-next" type="check">
+Plan for tomorrow's lunch. Good idea, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Run load tests in their own zone, with a ResourceQuota', good: true, why: 'A budget stops a test from eating the whole food court.' }, { text: 'Give every tray 7Gi of requests, just in case', good: false, why: 'Big requests fill stalls with empty plates.' }, { text: 'Add a PodDisruptionBudget for the shop', good: true, why: 'Planned work will never drop it below the budget.' }, { text: 'Delete the HPA after lunch', good: false, why: 'Keep it. It shrinks the shop by itself after the rush.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now survive a lunch rush and find what slows it down.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional), on a throwaway kind cluster with metrics-server. Start a Service called shop, then make a load tray. Delete it when you are done.
+
+```bash
+kubectl run load --image=busybox:1.37 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://shop; done"
+kubectl get hpa shop --watch
+kubectl delete pod load
+```
+</Card>

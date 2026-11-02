@@ -1,0 +1,25 @@
+---
+// Rescue Center: pick a problem (grouped in sections, with a filter box), answer 2–3 questions, get safe commands.
+import Base from '~/layouts/Base.astro';
+import RescueFlow from '~/components/interactives/RescueFlow';
+import { LANGS, t, type Lang } from '~/i18n';
+import { getRescue, lessonLinks } from '~/lib/content';
+import { ROOT_COURSE } from '~/lib/catalog';
+import '~/components/interactives/rescue-page.css';
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const { flows } = await getRescue(ROOT_COURSE);
+const lessons = await lessonLinks(lang, ROOT_COURSE);
+---
+
+<Base lang={lang} title={t(lang, 'rescue.title')} altPath={`/${other}/rescue/`}>
+  <div class="container rescue-page">
+    <h1>{t(lang, 'rescue.title')}</h1>
+    <p>{t(lang, 'rescue.intro')}</p>
+    <RescueFlow client:load lang={lang} flows={flows} lessons={lessons} />
+    <p class="more">{t(lang, 'rescue.more')} <a href={`/${lang}/${ROOT_COURSE}/#world-11`}>{t(lang, 'rescue.moreLink')}</a></p>
+  </div>
+</Base>

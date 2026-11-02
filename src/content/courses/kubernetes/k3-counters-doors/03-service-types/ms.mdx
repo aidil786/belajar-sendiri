@@ -1,0 +1,78 @@
+---
+id: k8s-k3-l03
+world: 3
+title: NodePort, LoadBalancer dan headless
+summary: "Anda akan belajar: empat jenis Service, dan bila guna setiap satu."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, YamlDoctor, Choice, SortCards, Mission]
+needs: [k8s-k3-l02]
+scenario: k3-types
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: jenis Service", url: "https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types" }
+  - { label: "Kubernetes: Service headless", url: "https://kubernetes.io/docs/concepts/services-networking/service/#headless-services" }
+  - { label: "kind: LoadBalancer", url: "https://kind.sigs.k8s.io/docs/user/loadbalancer/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-types" commands={['kubectl get services']} label="Dua Service: kubernetes dan shop. Kedua-duanya ClusterIP, tiada EXTERNAL-IP." />
+
+Nombor pesanan kedai ialah ClusterIP. Ia hanya berfungsi di dalam medan selera. Pelanggan di jalan tak boleh guna. Macam mana mereka nak masuk?
+</Card>
+
+<Card id="see-types" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'ClusterIP', title: 'Dalam sahaja', text: 'Jenis biasa. Satu nombor pesanan untuk pod dalam kluster.' }, { when: 'NodePort', title: 'Tingkap tepi di setiap gerai', text: 'Setiap node buka port yang sama, dari 30000 hingga 32767.' }, { when: 'LoadBalancer', title: 'Papan tanda jalan', text: 'Cloud beri satu alamat luar. Ia dibina atas NodePort.' }, { when: 'Headless', title: 'Tiada satu nombor', text: 'clusterIP: None. Namanya senaraikan IP setiap dulang.' }]} />
+
+Service ada **jenis**. Setiap jenis buka satu pintu lagi berbanding yang sebelumnya. Ketik keempat-empatnya.
+</Card>
+
+<Card id="try-nodeport" type="try">
+**<Term id="nodeport">NodePort</Term>** buka port yang sama di setiap gerai. Apply `nodeport.yaml`. Kemudian panggil alamat satu gerai dari laptop anda.
+
+<Interactive name="FoodCourtSim" scenario="k3-nodeport-curl" goal={{ reachable: { url: 'http://172.18.0.3:30080' }, lastTyped: '^curl' }} hints={['Taip kubectl apply -f nodeport.yaml', 'Cari alamat gerai: kubectl get nodes -o wide (INTERNAL-IP).', 'Taip curl http://172.18.0.3:30080']} success="Tingkap tepi berfungsi. Alamat mana-mana gerai tambah 30080 sampai ke kedai." />
+
+<Hint>Alamat gerai ada dalam `kubectl get nodes -o wide`. Cuba `curl http://172.18.0.3:30080`.</Hint>
+</Card>
+
+<Card id="see-lb" type="see">
+<Interactive name="KubeReplay" scenario="k3-types" commands={['kubectl expose deployment shop --type=LoadBalancer --port=80 --name=shop-lb', 'kubectl get service shop-lb']} label="Service LoadBalancer bernama shop-lb. Lajur EXTERNAL-IP tertulis pending." />
+
+**<Term id="loadbalancer">LoadBalancer</Term>** minta alamat jalan daripada cloud. Kluster kind biasa tiada cloud, jadi ia menunggu: `<pending>`.
+</Card>
+
+<Card id="check-doctor" type="check">
+Satu huruf tersilap. Baca jawapan kubectl, kemudian baiki fail itu.
+
+<Interactive name="YamlDoctor" file="lb.yaml" manifest={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop-lb\nspec:\n  type: Loadbalancer\n  selector:\n    app: shop\n  ports:\n    - port: 80\n'} solution={'apiVersion: v1\nkind: Service\nmetadata:\n  name: shop-lb\nspec:\n  type: LoadBalancer\n  selector:\n    app: shop\n  ports:\n    - port: 80\n'} keep={['name: shop-lb', 'app: shop']} hint="kubectl senaraikan empat jenis yang ia kenal. Salin ejaannya." success="Dah baiki! Ejaan jenis mesti tepat, huruf besar sekali." />
+
+Maksudnya: Kubernetes kenal empat jenis, dan `Loadbalancer` bukan salah satunya.
+</Card>
+
+<Card id="predict-headless" type="predict">
+Pangkalan data berjalan sebagai StatefulSet. Setiap dulang mesti dipanggil ikut namanya sendiri. Service mana yang sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Headless: clusterIP: None', correct: true, why: 'Tiada satu nombor. DNS beri alamat setiap dulang.' }, { label: 'LoadBalancer', why: 'Itu buka pangkalan data kepada jalan raya. Bukan itu yang anda mahu!' }, { label: 'NodePort', why: 'Tingkap tepi untuk pemanggil luar, bukan untuk menamakan setiap dulang.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Jenis mana sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'cluster', label: 'ClusterIP' }, { id: 'node', label: 'NodePort' }, { id: 'lb', label: 'LoadBalancer' }]} items={[{ label: 'api panggil menu di dalam kluster', bucket: 'cluster', why: 'Dalam sahaja: jenis biasa sudah cukup.' }, { label: 'Hanya pod lain yang pernah panggil', bucket: 'cluster', why: 'Tutup pintu yang tiada siapa perlukan.' }, { label: 'Ujian pantas dari laptop di kind', bucket: 'node', why: 'Setiap node buka port itu. Cukup untuk ujian.' }, { label: 'Port yang sama di setiap node', bucket: 'node', why: 'Itulah kerja NodePort.' }, { label: 'Pelanggan sampai ke kedai di kluster cloud', bucket: 'lb', why: 'Cloud beri satu alamat luar.' }, { label: 'Satu IP luar daripada cloud', bucket: 'lb', why: 'Itu kerja LoadBalancer.' }]} success="Siap disusun! Pelajaran seterusnya tunjuk pintu jalan terbaik: Gateway." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih ClusterIP, NodePort, LoadBalancer atau headless.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di kind, alamat LoadBalancer datang daripada alat tambahan cloud-provider-kind. Panggilan NodePort dari laptop berfungsi di Linux. Di Mac dan Windows, node kind tersembunyi dalam VM kecil Docker. Ada jenis kelima, ExternalName: nama lain untuk nama DNS luar.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l03-rep" steps={[{ id: 'np', text: 'Buat Service NodePort untuk kedai.', command: 'kubectl expose deployment shop --type=NodePort --port=80 --name=shop-np' }, { id: 'port', text: 'Baca port selepas titik bertindih dalam PORT(S).', command: 'kubectl get service shop-np' }, { id: 'lb', text: 'Buat LoadBalancer dan lihat EXTERNAL-IP kekal pending.', command: 'kubectl expose deployment shop --type=LoadBalancer --port=80 --name=shop-lb' }]} success="Anda buka dua jenis pintu!" />
+</Card>

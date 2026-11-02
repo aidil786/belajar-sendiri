@@ -1,0 +1,91 @@
+---
+id: iac-t2-l08
+world: 2
+title: Ungkapan dan fungsi
+summary: "Anda akan belajar: bentuk nilai dengan fungsi, conditional dan ungkapan for."
+minutes: 5
+xp: 25
+interactives: [Choice, TofuSim, SortCards, Mission]
+needs: [iac-t2-l07]
+scenario: t2-functions
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: expressions", url: "https://opentofu.org/docs/language/expressions/" }
+  - { label: "OpenTofu: built-in functions", url: "https://opentofu.org/docs/language/functions/" }
+  - { label: "OpenTofu: conditional expressions", url: "https://opentofu.org/docs/language/expressions/conditionals/" }
+  - { label: "OpenTofu: for expressions", url: "https://opentofu.org/docs/language/expressions/for/" }
+---
+
+<Card id="hook" type="hook">
+Papan tanda mesti tulis KEDAI KANCIL dalam huruf besar. Variable tulis "Kedai Kancil". Perlukah tambah variable kedua dalam huruf besar?
+
+<Interactive name="Choice" options={[{ label: 'Tak perlu. Fungsi boleh tukar jadi huruf besar.', correct: true, why: 'upper(var.shop) beri KEDAI KANCIL. Satu nilai, banyak bentuk.' }, { label: 'Perlu. Satu variable untuk setiap ejaan.', why: 'Dua salinan akan jadi berbeza. Bentukkan satu nilai sahaja.' }, { label: 'Taip huruf besar di semua tempat', why: 'Kemudian huruf kecil hilang di tempat yang anda perlukan.' }]} />
+</Card>
+
+<Card id="see-plan" type="see">
+Pelan ini cuma ada output. Taip `tofu plan` dan baca Changes to Outputs.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ lastTyped: '^tofu plan' }} hints={['Taip tofu plan dan tekan Enter.']} success="Setiap output dikira: digabung, diformat, dipilih." />
+
+Setiap `value` ialah **<Term id="expression">expression (ungkapan)</Term>**: sesuatu yang OpenTofu kira.
+</Card>
+
+<Card id="check-sort" type="check">
+Setiap **<Term id="function">function (fungsi)</Term>** bentuk satu nilai. Teks atau senarai?
+
+<Interactive name="SortCards" buckets={[{ id: 'text', label: 'Bentuk teks' }, { id: 'list', label: 'Kerja dengan senarai' }]} items={[{ label: '`upper("kancil")` beri "KANCIL"', bucket: 'text', why: 'Teks masuk, teks keluar.' }, { label: '`lower("KANCIL")` beri "kancil"', bucket: 'text', why: 'Teks masuk, teks keluar.' }, { label: '`format("%s stalls", "3")` beri "3 stalls"', bucket: 'text', why: 'Isi %s ke dalam corak.' }, { label: '`join(", ", ["nasi", "mee"])` beri "nasi, mee"', bucket: 'list', why: 'Senarai masuk, satu teks keluar.' }, { label: '`contains(["nasi", "mee"], "mee")` beri true', bucket: 'list', why: 'Ia tengok ke dalam senarai.' }]} success="Pembantu teks dan pembantu senarai. Ada banyak lagi." />
+</Card>
+
+<Card id="try-upper" type="try">
+Buat papan tanda guna huruf besar. Dalam `main.tf`, tukar `value = var.shop` jadi `value = upper(var.shop)`. Kemudian `tofu apply`, `yes`.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ outputEquals: { shop_sign: 'KEDAI KANCIL' } }} hints={['Cari output "shop_sign".', 'Tukar value-nya jadi upper(var.shop).', 'Kemudian tofu apply, dan yes.']} success="shop_sign = KEDAI KANCIL. Variable sama, bentuk baru." />
+
+<Hint>Balut `var.shop` dengan `upper( )`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+**<Term id="conditional">Conditional (bersyarat)</Term>** pilih satu daripada dua nilai. Dengan `open = false`, apa `door` kata?
+
+```hcl
+output "door" {
+  value = var.open ? "OPEN" : "CLOSED"
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '"CLOSED"', correct: true, why: 'false pilih nilai selepas titik bertindih.' }, { label: '"OPEN"', why: 'OPEN dipilih hanya bila var.open ialah true.' }, { label: 'Ralat', why: 'false ialah jawapan yang sah. Ia pilih CLOSED.' }]} />
+</Card>
+
+<Card id="try-closed" type="try">
+Tutup kedai untuk malam ini: `tofu apply -var open=false`, kemudian `yes`.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ outputEquals: { door: 'CLOSED' } }} hints={['Taip tofu apply -var open=false', 'Kemudian taip yes.']} success="door = CLOSED. Satu variable tukar jawapannya." />
+
+<Hint>`tofu apply -var open=false`, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="check-for" type="check">
+Ungkapan `for` ubah setiap item. Apa hasilnya?
+
+```hcl
+[for s in var.stalls : upper(s)]
+```
+
+<Interactive name="Choice" options={[{ label: '["NASI", "MEE", "ROTI"]', correct: true, why: 'Untuk setiap gerai s, upper(s). Senarai baru.' }, { label: '"NASI, MEE, ROTI"', why: 'Kurungan segi empat buat senarai, bukan satu teks. join yang buat teks.' }, { label: '["nasi", "mee", "roti"]', why: 'upper(s) tukar setiap item jadi huruf besar.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bentuk nilai dengan fungsi, conditional dan for.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: pelan kertas tak boleh isi ruang kosongnya sendiri. Pelan kita boleh kira, ulang, dan buat banyak gerai dari satu lukisan.
+
+`tofu console` biar anda cuba ungkapan satu demi satu. Ia tiada dalam terminal latihan ini; cuba di komputer anda sendiri.
+
+<Interactive name="Mission" id="iac-t2-l08-rep" steps={[{ id: 'folder', text: 'Dalam folder latihan yang ada fail .tf, mulakan console.', command: 'tofu console' }, { id: 'upper', text: 'Cuba satu fungsi.', command: 'upper("kedai kancil")' }, { id: 'join', text: 'Cuba fungsi senarai.', command: 'join(", ", ["nasi", "mee"])' }, { id: 'exit', text: 'Keluar dari console.', command: 'exit' }]} success="Anda sudah cuba ungkapan dengan tangan." />
+</Card>

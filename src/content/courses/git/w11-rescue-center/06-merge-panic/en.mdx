@@ -1,0 +1,61 @@
+---
+id: git-w11-l06
+world: 11
+title: Merge panic
+summary: "You will learn: how to back out of a scary merge, calmly."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l06]
+scenario: w11-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge --abort", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git revert -m", url: "https://git-scm.com/docs/git-revert" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l06" commands={['git merge title']} label="git merge title: Auto-merging index.html. CONFLICT (content): Merge conflict in index.html. Automatic merge failed." />
+
+CONFLICT! Scary words fill your screen. Your heart races. Breathe: nothing is lost. This happens to everyone. Here's the safe way out.
+</Card>
+
+<Card id="spot-exit" type="try">
+`git status` always tells you where you are. Find the exit.
+
+<Interactive name="SpotLines" scenario="w11-l06" commands={['git merge title', 'git status']} targets="merge --abort" prompt="Tap the line that shows the way back." success="That's your exit. It cancels the merge." />
+
+<Hint>Look for the word abort.</Hint>
+</Card>
+
+<Card id="try-abort" type="try">
+Cancel the merge. Go back to how things were.
+
+<Interactive name="Sim" scenario="w11-l06" intro={['git merge title']} panels={['graph']} goal={{ inMerge: false, clean: true, typed: 'merge --abort' }} hints={['Type git merge --abort']} success="Phew. Back to calm. Nothing was lost." />
+
+<Hint>Type `git merge --abort`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+After `git merge --abort`, where is your work?
+
+<Interactive name="Choice" options={[{ label: 'Exactly as before the merge', correct: true, why: 'Abort rewinds the merge. Both branches are untouched.' }, { label: 'Lost forever', why: 'No! Your commits on both branches are safe.' }, { label: 'Half merged', why: 'Abort undoes all of it. A clean start.' }]} />
+</Card>
+
+<Card id="sort-when" type="check">
+Fix it now, or back out? Sort each moment.
+
+<Interactive name="SortCards" buckets={[{ id: 'abort', label: 'Back out: git merge --abort' }, { id: 'fix', label: 'Fix it now' }]} items={[{ label: 'One small line clashes, and you know the answer', bucket: 'fix', why: 'Easy one. Fix the line, git add it, then commit.' }, { label: "You don't know whose change is right", bucket: 'abort', why: 'Back out. Ask your teammate, then merge again.' }, { label: 'Ten files clash and you feel lost', bucket: 'abort', why: 'Back out, take a breath, plan it.' }, { label: "It's late and you're tired", bucket: 'abort', why: 'The merge will wait for tomorrow.' }]} success="Sorted! Backing out is always allowed." />
+</Card>
+
+<Card id="win" type="win">
+You can now back out of a scary merge, calmly.
+</Card>
+
+<Card id="deeper" type="deeper">
+The merge worked, but you regret it? Not pushed: `git reset --hard ORIG_HEAD` jumps back to just before it. Careful, that wipes uncommitted changes. Already pushed: `git revert -m 1 HEAD` makes an undo commit and keeps main's side. Fixing conflicts step by step is in World 3.
+</Card>

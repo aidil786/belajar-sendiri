@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l01
+world: 3
+title: Every pod gets an IP
+summary: "You will learn: how pods reach each other, and why their addresses change."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k2-boss]
+scenario: k3-pods
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: the network model", url: "https://kubernetes.io/docs/concepts/services-networking/" }
+  - { label: "Kubernetes: cluster networking", url: "https://kubernetes.io/docs/concepts/cluster-administration/networking/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-pods" commands={['kubectl get pods -o wide']} label="Four trays on two stalls. The IP column gives each tray its own number: three shop trays and one client tray." />
+
+The client tray is hungry. Three shop trays can cook. How does the client reach one of them?
+</Card>
+
+<Card id="see-ip" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'A new tray', text: 'Kubernetes puts a new pod on a stall.' }, { when: '2', title: 'Its own number', text: 'The network plugin gives it a fresh IP, like 10.244.1.3.' }, { when: '3', title: 'Any tray can call', text: 'Every pod can reach every other pod by IP, on any stall.' }, { when: '4', title: 'No hatch needed', text: 'Pods talk straight to each other. No port mapping in between.' }]} />
+
+Every pod gets its own **<Term id="pod-ip">pod IP</Term>**. Think of a table number for each tray. Tap each step.
+</Card>
+
+<Card id="see-call" type="see">
+<Interactive name="KubeReplay" scenario="k3-pods" commands={['kubectl exec client -- wget -qO- -T 5 http://10.244.1.4']} label="From inside the client pod, wget asks 10.244.1.4 for a page. A shop tray on another stall answers: Kedai Kancil." />
+
+`kubectl exec client -- wget …` runs wget inside the client tray. It calls one shop tray straight by its IP. The page comes back.
+</Card>
+
+<Card id="try-delete" type="try">
+Delete one shop tray. Then look at the IP column again.
+
+<Interactive name="FoodCourtSim" scenario="k3-pods" goal={{ typed: '^kubectl delete pod', lastTyped: 'get pods.*-o wide' }} hints={['Type kubectl get pods -o wide and pick a shop pod name.', 'Type kubectl delete pod and that name. Then kubectl get pods -o wide again.']} success="A new tray, with a new name and a new IP." />
+
+<Hint>`kubectl delete pod <name>` throws one tray away. `kubectl get pods -o wide` shows the IPs.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The new tray got a new IP. The client saved the old one. What happens to its next order?
+
+<Interactive name="Choice" options={[{ label: 'It fails: nobody sits at the old number now', correct: true, why: 'Pods come and go. Their IPs go with them.' }, { label: 'The new tray answers at the old number', why: 'A new tray gets a new number. The old one is empty.' }, { label: 'Kubernetes tells the client the new number', why: 'Nobody tells the client. That is the job of a Service, next lesson.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Pod IPs change. Judge each habit.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Expect a new IP when a pod is replaced.', good: true, why: 'A replaced tray is a new tray, with a new number.' }, { text: 'Copy a pod IP into your app settings.', good: false, why: 'It breaks the next time that pod is replaced.' }, { text: 'Call other apps by a fixed name instead.', good: true, why: 'Yes! Services give you that name. Next lesson.' }, { text: 'Never delete pods, so their IPs stay.', good: false, why: 'Pods get replaced anyway: updates, crashes, a closed stall.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain pod IPs, and why they change.
+</Card>
+
+<Card id="deeper" type="deeper">
+Each stall hands out IPs from its own range, like `10.244.1.0/24` on dev-worker. A network plugin (CNI) does this work. You meet it in lesson 11.
+
+Real rep (optional), on a throwaway kind cluster:
+
+<Interactive name="Mission" id="k3-l01-rep" steps={[{ id: 'here', text: 'Read your "you are here" sign first. It should say kind-dev.', command: 'kubectl config current-context' }, { id: 'make', text: 'Start three shop trays.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'look', text: 'Note each IP and stall.', command: 'kubectl get pods -o wide' }, { id: 'swap', text: 'Delete one shop pod. Look again: new name, new IP.' }]} success="Real trays, real numbers!" />
+</Card>

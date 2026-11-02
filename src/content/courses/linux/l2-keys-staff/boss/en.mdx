@@ -1,0 +1,80 @@
+---
+id: linux-l2-boss
+world: 2
+title: "The service that won't start"
+summary: "You will learn: to bring a broken web server back on your own: status, logs, fix, test, start."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SpotLines, OrderList, Mission]
+needs: [linux-l2-l10]
+scenario: linux-l2-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "systemctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/systemctl.1.en.html" }
+  - { label: "journalctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/journalctl.1.en.html" }
+  - { label: "sed (Debian 13 man page)", url: "https://manpages.debian.org/trixie/sed/sed.1.en.html" }
+  - { label: "nginx: command-line parameters (nginx -t)", url: "https://nginx.org/en/docs/switches.html" }
+  - { label: "nginx: core module (listen)", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html#listen" }
+---
+
+<Card id="hook" type="hook">
+Boss: Monday, 8 am. Customers say the menu site is down. You try `curl -sS localhost` and get `curl: (7) Failed to connect to localhost port 80 after 0 ms: Could not connect to server`. Where do you look first?
+
+<Interactive name="Choice" options={[{ label: 'Ask systemd: is nginx even running?', correct: true, why: 'Plain words of the curl error: nobody answers on port 80. Check the staff first.' }, { label: 'Reinstall nginx', why: 'Big and slow, and the settings stay broken. Find the cause first.' }, { label: 'Reboot the server', why: 'nginx would fail again at boot. Look before you act.' }]} />
+</Card>
+
+<Card id="try-status" type="try">
+Step 1: ask the shift manager if nginx is working. Then read its diary.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss" goal={{ typed: '^systemctl (is-active|status) nginx', lastTyped: '^sudo journalctl ' }} hints={['Ask: systemctl is-active nginx', 'Read why: sudo journalctl -u nginx -n 5']} solution={['systemctl is-active nginx', 'sudo journalctl -u nginx -n 5']} success="failed, and the diary says why. Read the [emerg] line." />
+
+<Hint>The red light in Services also says failed.</Hint>
+</Card>
+
+<Card id="spot-cause" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'Nov 01 08:55:04 kedai nginx[1244]: 2026/11/01 08:55:04 [emerg] 1244#1244: unknown directive "lisen" in /etc/nginx/sites-enabled/default:22', target: true }, { text: 'Nov 01 08:55:04 kedai nginx[1244]: nginx: configuration file /etc/nginx/nginx.conf test failed' }, { text: 'Nov 01 08:55:04 kedai systemd[1]: nginx.service: Control process exited, code=exited, status=1/FAILURE' }, { text: 'Nov 01 08:55:04 kedai systemd[1]: Failed to start nginx.service - A high performance web server and a reverse proxy server.' }]} prompt="Step 2: tap the line that names the real problem." success="unknown directive lisen: someone typed lisen instead of listen, on line 22." />
+</Card>
+
+<Card id="try-fix" type="try">
+Step 3: fix the typo, then test the settings: `sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default`, then `sudo nginx -t`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss" goal={{ fileNotContains: { '/etc/nginx/sites-available/default': 'lisen' }, lastTyped: '^sudo nginx -t' }} hints={["Swap the word: sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'Test: sudo nginx -t']} solution={["sudo sed -i 's/lisen/listen/' /etc/nginx/sites-available/default", 'sudo nginx -t']} success="syntax is ok, test is successful. The settings are healthy." />
+
+<Hint>`sed -i 's/old/new/' file` swaps a word inside the file itself.</Hint>
+</Card>
+
+<Card id="predict-back" type="predict">
+`nginx -t` says `test is successful`. Is the menu site back now?
+
+<Interactive name="Choice" options={[{ label: 'Not yet. nginx is still stopped.', correct: true, why: 'nginx -t only checks the paper. Someone must start the staff member.' }, { label: 'Yes. A good test starts it.', why: 'A test changes nothing. systemctl starts services.' }, { label: 'Only after a reboot', why: 'No reboot needed. One start command is enough.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Step 4: the settings are fixed. Start nginx, then check the page like a customer would.
+
+<Interactive name="LinuxSim" scenario="linux-l2-boss-2" goal={{ serviceActive: ['nginx'], reachable: { localhost: 200 } }} hints={['Start it: sudo systemctl start nginx', 'Check: curl -sI localhost']} solution={['sudo systemctl start nginx', 'curl -sI localhost']} success="HTTP/1.1 200 OK. The menu site is back. Service Medic!" />
+
+<Hint>Watch the light turn green.</Hint>
+</Card>
+
+<Card id="order-ladder" type="check">
+Write the "won't start" ladder for the next person on shift.
+
+<Interactive name="OrderList" items={['curl: is it really down?', 'systemctl is-active or status: what does systemd say?', 'sudo journalctl -u: why did it stop?', 'Fix the file, then test it (nginx -t)', 'sudo systemctl start, then curl again']} label="First step at the top" success="Check, ask, read, fix, test, start. You can rescue any service now." />
+</Card>
+
+<Card id="win" type="win">
+You can now bring a broken service back on your own.
+</Card>
+
+<Card id="deeper" type="deeper">
+The same ladder works for any service: ssh, cron, a database. Many programs have their own test, like `nginx -t`. Fixed it? `sudo systemctl enable nginx` makes sure it also comes back after a reboot.
+
+Real rep (optional), only on a throwaway VM with nginx installed:
+
+<Interactive name="Mission" id="linux-l2-boss-rep" steps={[{ id: 'break', text: 'Break it on purpose (throwaway VM only!).', command: "sudo sed -i 's/listen 80/lisen 80/' /etc/nginx/sites-available/default" }, { id: 'restart', text: 'Watch it fail.', command: 'sudo systemctl restart nginx' }, { id: 'read', text: 'Read why.', command: 'sudo journalctl -u nginx -n 5' }, { id: 'fix', text: 'Fix it.', command: "sudo sed -i 's/lisen 80/listen 80/' /etc/nginx/sites-available/default" }, { id: 'test', text: 'Test, then start.', command: 'sudo nginx -t && sudo systemctl restart nginx' }]} success="A real rescue, done by you." />
+</Card>

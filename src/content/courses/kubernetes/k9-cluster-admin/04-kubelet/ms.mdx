@@ -1,0 +1,81 @@
+---
+id: k8s-k9-l04
+world: 9
+title: "Kubelet: systemctl dan journalctl"
+summary: "Anda akan belajar: cara semak, mulakan semula dan baca kubelet dari dalam node."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, CommandBuilder, SortCards, Mission]
+needs: [k8s-k9-l03]
+scenario: k9-kubelet
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubelet", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/" }
+  - { label: "Troubleshooting kluster", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "systemctl (systemd)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+  - { label: "journalctl (systemd)", url: "https://www.freedesktop.org/software/systemd/man/latest/journalctl.html" }
+---
+
+<Card id="hook" type="hook">
+Satu mesin but semula pukul 3 pagi. Tak lama kemudian gerainya Ready semula. Tiada siapa taip apa-apa. Siapa hidupkan penyelianya, kubelet?
+
+<Interactive name="Choice" options={[{ label: 'Pengurus servis mesin itu sendiri', correct: true, why: 'Ya. kubelet ialah servis yang hidup semasa but.' }, { label: 'API server', why: 'Pejabat tak boleh capai gerai yang kubeletnya mati. Ia cuma boleh tunggu.' }, { label: 'kubectl', why: 'kubectl bercakap dengan pejabat, bukan dengan servis mesin.' }]} />
+</Card>
+
+<Card id="see-status" type="see">
+<Interactive name="KubeReplay" scenario="k9-kubelet" picture={false} commands={['ssh dev-worker', 'systemctl status kubelet']} label="Di dalam dev-worker: systemctl status kubelet kata loaded dan enabled, active (running), dengan baris journal terakhir kubelet di bawahnya." />
+
+Pengurus servis itu ialah **<Term id="systemd">systemd</Term>**, bilik kuasa mesin. `systemctl status kubelet` tanya ia: penyelia sedang bertugas, dan sejak bila?
+</Card>
+
+<Card id="try-spot" type="try">
+Baca macam pentadbir. Tekan dua baris: “hidup semasa but” dan “berjalan sekarang”.
+
+<Interactive name="SpotLines" prompt="Tekan 2 baris yang paling penting." lines={[{ text: '● kubelet.service - kubelet: The Kubernetes Node Agent' }, { text: '     Loaded: loaded (/etc/systemd/system/kubelet.service; enabled; preset: enabled)', target: true }, { text: '    Drop-In: /etc/systemd/system/kubelet.service.d' }, { text: '             └─10-kubeadm.conf, 11-kind.conf' }, { text: '     Active: active (running) since Sat 2026-10-31 00:55:03 UTC; 5min ago', target: true }, { text: '       Docs: http://kubernetes.io/docs/' }, { text: '   Main PID: 342 (kubelet)' }]} success="enabled = ia hidup semasa but. active (running) = ia berjalan sekarang." />
+
+<Hint>Cari perkataan enabled dan running.</Hint>
+</Card>
+
+<Card id="try-restart" type="try">
+Selepas tetapan kubelet berubah, anda mulakan semula. Taip `ssh dev-worker`, kemudian `systemctl restart kubelet`. Kemudian baca **<Term id="journal">journal (diari)</Term>**: `journalctl -u kubelet -n 5 --no-pager`. Hati-hati: restart mengubah node.
+
+<Interactive name="FoodCourtSim" scenario="k9-kubelet" goal={{ typed: '^systemctl restart kubelet(\\.service)?$', lastTyped: '^journalctl\\b.*(-u ?|--unit[= ])kubelet' }} hints={['Taip ssh dev-worker', 'Kemudian systemctl restart kubelet', 'Kemudian journalctl -u kubelet -n 5 --no-pager']} success="Diari tunjuk permulaan baharu, dengan nombor proses baharu dalam kubelet[…]." />
+
+<Hint>Restart ialah henti sekejap dan hidup semula. Node kekal Ready.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan untuk 20 baris terakhir diari kubelet.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'journalctl', means: 'buka diari mesin' }, { text: '-u kubelet', means: 'muka surat kubelet sahaja' }, { text: '-n 20', means: '20 baris terakhir' }, { text: '--no-pager', means: 'cetak semua, jangan tunggu kekunci' }]} decoys={[{ text: '-u containerd', means: 'muka surat dapur, bukan penyelia' }, { text: '-f', means: 'terus perhati baris baharu sehingga Ctrl+C' }]} success="Itulah arahan yang paling kerap anda taip dalam peperiksaan." />
+
+<Hint>Mula dengan journalctl, kemudian unit, kemudian berapa baris.</Hint>
+</Card>
+
+<Card id="predict-stop" type="predict">
+Anda hentikan kubelet di dev-worker. Apa jadi pada dulangnya serta-merta?
+
+<Interactive name="Choice" options={[{ label: 'Dulang terus berjalan', correct: true, why: 'Ya. containerd terus memasak. Penyelia cuma berhenti melapor.' }, { label: 'Semua berhenti serentak', why: 'Dapur tak perlukan penyelia untuk terus memasak.' }, { label: 'Semua pindah ke gerai lain serta-merta', why: 'Kubernetes tunggu dahulu. Lebih kurang 5 minit kemudian, baru ia pindahkan.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Arahan ini cuma melihat, atau mengubah gerai? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'look', label: 'Cuma melihat' }, { id: 'change', label: 'Mengubah gerai (hati-hati)' }]} items={[{ label: 'systemctl status kubelet', bucket: 'look', why: 'Ia baca keadaan servis.' }, { label: 'systemctl is-active kubelet', bucket: 'look', why: 'Satu perkataan sahaja: active atau inactive.' }, { label: 'journalctl -u kubelet -n 20', bucket: 'look', why: 'Ia baca diari.' }, { label: 'systemctl stop kubelet', bucket: 'change', why: 'Gerai jadi NotReady tak lama kemudian.' }, { label: 'systemctl restart kubelet', bucket: 'change', why: 'Henti sekejap, kemudian hidup.' }, { label: 'systemctl enable kubelet', bucket: 'change', why: 'Ia ubah apa yang hidup semasa but.' }]} success="Lihat dahulu. Ubah kemudian." />
+
+<Hint>status, is-active dan journalctl tak pernah mengubah apa-apa.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak, mulakan semula dan baca kubelet.
+</Card>
+
+<Card id="deeper" type="deeper">
+`cat /etc/systemd/system/kubelet.service` tunjuk `Restart=always`: jika kubelet ranap, systemd hidupkannya semula. `systemctl stop` yang dirancang kekal berhenti. `journalctl -u kubelet -f` ikut baris baharu secara langsung; tekan Ctrl+C untuk keluar.
+
+<Interactive name="Mission" id="k8s-k9-l04-real" steps={[{ id: 'where', text: 'Guna kluster kind pakai buang anda sahaja.', command: 'kubectl config current-context' }, { id: 'status', text: 'Tanya systemd tentang penyelia satu gerai.', command: 'docker exec dev-worker systemctl status kubelet --no-pager' }, { id: 'diary', text: 'Baca 20 baris terakhir diarinya.', command: 'docker exec dev-worker journalctl -u kubelet -n 20 --no-pager' }, { id: 'unit', text: 'Baca fail servis dan drop-in-nya.', command: 'docker exec dev-worker systemctl cat kubelet' }]} success="Anda dah baca status dan diari kubelet sebenar!" />
+</Card>

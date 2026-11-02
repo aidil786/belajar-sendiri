@@ -1,0 +1,70 @@
+---
+id: git-w07-l03
+world: 7
+title: "Triggers: push, PR, schedule, manual"
+summary: "You will learn: how to choose when a workflow runs."
+minutes: 4
+xp: 20
+interactives: [PracticeRepo, SpotLines, Choice, Transcript, SortCards, SwipeJudge]
+needs: [git-w07-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Events that trigger workflows", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows" }
+  - { label: "Workflow syntax: on", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="actions" repo={{ owner: 'aina-codes', name: 'diary' }} runs={[
+  { id: 24, workflow: 'Deploy', event: 'workflow_dispatch', branch: 'main', status: 'running', jobs: [{ name: 'deploy', steps: [{ name: 'Publish site', status: 'running' }] }] },
+  { id: 23, workflow: 'Nightly links check', event: 'schedule', branch: 'main', status: 'pass', jobs: [{ name: 'links', steps: [{ name: 'Check every link', status: 'pass', log: ['No broken links.'] }] }] },
+  { id: 22, workflow: 'CI', event: 'pull_request', branch: 'contact-page', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Run tests', status: 'pass', log: ['All tests passed.'] }] }] },
+  { id: 21, workflow: 'CI', event: 'push', branch: 'main', status: 'pass', jobs: [{ name: 'test', steps: [{ name: 'Run tests', status: 'pass', log: ['All tests passed.'] }] }] }]} />
+
+Four runs, four ways to start. A push. A pull request. A clock. A button. How does the robot know when to wake up?
+</Card>
+
+<Card id="see-push-pr" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'on:' }, { text: '  push:' }, { text: '    branches: [main]' }, { text: '  pull_request:', target: true }]} prompt="Tap the line that checks pull requests." success="Yes! Every new PR, and every new commit on it, gets checked." />
+
+Each start is an **<Term id="trigger">event</Term>**. `push` fires when commits land. `branches: [main]` keeps it to main. `pull_request` fires when a PR opens or changes.
+</Card>
+
+<Card id="see-schedule" type="see">
+`schedule` is an alarm clock. It uses **<Term id="cron">cron</Term>**: minute, hour, day, month, weekday. By default, times are in UTC. When does `cron: '30 1 * * 1'` ring?
+
+<Interactive name="Choice" options={[{ label: '01:30 UTC every Monday', correct: true, why: 'Minute 30, hour 1, any day, any month, weekday 1 (Monday). That is 9:30 am in Malaysia.' }, { label: 'Every 30 minutes', why: 'That would be `*/30 * * * *`. Here, 30 is the minute.' }, { label: 'On the 1st of every month', why: 'The day of the month is the third field. Here it is `*`, any day.' }]} />
+</Card>
+
+<Card id="see-manual" type="see">
+<Interactive name="Transcript" title="bash" label="The GitHub CLI command gh workflow run deploy.yml starts the Deploy workflow by hand." lines={[{ cmd: 'gh workflow run deploy.yml' }]} />
+
+`workflow_dispatch` gives you a **Run workflow** button on GitHub. Press it any time. The GitHub CLI can press it for you, like above.
+</Card>
+
+<Card id="try-sort" type="try">
+Which trigger fits each job? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'push', label: 'push' }, { id: 'pr', label: 'pull_request' }, { id: 'schedule', label: 'schedule' }]} items={[{ label: 'Deploy when main changes', bucket: 'push', why: 'New commits on main arrive by push.' }, { label: "Check a teammate's PR before merging", bucket: 'pr', why: 'pull_request runs on the PR itself.' }, { label: 'Check for broken links every night', bucket: 'schedule', why: 'Nights come on a clock. Use cron.' }, { label: 'Test new commits on an open PR', bucket: 'pr', why: 'pull_request runs again on every new PR commit.' }, { label: 'Rebuild the site every Monday', bucket: 'schedule', why: 'Every Monday is a clock job.' }]} success="Sorted! Each job has the right alarm." />
+</Card>
+
+<Card id="predict" type="predict">
+Your nightly workflow sits on a feature branch. It is not on main yet. Will the alarm ring?
+
+<Interactive name="Choice" options={[{ label: 'No. Schedules only run from the default branch.', correct: true, why: 'Merge the file into main first. Then the clock starts.' }, { label: 'Yes, every night', why: 'Scheduled runs only use the default branch.' }, { label: 'Yes, but only once', why: 'It never starts. The file must be on the default branch.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Does each trigger fit the goal? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Test every PR: `on: pull_request`', good: true, why: 'Every new PR, and every new commit on it, gets checked.' }, { text: 'Nightly check: `on: push`', good: false, why: 'push only runs when someone pushes. Use schedule for a clock.' }, { text: 'Deploy by hand: `on: workflow_dispatch`', good: true, why: 'It adds a button. Nothing runs until you press it.' }, { text: "Every minute: `cron: '* * * * *'`", good: false, why: 'The shortest gap is 5 minutes.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose when a workflow runs.
+</Card>
+
+<Card id="deeper" type="deeper">
+`paths:` runs a workflow only when certain files change. `types: [opened]` narrows `pull_request` to new PRs only. Busy times can delay scheduled runs. The top of the hour is busiest. So pick a minute like 30, not 0.
+</Card>

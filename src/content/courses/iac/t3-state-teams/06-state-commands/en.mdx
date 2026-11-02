@@ -1,0 +1,71 @@
+---
+id: iac-t3-l06
+world: 3
+title: state list, show and rm
+summary: "You will learn: how to look inside the register, and why rm only makes OpenTofu forget."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t3-l05]
+scenario: t3-register-big
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu state list", url: "https://opentofu.org/docs/cli/commands/state/list/" }
+  - { label: "tofu state show", url: "https://opentofu.org/docs/cli/commands/state/show/" }
+  - { label: "tofu state rm", url: "https://opentofu.org/docs/cli/commands/state/rm/" }
+  - { label: "OpenTofu: removed blocks and destroy = false", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+The register holds five things now. The boss asks: "Which table number did we get?" You don't want to dig through raw JSON. What do you use?
+
+<Interactive name="Choice" options={[{ label: 'tofu state show random_integer.table', correct: true, why: 'It prints one thing from the register, neatly.' }, { label: 'Open terraform.tfstate and edit it', why: 'Reading works, but editing by hand can break the register.' }, { label: 'tofu apply', why: 'Apply builds changes. You only want to look.' }]} />
+</Card>
+
+<Card id="try-look" type="try">
+First list everything: `tofu state list`. Then look at one: `tofu state show random_integer.table`.
+
+<Interactive name="TofuSim" scenario="t3-register-big" goal={{ typed: '^tofu state list$', lastTyped: '^tofu state show random_integer\\.table$' }} hints={['Type tofu state list and press Enter.', 'Then tofu state show random_integer.table']} success="Table 540. list gives the names, show gives the details." />
+
+<Hint>Copy a name from the list into `tofu state show`.</Hint>
+</Card>
+
+<Card id="check-spot" type="check">
+This is `tofu state show local_file.sign`. Find what the sign says.
+
+<Interactive name="SpotLines" prompt="Tap the line with the sign's words." lines={[{ text: '# local_file.sign:' }, { text: 'resource "local_file" "sign" {' }, { text: '    content              = <<-EOT' }, { text: '        Table 540: clever-kancil', target: true }, { text: '    EOT' }, { text: '    … (checksums and permissions)' }, { text: '    filename             = "sign.txt"' }, { text: '    id                   = "6008a7ec863297c276122d2929ff319e2ccf92ac"' }, { text: '}' }]} success="The register remembers every detail, even the words on the sign." />
+</Card>
+
+<Card id="predict" type="predict">
+Now `tofu state rm local_file.sign`. What happens to `sign.txt`?
+
+<Interactive name="Choice" options={[{ label: 'It stays. OpenTofu just forgets it.', correct: true, why: 'state rm only changes the register. The real thing is untouched.' }, { label: 'It is deleted', why: 'Deleting is destroy. state rm never touches real things.' }, { label: 'It moves into a backup folder', why: 'The register gets a backup copy. The sign stays where it is.' }]} />
+</Card>
+
+<Card id="try-rm" type="try">
+⚠️ Careful: state rm makes OpenTofu forget a real thing. Try it here: `tofu state rm local_file.sign`. Then `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t3-register-big" goal={{ resourceMissing: ['local_file.sign'], filesExist: ['sign.txt'], lastTyped: '^tofu plan' }} hints={['Type tofu state rm local_file.sign', 'Then tofu plan, and read what it wants.']} success="Plan wants to build the sign again. It forgot one exists. In the cloud, that means a duplicate." />
+
+<Hint>Plan after rm shows what "forgetting" costs.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Sort the commands: do they only read, or do they change the register?
+
+<Interactive name="SortCards" buckets={[{ id: 'read', label: 'Only reads' }, { id: 'write', label: 'Changes the register' }]} items={[{ label: 'tofu state list', bucket: 'read', why: 'Names only.' }, { label: 'tofu state show', bucket: 'read', why: 'One thing, all details.' }, { label: 'tofu state rm', bucket: 'write', why: 'Removes an entry. Careful.' }, { label: 'tofu state mv', bucket: 'write', why: 'Renames an entry.' }, { label: 'tofu output', bucket: 'read', why: 'Reads the outputs from the register.' }, { label: 'tofu import', bucket: 'write', why: 'Adds an entry.' }]} success="Look as much as you like. Think twice before you write." />
+</Card>
+
+<Card id="win" type="win">
+You can now read the register and know what state rm really does.
+</Card>
+
+<Card id="deeper" type="deeper">
+Each state command that changes the register saves a timestamped backup first, like `terraform.tfstate.1793491219.backup`. The reviewable way to forget a thing is a `removed` block in the code. OpenTofu 1.13 also has `lifecycle { destroy = false }`: forget it instead of destroying it.
+
+<Interactive name="Mission" id="iac-t3-l06-rep" steps={[{ id: 'build', text: 'In a practice folder, build two local_file resources.', command: 'tofu init && tofu apply' }, { id: 'list', text: 'List the register.', command: 'tofu state list' }, { id: 'show', text: 'Show one of them, using its address.', command: 'tofu state show local_file.<name>' }, { id: 'forget', text: 'Forget one. Then plan: it wants to build it again.', command: 'tofu state rm local_file.<name> && tofu plan' }]} success="You looked inside, and saw what forgetting means." />
+</Card>

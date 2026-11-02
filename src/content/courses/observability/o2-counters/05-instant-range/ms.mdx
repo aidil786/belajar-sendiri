@@ -1,0 +1,70 @@
+---
+id: obs-o2-l05
+world: 2
+title: Vektor instant dan range
+summary: "Anda akan belajar: beza antara satu nilai sekarang dan satu tetingkap nilai, dan mana yang fungsi perlukan."
+minutes: 4
+xp: 20
+interactives: [Choice, PromQLPlayground, SortCards, Transcript, Mission]
+needs: [obs-o2-l04]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: querying basics", url: "https://prometheus.io/docs/prometheus/latest/querying/basics/" }
+  - { label: "Prometheus: HTTP API", url: "https://prometheus.io/docs/prometheus/latest/querying/api/" }
+  - { label: "Prometheus 3 migration guide", url: "https://prometheus.io/docs/prometheus/latest/migration/" }
+---
+
+<Card id="hook" type="hook">
+Dua soalan: “Berapa pelanggan menunggu sekarang?” dan “Paling ramai berapa dalam 10 minit lepas?” Jenis jawapan yang sama?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Satu nombor sekarang, berbanding banyak nombor dari masa ke masa.', correct: true, why: 'Ya. Soalan kedua perlukan satu tetingkap nilai.' }, { label: 'Ya. Kedua-duanya satu nombor.', why: 'Jawapannya satu nombor, tapi anda perlukan banyak nilai untuk mencarinya.' }, { label: 'Prometheus tak boleh jawab yang kedua', why: 'Boleh. Ia simpan nilai lama.' }]} />
+</Card>
+
+<Card id="try-range" type="try">
+Satu nilai untuk setiap siri, sekarang, ialah **<Term id="instant-vector">instant vector</Term>**. Minta satu tetingkap pula.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_customers_waiting']} initial="kedai_customers_waiting" prompt="Tambah [5m] terus selepas nama, kemudian Run. Kira sampel dalam setiap baris." goal={{ resultType: 'matrix', resultCount: 2 }} hints={['Taip [5m] di hujung: kedai_customers_waiting[5m]']} solution="kedai_customers_waiting[5m]" success="Setiap baris kini ada senarai sampel, dengan masanya." />
+</Card>
+
+<Card id="predict" type="predict">
+Tetingkap itu ialah **<Term id="range-vector">range vector</Term>**. Prometheus scrape setiap 1m di sini. Berapa sampel dalam `[5m]`?
+
+<Interactive name="Choice" options={[{ label: '5', correct: true, why: 'Ya. Dalam Prometheus 3, tetingkap tak ambil sampel tepat 5 minit lalu.' }, { label: '6', why: 'Hampir! Tetingkap Prometheus 3 tinggalkan hujung awal, jadi 5.' }, { label: '300', why: '300 itu saat. Sampel datang seminit sekali.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Jalankan dan baca mesej merah. Kemudian baikinya.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_customers_waiting']} initial="max_over_time(kedai_customers_waiting)" prompt="Cari paling ramai pelanggan menunggu dalam 10 minit lepas." goal={{ usesFunction: ['max_over_time'], resultType: 'vector', resultCount: 2 }} hints={['Fungsi itu mahu tetingkap. Tambah [10m] selepas nama, dalam kurungan.']} solution="max_over_time(kedai_customers_waiting[10m])" success="12 di nasi lemak, 4 di roti canai. Range masuk, satu nombor keluar." />
+
+<Hint>`expected type range vector` dalam bahasa mudah: beri ia tetingkap, seperti `[10m]`.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Instant atau range? Susun setiap query.
+
+<Interactive name="SortCards" buckets={[{ id: 'instant', label: 'Instant vector' }, { id: 'range', label: 'Range vector' }]} items={[{ label: '`kedai_customers_waiting`', bucket: 'instant', why: 'Satu nilai untuk setiap siri.' }, { label: '`kedai_customers_waiting[5m]`', bucket: 'range', why: 'Satu tetingkap sampel.' }, { label: '`kedai_orders_total{stall="cendol"}`', bucket: 'instant', why: 'Penapis masih beri satu nilai setiap satu.' }, { label: '`kedai_orders_total{stall="cendol"}[1h]`', bucket: 'range', why: 'Sejam sampel.' }, { label: '`max_over_time(kedai_customers_waiting[10m])`', bucket: 'instant', why: 'Fungsi tukar tetingkap kembali jadi satu nilai.' }]} success="Kurungan segi empat buat tetingkap. Fungsi tukarnya kembali." />
+</Card>
+
+<Card id="check" type="check">
+Boleh graf lukis `kedai_customers_waiting[5m]`?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Graf perlukan satu nilai setiap langkah. Jadual tunjuk sampelnya.', correct: true, why: 'Ya. Graf lukis instant vector, langkah demi langkah.' }, { label: 'Ya, sebagai lima garisan', why: 'Satu titik graf perlukan satu nilai. Tetingkap ada banyak.' }, { label: 'Hanya di Grafana', why: 'Graf Grafana pun perlukan instant vector.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan instant vector dan range vector, dan baiki tetingkap yang tertinggal.
+</Card>
+
+<Card id="deeper" type="deeper">
+Query instant lihat ke belakang hingga 5 minit untuk sampel terbaru. Prometheus 3 jadikan tetingkap terbuka di kiri: `(now − 5m, now]`. HTTP API pun namakan jenisnya. Jawapan ini sebenar:
+
+<Interactive name="Transcript" title="bash" label="API query jawab up sebagai JSON. resultType ialah vector, dengan satu nilai untuk setiap target." lines={[{ cmd: "curl -s 'localhost:9090/api/v1/query?query=up'" }, { out: '{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","instance":"node-exporter:9100","job":"node"},"value":[1793537441.393,"1"]},{"metric":{"__name__":"up","instance":"localhost:9090","job":"prometheus"},"value":[1793537441.393,"1"]}]}}' }]} />
+
+<Interactive name="Mission" id="obs-o2-l05-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'api', text: 'Tanya API untuk up. Cari resultType.', command: "curl -s 'localhost:9090/api/v1/query?query=up'" }, { id: 'range', text: 'Di laman query, jalankan node_load1[1m] dan tengok jadual. Dengan scrape 15 s, anda nampak lebih kurang 4 sampel.' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="Instant dan range, pada Prometheus sebenar." />
+</Card>

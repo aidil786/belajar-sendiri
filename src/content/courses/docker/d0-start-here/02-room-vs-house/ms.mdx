@@ -1,0 +1,72 @@
+---
+id: docker-d0-l02
+world: 0
+title: Container lawan mesin maya
+summary: "Anda akan belajar: beza container (sebuah bilik) dengan virtual machine (sebuah rumah penuh)."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KitchenReplay, SortCards, KitchenSim, SwipeJudge]
+needs: [docker-d0-l01]
+scenario: d0-rooms
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "Docker architecture", url: "https://docs.docker.com/get-started/docker-overview/#docker-architecture" }
+---
+
+<Card id="hook" type="hook">
+Ali uji aplikasinya dalam lima komputer maya. Laptopnya jadi lembap macam kura-kura. Setiap satu ialah komputer penuh di dalam komputernya. Ada cara lebih ringan?
+
+<Interactive name="Choice" options={[{ label: 'Ada: kongsi satu sistem, beri setiap aplikasi biliknya sendiri', correct: true, why: 'Itulah idea container. Anda akan tengok sekarang.' }, { label: 'Tiada: beli lima laptop', why: 'Itu mahal. Ada cara yang jauh lebih ringan.' }, { label: 'Jalankan lima aplikasi tanpa dinding', why: 'Nanti mereka berlanggar. Setiap aplikasi tetap perlu ruang sendiri.' }]} />
+</Card>
+
+<Card id="see-house" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'VM', title: 'Sebuah rumah penuh', text: 'Dinding sendiri, dapur sendiri, talian elektrik sendiri. Ia hidupkan sistem pengendalian penuh.' }, { when: 'Container', title: 'Sebuah bilik', text: 'Pintu dan barang sendiri. Ia kongsi elektrik rumah dengan bilik lain.' }]} />
+
+**<Term id="virtual-machine">Virtual machine</Term>** (mesin maya, VM) ialah sebuah rumah penuh. Container ialah sebuah bilik dalam rumah. Tekan setiap satu untuk bandingkan.
+</Card>
+
+<Card id="see-kernel" type="see">
+<Interactive name="KitchenReplay" scenario="d0-rooms" commands={['cat /etc/os-release', 'docker run --rm alpine:3.22 cat /etc/os-release', 'uname -a', 'docker run --rm alpine:3.22 uname -a']} label="Laptop kata Ubuntu, container kata Alpine Linux. Kemudian uname tunjuk kernel yang sama, 6.18.44, pada kedua-duanya." />
+
+Bilik ada fail sendiri: Alpine di dalam, Ubuntu di luar. Tapi kedua-duanya tunjuk **<Term id="kernel">kernel</Term>** yang sama. Kernel ialah elektrik rumah. Ia jalankan setiap program, di setiap bilik.
+</Card>
+
+<Card id="try-sort" type="try">
+Rumah atau bilik? Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'vm', label: 'Virtual machine' }, { id: 'container', label: 'Container' }]} items={[{ label: 'Mula dalam lebih kurang sesaat', bucket: 'container', why: 'Tiada apa nak dihidupkan. Elektrik rumah dah sedia.' }, { label: 'Hidupkan sistem pengendalian penuh', bucket: 'vm', why: 'Rumah penuh perlu talian elektrik sendiri.' }, { label: 'Kongsi kernel laptop', bucket: 'container', why: 'Bilik kongsi elektrik rumah.' }, { label: 'Perlukan gigabait ruang cakera', bucket: 'vm', why: 'Sistem penuh ambil banyak ruang.' }, { label: 'Boleh jalankan Windows di Mac', bucket: 'vm', why: 'VM bawa kernel sendiri, jadi apa-apa sistem boleh muat.' }, { label: 'Selalunya cuma beberapa megabait', bucket: 'container', why: 'alpine:3.22 cuma lebih kurang 13MB dalam cakera.' }]} success="Siap! Rumah berat. Bilik ringan." />
+</Card>
+
+<Card id="try-run" type="try">
+Buka bilik sendiri. Taip `docker run --rm alpine:3.22 echo hi`. Ia kata hi, dan `--rm` kemas bilik itu.
+
+<Interactive name="KitchenSim" scenario="d0-rooms" goal={{ lastTyped: '^docker\\s+run\\b.*alpine', lastExit: 0 }} hints={['Taip docker run --rm alpine:3.22 echo hi dan tekan Enter.']} success="Hi! Satu bilik dibuka, buat kerjanya, dan dikemas sekelip mata." />
+
+<Hint>Salin tepat-tepat: `docker run --rm alpine:3.22 echo hi`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Container Linux perlukan kernel Linux. Laptop anda Mac. Apa Docker Desktop buat?
+
+<Interactive name="Choice" options={[{ label: 'Ia jalankan VM Linux kecil, dengan bilik-bilik di dalamnya', correct: true, why: 'Ya! Satu rumah Linux kecil, banyak bilik di dalamnya.' }, { label: 'Ia tukar macOS jadi Linux', why: 'macOS kekal macOS. Docker tambah rumah Linux kecil di sebelahnya.' }, { label: 'Tiada apa: container tak boleh jalan di Mac', why: 'Boleh. Docker Desktop bawa VM Linux kecil sekali.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Pilih alat yang betul. Setiap rancangan ini idea yang bagus?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Guna container untuk hantar aplikasi web kecil', good: true, why: 'Ringan dan laju. Sangat sesuai.' }, { text: 'Guna container untuk 5 salinan ujian aplikasi anda', good: true, why: 'Lima bilik jauh lebih ringan daripada lima rumah.' }, { text: 'Guna container untuk jalankan aplikasi Windows sahaja di laptop Linux', good: false, why: 'Bilik kongsi kernel Linux. Windows perlu rumah sendiri: VM.' }, { text: 'Guna VM untuk cuba sistem pengendalian baru', good: true, why: 'Sistem baru perlu kernel sendiri. VM bawa satu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan beza container dengan virtual machine.
+</Card>
+
+<Card id="deeper" type="deeper">
+VM ada dinding lebih kukuh, sebab setiap rumah ada kernel sendiri. Bilik lebih ringan, tapi kongsi satu kernel. Sebab itu banyak cloud jalankan container di dalam VM: bilik di dalam rumah.
+
+Latihan sebenar (pilihan): selepas Docker dipasang, jalankan `docker run --rm alpine:3.22 uname -a` dan `uname -a`. Kernel sama? Di Mac atau Windows, anda nampak kernel VM Linux kecil itu.
+</Card>

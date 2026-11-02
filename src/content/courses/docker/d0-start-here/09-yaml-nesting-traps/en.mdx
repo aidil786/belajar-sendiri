@@ -1,0 +1,70 @@
+---
+id: docker-d0-l09
+world: 0
+title: "YAML part 2: nesting and traps"
+summary: "You will learn: how spaces put YAML lines inside each other, and how to dodge tabs, lost zeros and sneaky true values."
+minutes: 4
+xp: 20
+interactives: [Transcript, YamlPlayground, Choice, SortCards]
+needs: [docker-d0-l08]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "YAML 1.2 spec", url: "https://yaml.org/spec/1.2.2/" }
+  - { label: "Compose file reference", url: "https://docs.docker.com/reference/compose-file/" }
+  - { label: "Kubernetes objects in YAML", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="docker compose config fails: found character that cannot start any token, at line 3, column 1." lines={[{ cmd: 'docker compose config' }, { out: 'failed to parse /home/you/shop/compose.yaml: go-yaml load error in scanner (while scanning for the next token) at L3.C1: found character that cannot start any token', color: 'red' }]} />
+
+One invisible tab broke a whole file. That is the real message. In plain words: line 3 starts with a tab, and YAML allows only spaces.
+</Card>
+
+<Card id="see-nesting" type="see">
+A tiffin carrier stacks bowls inside one carrier. YAML stacks with spaces. Two more spaces mean “inside the line above”. This is **<Term id="nesting">nesting</Term>**.
+
+<Interactive name="YamlPlayground" file="tiffin.yaml" initial={'tiffin:\n  top: rice\n  middle: chicken curry\n  bottom:\n    - egg\n    - cucumber\n'} prompt="Change chicken curry to rendang. See where it lives in the box." />
+</Card>
+
+<Card id="predict" type="predict">
+The `bottom:` line and its list move 2 spaces left. Now `bottom:` lines up with `tiffin:`. Where does it end up?
+
+<Interactive name="Choice" options={[{ label: 'Outside the tiffin, at the top level', correct: true, why: 'Same spaces as tiffin means next to it, not inside it.' }, { label: 'Still inside the tiffin', why: 'Inside means more spaces than tiffin. Now they have the same.' }, { label: 'It gets deleted', why: 'Nothing is deleted. It just moves out of the carrier.' }]} />
+</Card>
+
+<Card id="try-indent" type="try">
+Line 3 is one space short. Read the box: the reader’s real words, then plain words. Line it up. On a phone, use “Add a space”.
+
+<Interactive name="YamlPlayground" file="tiffin.yaml" initial={'tiffin:\n  top: rice\n middle: chicken curry\n  bottom: sambal\n'} prompt="Put middle back inside the tiffin." expect={[{ path: 'tiffin', type: 'map', count: 3, hint: 'middle needs the same two spaces as top.' }, { path: 'tiffin.middle', equals: 'chicken curry' }]} solution={'tiffin:\n  top: rice\n  middle: chicken curry\n  bottom: sambal\n'} hint="Count the spaces before top. Give middle the same." success="All three bowls sit in the tiffin again." />
+</Card>
+
+<Card id="see-traps" type="see">
+Most YAML bugs come from a few sneaky traps. Fine, or a trap? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'fine', label: 'Fine' }, { id: 'trap', label: 'Trap' }]} items={[{ label: 'Two spaces for each level', bucket: 'fine', why: 'Same steps every time. Easy to read.' }, { label: 'A tab at the start of a line', bucket: 'trap', why: 'YAML allows only spaces for indents.' }, { label: '`phone: 0123456789` with no quotes', bucket: 'trap', why: 'The reader sees a number and drops the first 0.' }, { label: '`name: "Kedai Kancil"`', bucket: 'fine', why: 'Quotes keep a value as text. Always safe.' }, { label: 'Some lines 2 spaces in, others 3', bucket: 'trap', why: 'Lines must line up exactly.' }, { label: '`spicy: yes` when you mean the word yes', bucket: 'trap', why: 'Some readers turn yes into true.' }]} success="Spaces, not tabs. Line up. Quote anything that could look like a number or true." />
+</Card>
+
+<Card id="try-zero" type="try">
+Look at the box: the reader sees a number, 123456789. The first 0 is gone! Phone numbers are text. Quotes keep the 0.
+
+<Interactive name="YamlPlayground" file="shop.yaml" initial={'name: Kedai Kancil\nphone: 0123456789\nopen: true\n'} prompt="Make the phone number text again." expect={[{ path: 'phone', type: 'text', equals: '0123456789', hint: 'Put quotes around it: "0123456789".' }]} solution={'name: Kedai Kancil\nphone: "0123456789"\nopen: true\n'} hint="Add a quote before the 0 and after the 9." success="The phone number keeps its 0. Customers can call now." />
+</Card>
+
+<Card id="check" type="check">
+`spicy: yes`. Kubernetes reads that as true. How do you keep the word yes?
+
+<Interactive name="Choice" options={[{ label: 'Write `spicy: "yes"`', correct: true, why: 'Quotes make it text in every YAML reader.' }, { label: 'Write it in CAPITALS: YES', why: 'Those readers turn YES into true as well.' }, { label: 'Add more spaces before it', why: 'Spaces change nesting, not the kind of value.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now nest YAML with spaces and dodge its sneaky traps.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tools use different YAML readers. Older readers (YAML 1.1) turn yes, no, on and off into true or false. Newer ones keep them as words. Quotes are safe everywhere.
+
+Real rep (optional): in your code editor, turn on “show whitespace”. Tabs and spaces look different then. Open a YAML file and check it.
+</Card>

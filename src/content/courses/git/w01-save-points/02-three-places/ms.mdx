@@ -1,0 +1,67 @@
+---
+id: git-w01-l02
+world: 1
+title: Tiga tempat kerja anda tinggal
+summary: "Anda akan belajar: tiga tempat Git simpan kerja anda."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice]
+needs: [git-w01-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitglossary (working tree, index)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html bergoyang dalam folder kerja dengan tanda berubah." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+Anda tekan simpan dalam editor. Jadi Git pun dah simpan, kan? Belum lagi! Kerja anda boleh berada di tiga tempat.
+</Card>
+
+<Card id="see-working" type="see">
+<Interactive name="AreasScene" label="Folder kerja biru bercahaya. Ia ada index.html dan style.css. Kotak dan repository kosong." frames={[{ working: [{ name: 'index.html', glow: true }, { name: 'style.css', glow: true }], staging: [], repo: [] }]} />
+
+Tempat 1 ialah **folder kerja** (working folder). Ini fail biasa anda. Anda ubah fail di sini.
+</Card>
+
+<Card id="see-staging" type="see">
+<Interactive name="AreasScene" command="git add index.html" label="Arahan git add index.html menaip sendiri. index.html meluncur dari folder kerja ke dalam kotak kuning." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css'] }, { working: ['style.css'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+Tempat 2 ialah **kawasan staging**, iaitu sebuah kotak. `git add` masukkan perubahan yang siap ke dalam kotak.
+</Card>
+
+<Card id="see-repo" type="see">
+<Interactive name="AreasScene" command='git commit -m "Add home page"' effect="flash" label="Kilat kamera. Kotak jadi kosong, dan commit baru bernama Add home page masuk ke repository hijau." frames={[{ working: ['style.css'], staging: ['index.html'], repo: [{ name: 'Add README', kind: 'commit' }] }, { working: ['style.css'], staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }] }]} />
+
+Tempat 3 ialah **repository** (stor sejarah projek). `git commit` ambil gambar isi kotak dan simpan di sini dengan selamat.
+</Card>
+
+<Card id="predict-new" type="predict">
+Anda buat fail baru, `notes.txt`. Di mana ia sekarang?
+
+<Interactive name="Choice" compact options={[{ label: 'Folder kerja', correct: true, why: 'Fail baru bermula dalam folder anda. Git nampak, tapi belum simpan apa-apa.' }, { label: 'Kawasan staging', why: 'Hanya git add masukkan fail ke dalam kotak.' }, { label: 'Repository', why: 'Hanya git commit simpan ke dalam repository.' }]} reveal={{ label: 'notes.txt muncul dalam folder kerja biru dengan tanda baru.', frames: [{ working: ['index.html'] }, { working: ['index.html', { name: 'notes.txt', tag: 'new', glow: true }] }] }} />
+</Card>
+
+<Card id="predict-add" type="predict">
+Anda taip `git add notes.txt`. Di mana ia sekarang?
+
+<Interactive name="Choice" compact options={[{ label: 'Folder kerja', why: 'git add gerakkan fail itu ke dalam kotak.' }, { label: 'Kawasan staging', correct: true, why: 'git add masukkan fail ke dalam kotak, sedia untuk disimpan.' }, { label: 'Repository', why: 'Belum lagi. Itu perlukan git commit.' }]} reveal={{ label: 'notes.txt meluncur dari folder kerja ke dalam kotak kuning.', frames: [{ working: ['index.html', { name: 'notes.txt', tick: true }] }, { working: ['index.html'], staging: [{ name: 'notes.txt', tick: true }] }] }} />
+</Card>
+
+<Card id="predict-commit" type="predict">
+Anda taip `git commit -m "Add notes"`. Ke mana salinan yang disimpan pergi?
+
+<Interactive name="Choice" compact options={[{ label: 'Folder kerja', why: 'Folder anda simpan fail, tapi commit tinggal dalam repository.' }, { label: 'Kawasan staging', why: 'Kotak jadi kosong bila anda commit.' }, { label: 'Repository', correct: true, why: 'Commit (titik simpan) ialah gambar isi kotak, disimpan dalam repository.' }]} reveal={{ effect: 'flash', label: 'Kilat. Kotak jadi kosong dan commit bernama Add notes masuk ke repository.', frames: [{ staging: ['notes.txt'], repo: [{ name: 'Add home page', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add notes', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan tiga tempat kerja anda tinggal.
+</Card>
+
+<Card id="deeper" type="deeper">
+Anda akan jumpa nama lain untuk tempat-tempat ini. Folder kerja juga dipanggil working tree. Kawasan staging juga dipanggil index. Repository tinggal dalam folder tersembunyi `.git`.
+</Card>

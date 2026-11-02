@@ -1,0 +1,89 @@
+---
+// Lesson (and boss) player page: /[lang]/[course]/[world]/[lesson]/
+import { getCollection, render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import LessonPlayer from '~/components/lesson/LessonPlayer.astro';
+import Card from '~/components/lesson/Card.astro';
+import Interactive from '~/components/lesson/Interactive.astro';
+import Hint from '~/components/lesson/Hint.astro';
+import Term from '~/components/lesson/Term.astro';
+import PeekCard from '~/components/lesson/PeekCard.astro';
+import PeekSkip from '~/components/lesson/PeekSkip.astro';
+import PeekHint from '~/components/lesson/PeekHint.astro';
+import PeekTerm from '~/components/lesson/PeekTerm.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { badgeNames, badgeRules, flatten, getCourse, itemUrl, mapUrl, nextReady, worldLabel } from '~/lib/course';
+import { toolVersionText } from '~/lib/catalog';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('lessons');
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  const paths = [];
+  for (const courseEntry of await getCollection('courses')) {
+    const course = courseEntry.data;
+    for (const item of flatten(course)) {
+      if (item.status !== 'ready') continue;
+      for (const lang of LANGS) {
+        const other: Lang = lang === 'en' ? 'ms' : 'en';
+        const entry = byId.get(`${course.id}/${item.dir}/${lang}`);
+        const otherEntry = byId.get(`${course.id}/${item.dir}/${other}`);
+        if (!entry || !otherEntry) continue; // listed as ready but not written yet
+        paths.push({
+          params: { lang, course: course.id, world: item.world.slug, lesson: item.slug },
+          props: { itemId: item.id, entry, otherEntry },
+        });
+      }
+    }
+  }
+  return paths;
+}
+
+const { lang, course: courseId } = Astro.params as { lang: Lang; course: string };
+const { itemId, entry, otherEntry } = Astro.props;
+const course = await getCourse(courseId);
+const item = flatten(course).find((x) => x.id === itemId)!;
+const other: Lang = lang === 'en' ? 'ms' : 'en';
+const next = nextReady(course, item.id);
+const { Content } = await render(entry);
+const { Content: PeekContent } = await render(otherEntry);
+const fm = entry.data;
+const worldText = `${worldLabel(lang, item.world)}: ${item.world.title[lang]}`;
+// Ship It lessons say which tool version they were checked against.
+const tool = fm.tool ?? course.tool;
+const toolVersion = fm.toolVersion ?? course.toolVersion;
+const checked =
+  tool && toolVersion
+    ? t(lang, 'lesson.checkedWith', {
+        tool: t(lang, `tool.${tool}`),
+        version: toolVersionText(toolVersion),
+        date: fm.lastChecked.toLocaleDateString(lang === 'ms' ? 'ms-MY' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
+      })
+    : undefined;
+---
+
+<Base lang={lang} title={fm.title} description={fm.summary} altPath={itemUrl(other, courseId, item)} bare>
+  <LessonPlayer
+    lang={lang}
+    lessonId={item.id}
+    kind={item.kind}
+    title={fm.title}
+    summary={fm.summary}
+    minutes={fm.minutes}
+    xp={fm.xp}
+    mapHref={mapUrl(lang, courseId, item.world)}
+    altPath={itemUrl(other, courseId, item)}
+    next={next ? { href: itemUrl(lang, courseId, next), title: next.title[lang] } : null}
+    badgeRules={badgeRules(course)}
+    badgeNames={badgeNames(lang, [course])}
+    docs={fm.docs}
+    bmReviewed={fm.bmReviewed}
+    worldLabel={worldText}
+    hat={course.hat}
+    checked={checked}
+  >
+    <Content components={{ Card, Interactive, Hint, Term }} />
+    <Fragment slot="peek">
+      <PeekContent components={{ Card: PeekCard, Interactive: PeekSkip, Hint: PeekHint, Term: PeekTerm }} />
+    </Fragment>
+  </LessonPlayer>
+</Base>

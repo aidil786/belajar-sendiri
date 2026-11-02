@@ -1,0 +1,61 @@
+---
+id: git-w11-l11
+world: 11
+title: "Pull bersepah: abort"
+summary: "Anda akan belajar: cara undur diri dari pull yang berhenti dengan konflik."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, Sim, SortCards, Choice]
+needs: [git-w04-l08]
+scenario: w11-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git rebase --abort", url: "https://git-scm.com/docs/git-rebase" }
+  - { label: "git merge --abort", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l11" commands={['git pull --rebase']} label="git pull --rebase ambil commit Aisyah, kemudian berhenti: CONFLICT (content): Merge conflict in index.html. Could not apply Say Git is fun." />
+
+Anda pull. CONFLICT! Anda dan Aisyah ubah baris yang sama. Terlalu bersepah sekarang? Ini berlaku pada semua orang. Anda sentiasa boleh undur diri.
+</Card>
+
+<Card id="spot-exit" type="try">
+Pull dengan `--rebase` berhenti di tengah-tengah rebase. `git status` beritahu cara keluar.
+
+<Interactive name="SpotLines" scenario="w11-l11" commands={['git pull --rebase', 'git status']} targets={'use "git rebase --abort"'} prompt="Ketik baris dalam git status yang tunjuk jalan balik." success="Jumpa jalan keluar: git rebase --abort." />
+
+<Hint>Tengok berhampiran hujung, cari perkataan abort.</Hint>
+</Card>
+
+<Card id="try-abort" type="try">
+Undur diri dari pull yang bersepah. Kerja anda kembali seperti sejurus sebelumnya.
+
+<Interactive name="Sim" scenario="w11-l11" intro={['git pull --rebase']} panels={['graph']} goal={{ inRebase: false, clean: true, typed: 'rebase --abort' }} hints={['Taip git rebase --abort']} success="Tenang semula. Commit anda dah balik, tak terusik." />
+
+<Hint>Taip `git rebase --abort`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="sort-exit" type="check">
+Jalan keluar yang mana sesuai? `git status` sentiasa beritahu.
+
+<Interactive name="SortCards" buckets={[{ id: 'rebase', label: 'git rebase --abort' }, { id: 'merge', label: 'git merge --abort' }]} items={[{ label: 'Anda jalankan git pull --rebase', bucket: 'rebase', why: 'Pull itu berhenti di dalam rebase.' }, { label: 'git status kata: interactive rebase in progress', bucket: 'rebase', why: 'Ada rebase yang menunggu. Abort rebase itu.' }, { label: 'Anda jalankan git pull --no-rebase', bucket: 'merge', why: 'Pull itu berhenti di dalam merge.' }, { label: 'git status kata: use "git merge --abort"', bucket: 'merge', why: 'Git beritahu jalan keluarnya. Guna itu.' }]} success="Tersusun! Berhenti dalam rebase: rebase --abort. Dalam merge: merge --abort." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda dah undur diri. Bagaimana dengan commit (titik simpan) Aisyah?
+
+<Interactive name="Choice" options={[{ label: 'Masih selamat di GitHub. Pull semula bila dah sedia', correct: true, why: 'Abort cuma sentuh bahagian anda. Kerja dia menunggu.' }, { label: 'Dah dipadam', why: 'Tidak! Abort tak pernah sentuh GitHub.' }, { label: 'Dah masuk ke branch anda', why: 'Abort batalkan seluruh pull di bahagian anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh undur diri dari pull yang bersepah, dengan tenang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sedia cuba lagi? Pull sekali lagi dan baiki pertembungan itu. Dalam rebase: sunting fail, `git add`, kemudian `git rebase --continue`. Dalam merge: sunting, `git add`, kemudian `git commit`. Tak pasti baris siapa yang menang? Tanya kawan sepasukan dulu.
+</Card>

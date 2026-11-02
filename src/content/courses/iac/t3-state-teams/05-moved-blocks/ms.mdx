@@ -1,0 +1,74 @@
+---
+id: iac-t3-l05
+world: 3
+title: Blok moved dan refactor
+summary: "Anda akan belajar: cara tukar nama dalam pelan tanpa merobohkan apa-apa."
+minutes: 4
+xp: 20
+interactives: [PlanReader, SpotLines, TofuSim, Choice, SortCards, CommandBuilder, SwipeJudge, Mission]
+needs: [iac-t3-l04]
+scenario: t3-rename
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: refactor dengan blok moved", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+  - { label: "tofu state mv", url: "https://opentofu.org/docs/cli/commands/state/mv/" }
+  - { label: "Terraform: blok moved", url: "https://developer.hashicorp.com/terraform/language/block/moved" }
+---
+
+<Card id="hook" type="hook">
+Anda tukar nama `random_pet.stall` kepada `random_pet.chef` dalam `main.tf`. Itu sahaja. Baca plan ini.
+
+<Interactive name="PlanReader" scenario="t3-rename" prompt="Tekan apa yang OpenTofu akan buat pada setiap satu." success="Tukar nama jadi destroy + create. Gerai itu akan hilang namanya." />
+</Card>
+
+<Card id="see-moved" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris dengan nama lama." lines={[{ text: 'moved {' }, { text: '  from = random_pet.stall', target: true }, { text: '  to   = random_pet.chef' }, { text: '}' }]} success="from ialah alamat lama. to ialah alamat baharu." />
+
+OpenTofu kenal benda melalui alamatnya. Nama baharu nampak macam benda baharu. **<Term id="moved-block">Blok moved</Term>** (blok pindah) berkata: "Benda sama, nama baharu."
+</Card>
+
+<Card id="try-moved" type="try">
+Tambah blok moved dalam `main.tf`. Kemudian `tofu plan`: cari `has moved to`. Kemudian `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-rename" goal={{ resourceInState: ['random_pet.chef'], outputEquals: { stall: 'lucky-civet' } }} hints={['Tambah blok moved: from = random_pet.stall, to = random_pet.chef, satu setiap baris.', 'tofu plan patut kata: Plan: 0 to add, 0 to change, 0 to destroy.', 'Kemudian tofu apply dan yes. Dapat nama baharu? Tekan Mula semula.']} success="Nama ditukar, dan gerai kekal namanya: lucky-civet." />
+
+<Hint>Salin empat baris dari kad tadi.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Refactor seterusnya: `count` jadi `for_each`. Jadi `random_pet.stall[0]` jadi `random_pet.stall["nasi"]`. Apa yang selamatkannya?
+
+<Interactive name="Choice" options={[{ label: 'Blok moved dari stall[0] ke stall["nasi"]', correct: true, why: 'Setiap instance ada alamatnya sendiri. moved boleh guna untuknya juga.' }, { label: 'Tiada apa-apa: nama resource sama', why: 'Indeks itu sebahagian alamat. [0] dan ["nasi"] berbeza.' }, { label: 'Blok import baharu', why: 'Import ambil alih benda yang dibina di luar OpenTofu. Yang ini sudah diurus.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Perubahan mana yang perlukan blok moved?
+
+<Interactive name="SortCards" buckets={[{ id: 'moved', label: 'Perlu blok moved' }, { id: 'none', label: 'Tak perlu blok moved' }]} items={[{ label: 'Tukar nama resource', bucket: 'moved', why: 'Alamatnya berubah.' }, { label: 'Pindahkan resource ke dalam modul', bucket: 'moved', why: 'Alamatnya kini bermula dengan module.' }, { label: 'Tukar length = 2 kepada 3', bucket: 'none', why: 'Alamat sama. Ini perubahan biasa.' }, { label: 'Tukar nama main.tf kepada shop.tf', bucket: 'none', why: 'Nama fail tak dikira. Hanya alamat dikira.' }, { label: 'Tukar count kepada for_each', bucket: 'moved', why: 'Indeks [0] jadi kunci seperti ["nasi"].' }]} success="Alamat berubah perlukan moved. Selain itu, plan biasa." />
+</Card>
+
+<Card id="see-cli" type="see">
+Cara lama ubah daftar terus. Tiada siapa menyemaknya. Bina juga, supaya anda boleh membacanya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'bercakap dengan OpenTofu' }, { text: 'state mv', means: 'tukar nama dalam daftar sahaja' }, { text: 'random_pet.stall', means: 'alamat lama' }, { text: 'random_pet.chef', means: 'alamat baharu' }]} decoys={[{ text: 'apply', means: 'bina perubahan' }, { text: '-auto-approve', means: 'langkau soalan' }]} success="tofu state mv random_pet.stall random_pet.chef. Blok moved buat perkara sama dalam plan yang disemak." />
+</Card>
+
+<Card id="check-review" type="check">
+Anda semak refactor rakan. Leret: bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tukar nama resource dan tambah blok moved dalam perubahan yang sama', good: true, why: 'Plan tunjuk "has moved to". Tiada apa dibina semula.' }, { text: 'Tukar nama, nampak "1 to destroy", dan apply juga', good: false, why: 'Berhenti bila nampak destroy. Tambah blok moved.' }, { text: 'Jalankan state mv pada daftar bersama, tanpa beritahu sesiapa', good: false, why: 'Tiada plan, tiada semakan. Pasukan dapat kejutan.' }, { text: 'Simpan blok moved sehingga setiap salinan sudah apply', good: true, why: 'Folder lain yang guna kod sama mungkin masih ada nama lama.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tukar nama dan susun semula pelan tanpa bina semula apa-apa.
+</Card>
+
+<Card id="deeper" type="deeper">
+moved juga boleh tukar nama seluruh modul: `from = module.a`, `to = module.b`. Untuk berhenti mengurus sesuatu tanpa memusnahkannya, guna blok `removed` dengan `lifecycle { destroy = false }`. Modul yang orang lain guna patut simpan blok moved untuk masa yang lama.
+
+<Interactive name="Mission" id="iac-t3-l05-rep" steps={[{ id: 'build', text: 'Dalam folder latihan, bina random_pet "stall".', command: 'tofu init && tofu apply' }, { id: 'rename', text: 'Tukar namanya kepada chef. Plan: nampak destroy + create.', command: 'tofu plan' }, { id: 'moved', text: 'Tambah blok moved. Plan semula: nampak has moved to.', command: 'tofu plan' }, { id: 'apply', text: 'Apply. Pet itu kekal namanya.', command: 'tofu apply' }]} success="Refactor sebenar, tanpa apa-apa dibina semula." />
+</Card>

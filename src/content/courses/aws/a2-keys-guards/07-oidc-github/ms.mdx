@@ -1,0 +1,69 @@
+---
+id: aws-a2-l07
+world: 2
+title: OIDC dari GitHub Actions
+summary: "Anda akan belajar: benarkan satu workflow GitHub pinjam role AWS, tanpa kunci disimpan."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, SpotLines, SwipeJudge, IamJudge, Mission]
+needs: [aws-a2-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Create a role for OIDC (GitHub)", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html" }
+  - { label: "Create an OIDC identity provider in IAM", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html" }
+  - { label: "GitHub: OIDC in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "GitHub: OIDC reference (sub claim)", url: "https://docs.github.com/en/actions/reference/security/oidc" }
+  - { label: "Pushing an image to Amazon ECR", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push.html" }
+---
+
+<Card id="hook" type="hook">
+Workflow GitHub Kedai Kancil mesti push image ke AWS. Anda sudah jumpa jawapannya dalam [CI/CD Dunia C3](/ms/cicd/release-deploy/oidc/): pas pelawat, <Term id="oidc" course="cicd">OIDC</Term>. Kenapa ia lebih baik daripada kunci yang disimpan?
+
+<Interactive name="Choice" options={[{ label: 'Pas itu berfungsi untuk satu job, kemudian luput', correct: true, why: 'Tiada apa yang tahan lama dalam GitHub secrets, jadi tiada yang lama boleh bocor.' }, { label: 'Lebih cepat ditaip', why: 'Kelajuan bukan intinya. Luput itu intinya.' }, { label: 'Kunci yang disimpan tak berfungsi di GitHub', why: 'Ia berfungsi. Cuma ia tak pernah luput, itulah bahayanya.' }]} />
+</Card>
+
+<Card id="see-setup" type="see">
+Di pihak AWS ada tiga bahagian. Susun keseluruhan persediaan.
+
+<Interactive name="OrderList" items={['Tambah GitHub sebagai OIDC identity provider dalam IAM', 'Buat role yang trust policynya namakan repo anda', 'Beri role itu polisi kebenaran yang kecil', 'Dalam workflow, benarkan id-token: write', 'configure-aws-credentials tukar pas itu kepada kunci']} label="Langkah pertama di atas" success="Provider, role, polisi, kemudian workflow. Tiada kunci di mana-mana." />
+</Card>
+
+<Card id="see-trust" type="see">
+<Term id="trust-policy">Trust policy</Term> role itu semak pas. Ketik baris yang kata **repo mana** boleh pinjam role itu.
+
+<Interactive name="SpotLines" lines={[{ text: '"Principal": {' }, { text: '  "Federated": "arn:aws:iam::111122223333:oidc-provider/token.actions.githubusercontent.com"' }, { text: '},' }, { text: '"Action": "sts:AssumeRoleWithWebIdentity",' }, { text: '"Condition": {' }, { text: '  "StringEquals": {' }, { text: '    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",' }, { text: '    "token.actions.githubusercontent.com:sub": "repo:kedai-kancil/shop:environment:production"', target: true }, { text: '  }' }, { text: '}' }]} prompt="Ketik baris yang namakan repo." success="Baris sub: repo shop sahaja, persekitaran production sahaja." />
+</Card>
+
+<Card id="try-swipe" type="try">
+Setiap baris ialah nilai `sub` yang mungkin. Selamat untuk role deploy production, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'repo:kedai-kancil/shop:environment:production', good: true, why: 'Satu repo, satu persekitaran yang dilindungi.' }, { text: 'repo:kedai-kancil/shop:ref:refs/heads/main', good: true, why: 'Satu repo, satu branch. Okey juga.' }, { text: 'repo:*', good: false, why: 'IAM terima, tetapi mana-mana repo di GitHub boleh pinjam role anda!' }, { text: 'repo:kedai-kancil/shop:*', good: false, why: 'Setiap branch dan pull request boleh deploy. Sempitkan.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Anda cuba simpan trust policy yang `sub`nya hanya `*`. Apa IAM buat?
+
+<Interactive name="Choice" options={[{ label: 'IAM enggan simpan, dengan ralat', correct: true, why: 'Untuk provider GitHub, IAM wajibkan syarat sub yang bukan wildcard semata-mata.' }, { label: 'Ia simpan; mana-mana repo boleh deploy', why: 'IAM semak yang ini dan menolak. Nilai longgar lain masih boleh terlepas.' }, { label: 'Ia simpan, tetapi GitHub sekat repo lain', why: 'GitHub beri pas kepada setiap repo. AWS mesti semak sub.' }]} />
+</Card>
+
+<Card id="check-judge" type="check">
+Workflow sudah masuk, memakai role `ci-deployer`. Ia cuba padam seluruh rak image. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:DeleteRepository', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }} policies={[{ name: 'ecr-push', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'], Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }] } }]} success="Ditolak. Pas itu push image. Ia tak boleh padam rak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh benarkan satu workflow GitHub pinjam role AWS, tanpa kunci disimpan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Repo GitHub yang dibuat selepas 15 Julai 2026 letak id dalam nilai `sub`, seperti `repo:kedai-kancil@123/shop@456:…`. Salin format tepat dari dokumentasi repo anda.
+
+Latihan sebenar (IAM percuma; pasang penggera bajet dahulu). Senarai bersihkan: role dan provider.
+
+<Interactive name="Mission" id="aws-a2-l07-rep" steps={[{ id: 'provider', text: 'Dalam IAM, tambah provider token.actions.githubusercontent.com dengan audience sts.amazonaws.com.' }, { id: 'role', text: 'Buat role yang percaya branch main repo ujian anda sahaja.' }, { id: 'policy', text: 'Jangan pasang kebenaran dahulu: arahan ujian di bawah tak perlukannya.' }, { id: 'run', text: 'Jalankan workflow dengan id-token: write yang panggil arahan seterusnya.', command: 'aws sts get-caller-identity' }, { id: 'clean', text: 'Bersihkan: padam role, kemudian provider.' }]} success="Pas dipinjam dan dipulangkan. Tiada kunci disimpan." />
+</Card>

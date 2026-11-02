@@ -1,0 +1,69 @@
+---
+id: obs-o1-l04
+world: 1
+title: RED and USE
+summary: "You will learn: one short checklist for services (RED) and one for machine parts (USE)."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l03]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana: the RED and USE methods", url: "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" }
+  - { label: "Google SRE book: monitoring distributed systems", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+---
+
+<Card id="hook" type="hook">
+Two problems at once. The checkout service is slow. The stove is too hot. Use one checklist for both?
+
+<Interactive name="Choice" options={[{ label: 'Two checklists: one for services, one for machine parts', correct: true, why: 'Yes. A service serves requests. A stove does work. Ask each its own questions.' }, { label: 'One checklist fits all', why: 'You cannot ask a stove how many requests failed.' }, { label: 'No checklist: just guess', why: 'A short checklist beats guessing at 3 a.m.' }]} />
+</Card>
+
+<Card id="see-red" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'R', title: 'Rate', text: 'How many requests per second?' }, { when: 'E', title: 'Errors', text: 'How many of them fail?' }, { when: 'D', title: 'Duration', text: 'How long do they take?' }]} />
+
+For every service, ask **<Term id="red-method">RED</Term>**: Rate, Errors, Duration. Tap each letter.
+</Card>
+
+<Card id="try-use" type="try">
+For a machine part, ask USE: Utilization, Saturation, Errors. Show the stove’s utilization.
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" metrics={['kedai_stove_busy_ratio', 'kedai_queue_orders', 'kedai_checkout_seconds']} prompt="Show how busy the stove is: 1 means busy all the time." goal={{ typed: 'kedai_stove_busy_ratio', resultCount: 1 }} hints={['Utilization means how busy. Which chip says busy?', 'Tap kedai_stove_busy_ratio, then press Run.']} solution="kedai_stove_busy_ratio" success="The stove is busy 100% of the time at 25m." />
+
+<Hint><Term id="use-method">USE</Term> is for parts that work: a stove, a CPU, a disk.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Look at the stove’s graph. When does it reach 1, busy all the time?
+
+<Interactive name="Choice" options={[{ label: 'At 14m', correct: true, why: 'Yes. From 14m the stove never rests.' }, { label: 'At 0m', why: 'It starts at 0.5: busy half the time.' }, { label: 'At 25m', why: 'It was already at 1 long before 25m.' }]} />
+
+<Hint>Move the time slider, or read the graph line.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+RED for services, USE for parts. Sort each question.
+
+<Interactive name="SortCards" buckets={[{ id: 'red', label: 'RED (a service)' }, { id: 'use', label: 'USE (a part)' }]} items={[{ label: 'Checkout requests per second', bucket: 'red', why: 'Rate, for the checkout service.' }, { label: 'Share of menu requests that fail', bucket: 'red', why: 'Errors, for the menu service.' }, { label: 'How long an order request takes', bucket: 'red', why: 'Duration, for the order service.' }, { label: 'CPU busy 90% of the time', bucket: 'use', why: 'Utilization of a CPU.' }, { label: 'Jobs waiting for the disk', bucket: 'use', why: 'Saturation of a disk.' }, { label: 'Network card errors', bucket: 'use', why: 'Errors of a part.' }]} success="Services get RED. Parts get USE." />
+</Card>
+
+<Card id="check" type="check">
+RED has three letters. Which golden signal does it leave out?
+
+<Interactive name="Choice" options={[{ label: 'Saturation', correct: true, why: 'Yes. RED skips how full. USE covers it for parts.' }, { label: 'Latency', why: 'Duration is latency.' }, { label: 'Traffic', why: 'Rate is traffic.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now check services with RED and machine parts with USE.
+</Card>
+
+<Card id="deeper" type="deeper">
+USE comes from Brendan Gregg, for finding why a machine is slow. RED comes from Tom Wilkie, for services. Grafana’s docs say a good RED dashboard shows how users feel. RED points at symptoms; USE often finds causes.
+
+<Interactive name="Mission" id="obs-o1-l04-real" steps={[{ id: 'svc', text: 'Pick one service you know. Write its R, E and D.' }, { id: 'part', text: 'Pick one machine part under it. Write its U, S and E.' }]} success="Two checklists, ready for the next incident." />
+</Card>

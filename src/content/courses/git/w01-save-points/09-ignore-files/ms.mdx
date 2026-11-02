@@ -1,0 +1,64 @@
+---
+id: git-w01-l09
+world: 1
+title: Abaikan fail
+summary: "Anda akan belajar: cara beritahu Git fail mana yang tak boleh disimpan."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, SortCards, Sim, Choice]
+needs: [git-w01-l08]
+scenario: w01-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Empat benda bergoyang dalam folder kerja: index.html, debug.log, .env dan node_modules/. Tiga daripadanya sampah atau rahsia." frames={[{ working: ['index.html', { name: 'debug.log', tag: 'new' }, { name: '.env', tag: 'new' }, { name: 'node_modules/', tag: 'new' }] }]} />
+
+Folder anda penuh sampah: log, muat turun, malah `.env` berisi kata laluan. Satu `git add .` yang cuai akan ambil semuanya.
+</Card>
+
+<Card id="see-gitignore" type="see">
+<Interactive name="TermReplay" scenario="w01-l09" commands={['git status -s', 'echo "*.log" > .gitignore', 'git status -s']} label="Sebelum: git status -s senaraikan debug.log dan error.log. Selepas *.log ditulis dalam .gitignore, hanya .gitignore disenaraikan." />
+
+Fail **.gitignore** (senarai benda untuk diabaikan) beritahu Git apa yang perlu dilangkau. Satu baris, `*.log`, dan kedua-dua fail log hilang dari `git status`.
+</Card>
+
+<Card id="see-patterns" type="see">
+<Interactive name="TermReplay" scenario="w01-l09" commands={['echo "node_modules/" > .gitignore', 'echo ".env" >> .gitignore', 'echo "*.log" >> .gitignore', 'cat .gitignore']} label="Tiga arahan echo bina .gitignore. cat tunjuk tiga barisnya: node_modules/, .env dan *.log." />
+
+Setiap baris ialah satu **corak** (pattern). Nama yang berakhir dengan `/` maksudnya folder. `*` maksudnya "apa-apa sahaja". `>` tulis fail baru, `>>` tambah satu baris.
+</Card>
+
+<Card id="try-sort" type="try">
+Patutkah Git abaikan, atau simpan? Susun setiap fail.
+
+<Interactive name="SortCards" buckets={[{ id: 'ignore', label: 'Abaikan' }, { id: 'keep', label: 'Simpan' }]} items={[{ label: 'node_modules/', bucket: 'ignore', why: 'Kod yang dimuat turun. Anda boleh muat turun semula bila-bila masa.' }, { label: '.env', bucket: 'ignore', why: 'Ia simpan rahsia macam kata laluan dan kunci.' }, { label: 'debug.log', bucket: 'ignore', why: 'Log dibuat oleh program. Bukan anda yang tulis.' }, { label: '.DS_Store', bucket: 'ignore', why: 'Sampah yang Mac buat dalam folder.' }, { label: 'index.html', bucket: 'keep', why: 'Inilah diari anda sendiri!' }, { label: 'style.css', bucket: 'keep', why: 'Reka bentuk anda. Simpan.' }, { label: 'README.md', bucket: 'keep', why: 'Ia terangkan projek anda.' }, { label: '.gitignore', bucket: 'keep', why: 'Simpan, supaya semua orang langkau sampah yang sama.' }]} success="Semua dah disusun! Sampah dan rahsia kekal di luar." />
+</Card>
+
+<Card id="try-write" type="try">
+Sorokkan fail log daripada Git. Kemudian masukkan `.gitignore` ke dalam kotak.
+
+<Interactive name="Sim" scenario="w01-l09" panels={['areas']} goal={{ fileContains: { '.gitignore': '*.log' }, staged: ['.gitignore'], notStaged: ['debug.log', 'error.log'], noUntracked: true }} hints={['Tulis peraturannya: echo "*.log" > .gitignore', 'Sekarang masukkan ke dalam kotak: git add .gitignore']} success="Log dah disorok, dan peraturan anda sedia untuk commit." />
+
+<Hint>Taip `echo "*.log" > .gitignore`. Kemudian `git add .gitignore`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Minggu lepas, `debug.log` dah masuk dalam commit (titik simpan). Hari ini anda tambah `*.log` dalam `.gitignore`. Apa jadi pada `debug.log`?
+
+<Interactive name="Choice" options={[{ label: 'Git terus menjejaknya', correct: true, why: '.gitignore hanya sorokkan fail yang Git belum jejak. Pelajaran seterusnya tunjuk cara baikinya.' }, { label: 'Git padamnya', why: '.gitignore tak pernah padam apa-apa.' }, { label: 'Git berhenti menjejaknya', why: 'Tak dengan sendirinya. .gitignore hanya sorokkan fail untracked.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jauhkan sampah dan rahsia daripada commit anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Commit `.gitignore` anda, supaya seluruh pasukan guna peraturan yang sama. Baris yang bermula dengan `!` bawa balik satu fail, contohnya `!keep.log`. `git add .` langkau fail yang diabaikan tanpa sebarang amaran.
+
+<Interactive name="TermReplay" scenario="w01-l09-ignored" commands={['git add .', 'git status -s']} label="Dengan *.log dalam .gitignore, git add . hanya tambah .gitignore. Dua fail log kekal di luar." />
+</Card>

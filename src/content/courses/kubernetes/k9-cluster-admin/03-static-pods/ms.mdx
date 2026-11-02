@@ -1,0 +1,86 @@
+---
+id: k8s-k9-l03
+world: 9
+title: Static pod dan folder manifest
+summary: "Anda akan belajar: cara pejabat berjalan daripada fail, dan cara pulihkan bahagian yang hilang."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, SpotLines, Choice, SwipeJudge, SortCards, Mission]
+needs: [k8s-k9-l02]
+scenario: k9-scheduler-down
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cipta static Pod", url: "https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" }
+  - { label: "Static Pod (konsep)", url: "https://kubernetes.io/docs/concepts/workloads/pods/static-pods/" }
+  - { label: "kubeadm init: manifest static Pod", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-scheduler-down" commands={['kubectl get pods', 'kubectl get pods -n kube-system -l component=kube-scheduler']} label="Pod tray Pending. Dalam kube-system, tiada pod kube-scheduler dijumpai." />
+
+Dulang baharu menunggu dalam Pending, tanpa sebarang event. Pod scheduler pun hilang. Siapa ambil semula staf pejabat?
+</Card>
+
+<Card id="try-look" type="try">
+Pejabat tak boleh ambil pekerja untuk dirinya. Jadi kubelet di gerainya hidupkan mereka daripada fail: **<Term id="static-pod">static pod</Term>**. Taip `ssh dev-control-plane`, kemudian `ls /etc/kubernetes/manifests`.
+
+<Interactive name="FoodCourtSim" scenario="k9-static-pods" goal={{ typed: '^(ssh dev-control-plane|docker exec -it dev-control-plane bash)$', lastTyped: '^ls( -l)? /etc/kubernetes/manifests/?$' }} hints={['Taip ssh dev-control-plane dan tekan Enter.', 'Kemudian ls /etc/kubernetes/manifests']} success="Empat kad tugas: seluruh pejabat pengurus." />
+
+<Hint>kubelet perhatikan satu folder ini. Tetapannya dipanggil staticPodPath.</Hint>
+</Card>
+
+<Card id="try-spot" type="try">
+Pejabat tunjuk setiap static pod sebagai **<Term id="mirror-pod">mirror pod</Term>**: gambar baca-sahaja. Tekan dua baris: “daripada fail”, dan pemiliknya.
+
+<Interactive name="SpotLines" prompt="Tekan 2 baris yang buktikan ia static pod." lines={[{ text: 'Name:                 kube-scheduler-dev-control-plane' }, { text: 'Namespace:            kube-system' }, { text: 'Node:                 dev-control-plane/172.18.0.2' }, { text: 'Labels:               component=kube-scheduler' }, { text: 'Annotations:          kubernetes.io/config.hash: 51b81a1b99b1886456a705c195e7256a' }, { text: '                      kubernetes.io/config.mirror: 51b81a1b99b1886456a705c195e7256a' }, { text: '                      kubernetes.io/config.source: file', target: true }, { text: 'Status:               Running' }, { text: 'Controlled By:  Node/dev-control-plane', target: true }]} success="Dibuat daripada fail, dan dimiliki oleh node itu sendiri. Tiada Deployment langsung." />
+
+<Hint>Satu baris ada perkataan file. Satu baris bermula dengan Controlled By.</Hint>
+</Card>
+
+<Card id="predict-delete" type="predict">
+Anda padam mirror pod itu dengan kubectl. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia kembali serta-merta', correct: true, why: 'Ya. Kad tugas masih dalam folder, jadi kubelet hantar gambar itu semula.' }, { label: 'Scheduler berhenti terus', why: 'Anda cuma padam gambarnya. Static pod sebenar terus berjalan.' }, { label: 'Deployment buat yang baharu', why: 'Tiada Deployment memilikinya. Pemiliknya ialah node itu.' }]} />
+</Card>
+
+<Card id="see-back" type="see">
+<Interactive name="KubeReplay" scenario="k9-static-pods" commands={['kubectl delete pod kube-scheduler-dev-control-plane -n kube-system', 'sleep 3', 'kubectl get pods -n kube-system -l component=kube-scheduler']} label="Mirror pod dipadam. Tiga saat kemudian, kube-scheduler-dev-control-plane muncul semula, Running, umur 3s." />
+
+Hilang, kemudian kembali dengan umur baharu. Gambarnya berubah. Kad tugasnya tidak.
+</Card>
+
+<Card id="try-fix" type="try">
+Seseorang pindahkan kad tugas scheduler ke `/root`. Letak semula. Hati-hati: folder ini jalankan pejabat. Ubah apa yang perlu sahaja.
+
+<Interactive name="FoodCourtSim" scenario="k9-scheduler-down" goal={{ staticPodRunning: { name: 'kube-scheduler' }, podsReady: { selector: 'run=tray', count: 1 } }} hints={['Taip ssh dev-control-plane', 'Lihat dalam /root: ls /root', 'Pindahkan semula: mv /root/kube-scheduler.yaml /etc/kubernetes/manifests/', 'Kemudian exit dan tekan +30s. Perhatikan dulang itu.']} success="Scheduler kembali, dan dulang yang menunggu dapat gerai." />
+
+<Hint>ls /etc/kubernetes/manifests tunjuk tiga fail sahaja. Yang mana hilang?</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik dalam folder manifests? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Salin fail ke /root sebelum anda ubah', good: true, why: 'Sandaran di luar folder. Anda sentiasa boleh patah balik.' }, { text: 'Simpan sandaran kube-apiserver.yaml.bak di dalam folder itu', good: false, why: 'kubelet baca setiap fail di situ. Sandaran lama anda mungkin yang berjalan.' }, { text: 'Ubah satu baris, kemudian tunggu dan semak pod', good: true, why: 'kubelet perlukan sedikit masa untuk perasan perubahan.' }, { text: 'Padam mirror pod untuk hentikan scheduler', good: false, why: 'Gambarnya kembali. Untuk hentikan, pindahkan fail keluar.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Static pod atau pod biasa? Lihat namanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'static', label: 'Static pod (fail pada node)' }, { id: 'normal', label: 'Pod biasa (dibuat oleh controller)' }]} items={[{ label: 'etcd-dev-control-plane', bucket: 'static', why: 'Daripada etcd.yaml. Namanya berakhir dengan nama node.' }, { label: 'kube-apiserver-dev-control-plane', bucket: 'static', why: 'Kaunter depan pun berjalan daripada kad tugas.' }, { label: 'coredns-59d675bd9-8d9kv', bucket: 'normal', why: 'Deployment yang buat: huruf rawak di hujung.' }, { label: 'kube-proxy-bnmrn', bucket: 'normal', why: 'DaemonSet jalankan satu di setiap gerai.' }, { label: 'kindnet-6q866', bucket: 'normal', why: 'Juga DaemonSet: pembantu rangkaian kind.' }]} success="Staf pejabat daripada fail; yang lain daripada controller." />
+
+<Hint>Nama static pod berakhir dengan nama node.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari static pod dan pulihkan yang hilang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Folder itu datang dari tetapan kubelet: `staticPodPath` dalam `/var/lib/kubelet/config.yaml`. Worker pun ada folder ini, cuma kosong. Fail yang bermula dengan titik dilangkau. Simpan sandaran di luar, contohnya dalam `/etc/kubernetes/backup/`.
+
+<Interactive name="Mission" id="k8s-k9-l03-real" steps={[{ id: 'where', text: 'Guna kluster kind pakai buang anda sahaja.', command: 'kubectl config current-context' }, { id: 'make', text: 'Letak kad tugas kecil dalam folder satu worker.', command: "docker exec dev-worker sh -c 'printf \"apiVersion: v1\\nkind: Pod\\nmetadata:\\n  name: static-web\\nspec:\\n  containers:\\n  - name: web\\n    image: nginx:1.29-alpine\\n\" > /etc/kubernetes/manifests/static-web.yaml'" }, { id: 'see', text: 'Lihat mirror pod-nya: static-web-dev-worker.', command: 'kubectl get pods -o wide' }, { id: 'delete', text: 'Padam gambarnya. Lihat semula: ia kembali.', command: 'kubectl delete pod static-web-dev-worker' }, { id: 'clean', text: 'Kemas semula: keluarkan kad tugas itu.', command: 'docker exec dev-worker rm /etc/kubernetes/manifests/static-web.yaml' }]} success="Anda buat, perhati dan buang static pod sebenar!" />
+</Card>

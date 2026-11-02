@@ -1,0 +1,80 @@
+---
+id: docker-d1-l07
+world: 1
+title: "The order hatch: port mapping"
+summary: "You will learn: to open a door from your laptop into a container with -p."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, OrderHatch, KitchenSim, Choice, Mission]
+needs: [docker-d1-l06]
+scenario: d1-no-hatch
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Port publishing and mapping", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "Publishing and exposing ports", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/" }
+  - { label: "docker port", url: "https://docs.docker.com/reference/cli/docker/container/port/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-no-hatch" commands={['docker ps', 'curl localhost:8080']} fails={['curl localhost:8080']} label="docker ps shows web is Up, with 80/tcp and no laptop port. curl localhost:8080 fails: Couldn't connect to server." />
+
+web is Up, but the real error says `Couldn't connect to server`. Plain words: nobody answers at port 8080 on your laptop. The box is sealed.
+</Card>
+
+<Card id="try-hatch" type="try">
+Cut an **order hatch**: plug laptop port 8080 into web's port 80. This is <Term id="port-mapping">port mapping</Term>.
+
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }]} task={{ type: 'map', host: 8080, container: 'web', port: 80 }} success="Hatch open! Orders on 8080 reach nginx on 80." />
+</Card>
+
+<Card id="see-order" type="see">
+<Interactive name="KitchenReplay" scenario="d1-no-hatch" commands={['docker rm -f web', 'docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'docker port web', 'curl -s localhost:8080 | grep title']} label="The old web is removed. A new web starts with -p 8080:80. docker port web shows 80/tcp -> 0.0.0.0:8080. curl gets the Welcome to nginx! page." />
+
+A hatch is cut when a box is made. So web is made again. Read `-p 8080:80` left to right: laptop first, box second.
+</Card>
+
+<Card id="try-sim" type="try">
+Your turn. Run web with a hatch on 8080. Then `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'], portMapped: { web: '8080:80' }, lastTyped: '^curl ' }} hints={['Type docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'Then type curl localhost:8080']} success="The page came through the hatch. Look at the 8080 sign in the picture." />
+</Card>
+
+<Card id="predict" type="predict">
+web holds hatch 8080. A new box, api, also asks for laptop port 8080. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Docker refuses: 8080 is taken', correct: true, why: 'One laptop port, one box. Otherwise orders would get mixed up.' }, { label: 'Both share hatch 8080', why: 'A laptop port can lead to one box only.' }, { label: 'api takes it from web', why: 'Docker never takes a hatch away from a running box.' }]} />
+</Card>
+
+<Card id="check-busy" type="check">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker run -d --name api -p 8080:80 nginx:1.30-alpine']} fails={['docker run -d --name api -p 8080:80 nginx:1.30-alpine']} label="web already holds laptop port 8080. docker run for api fails: Bind for 0.0.0.0:8080 failed: port is already allocated. api is left Created." />
+
+The real error ends with `port is already allocated`. Plain words: another box already uses laptop port 8080.
+</Card>
+
+<Card id="try-two" type="try">
+Give api its own hatch. Any free laptop port works.
+
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }, { name: 'api', ports: [80], image: 'nginx:1.30-alpine' }]} start={[{ host: 8080, container: 'web', port: 80 }]} hostPorts={[8080, 8081]} task={{ type: 'map', maps: [{ container: 'api', port: 80 }] }} prompt="api needs a hatch too. 8080 is busy." success="Two hatches. Inside, both boxes use 80. Each box has its own ports." />
+</Card>
+
+<Card id="check-order" type="check">
+`docker run -d -p 3000:80 nginx:1.30-alpine`. Which address opens the page?
+
+<Interactive name="Choice" options={[{ label: 'localhost:3000', correct: true, why: 'Laptop side first. 3000 is on your laptop.' }, { label: 'localhost:80', why: '80 is inside the box. Your laptop side comes first.' }, { label: 'Both work', why: 'Only the laptop side is open to your browser.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now open an order hatch into a container.
+</Card>
+
+<Card id="deeper" type="deeper">
+Without an address, `-p` opens the hatch on every network you are on. Others on your Wi-Fi may reach it! `-p 127.0.0.1:8080:80` keeps it for your laptop only. More hatch tricks come in World D3.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l07-rep" steps={[{ id: 'run', text: 'Start web with a hatch on 8080, for your laptop only.', command: 'docker run -d --name web -p 127.0.0.1:8080:80 nginx:1.30-alpine' }, { id: 'open', text: 'Open http://localhost:8080 in your browser.' }, { id: 'port', text: 'Ask which hatch web has.', command: 'docker port web' }, { id: 'tidy', text: 'Tidy up.', command: 'docker rm -f web' }]} success="A real page, through a real hatch." />
+</Card>

@@ -1,0 +1,87 @@
+---
+id: k8s-k9-l02
+world: 9
+title: "kubeadm: bagaimana kluster lahir"
+summary: "Anda akan belajar: apa yang kubeadm init bina, dan cara gerai baharu menyertai dengan token."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, SortCards, CommandBuilder, Choice, OrderList, Mission]
+needs: [k8s-k9-l01]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Membina kluster dengan kubeadm", url: "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/" }
+  - { label: "kubeadm init", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/" }
+  - { label: "kubeadm join", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/" }
+  - { label: "kubeadm token", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-certs" commands={['kubectl get nodes']} label="kubectl get nodes: tiga gerai, semua Ready, dibina oleh kind dalam lebih kurang seminit." />
+
+kind bina medan selera ini dalam lebih kurang seminit. Pada tiga mesin kosong, tiada siapa buat untuk anda. Siapa bina pejabat pengurus?
+</Card>
+
+<Card id="see-init" type="see">
+Pembinanya ialah **<Term id="kubeadm">kubeadm</Term>**. `kubeadm init` jadikan mesin pertama pejabat pengurus. Tekan setiap langkahnya.
+
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Semakan awal', text: 'Mesin ini sudah sedia? Tetapan yang salah hentikannya di sini.' }, { when: '2', title: 'Kunci dan sijil', text: 'CA kluster baharu dan lencana, dalam /etc/kubernetes/pki.' }, { when: '3', title: 'Fail kubeconfig', text: 'admin.conf, dan satu fail untuk setiap bahagian pejabat, dalam /etc/kubernetes.' }, { when: '4', title: 'Kad tugas pejabat', text: 'etcd, API server, controller manager dan scheduler, dalam /etc/kubernetes/manifests.' }, { when: '5', title: 'Hidupkan kubelet', text: 'Ia baca kad tugas itu dan hidupkan pejabat.' }, { when: '6', title: 'Jauhkan aplikasi', text: 'Mesin pejabat dapat label dan taint control-plane.' }, { when: '7', title: 'Tiket untuk gerai baharu', text: 'Satu join token. Kemudian CoreDNS dan kube-proxy ditambah.' }]} />
+</Card>
+
+<Card id="try-look" type="try">
+Lihat apa yang pembina tinggalkan. Taip `docker exec -it dev-control-plane bash`. Kemudian `ls /etc/kubernetes`.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" goal={{ typed: '^(ssh dev-control-plane|docker exec -it dev-control-plane bash)$', lastTyped: '^ls( -l)? /etc/kubernetes/?$' }} hints={['Taip docker exec -it dev-control-plane bash dan tekan Enter.', 'Sekarang taip ls /etc/kubernetes']} success="Fail kubeconfig, folder manifests dan folder pki: semuanya daripada kubeadm init." />
+
+<Hint>Nak lagi? Cuba ls /etc/kubernetes/pki dan ls /etc/kubernetes/manifests.</Hint>
+</Card>
+
+<Card id="check-files" type="check">
+Di mana kubeadm letak setiap fail? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'pki', label: 'pki/: kunci dan sijil' }, { id: 'manifests', label: 'manifests/: kad tugas pejabat' }, { id: 'conf', label: '/etc/kubernetes: fail kubeconfig' }]} items={[{ label: 'ca.crt', bucket: 'pki', why: 'CA kluster sendiri. Ia tandatangan setiap lencana.' }, { label: 'apiserver.key', bucket: 'pki', why: 'Kunci peribadi kaunter depan.' }, { label: 'kube-scheduler.yaml', bucket: 'manifests', why: 'Kad tugas: kubelet hidupkan scheduler daripadanya.' }, { label: 'etcd.yaml', bucket: 'manifests', why: 'Kad tugas untuk buku pesanan, etcd.' }, { label: 'admin.conf', bucket: 'conf', why: 'Kunci induk untuk kubectl.' }, { label: 'scheduler.conf', bucket: 'conf', why: 'Cara scheduler sampai ke API server.' }]} success="Lencana dalam pki, kad tugas dalam manifests, kunci pejabat sebagai fail .conf." />
+
+<Hint>.crt dan .key ialah lencana dan kunci. Fail .yaml di sini ialah kad tugas.</Hint>
+</Card>
+
+<Card id="try-admin" type="try">
+kubeadm tinggalkan kunci induk pada mesin pejabat: **<Term id="admin-conf">admin.conf</Term>**. Gunakannya dengan sengaja. Taip `kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes`.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" intro={['docker exec -it dev-control-plane bash']} goal={{ typed: 'KUBECONFIG=/etc/kubernetes/admin\\.conf|--kubeconfig[= ]/etc/kubernetes/admin\\.conf', lastTyped: '^kubectl\\b.*\\bget (nodes?|no)\\b' }} hints={['Taip kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes', 'Atau export KUBECONFIG=/etc/kubernetes/admin.conf dahulu, kemudian kubectl get nodes.']} success="kubectl sampai ke pejabat dengan kunci induk. admin.conf boleh buat apa sahaja, jadi jaga baik-baik." />
+
+<Hint>Worker tidak dapat admin.conf. Hanya mesin pejabat yang ada.</Hint>
+</Card>
+
+<Card id="try-join" type="try">
+Gerai baharu menyertai dengan tiket: **<Term id="bootstrap-token">join token</Term>**. Bina arahan join.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubeadm join', means: 'bawa mesin ini masuk ke kluster' }, { text: '172.18.0.2:6443', means: 'kaunter depan pejabat (API server)' }, { text: '--token abcdef.0123456789abcdef', means: 'tiketnya' }, { text: '--discovery-token-ca-cert-hash sha256:<hash>', means: 'semak ID pejabat, supaya anda sertai medan selera yang betul' }]} decoys={[{ text: 'kubeadm init', means: 'bina pejabat baharu: bukan untuk gerai baharu' }, { text: '--discovery-token-unsafe-skip-ca-verification', means: 'langkau semakan ID: tidak selamat' }]} success="Itulah arahan join. kubeadm init cetak arahan seperti ini." />
+
+<Hint>Mula dengan kubeadm join. Alamat, kemudian tiket, kemudian semakan ID.</Hint>
+</Card>
+
+<Card id="predict-token" type="predict">
+Arahan join anda dari pagi semalam. Tiga puluh jam sudah berlalu. Apa sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Buat yang baharu: kubeadm token create --print-join-command', correct: true, why: 'Ya. Token tahan 24 jam secara lalai. Ini cetak arahan join baharu.' }, { label: 'Jalankan kubeadm init sekali lagi', why: 'init bina pejabat. Anda perlukan tiket untuk pejabat yang sedia ada.' }, { label: 'Guna arahan lama juga', why: 'Tiket itu luput selepas 24 jam. Pejabat akan menolaknya.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun seluruh kerja membina.
+
+<Interactive name="OrderList" items={['Pasang container runtime, kubeadm dan kubelet pada setiap mesin', 'Jalankan kubeadm init pada mesin pertama', 'Salin admin.conf supaya kubectl sampai ke pejabat', 'Pasang satu add-on rangkaian Pod', 'Jalankan kubeadm join pada setiap worker', 'Semak setiap gerai muncul: kubectl get nodes']} label="Langkah pertama di atas" success="Daripada mesin kosong ke medan selera, langkah demi langkah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara kubeadm bina kluster dan cara gerai menyertai.
+</Card>
+
+<Card id="deeper" type="deeper">
+kubeadm tidak tambah rangkaian Pod. Anda pasang sendiri, dan hanya satu untuk setiap kluster. CoreDNS tidak akan hidup sebelum rangkaian ada. Join token ialah rahsia: sesiapa yang memegangnya boleh tambah mesin.
+
+<Interactive name="Mission" id="k8s-k9-l02-real" steps={[{ id: 'where', text: 'Guna kluster kind pakai buang anda sahaja.', command: 'kubectl config current-context' }, { id: 'files', text: 'Lihat apa yang kubeadm tinggalkan pada mesin pejabat.', command: 'docker exec dev-control-plane ls /etc/kubernetes' }, { id: 'ticket', text: 'Buat arahan join baharu. Jangan tampal di tempat awam.', command: 'docker exec dev-control-plane kubeadm token create --print-join-command' }, { id: 'tokens', text: 'Senaraikan tiket yang ada sekarang.', command: 'docker exec dev-control-plane kubeadm token list' }]} success="Anda dah lihat binaan kubeadm sebenar!" />
+</Card>

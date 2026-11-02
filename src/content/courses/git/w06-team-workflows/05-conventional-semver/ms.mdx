@@ -1,0 +1,74 @@
+---
+id: git-w06-l05
+world: 6
+title: Conventional Commits, SemVer, changelog
+summary: "Anda akan belajar: cara label commit tentukan versi seterusnya dan changelog."
+minutes: 4
+xp: 20
+interactives: [TermReplay, TimelineTap, SpotLines, SortCards, Choice, OrderList]
+needs: [git-w06-l04]
+scenario: w06-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+  - { label: "Keep a Changelog", url: "https://keepachangelog.com/en/1.1.0/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w06-l05-messy" commands={['git log --oneline']} label="git log dengan empat mesej kabur: more changes, fix things, update dan stuff." />
+
+Hari release (keluaran)! Pengguna tanya apa yang berubah. Kemas kini besar atau pembaikan kecil? Log commit (titik simpan) ini tak beritahu.
+</Card>
+
+<Card id="see-semver" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'MAJOR', title: '2.4.1 → 3.0.0', text: 'Perubahan yang memecahkan. Kod lain yang guna kod anda mungkin rosak.' }, { when: 'MINOR', title: '2.4.1 → 2.5.0', text: 'Ciri baru. Semua yang lama masih berfungsi. PATCH kembali ke 0.' }, { when: 'PATCH', title: '2.4.1 → 2.4.2', text: 'Pembaikan bug. Tiada yang baru, tiada yang rosak.' }]} />
+
+**<Term id="semantic-versioning">Semantic Versioning</Term>** (SemVer) guna tiga nombor: MAJOR.MINOR.PATCH. Setiap satu beritahu pengguna sebesar mana perubahan itu.
+</Card>
+
+<Card id="try-spot" type="try">
+Label **<Term id="conventional-commits">Conventional Commits</Term>** padan dengan nombor itu. `fix:` maksudnya PATCH. `feat:` maksudnya MINOR. Ketik setiap commit yang tambah ciri baru.
+
+<Interactive name="SpotLines" scenario="w06-l05" commands={['git log --oneline']} targets=" feat: " prompt="Ketik setiap commit yang tambah ciri baru." success="Dua ciri! Jadi versi seterusnya naikkan MINOR." />
+</Card>
+
+<Card id="try-sort" type="try">
+Nombor mana yang setiap commit naikkan?
+
+<Interactive name="SortCards" buckets={[{ id: 'patch', label: 'PATCH' }, { id: 'minor', label: 'MINOR' }, { id: 'major', label: 'MAJOR' }]} items={[{ label: '`fix: stop cart crash`', bucket: 'patch', why: 'fix: ialah pembaikan bug. PATCH.' }, { label: '`feat: add search box`', bucket: 'minor', why: 'feat: ialah ciri baru. MINOR.' }, { label: '`feat!: drop old menu links`', bucket: 'major', why: 'Tanda ! maksudnya perubahan yang memecahkan. Pautan lama tak jalan lagi. MAJOR.' }, { label: '`fix: correct price rounding`', bucket: 'patch', why: 'Satu lagi pembaikan bug. PATCH.' }, { label: '`feat: add dark mode`', bucket: 'minor', why: 'Benda baru yang tak rosakkan apa-apa. MINOR.' }]} success="Semua tersusun! Label buat versi jadi mudah." />
+
+<Hint>fix: ialah PATCH. feat: ialah MINOR. Tanda ! sebelum titik bertindih ialah MAJOR.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Versi 2.4.1 dah live. Sejak itu: dua commit `fix:` dan satu `feat:`. Apa versi seterusnya?
+
+<Interactive name="Choice" compact options={[{ label: '2.5.0', correct: true, why: 'feat: naikkan MINOR. PATCH kembali ke 0.' }, { label: '2.4.3', why: 'Ada feat:, jadi MINOR naik, bukan PATCH sahaja.' }, { label: '3.0.0', why: 'Tiada yang memecahkan, jadi MAJOR kekal.' }, { label: '2.5.1', why: 'Bila MINOR naik, PATCH kembali ke 0.' }]} />
+</Card>
+
+<Card id="try-changelog" type="try">
+**<Term id="changelog">Changelog</Term>** (log perubahan) senaraikan perubahan untuk manusia. Versi terbaru di atas. Perubahan dikumpul, contohnya Added dan Fixed. Ketik setiap pembaikan.
+
+<Interactive name="SpotLines" lines={[{ text: '# Changelog' }, { text: '## [Unreleased]' }, { text: '## [2.5.0] - 2026-10-30' }, { text: '### Added' }, { text: '- Search box on the menu.' }, { text: '### Fixed' }, { text: '- Cart keeps its items.', target: true }, { text: '## [2.4.1] - 2026-10-02' }, { text: '### Fixed' }, { text: '- Prices round correctly.', target: true }]} prompt="Ketik setiap pembaikan dalam changelog ini." success="Jumpa! Orang baca ini, bukan log mentah." />
+</Card>
+
+<Card id="check-order" type="check">
+Susun versi ini, yang terbaru di atas.
+
+<Interactive name="OrderList" items={['3.0.0', '2.10.0', '2.9.1', '2.9.0', '1.12.0']} label="Terbaru di atas" success="Ya! 2.10.0 lebih baru daripada 2.9.1." />
+
+<Hint>Banding satu nombor pada satu masa. 10 lebih besar daripada 9.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tukar label commit jadi versi dan changelog.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ada alat yang boleh baca Conventional Commits untuk anda. Ia pilih versi seterusnya dan draf changelog. Footer yang bermula dengan `BREAKING CHANGE:` juga maksudnya MAJOR. Versi bawah 1.0.0 untuk kerja awal: apa-apa boleh berubah. Tag macam v2.5.0 tambah huruf v, tapi versinya 2.5.0.
+</Card>

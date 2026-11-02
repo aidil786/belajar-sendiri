@@ -1,0 +1,83 @@
+---
+id: k8s-k6-l05
+world: 6
+title: "securityContext: kunci bekas"
+summary: "Anda akan belajar: empat kunci yang tahap restricted mahu, dan di mana setiap satu diletak."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, KubeReplay, YamlDoctor, FoodCourtSim, SortCards]
+needs: [k8s-k6-l04]
+scenario: k6-locks
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Configure a security context", url: "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" }
+  - { label: "Pod Security Standards: restricted", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted" }
+  - { label: "Restrict a container's syscalls with seccomp", url: "https://kubernetes.io/docs/tutorials/security/seccomp/" }
+---
+
+<Card id="hook" type="hook">
+Seorang pencuri pecah masuk satu bekas: container kedai anda. Ia berjalan sebagai root, dengan semua kuasa hidup. Sejauh mana pencuri boleh pergi?
+
+<Interactive name="Choice" options={[{ label: 'Terlalu jauh: root berkuasa boleh cuba lari ke node', correct: true, why: 'Root dengan kuasa tambahan ialah permulaan terbaik untuk lari. Kunci bekas itu.' }, { label: 'Tiada ke mana: container ialah dinding sempurna', why: 'Container ialah pagar, bukan peti besi. Kunci buat ia lebih kuat.' }, { label: 'Hanya ke dalam log', why: 'Kebimbangannya lebih besar: node tempat ia berjalan.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+Kunci 1 dipasang pada seluruh dulang. **<Term id="security-context">securityContext</Term>** simpan kunci-kunci itu. Tekan dua baris yang halang root.
+
+<Interactive name="SpotLines" lines={[{ text: 'spec:' }, { text: '  securityContext:' }, { text: '    runAsNonRoot: true', target: true }, { text: '    runAsUser: 1000', target: true }, { text: '    seccompProfile:' }, { text: '      type: RuntimeDefault' }]} prompt="Tekan setiap baris yang halang tukang masak jadi root." success="Betul! Bukan root, dan nombor pengguna biasa. Dua baris akhir hidupkan seccomp." />
+
+<Hint>Root ialah pengguna 0. Cari perkataan tentang pengguna.</Hint>
+</Card>
+
+<Card id="see-container" type="see">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['kubectl apply -f half.yaml']} fails={['kubectl apply -f half.yaml']} picture={false} label="half.yaml hanya ada kunci dulang. Ia ditolak: container mesti tetapkan allowPrivilegeEscalation=false dan buang SEMUA capabilities." />
+
+Kunci dulang belum cukup. Setiap container perlu dua lagi. **<Term id="capabilities">Capabilities</Term>** ialah cebisan kuasa root. Buang semuanya:
+
+```yaml
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+```
+</Card>
+
+<Card id="try-doctor" type="try">
+Mei letak kunci container pada dulang. API server tak kenal kunci itu di situ. Pindahkan ke dalam container.
+
+<Interactive name="YamlDoctor" file="tray.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  securityContext:\n    runAsNonRoot: true\n    allowPrivilegeEscalation: false\n  containers:\n    - name: web\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: tray\nspec:\n  securityContext:\n    runAsNonRoot: true\n  containers:\n    - name: web\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n      securityContext:\n        allowPrivilegeEscalation: false\n'} keep={['allowPrivilegeEscalation: false', 'runAsNonRoot: true']} keepHint="Simpan kedua-dua kunci. Pindahkan yang kedua sahaja." hint="allowPrivilegeEscalation duduk di bawah securityContext milik container itu sendiri." success="Berjaya! Setiap kunci di tempatnya." />
+</Card>
+
+<Card id="try-sim" type="try">
+Dua dulang menunggu dalam folder anda. `cat` kedua-duanya, kemudian apply yang pengawal terima.
+
+<Interactive name="FoodCourtSim" scenario="k6-locks" namespace="kedai" goal={{ podsReady: { selector: 'app=tray', namespace: 'kedai', count: 1 } }} hints={['Baca dulu: cat half.yaml, kemudian cat locked.yaml', 'Apply yang ada semua kunci: kubectl apply -f locked.yaml']} success="Dulang berkunci, berjalan dalam zon berkawal." />
+
+<Hint>Kira kuncinya. Pengawal mahu empat.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda tambah `readOnlyRootFilesystem: true`. Aplikasi tulis fail sementara ke `/tmp`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Gagal menulis. Beri volume emptyDir di /tmp.', correct: true, why: 'Baca sahaja bermakna seluruh bekas. Loker kecil yang boleh ditulis menyelesaikannya.' }, { label: 'Kubernetes buat /tmp boleh ditulis untuk anda', why: 'Tidak. Anda tambah volume itu sendiri.' }, { label: 'Pengawal tolak pod itu', why: 'Restricted tak minta kunci ini. Pod masuk; aplikasi gagal kemudian.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Di mana setiap kunci boleh diletak? Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'container', label: 'Container sahaja' }, { id: 'both', label: 'Pod atau container' }]} items={[{ label: '`allowPrivilegeEscalation`', bucket: 'container', why: 'Hanya container memilikinya.' }, { label: '`capabilities`', bucket: 'container', why: 'Setiap container buang kuasanya sendiri.' }, { label: '`readOnlyRootFilesystem`', bucket: 'container', why: 'Setiap container ada fail sendiri.' }, { label: '`runAsNonRoot`', bucket: 'both', why: 'Tetapkan sekali pada pod. Container pun boleh.' }, { label: '`seccompProfile`', bucket: 'both', why: 'Untuk seluruh pod, atau setiap container.' }, { label: '`runAsUser`', bucket: 'both', why: 'Untuk seluruh pod, atau setiap container.' }]} success="Siap! Bila kedua-dua tetapkan, nilai container yang menang." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kunci bekas dengan securityContext.
+</Card>
+
+<Card id="deeper" type="deeper">
+Restricted benarkan satu kuasa kembali: `NET_BIND_SERVICE`, untuk port bawah 1024. Banyak image berjalan sebagai root secara lalai. Dengan `runAsNonRoot: true` dan image root, kubelet enggan memulakannya: `CreateContainerConfigError`. Pilih image bukan root, atau tetapkan `runAsUser`.
+
+<Interactive name="Mission" id="k6-l05-rep" steps={[{ id: 'zone', text: 'Dalam kluster buang sahaja, buat zon restricted.', command: 'kubectl create namespace locks && kubectl label ns locks pod-security.kubernetes.io/enforce=restricted' }, { id: 'file', text: 'Tulis locked.yaml: pod busybox bernama locked, dengan kunci dari pelajaran ini. Jangan letak baris namespace.' }, { id: 'apply', text: 'Apply dalam zon itu.', command: 'kubectl apply -n locks -f locked.yaml' }, { id: 'id', text: 'Tanya ia berjalan sebagai siapa.', command: 'kubectl exec -n locks locked -- id' }]} success="Bekas anda sudah berkunci!" />
+</Card>

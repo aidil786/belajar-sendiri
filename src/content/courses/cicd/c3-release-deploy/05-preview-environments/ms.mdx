@@ -1,0 +1,72 @@
+---
+id: cicd-c3-l05
+world: 3
+title: "Pratonton untuk setiap PR"
+summary: "Anda akan belajar: cara setiap pull request dapat pautan live sendiri untuk dicuba sebelum merge."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, ConveyorBelt, SwipeJudge, Transcript]
+needs: [cicd-c3-l04]
+scenario: c3-preview
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare Workers: Previews", url: "https://developers.cloudflare.com/workers/previews/" }
+  - { label: "Cloudflare: Preview examples for CI", url: "https://developers.cloudflare.com/workers/previews/examples/" }
+  - { label: "Events: pull_request", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request" }
+---
+
+<Card id="hook" type="hook">
+Satu pull request ubah 300 baris CSS. Penyemak baca setiap baris. Adakah halaman menu masih nampak betul?
+
+<Interactive name="Choice" options={[{ label: 'Buka pautan live untuk PR ini dan tengok', correct: true, why: 'Tengok sendiri lebih baik daripada meneka. Pautan itu ialah pratonton.' }, { label: 'Baca CSS itu dengan sangat teliti', why: 'Pembaca yang teliti pun terlepas rupa halaman.' }, { label: 'Merge dulu, kemudian semak laman live', why: 'Nanti pelanggan anda yang jumpa masalah dulu.' }]} />
+</Card>
+
+<Card id="see-preview" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Buka', title: 'PR dibuka', text: 'Workflow bina branch itu dan muat naik pratonton.' }, { when: 'Pautan', title: 'Pautan sendiri', text: 'Pratonton dapat alamat sendiri. Penyemak klik dan cuba.' }, { when: 'Push', title: 'Commit baharu', text: 'Pratonton yang sama dikemas kini. Pautannya kekal.' }, { when: 'Tutup', title: 'PR ditutup', text: 'Padam pratonton itu. Pinggan dikemas.' }]} />
+
+**<Term id="preview-environment">Persekitaran pratonton</Term>** ialah pinggan rasa untuk satu pull request. Tekan setiap peringkat hayatnya.
+</Card>
+
+<Card id="try-run" type="try">
+`npx wrangler preview` muat naik pratonton Worker anda ke Cloudflare. Di sini ia jalan pada setiap pull request. Run.
+
+<Interactive name="ConveyorBelt" scenario="c3-preview" event="pr" events={['pr']} label="Satu pull request bina dan muat naik pratontonnya sendiri." />
+
+<Hint>Pilih Pull request, kemudian tekan Run.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang orang luar buka pull request dari fork mereka. Adakah pratonton akan deploy?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: fork tak dapat secret, jadi tiada token', correct: true, why: 'GitHub jauhkan secret anda daripada kod orang luar.' }, { label: 'Ya, sama macam anda', why: 'Pull request dari fork berjalan tanpa secret anda.' }, { label: 'Hanya kalau pull request itu kecil', why: 'Saiz tak penting. Secret tetap berkunci untuk fork.' }]} />
+</Card>
+
+<Card id="check-fork" type="check">
+Semak. Cari pull request yang pratontonnya gagal, dan baca ralat sebenar.
+
+<Interactive name="ConveyorBelt" scenario="c3-preview" task={{ type: 'event', job: 'preview', result: 'failure' }} success="Maksudnya: pull request dari fork tiada token Cloudflare, jadi tiada apa dimuat naik." />
+
+<Hint>Cuba pull request dari fork.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat pratonton: bagus, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Padam pratonton bila pull request ditutup.', good: true, why: 'Pratonton lama bertimbun dan mengelirukan orang.' }, { text: 'Beri pratonton pangkalan data production.', good: false, why: 'Ujian boleh ubah pesanan sebenar. Beri pratonton data ujian.' }, { text: 'Letak pautan pratonton pada pull request.', good: true, why: 'Penyemak jumpa dengan satu klik.' }, { text: 'Beri token deploy anda kepada pull request dari fork.', good: false, why: 'Kod orang luar boleh mencurinya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri setiap pull request pratontonnya sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Worker Previews masih dalam open beta. Setiap satu dapat pautan yang dikemas kini pada setiap push. Kemas bila pull request ditutup.
+
+<Interactive name="Transcript" title="bash" label="Padam pratonton bernama pr-7 tanpa ditanya dulu." lines={[{ cmd: 'npx wrangler preview delete --name "pr-7" --skip-confirmation' }]} />
+
+Workers Builds juga boleh letak pautan itu pada pull request. Latihan sebenar (pilihan): tambah workflow ini pada repo Worker ujian.
+</Card>

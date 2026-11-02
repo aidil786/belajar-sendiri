@@ -1,0 +1,70 @@
+---
+id: docker-d3-l07
+world: 3
+title: Publish, expose, host dan none
+summary: "Anda akan belajar: port mana yang laptop anda boleh capai, dan mod rangkaian host dan none."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, OrderHatch, Choice, KitchenSim, SortCards, Mission]
+needs: [docker-d3-l06]
+scenario: d3-expose
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Port publishing", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "Docker docs: Host network driver", url: "https://docs.docker.com/engine/network/drivers/host/" }
+  - { label: "Docker docs: None network driver", url: "https://docs.docker.com/engine/network/drivers/none/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-expose" commands={['docker ps', 'curl localhost:8080']} fails={['curl localhost:8080']} label="docker ps tunjuk web dengan 80/tcp dalam PORTS. curl localhost:8080 gagal: Couldn't connect to server." />
+
+web sedang berjalan. Lajur PORTS tulis `80/tcp`. Tapi curl kata `Couldn't connect to server`. Maksudnya: tiada tingkap dibuka di laptop anda.
+</Card>
+
+<Card id="see-hatch" type="see">
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }, { name: 'db', ports: [5432], image: 'postgres:18-alpine' }]} task={{ type: 'map', host: 8080, container: 'web', port: 80 }} prompt="Buka tingkap dari port laptop 8080 ke port web 80. Biarkan db." success="web ada tingkap. db kekal peribadi." />
+
+**Publish** port (`-p 8080:80`) buka <Term id="port-mapping">tingkap</Term> di laptop anda. `EXPOSE 80` dalam resepi cuma tulis port itu pada label.
+</Card>
+
+<Card id="predict" type="predict">
+db tunjuk `5432/tcp`, tanpa `-p`. Siapa boleh capai?
+
+<Interactive name="Choice" options={[{ label: 'Hanya bekas dalam rangkaiannya', correct: true, why: 'Expose cuma label. Tanpa -p, laptop anda tiada tingkap ke situ.' }, { label: 'Laptop anda, di localhost:5432', why: 'Tiada tingkap dibuka. Itu perlukan -p 5432:5432.' }, { label: 'Sesiapa di internet', why: 'Tiada yang di-publish, jadi tiada orang luar boleh ketuk.' }]} />
+</Card>
+
+<Card id="try-publish" type="try">
+Beri web tingkap di 8080. Bekas tak boleh dapat tingkap baru kemudian, jadi buat semula.
+
+<Interactive name="KitchenSim" scenario="d3-expose" goal={{ portMapped: { web: '8080:80' }, reachable: 'localhost:8080' }} hints={['Taip docker rm -f web', 'Taip docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'Kemudian curl localhost:8080']} success="Tingkap 8080 terbuka. Halaman sampai." />
+
+<Hint>Tingkap ditetapkan semasa bekas dibuat. Buang web, kemudian jalankan dengan `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="see-modes" type="see">
+Setiap bekas ada jenis talian. Yang asal ialah bridge. **host** kongsi talian laptop anda sendiri. none tiada talian langsung. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'bridge', label: 'bridge (asal)' }, { id: 'host', label: 'host' }, { id: 'none', label: 'none' }]} items={[{ label: 'Talian sendiri; laptop capai ia melalui -p', bucket: 'bridge', why: 'Susunan biasa. Tingkap tentukan apa yang laptop nampak.' }, { label: 'Guna port laptop secara terus', bucket: 'host', why: 'Aplikasi dengar terus di laptop anda.' }, { label: '-p dibuang', bucket: 'host', why: 'Tak perlu tingkap, jadi Docker buang -p dengan amaran.' }, { label: 'Hanya loopback di dalam', bucket: 'none', why: 'Internet pun tiada. Sesuai untuk kerja luar talian.' }]} success="bridge, host, none: tiga jenis talian." />
+</Card>
+
+<Card id="check-host-none" type="check">
+<Interactive name="KitchenReplay" scenario="d3-expose" commands={['docker run -d --name hostbox --network host -p 8082:80 alpine:3.22 sleep 300', 'docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8']} fails={['docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8']} label="Mod host cetak: WARNING: Published ports are discarded when using host network mode. Dengan none, ping kata: Network unreachable." />
+
+Kata-kata sebenar Docker: mod host buang `-p`. Dengan none, `Network unreachable`: bekas itu tiada talian keluar.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih port mana yang laptop anda boleh capai.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-p 8080:80` dengar di semua kad rangkaian, jadi jiran Wi-Fi mungkin boleh capai. `-p 127.0.0.1:8080:80` simpan tingkap untuk laptop anda sahaja. `-P` buka tingkap rawak untuk setiap port expose. Di Docker Desktop, mod host perlukan versi baru; semak docs.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d3-l07-rep" steps={[{ id: 'local', text: 'Publish untuk laptop anda sahaja.', command: 'docker run -d --name web -p 127.0.0.1:8080:80 nginx:1.30-alpine' }, { id: 'port', text: 'Tengok tingkap itu.', command: 'docker port web' }, { id: 'none', text: 'Cuba bekas tanpa talian.', command: 'docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f web' }]} success="Anda buka tingkap yang perlu sahaja." />
+</Card>

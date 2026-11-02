@@ -1,0 +1,72 @@
+---
+id: cicd-c1-l04
+world: 1
+title: Maklum balas pantas dan ujian flaky
+summary: "Anda akan belajar: cara dapat berita buruk dengan cepat, dan apa nak buat dengan ujian yang tak tetap pendirian."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, OrderList, TimelineTap, SwipeJudge]
+needs: [cicd-c1-l03]
+scenario: c1-typo
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+  - { label: "Re-running workflows and jobs", url: "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs" }
+---
+
+<Card id="hook" type="hook">
+Anda push. Pipeline jalan selama 40 minit. Kemudian ia gagal kerana salah taip. 40 minit hilang begitu sahaja! Macam mana nak tahu lebih awal?
+
+<Interactive name="Choice" options={[{ label: 'Jalankan semakan cepat dulu', correct: true, why: 'Semakan salah taip ambil beberapa saat. Letak di depan.' }, { label: 'Kurangkan push', why: 'Nanti setiap push bawa lebih banyak perubahan, dan lebih banyak boleh rosak.' }, { label: 'Berhenti jalankan pipeline', why: 'Nanti salah taip itu sampai kepada pengguna.' }]} />
+</Card>
+
+<Card id="try-predict" type="predict">
+Ada salah taip dalam kod.
+
+<Interactive name="ConveyorBelt" scenario="c1-typo" task={{ type: 'predict' }} success="Lint tangkap dalam beberapa saat!" />
+
+Semakan cepat pergi dulu, jadi berita buruk sampai cepat. Itulah **<Term id="fast-feedback">maklum balas pantas</Term>** (fast feedback).
+</Card>
+
+<Card id="try-order" type="try">
+Susun semakan ini. Yang paling cepat di atas.
+
+<Interactive name="OrderList" items={['Lint (10 saat)', 'Unit test (1 minit)', 'Build (3 minit)', 'End-to-end test (12 minit)']} label="Paling cepat di atas" success="Cepat dulu! Kebanyakan kesilapan muncul dalam minit pertama." />
+</Card>
+
+<Card id="see-cache" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-first-pipeline" events={['push-main', 'pr']} task={{ type: 'cacheHit' }} success="Jalan pintas! Pakej datang dari cache." />
+
+Run dua kali. Run kedua langkau muat turun yang lambat. Cache buat setiap run lebih laju.
+</Card>
+
+<Card id="see-flaky" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Run 1', title: '✓ Lulus', text: 'Commit 3f9c2a7. Kesemua 42 ujian lulus.' }, { when: 'Run 2', title: '✗ Gagal', text: 'Commit yang sama. Satu ujian tamat masa sambil tunggu satu halaman.' }, { when: 'Run 3', title: '✓ Lulus', text: 'Commit yang sama lagi. Hijau.' }]} />
+
+Hidangan sama, tiga kali rasa, dua jawapan. Ujian begini dipanggil **<Term id="flaky-test">flaky test</Term>** (ujian tak tetap).
+</Card>
+
+<Card id="try-swipe" type="try">
+Ujian anda flaky. Cara baiki yang baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tekan re-run sampai ia jadi hijau', good: false, why: 'Masalahnya kekal. Lama-lama tiada siapa percaya run merah.' }, { text: 'Tunggu sampai halaman sedia, bukan 2 saat tetap', good: true, why: 'Tunggu benda sebenar hentikan masalah masa.' }, { text: 'Beri setiap ujian data barunya sendiri', good: true, why: 'Ujian yang kongsi data boleh ganggu satu sama lain.' }, { text: 'Tanda, jejak, dan baiki minggu ini', good: true, why: 'Masalah yang ada pemilik akan dibaiki.' }, { text: 'Padam setiap ujian yang pernah gagal', good: false, why: 'Nanti pepijat sebenar terus lalu.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Pasukan anda tekan re-run pada setiap run merah. Apa jadi lepas ni?
+
+<Interactive name="Choice" options={[{ label: 'Orang tak percaya merah lagi, dan pepijat sebenar terlepas', correct: true, why: 'Run merah sepatutnya bermaksud berhenti. Ujian flaky ajar orang abaikannya.' }, { label: 'Ujian jadi lebih laju', why: 'Re-run buat masa menunggu lebih lama, bukan lebih pendek.' }, { label: 'Tiada apa berubah', why: 'Kepercayaan hilang sedikit demi sedikit, setiap kali re-run.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh dapat maklum balas pantas dan uruskan ujian flaky.
+</Card>
+
+<Card id="deeper" type="deeper">
+Banyak pasukan sasarkan maklum balas CI dalam kira-kira sepuluh minit. Cara nak laju: cache, job serentak dan penapis laluan (Dunia C2). GitHub boleh re-run job yang gagal sahaja. Berguna, tapi tetap baiki ujian flaky itu.
+
+Latihan sebenar (pilihan): buka sepuluh run terakhir repo anda. Ada commit yang merah, kemudian hijau, tanpa perubahan? Anda dah jumpa flaky test.
+</Card>

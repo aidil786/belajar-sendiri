@@ -1,0 +1,72 @@
+---
+id: iac-t2-l02
+world: 2
+title: Fail tfvars
+summary: "Anda akan belajar: simpan nilai variable dalam fail, dan nilai mana yang menang."
+minutes: 3
+xp: 15
+interactives: [Choice, TofuSim, OrderList, SwipeJudge]
+needs: [iac-t2-l01]
+scenario: t2-tfvars
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: variable definition precedence", url: "https://opentofu.org/docs/language/values/variables/#variable-definition-precedence" }
+---
+
+<Card id="hook" type="hook">
+Anda taip `-var shop=…` setiap kali membina. Satu hari anda akan terlupa. Di mana nilai itu boleh disimpan?
+
+<Interactive name="Choice" options={[{ label: 'Dalam fail nilai di sebelah pelan', correct: true, why: 'Tulis sekali. OpenTofu baca fail itu.' }, { label: 'Dalam kepala anda', why: 'Kepala boleh lupa. Fail tidak.' }, { label: 'Sebagai default dalam variables.tf, untuk setiap kedai', why: 'Default sesuai untuk satu kedai. Setiap kedai perlu nilai sendiri.' }]} />
+</Card>
+
+<Card id="see-auto" type="see">
+`terraform.tfvars` sudah simpan nama kedai. Taip `tofu plan`. Kali ini tiada soalan.
+
+<Interactive name="TofuSim" scenario="t2-tfvars" open="terraform.tfvars" goal={{ planSummary: { add: 1 }, typed: '^tofu plan' }} hints={['Taip tofu plan dan tekan Enter.']} success="Tiada soalan. Nilai itu datang dari terraform.tfvars." />
+
+**<Term id="tfvars">Fail .tfvars</Term>** simpan nilai. `terraform.tfvars` dibaca sendiri.
+</Card>
+
+<Card id="predict" type="predict">
+`penang.tfvars` simpan kedai Penang. Anda taip `tofu plan -var-file=penang.tfvars`. Nama kedai mana yang menang?
+
+```hcl
+shop   = "Kedai Kancil Penang"
+tables = 8
+```
+
+<Interactive name="Choice" options={[{ label: 'Kedai Kancil Penang', correct: true, why: 'Fail yang anda sebut di baris arahan menang atas terraform.tfvars.' }, { label: 'Kedai Kancil', why: 'terraform.tfvars dibaca dulu. Fail yang anda sebut datang kemudian dan menang.' }, { label: 'OpenTofu tanya yang mana satu', why: 'Ia tak pernah tanya. Satu urutan yang jelas yang tentukan.' }]} />
+</Card>
+
+<Card id="try-penang" type="try">
+Bina papan tanda Penang: `tofu apply -var-file=penang.tfvars`, kemudian `yes`.
+
+<Interactive name="TofuSim" scenario="t2-tfvars" open="penang.tfvars" goal={{ fileContains: { 'sign.txt': 'Penang' } }} hints={['Taip tofu apply -var-file=penang.tfvars', 'Baca plan: Penang, 8 meja. Kemudian taip yes.']} success="Kedai Kancil Penang: 8 tables. Satu pelan, satu fail untuk setiap kedai." />
+
+<Hint>`tofu apply -var-file=penang.tfvars`, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Siapa menang? Letak yang paling lemah di atas. Yang kemudian menang atas yang awal.
+
+<Interactive name="OrderList" items={['default dalam variables.tf', 'TF_VAR_shop, environment variable', 'terraform.tfvars', 'fail yang berakhir dengan .auto.tfvars', '-var atau -var-file di baris arahan']} label="Paling lemah di atas" success="Baris arahan menang atas fail. Fail menang atas default." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Selamat untuk commit ke Git?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'penang.tfvars dengan nama kedai dan 8 meja', good: true, why: 'Tetapan biasa. Rakan sepasukan perlukannya.' }, { text: 'prod.tfvars dengan kata laluan pangkalan data', good: false, why: 'Rahsia tak pernah masuk Git. Hantar dengan cara lain (Dunia T3 dan T4).' }, { text: 'Satu baris .gitignore yang halang secret.tfvars', good: true, why: 'Git tak akan ambilnya secara tak sengaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan nilai dalam fail .tfvars dan tahu yang mana menang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Mana-mana fail yang berakhir dengan `.auto.tfvars` juga dibaca sendiri, ikut susunan nama. `export TF_VAR_tables=6` beri `var.tables` nilai dari shell anda. Dalam pipeline, `-input=false` halang OpenTofu daripada bertanya. Nilai yang tiada akan terus gagal, bukan menunggu selama-lamanya.
+</Card>

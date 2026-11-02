@@ -1,0 +1,78 @@
+---
+id: iac-t3-l02
+world: 3
+title: "Locking: one builder at a time"
+summary: "You will learn: why the register gets a busy sign, and what to do when it is stuck."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, SpotLines, OrderList, CommandBuilder, SwipeJudge, Mission]
+needs: [iac-t3-l01]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: state locking", url: "https://opentofu.org/docs/language/state/locking/" }
+  - { label: "tofu force-unlock", url: "https://opentofu.org/docs/cli/commands/force-unlock/" }
+  - { label: "tofu plan (-lock, -lock-timeout)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: s3 backend locking", url: "https://opentofu.org/docs/language/settings/backends/s3/" }
+---
+
+<Card id="hook" type="hook">
+Aina's `tofu apply` is halfway done. Ben starts his own apply on the same register. What should happen to Ben's run?
+
+<Interactive name="Choice" options={[{ label: 'It stops: the register is busy', correct: true, why: 'Two builders writing one register at once could tear it.' }, { label: 'Both run, and the faster one wins', why: 'The register could end up with half of each. That breaks it.' }, { label: "Ben's run deletes Aina's work", why: 'A lock stops Ben before he writes anything.' }]} />
+</Card>
+
+<Card id="see-lock" type="see">
+<Interactive name="Transcript" title="bash" label="A real error. Ben's tofu plan stops with Error acquiring the state lock. The Lock Info shows an ID, the path terraform.tfstate, the operation OperationTypeApply and Who: root@aina-laptop." lines={[{ cmd: 'tofu plan' }, { out: 'Error: Error acquiring the state lock', color: 'red' }, { out: '\nError message: resource temporarily unavailable\nLock Info:\n  ID:        94da26d5-0aeb-a021-8eda-d41c2046f8f1\n  Path:      terraform.tfstate\n  Operation: OperationTypeApply\n  Who:       root@aina-laptop\n  Version:   1.13.5\n  Created:   2026-11-01 13:13:45.403003532 +0000 UTC\n  Info:\n\nOpenTofu acquires a state lock to protect the state from being written\nby multiple users at the same time. Please resolve the issue above and try\nagain. For most commands, you can disable locking with the "-lock=false"\nflag, but this is not recommended.' }]} />
+
+A **<Term id="state-lock">state lock</Term>** is a "busy" sign on the register. Ben's plan stopped at once. Nothing changed.
+</Card>
+
+<Card id="try-who" type="try">
+Who is building right now? Tap that line.
+
+<Interactive name="SpotLines" prompt="Tap the line that names who holds the lock." lines={[{ text: 'Lock Info:' }, { text: '  ID:        94da26d5-0aeb-a021-8eda-d41c2046f8f1' }, { text: '  Path:      terraform.tfstate' }, { text: '  Operation: OperationTypeApply' }, { text: '  Who:       root@aina-laptop', target: true }, { text: '  Version:   1.13.5' }, { text: '  Created:   2026-11-01 13:13:45.403003532 +0000 UTC' }]} success="Aina's laptop holds it. Ask her first." />
+
+<Hint>Look for the word Who.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Ben's run hit a lock. Put his next steps in order.
+
+<Interactive name="OrderList" items={['Read Who and Created in the error', 'Ask that person, or check the pipeline', 'Wait for their run to finish, then try again', 'Only if their run died: force-unlock with the ID']} label="First step at the top" success="Ask, wait, and only then unlock." />
+</Card>
+
+<Card id="predict" type="predict">
+Ben is in a hurry. Can he just add `-lock=false`?
+
+<Interactive name="Choice" options={[{ label: 'No: then two runs can write at once', correct: true, why: 'The busy sign is there to protect the register. Skipping it risks a torn register.' }, { label: 'Yes, it is only a warning', why: 'It is an error, and the run stopped. The docs say -lock=false is not recommended.' }, { label: 'Yes, if he types fast', why: 'Speed does not help. Two writers can still clash.' }]} />
+</Card>
+
+<Card id="try-unlock" type="try">
+Aina's laptop crashed mid-apply. Her lock stayed behind. Build the careful fix.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'talk to OpenTofu' }, { text: 'force-unlock', means: 'take away a stuck busy sign' }, { text: 'LOCK_ID', means: 'the ID from the error' }]} decoys={[{ text: '-lock=false', means: 'ignore the sign: risky' }, { text: 'destroy', means: 'delete everything: never for this' }]} success="tofu force-unlock LOCK_ID. Careful: only for a run that is really dead." />
+
+<Hint>Three pieces: the tool, the command, then the ID.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Swipe: good teamwork, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: "Waited for Aina's apply to finish, then planned again", good: true, why: 'The lock did its job. Now the register is free.' }, { text: 'Added -lock=false to get past the error', good: false, why: 'Two writers at once can break the register.' }, { text: 'Force-unlocked while the pipeline was still applying', good: false, why: 'The run was alive. Now two runs can write.' }, { text: 'Used -lock-timeout=5m so the run waits its turn', good: true, why: 'OpenTofu keeps trying for 5 minutes before it gives up.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a lock error and free a stuck lock safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Most shared backends lock: `s3` with `use_lockfile = true`, `gcs`, `azurerm`, `pg`. Terraform's docs call DynamoDB locking for `s3` deprecated; OpenTofu keeps both. The local backend uses the computer's own file lock. That is how this real error happened: two runs on one machine.
+
+Real rep (optional): two terminals, one folder, one register.
+
+<Interactive name="Mission" id="iac-t3-l02-rep" steps={[{ id: 'build', text: 'In a practice folder with one terraform_data resource, build once.', command: 'tofu init && tofu apply -auto-approve' }, { id: 'change', text: 'Change its input. In terminal 1, start an apply. Leave it at "Enter a value".', command: 'tofu apply' }, { id: 'clash', text: 'In terminal 2, plan. Read the lock error.', command: 'tofu plan' }, { id: 'free', text: 'Back in terminal 1, type no. Plan again in terminal 2: it works.' }]} success="You saw a real lock, and it let go by itself." />
+</Card>

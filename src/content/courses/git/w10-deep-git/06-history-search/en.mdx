@@ -1,0 +1,80 @@
+---
+id: git-w10-l06
+world: 10
+title: Search your history
+summary: "You will learn: how to find when text changed, where it lives now, and who touched each line."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, Sim, SpotLines, SortCards]
+needs: [git-w10-l05]
+scenario: w10-search
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git log (-S, -G, --author, --grep)", url: "https://git-scm.com/docs/git-log" }
+  - { label: "git grep", url: "https://git-scm.com/docs/git-grep" }
+  - { label: "git blame", url: "https://git-scm.com/docs/git-blame" }
+  - { label: "git shortlog", url: "https://git-scm.com/docs/git-shortlog" }
+---
+
+<Card id="hook" type="hook">
+A customer asks: "When did the price RM10 appear?" Five commits, three people. Reading every change takes ages. What is faster?
+
+<Interactive name="Choice" options={[{ label: 'Ask Git to search the history', correct: true, why: 'Git can find the exact commit in a second. Let us see how.' }, { label: 'Read every commit by hand', why: 'That works for five commits. Not for five thousand.' }, { label: 'Guess from the dates', why: 'Guessing is slow and unsure. Git can search for you.' }]} />
+</Card>
+
+<Card id="see-pickaxe" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git log -S "TODO" --oneline']} label="git log -S TODO lists two commits: Fix the footer phone, which removed TODO, and Add a footer, which added it." />
+
+`git log -S "TODO"` finds commits that added or removed that text. People call it the **<Term id="pickaxe">pickaxe</Term>**. Here, one commit added TODO and one removed it.
+</Card>
+
+<Card id="try-price" type="try">
+Your turn. Which commit added "RM10"?
+
+<Interactive name="Sim" scenario="w10-search" panels={[]} goal={{ typed: '-S\\s*"?RM10' }} hints={['Use the pickaxe: git log -S', 'Type git log -S "RM10" --oneline']} success="Found it! Add the price brought in RM10." />
+
+<Hint>Type `git log -S "RM10" --oneline`.</Hint>
+</Card>
+
+<Card id="see-grep" type="see">
+`git grep` searches the files Git tracks, as they are now. `-n` adds line numbers.
+
+<Interactive name="SpotLines" scenario="w10-search" commands={['git grep -n footer']} targets="^style\.css" prompt="Tap the match inside the stylesheet." success="Yes! style.css line 1 says footer." />
+</Card>
+
+<Card id="see-blame" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git blame index.html']} label="git blame index.html: line 1 from You, line 2 from Aisyah, line 3 from Aisyah. Each line has a commit id and a date." />
+
+`git blame` shows who last changed each line, and in which commit. It is for finding context, not for blaming people!
+</Card>
+
+<Card id="predict" type="predict">
+<Term id="blame">Blame</Term> says Aisyah last changed the footer line. Did Aisyah add the footer?
+
+<Interactive name="Choice" options={[{ label: 'Not sure. Blame shows only the last change', correct: true, why: 'Ben added the footer. Aisyah fixed its phone number later. Use log -S to see the first one.' }, { label: 'Yes, blame shows who wrote it first', why: 'Blame shows the newest change to each line, not the first.' }, { label: 'No, blame always shows the oldest author', why: 'It is the other way: blame shows the latest change.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which tool answers each question best?
+
+<Interactive name="SortCards" buckets={[{ id: 'pickaxe', label: 'git log -S' }, { id: 'grep', label: 'git grep' }, { id: 'blame', label: 'git blame' }]} items={[{ label: 'Which commit removed TODO?', bucket: 'pickaxe', why: 'The pickaxe finds commits that add or remove text.' }, { label: 'Which files mention Kancil today?', bucket: 'grep', why: 'git grep searches the files as they are now.' }, { label: 'Who last edited line 2?', bucket: 'blame', why: 'Blame names the last change to each line.' }, { label: 'When did RM10 first appear?', bucket: 'pickaxe', why: 'The oldest commit in the list added it.' }, { label: 'Where is the word footer used?', bucket: 'grep', why: 'Search the current files with git grep.' }]} success="Sorted! When: log -S. Where: grep. Who last: blame." />
+</Card>
+
+<Card id="see-shortlog" type="see">
+<Interactive name="TermReplay" scenario="w10-search" commands={['git shortlog -sn HEAD']} label="git shortlog -sn HEAD counts commits per person: Aisyah 2, Ben 2, You 1." />
+
+`git shortlog -sn` counts commits per person, the most first. Handy for a thank-you note in your release.
+</Card>
+
+<Card id="win" type="win">
+You can now find when, where and who in your project's history.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git log -G "regex"` matches any changed line, not just added or removed text. `git log --author=Ben` shows one person's commits. `git log --grep=footer` searches the messages. Add `-p` to see each change. `git blame -L 2,3 file` looks at lines 2 to 3 only.
+
+<Interactive name="TermReplay" scenario="w10-search" commands={['git log --author=Ben --oneline', 'git log --grep=footer --oneline']} label="Ben made Style the footer and Add a footer. Three commit messages mention footer." />
+</Card>

@@ -1,0 +1,64 @@
+---
+id: git-w05-l12
+world: 5
+title: Ruleset, perlindungan, CODEOWNERS
+summary: "Anda akan belajar: cara peraturan jaga main, dan cara CODEOWNERS pilih reviewer."
+minutes: 4
+xp: 20
+interactives: [Choice, PracticeRepo, SortCards, TermReplay, SwipeJudge]
+needs: [git-w05-l11]
+scenario: w05-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About protected branches", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+  - { label: "About rulesets", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets" }
+  - { label: "About code owners", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners" }
+---
+
+<Card id="hook" type="hook">
+Sam merge (cantum) PR dia sendiri tengah malam. Ujiannya dah gagal. Laman kelab pun rosak! Macam mana pasukan boleh elak perkara ini?
+
+<Interactive name="Choice" options={[{ label: 'Letak peraturan pada main: semakan mesti lulus dulu', correct: true, why: 'Peraturan berfungsi setiap kali, walaupun tengah malam.' }, { label: 'Minta Sam berjanji jari kelingking', why: 'Janji memang manis. Peraturan tetap berfungsi bila orang mengantuk.' }, { label: 'Tarik akses semua orang', why: 'Lepas itu tiada siapa boleh bantu. Peraturan lebih baik.' }]} />
+</Card>
+
+<Card id="try-rules" type="try">
+**<Term id="branch-protection">Perlindungan branch</Term>** (branch protection) letak peraturan pada branch (cabang). Hidupkan peraturan yang perlukan semakan lulus. Kemudian tengok PR Sam.
+
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} pulls={[{ number: 40, title: 'Buat logo berpusing', body: 'Logo berpusing bila tetikus lalu di atasnya.', author: 'sam', from: 'spin', to: 'main', state: 'open', checks: [{ name: 'test', status: 'fail' }], files: [{ path: 'style.css', diff: ['@@ -0,0 +1 @@', '+.logo:hover { animation: spin 1s; }'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: false }, { id: 'requireChecks', label: 'Perlu semua semakan lulus', on: false }, { id: 'linearHistory', label: 'Simpan sejarah dalam satu garis lurus', on: false }] }} task={{ type: 'toggleRule', rule: 'requireChecks', on: true }} success="Peraturan dah hidup! Buka Pull request: PR Sam kini disekat sampai ujiannya lulus." />
+
+<Hint>Hidupkan "Perlu semua semakan lulus".</Hint>
+</Card>
+
+<Card id="see-rulesets" type="see">
+**<Term id="ruleset">Ruleset</Term>** ialah cara baru untuk tambah peraturan. Beberapa ruleset boleh bertindih pada satu branch. Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'classic', label: 'Peraturan perlindungan branch' }, { id: 'ruleset', label: 'Ruleset' }]} items={[{ label: 'Hanya satu boleh berlaku pada satu branch', bucket: 'classic', why: 'Satu branch, satu peraturan perlindungan.' }, { label: 'Beberapa boleh berlaku serentak', bucket: 'ruleset', why: 'Ruleset boleh bertindih. Peraturan paling ketat menang.' }, { label: 'Boleh lindungi tag juga', bucket: 'ruleset', why: 'Ruleset boleh sasarkan branch atau tag.' }, { label: 'Sesiapa yang boleh baca repo boleh nampak', bucket: 'ruleset', why: 'Jadi semua orang tahu peraturannya, bukan admin sahaja.' }]} success="Dah tersusun! Kedua-duanya jaga main. Ruleset boleh buat lebih." />
+</Card>
+
+<Card id="see-owners" type="see">
+<Interactive name="TermReplay" scenario="w05-l12-ms" commands={['cat .github/CODEOWNERS']} label="cat tunjuk fail CODEOWNERS. Baris pertama: bintang, at-aina. Kemudian bintang titik css, at-mei. Kemudian garis miring docs garis miring, at-ravi." />
+
+Fail **<Term id="codeowners">CODEOWNERS</Term>** beritahu siapa pemilik fail mana. GitHub minta pemilik itu review perubahan pada fail mereka. Secara automatik!
+</Card>
+
+<Card id="predict" type="predict">
+Satu PR ubah `style.css`. Siapa yang diminta buat review?
+
+<Interactive name="Choice" compact options={[{ label: '@mei', correct: true, why: 'Kedua-dua * dan *.css padan. Baris padan yang terakhir menang.' }, { label: '@aina', why: 'Baris * padan, tapi baris kemudian pun padan. Padanan terakhir menang.' }, { label: '@ravi', why: '/docs/ cuma untuk fail dalam folder docs.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Peraturan yang bagus untuk main, atau perlu baiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Perlu satu review yang meluluskan', good: true, why: 'Sepasang mata lagi boleh tangkap kesilapan.' }, { text: 'Perlu semua semakan lulus', good: true, why: 'Kod rosak tak masuk ke main.' }, { text: 'Biar semua orang force-push ke main', good: false, why: 'Force push boleh padam kerja orang lain.' }, { text: 'Biar sesiapa pun padam main', good: false, why: 'main ialah jantung repo. Jaga ia baik-baik.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lindungi main dengan peraturan dan pilih reviewer dengan CODEOWNERS.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peraturan juga boleh perlukan review code owner, komen yang selesai atau commit bertandatangan. Force push dan padam branch yang dilindungi disekat secara lalai. Code owner perlukan akses tulis ke repo. Fail CODEOWNERS boleh duduk dalam `.github/`, folder atas atau `docs/`. Ruleset boleh benarkan orang atau aplikasi terpilih langkau satu peraturan.
+</Card>

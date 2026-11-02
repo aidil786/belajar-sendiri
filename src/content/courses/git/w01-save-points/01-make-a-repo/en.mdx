@@ -1,0 +1,65 @@
+---
+id: git-w01-l01
+world: 1
+title: Make a repo
+summary: "You will learn: how to make Git start watching a folder."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w00-l04]
+scenario: w01-l01
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git init", url: "https://git-scm.com/docs/git-init" }
+  - { label: "gitglossary (repository)", url: "https://git-scm.com/docs/gitglossary" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Two files wobble in the diary folder: README.md and index.html. Git is not watching them." frames={[{ working: ['README.md', 'index.html'] }]} />
+
+You made a diary website. You want save points. But Git doesn't even know this folder exists!
+</Card>
+
+<Card id="see-init" type="see">
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init']} label="git init prints: Initialized empty Git repository in /home/you/diary/.git/" />
+
+`git init` tells Git: "Watch this folder." Now the folder is a **repository**. Most people say repo.
+</Card>
+
+<Card id="see-hidden" type="see">
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init', 'ls', 'ls -a']} label="After git init, ls shows README.md and index.html. ls -a also shows a hidden folder called .git." />
+
+`ls -a` lists all files, even hidden ones. See `.git`? That is the **.git folder**. Git keeps every save point inside it.
+</Card>
+
+<Card id="try-init" type="try">
+Make your diary a repo. Then find the hidden folder.
+
+<Interactive name="Sim" scenario="w01-l01" panels={[]} goal={{ repoAt: '/home/you/diary', cwd: '/home/you/diary', lastTyped: '^ls -a' }} hints={['Type git init and press Enter.', 'Now type ls -a to see hidden files too.']} success="There it is: .git! Your diary is a repo now." />
+
+<Hint>First type `git init`. Then type `ls -a`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You delete the `.git` folder. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Git forgets every save point. Your files stay.', correct: true, why: 'All the history lives in .git. Your normal files sit outside it.' }, { label: 'All your files vanish too', why: 'Your files live outside .git, so they stay.' }, { label: 'Nothing. Git keeps a backup.', why: 'There is no backup. The history is gone for good.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Plain `ls` did not show `.git`. Why not?
+
+<Interactive name="Choice" options={[{ label: 'Names that start with a dot are hidden', correct: true, why: 'ls skips dot names. ls -a shows them all.' }, { label: 'Git hides it after git init', why: 'Git does nothing special. Dot names are just hidden.' }, { label: 'It only appears after a commit', why: 'git init makes it right away.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now turn any folder into a Git repo.
+</Card>
+
+<Card id="deeper" type="deeper">
+Run `git init` once per project, inside the project folder. Never in your home folder! Running it twice is safe: Git just says "Reinitialized". Your first <Term id="branch">branch</Term> gets its name from the `init.defaultBranch` setting. Git 3.0 will use `main` by default.
+
+<Interactive name="TermReplay" scenario="w01-l01" commands={['git init', 'git init']} label="Running git init twice. The second time Git says: Reinitialized existing Git repository." />
+</Card>

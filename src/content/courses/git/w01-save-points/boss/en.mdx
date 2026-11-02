@@ -1,0 +1,61 @@
+---
+id: git-w01-boss
+world: 1
+title: "Diary site: 5 clean commits"
+summary: "You will learn: to build a diary site, one clean commit at a time."
+minutes: 6
+xp: 50
+interactives: [AreasScene, Challenge, Choice, Mission, LogCheck]
+needs: [git-w01-l12]
+scenario: w01-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Five files wobble in the diary folder: README.md, index.html, style.css, about.html and a junk file, debug.log." frames={[{ working: ['README.md', 'index.html', 'style.css', 'about.html', { name: 'debug.log', tag: 'notReady' }] }]} />
+
+Your diary site is ready. Four real files and one junk log. Can you save it as five clean commits?
+</Card>
+
+<Card id="see-plan" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} label="The files leave the working folder. Five commits line up in the repository: Add README, Add home page, Add purple style, Ignore log files, Add about page." frames={[{ working: ['README.md', 'index.html', 'style.css', '.gitignore', 'about.html'], repo: [] }, { working: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }, { name: 'Add purple style', kind: 'commit' }, { name: 'Ignore log files', kind: 'commit' }, { name: 'Add about page', kind: 'commit' }] }]} />
+
+Here is the **plan**: one change per commit. Each message is short and starts with an action word.
+</Card>
+
+<Card id="try-build" type="try">
+Build the site in five stages. Every message must be clean. Made a mistake? Press "Start again".
+
+<Interactive name="Challenge" stages={[{ title: 'Start the repo', text: 'Make the diary a repo. Then commit `README.md`.', scenario: 'w01-boss-1', goal: { repoAt: '/home/you/diary', commits: 1, cleanMessages: 1, lastCommitHas: ['README.md'] }, hints: ['Start with git init.', 'Then git add README.md and git commit -m "Add README"'] }, { title: 'Home page', text: 'Commit only `index.html`. Leave `style.css` for the next stage.', scenario: 'w01-boss-2', goal: { commits: 2, cleanMessages: 2, lastCommitHas: ['index.html'], lastCommitLacks: ['style.css'] }, hints: ['git add index.html puts just that file in the box.', 'Then git commit -m "Add home page"'] }, { title: 'Style', text: '`style.css` is new, and `index.html` now links to it. That is one change: commit both together.', scenario: 'w01-boss-3', goal: { commits: 3, cleanMessages: 3, lastCommitHas: ['style.css'], clean: true }, hints: ['git add style.css index.html', 'Then git commit -m "Add purple style"'] }, { title: 'Ignore the log', text: 'Hide every `.log` file with a `.gitignore`. Then commit the `.gitignore`.', scenario: 'w01-boss-4', goal: { commits: 4, cleanMessages: 4, lastCommitHas: ['.gitignore'], lastCommitLacks: ['debug.log'], noUntracked: true }, hints: ['Write the rule: echo "*.log" > .gitignore', 'Then git add .gitignore and git commit -m "Ignore log files"'] }, { title: 'About page', text: 'Commit `about.html` and its new link in `index.html`. Then admire `git log --oneline`.', scenario: 'w01-boss-5', goal: { commits: 5, cleanMessages: 5, lastCommitHas: ['about.html'], clean: true, noUntracked: true }, hints: ['git add about.html index.html', 'Then git commit -m "Add about page"'] }]} />
+
+<Hint>Stuck? Run `git status`. It tells you what is left to save.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Why did `style.css` and the link in `index.html` share one commit?
+
+<Interactive name="Choice" options={[{ label: 'They are one change: adding the style', correct: true, why: 'The link is useless without style.css. Together they make one change.' }, { label: 'Git needs two files in every commit', why: 'A commit can hold one file or many.' }, { label: 'To make fewer commits', why: 'Fewer is not the goal. One change per commit is.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Optional: build it again on your own computer. Same plan, real Git.
+
+<Interactive name="Mission" id="w01-boss-diary" steps={[{ id: 'folder', text: 'Make a folder for your site.', command: 'mkdir diary-site' }, { id: 'cd', text: 'Go inside it.', command: 'cd diary-site' }, { id: 'init', text: 'Make it a repo.', command: 'git init' }, { id: 'readme-add', text: 'Write a `README.md` in your editor. Put it in the box.', command: 'git add README.md' }, { id: 'readme-commit', text: 'Save it with a clean message.', command: 'git commit -m "Add README"' }, { id: 'pages', text: 'Make `index.html`, `style.css` and `about.html`. Commit each change on its own.' }, { id: 'ignore', text: 'Hide log files. Then add and commit your `.gitignore`.', command: 'echo "*.log" > .gitignore' }, { id: 'log', text: 'Print your history and copy it.', command: 'git log --oneline' }]} success="Your real diary has a clean history!" />
+</Card>
+
+<Card id="check-log" type="check">
+Paste your real `git log --oneline` below. The check runs on this page only. Nothing is sent anywhere.
+
+<Interactive name="LogCheck" min={5} />
+</Card>
+
+<Card id="win" type="win">
+You can now build a project with small, clean commits.
+</Card>

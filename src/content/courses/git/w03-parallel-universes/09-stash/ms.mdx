@@ -1,0 +1,71 @@
+---
+id: git-w03-l09
+world: 3
+title: Simpan kerja sementara dengan stash
+summary: "Anda akan belajar: simpan kerja separuh siap, tukar branch, dan ambil semula."
+minutes: 4
+xp: 20
+interactives: [Transcript, AreasScene, Sim, TermReplay, Choice, SpotLines]
+needs: [git-w03-l08]
+scenario: w03-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git stash", url: "https://git-scm.com/docs/git-stash" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="git switch main gagal: perubahan anda pada style.css akan ditimpa. Git minta anda commit atau stash dulu sebelum tukar branch." lines={[{ cmd: 'git switch main' }, { out: 'error: Your local changes to the following files would be overwritten by checkout:\n\tstyle.css\nPlease commit your changes or stash them before you switch branches.\nAborting' }]} />
+
+Tema gelap baru separuh siap. Tiba-tiba: ada pembaikan segera di main! Git tak benarkan anda tukar. Sekarang macam mana?
+</Card>
+
+<Card id="see-stash" type="see">
+<Interactive name="AreasScene" zones={['working']} zoneLabels={{ working: 'Folder anda' }} command="git stash" label="style.css, dengan perubahan belum siap, keluar dari folder dan masuk ke dalam laci. Folder anda bersih." frames={[{ working: [{ name: 'style.css', tag: 'changed' }] }, { working: [] }]} />
+
+`git stash` simpan perubahan yang belum siap dalam laci. Folder anda bersih semula, jadi anda boleh tukar branch. Laci itu ialah **<Term id="stash">stash</Term>** (simpanan sementara).
+</Card>
+
+<Card id="try-stash" type="try">
+Simpan kerja anda dalam laci. Kemudian tukar ke main.
+
+<Interactive name="Sim" scenario="w03-l09" panels={['areas']} goal={{ stashCount: 1, currentBranch: 'main' }} hints={['Mula-mula taip git stash.', 'Kemudian taip git switch main.']} success="Laci ditutup, folder bersih, dan anda di main." />
+
+<Hint>Dua arahan: `git stash`, kemudian `git switch main`.</Hint>
+</Card>
+
+<Card id="see-pop" type="see">
+<Interactive name="TermReplay" scenario="w03-l09" commands={['git stash', 'git stash pop']} label="git stash simpan kerja. git stash pop kembalikannya: style.css ditunjuk sebagai modified, dan entri stash dibuang." />
+
+Dah siap pembaikan? `git stash pop` keluarkan kerja paling baru dari laci. Ia kembali ke folder anda.
+</Card>
+
+<Card id="try-pop" type="try">
+Anda dah baiki main. Kembali ke `dark-mode` dan keluarkan kerja anda dari laci.
+
+<Interactive name="Sim" scenario="w03-l09b" panels={['areas']} goal={{ currentBranch: 'dark-mode', stashCount: 0, modified: ['style.css'] }} hints={['Taip git switch dark-mode.', 'Kemudian taip git stash pop.']} success="Tema gelap separuh siap anda dah kembali. Teruskan!" />
+
+<Hint>Tukar dulu. Kemudian `git stash pop`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda stash dua kali, kemudian pop sekali. Kerja mana yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Yang paling baru', correct: true, why: 'Stash macam timbunan. Yang terakhir masuk, keluar dulu.' }, { label: 'Yang paling lama', why: 'Pop ambil dari atas timbunan: yang paling baru.' }, { label: 'Kedua-duanya sekali gus', why: 'Setiap pop keluarkan satu entri sahaja.' }]} />
+</Card>
+
+<Card id="check-list" type="check">
+Ini laci dengan dua entri.
+
+<Interactive name="SpotLines" scenario="w03-l09c" commands={['git stash list']} targets="^stash@\{0\}" prompt="Ketik entri yang git stash pop akan keluarkan." success="stash@{0} sentiasa yang paling baru." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan kerja sementara dan ambil semula kemudian.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git stash -u` ambil juga fail baru yang belum dijejak. `git stash push -m "nota"` tambah label. `git stash apply` kembalikan kerja tapi simpan salinan dalam laci. `git stash drop` buang satu entri terus. Pop boleh bertembung dengan perubahan baru. Masa itu, penanda tertulis Updated upstream dan Stashed changes.
+</Card>

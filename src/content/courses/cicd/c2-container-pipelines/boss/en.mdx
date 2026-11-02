@@ -1,0 +1,85 @@
+---
+id: cicd-c2-boss
+world: 2
+title: Green line
+summary: "You will learn: to make every PR build, test and scan, and every merge ship a tagged image."
+minutes: 6
+xp: 50
+interactives: [ConveyorBelt, Choice, SortCards]
+needs: [cicd-c2-m2]
+scenario: c2-green-line
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "About service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-boss-push" event="fork-pr" label="A pull request from a fork runs the line. The build tries to push to ghcr.io and is denied." />
+
+Boss: the green line! Mei sends her first PR from a fork. The line turns red. Press Run and read the red line.
+</Card>
+
+<Card id="check-why" type="check">
+Plain words: a PR tried to push, with a read-only key. Should a PR push an image at all?
+
+<Interactive name="Choice" options={[{ label: 'No: build and test it, push only after the merge', correct: true, why: 'PR code is not reviewed yet. Only main fills the freezer.' }, { label: 'Yes, with permissions: write-all', why: 'Forks never get write keys, and strangers should not fill your freezer.' }, { label: 'Yes, but only from forks', why: 'Forks are exactly the PRs you trust least.' }]} />
+</Card>
+
+<Card id="try-push" type="try">
+Room 1: fix the yellow line. PRs should only build. Main should push.
+
+<Interactive name="ConveyorBelt" scenario="c2-boss-push" event="fork-pr" events={['fork-pr']} task={{ type: 'green' }} fixes={[
+  { label: 'push: true', text: '          push: true', why: 'That is the line you have. Fork PRs still try to push.' },
+  { label: 'push: false', text: '          push: false', why: 'Green, but now main never ships either.', correct: false },
+  { label: 'Push only when it is not a PR', text: "          push: ${{ github.event_name != 'pull_request' }}" }]}
+  success="Room 1 cleared! PRs build, main pushes." />
+
+<Hint>The event name for a PR is pull_request. Push when it is anything else.</Hint>
+</Card>
+
+<Card id="sort-events" type="check">
+Room 2: what happens where on the green line?
+
+<Interactive name="SortCards" buckets={[{ id: 'both', label: 'PR and main' }, { id: 'main', label: 'Merge to main only' }]} items={[{ label: 'Run the tests', bucket: 'both', why: 'Every change gets taste-tested.' }, { label: 'Build the image', bucket: 'both', why: 'A broken recipe shows up before the merge.' }, { label: 'Scan for critical CVEs', bucket: 'both', why: 'Catch a bad ingredient before it is merged.' }, { label: 'Log in to GHCR', bucket: 'main', why: 'Only main needs the freezer.' }, { label: 'Push a tagged image', bucket: 'main', why: 'Only reviewed, merged code ships.' }]} success="That is the green line: check everything, ship from main." />
+</Card>
+
+<Card id="try-db" type="try">
+Room 3: the API tests need Postgres, and they can't find it. Give the job a database.
+
+<Interactive name="ConveyorBelt" scenario="c2-service-db" task={{ type: 'green' }} fixes={[
+  { label: 'Redis service', text: '    runs-on: ubuntu-latest\n    services:\n      cache:\n        image: redis:8\n        ports:\n          - 6379:6379', why: 'Redis is a cache. The tests call Postgres on port 5432.' },
+  { label: 'Postgres service on port 5432', text: '    runs-on: ubuntu-latest\n    services:\n      db:\n        image: postgres:18\n        env:\n          POSTGRES_PASSWORD: test\n        options: --health-cmd pg_isready --health-interval 5s --health-retries 10\n        ports:\n          - 5432:5432' }]}
+  success="Room 3 cleared! The tests found their database." />
+
+<Hint>Read the red line: which port does nobody answer on?</Hint>
+</Card>
+
+<Card id="check-cve" type="check">
+Room 4: a PR's image has a CRITICAL CVE. What should the line do?
+
+<Interactive name="Choice" options={[{ label: 'Go red on the PR, so the bad pack never merges', correct: true, why: 'Fix the base image or package, push again, and the PR turns green.' }, { label: 'Pass the PR, and scan later on main', why: 'Then the hole is already merged. Catch it on the PR.' }, { label: 'Push the image, but with a warning tag', why: 'A warning label does not stop anyone from using the pack.' }]} />
+</Card>
+
+<Card id="predict-cve" type="predict">
+Final room: the whole line, with a CRITICAL CVE in the image. Tap the station that will stop it, then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-green-line-cve" event="pr" task={{ type: 'predict' }} success="Boss cleared! Tests pass, the scan stops the bad pack, nothing ships." />
+
+<Hint>The tests pass. Which job scans the image?</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now check every PR and ship every merge.
+</Card>
+
+<Card id="deeper" type="deeper">
+Here is the whole green line. Compose runs the tests. Then the image is built and scanned. Only main logs in and pushes. The scan comes before the push, so a bad pack never ships. Mission 2 puts this line in your own repo.
+
+<Interactive name="ConveyorBelt" scenario="c2-green-line" label="The whole green line. On a PR: tests, build, scan, no push. On main: the same, plus login and push." />
+</Card>

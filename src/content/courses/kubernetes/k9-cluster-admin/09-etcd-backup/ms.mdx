@@ -1,0 +1,91 @@
+---
+id: k8s-k9-l09
+world: 9
+title: Sandaran dan pemulihan etcd
+summary: "Anda akan belajar: fotokopi buku pesanan dengan etcdctl, dan pulihkan objek yang hilang dengan etcdutl."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l08]
+scenario: k9-etcd-backup
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: operating etcd clusters (backup and restore)", url: "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/" }
+  - { label: "etcd 3.7: disaster recovery", url: "https://etcd.io/docs/v3.7/op-guide/recovery/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 2 pagi, seseorang padam Deployment shop. YAML-nya tak pernah disimpan dalam Git. Apa yang masih boleh pulihkannya?
+
+<Interactive name="Choice" options={[{ label: 'Salinan buku pesanan (etcd) dari sebelum itu', correct: true, why: 'Ya. etcd simpan setiap objek. Salinan lama masih ada shop.' }, { label: 'kubectl rollout undo', why: 'Undo perlukan Deployment itu sendiri. Ia sudah hilang.' }, { label: 'Mulakan semula API server', why: 'API server baca etcd. etcd tiada lagi shop.' }]} />
+</Card>
+
+<Card id="see-save" type="see">
+<Interactive name="KubeReplay" scenario="k9-etcd-backup" picture={false} commands={['ssh dev-control-plane', 'etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db', 'exit']} label="Pada dev-control-plane, etcdctl simpan snapshot. Baris log-nya berakhir dengan Snapshot saved at /opt/backup.db dan Server version 3.7.0." />
+
+**<Term id="etcd-snapshot">etcd snapshot</Term>** ialah fotokopi buku pesanan. etcdctl minta salinan itu daripada etcd yang sedang berjalan. Simpan salinan itu di luar kluster.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan simpan. Setiap kepingan tunjuk maksudnya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'etcdctl', means: 'bercakap dengan etcd yang sedang berjalan' }, { text: '--endpoints=https://127.0.0.1:2379', means: 'tempat etcd mendengar' }, { text: '--cacert=/etc/kubernetes/pki/etcd/ca.crt', means: 'CA etcd: siapa tandatangan kad pengenalan' }, { text: '--cert=/etc/kubernetes/pki/etcd/server.crt', means: 'kad pengenalan yang CA etcd tandatangan' }, { text: '--key=/etc/kubernetes/pki/etcd/server.key', means: 'kunci rahsia untuk kad itu' }, { text: 'snapshot', means: 'urus snapshot' }, { text: 'save', means: 'buat satu sekarang' }, { text: '/opt/backup.db', means: 'tempat salinan disimpan' }]} decoys={[{ text: 'etcdutl', means: 'bekerja pada fail, bukan etcd yang sedang berjalan' }, { text: 'restore', means: 'pulihkan salinan (kerja etcdutl)' }]} success="Itulah sandaran gaya peperiksaan. Tiga flag sijil itu bahagian pentingnya." />
+
+<Hint>Alat, lokasi, tiga flag sijil, kemudian snapshot save dan failnya.</Hint>
+</Card>
+
+<Card id="see-hang" type="see">
+<Interactive name="KubeReplay" scenario="k9-etcd-backup" picture={false} commands={['ssh dev-control-plane', 'etcdctl snapshot save /opt/backup.db', 'exit']} label="Tanpa flag sijil, etcdctl cetak satu baris tentang fail sementara, kemudian menunggu. Pelajar tekan Ctrl+C." />
+
+Perangkap sebenar: tanpa flag sijil, etcdctl cetak satu baris dan tunggu selamanya. Tekan Ctrl+C. Kemudian tambah `--cacert`, `--cert` dan `--key`.
+</Card>
+
+<Card id="try-save" type="try">
+Giliran anda. Buka node pejabat, simpan snapshot, kemudian semak.
+
+<Interactive name="FoodCourtSim" scenario="k9-etcd-backup" goal={{ snapshotTaken: { path: '/opt/backup.db' }, typed: '^etcdutl .*snapshot status' }} hints={['Taip ssh dev-control-plane', 'Salin arahan etcdctl … snapshot save di bawah.', 'Semak: etcdutl --write-out=table snapshot status /opt/backup.db']} success="Disimpan dan disemak. Jadual itu tunjuk revision dan saiznya." />
+
+```bash
+etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db
+etcdutl --write-out=table snapshot status /opt/backup.db
+```
+</Card>
+
+<Card id="predict" type="predict">
+Pada etcd 3.7, anda taip `etcdctl snapshot status /opt/backup.db`. Apa berlaku?
+
+<Interactive name="Choice" options={[{ label: 'Ia cetak bantuan snapshot: status sudah pindah ke etcdutl', correct: true, why: 'Ya. Dalam 3.7, etcdctl hanya simpan. etcdutl baca dan pulihkan.' }, { label: 'Jadual dengan revision', why: 'Panduan lama tunjuk begitu. Dalam 3.7, guna etcdutl snapshot status.' }, { label: 'Ia pulihkan snapshot itu', why: 'status cuma membaca. Dan restore juga sudah pindah ke etcdutl.' }]} />
+</Card>
+
+<Card id="try-restore" type="try">
+Shop dipadam selepas snapshot diambil. **<Term id="etcdutl">etcdutl</Term>** pulihkan salinan ke folder baharu yang kosong. Kemudian tunjukkan etcd ke situ. Bahaya: objek yang lebih baharu hilang.
+
+<Interactive name="FoodCourtSim" scenario="k9-etcd-restore" goal={{ deploymentRestored: { name: 'shop' } }} hints={['Taip ssh dev-control-plane', 'Pulihkan: etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', 'Tunjukkan etcd ke situ dengan baris sed di bawah. Kemudian exit dan tunggu kira-kira 30 s.']} success="Shop sudah kembali, dengan uid lamanya dan dulang-dulangnya." />
+
+```bash
+etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db
+sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml
+```
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah pemulihan ikut urutan.
+
+<Interactive name="OrderList" items={['etcdutl snapshot status: salinan itu sihat?', 'etcdutl --data-dir <folder baharu> snapshot restore', 'Tunjukkan etcd.yaml ke folder baharu', 'Tunggu: etcd mula semula, kemudian API menjawab', 'kubectl get deployments']} label="Langkah pertama di atas" success="Itulah rutin pemulihan. Semak, pulihkan, tukar arah, tunggu, lihat." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sandarkan etcd dan pulihkan objek yang hilang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Node kind tiada etcdctl. Di sana, jalankannya dalam pod etcd. Hanya `/var/lib/etcd` dan sijil dikongsi dengan node itu.
+
+<Interactive name="KubeReplay" scenario="k9-etcd-kind" picture={false} commands={['kubectl -n kube-system exec etcd-dev-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db']} label="Pada kind, kubectl exec jalankan etcdctl dalam pod etcd. Snapshot disimpan di /var/lib/etcd/backup.db." />
+
+<Interactive name="Mission" id="k8s-k9-l09-real" steps={[{ id: 'save', text: 'Pada kluster kind latihan, simpan snapshot dalam pod etcd (arahan di atas).', command: 'kubectl -n kube-system exec etcd-<cluster>-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db' }, { id: 'copy', text: 'Salin keluar dari node, ke laptop anda.', command: 'docker cp <cluster>-control-plane:/var/lib/etcd/backup.db ./backup.db' }]} success="Snapshot etcd sebenar kini selamat di laptop anda." />
+</Card>

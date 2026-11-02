@@ -1,0 +1,81 @@
+---
+id: iac-t2-l06
+world: 2
+title: "for_each: one per item"
+summary: "You will learn: to make one copy per item with for_each, named by the item, not a number."
+minutes: 5
+xp: 25
+interactives: [Choice, TofuSim, SortCards]
+needs: [iac-t2-l05]
+scenario: t2-for-each
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: the for_each meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/for_each/" }
+  - { label: "OpenTofu: count", url: "https://opentofu.org/docs/language/meta-arguments/count/" }
+---
+
+<Card id="hook" type="hook">
+With `count`, closing mee rebuilt roti's file. You want each stall to keep its own place. What helps?
+
+<Interactive name="Choice" options={[{ label: 'Name each copy by its stall, not by a number', correct: true, why: 'That is for_each. Remove mee, and only mee goes.' }, { label: 'Never close a stall', why: 'Shops change. The blueprint should cope.' }, { label: 'Put mee last in the list', why: 'It works once. The next change brings the trap back.' }]} />
+</Card>
+
+<Card id="see-keys" type="see">
+This blueprint uses `for_each`. Type `tofu state list`.
+
+<Interactive name="TofuSim" scenario="t2-for-each" open="variables.tf" goal={{ lastTyped: '^tofu state list' }} hints={['Type tofu state list and press Enter.']} success={'stall["mee"], stall["nasi"], stall["roti"]. Names, not numbers.'} />
+
+**<Term id="for-each">for_each</Term>** makes one copy per item. Each copy is named by its key: `stall["mee"]`.
+</Card>
+
+<Card id="predict" type="predict">
+You remove "mee" from the set. What does the plan do?
+
+<Interactive name="Choice" options={[{ label: 'Destroy only stall["mee"]', correct: true, why: 'nasi and roti keep their names, so nothing else moves.' }, { label: 'Rewrite roti, then destroy the last one', why: 'That was count. for_each has no numbers to shift.' }, { label: 'Rebuild all three', why: 'Only the missing key goes.' }]} />
+</Card>
+
+<Card id="try-remove" type="try">
+Check it. In `variables.tf`, remove `"mee"` from the list. Then type `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t2-for-each" open="variables.tf" goal={{ planSummary: { add: 0, change: 0, destroy: 1 } }} hints={['Change the default to ["nasi", "roti"].', 'Then type tofu plan.']} success="0 to add, 0 to change, 1 to destroy. Only mee goes." />
+
+<Hint>Delete `"mee", ` from the default list, then plan.</Hint>
+</Card>
+
+<Card id="check-pick" type="check">
+count or for_each?
+
+<Interactive name="SortCards" buckets={[{ id: 'count', label: 'count' }, { id: 'each', label: 'for_each' }]} items={[{ label: 'Three helpers that are all the same', bucket: 'count', why: 'Identical copies: a number is enough.' }, { label: 'One file per stall name', bucket: 'each', why: 'Each copy has its own name.' }, { label: 'A list of stalls that changes often', bucket: 'each', why: 'Names stay put when items come and go.' }, { label: 'Switch one thing on or off', bucket: 'count', why: 'count = 1 or count = 0.' }, { label: 'A map of dish to price', bucket: 'each', why: 'for_each takes maps: key and value.' }]} success="Same copies: count. Named items: for_each." />
+</Card>
+
+<Card id="try-map" type="try">
+`for_each` takes a map too: `each.key` is the dish, `each.value` its price. Build the price tags: `tofu apply`, `yes`.
+
+<Interactive name="TofuSim" scenario="t2-prices" goal={{ fileContains: { 'nasi-price.txt': 'RM5' } }} hints={['Type tofu apply.', 'Read the plan: 2 to add. Type yes.', 'Then cat nasi-price.txt to read one tag.']} success="nasi: RM5 and teh: RM2. One file per map entry." />
+
+```hcl
+resource "local_file" "price" {
+  for_each = var.prices
+  filename = "${each.key}-price.txt"
+  content  = "${each.key}: RM${each.value}\n"
+}
+```
+</Card>
+
+<Card id="check-address" type="check">
+How do you name teh's price file in a command?
+
+<Interactive name="Choice" options={[{ label: '`local_file.price["teh"]`', correct: true, why: 'The key goes in quotes, inside square brackets.' }, { label: '`local_file.price[1]`', why: 'Numbers are for count. for_each uses keys.' }, { label: '`local_file.price.teh`', why: 'Close! The key needs ["…"].' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make one copy per item with for_each.
+</Card>
+
+<Card id="deeper" type="deeper">
+for_each takes a map or a set of strings. Turn a list into a set with `toset(var.stalls)`. The keys must be known before apply, so they can't come from random values. In a shell, quote addresses with brackets: `tofu state show 'local_file.stall["mee"]'`.
+</Card>

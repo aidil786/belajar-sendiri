@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l05
+world: 3
+title: Cluster DNS
+summary: "You will learn: to call a Service by name, even in another namespace."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, OrderList, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k3-l04]
+scenario: k3-dns
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: DNS for Services and Pods", url: "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" }
+  - { label: "Kubernetes: debug DNS", url: "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-dns" commands={['kubectl exec client -- wget -qO- -T 5 http://menu']} fails={['kubectl exec client -- wget -qO- -T 5 http://menu']} label="The client asks for http://menu. wget says: bad address 'menu'." />
+
+The menu moved to the kitchen zone. Now the client gets `bad address 'menu'`. Plain words: that name means nothing in this zone.
+</Card>
+
+<Card id="see-name" type="see">
+Every Service gets a name in the **<Term id="cluster-dns">cluster DNS</Term>**, the food court's directory. Put the parts of the full name in order.
+
+<Interactive name="OrderList" items={['menu (the Service)', 'kitchen (its namespace)', 'svc (it is a Service)', 'cluster.local (this cluster)']} label="Left to right, top first" success="menu.kitchen.svc.cluster.local: the full address." />
+</Card>
+
+<Card id="see-search" type="see">
+<Interactive name="KubeReplay" scenario="k3-dns" commands={['kubectl exec client -- cat /etc/resolv.conf']} label="The client's resolv.conf: a search list that starts with default.svc.cluster.local, and the DNS server 10.96.0.10." />
+
+Why does plain `shop` work in your own zone? The pod's search list adds `default.svc.cluster.local` for you. Other zones need their name.
+</Card>
+
+<Card id="try-call" type="try">
+Reach the menu from the client. Add its zone to the name.
+
+<Interactive name="FoodCourtSim" scenario="k3-dns" namespace="all" goal={{ reachable: { url: 'http://menu.kitchen', from: 'client' }, lastTyped: 'menu\\.kitchen' }} hints={['Type kubectl exec client -- wget -qO- -T 5 http://menu.kitchen']} success="Nasi lemak RM5! Service name plus zone did it." />
+
+<Hint>`http://menu.kitchen` is the Service `menu` in the namespace `kitchen`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A pod inside the kitchen zone calls `http://menu`. Does it work?
+
+<Interactive name="Choice" options={[{ label: 'Yes: its search list starts with its own zone', correct: true, why: 'Short names work inside the same namespace.' }, { label: 'No: you always need the full name', why: 'Inside the same zone, the short name is enough.' }, { label: 'Only from the default zone', why: 'Each pod searches its own zone first.' }]} />
+</Card>
+
+<Card id="check-names" type="check">
+The client lives in the zone `default`. Judge each address it uses.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'http://shop', good: true, why: 'shop is in the same zone. The short name works.' }, { text: 'http://menu', good: false, why: 'menu lives in kitchen. Add the zone.' }, { text: 'http://menu.kitchen', good: true, why: 'Service plus zone. Short and clear.' }, { text: 'http://menu.kitchen.svc.cluster.local', good: true, why: 'The full name works from anywhere.' }, { text: 'http://10.96.48.12', good: false, why: 'A Service IP is stable, but a new Service gets a new IP. Use the name.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now call any Service by name, in any namespace.
+</Card>
+
+<Card id="deeper" type="deeper">
+The directory is CoreDNS: pods in `kube-system` behind the Service `kube-dns` at 10.96.0.10. A headless Service's name returns each pod's own IP. If names fail everywhere, check CoreDNS first.
+
+Real rep (optional), on a throwaway kind cluster:
+
+<Interactive name="Mission" id="k3-l05-rep" steps={[{ id: 'dns', text: 'Find the directory pods.', command: 'kubectl get pods -n kube-system -l k8s-app=kube-dns' }, { id: 'search', text: 'Read the client’s search list.', command: 'kubectl exec client -- cat /etc/resolv.conf' }, { id: 'full', text: 'Call the shop by its full name.', command: 'kubectl exec client -- wget -qO- -T 5 http://shop.default.svc.cluster.local' }]} success="You read the food court's directory!" />
+</Card>

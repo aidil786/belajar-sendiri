@@ -1,0 +1,73 @@
+---
+id: linux-l3-l03
+world: 3
+title: "Ports and listening: ss"
+summary: "You will learn: what a port is, and how to see who answers each one."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SortCards, SpotLines, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l02]
+scenario: linux-l3-ports
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "Debian: /etc/services", url: "https://manpages.debian.org/trixie/manpages/services.5.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ports" intro={['curl -sS localhost:8080; echo $?']} network />
+
+A customer dials kedai, extension 8080. The real error says `Could not connect to server`. Plain words: nobody waits at that extension.
+</Card>
+
+<Card id="try-ports" type="try">
+The IP address reaches the building. The <Term id="port">port</Term> picks the extension inside. Some are famous. Match each job to its port.
+
+<Interactive name="SortCards" buckets={[{ id: 'p22', label: '22' }, { id: 'p80', label: '80' }, { id: 'p443', label: '443' }]} items={[{ label: 'ssh you@kedai', bucket: 'p22', why: 'SSH, the remote login line, uses 22.' }, { label: 'http://kedai.example', bucket: 'p80', why: 'Plain web pages use 80.' }, { label: 'https://kedai.example', bucket: 'p443', why: 'Sealed web pages use 443.' }]} success="22 for SSH, 80 for web, 443 for sealed web." />
+</Card>
+
+<Card id="see-ss" type="see">
+A program waiting by an extension is **listening**. `ss -tln` lists them: TCP, listening, numbers. Tap the line for the web counter.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:80        0.0.0.0:*', target: true }]} prompt="Tap the line for port 80." success="Port 80 is the web counter. Nobody listens on 8080." />
+</Card>
+
+<Card id="try-who" type="try">
+Who answers each port? Add `-p` for the program names. Only root may see them, so use `sudo`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ports" goal={{ lastTyped: '^sudo ss -\\w*p' }} hints={['Type sudo ss -tlnp', 'Read the users:(...) part at the end.']} solution={['sudo ss -tlnp']} success="sshd answers 22. nginx answers 80." />
+
+<Hint>Without sudo, the process column stays empty.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You stop nginx. Then you run `curl localhost`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'curl says it could not connect', correct: true, why: 'Nobody listens on 80 any more. The call is refused at once.' }, { label: 'curl waits for two minutes', why: 'A refusal comes at once. Waiting is a guard: a later lesson.' }, { label: 'curl shows an empty page', why: 'No program, no page at all.' }]} />
+</Card>
+
+<Card id="try-stop" type="try">
+Try it. Stop nginx, look with `ss -tln`, then start it again.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ports" goal={{ typed: '^sudo systemctl stop nginx', serviceActive: ['nginx'], portListening: [80] }} hints={['sudo systemctl stop nginx', 'ss -tln shows only 22 now.', 'sudo systemctl start nginx']} solution={['sudo systemctl stop nginx', 'ss -tln', 'sudo systemctl start nginx']} success="Port 80 went quiet, then came back with nginx." />
+</Card>
+
+<Card id="check" type="check">
+True or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'One address can have many ports listening.', good: true, why: 'kedai listens on 22 and 80 at once.' }, { text: 'Could not connect means the server is off.', good: false, why: 'Often the server is fine. Only that port has nobody.' }, { text: 'ss -tln shows ports by number.', good: true, why: '-n means numbers, not names like http.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now see which ports listen, and who answers them.
+</Card>
+
+<Card id="deeper" type="deeper">
+`ss -tln` letters: `t` TCP, `l` listening, `n` numbers, `p` programs. Add `u` for UDP. Old guides use `netstat`; Debian 13 doesn't install it. `/etc/services` lists famous port names.
+
+<Interactive name="Mission" id="linux-l3-l03-rep" steps={[{ id: 'ss', text: 'Linux or WSL: list listening ports and programs.', command: 'sudo ss -tlnp' }, { id: 'guess', text: 'Pick one port. Guess the program before you read it.' }]} success="You read a real machine's extensions." />
+</Card>

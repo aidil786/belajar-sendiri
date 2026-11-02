@@ -1,0 +1,80 @@
+---
+id: docker-d3-boss
+world: 3
+title: Data that survives
+summary: "You will learn: to run an app and Postgres whose data survives docker rm."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, SwipeJudge, LockerTest]
+needs: [docker-d3-l09]
+scenario: d3-boss-ready
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Docker docs: Volumes", url: "https://docs.docker.com/engine/storage/volumes/" }
+  - { label: "Docker docs: Networking overview", url: "https://docs.docker.com/engine/network/" }
+  - { label: "Postgres image on Docker Hub", url: "https://hub.docker.com/_/postgres" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-pg-novolume" commands={['docker exec db psql -U postgres -c "select * from orders;"', 'docker rm -f db', 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine', 'docker exec db psql -U postgres -c "select * from orders"']} fails={['docker exec db psql -U postgres -c "select * from orders"']} label="Last night's test: one order, then db is removed and started again. psql says relation orders does not exist." />
+
+Boss: Kedai Kancil opens tomorrow! Last night's test lost every order. Build it right: a shop and Postgres, with orders that survive `docker rm`.
+</Card>
+
+<Card id="try-room1" type="try">
+Room 1: make the pgdata locker and the shopnet phone line.
+
+<Interactive name="KitchenSim" scenario="d3-fresh" goal={{ volumeExists: ['pgdata'], networkExists: ['shopnet'] }} hints={['Type docker volume create pgdata', 'Type docker network create shopnet']} success="Room 1 cleared! A locker and a line are ready." />
+
+<Hint>One `docker volume create`, one `docker network create`.</Hint>
+</Card>
+
+<Card id="check-path" type="check">
+Room 2 starts Postgres 18. Where must the pgdata locker open?
+
+<Interactive name="Choice" options={[{ label: '`/var/lib/postgresql`', correct: true, why: 'Postgres 18 keeps its data under this folder.' }, { label: '`/var/lib/postgresql/data`', why: 'That is the old folder. Postgres 18 stops with an error there.' }, { label: '`/data`', why: 'Postgres does not keep its data there. pgdata would stay empty.' }]} />
+</Card>
+
+<Card id="try-room2" type="try">
+Room 2: start db on shopnet, with the pgdata locker. Then make an orders table.
+
+<Interactive name="KitchenSim" scenario="d3-boss-locker" goal={{ running: ['db'], networkHas: { shopnet: ['db'] }, containerEnv: { db: ['POSTGRES_PASSWORD'] }, tableInVolume: { pgdata: 'orders' } }} hints={['Type docker run -d --name db --network shopnet -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Type docker exec db psql -U postgres -c "create table orders (id int, dish text)"']} success="Room 2 cleared! The orders table lives in the locker." />
+
+<Hint>You need `--network shopnet`, `-e POSTGRES_PASSWORD=…` and `-v pgdata:/var/lib/postgresql`.</Hint>
+</Card>
+
+<Card id="check-host" type="check">
+The shop app needs to find db. Which setting works?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'DB_HOST=db', good: true, why: 'On shopnet, the name is the address.' }, { text: 'DB_HOST=localhost', good: false, why: 'That is the app box itself.' }, { text: 'DB_HOST=172.18.0.2', good: false, why: 'A new db may get a new address. Names stay.' }]} />
+</Card>
+
+<Card id="try-room3" type="try">
+Room 3: start web, the shop page, on shopnet. Open hatch 8080 for customers.
+
+<Interactive name="KitchenSim" scenario="d3-boss-db" goal={{ running: ['web'], networkHas: { shopnet: ['web', 'db'] }, portMapped: { web: '8080:80' }, reachable: 'localhost:8080' }} hints={['Type docker run -d --name web --network shopnet -p 8080:80 nginx:1.30-alpine', 'Then curl localhost:8080']} success="Room 3 cleared! Customers can see the shop." />
+
+<Hint>web needs both: `--network shopnet` and `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Before the last room: a quick locker check. Guess first, then run it.
+
+<Interactive name="LockerTest" mounts={['writable', 'volume', 'bind']} ask={['recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="try-final" type="try">
+Final room: throw db away with `docker rm -f`. Start it again on the same line and locker. Then show the orders.
+
+<Interactive name="KitchenSim" scenario="d3-boss-ready" goal={{ running: ['db', 'web'], networkHas: { shopnet: ['db', 'web'] }, tableInVolume: { pgdata: 'orders' }, typed: '^docker (container )?rm ', lastTyped: 'select', lastExit: 0 }} hints={['Type docker rm -f db', 'Type docker run -d --name db --network shopnet -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql postgres:18-alpine', 'Type docker exec db psql -U postgres -c "select * from orders"']} success="Boss cleared! The box is new, and the orders survived." />
+
+<Hint>Use the same run line as Room 2.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now run an app and a database whose data survives.
+</Card>

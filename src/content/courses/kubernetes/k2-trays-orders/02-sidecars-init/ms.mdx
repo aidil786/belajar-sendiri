@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l02
+world: 2
+title: "Sidecar dan init container"
+summary: "Anda akan belajar: langkah persediaan sebelum aplikasi, dan pembantu sepanjang hari."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l01]
+scenario: k2-sidecar
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Init containers", url: "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" }
+  - { label: "Kubernetes: Sidecar containers", url: "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" }
+---
+
+<Card id="hook" type="hook">
+Server web anda crash semasa mula. Fail menu belum ada. Sesuatu mesti sediakannya dulu, kemudian beredar. Siapa patut buat?
+
+<Interactive name="Choice" options={[{ label: 'Pembantu yang jalan dulu, kemudian berhenti', correct: true, why: 'Tukang masak persediaan susun meja sebelum gerai dibuka. Kubernetes ada yang macam itu.' }, { label: 'Server web, dengan kod tambahan', why: 'Boleh, tapi satu container buat dua kerja. Asingkan langkah persediaan.' }, { label: 'Anda sendiri, setiap pagi', why: 'Pod datang dan pergi sepanjang hari. Tiada siapa boleh jaga setiap satu.' }]} />
+</Card>
+
+<Card id="see-init" type="see">
+<Interactive name="KubeReplay" scenario="k2-sidecar" commands={['kubectl apply -f kedai.yaml', 'sleep 2', 'kubectl get pod kedai', 'sleep 10', 'kubectl get pod kedai']} label="Mula-mula pod tunjuk Init:0/2 semasa langkah persediaan berjalan. Sepuluh saat kemudian ia Running dengan READY 2/2." />
+
+**<Term id="init-container">Init container</Term>** (tukang persediaan) jalan dulu, siap, kemudian pergi. `Init:0/2` maksudnya 0 daripada 2 init container sudah siap. Server web tunggu mereka.
+</Card>
+
+<Card id="try-order" type="try">
+Bagaimana dulang `kedai` bermula dan berhenti? Susun langkahnya.
+
+<Interactive name="OrderList" items={['prep susun menu, kemudian keluar', 'sweeper mula dan terus berjalan', 'web mula melayan', 'Waktu tutup: web berhenti dulu', 'sweeper berhenti paling akhir']} label="Langkah pertama di atas" success="Ya! Persediaan dulu, pembantu seterusnya, aplikasi di tengah, pembantu pergi paling akhir." />
+
+<Hint>Init container jalan satu demi satu, ikut susunan dalam fail.</Hint>
+</Card>
+
+<Card id="see-sidecar" type="see">
+**<Term id="sidecar">Sidecar</Term>** ialah pembantu sepanjang hari, contohnya penghantar log. Ia duduk bawah `initContainers`. Baris mana yang buat `sweeper` tinggal sepanjang hari?
+
+<Interactive name="Choice" options={[{ label: '`restartPolicy: Always`', correct: true, why: 'Ia mula sebelum aplikasi dan terus berjalan. Itulah sidecar asli.' }, { label: '`name: sweeper`', why: 'Nama cuma nama. Apa-apa nama pun boleh.' }, { label: '`image: busybox:1.37`', why: 'Image tentukan apa yang dijalankan, bukan berapa lama ia tinggal.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Giliran anda. Apply `kedai.yaml`. Perhati STATUS berubah sehingga READY tunjuk 2/2.
+
+<Interactive name="FoodCourtSim" scenario="k2-sidecar" goal={{ podsReady: { selector: 'app=kedai', count: 1 }, typed: 'get pods?' }} hints={['Taip kubectl apply -f kedai.yaml', 'Taip kubectl get pods sekali lagi selepas beberapa saat']} success="READY 2/2: server web dan sweeper kedua-duanya sudah sedia." />
+
+<Hint>Taip `kubectl apply -f kedai.yaml`, kemudian `kubectl get pods` beberapa kali.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dalam `noprep.yaml`, tukang persediaan keluar dengan ralat. Apa `kubectl get pods` tunjuk?
+
+<Interactive name="Choice" options={[{ label: '`Init:Error`, kemudian `Init:CrashLoopBackOff`', correct: true, why: 'Langkah persediaan gagal, jadi Kubernetes cuba lagi dan tunggu lebih lama setiap kali. web tak pernah mula.' }, { label: '`Running`', why: 'web tunggu sehingga setiap init container siap dengan baik.' }, { label: '`Completed`', why: 'Completed maksudnya kod keluar 0. Langkah ini keluar dengan 1.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k2-sidecar" commands={['kubectl apply -f noprep.yaml', 'sleep 6', 'kubectl get pod noprep', 'kubectl logs noprep -c prep']} label="noprep tunjuk Init:CrashLoopBackOff. Log container prep berkata: where is the menu file." />
+
+Ralat sebenar: `Init:CrashLoopBackOff`. Maksudnya: langkah persediaan asyik gagal, jadi dulang tak pernah dibuka. Baca lognya dengan `-c prep`.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tambah langkah persediaan dan pembantu sepanjang hari pada pod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sidecar asli stabil sejak Kubernetes 1.33. Panduan lama letak pembantu bawah `containers:`. Akibatnya Job tak pernah tamat selagi pembantu berjalan. Sidecar asli tak tahan Job daripada tamat.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, apply `kedai.yaml` dan perhati dengan `kubectl get pod kedai -w`.
+</Card>

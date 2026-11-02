@@ -1,0 +1,60 @@
+---
+id: docker-d4-l10
+world: 4
+title: Compose v2 vs v5
+summary: "You will learn: to tell old Compose advice from current advice."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, TimelineTap, Choice, KitchenSim, SwipeJudge]
+needs: [docker-d4-l09]
+scenario: d4-version
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "History and development of Docker Compose", url: "https://docs.docker.com/compose/intro/history/" }
+  - { label: "Compose file reference: version and name", url: "https://docs.docker.com/reference/compose-file/version-and-name/" }
+  - { label: "docker compose version", url: "https://docs.docker.com/reference/cli/docker/compose/version/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-version" commands={['docker-compose up -d', 'docker compose up -d']} fails={['docker-compose up -d']} label="The old command with a dash is not found. The new one with a space works, with a yellow warning about the version line." />
+
+A blog post from 2019 says: run `docker-compose up`. Your laptop says: command not found. Is your Docker broken?
+</Card>
+
+<Card id="see-history" type="see">
+<Interactive name="TimelineTap" events={[{ when: '2014', title: 'v1: docker-compose', text: 'Written in Python. You typed docker-compose, with a dash.' }, { when: '2020', title: 'v2: docker compose', text: 'Rewritten in Go, as part of the docker command. A space, not a dash.' }, { when: '2025', title: 'v5', text: 'The same docker compose commands. New: an official Go SDK for tool builders.' }]} />
+
+Same set meal, new menu cover. Your Docker is fine: the dash is the old name. Tap through the story.
+</Card>
+
+<Card id="predict" type="predict">
+Why did the number jump from v2 straight to v5?
+
+<Interactive name="Choice" options={[{ label: 'To avoid a mix-up with old file formats', correct: true, why: 'Old files said version 2.x or 3.x. A tool called v3 would sound like file format 3.' }, { label: 'v3 and v4 failed', why: 'There never was a v3 or v4 tool.' }, { label: 'v5 is a full rewrite', why: 'v5 works just like v2. The big new thing is the Go SDK.' }]} />
+</Card>
+
+<Card id="try-version" type="try">
+Check which Compose your kitchen has.
+
+<Interactive name="KitchenSim" scenario="d4-version" keys="compose" goal={{ lastTyped: '^docker compose version' }} hints={['Type docker compose version']} success="v5: the same docker compose commands you learned." />
+
+<Hint>`docker compose version`</Hint>
+</Card>
+
+<Card id="check-today" type="check">
+Would you use this today? Right for yes, left for no.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'docker compose up -d', good: true, why: 'The current command: a space, not a dash.' }, { text: 'docker-compose up -d', good: false, why: 'The old v1 style. Many machines no longer have it.' }, { text: 'version: "3.8"', good: false, why: 'Obsolete. Compose ignores it and warns. Delete the line.' }, { text: 'compose.yaml', good: true, why: 'The preferred file name today.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell old Compose advice from current advice.
+</Card>
+
+<Card id="deeper" type="deeper">
+The Go SDK lets Go programs load, check and run Compose projects. No command line needed. It is for tool builders, not daily work. Your files follow the Compose Specification, which has no version number. Real rep (optional): run `docker compose version` on your machine.
+</Card>

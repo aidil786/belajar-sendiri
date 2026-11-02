@@ -1,0 +1,73 @@
+---
+id: linux-l1-l07
+world: 1
+title: "Search inside files: grep"
+summary: "You will learn: to pull out only the lines you need from a long file."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l1-l06]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "grep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/grep/grep.1.en.html" }
+  - { label: "GNU grep manual", url: "https://www.gnu.org/software/grep/manual/grep.html" }
+---
+
+<Card id="hook" type="hook">
+The boss asks: which tables have not paid? The order book has 15 lines today. Tomorrow it may have 900.
+
+<Interactive name="Choice" options={[{ label: 'Search the book for the word UNPAID', correct: true, why: 'Let the server read every line and keep only the matches.' }, { label: 'Read every line with my eyes', why: 'Slow, and easy to miss one at line 600.' }, { label: 'Ask every table again', why: 'The answer is already written down. Search it.' }]} />
+</Card>
+
+<Card id="see-grep" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['grep UNPAID orders.log']} />
+
+**grep** prints only the lines that contain your word. Two tables have not paid: T5 and T6. Or is that all?
+</Card>
+
+<Card id="predict-case" type="predict">
+One cashier wrote `Unpaid`, not `UNPAID`. Did grep show that line?
+
+<Interactive name="Choice" options={[{ label: 'No. grep cares about big and small letters.', correct: true, why: 'UNPAID and Unpaid are different to grep. -i ignores case.' }, { label: 'Yes. grep ignores case anyway.', why: 'Only with -i. Plain grep matches letters exactly.' }, { label: 'Only if the line is short', why: 'Length does not matter. The letters must match.' }]} />
+</Card>
+
+<Card id="try-i" type="try">
+Catch every spelling: `grep -i unpaid orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^grep (.* )?-i(c)? (.* )?unpaid' }} hints={['Type grep -i unpaid orders.log']} solution={['grep -i unpaid orders.log']} success="Three tables owe money: T5, T6 and T2." />
+
+<Hint>`-i` means "ignore case".</Hint>
+</Card>
+
+<Card id="spot-t6" type="check">
+<Interactive name="SpotLines" lines={[{ text: '08:15 T4 mee-goreng 6 paid' }, { text: '08:22 T6 roti-canai 2 UNPAID', target: true }, { text: '08:28 T5 teh-tarik 3 paid' }, { text: '08:38 T6 teh-tarik 3 paid', target: true }, { text: '08:41 T2 nasi-lemak 5 Unpaid' }]} prompt="Tap every line that grep T6 orders.log prints." success="Both T6 lines. grep keeps any line with T6 in it." />
+</Card>
+
+<Card id="sort-flags" type="check">
+Three handy switches. Which one answers each question?
+
+<Interactive name="SortCards" buckets={[{ id: 'c', label: '-c: count' }, { id: 'n', label: '-n: line numbers' }, { id: 'v', label: '-v: lines without it' }]} items={[{ label: 'How many nasi lemak orders?', bucket: 'c', why: '-c prints a number instead of the lines.' }, { label: 'Which line is table 6 on?', bucket: 'n', why: '-n puts the line number in front.' }, { label: 'Every order that is not nasi lemak', bucket: 'v', why: '-v flips it: lines that do not match.' }, { label: 'How many unpaid orders?', bucket: 'c', why: 'A count again. Add -i for every spelling.' }]} success="Count, number, or the opposite." />
+</Card>
+
+<Card id="try-count" type="try">
+How many nasi lemak orders today? Ask grep to count: `grep -c nasi-lemak orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^grep (.* )?-c(i)? (.* )?nasi-lemak' }} hints={['Type grep -c nasi-lemak orders.log']} solution={['grep -c nasi-lemak orders.log']} success="6. Nasi lemak is the star of the day." />
+
+<Hint>`-c` means "count".</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now pull just the lines you need from a file.
+</Card>
+
+<Card id="deeper" type="deeper">
+`grep laksa orders.log` prints nothing and ends with exit code 1. Plain words: no line matched; nothing broke. `grep -r belacan ~/kedai` searches every file in every room. `grep -n` and `-i` mix: `grep -ni unpaid orders.log`.
+
+Real rep (optional): on Linux, `grep -c bash /etc/passwd` counts users with bash as their shell.
+</Card>

@@ -1,0 +1,65 @@
+---
+id: iac-t4-l02
+world: 4
+title: Sumber modul dan pin versi
+summary: "Anda akan belajar: dari mana modul boleh datang, dan cara pin versi yang anda percaya."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, SortCards, SwipeJudge, Mission]
+needs: [iac-t4-l01]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: sumber modul", url: "https://opentofu.org/docs/language/modules/sources/" }
+  - { label: "OpenTofu: kekangan versi", url: "https://opentofu.org/docs/language/expressions/version-constraints/" }
+  - { label: "OpenTofu: fail lock kebergantungan", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+---
+
+<Card id="hook" type="hook">
+Pelan anda guna modul gerai dari internet, tanpa versi. Malam ini pembuatnya mengubahnya. Esok CI jalankan `tofu init` dan `tofu plan`. Apa boleh jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia tarik kod baharu. Perubahan mengejut.', correct: true, why: 'Tanpa pin, init yang baharu muat turun reka bentuk terkini.' }, { label: 'Tiada apa: modul tak pernah berubah', why: 'Pembuat kemas kini modul setiap masa.' }, { label: 'Fail lock simpan modul lama', why: 'Fail lock jejak provider sahaja. Modul perlukan pin sendiri.' }]} />
+</Card>
+
+<Card id="see-pins" type="see">
+<Interactive name="SpotLines" prompt="Tekan dua baris yang pin versi." lines={[{ text: 'module "kiosk" {' }, { text: '  source = "./modules/kiosk"' }, { text: '}' }, { text: '' }, { text: 'module "stall" {' }, { text: '  source  = "kedai-kancil/stall/local"' }, { text: '  version = "~> 1.2"', target: true }, { text: '}' }, { text: '' }, { text: 'module "oven" {' }, { text: '  source = "git::https://example.com/oven.git?ref=v2.0.1"', target: true }, { text: '}' }]} success="Modul registry pin dengan version. Git pin dengan ?ref= (tag atau commit)." />
+
+**<Term id="version-pin">Pin versi</Term>** beritahu versi mana yang anda percaya. Folder tempatan tak perlu pin: ia berubah hanya bila anda ubah.
+</Card>
+
+<Card id="try-sort" type="try">
+Dari mana setiap modul datang?
+
+<Interactive name="SortCards" buckets={[{ id: 'local', label: 'Folder tempatan' }, { id: 'registry', label: 'Registry' }, { id: 'git', label: 'Repo Git' }]} items={[{ label: './modules/kiosk', bucket: 'local', why: 'Bermula dengan ./ atau ../: folder di sebelah anda.' }, { label: 'kedai-kancil/stall/local', bucket: 'registry', why: 'Namespace, nama, provider: alamat registry.' }, { label: 'git::https://…/oven.git?ref=v2.0.1', bucket: 'git', why: 'git:: dan URL. ?ref= pilih tag.' }, { label: '../shared/menu', bucket: 'local', why: 'Satu folder ke atas: masih dalam cakera anda.' }, { label: 'hashicorp/consul/aws', bucket: 'registry', why: 'Tiga bahagian, tiada URL: modul registry.' }]} success="Folder, registry dan Git: tiga jenis sumber." />
+</Card>
+
+<Card id="predict" type="predict">
+Pin itu tulis `version = "~> 1.2.0"`. Kemas kini mana yang boleh masuk sendiri?
+
+<Interactive name="Choice" options={[{ label: '1.2.7', correct: true, why: '~> cuma benarkan nombor terakhir yang anda tulis naik: 1.2.x.' }, { label: '1.3.0', why: '~> 1.2.0 kekalkan 1.2. Tulis ~> 1.2 untuk benarkan 1.3.' }, { label: '2.0.0', why: 'Versi major baharu boleh rosakkan sesuatu. ~> tak pernah benarkannya.' }]} />
+</Card>
+
+<Card id="try-range" type="try">
+Sekarang pin itu `~> 1.2`. Susun setiap versi.
+
+<Interactive name="SortCards" buckets={[{ id: 'in', label: 'Dibenarkan' }, { id: 'out', label: 'Disekat' }]} items={[{ label: '1.2.5', bucket: 'in', why: '1.2 ke atas, dalam 1.x.' }, { label: '1.9.0', bucket: 'in', why: 'Nombor minor boleh naik.' }, { label: '2.0.0', bucket: 'out', why: 'Nombor major tetap 1.' }, { label: '1.1.9', bucket: 'out', why: 'Di bawah 1.2 yang anda tulis.' }]} success="~> 1.2 maksudnya: sekurang-kurangnya 1.2, di bawah 2.0." />
+</Card>
+
+<Card id="check" type="check">
+Semak modul rakan anda. Leret: bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Modul registry dengan version = "~> 1.2"', good: true, why: 'Baikan kecil masuk. Perubahan besar tunggu anda.' }, { text: 'Modul Git tanpa ?ref=', good: false, why: 'Ia ikut branch utama. Ia boleh berubah bila-bila masa.' }, { text: 'Modul Git di-pin pada SHA commit penuh', good: true, why: 'Tiada siapa boleh alih satu commit. Pin paling selamat.' }, { text: 'Modul kongsi yang paksa provider version = 3.9.1 tepat', good: false, why: 'Modul kongsi patut tetapkan minimum sahaja. Biar pemanggil pilih.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih sumber modul dan pin versi yang anda percaya.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTofu juga boleh ambil modul dari registry OCI (`oci://`) dan dari S3, GCS atau HTTP. Untuk naik ke versi modul lebih baharu, ubah pin, kemudian jalankan `tofu init -upgrade`. Fail lock (pelajaran seterusnya) rekod provider sahaja, bukan modul.
+
+<Interactive name="Mission" id="iac-t4-l02-rep" steps={[{ id: 'find', text: 'Layari OpenTofu Registry untuk satu modul kecil. Catat alamat dan versi terbarunya.' }, { id: 'pin', text: 'Tulis blok module dengan source dan pin versi ~>. Jangan apply.' }, { id: 'init', text: 'Muat turun, dan baca versi mana yang init pilih.', command: 'tofu init' }]} success="Anda pin modul sebenar dari registry." />
+</Card>

@@ -1,0 +1,77 @@
+---
+id: iac-t4-l04
+world: 4
+title: A plan on every pull request
+summary: "You will learn: how a small workflow plans every change on the pull request, so the team reviews it first."
+minutes: 5
+xp: 25
+interactives: [Choice, PracticeRepo, YamlBuilder, SortCards, SwipeJudge]
+needs: [iac-t4-l03]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "opentofu/setup-opentofu (GitHub Action)", url: "https://github.com/opentofu/setup-opentofu" }
+  - { label: "OpenTofu: the core workflow", url: "https://opentofu.org/docs/intro/core-workflow/" }
+  - { label: "Terraform: running in automation", url: "https://developer.hashicorp.com/terraform/tutorials/automation/automate-terraform" }
+  - { label: "GitHub: protected branches", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+---
+
+<Card id="hook" type="hook">
+Ben ran `tofu apply` from his laptop. Nobody saw the plan. It destroyed the old menu board. How could the team have caught it in time?
+
+<Interactive name="Choice" options={[{ label: 'A plan on the pull request that everyone reads', correct: true, why: 'The robot plans every change. A human reads it before merging.' }, { label: 'Ask Ben to be more careful', why: 'Everyone slips sometimes. A check that always runs is kinder.' }, { label: 'Never use apply', why: 'Apply is fine. Apply after a reviewed plan.' }]} />
+</Card>
+
+<Card id="see-pr" type="see">
+<Interactive name="PracticeRepo" screen="pull" at={8} repo={{ owner: 'kedai-kancil', name: 'blueprint', readme: '# Blueprint\n\nKedai Kancil, written down as OpenTofu.\n' }} pulls={[{ number: 8, title: 'Add a roti kiosk', body: 'One more kiosk from the kiosk module.', author: 'ben', from: 'roti-kiosk', to: 'main', state: 'open', checks: [{ name: 'tofu fmt', status: 'pass' }, { name: 'tofu validate', status: 'pass' }, { name: 'tofu plan', status: 'pass' }], files: [{ path: 'main.tf', diff: ['@@ -9,0 +10,4 @@', '+module "roti" {', '+  source = "./modules/kiosk"', '+  name   = "roti-canai"', '+}'] }], comments: [{ author: 'plan-bot', body: 'Plan for this pull request:\n\n```\n# module.roti.local_file.sign will be created\nPlan: 1 to add, 0 to change, 0 to destroy.\n```' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }} task={{ type: 'approve', pr: 8 }} success="Approved: 1 to add, 0 to destroy. You read the plan before anything was built." />
+
+Read the plan in the comment. Nothing to destroy? Then approve it.
+</Card>
+
+<Card id="try-build" type="try">
+Build the workflow that made those checks. Plan only: no apply here.
+
+<Interactive name="YamlBuilder" workflow="Plan" goal={{ order: ['pr', 'read', 'job', 'checkout', 'setup', 'fmt', 'init', 'validate', 'plan'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'On a pull request to main', yaml: 'pull_request:\n  branches: [main]', means: 'Run on every pull request into main.' },
+  { id: 'read', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'Planning only reads the code.' },
+  { id: 'write', kind: 'permissions', label: 'Write everything', yaml: 'contents: write', means: 'Let the job change the repo.', why: 'A plan job only reads. Give it the least.' },
+  { id: 'job', kind: 'job', label: 'Job: plan', yaml: 'plan:\n  runs-on: ubuntu-latest', means: 'A fresh Linux computer.' },
+  { id: 'checkout', kind: 'step', label: 'Check out the code', yaml: '- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n  with:\n    persist-credentials: false', means: 'Copy the blueprint, pinned to a commit.' },
+  { id: 'setup', kind: 'step', label: 'Install OpenTofu', yaml: '- uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2\n  with:\n    tofu_version: 1.13.5\n    tofu_wrapper: false', means: 'The same OpenTofu version as your laptop.' },
+  { id: 'fmt', kind: 'step', label: 'Check the layout', yaml: '- run: tofu fmt -check', means: 'Fails if a file needs tofu fmt.' },
+  { id: 'init', kind: 'step', label: 'Init', yaml: '- run: tofu init -input=false', means: 'Providers from the lock file, and modules.' },
+  { id: 'validate', kind: 'step', label: 'Validate', yaml: '- run: tofu validate', means: 'Catch typos before the plan.' },
+  { id: 'plan', kind: 'step', label: 'Plan', yaml: '- run: tofu plan -input=false', means: 'Show what this change would do.' },
+  { id: 'apply', kind: 'step', label: 'Apply', yaml: '- run: tofu apply -auto-approve', means: 'Build it now.', why: 'Apply comes after review and merge, never on the pull request.' }]} />
+
+<Hint>Trigger, permissions, job, then the steps in the order you would type them.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Ben forgot to run `tofu fmt`. His pull request runs this workflow. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The fmt step fails, the check turns red, and merging waits', correct: true, why: 'With "require checks to pass", red blocks the merge until he runs tofu fmt.' }, { label: 'The workflow fixes the files for him', why: 'fmt -check only checks. It never changes files.' }, { label: 'Nothing: layout does not matter', why: 'Tidy files make reviews easier. The check keeps them tidy.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Where does each step belong?
+
+<Interactive name="SortCards" buckets={[{ id: 'pr', label: 'On the pull request' }, { id: 'main', label: 'After merge, on main' }]} items={[{ label: 'tofu fmt -check', bucket: 'pr', why: 'Cheap and fast. Catch it early.' }, { label: 'tofu plan', bucket: 'pr', why: 'Reviewers read it before merging.' }, { label: 'A human reads the plan', bucket: 'pr', why: 'That is the whole point of the pull request.' }, { label: 'tofu apply', bucket: 'main', why: 'Only reviewed, merged changes get built.' }]} success="Plan on the pull request. Apply after merge." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Swipe: a good pipeline habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Plan on every pull request, apply after merge with an approval', good: true, why: 'Every change is seen before it is built.' }, { text: 'Apply on every pull request, so reviewers see it live', good: false, why: 'Then unreviewed code builds real things.' }, { text: 'Pin actions to a full commit SHA', good: true, why: 'A tag can move. A commit cannot.' }, { text: 'Skip the plan when the change looks small', good: false, why: 'Small changes can still destroy things. Always plan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now plan every change on a pull request, for the team to review.
+</Card>
+
+<Card id="deeper" type="deeper">
+In CI the plan needs the shared backend (T3·1). Without it, the register looks empty. Posting the plan as a comment needs `pull-requests: write` and a small script. For apply after merge, save the plan with `-out` and apply exactly that file. Atlantis or HCP Terraform can run this loop for you. Mission 8 puts this workflow on your repo.
+</Card>

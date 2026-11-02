@@ -1,0 +1,63 @@
+---
+id: git-w05-l11
+world: 5
+title: Konflik dalam PR
+summary: "Anda akan belajar: kenapa pull request dapat konflik, dan cara membaikinya."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, MarkdownPlayground, OrderList, SwipeJudge]
+needs: [git-w05-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About merge conflicts", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/about-merge-conflicts" }
+  - { label: "Resolving a merge conflict on GitHub", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github" }
+  - { label: "git merge (conflicts)", url: "https://git-scm.com/docs/git-merge#_how_conflicts_are_presented" }
+---
+
+<Card id="hook" type="hook">
+Anda dan Ravi sama-sama ubah baris kedua README. PR dia di-merge (dicantum) dulu. Sekarang PR anda kata ada <Term id="conflict">konflik</Term>. Anda dah rosakkan sesuatu ke?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Git cuma perlukan anda pilih apa yang kekal', correct: true, why: 'Dua perubahan bertembung pada baris yang sama. Git tak akan meneka. Anda pilih.' }, { label: 'Ya. Tutup PR dan mula semula', why: 'Tak perlu! Konflik perkara biasa, dan cepat dibaiki.' }, { label: 'Ya. Ravi kena undur kerja dia', why: 'Kerja dia okey. Anda cuma gabungkan dua perubahan itu.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Git tandakan pertembungan dengan **<Term id="conflict-markers">penanda konflik</Term>**. Baris anda di atas. Baris main di bawah. Tekan tiga baris penanda itu.
+
+<Interactive name="SpotLines" lines={[{ text: '# Laman Kelab' }, { text: '<<<<<<< my-tagline', target: true }, { text: 'Kod, snek dan kawan-kawan. Setiap Jumaat!' }, { text: '=======', target: true }, { text: 'Kami berjumpa setiap Jumaat selepas sekolah.' }, { text: '>>>>>>> main', target: true }]} prompt="Tekan setiap baris penanda." success="Jumpa ketiga-tiganya: permulaan, tengah dan hujung pertembungan." />
+</Card>
+
+<Card id="try-fix" type="try">
+Sekarang baiki. Simpan perkataan yang anda mahu. Padam ketiga-tiga baris penanda.
+
+<Interactive name="MarkdownPlayground" initial={'# Laman Kelab\n<<<<<<< my-tagline\nKod, snek dan kawan-kawan. Setiap Jumaat!\n=======\nKami berjumpa setiap Jumaat selepas sekolah.\n>>>>>>> main\n'} prompt="Tiada penanda lagi, dan sekurang-kurangnya satu baris tentang Jumaat." goal={{ mustMatch: ['^# Laman Kelab(?![\\s\\S]*(?:<{7}|={7}|>{7}))', 'Jumaat'], hint: ['Padam baris yang bermula dengan <<<<<<<, ======= dan >>>>>>>. Simpan tajuk # Laman Kelab.', 'Simpan sekurang-kurangnya satu baris tentang Jumaat.'] }} success="Bersih! README itu senang dibaca semula." />
+
+<Hint>Anda boleh simpan satu baris, atau kedua-duanya. Cuma buang tiga baris penanda itu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Editor web GitHub boleh baiki pertembungan baris yang mudah. Di sini, main padam satu fail yang branch (cabang) anda ubah. Bolehkah editor web baiki itu?
+
+<Interactive name="Choice" options={[{ label: 'Tak boleh. Baiki di komputer anda, kemudian push', correct: true, why: 'Editor web cuma uruskan baris yang bertembung. Konflik lain perlukan Git anda sendiri.' }, { label: 'Boleh, editor web baiki apa-apa konflik', why: 'Ia cuma baiki baris yang bertembung dalam satu fail.' }, { label: 'Tak boleh. PR itu tak akan dapat merge', why: 'Boleh. Baiki di komputer anda dengan Git, kemudian push.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah membaiki konflik di GitHub. Yang pertama di atas.
+
+<Interactive name="OrderList" items={['Buka konflik itu dari PR', 'Pilih perkataan yang mahu disimpan', 'Padam penanda konflik', 'Tanda fail itu sebagai selesai', 'Commit merge itu']} label="Langkah pertama di atas" success="Konflik selesai! Sekarang PR boleh di-merge." />
+</Card>
+
+<Card id="check-swipe" type="check">
+Kurangkan konflik lain kali. Tabiat bagus, atau perlu baiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pastikan PR kecil dan cepat di-merge', good: true, why: 'PR yang kecil dan cepat jarang bertembung.' }, { text: 'Selalu bawa main yang terbaru ke branch anda', good: true, why: 'Anda jumpa pertembungan awal, semasa ia masih kecil.' }, { text: 'Biarkan PR terbuka selama tiga bulan', good: false, why: 'Main terus bergerak, dan pertembungan bertimbun.' }, { text: 'Dua orang ubah baris yang sama tanpa berbincang', good: false, why: 'Beritahu siapa buat apa. Issue boleh bantu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki konflik dalam pull request tanpa panik.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di GitHub, membaiki konflik buat satu merge commit. Ia merge main ke dalam branch PR anda. Bukan baris yang bertembung sahaja: seluruh main masuk. Di komputer anda, tukar ke branch anda dan merge main ke dalamnya. Baiki fail, kemudian `git add` dan `git commit`. Push, dan PR itu dikemas kini. Dunia 3 terangkan merge dengan lebih lanjut.
+</Card>

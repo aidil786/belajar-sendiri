@@ -1,0 +1,76 @@
+---
+id: git-w03-l02
+world: 3
+title: Make and switch branches
+summary: "You will learn: how to hop onto a branch, and make one in one step."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, UniverseSplitter, Choice]
+needs: [git-w03-l01]
+scenario: w03-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l02" commands={['git branch']} label="git branch lists dark-mode and main. The star is next to main." />
+
+You made a `dark-mode` note. But the star is still on main. How do you hop over?
+</Card>
+
+<Card id="see-switch" type="see">
+<Interactive name="GraphScene" scenario="w03-l02" commands={['git switch dark-mode']} label="HEAD jumps from main to the dark-mode note. Both notes sit on the same commit." />
+
+`git switch dark-mode` moves HEAD onto that note. Your new commits now go on dark-mode. main stays safe.
+</Card>
+
+<Card id="try-switch" type="try">
+Hop onto the `dark-mode` branch.
+
+<Interactive name="Sim" scenario="w03-l02" panels={['graph']} goal={{ currentBranch: 'dark-mode' }} hints={['Type git switch dark-mode and press Enter.']} success="You're on dark-mode. Play all you like. main is safe." />
+
+<Hint>Type `git switch dark-mode`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-create" type="see">
+<Interactive name="GraphScene" scenario="w03-l02" commands={['git switch -c about']} label="A new note, about, appears on the same commit, and HEAD hops onto it in one step." />
+
+In a hurry? `git switch -c about` makes a new note and hops on. Two steps in one.
+</Card>
+
+<Card id="try-universe" type="try">
+Two branches grew apart. Think of them as two universes. Hop into each one and watch your files.
+
+<Interactive name="UniverseSplitter" scenario="w03-l02-split" file="index.html" task={{ type: 'visitAll' }} success="Each universe keeps its own files. Switching swaps them in your folder." />
+
+<Hint>Tap the other lane, or the `about` button.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You are on about. You switch to main. What happens to `about.html` in your folder?
+
+<Interactive name="Choice" options={[{ label: 'It leaves your folder. It is safe on about.', correct: true, why: 'Git swaps in the files of main. Switch back, and about.html returns.' }, { label: 'It stays in your folder', why: 'main has no about.html, so Git takes it out of your folder.' }, { label: 'Git deletes it forever', why: 'It is safe in a commit on about. Switch back to see it.' }]} />
+</Card>
+
+<Card id="try-create" type="try">
+Make a branch called `contact` and hop onto it, with one command.
+
+<Interactive name="Sim" scenario="w03-l02" panels={['graph']} goal={{ currentBranch: 'contact' }} hints={['Type git switch -c contact and press Enter.']} success="New branch, and you're on it. One command!" />
+
+<Hint>`switch` hops. `-c` creates first.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now make branches and hop between them.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git switch -` hops back to the branch you were on. Changed files but didn't commit? Git carries them along when it is safe. If a change would get lost, Git stops and tells you. Lesson 9 shows the fix: stash.
+
+<Interactive name="TermReplay" scenario="w03-l02" commands={['git switch -c contact', 'git switch -', 'git branch']} label="Make contact and hop on, then git switch - hops back to main." />
+</Card>

@@ -1,0 +1,83 @@
+---
+id: iac-t2-boss
+world: 2
+title: Tiga gerai dari satu senarai
+summary: "Anda akan belajar: bina banyak gerai dari satu senarai dengan variable, for_each dan output."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, SortCards, Mission]
+needs: [iac-t2-l08]
+scenario: t2-boss
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: the for_each meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/for_each/" }
+  - { label: "OpenTofu: output values", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "OpenTofu: built-in functions", url: "https://opentofu.org/docs/language/functions/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil buka medan selera dengan tiga gerai: nasi, mee dan roti. Pelan cuma senaraikan nasi. Apa perubahan paling cepat dan selamat?
+
+<Interactive name="Choice" options={[{ label: 'Tambah mee dan roti ke map stalls dalam terraform.tfvars', correct: true, why: 'for_each buat satu fail untuk setiap entri. Dua baris, dua gerai baru.' }, { label: 'Salin blok resource dua kali', why: 'for_each sudah buat salinan. Beri ia lebih banyak item sahaja.' }, { label: 'Buat dua folder baru', why: 'Tiga pelan perlu diselaraskan. Satu senarai sudah cukup.' }]} />
+</Card>
+
+<Card id="try-three" type="try">
+Dalam `terraform.tfvars`, tambah `mee = 4` dan `roti = 2` ke dalam map. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t2-boss" open="terraform.tfvars" goal={{ stateCount: 3, filesExist: ['stalls/mee.txt', 'stalls/roti.txt'] }} hints={['Tambah dua baris dalam kurungan: mee = 4 dan roti = 2.', 'Kemudian tofu apply. Plan tambah 3. Taip yes.']} success="Tiga gerai, satu blok, satu senarai." />
+
+```hcl
+stalls = {
+  nasi = 5
+  mee  = 4
+  roti = 2
+}
+```
+</Card>
+
+<Card id="predict" type="predict">
+`stall_files` gabungkan setiap nama fail dengan ungkapan `for`. Apa `tofu output` paparkan?
+
+<Interactive name="Choice" options={[{ label: 'stall_files = "stalls/mee.txt, stalls/nasi.txt, stalls/roti.txt"', correct: true, why: 'for kumpul nama-nama itu; join cantumkannya jadi satu teks, ikut susunan kunci.' }, { label: 'stall_files = "stalls/nasi.txt"', why: 'for lalu setiap gerai, bukan yang pertama sahaja.' }, { label: 'Tiada apa, output perlukan arahan lain', why: 'tofu output baca dari state selepas apply.' }]} />
+</Card>
+
+<Card id="try-output" type="try">
+Bos mahu nama gerai juga. Dalam `outputs.tf`, tambah output di bawah. Kemudian apply.
+
+<Interactive name="TofuSim" scenario="t2-boss-built" open="outputs.tf" goal={{ outputExists: ['stall_names'] }} hints={['Tambah blok output baru di bawah stall_files.', 'output "stall_names" { value = join(", ", keys(var.stalls)) }', 'Kemudian tofu apply, dan yes.']} success="stall_names = mee, nasi, roti. Bos boleh baca senarai itu." />
+
+```hcl
+output "stall_names" {
+  value = join(", ", keys(var.stalls))
+}
+```
+</Card>
+
+<Card id="check-tools" type="check">
+Alat mana buat setiap kerja hari ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'var', label: 'variable' }, { id: 'each', label: 'for_each' }, { id: 'out', label: 'output' }]} items={[{ label: 'Simpan senarai gerai dan harga', bucket: 'var', why: 'var.stalls, diisi dari terraform.tfvars.' }, { label: 'Buat satu fail untuk setiap gerai', bucket: 'each', why: 'Satu salinan untuk setiap entri map.' }, { label: 'Tunjuk nama fail selepas apply', bucket: 'out', why: 'stall_files kongsikannya.' }, { label: 'Namakan setiap salinan stall["mee"]', bucket: 'each', why: 'Kunci jadi nama salinan itu.' }]} success="Variable masuk, for_each bina, output kongsi." />
+</Card>
+
+<Card id="try-close" type="try">
+Gerai mee tutup. Buang barisnya dari `terraform.tfvars`. Kemudian taip `tofu plan`. Hanya mee patut pergi.
+
+<Interactive name="TofuSim" scenario="t2-boss-built" open="terraform.tfvars" goal={{ planSummary: { add: 0, change: 0, destroy: 1 } }} hints={['Padam baris mee  = 4.', 'Kemudian taip tofu plan.']} success="0 to add, 0 to change, 1 to destroy. nasi dan roti tak perasan pun." />
+
+<Hint>Padam satu baris, kemudian `tofu plan`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina banyak gerai dari satu senarai, dan kongsi apa yang dibina.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): bina medan selera ini di mesin anda sendiri, kemudian kemaskan.
+
+<Interactive name="Mission" id="iac-t2-boss-rep" steps={[{ id: 'files', text: 'Salin variables.tf, main.tf, outputs.tf dan terraform.tfvars dari boss ini ke satu folder.' }, { id: 'init', text: 'Dapatkan provider.', command: 'tofu init' }, { id: 'apply', text: 'Bina tiga gerai. Taip yes.', command: 'tofu apply' }, { id: 'out', text: 'Baca output.', command: 'tofu output' }, { id: 'close', text: 'Buang mee dari terraform.tfvars, kemudian plan. Hanya mee pergi.', command: 'tofu plan' }, { id: 'destroy', text: 'Kemaskan. Taip yes.', command: 'tofu destroy' }]} success="Tiga gerai sebenar dari satu senarai." />
+</Card>

@@ -1,0 +1,98 @@
+---
+// One box in a family overview's "extras" row (Ship It, Level Up): the Rescue Center, the capstone
+// missions, the finish line, the night shift or the certification map. Extra `data-*` props land on
+// the box (tests and progress marks use them). Content in the slot goes under the text.
+import Icon from '~/components/ui/Icon.astro';
+interface Props {
+  /** The heading's id (the box is labelled by it). */
+  id: string;
+  tone: 'rescue' | 'night' | 'missions' | 'finish' | 'certs';
+  icon: string;
+  title: string;
+  /** A small line above the title ("Open any time", "Finish line"). */
+  label?: string | undefined;
+  text?: string | undefined;
+  /** A calm "Coming soon" line. */
+  soon?: string | undefined;
+  href?: string | undefined;
+  linkText?: string | undefined;
+  [data: `data-${string}`]: string | boolean | undefined;
+}
+const { id, tone, icon, title, label, text, soon, href, linkText, ...rest } = Astro.props;
+---
+
+<section class={`extra extra-${tone}`} aria-labelledby={id} {...rest}>
+  <span class="extra-icon">
+    <Icon name={icon} size={28} />
+  </span>
+  <div>
+    {label && <p class="extra-label">{label}</p>}
+    <h2 id={id}>{title}</h2>
+    {text && <p>{text}</p>}
+    <slot />
+    {soon && <p class="extra-soon">{soon}</p>}
+    {href && linkText && <a href={href}>{linkText} →</a>}
+  </div>
+</section>
+
+<style>
+  .extra {
+    display: flex;
+    gap: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+  }
+  .extra h2 {
+    font-size: var(--text-l);
+    margin: 0 0 var(--space-1);
+  }
+  .extra p {
+    margin: 0 0 var(--space-2);
+  }
+  .extra-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-m);
+    background: var(--color-surface-2);
+  }
+  .extra-rescue .extra-icon {
+    background: var(--c-repo-soft);
+    color: var(--c-repo-ink);
+  }
+  .extra-missions .extra-icon {
+    background: var(--c-head-soft);
+    color: var(--c-head-ink);
+  }
+  .extra-night .extra-icon {
+    background: var(--c-working-soft);
+    color: var(--c-working-ink);
+  }
+  .extra-certs .extra-icon {
+    background: var(--c-remote-soft);
+    color: var(--c-remote-ink);
+  }
+  .extra-finish .extra-icon {
+    background: var(--c-staging-soft);
+    color: var(--c-staging-ink);
+  }
+  .extra-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .extra-soon {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .extra a {
+    font-weight: var(--weight-bold);
+    display: inline-flex;
+    min-height: var(--tap);
+    align-items: center;
+  }
+</style>

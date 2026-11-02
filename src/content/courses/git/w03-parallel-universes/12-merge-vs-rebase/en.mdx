@@ -1,0 +1,69 @@
+---
+id: git-w03-l12
+world: 3
+title: Merge or rebase? Plus cherry-pick
+summary: "You will learn: when to merge, when to rebase, and how to copy just one commit."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, SortCards, Choice, GraphPick, SwipeJudge]
+needs: [git-w03-l11]
+scenario: w03-l12-pick
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rebase: recovering from upstream rebase", url: "https://git-scm.com/docs/git-rebase#_recovering_from_upstream_rebase" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l05" commands={['git log --oneline --graph --all']} label="The log forks: main has Make heading teal, about has two commits. Both grow from Add style." />
+
+Two ways to bring about into main: merge or rebase. Your team argues about it. Who wins?
+</Card>
+
+<Card id="see-golden" type="see">
+<Interactive name="GraphScene" scenario="w03-l10" commands={['git rebase main']} showLost label="After the rebase, new copies of the about commits sit after main. The old commits stay behind as dashed dots." />
+
+Rebase makes new copies. The old commits live on with anyone who has them. Two versions! So never rebase commits others already have. That's the **<Term id="golden-rule">golden rule</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Which one does this?
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge' }, { id: 'rebase', label: 'Rebase' }]} items={[{ label: 'Keeps the true story, with joins', bucket: 'merge', why: 'A merge commit shows where work came together.' }, { label: 'Makes one straight line', bucket: 'rebase', why: 'Your commits are replayed after main.' }, { label: 'Safe on branches others use', bucket: 'merge', why: 'Merge never rewrites commits people have.' }, { label: 'Gives your commits new ids', bucket: 'rebase', why: 'Replayed commits are new copies.' }]} success="Sorted! Both are good tools. Just mind the golden rule." />
+</Card>
+
+<Card id="predict" type="predict">
+You shared about yesterday. Aina built on it today. Should you rebase about now?
+
+<Interactive name="Choice" options={[{ label: 'No. Merge instead.', correct: true, why: 'Aina has the old commits. A rebase would split your stories.' }, { label: 'Yes. Rebase is always tidier.', why: 'Tidy, but it breaks the golden rule here.' }, { label: 'Yes, if you do it fast', why: 'Speed does not help. Aina still has the old commits.' }]} />
+</Card>
+
+<Card id="see-cherry" type="see">
+<Interactive name="GraphScene" scenario="w03-l12-pick" commands={['git cherry-pick experiments~1']} label="A copy of Fix README intro appears on main. The experiments branch keeps all three of its commits." />
+
+Sometimes you need just one commit. `git cherry-pick` copies one commit onto your branch. One cherry, not the whole tree. That's a **<Term id="cherry-pick">cherry-pick</Term>**.
+</Card>
+
+<Card id="try-pick" type="try">
+Copy only the useful fix from `experiments` onto main.
+
+<Interactive name="GraphPick" scenario="w03-l12-pick" answer="^Fix README intro$" prompt="Tap the commit to copy onto main." then="git cherry-pick {hash}" why="Only the README fix comes over. The wild ideas stay behind." />
+</Card>
+
+<Card id="check-when" type="check">
+Good use of cherry-pick, or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Copy one bug fix to an older release branch', good: true, why: 'One commit, needed in one more place. Perfect.' }, { text: 'Bring a whole finished feature into main', good: false, why: 'Merge does that in one go, and keeps the story.' }, { text: 'Grab one good commit from an old experiment', good: true, why: 'Take the cherry, leave the tree.' }, { text: 'Copy ten commits one by one instead of merging', good: false, why: 'That makes duplicates. Merge or rebase instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose merge or rebase, and copy one commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many teams rebase their own branch, then merge it. Both are fine with the golden rule. `git cherry-pick -x` adds a line saying where the copy came from. A clash? Fix the file, `git add`, then `git cherry-pick --continue`. Or `git cherry-pick --abort`.
+</Card>

@@ -1,0 +1,90 @@
+---
+id: docker-d4-l04
+world: 4
+title: "Tunggu sihat: depends_on"
+summary: "Anda akan belajar: buat satu hidangan tunggu sampai yang lain betul-betul sedia."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, OrderList, KitchenReplay, ComposeCanvas, Choice, KitchenSim, Mission]
+needs: [docker-d4-l03]
+scenario: d4-healthy
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Control startup order", url: "https://docs.docker.com/compose/how-tos/startup-order/" }
+  - { label: "Compose file reference: depends_on", url: "https://docs.docker.com/reference/compose-file/services/#depends_on" }
+  - { label: "Compose file reference: healthcheck", url: "https://docs.docker.com/reference/compose-file/services/#healthcheck" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'db hidup', text: 'Postgres bangun. Ia perlukan beberapa saat.' }, { when: '2', title: 'api hidup', text: 'API terus panggil db.' }, { when: '3', title: 'Tiada jawapan', text: 'db belum sedia. API putus asa dan berhenti.' }, { when: '4', title: 'db sedia', text: 'Dah terlambat. Tiada siapa yang memanggil lagi.' }]} />
+
+Waktu sibuk pagi. API hidup terlalu awal. Ia panggil pangkalan data yang masih baru bangun. Ketik setiap saat.
+</Card>
+
+<Card id="see-order" type="see">
+```yaml
+  web:
+    depends_on: [api]
+  api:
+    depends_on: [db]
+```
+
+<Interactive name="OrderList" items={['db', 'api', 'web']} label="Yang hidup dulu di atas" success="db, kemudian api, kemudian web." />
+
+**<Term id="depends-on">depends_on</Term>** (bergantung pada) tetapkan urutan mula. Satu hidangan hidup selepas hidangan yang ia perlukan. Susun urutan mula dengan betul.
+</Card>
+
+<Card id="see-healthy" type="see">
+```yaml
+  api:
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:18-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      retries: 10
+```
+
+<Interactive name="KitchenReplay" scenario="d4-healthy" commands={['docker compose up -d']} label="db tunjuk Healthy dulu. Baru api dan web hidup." />
+
+Hidup belum tentu sedia. Health check ialah ujian rasa. `pg_isready` tanya db: dah sedia? `service_healthy` buat api tunggu jawapan ya.
+</Card>
+
+<Card id="try-wait" type="try">
+Sekarang api tunggu sampai db hidup sahaja. Buat ia tunggu sampai db sihat. Kemudian pesan set hidangan.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Tunjuk laman kedai.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Terima pesanan.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: '2s', retries: 10 }, means: 'Simpan pesanan. Ada ujian rasa.' }]} start={[{ id: 'web', dependsOn: { api: 'service_started' } }, { id: 'api', dependsOn: { db: 'service_started' } }, { id: 'db', volume: 'db-data' }]} volumes={['db-data']} goal={{ dependsOn: { api: { db: 'service_healthy' } } }} success="api kini tunggu jawapan ya dari db." />
+
+<Hint>Buka senarai "Tunggu" api. Pilih sihat untuk db.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang padam kata laluan db. Postgres terus keluar. Apa `docker compose up -d` buat sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Ia berhenti. api dan web tak pernah hidup.', correct: true, why: 'db tak pernah sihat, jadi yang menunggu kekal Created.' }, { label: 'Ia tetap hidupkan api', why: 'service_healthy maksudnya: tunggu jawapan ya. Tiada ya, tiada mula.' }, { label: 'Ia tunggu selama-lamanya', why: 'db dah keluar, jadi Compose terus berhenti dengan ralat.' }]} />
+</Card>
+
+<Card id="check-sick" type="check">
+Jalankan dan baca baris merah. Kemudian tanya log db kenapa.
+
+<Interactive name="KitchenSim" scenario="d4-sick-db" keys="compose" goal={{ typed: '^docker compose up', lastTyped: '^docker compose logs (-f )?db' }} hints={['Taip docker compose up -d dulu.', 'Kemudian taip docker compose logs db']} success="Postgres cakap terus terang: tiada kata laluan. Sebab itu db tak pernah sihat." />
+
+Kata sebenar: `dependency failed to start`. Maksudnya: db berhenti, jadi hidangan yang menunggunya tak pernah hidup.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat satu hidangan tunggu sampai yang lain sihat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tiga syarat: `service_started` (bentuk senarai pendek), `service_healthy`, dan `service_completed_successfully` untuk kerja sekali jalan, contohnya buat jadual. Tambah `restart: true` dan Compose juga mula semula api selepas ia mula semula db. `docker compose up -d --wait` hanya kembali bila setiap hidangan hidup atau sihat. CI guna ini.
+
+<Interactive name="Mission" id="d4-l04-rep" steps={[{ id: 'up', text: 'Beri db anda healthcheck dan hidupkan projek.', command: 'docker compose up -d' }, { id: 'ps', text: 'Cari (healthy) di sebelah db.', command: 'docker compose ps' }, { id: 'wait', text: 'Cuba cara CI: kembali hanya bila semua sedia.', command: 'docker compose up -d --wait' }]} success="Hidangan anda kini menunggu satu sama lain dengan elok." />
+</Card>

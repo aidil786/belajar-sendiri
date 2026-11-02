@@ -1,0 +1,74 @@
+---
+id: git-w06-l05
+world: 6
+title: Conventional Commits, SemVer, changelogs
+summary: "You will learn: how commit labels decide the next version and the changelog."
+minutes: 4
+xp: 20
+interactives: [TermReplay, TimelineTap, SpotLines, SortCards, Choice, OrderList]
+needs: [git-w06-l04]
+scenario: w06-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+  - { label: "Keep a Changelog", url: "https://keepachangelog.com/en/1.1.0/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w06-l05-messy" commands={['git log --oneline']} label="git log with four vague messages: more changes, fix things, update and stuff." />
+
+Release day! Users ask what changed. Is it a big update or a small fix? This log will not tell you.
+</Card>
+
+<Card id="see-semver" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'MAJOR', title: '2.4.1 → 3.0.0', text: 'A breaking change. Code that uses yours may stop working.' }, { when: 'MINOR', title: '2.4.1 → 2.5.0', text: 'A new feature. Everything old still works. PATCH goes back to 0.' }, { when: 'PATCH', title: '2.4.1 → 2.4.2', text: 'A bug fix. Nothing new, nothing breaks.' }]} />
+
+**<Term id="semantic-versioning">Semantic Versioning</Term>** (SemVer) uses three numbers: MAJOR.MINOR.PATCH. Each one tells users how big the change is.
+</Card>
+
+<Card id="try-spot" type="try">
+**<Term id="conventional-commits">Conventional Commits</Term>** labels match those numbers. `fix:` means PATCH. `feat:` means MINOR. Tap every commit that adds a feature.
+
+<Interactive name="SpotLines" scenario="w06-l05" commands={['git log --oneline']} targets=" feat: " prompt="Tap every commit that adds a feature." success="Two features! So the next version bumps MINOR." />
+</Card>
+
+<Card id="try-sort" type="try">
+Which number does each commit bump?
+
+<Interactive name="SortCards" buckets={[{ id: 'patch', label: 'PATCH' }, { id: 'minor', label: 'MINOR' }, { id: 'major', label: 'MAJOR' }]} items={[{ label: '`fix: stop cart crash`', bucket: 'patch', why: 'fix: is a bug fix. PATCH.' }, { label: '`feat: add search box`', bucket: 'minor', why: 'feat: is a new feature. MINOR.' }, { label: '`feat!: drop old menu links`', bucket: 'major', why: 'The ! means a breaking change. Old links stop working. MAJOR.' }, { label: '`fix: correct price rounding`', bucket: 'patch', why: 'Another bug fix. PATCH.' }, { label: '`feat: add dark mode`', bucket: 'minor', why: 'Something new that breaks nothing. MINOR.' }]} success="All sorted! Labels make versions easy." />
+
+<Hint>fix: is PATCH. feat: is MINOR. A ! before the colon is MAJOR.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Version 2.4.1 is live. Since then: two `fix:` commits and one `feat:`. What comes next?
+
+<Interactive name="Choice" compact options={[{ label: '2.5.0', correct: true, why: 'A feat: bumps MINOR. PATCH goes back to 0.' }, { label: '2.4.3', why: 'There is a feat:, so MINOR goes up, not just PATCH.' }, { label: '3.0.0', why: 'Nothing breaks, so MAJOR stays the same.' }, { label: '2.5.1', why: 'When MINOR goes up, PATCH resets to 0.' }]} />
+</Card>
+
+<Card id="try-changelog" type="try">
+A **<Term id="changelog">changelog</Term>** lists changes for people. The newest version goes on top. Changes are grouped, like Added and Fixed. Tap every fix.
+
+<Interactive name="SpotLines" lines={[{ text: '# Changelog' }, { text: '## [Unreleased]' }, { text: '## [2.5.0] - 2026-10-30' }, { text: '### Added' }, { text: '- Search box on the menu.' }, { text: '### Fixed' }, { text: '- Cart keeps its items.', target: true }, { text: '## [2.4.1] - 2026-10-02' }, { text: '### Fixed' }, { text: '- Prices round correctly.', target: true }]} prompt="Tap every fix in this changelog." success="Found them! People read this, not the raw log." />
+</Card>
+
+<Card id="check-order" type="check">
+Put these versions in order, newest at the top.
+
+<Interactive name="OrderList" items={['3.0.0', '2.10.0', '2.9.1', '2.9.0', '1.12.0']} label="Newest at the top" success="Yes! 2.10.0 is newer than 2.9.1." />
+
+<Hint>Compare one number at a time. 10 is bigger than 9.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now turn commit labels into versions and a changelog.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tools can read Conventional Commits for you. They pick the next version and draft the changelog. A footer that starts with `BREAKING CHANGE:` also means MAJOR. Versions below 1.0.0 are for early work: anything may change. A tag like v2.5.0 adds a v, but the version is 2.5.0.
+</Card>

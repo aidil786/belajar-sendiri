@@ -1,0 +1,72 @@
+---
+id: cicd-c3-l05
+world: 3
+title: "A preview for every PR"
+summary: "You will learn: how each pull request gets its own live link to try before merging."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, ConveyorBelt, SwipeJudge, Transcript]
+needs: [cicd-c3-l04]
+scenario: c3-preview
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare Workers: Previews", url: "https://developers.cloudflare.com/workers/previews/" }
+  - { label: "Cloudflare: Preview examples for CI", url: "https://developers.cloudflare.com/workers/previews/examples/" }
+  - { label: "Events: pull_request", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request" }
+---
+
+<Card id="hook" type="hook">
+A pull request changes 300 lines of CSS. The reviewer reads every line. Does the menu page still look right?
+
+<Interactive name="Choice" options={[{ label: 'Open a live link for this PR and look', correct: true, why: 'Seeing beats guessing. That link is a preview.' }, { label: 'Read the CSS very carefully', why: 'Even careful readers miss how a page looks.' }, { label: 'Merge it, then check the live site', why: 'Then your customers find the problems first.' }]} />
+</Card>
+
+<Card id="see-preview" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Open', title: 'PR opened', text: 'A workflow builds the branch and uploads a preview.' }, { when: 'Link', title: 'Its own link', text: 'The preview gets its own address. Reviewers click and try it.' }, { when: 'Push', title: 'New commit', text: 'The same preview updates. The link stays the same.' }, { when: 'Close', title: 'PR closed', text: 'Delete the preview. The plate is cleared.' }]} />
+
+A **<Term id="preview-environment">preview environment</Term>** is a tasting plate for one pull request. Tap through its life.
+</Card>
+
+<Card id="try-run" type="try">
+`npx wrangler preview` uploads a preview of your Worker to Cloudflare. Here it runs on every pull request. Run it.
+
+<Interactive name="ConveyorBelt" scenario="c3-preview" event="pr" events={['pr']} label="A pull request builds and uploads its own preview." />
+
+<Hint>Pick Pull request, then press Run.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now a stranger opens a pull request from their fork. Will the preview deploy?
+
+<Interactive name="Choice" options={[{ label: 'No: forks get no secrets, so there is no token', correct: true, why: 'GitHub keeps your secrets away from strangers’ code.' }, { label: 'Yes, the same as yours', why: 'A pull request from a fork runs without your secrets.' }, { label: 'Only if the pull request is small', why: 'Size does not matter. Secrets stay locked for forks.' }]} />
+</Card>
+
+<Card id="check-fork" type="check">
+Check it. Find the pull request whose preview fails, and read the real error.
+
+<Interactive name="ConveyorBelt" scenario="c3-preview" task={{ type: 'event', job: 'preview', result: 'failure' }} success="Plain words: a fork's pull request has no Cloudflare token, so nothing is uploaded." />
+
+<Hint>Try the pull request from a fork.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Preview habits: good, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Delete the preview when the pull request closes.', good: true, why: 'Old previews pile up and confuse people.' }, { text: 'Give previews the production database.', good: false, why: 'A test could change real orders. Give previews test data.' }, { text: 'Post the preview link on the pull request.', good: true, why: 'Reviewers find it in one click.' }, { text: 'Give fork pull requests your deploy token.', good: false, why: 'A stranger’s code could steal it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now give every pull request its own preview.
+</Card>
+
+<Card id="deeper" type="deeper">
+Worker Previews are in open beta. Each one gets a link that updates with every push. Clean up when the pull request closes.
+
+<Interactive name="Transcript" title="bash" label="Delete the preview named pr-7 without a question first." lines={[{ cmd: 'npx wrangler preview delete --name "pr-7" --skip-confirmation' }]} />
+
+Workers Builds can also post the link on the pull request. Real rep (optional): add this workflow to a test Worker repo.
+</Card>

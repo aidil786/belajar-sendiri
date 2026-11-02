@@ -1,0 +1,72 @@
+---
+id: docker-d6-l02
+world: 6
+title: "Namespaces: what it can see"
+summary: "You will learn: how Linux namespaces give a process its own processes, network and hostname."
+minutes: 4
+xp: 20
+interactives: [NamespaceXray, KitchenReplay, Choice, KitchenSim, SortCards, Mission]
+needs: [docker-d6-l01]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "namespaces(7)", url: "https://man7.org/linux/man-pages/man7/namespaces.7.html" }
+  - { label: "Docker security: kernel namespaces", url: "https://docs.docker.com/engine/security/" }
+  - { label: "unshare(1)", url: "https://man7.org/linux/man-pages/man1/unshare.1.html" }
+---
+
+<Card id="hook" type="hook">
+This plain process, `node server.js`, sees every program on the laptop. Inside a container, `ps` showed just one. Flip the two switches and watch.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt']} task={{ type: 'turnOn', switches: ['pid', 'mnt'] }} prompt="Turn on PID, then Mount. Watch the process list." success="Now it sees one process: itself, as PID 1." />
+</Card>
+
+<Card id="see-uts" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['hostname', 'docker exec web hostname']} label="hostname on the laptop prints laptop. Inside web, hostname prints the container's short id." />
+
+Two different names! Each switch is a <Term id="linux-namespace">namespace</Term>. A **namespace** is a pair of blinkers. It hides one thing, like the laptop's hostname.
+</Card>
+
+<Card id="try-net" type="try">
+Find the blinker that gives the process its own network card.
+
+<Interactive name="NamespaceXray" switches={['uts', 'net', 'ipc']} task={{ type: 'find', what: 'ownNetwork' }} />
+
+<Hint>Look for the switch next to the Network panel.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Two nginx containers both listen on port 80 inside. Will they clash?
+
+<Interactive name="Choice" options={[{ label: 'No. Each has its own network, so each has its own port 80.', correct: true, why: 'The network namespace gives every lunchbox its own ports.' }, { label: 'Yes. Only one program can use port 80.', why: 'That is true inside one network. Each container has its own.' }, { label: 'Only if they use the same image', why: 'The image doesn’t matter. The network namespace does.' }]} />
+</Card>
+
+<Card id="try-two" type="try">
+Prove it. Start a second nginx called `web2`, without `-p`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ running: ['web', 'web2'] }} hints={['Type docker run -d --name web2 nginx:1.30-alpine', 'Then docker ps shows both lunchboxes up.']} success="Both serve port 80 inside. No clash: each has its own network." />
+
+<Hint>`docker run -d --name web2 nginx:1.30-alpine` starts it in the background.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Which namespace hides each thing?
+
+<Interactive name="SortCards" buckets={[{ id: 'pid', label: 'PID' }, { id: 'net', label: 'Network' }, { id: 'uts', label: 'UTS' }]} items={[{ label: 'nginx is PID 1', bucket: 'pid', why: 'The PID namespace starts the count again at 1.' }, { label: 'Its own port 80', bucket: 'net', why: 'Ports belong to a network namespace.' }, { label: 'Its own hostname', bucket: 'uts', why: 'UTS holds the hostname.' }, { label: 'Its own eth0 card', bucket: 'net', why: 'Network cards live in the network namespace.' }, { label: 'Can’t see Firefox running', bucket: 'pid', why: 'Other processes are hidden by the PID namespace.' }]} success="Sorted! Each namespace hides one thing." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how namespaces change what a container sees.
+</Card>
+
+<Card id="deeper" type="deeper">
+Linux has 8 kinds: cgroup, IPC, network, mount, PID, time, user and UTS. Docker turns on PID, mount, network, UTS and IPC (plus cgroup on cgroup v2). The user one stays off by default (lesson 6). A Kubernetes namespace is a different idea: a zone of the food court.
+
+Real rep (optional, Linux): make your own namespaces.
+
+<Interactive name="Mission" id="d6-l02-unshare" steps={[{ id: 'in', text: 'Open a shell with its own hostname and process list.', command: 'sudo unshare --uts --pid --fork --mount-proc sh' }, { id: 'name', text: 'Rename this little world. The laptop keeps its name.', command: 'hostname kancil' }, { id: 'ps', text: 'List processes. The shell is PID 1.', command: 'ps' }, { id: 'out', text: 'Leave. Everything inside disappears.', command: 'exit' }]} success="You built a tiny container by hand!" />
+</Card>

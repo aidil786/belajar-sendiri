@@ -1,0 +1,70 @@
+---
+id: git-w04-l12
+world: 4
+title: Forks and syncing
+summary: "You will learn: how to copy someone's project into your account and keep your copy up to date."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, TermReplay, Sim, OrderList, SwipeJudge]
+needs: [git-w04-l11]
+scenario: w04-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Fork a repository", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo" }
+  - { label: "Syncing a fork", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork" }
+  - { label: "git remote", url: "https://git-scm.com/docs/git-remote" }
+---
+
+<Card id="hook" type="hook">
+Mei's recipe site has a typo. You can't push to her repo. How can you help?
+
+<Interactive name="Choice" options={[{ label: 'Copy her repo into your account, fix it there, then offer it back', correct: true, why: 'That copy is a fork. The offer is a pull request (World 5).' }, { label: 'Push anyway', why: 'GitHub refuses. It is her repo.' }, { label: 'Give up', why: 'No need! Open source welcomes help like yours.' }]} />
+</Card>
+
+<Card id="see-fork" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Fork', text: 'A copy of mei/recipes lands in your account: you/recipes.' }, { when: '2', title: 'Clone', text: 'Copy your fork to your laptop.' }, { when: '3', title: 'Push', text: 'Push your fix to your fork. It is yours, so it works.' }, { when: '4', title: 'Pull request', text: 'Ask Mei to take your change. That is World 5!' }]} />
+
+A **<Term id="fork">fork</Term>** is your own copy of someone's repo, on GitHub. Tap each step.
+</Card>
+
+<Card id="see-upstream" type="see">
+<Interactive name="TermReplay" scenario="w04-l12" commands={['git remote add upstream https://github.com/mei/recipes.git', 'git remote -v']} label="After adding upstream, git remote -v lists two remotes: origin is your fork, upstream is Mei's repo." />
+
+Your clone knows `origin`: your fork. Add Mei's repo as a second remote. The usual name for it is <Term id="upstream">upstream</Term>.
+</Card>
+
+<Card id="predict" type="predict">
+Mei adds a roti canai recipe to her repo. Does your fork get it by itself?
+
+<Interactive name="Choice" options={[{ label: 'No. You sync it.', correct: true, why: 'A fork is a copy. It does not update itself.' }, { label: 'Yes, at once', why: 'Sadly no. Your copy stays as it was.' }, { label: 'Only if Mei asks GitHub', why: 'Mei cannot push to your fork. You sync it yourself.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Sync your fork: add upstream, fetch, merge, then push.
+
+<Interactive name="Sim" scenario="w04-l12" panels={['graph']} goal={{ pushed: ['main'], serverHas: { url: 'https://github.com/you/recipes.git', branch: 'main', hasMessage: 'roti canai' } }} hints={['Start with git remote add upstream https://github.com/mei/recipes.git', 'Then git fetch upstream and git merge upstream/main', 'Last, git push']} success="Your fork has the roti canai recipe now. Synced!" />
+
+<Hint>Four commands: remote add, fetch, merge, push.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+GitHub also gives your fork a **Sync fork** button. On your laptop, it's these steps. Put them in order.
+
+<Interactive name="OrderList" items={['git remote add upstream <Mei’s address>', 'git fetch upstream', 'git merge upstream/main', 'git push']} label="First step at the top" success="Add once. Then fetch, merge, push whenever Mei adds something." />
+</Card>
+
+<Card id="check-habits" type="check">
+Fork habits: good, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Sync your fork before you start new work', good: true, why: 'You build on the newest version.' }, { text: 'Make a new branch in your fork for each fix', good: true, why: 'One fix, one branch, one pull request.' }, { text: 'Never sync, ever', good: false, why: 'Your fork falls behind and gets hard to merge.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fork a project and keep your copy in sync.
+</Card>
+
+<Card id="deeper" type="deeper">
+The GitHub CLI can do this too. `gh repo fork --clone` forks and clones in one go. `gh repo sync` updates a fork from its parent. A fork remembers the original, so pull requests know where to go.
+</Card>

@@ -1,0 +1,74 @@
+---
+id: iac-t3-l04
+world: 3
+title: Blok import
+summary: "Anda akan belajar: cara ambil alih benda yang dibina dengan tangan, tanpa membinanya semula."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SwipeJudge, CommandBuilder, Mission]
+needs: [iac-t3-l03]
+scenario: t3-import-door
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: blok import", url: "https://opentofu.org/docs/language/import/" }
+  - { label: "tofu import", url: "https://opentofu.org/docs/cli/commands/import/" }
+  - { label: "Terraform: blok import", url: "https://developer.hashicorp.com/terraform/language/import" }
+---
+
+<Card id="hook" type="hook">
+Dulu, seseorang tetapkan kod pintu kedai kepada `KANCIL` dengan tangan. Sekarang anda tambah pintu itu dalam pelan dan jalankan apply. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'OpenTofu buat kod rawak baharu. Kunci lama tak boleh guna lagi.', correct: true, why: 'Daftar tiada rekod KANCIL, jadi ia bina yang baharu.' }, { label: 'OpenTofu jumpa KANCIL sendiri', why: 'Ia hanya tahu apa yang daftarnya kata. KANCIL tiada di situ.' }, { label: 'OpenTofu enggan berjalan', why: 'Ia berjalan dengan gembira, dan bina kod pintu kedua.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Semak. Taip `tofu plan` dan cari `will be created`.
+
+<Interactive name="TofuSim" scenario="t3-import-door" goal={{ planSummary: { add: 1 }, lastTyped: '^tofu plan' }} hints={['Taip tofu plan dan tekan Enter.']} success="Nampak? Kod pintu baharu. Tiada siapa ada kuncinya." />
+</Card>
+
+<Card id="see-block" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris yang namakan benda sebenar untuk diambil alih." lines={[{ text: 'import {' }, { text: '  to = random_string.door' }, { text: '  id = "KANCIL"', target: true }, { text: '}' }]} success="id itu benda sebenar. to itu namanya dalam pelan anda." />
+
+**<Term id="import-block">Blok import</Term>** berkata: "Benda ini sudah wujud. Ambil alih, jangan bina." `to` ialah alamat dalam pelan anda. `id` tunjuk benda sebenar.
+</Card>
+
+<Card id="try-import" type="try">
+Tambah blok import di bawah resource pintu dalam `main.tf`. Jalankan `tofu plan`: cari `1 to import`. Kemudian `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-import-door" goal={{ outputEquals: { door: 'KANCIL' } }} hints={['Di bawah blok resource, tambah: import { to = random_string.door, id = "KANCIL" }, satu tetapan satu baris.', 'tofu plan patut kata: Plan: 1 to import, 0 to add.', 'Kemudian tofu apply dan yes. Tersilap bina kod baharu? Tekan Mula semula.']} success="Berjaya diambil alih! Output door kata KANCIL, dan tiada apa dibina semula." />
+
+<Hint>Salin empat baris dari kad tadi.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Import sudah selesai. Blok itu masih dalam `main.tf`. Apa sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Simpan atau padam. Ia tak buat apa-apa lagi.', correct: true, why: 'Selepas import berjaya, blok itu sudah selesai. Ada pasukan simpan sebagai sejarah.' }, { label: 'Padam cepat, nanti ia import dua kali', why: 'Pintu sudah ada dalam daftar. Tiada apa berlaku dua kali.' }, { label: 'Jalankan tofu import juga, untuk pasti', why: 'Blok itu sudah buat kerjanya, dengan plan yang boleh dibaca.' }]} />
+</Card>
+
+<Card id="check" type="check">
+⚠️ Hati-hati: id yang salah boleh gantikan benda sebenar. Begitu juga pelan yang tak sepadan dengannya. Leret: import selamat, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Baca plan dahulu: "1 to import, 0 to destroy"', good: true, why: 'Tepat seperti yang dimahukan: ambil alih, tiada perubahan.' }, { text: 'Plan kata "Warning: this will destroy the imported resource". Apply juga.', good: false, why: 'Berhenti. Jadikan pelan sepadan dengan benda sebenar dahulu.' }, { text: 'Salin id dari tetapan benda sebenar', good: true, why: 'Setiap provider terangkan id import-nya. Salin, jangan teka.' }, { text: 'Teka id dan jalankan apply -auto-approve', good: false, why: 'id yang salah boleh ambil alih, atau nanti padam, benda yang salah.' }]} />
+</Card>
+
+<Card id="see-cli" type="see">
+Ada juga arahan yang lebih lama. Ia tulis daftar serta-merta, tanpa plan untuk dibaca dahulu. Bina arahan itu.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'bercakap dengan OpenTofu' }, { text: 'import', means: 'ambil alih satu benda sekarang' }, { text: 'random_string.door', means: 'alamatnya dalam pelan' }, { text: 'KANCIL', means: 'id benda sebenar' }]} decoys={[{ text: '-auto-approve', means: 'langkau soalan' }, { text: 'destroy', means: 'padam benda: bukan ini' }]} success="tofu import random_string.door KANCIL. Blok lebih selamat: anda nampak plan dahulu." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh ambil alih benda yang dibina dengan tangan, dengan plan yang boleh disemak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Blok import boleh guna `for_each` untuk ambil alih banyak benda sekaligus. `tofu plan -generate-config-out=generated.tf` boleh draf blok resource untuk anda; dokumentasi masih panggil ia eksperimen. Dokumentasi setiap provider senaraikan id import-nya, dalam bahagian "Import".
+
+<Interactive name="Mission" id="iac-t3-l04-rep" steps={[{ id: 'write', text: 'Dalam folder latihan: random_string "door" dengan length = 6, dan blok import untuk id "KANCIL".' }, { id: 'plan', text: 'Cari 1 to import.', command: 'tofu init && tofu plan' }, { id: 'apply', text: 'Ambil alih.', command: 'tofu apply' }, { id: 'look', text: 'Baca daftar.', command: 'tofu state show random_string.door' }]} success="Anda ambil alih benda sebenar tanpa membinanya semula." />
+</Card>

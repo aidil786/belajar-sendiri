@@ -1,0 +1,80 @@
+---
+id: cicd-c1-boss
+world: 1
+title: Lukis talian
+summary: "Anda akan belajar: cara reka pipeline yang sesuai untuk setiap pasukan."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, SortCards, ConveyorBelt, OrderList, Choice, SwipeJudge]
+needs: [cicd-c1-l09]
+scenario: c1-boss-kuih
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "DORA: software delivery performance metrics", url: "https://dora.dev/guides/dora-metrics/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Pasukan 1', title: 'Kedai kuih Mak Siti', text: 'Laman web kecil. Dua orang. Tiada container. Baikan patut cepat live.' }, { when: 'Pasukan 2', title: 'API Kedai Kancil', text: 'Hantar image container ke GHCR. Beribu pengguna. Pek buruk tak boleh sampai ke peti sejuk.' }, { when: 'Pasukan 3', title: 'Tempahan Klinik Ceria', text: 'Aplikasi tempahan untuk klinik. Pengurus mesti luluskan setiap release.' }]} />
+
+Tiga pasukan minta pipeline daripada anda. Satu saiz tak muat semua. Ketik setiap pasukan untuk berkenalan.
+</Card>
+
+<Card id="t1-pick" type="try">
+Pasukan 1, laman kuih Mak Siti. Stesen mana yang ia perlukan?
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'Perlu' }, { id: 'skip', label: 'Tak perlu' }]} items={[{ label: 'Lint', bucket: 'need', why: 'Beberapa saat sahaja. Tangkap salah taip dulu.' }, { label: 'Ujian', bucket: 'need', why: 'Setiap pasukan buat uji rasa.' }, { label: 'Build laman', bucket: 'need', why: 'Laman mesti dimasak dan dibungkus.' }, { label: 'Deploy setiap kali merge ke main', bucket: 'need', why: 'Baikan cepat penting di sini. Hijau bermaksud live.' }, { label: 'Scan image container', bucket: 'skip', why: 'Tiada container di sini untuk di-scan.' }, { label: 'Publish image ke registry', bucket: 'skip', why: 'Tiada image, jadi tiada apa masuk peti sejuk.' }, { label: 'Pengurus luluskan setiap release', bucket: 'skip', why: 'Dua orang, baikan kecil. Menunggu akan lambatkan mereka.' }]} success="Talian kecil untuk pasukan kecil. Tiada yang lebih." />
+
+<Hint>Tiada container, tiada pengurus. Simpan apa yang pasukan ini betul-betul perlukan.</Hint>
+</Card>
+
+<Card id="t1-run" type="try">
+Ini talian Mak Siti. Cuba event satu per satu. Cari yang buat van terus parkir.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-kuih" task={{ type: 'event', job: 'deploy', result: 'skipped' }} success="Pull request disemak. Hanya main dihantar." />
+
+<Hint>Cuba pull request. Tengok stesen deploy.</Hint>
+</Card>
+
+<Card id="t2-order" type="try">
+Pasukan 2, API Kedai Kancil. Susun stesen mereka ikut urutan.
+
+<Interactive name="OrderList" items={['Lint kod', 'Jalankan ujian', 'Build image', 'Scan image', 'Publish ke GHCR', 'Deploy']} label="Stesen pertama di atas" success="Keenam-enam stesen. Scan jaga peti sejuk." />
+
+<Hint>Semak kod, masak image, semak image, baru hantar.</Hint>
+</Card>
+
+<Card id="t2-run" type="predict">
+Seseorang rosakkan Dockerfile API.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-api" task={{ type: 'predict' }} success="Build hentikannya. Tiada apa di-scan, di-publish atau di-deploy." />
+
+<Hint>Dockerfile ialah resepi image. Stesen mana yang masak image?</Hint>
+</Card>
+
+<Card id="t3-choose" type="predict">
+Pasukan 3, Klinik Ceria. Mereka mahu staging, kemudian production selepas pengurus kata jalan. Reka bentuk mana yang sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Build sekali, kemudian staging, luluskan, baru production', correct: true, why: 'Production dapat apa yang staging semak, dan pengurus kata jalan.' }, { label: 'Build untuk staging, kemudian build lagi untuk production', why: 'Build kedua mungkin berbeza. Production mesti dapat apa yang staging uji.' }, { label: 'Terus deploy ke production setiap kali merge', why: 'Pengurus mesti luluskan dulu. Itu continuous delivery.' }]} />
+</Card>
+
+<Card id="t3-run" type="try">
+Run talian Klinik Ceria. Bila production menunggu, luluskan bagi pihak pengurus, Dr Lim.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-clinic" task={{ type: 'approve' }} success="Dah dihantar, dengan kelulusan pengurus. Pek yang sama macam staging." />
+</Card>
+
+<Card id="check" type="check">
+Reka bentuk yang baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Beri setiap pasukan enam stesen yang sama, sentiasa', good: false, why: 'Sesuaikan talian dengan pasukan. Laman kecil perlukan kurang stesen.' }, { text: 'Letak semakan cepat di depan setiap talian', good: true, why: 'Maklum balas pantas bantu setiap pasukan.' }, { text: 'Laman kuih tunggu pengurus untuk setiap baikan salah taip', good: false, why: 'Itu lambatkan baikan kecil. Continuous deployment sesuai untuk mereka.' }, { text: 'Build sekali dan promote, untuk klinik', good: true, why: 'Production dapat tepat apa yang staging semak.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh reka pipeline yang sesuai dengan pasukan.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: docker-d5-l09
+world: 5
+title: "docker history tells secrets"
+summary: "You will learn: how secrets leak into image layers, and how build secrets keep them out."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, Choice, KitchenSim, SpotLines, Transcript, SortCards, Mission]
+needs: [docker-d5-l08]
+scenario: d5-leaky
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image history", url: "https://docs.docker.com/reference/cli/docker/image/history/" }
+  - { label: "Build secrets", url: "https://docs.docker.com/build/building/secrets/" }
+  - { label: "Build check: SecretsUsedInArgOrEnv", url: "https://docs.docker.com/reference/build-checks/secrets-used-in-arg-or-env/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-leaky" commands={["docker history menu:1.0"]} label="docker history menu:1.0 lists every recipe line. Two rows show secrets: ENV API_KEY=kk_live_8f2a and ARG SHOP_TOKEN=tk_9b7c." />
+
+Your recipe card is stuck to the pack. `docker history` shows every line, for anyone who pulls it. Spot the two secrets?
+</Card>
+
+<Card id="predict-rm" type="predict">
+Line 3 of a recipe copies `.env` in. Line 4 runs `rm .env`. Is the secret in the image?
+
+<Interactive name="Choice" options={[{ label: 'Yes: it stays in the layer from line 3', correct: true, why: 'Each line bakes a layer. A later rm only hides the file on top.' }, { label: 'No: rm deleted it', why: 'rm hides it in a new layer. The old layer still holds it.' }, { label: 'Only if the image is public', why: 'Anyone who gets the image can dig it out, public or not.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Be the detective. Show the full lines with `--no-trunc`, and find the token.
+
+<Interactive name="KitchenSim" scenario="d5-leaky" goal={{ lastTyped: 'history.*--no-trunc|--no-trunc.*history' }} hints={['Type docker history --no-trunc menu:1.0', 'Look at the RUN line: it starts with |1 SHOP_TOKEN=…']} success="Found it: SHOP_TOKEN=tk_9b7c, in plain sight." />
+
+<Hint>`docker history --no-trunc menu:1.0`</Hint>
+</Card>
+
+<Card id="see-fix" type="see">
+A **<Term id="build-secret">build secret</Term>** is lent to one `RUN` step, then taken back. It never lands in a layer.
+
+<Interactive name="SpotLines" lines={[{ text: 'FROM alpine:3.22' }, { text: 'RUN --mount=type=secret,id=shop_token,env=SHOP_TOKEN test -n "$SHOP_TOKEN"', target: true }, { text: 'COPY menu.txt /app/menu.txt' }, { text: 'CMD ["cat", "/app/menu.txt"]' }]} prompt="Tap the line that borrows the secret." success="Yes! --mount=type=secret lends it to that step only." />
+</Card>
+
+<Card id="check-history" type="check">
+<Interactive name="Transcript" title="bash" label="Build with --secret id=shop_token,env=SHOP_TOKEN, then docker history: the RUN row shows test -n with no token value." lines={[{ cmd: 'docker build --secret id=shop_token,env=SHOP_TOKEN -t menu:1.1 .' }, { out: '…', color: 'dim' }, { cmd: "docker history --no-trunc --format '{{.CreatedBy}}' menu:1.1" }, { out: 'CMD ["cat" "/app/menu.txt"]\nCOPY menu.txt /app/menu.txt # buildkit\nRUN /bin/sh -c test -n "$SHOP_TOKEN" # buildkit\nCMD ["/bin/sh"]\nADD alpine-minirootfs-3.22.7-x86_64.tar.gz / # buildkit' }]} />
+
+Real output. The `RUN` row names the variable, never its value. The token stayed in your locked spice box.
+</Card>
+
+<Card id="sort" type="check">
+Safe for a build, or a leak?
+
+<Interactive name="SortCards" buckets={[{ id: 'safe', label: 'Safe' }, { id: 'leak', label: 'Leaks into the image' }]} items={[{ label: '`ARG NPM_TOKEN`, used by a RUN', bucket: 'leak', why: 'docker history shows the value on the RUN line.' }, { label: '`ENV API_KEY=kk_live_…`', bucket: 'leak', why: 'ENV is saved in the image for everyone.' }, { label: '`COPY .env .` then `RUN rm .env`', bucket: 'leak', why: 'The COPY layer still holds it.' }, { label: '`RUN --mount=type=secret,id=token …`', bucket: 'safe', why: 'Lent for one step, never baked in.' }, { label: '`.env` listed in `.dockerignore`', bucket: 'safe', why: 'It never even enters the kitchen.' }]} success="Secrets borrowed, never baked." />
+</Card>
+
+<Card id="win" type="win">
+You can now find leaked secrets and keep them out of your images.
+</Card>
+
+<Card id="deeper" type="deeper">
+Leaked one? Cancel the token first: it is public now. Then fix the recipe, rebuild and delete the old tags. BuildKit warns you with `SecretsUsedInArgOrEnv`.
+
+**Where the story breaks:** a real freezer holds one pack. A registry hands out perfect copies forever, and they never thaw. But packs still go off: new holes are found in old images.
+
+<Interactive name="Mission" id="d5-l09-rep" steps={[{ id: 'look', text: 'Read the full history of one of your own images.', command: 'docker history --no-trunc YOUR-IMAGE' }, { id: 'warn', text: 'Build it again. Read any WARN lines that BuildKit prints.' }, { id: 'fix', text: 'Move any secret into a build secret, and list .env in .dockerignore.' }]} success="Your recipe cards hide nothing now." />
+</Card>

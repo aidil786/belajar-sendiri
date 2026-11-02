@@ -1,0 +1,70 @@
+---
+id: obs-o1-l01
+world: 1
+title: Why watch at all?
+summary: "You will learn: why a shop needs a control room, and what monitoring and observability mean."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, SwipeJudge, Mission]
+needs: []
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Google SRE book: monitoring distributed systems", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+  - { label: "OpenTelemetry: observability primer", url: "https://opentelemetry.io/docs/concepts/observability-primer/" }
+---
+
+<Card id="hook" type="hook">
+Lunch rush at Kedai Kancil. Checkout broke 20 minutes ago. Who tells you first?
+
+<Interactive name="Choice" options={[{ label: 'An angry customer', correct: true, why: 'Sadly, often yes. With nobody watching, customers become your alarm.' }, { label: 'The server, by itself', why: 'A server only speaks up if you set that up.' }, { label: 'Nobody ever finds out', why: 'Someone always notices. Better if it is you, first.' }]} />
+</Card>
+
+<Card id="see-rush" type="see">
+<Interactive name="TimelineTap" events={[{ when: '12:00', title: 'The rush starts', text: 'Orders climb. Everything looks fine.' }, { when: '12:10', title: 'The queue grows', text: 'Orders wait longer. Nobody is looking.' }, { when: '12:19', title: 'Checkouts fail', text: '1 in 100 fails. Soon 6 in 100.' }, { when: '12:20', title: 'With a control room', text: 'An alarm rings. You start fixing it.' }, { when: '12:41', title: 'Without one', text: 'A customer complains. You are 22 minutes late.' }]} />
+
+Watching the shop's numbers all the time is **<Term id="monitoring">monitoring</Term>**. Tap each moment of the rush.
+</Card>
+
+<Card id="try-screen" type="try">
+Open your first control room screen. Time 0 is 12:00.
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" metrics={['kedai_checkout_errors_ratio', 'kedai_queue_orders']} prompt="Tap the chip kedai_checkout_errors_ratio, then press Run. Look at the graph." goal={{ typed: 'kedai_checkout_errors_ratio', resultCount: 1 }} hints={['Tap the chip kedai_checkout_errors_ratio. It goes into the box.', 'Then press Run.']} solution="kedai_checkout_errors_ratio" success="That is the share of checkouts that fail." />
+
+<Hint>A chip puts a number's name into the box for you.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The errors line jumps at 19m. The customer complained at 41m. How much warning could this screen give?
+
+<Interactive name="Choice" options={[{ label: '22 minutes', correct: true, why: 'Yes. An alarm on this screen beats the angry message by 22 minutes.' }, { label: 'None', why: 'The screen showed errors at 19m. That is early warning.' }, { label: '1 minute', why: 'Count from 19m to 41m.' }]} />
+</Card>
+
+<Card id="see-observability" type="see">
+**<Term id="observability">Observability</Term>** means you can ask new questions from the outside. Monitoring watches the questions you planned. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'mon', label: 'Monitoring' }, { id: 'obs', label: 'Observability' }]} items={[{ label: 'A screen shows orders per minute', bucket: 'mon', why: 'A number you planned to watch.' }, { label: 'An alarm rings when errors pass 2%', bucket: 'mon', why: 'A known problem, with an alarm ready.' }, { label: 'A weekly report of the busiest hour', bucket: 'mon', why: 'Planned in advance.' }, { label: 'Why do only Bangsar orders fail? You dig in.', bucket: 'obs', why: 'A new question nobody planned for.' }, { label: 'Follow one slow order through every step', bucket: 'obs', why: 'You explore the system from its own data.' }]} success="Planned watching, and free asking. You need both." />
+</Card>
+
+<Card id="check" type="check">
+Good reasons to watch? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Find trouble before customers do', good: true, why: 'The main reason.' }, { text: 'Know if a new release made things better', good: true, why: 'Numbers before and after tell you.' }, { text: 'Blame the person who broke it', good: false, why: 'Watching is for fixing, not blaming.' }, { text: 'Stare at graphs all day, by hand', good: false, why: 'Machines watch. People get called only when needed.' }, { text: 'Plan for next month’s busy days', good: true, why: 'Old numbers help you get ready.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain why a shop needs a control room.
+</Card>
+
+<Card id="deeper" type="deeper">
+Monitoring tells you *that* something is wrong. Observability helps you find *why*. Both feed on the same data: metrics, logs and traces. That is the next lesson.
+
+Real rep, no tools needed:
+
+<Interactive name="Mission" id="obs-o1-l01-real" steps={[{ id: 'app', text: 'Pick one app you look after, or one you use every day.' }, { id: 'three', text: 'Write three numbers that would show it is healthy.' }, { id: 'who', text: 'For each number, write who should hear about it when it goes bad.' }]} success="That is the start of your own control room." />
+</Card>

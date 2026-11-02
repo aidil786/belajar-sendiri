@@ -1,0 +1,67 @@
+---
+id: git-w11-l15
+world: 11
+title: I pushed to a protected branch
+summary: "You will learn: how to get your work into a protected branch the right way."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, Choice, GraphScene, Sim]
+needs: [git-w05-l12]
+scenario: w11-l15
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About protected branches", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'you', name: 'diary', readme: '# My Diary\n\nOne page a day.\n' }} settings={{ rules: [{ id: 'requirePR', label: 'Require a pull request before merging into main', on: true }, { id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'noForce', label: 'Block force pushes', on: true }] }} />
+
+You pushed to `main`. GitHub refused: main is protected. Phew! The rules did their job. Your commit is still safe on your computer.
+</Card>
+
+<Card id="decide" type="try">
+What does GitHub want from you?
+
+<Interactive name="Choice" options={[{ label: 'Push a new branch and open a pull request', correct: true, why: 'main only takes changes through a reviewed pull request.' }, { label: 'Turn the rule off', why: 'The rule keeps main safe. Ask an admin only if it is truly needed.' }, { label: 'git push --force', why: 'Protected branches block force pushes too. And it is risky.' }]} />
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="GraphScene" scenario="w11-l15" commands={['git switch -c fix-title']} label="A new label, fix-title, appears on the Fix the title commit. HEAD moves onto it." />
+
+Your commit just needs a branch. `git switch -c fix-title` puts a new label on it, right where you are.
+</Card>
+
+<Card id="try-push" type="try">
+Make the branch. Then push it to GitHub.
+
+<Interactive name="Sim" scenario="w11-l15" panels={['graph']} goal={{ currentBranch: 'fix-title', pushed: ['fix-title'] }} hints={['Type git switch -c fix-title', 'Then type git push -u origin fix-title']} success="Pushed! GitHub even printed a link to open a pull request." />
+
+<Hint>Type `git switch -c fix-title`, then `git push -u origin fix-title`.</Hint>
+</Card>
+
+<Card id="try-merge" type="try">
+You opened a pull request. Mei approved it. Merge it into main.
+
+<Interactive name="PracticeRepo" screen="pull" at={8} repo={{ owner: 'you', name: 'diary', readme: '# My Diary\n\nOne page a day.\n' }} pulls={[{ number: 8, title: 'Fix the title', body: 'Makes the diary title friendlier.', author: 'you', from: 'fix-title', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -1 +1 @@', '-<h1>My Diary</h1>', '+<h1>My Dear Diary</h1>'] }], reviews: [{ author: 'mei', state: 'approved', body: 'Nice fix!' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }, { id: 'requireChecks', label: 'Require checks to pass', on: true }] }} task={{ type: 'merge', pr: 8 }} success="Merged the right way! main has your fix." />
+
+<Hint>Scroll down and tap Merge pull request.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Why couldn't you just force push to main?
+
+<Interactive name="Choice" options={[{ label: 'Protected branches block force pushes', correct: true, why: 'GitHub blocks force pushes on protected branches by default.' }, { label: 'Force push costs money', why: 'No! It is blocked to keep shared history safe.' }, { label: 'It would have worked fine', why: "The rule blocks it. It could also wipe teammates' work." }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now get work into a protected branch properly.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tidy up afterwards: `git switch main`, then `git pull`. Does pull say the branches diverged? The pull request was probably squashed. Your work is on GitHub, so `git reset --hard origin/main` is safe then. Or, right after pushing your branch, run `git branch -f main origin/main`.
+</Card>

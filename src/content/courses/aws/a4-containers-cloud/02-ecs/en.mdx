@@ -1,0 +1,65 @@
+---
+id: aws-a4-l02
+world: 4
+title: "ECS: tasks and services"
+summary: "You will learn: how ECS runs containers from a recipe card, and keeps them running."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, OrderList, SpotLines, SortCards, Choice]
+needs: [aws-a4-l01]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon ECS: What is Amazon ECS?", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" }
+  - { label: "Amazon ECS: Task definitions", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html" }
+  - { label: "Amazon ECS: Services", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html" }
+  - { label: "AWS CLI: aws ecs list-tasks", url: "https://docs.aws.amazon.com/cli/latest/reference/ecs/list-tasks.html" }
+  - { label: "Amazon ECS pricing", url: "https://aws.amazon.com/ecs/pricing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '02:00', title: 'Crash', text: 'Kedai Kancil’s container stops on its only server.' }, { when: '02:01', title: 'Silence', text: 'Nobody is awake to start it again.' }, { when: '08:00', title: 'Closed', text: 'Morning shoppers find an error page.' }]} />
+
+Containers crash. Someone must notice and start a new one, every time. Tap the story. Who could do it at 2 a.m.?
+</Card>
+
+<Card id="see-ecs" type="see">
+**<Term id="ecs">ECS</Term>** is the mall's manager for containers. You give it a plan. It keeps the plan true, day and night. Put its steps in order.
+
+<Interactive name="OrderList" items={['Write the recipe card (task definition)', 'Register it with ECS', 'Create a service: keep 2 running', 'ECS starts 2 tasks from the card']} label="First step at the top" success="Card, register, service, tasks. Then ECS watches them for you." />
+</Card>
+
+<Card id="see-card" type="see">
+The recipe card is a **<Term id="task-definition">task definition</Term>**. It is JSON. Tap the line that says which image to run.
+
+<Interactive name="SpotLines" prompt="Tap the line that picks the image." success="That is your ECR shelf address, with a version tag." lines={[{ text: '{' }, { text: '  "family": "kedai-web",' }, { text: '  "requiresCompatibilities": ["FARGATE"],' }, { text: '  "cpu": "256",' }, { text: '  "memory": "512",' }, { text: '  "containerDefinitions": [{' }, { text: '    "name": "web",' }, { text: '    "image": "111122223333.dkr.ecr.ap-southeast-5.amazonaws.com/kedai-kancil:1.0",', target: true }, { text: '    "portMappings": [{ "containerPort": 80 }]' }, { text: '  }]' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+A running copy of the card is a task. A **<Term id="ecs-service">service</Term>** keeps N tasks alive. Which one holds each setting?
+
+<Interactive name="SortCards" buckets={[{ id: 'card', label: 'Task definition (the recipe card)' }, { id: 'service', label: 'Service (the promise)' }]} items={[{ label: 'Which image and tag', bucket: 'card', why: 'The card says what to cook.' }, { label: 'CPU and memory for each task', bucket: 'card', why: 'Each copy gets the size on the card.' }, { label: 'Keep 2 tasks running', bucket: 'service', why: 'The service counts and replaces.' }, { label: 'Which load balancer sends shoppers', bucket: 'service', why: 'The service joins tasks to the reception desk.' }]} success="The card says what. The service says how many, and keeps it so." />
+</Card>
+
+<Card id="predict" type="predict">
+The service wants 2 tasks. At 2 a.m. one crashes. What happens?
+
+<Interactive name="Choice" options={[{ label: 'ECS starts a new task by itself', correct: true, why: 'Want 2, see 1: it starts one. Like a Deployment in Kubernetes.' }, { label: 'The shop runs on 1 until you wake up', why: 'That is the old way. The service fixes it.' }, { label: 'ECS stops the other one too', why: 'Never. It only brings the count back up.' }]} />
+</Card>
+
+<Card id="check-cli" type="check">
+The CLI lists running tasks. Here is the official example's answer. Tap each task.
+
+<Interactive name="SpotLines" prompt="Tap each running task." success="Two tasks, each with its own id." lines={[{ text: '$ aws ecs list-tasks --cluster default' }, { text: '{' }, { text: '    "taskArns": [' }, { text: '        "arn:aws:ecs:us-west-2:123456789012:task/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111",', target: true }, { text: '        "arn:aws:ecs:us-west-2:123456789012:task/a1b2c3d4-5678-90ab-cdef-EXAMPLE22222"', target: true }, { text: '    ]' }, { text: '}' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now write a task definition, and let a service keep it running.
+</Card>
+
+<Card id="deeper" type="deeper">
+ECS itself has no extra charge. You pay for what tasks run on: Fargate (next lesson) or EC2 servers. A new card version is a revision: `kedai-web:2`. Point the service at it, and ECS rolls new tasks in, old ones out.
+</Card>

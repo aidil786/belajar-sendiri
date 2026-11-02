@@ -1,0 +1,67 @@
+---
+id: k8s-k2-l11
+world: 2
+title: "DaemonSets: one per stall"
+summary: "You will learn: how a DaemonSet runs one pod on every node, and why it skips some nodes."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, YamlDoctor, SortCards]
+needs: [k8s-k2-l10]
+scenario: k2-daemonset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: DaemonSet", url: "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" }
+  - { label: "Kubernetes: Taints and tolerations", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" }
+---
+
+<Card id="hook" type="hook">
+Every stall needs exactly one cleaner. When a new stall opens, it needs one too. Can a Deployment with `replicas: 3` promise that?
+
+<Interactive name="Choice" options={[{ label: 'No. It counts trays, not stalls.', correct: true, why: 'It might put two cleaners on one stall and none on another.' }, { label: 'Yes, always', why: 'A Deployment only keeps the count. Where trays land is up to the scheduler.' }, { label: 'Yes, if you count the stalls by hand', why: 'Then every new stall needs you. Kubernetes has a better way.' }]} />
+</Card>
+
+<Card id="see-ds" type="see">
+<Interactive name="KubeReplay" scenario="k2-daemonset" commands={['kubectl apply -f sweeper.yaml', 'kubectl rollout status daemonset/sweeper --timeout=120s', 'kubectl get pods -o wide']} label="The DaemonSet sweeper makes one pod on dev-worker and one on dev-worker2." />
+
+A **<Term id="daemonset">DaemonSet</Term>** puts one tray on every stall. Look at the NODE column: one sweeper per worker. A new stall gets its own sweeper by itself.
+</Card>
+
+<Card id="predict" type="predict">
+This cluster has 3 nodes. Why are there only 2 sweepers?
+
+<Interactive name="Choice" options={[{ label: 'The control plane has a lock: a taint', correct: true, why: 'Ordinary trays stay away from it. A tray needs a key, a toleration, to sit there (World K5).' }, { label: 'The DaemonSet is broken', why: 'It is fine. It skipped a stall that is locked for it.' }, { label: 'The scheduler ran out of CPU', why: 'The sweepers ask for no CPU. Something else keeps them out.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Your turn. Apply `sweeper.yaml`. Then run `kubectl get daemonset sweeper`. DESIRED should say 2.
+
+<Interactive name="FoodCourtSim" scenario="k2-daemonset" goal={{ podsReady: { selector: 'app=sweeper', count: 2, exact: true }, typed: 'get (ds|daemonsets?)' }} hints={['Type kubectl apply -f sweeper.yaml', 'Type kubectl get daemonset sweeper']} success="2 desired, 2 ready: one sweeper on each worker stall." />
+
+<Hint>`kubectl get ds` is the short form.</Hint>
+</Card>
+
+<Card id="try-doctor" type="try">
+A DaemonSet has no `replicas`. The number of stalls decides. Read the real error, then fix the file.
+
+<Interactive name="YamlDoctor" file="sweeper.yaml" manifest={'apiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: sweeper\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: sweeper\n  template:\n    metadata:\n      labels:\n        app: sweeper\n    spec:\n      containers:\n        - name: broom\n          image: busybox:1.37\n'} solution={'apiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: sweeper\nspec:\n  selector:\n    matchLabels:\n      app: sweeper\n  template:\n    metadata:\n      labels:\n        app: sweeper\n    spec:\n      containers:\n        - name: broom\n          image: busybox:1.37\n'} keep={['kind: DaemonSet', 'image: busybox']} hint="Delete the line Kubernetes does not know." success="Fixed! One sweeper per stall, no count needed." />
+</Card>
+
+<Card id="check" type="check">
+Deployment or DaemonSet? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'ds', label: 'DaemonSet' }]} items={[{ label: '3 copies of the shop website', bucket: 'deploy', why: 'You want a count, wherever they land.' }, { label: 'A log collector on every node', bucket: 'ds', why: 'Each stall has its own logs to collect.' }, { label: 'kube-proxy, the network helper on each node', bucket: 'ds', why: 'Every node needs it. It runs as a DaemonSet.' }, { label: 'Scaled with --replicas', bucket: 'deploy', why: 'A DaemonSet has no replica count. Stalls decide.' }]} success="Sorted! Count of trays: Deployment. One per stall: DaemonSet." />
+</Card>
+
+<Card id="win" type="win">
+You can now run one pod on every node with a DaemonSet.
+</Card>
+
+<Card id="deeper" type="deeper">
+In a kind cluster, `kube-proxy` and `kindnet` are DaemonSets in `kube-system`. They carry a toleration, so they run on the control plane too. A `nodeSelector` limits a DaemonSet to some stalls only.
+
+Real rep (optional): on a throwaway cluster, run `kubectl get daemonsets -n kube-system`.
+</Card>

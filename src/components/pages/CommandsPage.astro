@@ -1,0 +1,82 @@
+---
+// Command list for one course: /en/commands/ (Git) and /en/<course>/commands/ (other courses).
+import Base from '~/layouts/Base.astro';
+import DangerBadge from '~/components/ui/DangerBadge.astro';
+import { t, type Lang } from '~/i18n';
+import { getCourse } from '~/lib/course';
+import { getCommands } from '~/lib/content';
+import { commandHref, ROOT_COURSE, toolHref } from '~/lib/catalog';
+import { commandLabel } from '~/lib/review';
+interface Props {
+  lang: Lang;
+  courseId: string;
+}
+const { lang, courseId } = Astro.props;
+const other = lang === 'en' ? 'ms' : 'en';
+const course = await getCourse(courseId);
+const title = courseId === ROOT_COURSE ? t(lang, 'commands.title') : t(lang, 'commands.titleCourse', { course: course.title[lang] });
+const data = await getCommands(courseId);
+---
+
+<Base lang={lang} title={title} altPath={toolHref(other, course, 'commands')}>
+  <div class="container cmds">
+    <h1>{title}</h1>
+    <p>{t(lang, 'commands.intro')}</p>
+    {data.commands.length === 0 && <p class="cmds-empty" role="status">{t(lang, 'commands.empty')}</p>}
+    {
+      data.groups
+        .filter((g) => data.commands.some((c) => c.group === g.id))
+        .map((g) => (
+        <section>
+          <h2>{g.title[lang]}</h2>
+          <ul class="cmd-list">
+            {data.commands
+              .filter((c) => c.group === g.id)
+              .map((c) => (
+                <li>
+                  <a href={commandHref(lang, courseId, c.id)}>
+                    <code>{courseId === ROOT_COURSE ? c.syntax.split(' ').slice(0, c.syntax.startsWith('git') ? 2 : 1).join(' ') : commandLabel(c.syntax)}</code>
+                  </a>
+                  <span>{c.what[lang]}</span>
+                  <DangerBadge lang={lang} level={c.danger} />
+                </li>
+              ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .cmds {
+    padding-block: var(--space-5);
+    max-width: 52rem;
+  }
+  .cmds-empty {
+    color: var(--color-text-muted);
+  }
+  .cmd-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .cmd-list li {
+    display: grid;
+    grid-template-columns: minmax(8rem, auto) 1fr auto;
+    gap: var(--space-3);
+    align-items: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-4);
+  }
+  @media (max-width: 560px) {
+    .cmd-list li {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
+      justify-items: start;
+    }
+  }
+</style>

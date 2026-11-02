@@ -1,0 +1,426 @@
+# Checks every push and pull request. When all checks pass on `main`,
+# the deploy job publishes the site to Cloudflare Pages: https://belajarsendiri.pages.dev (see DEPLOY.md).
+# The Cloudflare token lives only in the GitHub environment "production", which only `main` can use.
+# Pull requests from forks never see it (and never deploy).
+name: CI
+
+on:
+  push:
+  pull_request:
+  # Run everything (the real Docker and Kubernetes checks too) on any branch by hand.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests (Git engine, i18n, scenarios)
+        run: npm test
+
+      - name: Readability (sentence and card word limits)
+        run: npm run check:readability
+
+      - name: Card ids match between en and ms
+        run: npm run check:cards
+
+      - name: Lesson MDX check
+        run: npm run check:mdx
+
+      - name: Kubernetes manifests vs kubeconform (Kubernetes 1.37, Docker)
+        run: npm run verify:manifests
+
+      - name: Engine vs real Git
+        run: |
+          git --version
+          npm run verify:commands
+
+      - name: Build
+        run: npm run build
+
+  secrets:
+    # Secret scan of every file (gitleaks, image pinned by digest). The lessons' made-up example
+    # secrets are listed in .gitleaks.toml; anything else that looks like a key fails the build.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: No secrets in the files (gitleaks 8.30.0)
+        run: docker run --rm -v "$PWD:/scan:ro" ghcr.io/gitleaks/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 dir /scan --no-banner --redact --config /scan/.gitleaks.toml
+
+  e2e:
+    # End-to-end + accessibility (Playwright + axe), split into 6 parallel shards:
+    # the every-lesson smoke test alone covers ~650 lesson pages (Level Up roughly doubled them;
+    # with 4 shards two of them ran past 30 minutes).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end + accessibility (shard ${{ matrix.shard }} of 6)
+        run: npx playwright test --shard=${{ matrix.shard }}/6
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  workflows:
+    # Every workflow the CI/CD course shows (and this repo's own) passes actionlint,
+    # run from its official Docker image (pinned in scripts/verify-workflows/index.ts).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lesson workflows vs actionlint
+        run: |
+          docker --version
+          npm run verify:workflows
+
+  k8s-truth:
+    # The food-court engine (Kubernetes simulator) against a real kind cluster running
+    # Kubernetes 1.37: `npm run verify:k8s` replays every Kubernetes scenario's verify
+    # lists on both and compares them (see scripts/verify-k8s).
+    # Heavy (real clusters and daemons): on main before every deploy, on pull requests and by hand.
+    # Other branch pushes skip it to save Actions minutes (a private repo has a monthly limit).
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      KIND_VERSION: v0.33.0
+      KUBECTL_VERSION: v1.37.2
+      # kind v0.33.0's default node image (Kubernetes v1.37.0), pinned by digest.
+      KIND_NODE_IMAGE: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install kind and kubectl (official binaries, checksums verified)
+        run: |
+          set -euo pipefail
+          curl -fsSLo kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          curl -fsSLo kind.sha256sum "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d ' ' -f 1 kind.sha256sum)  kind" | sha256sum --check
+          curl -fsSLo kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          curl -fsSLo kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install -m 0755 kind kubectl /usr/local/bin/
+          rm kind kind.sha256sum kubectl kubectl.sha256
+          kind version
+          kubectl version --client
+
+      - name: Create the kind cluster (dev-control-plane, dev-worker, dev-worker2)
+        run: kind create cluster --name dev --image "$KIND_NODE_IMAGE" --config scripts/verify-k8s/kind-dev.yaml --wait 180s
+
+      - name: Pre-load the lesson images into the nodes
+        run: |
+          for image in nginx:1.29-alpine nginx:1.30-alpine busybox:1.37; do
+            docker pull "$image"
+            kind load docker-image "$image" --name dev
+          done
+
+      - name: Engine vs real Kubernetes 1.37
+        run: |
+          kubectl get nodes -o wide
+          npm run verify:k8s
+        env:
+          TRUTH_SHARD: ${{ matrix.shard }}/8
+
+      - name: Delete the cluster
+        if: always()
+        run: kind delete cluster --name dev
+
+  docker-truth:
+    # The kitchen engine (Docker simulator) against a real Docker Engine 29 daemon:
+    # every Docker scenario's verify list runs in both and must match (npm run verify:docker).
+    # Heavy (real clusters and daemons): on main before every deploy, on pull requests and by hand.
+    # Other branch pushes skip it to save Actions minutes (a private repo has a monthly limit).
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Docker Engine 29 with the containerd image store (the course target)
+        # A hung apt or daemon restart fails fast instead of eating the job's 40 minutes.
+        timeout-minutes: 10
+        run: |
+          docker version
+          major=$(docker version --format '{{.Server.Version}}' | cut -d. -f1)
+          if [ "$major" -lt 29 ]; then
+            # Official Docker apt repository (docs.docker.com/engine/install/ubuntu/).
+            sudo install -m 0755 -d /etc/apt/keyrings
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          fi
+          # Keep the runner's own daemon settings; add the containerd image store (Docker Desktop's default).
+          cfg='{}'
+          if [ -f /etc/docker/daemon.json ]; then cfg=$(sudo cat /etc/docker/daemon.json); fi
+          echo "$cfg" | jq '.features["containerd-snapshotter"] = true' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker version
+          docker compose version
+          docker info --format 'Storage driver: {{.Driver}}'
+
+      - name: Engine vs real Docker (shard ${{ matrix.shard }} of 3)
+        run: npm run verify:docker
+        env:
+          TRUTH_SHARD: ${{ matrix.shard }}/3
+
+  linux-truth:
+    # The Linux engine (the Debian 13 practice server) against a real Debian 13 machine: a
+    # container with systemd as PID 1 (scripts/verify-linux/Dockerfile). Every Linux scenario's
+    # verify list runs in both and must match (npm run verify:linux).
+    # Heavy: on main before every deploy, on pull requests and by hand (like docker-truth).
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Engine vs real Debian 13 (shard ${{ matrix.shard }} of 2)
+        run: npm run verify:linux
+        env:
+          TRUTH_SHARD: ${{ matrix.shard }}/2
+
+  promql-truth:
+    # The PromQL engine (Observability course) against the real promtool: every observability
+    # scenario's verify list becomes a promtool unit test with the engine's answers, run in the
+    # official Prometheus 3.13 LTS image (pinned in scripts/verify-promql/index.ts).
+    # Heavy (Docker images): on main before every deploy, on pull requests and by hand.
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Engine vs promtool (Prometheus 3.13)
+        run: |
+          docker --version
+          npm run verify:promql
+
+  tofu-truth:
+    # The OpenTofu simulator against the real OpenTofu 1.13.5 (official image, pinned in
+    # scripts/verify-tofu/real.ts): every IaC scenario's verify lists run in both and must match
+    # (npm run verify:tofu). Providers download from the OpenTofu registry once per shard.
+    # Heavy (real containers): on main before every deploy, on pull requests and by hand.
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Engine vs real OpenTofu 1.13.5 (shard ${{ matrix.shard }} of 3)
+        run: |
+          docker --version
+          npm run verify:tofu
+        env:
+          TRUTH_SHARD: ${{ matrix.shard }}/3
+
+  deploy:
+    # Only after every check passed, only for pushes to main, and only in this repository
+    # (a fork never tries to deploy).
+    needs: [check, secrets, e2e, workflows, k8s-truth, docker-truth, linux-truth, promql-truth, tofu-truth]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'aidil786/belajar-sendiri'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Secrets live in this environment; its deployment rule allows the main branch only.
+    environment:
+      name: production
+      url: https://belajarsendiri.pages.dev
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Check the Cloudflare secrets exist
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          missing=0
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set (Settings > Environments > production > Environment secrets)."; missing=1; fi
+          done
+          exit $missing
+
+      - name: Make sure the Pages project exists (belajarsendiri, created on the first deploy)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: scripts/cloudflare-pages.sh ensure
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          PUBLIC_CF_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_ANALYTICS_TOKEN }}
+        run: npm run deploy
+
+      - name: The live site answers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: scripts/cloudflare-pages.sh smoke

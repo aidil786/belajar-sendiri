@@ -1,0 +1,72 @@
+---
+id: git-w03-l07
+world: 3
+title: Fix conflicts in VS Code
+summary: "You will learn: to fix a conflict, finish the merge, or cancel it safely."
+minutes: 5
+xp: 25
+interactives: [GraphScene, Hotspots, ConflictResolver, AreasScene, Sim, Choice, OrderList]
+needs: [git-w03-l06]
+scenario: w03-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge (--abort)", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "Merge conflicts in VS Code", url: "https://code.visualstudio.com/docs/sourcecontrol/merge-conflicts" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w03-l06" commands={['git merge cake']} label="The merge of cake into main stops. A red Conflict badge with a warning sign sits under HEAD." />
+
+Your merge with cake stopped on a conflict. Time to fix it. Calmly, in three small steps.
+</Card>
+
+<Card id="see-editor" type="see">
+<Interactive name="Hotspots" picture="vscode-merge" spots={[{ id: 'buttons', x: 46, y: 22, title: 'Quick buttons', text: 'One click keeps the current side, the incoming side, or both. The markers go away too.' }, { id: 'current', x: 84, y: 30, title: 'Current Change', text: 'Your side: the branch you are on (HEAD).' }, { id: 'incoming', x: 84, y: 45, title: 'Incoming Change', text: 'Their side: the branch you are merging in.' }, { id: 'list', x: 21, y: 42, title: 'Merge Changes', text: 'Files with conflicts. When one is fixed, stage it with +. That is git add.' }, { id: 'editor', x: 86, y: 88, title: 'Merge Editor', text: 'Opens a bigger view: yours, theirs, and the result.' }]} />
+
+Open the file in VS Code. It paints each side and puts buttons above the clash. Tap the dots.
+</Card>
+
+<Card id="try-resolve" type="try">
+Your diary had both on day 2! Keep both lines. Then finish the merge.
+
+<Interactive name="ConflictResolver" scenario="w03-l06" commands={['git merge cake']} look="editor" graph expect={['I learned branches', 'I baked a cake']} why="Your day had both. Keep both lines." success="Conflict fixed and merge finished. Look: a merge commit!" />
+
+<Hint>Tap “Accept Both Changes”. Then the finish button.</Hint>
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="AreasScene" command="git add index.html" label="index.html, fixed, slides from the working folder into the box. Then a commit called Merge branch 'cake' lands in the repository." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }, { staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }, { repo: [{ name: 'Add day 2 entry', kind: 'commit' }, { name: "Merge branch 'cake'", kind: 'commit' }] }]} />
+
+`git add index.html` tells Git: this file is fixed. Then `git commit` makes the merge commit. The + and Commit buttons in VS Code do the same.
+</Card>
+
+<Card id="try-abort" type="try">
+Not ready to choose? Cancel the merge. Everything goes back to before.
+
+<Interactive name="Sim" scenario="w03-l06" intro={['git merge cake']} panels={['graph']} goal={{ inMerge: false, noConflicts: true, typed: 'merge --abort' }} hints={['Type git merge --abort and press Enter.']} success="Back to before the merge. Nothing lost. Try again any time." />
+
+<Hint>Type `git merge --abort`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You fixed the file but forgot `git add`. You run `git commit`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Git refuses. The file is still unmerged.', correct: true, why: 'git add is how you tell Git a file is fixed.' }, { label: 'Git commits with the markers inside', why: 'Git checks first. Unmerged files block the commit.' }, { label: 'Git deletes the file', why: 'Git never deletes your work here.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the conflict fix in order.
+
+<Interactive name="OrderList" items={['Open the file with the conflict', 'Pick what stays and delete the markers', 'git add the file', 'git commit to finish the merge']} label="First step at the top" success="That's the whole fix. It works in any editor." />
+</Card>
+
+<Card id="win" type="win">
+You can now fix a merge conflict, or cancel it safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+VS Code's Merge Editor shows yours, theirs and the result together. From the terminal, `git mergetool` opens a merge tool you set up. `git merge --abort` works until you commit the merge. After that, undo it like any commit.
+</Card>

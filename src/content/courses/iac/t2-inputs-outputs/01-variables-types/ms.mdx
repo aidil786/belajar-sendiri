@@ -1,0 +1,69 @@
+---
+id: iac-t2-l01
+world: 2
+title: Variable dan jenis
+summary: "Anda akan belajar: tinggalkan ruang kosong dalam pelan dengan variable, dan beri setiap satu jenisnya."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SortCards, SwipeJudge, Mission]
+needs: [iac-t1-boss]
+scenario: t2-vars
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: types and values", url: "https://opentofu.org/docs/language/expressions/types/" }
+---
+
+<Card id="hook" type="hook">
+Pelan anda tulis "Kedai Kancil" di lima tempat. Kini bos buka kedai kedua, Warung Ali. Apa cara yang kemas?
+
+<Interactive name="Choice" options={[{ label: 'Tinggalkan ruang kosong untuk nama. Isi semasa membina.', correct: true, why: 'Satu pelan, banyak kedai. Ruang kosong itu ialah variable.' }, { label: 'Salin folder dan tukar kelima-limanya', why: 'Lima suntingan, lima peluang terlepas satu. Dan dua salinan perlu diselaraskan.' }, { label: 'Tukar nama kedai pertama', why: 'Kemudian Kedai Kancil hilang. Anda perlukan kedua-duanya.' }]} />
+</Card>
+
+<Card id="try-ask" type="try">
+`var.shop` ialah ruang kosong dalam pelan ini. Taip `tofu apply`. OpenTofu minta anda isi.
+
+<Interactive name="TofuSim" scenario="t2-vars" goal={{ resourceInState: ['local_file.sign'] }} open="variables.tf" hints={['Taip tofu apply.', 'Ia minta var.shop. Taip nama kedai, contohnya Warung Ali.', 'Kemudian baca plan dan taip yes.']} success="Siap dibina dengan nama kedai anda. Pelan sama, nilai anda." />
+
+**<Term id="input-variable">Variable (pemboleh ubah)</Term>** ialah ruang kosong. Guna sebagai `var.shop`.
+</Card>
+
+<Card id="see-types" type="see">
+Setiap variable ada **<Term id="type-constraint">type (jenis)</Term>**: jenis nilai yang muat. Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'string', label: 'string (teks)' }, { id: 'number', label: 'number (nombor)' }, { id: 'bool', label: 'bool (true atau false)' }, { id: 'list', label: 'list (senarai)' }]} items={[{ label: '`"Kedai Kancil"`', bucket: 'string', why: 'Teks dalam tanda petik.' }, { label: '`4`', bucket: 'number', why: 'Nombor, tanpa tanda petik.' }, { label: '`true`', bucket: 'bool', why: 'true atau false, tanpa tanda petik.' }, { label: '`["nasi", "mee"]`', bucket: 'list', why: 'Kurungan segi empat simpan senarai.' }, { label: '`"4"`', bucket: 'string', why: 'Tanda petik jadikannya teks, bukan nombor.' }]} success="Tanda petik, nombor, true atau false, kurungan." />
+</Card>
+
+<Card id="predict" type="predict">
+`tables` ada `type = number`. Seseorang taip `-var tables=lots`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'OpenTofu berhenti: perlu nombor', correct: true, why: 'Jenis ialah pengawal di pintu. Tiada apa dibina.' }, { label: 'Ia bina papan tanda dengan banyak meja', why: 'lots ialah teks. Jenis itu cuma benarkan nombor.' }, { label: 'Ia guna nilai default', why: 'Nilai salah tak pernah ditukar diam-diam. Ia berhenti dan beri sebab.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+Pelan ini benarkan 1 hingga 10 meja. Minta 20: `tofu plan -var tables=20`. Kemudian plan lagi dengan 6.
+
+<Interactive name="TofuSim" scenario="t2-inputs" intro={['tofu init']} open="variables.tf" goal={{ typed: 'tables=20', planSummary: { add: 1 } }} hints={['Taip tofu plan -var tables=20 dan baca ralatnya.', 'Sekarang taip tofu plan -var tables=6.']} success="20 ditolak oleh peraturan. 6 lulus, dan plan berjaya." />
+
+`Error: Invalid value for variable`. Maksudnya: peraturan pelan itu sendiri kata 1 hingga 10.
+</Card>
+
+<Card id="check-swipe" type="check">
+Tabiat variable yang baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Beri setiap variable satu jenis', good: true, why: 'Nilai salah berhenti di pintu.' }, { text: 'Tambah description, supaya rakan tahu apa nak taip', good: true, why: 'OpenTofu tunjuk description bila ia bertanya.' }, { text: 'Letak kata laluan bank kedai sebagai default', good: false, why: 'Rahsia tak pernah masuk fail .tf. Git simpan selama-lamanya.' }, { text: 'Tambah peraturan validation untuk had, seperti 1 hingga 10 meja', good: true, why: 'Pelan semak dirinya sebelum membina.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tinggalkan ruang kosong dengan variable dan kawalnya dengan jenis.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jenis lain: `map(number)` simpan pasangan nama-nilai. `set(string)` ialah senarai tanpa ulangan. `object({ … })` kumpul medan bernama. `default` jadikan variable pilihan. `sensitive = true` sorok nilai di skrin, tapi ia masih dalam state (Dunia T3).
+
+<Interactive name="Mission" id="iac-t2-l01-rep" steps={[{ id: 'block', text: 'Dalam folder latihan, tambah variable "shop" dengan type = string ke fail .tf.' }, { id: 'use', text: 'Gunakannya dalam local_file: content = "${var.shop}".' }, { id: 'ask', text: 'Jalankan apply dan jawab soalannya.', command: 'tofu apply' }, { id: 'var', text: 'Sekarang beri nilai di baris arahan.', command: 'tofu apply -var shop=Warung' }, { id: 'tidy', text: 'Kemaskan. Taip yes.', command: 'tofu destroy' }]} success="Pelan anda sendiri dengan ruang kosong." />
+</Card>

@@ -1,0 +1,62 @@
+---
+id: cicd-c2-l08
+world: 2
+title: Compose in CI
+summary: "You will learn: to start your whole set meal on the runner with Compose."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, ConveyorBelt, CommandBuilder, Mission]
+needs: [cicd-c2-l07]
+scenario: c2-compose-ci
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "docker compose run", url: "https://docs.docker.com/reference/cli/docker/compose/run/" }
+  - { label: "Status check functions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+---
+
+<Card id="hook" type="hook">
+Your `compose.yaml` starts web, API and Postgres on your laptop. In CI, do you rewrite it all as services?
+
+<Interactive name="Choice" options={[{ label: 'No: run the same compose.yaml on the runner', correct: true, why: "GitHub's Ubuntu runners come with Docker Compose. One recipe, both places." }, { label: 'Yes: copy each part into services:', why: 'That works, but now you keep two copies in step.' }, { label: 'Compose cannot run in CI', why: 'It can. The Ubuntu runner has Docker and Compose.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'docker compose up -d --wait', text: 'Start the whole set meal in the background. Wait until every part is healthy.' }, { when: '2', title: 'docker compose run --rm api npm test', text: 'A fresh api container runs the tests. Then it is removed.' }, { when: '3', title: 'docker compose down -v', text: 'Clear the table: stop everything and delete the volumes too.' }]} />
+
+Three commands put the <Term id="compose" course="docker">Compose</Term> set meal on the belt. Tap each one.
+</Card>
+
+<Card id="predict" type="predict">
+One order test fails. Tap the station that will stop the line, then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-compose-ci" task={{ type: 'predict' }} success="Right! The test station stopped the line." />
+</Card>
+
+<Card id="check" type="check">
+The tests failed. Did the last step, `docker compose down -v`, still run?
+
+<Interactive name="Choice" options={[{ label: 'Yes: if: always() runs it anyway', correct: true, why: 'always() means: run this step even after a failure.' }, { label: 'No: the line stopped at the tests', why: 'Most steps would stop. always() is the exception.' }, { label: 'Only on main', why: 'always() has nothing to do with branches.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that runs the API tests in a fresh container.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'compose', means: 'the set meal tool' }, { text: 'run', means: 'start one fresh container' }, { text: '--rm', means: 'remove it afterwards' }, { text: 'api', means: 'the api service' }, { text: 'npm test', means: 'the command inside it' }]} decoys={[{ text: 'up', means: 'start every service' }, { text: '-d', means: 'run in the background' }]} success="That's the test command!" />
+</Card>
+
+<Card id="win" type="win">
+You can now run your whole Compose stack in CI.
+</Card>
+
+<Card id="deeper" type="deeper">
+Add a step with `if: failure()` that runs `docker compose logs`. Then a red run shows what each container said. GitHub's runners are wiped after each job anyway. `down -v` matters most on your own runners.
+
+Real rep (optional), in a public practice repo with a compose.yaml:
+
+<Interactive name="Mission" id="c2-l08-rep" steps={[{ id: 'local', text: 'Try it on your machine first.', command: 'docker compose up -d --wait' }, { id: 'test', text: 'Run the tests in a fresh container.', command: 'docker compose run --rm api npm test' }, { id: 'ci', text: 'Copy the three steps into your workflow and push.' }]} success="Your set meal runs on the belt!" />
+</Card>

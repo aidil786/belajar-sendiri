@@ -1,0 +1,69 @@
+---
+id: docker-d0-l04
+world: 0
+title: Install Docker
+summary: "You will learn: how to install Docker on Windows, macOS or Linux from the official docs, and check that it runs."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, OsPicker, KitchenReplay, SwipeJudge]
+needs: [docker-d0-l03]
+scenario: d0-down
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Install Docker Desktop on Windows", url: "https://docs.docker.com/desktop/setup/install/windows-install/" }
+  - { label: "Install Docker Desktop on Mac", url: "https://docs.docker.com/desktop/setup/install/mac-install/" }
+  - { label: "Install Docker Engine on Ubuntu", url: "https://docs.docker.com/engine/install/ubuntu/" }
+  - { label: "Linux post-installation steps", url: "https://docs.docker.com/engine/install/linux-postinstall/" }
+  - { label: "Install WSL (Microsoft)", url: "https://learn.microsoft.com/en-us/windows/wsl/install" }
+---
+
+<Card id="hook" type="hook">
+Time to set up your real kitchen! The practice kitchen here is pretend. First question: where do you get Docker from?
+
+<Interactive name="Choice" options={[{ label: 'docs.docker.com, the official site', correct: true, why: 'Always the official site. Fake downloads can hide nasty surprises.' }, { label: 'A link in a random video comment', why: 'Never. You cannot know what that file really is.' }, { label: 'Any site that says “free download”', why: 'Fake download sites exist. Use docs.docker.com.' }]} />
+</Card>
+
+<Card id="see-roads" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Windows', title: 'Docker Desktop + WSL 2', text: 'WSL 2 gives Windows a real Linux inside. Docker Desktop runs its engine there.' }, { when: 'macOS', title: 'Docker Desktop', text: 'Pick the installer for your chip: Apple silicon or Intel.' }, { when: 'Linux', title: 'Docker Engine', text: 'Install it from Docker’s own package source, with the steps on docs.docker.com.' }]} />
+
+Three computers, three roads. On Windows, Docker Desktop leans on **<Term id="wsl">WSL 2</Term>**: a real Linux inside Windows. Tap your road.
+</Card>
+
+<Card id="try-os" type="try">
+Pick your computer. Do each step on your own machine, then tick it. Your ticks are saved.
+
+<Interactive name="OsPicker" id="install-docker" options={[{ os: 'windows', steps: [{ id: 'check', text: 'Check your PC: Windows 10 (22H2) or Windows 11, 64-bit, at least 8 GB of RAM.' }, { id: 'wsl', text: 'Open PowerShell as administrator. Type this, then restart. Already have WSL? Type `wsl --update` instead.', command: 'wsl --install' }, { id: 'download', text: 'Download **Docker Desktop for Windows** from docs.docker.com.' }, { id: 'install', text: 'Run the installer. Keep the WSL 2 option ticked. Click through to the end.' }, { id: 'start', text: 'Open Docker Desktop from the Start menu. It does not start by itself. Accept the agreement.' }, { id: 'version', text: 'Open a terminal and type this. You should see a Client part and a Server part.', command: 'docker version' }] }, { os: 'macos', steps: [{ id: 'chip', text: 'Open the Apple menu, then **About This Mac**. Is the chip Apple (M1, M2…) or Intel?' }, { id: 'download', text: 'Download **Docker Desktop for Mac** for your chip from docs.docker.com.' }, { id: 'drag', text: 'Open Docker.dmg. Drag Docker into the Applications folder.' }, { id: 'open', text: 'Open Docker from Applications. Accept the agreement.' }, { id: 'version', text: 'Open Terminal and type this. You should see a Client part and a Server part.', command: 'docker version' }] }, { os: 'linux', steps: [{ id: 'docs', text: 'Open docs.docker.com/engine/install and pick your system: Ubuntu, Debian, Fedora…' }, { id: 'repo', text: 'Follow the repository steps there. They add Docker’s own package source.' }, { id: 'install', text: 'On Ubuntu, install the packages with this:', command: 'sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin' }, { id: 'version', text: 'Check it. You should see a Client part and a Server part.', command: 'sudo docker version' }, { id: 'nosudo', text: 'Optional: to skip sudo, follow **Linux post-installation steps** on docs.docker.com.' }] }]} />
+
+<Hint>Not sure which one you have? Windows has a Start button. A Mac has an Apple menu.</Hint>
+</Card>
+
+<Card id="see-error" type="see">
+<Interactive name="KitchenReplay" scenario="d0-down" commands={['docker version']} fails={['docker version']} label="docker version prints the Client part, then: Cannot connect to the Docker daemon. Is the docker daemon running?" />
+
+You may meet this real message: `Cannot connect to the Docker daemon`. In plain words: the cook is not in the kitchen yet. The engine is not running.
+</Card>
+
+<Card id="predict" type="predict">
+Docker Desktop is installed. But `docker version` says `Cannot connect to the Docker daemon`. What do you try first?
+
+<Interactive name="Choice" options={[{ label: 'Open Docker Desktop and wait until it is running', correct: true, why: 'Desktop does not start by itself after you install it.' }, { label: 'Uninstall everything and start over', why: 'No need. The engine is just asleep. Wake it up.' }, { label: 'Buy a faster laptop', why: 'Speed is not the problem. Start the engine first.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Safe install habits. Good idea or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Download Docker only from docs.docker.com', good: true, why: 'Official site, real files.' }, { text: 'Paste a script from a forum straight into your terminal', good: false, why: 'You cannot see what it does. Follow the official steps.' }, { text: 'Keep Docker Desktop up to date', good: true, why: 'Updates fix bugs and security holes.' }, { text: 'Install Docker Desktop at a 500-person company without asking', good: false, why: 'Big companies need a paid plan. Ask your IT team first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now install Docker on your own computer and check that it runs.
+</Card>
+
+<Card id="deeper" type="deeper">
+On Linux, start a sleeping engine with `sudo systemctl start docker`. Joining the `docker` group skips sudo, but it gives root-level power. Do it only on your own machine.
+
+No good computer? Killercoda gives you a free Linux terminal in your browser. Type `docker version` there to see if Docker is ready.
+</Card>

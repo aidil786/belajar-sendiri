@@ -1,0 +1,68 @@
+---
+id: docker-d6-l03
+world: 6
+title: "cgroups: what it can use"
+summary: "You will learn: how cgroups cap a container's memory, CPU and processes, and what happens at the cap."
+minutes: 4
+xp: 20
+interactives: [Choice, NamespaceXray, KitchenSim, Transcript, SortCards, Mission]
+needs: [docker-d6-l02]
+scenario: d6-limits
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Resource constraints", url: "https://docs.docker.com/engine/containers/resource_constraints/" }
+  - { label: "cgroups(7)", url: "https://man7.org/linux/man-pages/man7/cgroups.7.html" }
+  - { label: "docker container stats", url: "https://docs.docker.com/reference/cli/docker/container/stats/" }
+---
+
+<Card id="hook" type="hook">
+One lunchbox has a memory leak. It eats and eats. Your laptop has 16 GB. What happens to the other lunchboxes?
+
+<Interactive name="Choice" options={[{ label: 'They slow down, or Linux kills some of them', correct: true, why: 'They all share the laptop’s memory. One greedy box hurts everyone.' }, { label: 'Nothing. Namespaces keep them apart.', why: 'Namespaces hide things. They don’t limit how much a box eats.' }, { label: 'Docker stops the leaky one at 1 GB', why: 'There is no limit unless you ask for one.' }]} />
+</Card>
+
+<Card id="see-limits" type="see">
+<Interactive name="NamespaceXray" switches={['memory', 'cpu', 'pids']} task={{ type: 'turnOn', switches: ['memory', 'cpu', 'pids'] }} prompt="Turn on all three limits. Watch the Limits panel." success="Each limit is a line in a cgroup file." />
+
+Linux has portion limits called <Term id="cgroup">cgroups</Term>. A **cgroup** caps memory, CPU or the number of processes.
+</Card>
+
+<Card id="try-limit" type="try">
+Give a new nginx, `web`, a 256 MB portion. Then check it with `docker stats --no-stream`.
+
+<Interactive name="KitchenSim" scenario="d6-limits" goal={{ running: ['web'], typed: '(--memory|-m)[ =]?[0-9]', lastTyped: '^docker stats' }} hints={['Type docker run -d --name web --memory 256m nginx:1.30-alpine', 'Now type docker stats --no-stream']} success="The LIMIT column says 256MiB. That is web's portion." />
+
+<Hint>`--memory 256m` sets the cap. `docker stats --no-stream` shows it once.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The app keeps eating memory, far past its cap. What does Linux do?
+
+<Interactive name="Choice" options={[{ label: 'Stops it. The exit code is 137.', correct: true, why: 'The kernel kills it. Docker marks it OOMKilled: out of memory.' }, { label: 'Gives it more memory', why: 'The cap is a hard wall.' }, { label: 'Nothing. Caps are just a warning.', why: 'A memory cap is enforced by the kernel itself.' }]} />
+</Card>
+
+<Card id="check-oom" type="check">
+<Interactive name="Transcript" title="bash" label="Real output on Docker 29: a container with a 32 MB cap eats memory, exits with code 137, and inspect says OOMKilled true." lines={[{ cmd: 'docker run --name hog --memory 32m --memory-swap 32m alpine:3.22 tail /dev/zero' }, { cmd: 'echo $?' }, { out: '137', color: 'red' }, { cmd: "docker inspect -f '{{.State.OOMKilled}}' hog" }, { out: 'true', color: 'red' }, { cmd: 'docker rm hog' }, { out: 'hog' }]} />
+
+Real output. `tail /dev/zero` eats memory forever. Exit code 137 means "killed". **OOMKilled** means out of memory: it hit its cap.
+</Card>
+
+<Card id="check-sort" type="check">
+Namespace or cgroup? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'ns', label: 'Namespace: what it sees' }, { id: 'cg', label: 'cgroup: what it uses' }]} items={[{ label: 'Its own hostname', bucket: 'ns', why: 'UTS namespace: a different view.' }, { label: 'At most 1.5 CPUs', bucket: 'cg', why: 'A portion of CPU time.' }, { label: 'Its own process list', bucket: 'ns', why: 'PID namespace: it sees only its own.' }, { label: 'At most 100 processes', bucket: 'cg', why: 'The pids limit stops runaway forks.' }, { label: 'At most 512 MB of memory', bucket: 'cg', why: 'The memory cap.' }]} success="Sorted! Namespaces = blinkers. cgroups = portions." />
+</Card>
+
+<Card id="win" type="win">
+You can now cap what a container may use.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker always puts a container in its own cgroup, but sets no cap unless asked. With cgroup v2, caps live in files: `memory.max`, `cpu.max`, `pids.max`. A CPU cap only slows a box down. It never kills it. Only use `tail /dev/zero` with a memory cap!
+
+<Interactive name="Mission" id="d6-l03-limits" steps={[{ id: 'run', text: 'Start nginx with three caps.', command: 'docker run -d --name web --memory 256m --cpus 0.5 --pids-limit 100 nginx:1.30-alpine' }, { id: 'stats', text: 'See its memory cap and PIDs.', command: 'docker stats --no-stream web' }, { id: 'rm', text: 'Clean up.', command: 'docker rm -f web' }]} success="Three portions, one lunchbox." />
+</Card>

@@ -1,0 +1,76 @@
+---
+id: k8s-k5-l10
+world: 5
+title: The debug ladder
+summary: "You will learn: a calm, step-by-step way to find out why a tray is not working."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, OrderList, FoodCourtSim, Choice, CommandBuilder]
+needs: [k8s-k5-l09]
+scenario: k5-ladder
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "Kubernetes: debug running pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/" }
+  - { label: "kubectl debug", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k5-ladder" commands={['kubectl get pods']} label="Two menu pods, both Running, but READY shows 0/1 for each." />
+
+Both menu trays say Running. But READY says 0/1. Customers get nothing. Where do you even start?
+</Card>
+
+<Card id="see-ladder" type="see">
+Don't guess. Climb the **<Term id="debug-ladder">debug ladder</Term>**, one rung at a time. Each rung shows a bit more. Put the rungs in order, from the bottom.
+
+<Interactive name="OrderList" items={['get: what is the status?', 'describe: what does the tray say about itself?', 'logs: what did the app print?', 'events: what did Kubernetes post?', 'exec: try it from inside the tray', 'debug: bring your own toolbox']} label="Bottom rung at the top" success="That is the ladder. Most problems show up by rung 2 or 3." />
+</Card>
+
+<Card id="try-describe" type="try">
+Rung 1 said 0/1. Now rung 2: describe the menu trays. Read the Events at the bottom.
+
+<Interactive name="FoodCourtSim" scenario="k5-ladder" goal={{ typed: '^(kubectl|k) describe (po|pods?)\\b' }} hints={['Type kubectl describe pods -l app=menu', 'Scroll to Events at the bottom.']} success="Found it: Readiness probe failed with statuscode 404." />
+
+<Hint>Type `kubectl describe pods -l app=menu`, then read the last lines.</Hint>
+</Card>
+
+<Card id="check-cause" type="check">
+The Events said: `Readiness probe failed: HTTP probe failed with statuscode: 404`. What does that mean?
+
+<Interactive name="Choice" options={[{ label: 'The probe asks for a page that is not there', correct: true, why: '404 means "no such page". The app runs, but the check asks the wrong door.' }, { label: 'The app crashed', why: 'It says Running with 0 restarts. It did not crash.' }, { label: 'The image is missing', why: 'That would be ErrImagePull. This tray started fine.' }]} />
+</Card>
+
+<Card id="see-confirm" type="see">
+<Interactive name="KubeReplay" scenario="k5-ladder" commands={['kubectl logs {pod:app=menu} --tail=2', 'kubectl exec {pod:app=menu} -- wget -qO- localhost/ready']} fails={['kubectl exec {pod:app=menu} -- wget -qO- localhost/ready']} label="The logs show kube-probe asking GET /ready and getting 404. From inside the pod, wget localhost/ready also gets 404 Not Found." />
+
+Rungs 3 and 5 agree. The logs show the probe asking for `/ready`. From inside, `/ready` gives 404 too. The app only serves `/`.
+</Card>
+
+<Card id="try-fix" type="try">
+`menu-fixed.yaml` probes `/` instead. Apply it. Wait until both trays are ready.
+
+<Interactive name="FoodCourtSim" scenario="k5-ladder" goal={{ podsReady: { selector: 'app=menu', count: 2 } }} hints={['Type kubectl apply -f menu-fixed.yaml', 'Let the clock run. New trays replace the old ones.']} success="2 of 2 ready. The menu is serving again." />
+
+<Hint>Type `kubectl apply -f menu-fixed.yaml`, then let the clock run.</Hint>
+</Card>
+
+<Card id="see-debug" type="see">
+Top rung: some images have no shell and no tools. `kubectl debug` adds a temporary toolbox container to the tray. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Talk to the cluster' }, { text: 'debug', means: 'add a temporary debug container' }, { text: '-it', means: 'give me a live terminal' }, { text: '<pod>', means: 'the tray to look into' }, { text: '--image=busybox:1.37', means: 'a small toolbox image' }, { text: '--target=web', means: 'see the web container’s processes' }]} decoys={[{ text: '--force', means: 'skip safety checks' }]} success="That is the top rung: your own tools inside the tray." />
+</Card>
+
+<Card id="win" type="win">
+You can now climb the debug ladder instead of guessing.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl debug node/dev-worker -it --image=busybox:1.37` opens a toolbox on a stall itself. A debug container stays until the pod is deleted. Stuck on one problem? The [Ship It Rescue Center](/en/ship-it/rescue/) has step-by-step flows.
+
+Real rep (optional): break a probe on a kind cluster, then climb the ladder.
+</Card>

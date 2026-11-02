@@ -1,0 +1,74 @@
+---
+id: iac-t2-l05
+world: 2
+title: "count: many of the same"
+summary: "You will learn: to make numbered copies with count, and the trap when a list changes."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, PlanReader]
+needs: [iac-t2-l04]
+scenario: t2-count
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: the count meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/count/" }
+  - { label: "OpenTofu: splat expressions", url: "https://opentofu.org/docs/language/expressions/splat/" }
+---
+
+<Card id="hook" type="hook">
+The fair needs three helpers, not two. Each helper is a `random_pet` name. How do you get a third?
+
+<Interactive name="Choice" options={[{ label: 'Set count = 3 on the one block', correct: true, why: 'One block, three copies. Change one number.' }, { label: 'Copy the whole block three times', why: 'Three blocks to keep in step. count does it with one.' }, { label: 'Run apply three times', why: 'apply builds what the blueprint says. It says two.' }]} />
+</Card>
+
+<Card id="see-list" type="see">
+Type `tofu state list`. Look at the numbers in square brackets.
+
+<Interactive name="TofuSim" scenario="t2-count" goal={{ lastTyped: '^tofu state list' }} hints={['Type tofu state list and press Enter.']} success="helper[0] and helper[1]. The copies are numbered from 0." />
+
+**<Term id="count">count</Term>** makes numbered copies of one block. Numbers start at 0.
+</Card>
+
+<Card id="predict" type="predict">
+With `count = 3`, what is the last helper called?
+
+```hcl
+resource "random_pet" "helper" {
+  count  = 3
+  length = 1
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '`random_pet.helper[2]`', correct: true, why: 'Counting from 0: [0], [1], [2].' }, { label: '`random_pet.helper[3]`', why: 'Three copies, but the first is [0]. So the last is [2].' }, { label: '`random_pet.helper3`', why: 'Copies keep one name, with a number in brackets.' }]} />
+</Card>
+
+<Card id="try-three" type="try">
+Change `count = 2` to `count = 3` in `main.tf`. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t2-count" goal={{ resourceInState: ['random_pet.helper[2]'] }} hints={['Find count = 2 in the helper block. Make it 3.', 'Then tofu apply. The plan adds 1. Type yes.']} success="1 to add: helper[2]. The first two stay as they are." />
+
+<Hint>Change one number, then apply.</Hint>
+</Card>
+
+<Card id="try-trap" type="try">
+The stall files use `count` over the list `["nasi", "mee", "roti"]`. Mee closes, so "mee" is removed. Read the plan.
+
+<Interactive name="PlanReader" scenario="t2-count" commands={['cp .next/variables.tf variables.tf']} />
+</Card>
+
+<Card id="check" type="check">
+Only mee closed. Why does the plan touch two files?
+
+<Interactive name="Choice" options={[{ label: 'Everything after mee moved up one number', correct: true, why: 'roti was [2], now it is [1]. So [1] is rewritten and [2] is destroyed.' }, { label: 'count always rebuilds everything', why: 'nasi, at [0], is untouched.' }, { label: 'OpenTofu made a mistake', why: 'It did exactly what count says: copies by number.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make copies with count, and spot its number trap.
+</Card>
+
+<Card id="deeper" type="deeper">
+`random_pet.helper[*].id` lists every copy's id; that `[*]` is a splat. `count = var.open ? 1 : 0` turns a resource on or off. For a list that changes, `for_each` names each copy by its item instead of a number. That is the next lesson.
+</Card>

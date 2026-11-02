@@ -1,0 +1,76 @@
+---
+id: k8s-k1-l05
+world: 1
+title: Medan selera, gerai, dulang
+summary: "Anda akan belajar: apa itu cluster, node dan pod, dan cara ia bersambung."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, Choice, SortCards, OrderList]
+needs: [k8s-k1-l04]
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Nodes", url: "https://kubernetes.io/docs/concepts/architecture/nodes/" }
+  - { label: "Pods", url: "https://kubernetes.io/docs/concepts/workloads/pods/" }
+  - { label: "Cluster architecture", url: "https://kubernetes.io/docs/concepts/architecture/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods -o wide']} label="Tiga pod kedai. Lajur NODE tulis dev-worker untuk dua pod dan dev-worker2 untuk satu." />
+
+Kedai anda ada 3 pod. Skrol ke lajur NODE: dua nama berbeza. Jadi, di mana sebenarnya pod anda tinggal?
+</Card>
+
+<Card id="try-nodes" type="try">
+Seluruh medan selera ialah satu **<Term id="cluster">cluster (kluster)</Term>**: mesin yang bekerja sebagai satu. Taip `kubectl get nodes` untuk senaraikan mesinnya.
+
+<Interactive name="FoodCourtSim" scenario="k1-want3" goal={{ typed: '^(kubectl|k) get (nodes?|no)\\b' }} hints={['Taip kubectl get nodes dan tekan Enter.']} success="Tiga mesin, satu medan selera." />
+
+<Hint>`get nodes` senaraikan setiap mesin dalam kluster.</Hint>
+</Card>
+
+<Card id="check-node" type="check">
+Setiap mesin ialah satu **<Term id="node">node (gerai)</Term>**. Kenapa dev-control-plane tak pegang langsung dulang anda?
+
+<Interactive name="Choice" options={[{ label: 'Ia jalankan pejabat pengurus', correct: true, why: 'Ya. Kerjanya mengurus kluster. Pelajaran 6 buka pintu pejabat itu.' }, { label: 'Ia rosak', why: 'get nodes kata Ready. Ia okey, cuma sibuk mengurus.' }, { label: 'Ia terlalu kecil', why: 'Saiz bukan sebabnya. Kerjanya mengurus, jadi dulang aplikasi dijauhkan.' }]} />
+</Card>
+
+<Card id="see-pod" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get pods']} label="kubectl get pods: tiga pod kedai, setiap satu READY 1/1 dan Running." />
+
+Container anda naik atas **<Term id="pod">pod (dulang)</Term>**: sedulang hidangan yang sentiasa bersama. READY 1/1 bermaksud satu container atas dulang, dan ia sedia.
+</Card>
+
+<Card id="try-sort" type="try">
+Medan selera, gerai atau dulang? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'cluster', label: 'Cluster' }, { id: 'node', label: 'Node' }, { id: 'pod', label: 'Pod' }]} items={[{ label: 'kind-dev', bucket: 'cluster', why: 'Nama seluruh medan selera.' }, { label: 'Seluruh medan selera', bucket: 'cluster', why: 'Semua mesin bersama-sama.' }, { label: 'dev-worker2', bucket: 'node', why: 'Satu mesin: satu gerai.' }, { label: 'Satu mesin', bucket: 'node', why: 'Satu gerai di medan selera.' }, { label: 'shop-747bf9cf8-gnjxm', bucket: 'pod', why: 'Satu dulang. Namanya berakhir dengan huruf rawak.' }, { label: 'Container yang sentiasa bersama', bucket: 'pod', why: 'Itulah sedulang hidangan.' }]} success="Medan selera, gerai, dulang. Semua tersusun!" />
+
+<Hint>Cluster ada node. Node ada pod.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu pod ada dua container: web dan satu pembantu. Bolehkah ia duduk di node berbeza?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ia sentiasa berkongsi satu node.', correct: true, why: 'Betul. Satu dulang tak pernah terbelah ke dua gerai.' }, { label: 'Ya, jika satu node penuh', why: 'Pod diletak sekali gus. Jika tiada gerai yang muat, ia tunggu.' }, { label: 'Ya, selalu', why: 'Container dalam satu pod sentiasa bersama, di satu node.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Paling besar ke paling kecil. Susun mengikut turutan.
+
+<Interactive name="OrderList" items={['cluster (medan selera)', 'node (gerai)', 'pod (dulang)', 'container (bekas makanan)']} label="Paling besar di atas" success="Medan selera, gerai, dulang, bekas makanan!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan cluster, node dan pod-podnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Container dalam satu pod berkongsi satu alamat IP. Ia bercakap sesama sendiri melalui localhost. Kebanyakan pod ada satu container sahaja. Pod dengan pembantu datang dalam Dunia K2.
+
+Latihan sebenar (pilihan): di kluster kind anda, `kubectl get nodes` dan `kubectl get pods -o wide` tunjuk gambaran yang sama.
+</Card>

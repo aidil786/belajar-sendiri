@@ -1,0 +1,64 @@
+---
+id: docker-d4-l01
+world: 4
+title: Why a set meal?
+summary: "You will learn: why one file can start your whole app."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, ComposeCanvas, KitchenSim, SortCards, Mission]
+needs: [docker-d3-boss]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Compose overview", url: "https://docs.docker.com/compose/" }
+  - { label: "How Compose works", url: "https://docs.docker.com/compose/intro/compose-application-model/" }
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-many-runs" commands={['docker network create kedai-net', 'docker run -d --name db --network kedai-net -e POSTGRES_PASSWORD=example -v db-data:/var/lib/postgresql postgres:18-alpine', 'docker run -d --name api --network kedai-net -e DB_HOST=db kedai-api', 'docker run -d --name web --network kedai-net -p 8080:80 kedai-web']} label="Four long commands open the shop by hand: a phone line, then the database, the API and the web page, in that order." />
+
+Opening Kedai Kancil by hand takes four long commands. Every morning. In this order. Miss one flag, and the shop stays shut.
+</Card>
+
+<Card id="see-set" type="see">
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Shows the shop page.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Takes the orders.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', means: 'Keeps the orders.' }]} start={['web', 'api', { id: 'db', volume: 'db-data' }]} volumes={['db-data']} prompt="Read the file it wrote. Then press Order the set meal." />
+
+A set meal is ordered in one go. **<Term id="compose">Compose</Term>** does that for containers. One file lists every dish. One order starts them all.
+</Card>
+
+<Card id="see-up" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose ps']} label="One command makes a phone line and a locker, then starts three lunchboxes: web, api and db." />
+
+That is the real thing. `docker compose up -d` reads `compose.yaml` and starts every dish in the background.
+</Card>
+
+<Card id="try-up" type="try">
+Your turn. Start the whole shop with one command. Then knock on hatch 8080 with `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" goal={{ composeUp: 'kedai-kancil', reachable: 'localhost:8080', lastTyped: '^curl' }} hints={['Type docker compose up -d and press Enter.', 'Now type curl localhost:8080']} success="One command, three lunchboxes, and the shop page answers!" />
+
+<Hint>Start with `docker compose up -d`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Which tool fits each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'compose', label: 'Compose' }, { id: 'run', label: 'One docker run' }, { id: 'k8s', label: 'Kubernetes (Part 3)' }]} items={[{ label: 'Web, API and database on your laptop', bucket: 'compose', why: 'Many dishes, one table: a set meal.' }, { label: 'A teammate starts the shop in one go', bucket: 'compose', why: 'They clone the repo and run docker compose up.' }, { label: 'Try one image once, then throw it away', bucket: 'run', why: 'One lunchbox needs no set meal.' }, { label: 'Keep 3 copies alive on many servers', bucket: 'k8s', why: 'Compose runs on one machine. Many machines need a food court manager.' }]} success="All sorted! Compose shines on one machine with many parts." />
+</Card>
+
+<Card id="win" type="win">
+You can now start a whole stack with one command.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose` is a plugin for the `docker` command. It looks for `compose.yaml` in your folder. The folder name becomes the project name. That is why the boxes are called `kedai-kancil-web-1`.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="d4-l01-rep" steps={[{ id: 'folder', text: 'Make a practice folder and go in.', command: 'mkdir hello-set && cd hello-set' }, { id: 'file', text: 'Write a tiny compose.yaml with one service.', command: "printf 'services:\\n  web:\\n    image: nginx:1.30-alpine\\n    ports:\\n      - \"8080:80\"\\n' > compose.yaml" }, { id: 'up', text: 'Start it in the background.', command: 'docker compose up -d' }, { id: 'look', text: 'Open http://localhost:8080 in your browser.' }, { id: 'down', text: 'Clear the table.', command: 'docker compose down' }]} success="Your first real set meal!" />
+</Card>

@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l06
+world: 5
+title: PodDisruptionBudget
+summary: "Anda akan belajar: cara pastikan cukup pod terus melayan semasa anda kosongkan gerai."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, SortCards]
+needs: [k8s-k5-l05]
+scenario: k5-pdb
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: disruptions", url: "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/" }
+  - { label: "Kubernetes: configure a PodDisruptionBudget", url: "https://kubernetes.io/docs/tasks/run-application/configure-pdb/" }
+  - { label: "kubectl drain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/" }
+---
+
+<Card id="hook" type="hook">
+Malam ini anda baiki node (gerai) dev-worker. Dua daripada tiga pod (dulang) kedai ada di situ. Kalau kedua-duanya pergi serentak, satu pod layan seluruh barisan. Macam mana nak elak?
+
+<Interactive name="Choice" options={[{ label: 'Tetapkan peraturan: sekurang-kurangnya 2 pod kekal hidup', correct: true, why: 'Kemudian pod pergi satu demi satu, dan barisan terus bergerak.' }, { label: 'Jangan baiki gerai', why: 'Gerai perlu naik taraf dan dibaiki. Rancang untuknya.' }, { label: 'Baiki waktu makan tengah hari', why: 'Waktu paling sibuk ialah masa paling teruk untuk hilang pod.' }]} />
+</Card>
+
+<Card id="see-pdb" type="see">
+<Interactive name="KubeReplay" scenario="k5-pdb" commands={['kubectl create pdb shop --selector=app=shop --min-available=2', 'kubectl get pdb shop']} label="PodDisruptionBudget shop dicipta: min available 2, allowed disruptions 1." />
+
+Peraturan itu ialah **<Term id="pdb">PodDisruptionBudget</Term>** (PDB). `--min-available=2` kekalkan 2 pod hidup. Dengan 3 sedia, ALLOWED DISRUPTIONS ialah 1: satu boleh pergi pada satu masa.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan itu sendiri. Setiap kepingan tunjuk maksudnya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Bercakap dengan kluster' }, { text: 'create', means: 'buat objek baharu' }, { text: 'pdb', means: 'satu PodDisruptionBudget' }, { text: 'shop', means: 'namanya' }, { text: '--selector=app=shop', means: 'pod mana yang dilindungi' }, { text: '--min-available=2', means: 'sekurang-kurangnya 2 kekal hidup' }]} decoys={[{ text: '--max-unavailable=0', means: 'tiada pod boleh pergi langsung' }, { text: 'delete', means: 'buang objek' }]} success="Itulah bajetnya: lindungi app=shop, kekalkan 2 hidup." />
+</Card>
+
+<Card id="try-drain" type="try">
+Sekarang kosongkan gerai dev-worker. Lencana bahaya muncul: drain pindahkan pod. Lihat bajet buat satu pod tunggu gilirannya.
+
+```bash
+kubectl drain dev-worker --ignore-daemonsets
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-drain" goal={{ nodeCordoned: { name: 'dev-worker', cordoned: true }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Taip kubectl drain dev-worker --ignore-daemonsets', 'Biar jam berjalan sehingga 3 pod kedai sedia semula.']} success="Gerai dikosongkan, dan kedai tak pernah kurang daripada 2 pod." />
+
+<Hint>Salin arahan di atas. Kemudian biar jam berjalan.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+Drain cetak: `Cannot evict pod as it would violate the pod's disruption budget.` Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Tunggu: pod lain mesti sedia dulu', correct: true, why: 'Drain cuba lagi setiap 5 saat, sehingga bajet benarkan.' }, { label: 'Drain gagal terus', why: 'Ia kata "will retry". Ia terus mencuba.' }, { label: 'Bajet itu rosak', why: 'Bajet berfungsi. Mesej itu tanda ia buat kerjanya.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+PDB hanya perlahankan pemindahan yang dirancang. Asingkan setiap kejadian.
+
+<Interactive name="SortCards" buckets={[{ id: 'pdb', label: 'PDB lindungi' }, { id: 'no', label: 'PDB tak boleh bantu' }]} items={[{ label: 'kubectl drain sebelum naik taraf', bucket: 'pdb', why: 'Drain minta dengan sopan (eviction). Bajet boleh kata "tunggu".' }, { label: 'Node autoscaler buang gerai yang lengang', bucket: 'pdb', why: 'Ia juga usir pod, jadi ia hormati bajet.' }, { label: 'Bekalan elektrik putus, satu gerai tutup', bucket: 'no', why: 'Tiada siapa minta dulu. Sebaran dan replika yang bantu di sini.' }, { label: 'kubectl delete pod pada pod kedai', bucket: 'no', why: 'Delete biasa bukan eviction. Ia langkau bajet.' }]} success="Betul: bajet jaga kerja terancang, bukan kemalangan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pastikan kedai terus melayan semasa anda kosongkan gerai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Guna `--max-unavailable` untuk sebut berapa yang boleh mati. Hati-hati: bajet yang benarkan 0 gangguan sekat setiap drain selama-lamanya. Selepas kerja, `kubectl uncordon dev-worker` buka gerai semula.
+
+Latihan sebenar (pilihan): dalam kind, buat PDB. Kemudian drain satu pekerja dan baca setiap baris.
+</Card>

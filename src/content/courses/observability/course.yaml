@@ -1,0 +1,151 @@
+# Level Up, Part 3 "Bilik Kawalan": Monitoring & Observability. 4 worlds (O1–O4), 33 lessons + capstone mission 9.
+# Plan: docs/LEVEL-UP-PLAN.md §1–2. Story: the control room (counters, a diary, following one order).
+# Folders: <world dir>/NN-<slug>/ (en.mdx + ms.mdx), bosses in <world dir>/boss/.
+# status: ready = lesson exists; soon = shown on the map as "Coming soon".
+# Content helpers: only flip status: soon → ready for lessons you wrote. Do not reorder or retitle.
+id: observability
+family: level-up
+part: 3
+partName: { en: "Bilik Kawalan", ms: "Bilik Kawalan" }
+story:
+  en: "The control room. Counters, a diary and one order followed end to end."
+  ms: "Bilik kawalan. Kaunter, diari dan satu pesanan dijejak dari mula hingga akhir."
+hat: headset
+tool: prometheus
+toolVersion: "3"
+requires:
+  - { course: kubernetes, worlds: [5] }
+title: { en: "Monitoring & Observability", ms: "Pemantauan & Observability" }
+summary:
+  en: "See what your app is doing. Get a kind, clear alarm when it breaks."
+  ms: "Lihat apa aplikasi anda sedang buat. Dapat penggera yang jelas bila ia rosak."
+intro:
+  en: "Every world is open. O1 needs no tools. O2 and O3 use Prometheus 3."
+  ms: "Semua dunia terbuka. O1 tak perlu alat. O2 dan O3 guna Prometheus 3."
+
+badges:
+  - { id: slo-setter, icon: screen, name: { en: "SLO Setter", ms: "Penetap SLO" }, when: { lessons: [obs-o1-boss] } }
+  - { id: quiet-pager, icon: bell, name: { en: "Quiet Pager", ms: "Pager Senyap" }, when: { lessons: [obs-o3-boss] } }
+  - { id: obs-world-1, icon: screen, name: { en: "Control Room Crew", ms: "Krew Bilik Kawalan" }, when: { world: 1 } }
+  - { id: obs-world-2, icon: chart, name: { en: "Query Whiz", ms: "Pakar Query" }, when: { world: 2 } }
+  - { id: obs-world-3, icon: bell, name: { en: "Alarm Tuner", ms: "Penala Penggera" }, when: { world: 3 } }
+  - { id: obs-world-4, icon: notebook, name: { en: "Order Tracker", ms: "Penjejak Pesanan" }, when: { world: 4 } }
+
+worlds:
+  - id: 1
+    code: O1
+    slug: control-room
+    dir: o1-control-room
+    icon: screen
+    color: working
+    title: { en: "The Control Room", ms: "Bilik Kawalan" }
+    summary:
+      en: "Why we watch, what to watch, and how to be on call kindly."
+      ms: "Kenapa kita pantau, apa yang dipantau, dan cara on-call dengan baik."
+    topics:
+      en: "metrics, logs, traces, golden signals, RED, USE, SLOs, error budgets"
+      ms: "metrik, log, trace, isyarat emas, RED, USE, SLO, bajet ralat"
+    lessons:
+      - { id: obs-o1-l01, slug: why-watch, title: { en: "Why watch at all?", ms: "Kenapa perlu pantau?" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o1-l02, slug: metrics-logs-traces, title: { en: "Metrics, logs and traces", ms: "Metrik, log dan trace" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o1-l03, slug: golden-signals, title: { en: "The four golden signals", ms: "Empat isyarat emas" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o1-l04, slug: red-use, title: { en: "RED and USE", ms: "RED dan USE" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o1-l05, slug: sli-slo, title: { en: "SLIs, SLOs and error budgets", ms: "SLI, SLO dan bajet ralat" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o1-l06, slug: dashboards-alerts, title: { en: "Dashboards or alerts?", ms: "Dashboard atau amaran?" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o1-l07, slug: on-call-kindly, title: { en: "On call, kindly", ms: "On-call dengan baik" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o1-l08, slug: who-does-what, title: { en: "Prometheus, Grafana, OpenTelemetry: who does what", ms: "Prometheus, Grafana, OpenTelemetry: siapa buat apa" }, minutes: 4, xp: 20, status: ready }
+    boss:
+      id: obs-o1-boss
+      title: { en: "Pick the signals", ms: "Pilih isyarat" }
+      summary: { en: "Choose SLIs and an SLO for Kedai Kancil's checkout.", ms: "Pilih SLI dan SLO untuk kaunter bayar Kedai Kancil." }
+      xp: 50
+      status: ready
+
+  - id: 2
+    code: O2
+    slug: counters
+    dir: o2-counters
+    icon: chart
+    color: staging
+    title: { en: "Counters", ms: "Kaunter" }
+    summary:
+      en: "Prometheus collects the numbers. PromQL asks questions about them."
+      ms: "Prometheus kumpul nombor. PromQL tanya soalan tentangnya."
+    topics:
+      en: "scraping, exporters, metric types, labels, rate, sum by, histograms, recording rules"
+      ms: "scrape, exporter, jenis metrik, label, rate, sum by, histogram, recording rule"
+    lessons:
+      - { id: obs-o2-l01, slug: scraping-targets, title: { en: "Scraping and targets", ms: "Scrape dan target" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o2-l02, slug: exporters, title: { en: "Exporters: node and blackbox", ms: "Exporter: node dan blackbox" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o2-l03, slug: metric-types, title: { en: "Counter, gauge, histogram, summary", ms: "Counter, gauge, histogram, summary" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o2-l04, slug: labels-cardinality, title: { en: "Labels and cardinality", ms: "Label dan kardinaliti" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o2-l05, slug: instant-range, title: { en: "Instant and range vectors", ms: "Vektor instant dan range" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o2-l06, slug: rate-increase, title: { en: "rate() and increase()", ms: "rate() dan increase()" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o2-l07, slug: sum-by, title: { en: "Add them up: sum by", ms: "Jumlahkan: sum by" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o2-l08, slug: histogram-quantile, title: { en: "Histograms and histogram_quantile", ms: "Histogram dan histogram_quantile" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o2-l09, slug: recording-rules, title: { en: "Recording rules", ms: "Recording rule" }, minutes: 3, xp: 15, status: ready }
+    boss:
+      id: obs-o2-boss
+      title: { en: "Count the orders", ms: "Kira pesanan" }
+      summary: { en: "Answer five questions about the shop with PromQL.", ms: "Jawab lima soalan tentang kedai dengan PromQL." }
+      xp: 50
+      status: ready
+
+  - id: 3
+    code: O3
+    slug: alarms-screens
+    dir: o3-alarms-screens
+    icon: bell
+    color: head
+    title: { en: "Alarms & Screens", ms: "Penggera & Skrin" }
+    summary:
+      en: "Alerts that matter and dashboards people read."
+      ms: "Amaran yang penting dan dashboard yang orang baca."
+    topics:
+      en: "alert rules, Alertmanager, symptoms, Grafana, templating, burn rate, runbooks"
+      ms: "peraturan amaran, Alertmanager, simptom, Grafana, templat, burn rate, runbook"
+    lessons:
+      - { id: obs-o3-l01, slug: alert-rules, title: { en: "Alert rules: for, labels, annotations", ms: "Peraturan amaran: for, label, anotasi" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o3-l02, slug: alertmanager, title: { en: "Alertmanager: route, group, silence", ms: "Alertmanager: hala, kumpul, senyap" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o3-l03, slug: symptoms-not-causes, title: { en: "Alert on symptoms, not causes", ms: "Amaran pada simptom, bukan punca" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o3-l04, slug: grafana-panels, title: { en: "Grafana dashboards and panels", ms: "Dashboard dan panel Grafana" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o3-l05, slug: dashboard-variables, title: { en: "Variables and templating", ms: "Variable dan templat" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o3-l06, slug: burn-rate, title: { en: "SLO burn-rate alerts", ms: "Amaran burn rate SLO" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o3-l07, slug: runbooks, title: { en: "Runbooks", ms: "Runbook" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o3-l08, slug: alert-fatigue, title: { en: "Alert fatigue", ms: "Letih amaran" }, minutes: 3, xp: 15, status: ready }
+    boss:
+      id: obs-o3-boss
+      title: { en: "Quiet the pager", ms: "Tenangkan pager" }
+      summary: { en: "Turn 20 noisy alerts into 3 that matter.", ms: "Tukar 20 amaran bising kepada 3 yang penting." }
+      xp: 50
+      status: ready
+
+  - id: 4
+    code: O4
+    slug: diary-one-order
+    dir: o4-diary-one-order
+    icon: notebook
+    color: remote
+    title: { en: "The Diary & One Order", ms: "Diari & Satu Pesanan" }
+    summary:
+      en: "Logs tell the story. Traces follow one order across services."
+      ms: "Log ceritakan kisahnya. Trace jejak satu pesanan merentas servis."
+    topics:
+      en: "structured logs, Loki, LogQL, OpenTelemetry, traces, spans, postmortems"
+      ms: "log berstruktur, Loki, LogQL, OpenTelemetry, trace, span, postmortem"
+    lessons:
+      - { id: obs-o4-l01, slug: structured-logs, title: { en: "Structured logs", ms: "Log berstruktur" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o4-l02, slug: loki-logql, title: { en: "Loki and LogQL basics", ms: "Asas Loki dan LogQL" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o4-l03, slug: opentelemetry, title: { en: "OpenTelemetry: SDK, collector, OTLP", ms: "OpenTelemetry: SDK, collector, OTLP" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o4-l04, slug: traces-spans, title: { en: "Traces and spans", ms: "Trace dan span" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o4-l05, slug: follow-one-order, title: { en: "Follow one order across services", ms: "Jejak satu pesanan merentas servis" }, minutes: 5, xp: 25, status: ready }
+      - { id: obs-o4-l06, slug: exemplars, title: { en: "Exemplars and correlation", ms: "Exemplar dan korelasi" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o4-l07, slug: incidents, title: { en: "Incidents: who does what", ms: "Insiden: siapa buat apa" }, minutes: 4, xp: 20, status: ready }
+      - { id: obs-o4-l08, slug: postmortems, title: { en: "Blameless postmortems", ms: "Postmortem tanpa menuding jari" }, minutes: 3, xp: 15, status: ready }
+      - { id: obs-o4-m9, slug: mission-9-watch-it, mission: 9, title: { en: "Capstone mission 9: Watch Kedai Kancil", ms: "Misi capstone 9: Pantau Kedai Kancil" }, minutes: 5, xp: 100, status: ready }
+    boss:
+      id: obs-o4-boss
+      title: { en: "Find the slow step", ms: "Cari langkah yang lambat" }
+      summary: { en: "Follow one slow order through logs and traces to its cause.", ms: "Jejak satu pesanan lambat melalui log dan trace hingga puncanya." }
+      xp: 50
+      status: ready

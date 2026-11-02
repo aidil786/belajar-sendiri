@@ -1,0 +1,67 @@
+---
+id: docker-d2-l05
+world: 2
+title: "Konteks binaan dan .dockerignore"
+summary: "Anda akan belajar: apa yang docker build hantar ke dapur, dan cara tinggalkan rahsia di rumah."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, SortCards, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d2-l04]
+scenario: d2-l05
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Build context", url: "https://docs.docker.com/build/concepts/context/" }
+  - { label: "Docker docs: .dockerignore files", url: "https://docs.docker.com/build/concepts/context/#dockerignore-files" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l05" commands={['docker build -t diary:1.0 .', 'docker run -d --name web -p 8080:80 diary:1.0', 'curl -s localhost:8080/notes.txt']} label="Laman diari dibina dengan COPY . dan dihidang di 8080. curl minta /notes.txt dan dapat nota rahsia." />
+
+Anda sudah lancar laman diari. Kawan anda buka `/notes.txt`. Nota rahsia anda ada di internet! Macam mana ia masuk?
+</Card>
+
+<Card id="see-context" type="see">
+<Interactive name="SpotLines" lines={[{ text: ' => [internal] load build definition from Dockerfile' }, { text: ' => [internal] load .dockerignore' }, { text: ' => [1/2] FROM docker.io/library/nginx:1.30-alpine' }, { text: ' => [internal] load build context' }, { text: ' => => transferring context: 217B', target: true }, { text: ' => [2/2] COPY . /usr/share/nginx/html/' }]} prompt="Ketik baris yang menghantar folder anda." success="Ya! Itulah seluruh folder sedang dihantar ke dapur." />
+
+`docker build .` hantar seluruh folder ke dapur. Folder itu ialah **<Term id="build-context">konteks binaan</Term>**. `COPY . ` salin semuanya, nota pun sekali.
+</Card>
+
+<Card id="try-sort" type="try">
+Hantar ke dapur, atau tinggal di rumah?
+
+<Interactive name="SortCards" buckets={[{ id: 'send', label: 'Hantar' }, { id: 'home', label: 'Tinggal di rumah' }]} items={[{ label: 'index.html', bucket: 'send', why: 'Laman itu perlukannya.' }, { label: 'style.css', bucket: 'send', why: 'Laman itu perlukannya juga.' }, { label: 'notes.txt', bucket: 'home', why: 'Peribadi. Jangan sesekali masuk image.' }, { label: '.git', bucket: 'home', why: 'Seluruh sejarah anda. Besar, dan laman itu tak perlukannya.' }, { label: 'node_modules', bucket: 'home', why: 'Berat. Resepi pasang yang baharu.' }, { label: '.env', bucket: 'home', why: 'Kata laluan duduk di sini. Jangan bawa masuk.' }]} success="Hanya apa yang hidangan perlukan masuk ke bekas." />
+</Card>
+
+<Card id="try-ignore" type="try">
+Fail **<Term id="dockerignore">.dockerignore</Term>** senaraikan apa yang tinggal di rumah. Buat satu, bina semula sebagai `diary:1.1`, jalankan, kemudian minta `/notes.txt`.
+
+<Interactive name="KitchenSim" scenario="d2-l05" goal={{ fileContains: { 'diary/.dockerignore': 'notes.txt' }, imageExists: 'diary:1.1', running: ['web'], lastTyped: '^curl\\b.*notes\\.txt' }} hints={['Taip echo "notes.txt" > .dockerignore', 'Kemudian docker build -t diary:1.1 .', 'Kemudian docker run -d --name web -p 8080:80 diary:1.1', 'Akhir sekali curl -s localhost:8080/notes.txt']} success="404 Not Found. Nota itu kekal di rumah." />
+
+<Hint>Mula dengan `echo "notes.txt" > .dockerignore`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`.dockerignore` senaraikan `.env`. Resepi tulis `COPY . .`. Adakah `.env` dalam image?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Ia tak pernah keluar dari laptop anda', correct: true, why: 'Fail yang diabaikan langsung tak dihantar. COPY tak boleh salin apa yang tiada.' }, { label: 'Ya. COPY . . salin semua', why: 'Semua yang dihantar. .env tak dihantar.' }, { label: 'Hanya .env yang kosong', why: 'Namanya pun tiada. Fail itu memang tiada dalam konteks.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Baris `.dockerignore` yang bagus? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" cards={[{ text: '.git', good: true, why: 'Sejarah anda kekal di rumah. Build jadi lebih kecil dan laju.' }, { text: 'node_modules', good: true, why: 'Resepi pasang yang bersih.' }, { text: 'index.html', good: false, why: 'Laman itu perlukannya! COPY tak akan jumpa.' }, { text: '.env', good: true, why: 'Rahsia kekal di luar setiap layer.' }, { text: '*', good: false, why: 'Itu abaikan semuanya. COPY tak jumpa apa-apa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih apa yang dihantar ke dapur dengan .dockerignore.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baris yang bermula dengan `!` bawa balik satu fail: `*.md` kemudian `!README.md`. Anda boleh senaraikan `Dockerfile` dan `.dockerignore` juga; build tetap membacanya. Konteks yang kecil juga bantu cache, sebab kurang fail yang boleh berubah.
+
+<Interactive name="Mission" id="d2-l05-rep" steps={[{ id: 'look', text: 'Bina mana-mana projek dan baca baris "transferring context".' }, { id: 'ignore', text: 'Tambah .dockerignore dengan .git dan node_modules.' }, { id: 'again', text: 'Bina semula dan bandingkan saiznya.' }]} success="Dapur anda terima apa yang perlu sahaja." />
+</Card>

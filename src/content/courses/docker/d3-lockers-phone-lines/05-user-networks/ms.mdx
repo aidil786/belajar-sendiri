@@ -1,0 +1,70 @@
+---
+id: docker-d3-l05
+world: 3
+title: "Talian telefon: rangkaian sendiri"
+summary: "Anda akan belajar: letak container dalam rangkaian sendiri, supaya mereka boleh berhubung."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d3-l04]
+scenario: d3-bridge
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Networking overview", url: "https://docs.docker.com/engine/network/" }
+  - { label: "Docker docs: Bridge network driver", url: "https://docs.docker.com/engine/network/drivers/bridge/" }
+  - { label: "Docker docs: docker network", url: "https://docs.docker.com/reference/cli/docker/network/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-bridge" commands={['docker exec web ping -c 1 db']} fails={['docker exec web ping -c 1 db']} label="web dan db kedua-duanya berjalan. web ping db ikut nama dan dapat: ping: bad address 'db'." />
+
+web perlu hubungi db. Kedua-duanya berjalan di laptop anda. Tapi: `ping: bad address 'db'`. Maksudnya: web tiada buku telefon yang ada nama db.
+</Card>
+
+<Card id="see-line" type="see">
+<Interactive name="SpotLines" prompt="Tekan talian telefon yang anda buat." success="Ya! shopnet ialah talian anda sendiri." lines={[{ text: 'NETWORK ID     NAME      DRIVER    SCOPE' }, { text: '72ac1ad45372   bridge    bridge    local' }, { text: '174817a41ab4   host      host      local' }, { text: '83438c27b07a   none      null      local' }, { text: '6cd5ddbfe8f4   shopnet   bridge    local', target: true }]} />
+
+**<Term id="user-network">Network</Term>** (rangkaian) ialah talian telefon antara bekas. `docker network create shopnet` buat talian anda sendiri. Tiga lagi itu Docker yang buat.
+</Card>
+
+<Card id="try-network" type="try">
+Buat talian shopnet. Sambungkan web dan db kepadanya.
+
+<Interactive name="KitchenSim" scenario="d3-bridge" goal={{ networkHas: { shopnet: ['web', 'db'] } }} hints={['Taip docker network create shopnet', 'Taip docker network connect shopnet web', 'Taip docker network connect shopnet db']} success="Kedua-dua bekas di satu talian. Cuba docker exec web ping -c 1 db sekarang!" />
+
+<Hint>`docker network connect shopnet web` sambungkan bekas yang sedang berjalan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+cache dimulakan dengan `docker run` biasa, tanpa `--network`. Boleh ia hubungi menu, yang ada di shopnet?
+
+<Interactive name="Choice" options={[{ label: 'Tak boleh: cache di talian asal', correct: true, why: 'Setiap rangkaian ialah talian sendiri. cache tiada di shopnet.' }, { label: 'Boleh: semua bekas kongsi satu talian', why: 'Hanya bekas dalam rangkaian yang sama boleh berbual.' }, { label: 'Hanya selepas restart', why: 'Restart kekalkan talian yang sama. network connect tambah talian.' }]} />
+</Card>
+
+<Card id="see-connect" type="see">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker exec cache wget -qO- http://menu', 'docker network connect shopnet cache', 'docker exec cache sh -c "wget -qO- http://menu | grep title"']} fails={['docker exec cache wget -qO- http://menu']} label="cache tak jumpa menu. Selepas docker network connect shopnet cache, tajuk halaman menu sampai." />
+
+`docker network connect` sambungkan bekas yang sedang berjalan ke satu talian. Tak perlu restart. Kini cache boleh hubungi menu.
+</Card>
+
+<Card id="check" type="check">
+db ada di shopnet. Bekas mana boleh panggil db ikut nama?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Boleh panggil db' }, { id: 'no', label: 'Tak boleh panggil db' }]} items={[{ label: 'Dimulakan dengan --network shopnet', bucket: 'yes', why: 'Talian sama, buku telefon sama.' }, { label: 'Dimulakan dengan docker run biasa', bucket: 'no', why: 'Ia di bridge asal, yang tiada nama.' }, { label: 'Disambung kemudian dengan network connect', bucket: 'yes', why: 'Sambung kemudian pun boleh.' }, { label: 'Dimulakan dengan --network none', bucket: 'no', why: 'none maksudnya tiada talian langsung.' }]} success="Talian sama, buku telefon sama." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri container anda talian telefon sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Bridge asal tiada nama, dan semua bekas masuk ke situ. Rangkaian sendiri ada nama, dan hanya bekas yang dijemput. `docker network inspect shopnet` senaraikan siapa yang bersambung. `docker network disconnect` putuskan satu bekas.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d3-l05-rep" steps={[{ id: 'net', text: 'Buat satu talian.', command: 'docker network create practice-net' }, { id: 'web', text: 'Letak bekas web di talian itu.', command: 'docker run -d --name menu --network practice-net nginx:1.30-alpine' }, { id: 'call', text: 'Panggil ia ikut nama dari bekas lain.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://menu' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f menu && docker network rm practice-net' }]} success="Dua bekas berbual di talian anda sendiri." />
+</Card>

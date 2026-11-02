@@ -1,0 +1,70 @@
+---
+id: cicd-c4-l09
+world: 4
+title: SLSA levels and allow-lists
+summary: "You will learn: how to prove where a build came from, and how to allow only trusted actions."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, OrderList, CommandBuilder, SwipeJudge]
+needs: [cicd-c4-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "SLSA: Build track basics", url: "https://slsa.dev/spec/v1.2/build-track-basics" }
+  - { label: "Artifact attestations", url: "https://docs.github.com/en/actions/concepts/security/artifact-attestations" }
+  - { label: "gh attestation verify", url: "https://cli.github.com/manual/gh_attestation_verify" }
+  - { label: "Limiting GitHub Actions for your organization", url: "https://docs.github.com/en/organizations/managing-organization-settings/disabling-or-limiting-github-actions-for-your-organization" }
+---
+
+<Card id="hook" type="hook">
+You pull `ghcr.io/you/shop:1.2.0` to deploy it. Did your pipeline build it, or someone's laptop? How can you tell?
+
+<Interactive name="Choice" options={[{ label: 'Check its signed build record', correct: true, why: 'A signed record says which repo, commit and workflow made it.' }, { label: 'Trust the tag', why: 'Anyone who can push can push an image with that tag.' }, { label: 'Check the image size', why: 'Size says nothing about who built it.' }]} />
+</Card>
+
+<Card id="see-provenance" type="see">
+A frozen pack has a label: which kitchen, which recipe, when. A build's label is called **provenance**. When it is signed, nobody can quietly fake it. What does it tell you?
+
+<Interactive name="SortCards" buckets={[{ id: 'tells', label: 'Provenance tells you' }, { id: 'not', label: 'It does not tell you' }]} items={[{ label: 'Which repo and commit it came from', bucket: 'tells', why: 'That is the heart of the label.' }, { label: 'Which workflow built it', bucket: 'tells', why: 'The build steps are named too.' }, { label: 'That nobody changed it after the build', bucket: 'tells', why: 'A changed image no longer matches the signed record.' }, { label: 'That the code has no bugs', bucket: 'not', why: 'It proves where it was made, not that the recipe is good.' }]} success="Sorted! Where and how, not how good." />
+</Card>
+
+<Card id="see-levels" type="see">
+**<Term id="slsa">SLSA</Term>** (say "salsa") grades builds, like food-safety grades. Put its Build levels in order. Weakest at the top.
+
+<Interactive name="OrderList" items={['L0: no promises', 'L1: provenance exists', 'L2: a hosted build platform signs it', 'L3: hardened builds, so runs cannot touch each other']} label="Weakest at the top" success="That's the ladder. Each level makes faking harder." />
+</Card>
+
+<Card id="predict" type="predict">
+Your GitHub Actions workflow makes an artifact attestation: a signed provenance record. Which SLSA Build level is that?
+
+<Interactive name="Choice" options={[{ label: 'Build L2', correct: true, why: 'A hosted platform signs it. A shared reusable workflow can reach L3.' }, { label: 'Build L0', why: 'There is signed provenance, so it is more than L0.' }, { label: 'Always Build L3', why: 'L3 needs the build kept apart from the caller, like a shared reusable workflow.' }]} />
+</Card>
+
+<Card id="try-verify" type="try">
+Check an image before you deploy it. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: "GitHub's command-line tool" }, { text: 'attestation', means: 'work with build records' }, { text: 'verify', means: 'check the signed record' }, { text: 'oci://ghcr.io/you/shop:1.2.0', means: 'this image in the registry' }, { text: '--owner', means: 'it must come from this owner' }, { text: 'you', means: 'your account' }]} decoys={[{ text: 'download', means: 'save the records to a file' }, { text: 'docker', means: "Docker's own tool" }]} success="That's it! No valid record from you, no deploy." />
+</Card>
+
+<Card id="see-allow" type="see">
+Big teams also keep an approved supplier list: an **<Term id="allow-list">allow-list</Term>**. Only actions on it may run. Good rule, or risky?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Allow actions made by GitHub', good: true, why: "GitHub's own actions are a trusted supplier." }, { text: 'Allow every action from anyone', good: false, why: 'Any supplier, poisoned or not, reaches your kitchen.' }, { text: 'Allow Marketplace actions from verified creators', good: true, why: 'GitHub has checked who these makers are.' }, { text: 'Require every action to be pinned to a full SHA', good: true, why: 'One setting makes lesson 3 a rule for everyone.' }]} />
+</Card>
+
+<Card id="try-pattern" type="try">
+Your allow-list must block one bad action, and keep everything else. Which entry does that?
+
+<Interactive name="Choice" options={[{ label: '`*, !example-org/changed-files@*`', correct: true, why: '* allows everything. ! blocks that one action, any version.' }, { label: '`example-org/*`', why: 'That allows only example-org actions. Everything else is blocked.' }, { label: '`example-org/changed-files@*`', why: 'That allows the bad action. Put ! in front to block it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now prove where a build came from, and allow only trusted actions.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a food label sits on the pack. Provenance is a separate signed file. A tool checks it, not your eyes. And no grade says the recipe is good. SLSA 1.2 also adds a Source track, for trusting the code itself. Real rep: verify an image you pushed in World C2.
+</Card>

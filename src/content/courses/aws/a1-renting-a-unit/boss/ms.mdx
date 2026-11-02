@@ -1,0 +1,74 @@
+---
+id: aws-a1-boss
+world: 1
+title: Hari pertama yang selamat
+summary: "Anda akan belajar: buka akaun dengan selamat: root dikunci, MFA hidup, penggera bajet sebelum apa-apa."
+minutes: 6
+xp: 50
+interactives: [Choice, OrderList, SwipeJudge, CommandBuilder, Transcript, IdleBill, Mission]
+needs: [aws-a1-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Root user best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html" }
+  - { label: "Managing your costs with AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "aws sts get-caller-identity", url: "https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil buka akaun AWS sebenar hari ini. Kuncinya masih baru. Apa yang pertama?
+
+<Interactive name="Choice" options={[{ label: 'Kunci root dengan MFA, kemudian pasang penggera bajet', correct: true, why: 'Kunci dahulu, penggera asap kedua. Bina kemudian.' }, { label: 'Mulakan server ujian untuk tengok caranya', why: 'Belum lagi. Tiada apa dibina sebelum penggera.' }, { label: 'Buat access key root untuk terminal', why: 'Jangan untuk root. Kunci itu buka semuanya.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Bilik 1: rancang seluruh hari pertama. Susun ikut urutan yang selamat.
+
+<Interactive name="OrderList" items={['Daftar: pengguna root lahir', 'Tambah MFA pada pengguna root', 'Hidupkan akses IAM kepada bil', 'Buat log masuk admin harian, dengan MFA', 'Log keluar dari root; log masuk sebagai admin', 'Cipta zero spend budget', 'Baru sekarang, bina sesuatu yang kecil']} label="Langkah pertama di atas" success="Bilik 1 selesai! Root dikunci sebelum apa-apa dibina." />
+
+<Hint>Root buat kerja root sahaja, kemudian keluar.</Hint>
+</Card>
+
+<Card id="try-swipe" type="try">
+Bilik 2: rakan sepasukan Kancil ada idea. Selamat, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Simpan peranti MFA kedua dalam peti besi pejabat.', good: true, why: 'Hilang telefon, peti besi masih ada jalan masuk.' }, { text: 'Simpan kata laluan root dalam aplikasi nota yang dikongsi.', good: false, why: 'Guna pengurus kata laluan, dan kongsi dengan hampir tiada sesiapa.' }, { text: 'Emel penggera dihantar ke peti masuk kongsi kedai.', good: true, why: 'Ada orang akan nampak, walaupun cuti.' }, { text: 'Langkau penggera: kita di Free plan.', good: false, why: 'Plan berubah, dan naik taraf berlaku. Pasang juga.' }]} />
+</Card>
+
+<Card id="try-cli" type="try">
+Bilik 3: pasang penggera dari terminal. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws budgets create-budget', means: 'buat bajet baru' }, { text: '--account-id 111122223333', means: 'akaun kedai' }, { text: '--budget file://budget.json', means: 'garisan pada bil' }, { text: '--notifications-with-subscribers file://notify.json', means: 'siapa dapat emel, dan bila' }]} decoys={[{ text: '--profile root', means: 'jangan: root tiada kunci' }]} success="Bilik 3 selesai! Penggera asap sudah hidup." />
+</Card>
+
+<Card id="see-who" type="see">
+<Interactive name="Transcript" title="bash" label="aws sts get-caller-identity tunjuk pengguna IAM DevAdmin, bukan pengguna root." lines={[{ cmd: 'aws sts get-caller-identity' }, { out: '{\n    "UserId": "AIDASAMPLEUSERID",\n    "Account": "123456789012",\n    "Arn": "arn:aws:iam::123456789012:user/DevAdmin"\n}', color: 'green' }]} />
+
+Bilik 4: sebelum sebarang perubahan, tanya siapa anda. Arn berakhir dengan `user/DevAdmin`: admin harian, bukan root.
+</Card>
+
+<Card id="predict" type="predict">
+Suatu hari Arn berakhir dengan `:root` pula. Apa Kancil patut buat?
+
+<Interactive name="Choice" options={[{ label: 'Berhenti, log keluar, dan log masuk sebagai admin', correct: true, why: 'Root untuk kerja jarang sahaja. Tukar sebelum ubah apa-apa.' }, { label: 'Teruskan, lebih cepat', why: 'Cepat hari ini, berisiko setiap hari. Tukar sekarang.' }, { label: 'Buat access key root supaya lebih mudah', why: 'Jangan. Root tak simpan kunci.' }]} />
+</Card>
+
+<Card id="check-idle" type="check">
+Bilik 5: rakan sepasukan bina satu ujian, kemudian “matikannya”. Sisa mana masih dibil?
+
+<Interactive name="IdleBill" items={['ebsOfStopped', 'securityGroup', 'elasticIpIdle', 'iam', 'loadBalancer', 'vpc']} ordered />
+</Card>
+
+<Card id="try-real" type="try">
+Bilik terakhir, betul-betul: hari pertama anda yang selamat. Tiada sumber, tiada kos.
+
+<Interactive name="Mission" id="aws-a1-boss-real" steps={[{ id: 'rules', text: 'Baca peraturan plan hari ini di aws.amazon.com/free.' }, { id: 'mfa', text: 'Tambah dua peranti MFA pada pengguna root.' }, { id: 'billing', text: 'Sebagai root, hidupkan akses IAM kepada bil. Kemudian log keluar.' }, { id: 'admin', text: 'Log masuk sebagai admin harian, dengan MFA.' }, { id: 'zero', text: 'Cipta zero spend budget dengan emel anda.' }, { id: 'monthly', text: 'Cipta monthly cost budget dengan garisan yang kecil.' }, { id: 'who', text: 'Di terminal, pastikan anda bukan root.', command: 'aws sts get-caller-identity' }]} success="Boss tewas! Akaun anda berkunci, dan penggera sudah hidup." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka akaun AWS dengan selamat: root dikunci, penggera hidup.
+</Card>

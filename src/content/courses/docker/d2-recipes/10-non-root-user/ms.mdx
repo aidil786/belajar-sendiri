@@ -1,0 +1,67 @@
+---
+id: docker-d2-l10
+world: 2
+title: "Jalan sebagai USER bukan root"
+summary: "Anda akan belajar: jalankan aplikasi sebagai pengguna biasa, supaya penceroboh boleh buat lebih sedikit."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d2-l09]
+scenario: d2-l10
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+  - { label: "Docker docs: Best practices (USER)", url: "https://docs.docker.com/build/building/best-practices/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l10" commands={['docker run --rm api:1.0 whoami']} label="whoami di dalam image api cetak root." />
+
+API anda berjalan sebagai `root` di dalam bekas. Satu pepijat biarkan orang asing masuk. Sekarang orang asing itu pun root, dengan setiap kunci dapur.
+</Card>
+
+<Card id="see-user" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine' }, { text: 'WORKDIR /app' }, { text: 'COPY server.js .' }, { text: 'USER node', target: true }, { text: 'CMD ["node", "server.js"]' }]} prompt="Ketik baris yang pilih siapa jalankan aplikasi." success="Ya! Dari baris itu, pengguna node yang buat kerja." />
+
+**<Term id="non-root">Pengguna bukan root</Term>** ada hak yang sedikit, macam pembantu dapur. `USER node` tukar kepada pengguna itu. Image node sudah ada pengguna bernama `node`.
+</Card>
+
+<Card id="try-user" type="try">
+Tambah `USER node` di hujung resepi. Bina `api:1.1`. Kemudian tanya `whoami`.
+
+<Interactive name="KitchenSim" scenario="d2-l10" goal={{ imageUser: { 'api:1.1': 'node' }, lastTyped: 'whoami' }} hints={['Taip echo "USER node" >> Dockerfile', 'Kemudian docker build -t api:1.1 .', 'Kemudian docker run --rm api:1.1 whoami']} success="node, bukan root. Kunci kecil, risiko kecil." />
+
+<Hint>USER boleh jadi baris terakhir. Ia tetapkan siapa jalankan CMD.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu resepi tulis `USER node`, dan selepasnya `RUN apk add --no-cache curl`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Build gagal: node tak boleh pasang pakej', correct: true, why: 'USER juga kena pada baris RUN di bawahnya. Memasang perlukan root.' }, { label: 'Ia jalan sama macam dulu', why: 'USER tukar siapa jalankan setiap RUN selepasnya juga.' }, { label: 'curl dipasang, untuk node sahaja', why: 'apk pasang untuk seluruh sistem. Pengguna biasa tak dibenarkan.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l10" commands={['cat oops/Dockerfile', 'docker build -t api:oops oops']} fails={['docker build -t api:oops oops']} label="Resepi oops tetapkan USER node sebelum RUN apk add. Build gagal: ERROR: Unable to open log: Permission denied, kod keluar 99." />
+
+Ralat sebenar: `Permission denied`, kod keluar 99. Maksudnya: hanya root boleh memasang. Pasang dulu, kemudian tukar dengan USER.
+</Card>
+
+<Card id="check-swipe" type="check">
+Tabiat yang bagus? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pasang pakej dulu, kemudian tambah USER dekat hujung', good: true, why: 'Root buat persediaan. Aplikasi jalan sebagai pembantu.' }, { text: 'Jalankan semua aplikasi sebagai root, lebih senang', good: false, why: 'Senang untuk penyerang juga.' }, { text: 'Guna pengguna image itu sendiri, macam node atau nginx', good: true, why: 'Mereka sudah wujud dan memiliki folder yang betul.' }, { text: 'Benarkan semua orang tulis setiap folder (chmod 777)', good: false, why: 'Lepas itu sesiapa boleh ubah apa-apa. Beri satu pengguna apa yang ia perlu sahaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan aplikasi sebagai pengguna bukan root.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run -u 1000` pilih pengguna untuk satu kali jalan. USER dalam resepi ialah pilihan asal yang selamat. Aplikasi perlu tulis satu folder? Serahkan kepadanya: `COPY --chown=node:node . .`. Dalam Dunia D5 anda tambah lagi kunci.
+
+<Interactive name="Mission" id="d2-l10-rep" steps={[{ id: 'who', text: 'Semak siapa yang jalankan image anda.', command: 'docker run --rm hello:1.0 whoami' }, { id: 'user', text: 'Tambah USER node dekat hujung resepi dan bina semula.' }, { id: 'again', text: 'Semak lagi. Ia patut tulis node.' }]} success="Aplikasi anda kini jalan dengan kunci yang lebih sedikit." />
+</Card>

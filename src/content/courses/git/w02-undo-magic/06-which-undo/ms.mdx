@@ -1,0 +1,72 @@
+---
+id: git-w02-l06
+world: 2
+title: Undur yang mana?
+summary: "Anda akan belajar: cara pilih restore, reset atau revert untuk setiap kesilapan."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, SortCards, Choice]
+needs: [git-w02-l05]
+scenario: w02-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" effect="wobble" label="Kesilapan di mana-mana: fail yang diubah dalam folder kerja, fail dalam kotak dan commit teruk dalam repositori. Semuanya bergoyang." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], staging: [{ name: 'style.css', tag: 'notReady' }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+restore, reset, revert. Tiga perkataan undur yang bunyinya hampir sama. Salah pilih, kerja anda mungkin hilang.
+</Card>
+
+<Card id="see-restore" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git restore index.html" label="Tanda diubah pada index.html hilang. Fail itu kembali ke versi yang disimpan." frames={[{ working: [{ name: 'index.html', tag: 'changed', glow: true }] }, { working: ['index.html'] }]} />
+
+Kesilapan belum masuk commit (titik simpan)? Guna **<Term id="restore">restore</Term>** (pulihkan). Ia baiki fail dalam folder atau dalam kotak.
+</Card>
+
+<Card id="see-reset" type="see">
+<Interactive name="GraphScene" scenario="w02-l04" commands={['git reset HEAD~1']} showLost label="Label main dan HEAD undur satu commit. Commit terbaru pudar jadi titik putus-putus." />
+
+Commit hanya dalam laptop anda? Guna **<Term id="reset">reset</Term>** (undur). Ia undurkan branch (jalan cerita), seolah-olah commit itu tak pernah wujud.
+</Card>
+
+<Card id="see-revert" type="see">
+<Interactive name="GraphScene" scenario="w02-l05" commands={['git revert HEAD~1']} label="Satu commit undur yang baru muncul di hujung. Semua commit lama kekal." />
+
+Commit dah dikongsi? Guna **<Term id="revert">revert</Term>** (batalkan). Ia tambah commit baru yang batalkan commit yang teruk.
+</Card>
+
+<Card id="try-sort" type="try">
+Susun setiap kesilapan ke dalam cara undur yang betul.
+
+<Interactive name="SortCards" buckets={[{ id: 'restore', label: 'git restore' }, { id: 'reset', label: 'git reset' }, { id: 'revert', label: 'git revert' }]} items={[{ label: 'Saya ubah index.html. Saya mahu ia macam asal.', bucket: 'restore', why: 'Belum di-commit, jadi restore baiki fail itu.' }, { label: 'Saya masukkan fail yang salah ke dalam kotak.', bucket: 'restore', why: 'git restore --staged keluarkan fail itu dari kotak.' }, { label: 'Saya terpadam README.md.', bucket: 'restore', why: 'README.md ada dalam commit. restore bawa ia balik.' }, { label: '2 commit terakhir saya hanya dalam laptop. Saya mahu buang.', bucket: 'reset', why: 'Tiada orang lain ada commit itu. Undurkan branch pun tak apa.' }, { label: 'Saya mahu buat semula commit terakhir. Belum dikongsi.', bucket: 'reset', why: 'git reset --soft HEAD~1 kekalkan perubahan dalam kotak.' }, { label: 'Commit teruk dah dikongsi dengan pasukan.', bucket: 'revert', why: 'Revert tambah commit undur. Sejarah yang dikongsi kekal sama.' }, { label: 'Rakan sepasukan dah ada commit saya yang rosak.', bucket: 'revert', why: 'Mereka dah ada commit itu. Batalkan dengan commit baru.' }]} success="Semua dah tersusun! Anda tahu undur mana yang sesuai." />
+
+<Hint>Tanya: dah di-commit? Dah dikongsi?</Hint>
+</Card>
+
+<Card id="check-danger" type="check">
+Yang mana boleh buat kerja hilang terus?
+
+<Interactive name="Choice" options={[{ label: '`git reset --hard`', correct: true, why: 'Ia padam perubahan yang belum di-commit. Tiada undo untuk itu.' }, { label: '`git revert`', why: 'Revert hanya tambah commit. Tiada apa yang hilang.' }, { label: '`git restore --staged`', why: 'Ia cuma kosongkan kotak. Perubahan anda kekal dalam folder.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih cara undur yang betul untuk apa jua kesilapan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peta ringkas. Pilih ikut di mana kesilapan itu berada.
+
+```
+Belum di-commit         → git restore <fail>
+Dalam kotak             → git restore --staged <fail>
+Commit terakhir, typo   → git commit --amend
+Hanya dalam laptop      → git reset HEAD~1
+Dah dikongsi            → git revert <commit>
+```
+</Card>

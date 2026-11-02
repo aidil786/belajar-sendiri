@@ -1,0 +1,67 @@
+---
+id: git-w02-l07
+world: 2
+title: Detached HEAD
+summary: "You will learn: how to visit an old commit and get back safely."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, Sim, TermReplay, Choice]
+needs: [git-w02-l06]
+scenario: w02-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git checkout", url: "https://git-scm.com/docs/git-checkout" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Four commits in the repository. The old one, Add day 1 page, glows and wobbles." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit', glow: true }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+You want to see your diary as it was on day 1. Just look, not change. How?
+</Card>
+
+<Card id="see-detach" type="see">
+<Interactive name="GraphScene" scenario="w02-l07" commands={['git switch --detach HEAD~2']} label="HEAD leaves the main label and jumps back two commits, to Add day 1 page. main stays on Add day 2 entry." />
+
+`git switch --detach HEAD~2` visits an old commit. HEAD now points at a commit, not a branch. This is a **<Term id="detached-head">detached HEAD</Term>**.
+</Card>
+
+<Card id="try-visit" type="try">
+Visit the commit "Add day 1 page".
+
+<Interactive name="Sim" scenario="w02-l07" panels={['graph']} goal={{ headDetached: true, headAtMessage: '^Add day 1 page$' }} hints={['Type git switch --detach HEAD~2 and press Enter.', 'Or type git log --oneline. Then git switch --detach and the hash.']} success="You're on day 1. Your newer commits are safe on main." />
+
+<Hint>Type `git switch --detach HEAD~2`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-checkout" type="see">
+<Interactive name="TermReplay" scenario="w02-l07" commands={['git checkout HEAD~2']} label="git checkout HEAD~2 prints a long note about detached HEAD state, then: HEAD is now at Add day 1 page." />
+
+Old guides use `git checkout` with a commit. Same result, plus a long note. Don't panic: it's only advice.
+</Card>
+
+<Card id="predict" type="predict">
+You are on a detached HEAD. You commit, then switch to main. What happens to that commit?
+
+<Interactive name="Choice" options={[{ label: 'It is left behind', correct: true, why: 'No branch points at it. Git even warns you when you leave.' }, { label: 'It joins main', why: 'main only moves when you commit while on main.' }, { label: 'Git deletes it at once', why: 'It stays for a while. The reflog remembers it (lesson 9).' }]} />
+</Card>
+
+<Card id="try-back" type="try">
+You are visiting day 1. Get back to your branch.
+
+<Interactive name="Sim" scenario="w02-l07b" panels={['graph']} goal={{ headDetached: false, headAtMessage: '^Add day 2 entry$' }} hints={['Type git switch main and press Enter.', 'main is your branch. Switching to it puts HEAD back on it.']} success="HEAD is back on main. Welcome home!" />
+
+<Hint>Type `git switch main`, then press Enter.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now visit old commits and come back safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git switch -` jumps back to where you were before. Made commits while detached? Give them a branch before you leave, or they get left behind. Making branches comes in World 3. `git checkout` still works in Git 3.0, next to `git switch`.
+
+<Interactive name="TermReplay" scenario="w02-l07" commands={['git switch --detach HEAD~2', 'git switch -']} label="git switch --detach HEAD~2 visits day 1. git switch - goes straight back to main." />
+</Card>

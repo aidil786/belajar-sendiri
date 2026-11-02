@@ -1,0 +1,76 @@
+---
+id: iac-t3-l03
+world: 3
+title: "Drift: someone clicked"
+summary: "You will learn: how plan spots changes made by hand, and how to fix them either way."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t3-l02]
+scenario: t3-drift-menu
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu plan (-refresh-only, -detailed-exitcode)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "tofu refresh", url: "https://opentofu.org/docs/cli/commands/refresh/" }
+  - { label: "OpenTofu: lifecycle (ignore_changes)", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+Last night Ben added "Maggi goreng" to `menu.txt` by hand. The blueprint still lists two dishes. What will `tofu plan` say?
+
+<Interactive name="Choice" options={[{ label: 'It wants to write the menu again, from the blueprint', correct: true, why: 'Plan checks the real things first. The menu no longer matches.' }, { label: 'Nothing: plan only reads the .tf files', why: 'Plan also looks at the real things. That step is called refresh.' }, { label: 'It copies Maggi goreng into main.tf', why: 'OpenTofu never edits your blueprint. Only you do.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Find out. Type `tofu plan` and read the `+` line.
+
+<Interactive name="TofuSim" scenario="t3-drift-menu" goal={{ planSummary: { add: 1, change: 0, destroy: 0 }, lastTyped: '^tofu plan' }} hints={['Type tofu plan and press Enter.']} success="Plan checked the real menu. It changed, so OpenTofu wants to write it again." />
+
+<Hint>Plan only shows. It changes nothing.</Hint>
+</Card>
+
+<Card id="see-drift" type="see">
+<Interactive name="SpotLines" prompt="Tap the two lines that report a change made outside OpenTofu." lines={[{ text: 'local_file.menu: Refreshing state... [id=091a5af7a28db92db1af2d90307baa4d12ab7c54]' }, { text: 'random_pet.stall: Refreshing state... [id=lucky-civet]' }, { text: '' }, { text: 'Note: Objects have changed outside of OpenTofu', target: true }, { text: '' }, { text: 'OpenTofu detected the following changes made outside of OpenTofu since the' }, { text: 'last "tofu apply" which may have affected this plan:' }, { text: '' }, { text: '  # local_file.menu has been deleted', target: true }, { text: '  - resource "local_file" "menu" {' }, { text: '      - filename             = "menu.txt" -> null' }, { text: '      … (more lines)' }]} success="That is drift, as tofu plan -refresh-only reports it." />
+
+**<Term id="drift">Drift</Term>**: the real building no longer matches the register. The local provider calls a changed file "deleted". Cloud providers show what changed with `~`.
+</Card>
+
+<Card id="predict" type="predict">
+Drift can go two ways. Sort each case.
+
+<Interactive name="SortCards" buckets={[{ id: 'blueprint', label: 'Undo it: apply the blueprint' }, { id: 'keep', label: 'Keep it: change the blueprint' }]} items={[{ label: 'Ben added a dish by mistake', bucket: 'blueprint', why: 'The blueprint is right. Apply puts it back.' }, { label: 'An emergency fix that must stay', bucket: 'keep', why: 'Write it into the .tf file, so plan shows no changes.' }, { label: 'A test someone forgot to clean up', bucket: 'blueprint', why: 'Apply removes the leftover.' }, { label: 'The boss approved the new dish yesterday', bucket: 'keep', why: 'Add it to the blueprint. Then review it like any change.' }]} success="Either way, the blueprint ends up telling the truth." />
+</Card>
+
+<Card id="try-apply" type="try">
+Ben's dish was a mistake. Put the menu back: `tofu apply`, then type `yes`.
+
+<Interactive name="TofuSim" scenario="t3-drift-menu" open="main.tf" goal={{ fileNotContains: { 'menu.txt': 'Maggi' }, filesExist: ['menu.txt'] }} hints={['Type tofu apply and press Enter.', 'Read the plan, then type yes.']} success="The menu matches the blueprint again. Try cat menu.txt." />
+
+<Hint>`tofu apply` shows the plan first and waits for `yes`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+What does `tofu apply -refresh-only` do?
+
+<Interactive name="Choice" options={[{ label: 'Updates the register to match the real things. Changes nothing real.', correct: true, why: 'It accepts what is out there, in the register only.' }, { label: 'Puts every real thing back to the blueprint', why: 'That is a normal tofu apply.' }, { label: 'Deletes the drifted things', why: 'Refresh-only never deletes or builds anything.' }]} />
+</Card>
+
+<Card id="check-nightly" type="check">
+A nightly job runs `tofu plan -detailed-exitcode`. Sort what each exit code means.
+
+<Interactive name="SortCards" buckets={[{ id: 'zero', label: '0: no changes' }, { id: 'one', label: '1: error' }, { id: 'two', label: '2: changes' }]} items={[{ label: 'Nobody touched anything', bucket: 'zero', why: 'Real things match the blueprint.' }, { label: 'Ben edited menu.txt by hand', bucket: 'two', why: 'Drift: the plan has something to do.' }, { label: 'A typo in main.tf', bucket: 'one', why: 'The plan could not finish.' }, { label: 'A new stall was merged but never applied', bucket: 'two', why: 'The blueprint is ahead of the building.' }]} success="Exit code 2 at night? Someone should look in the morning." />
+</Card>
+
+<Card id="win" type="win">
+You can now find drift with plan and fix it either way.
+</Card>
+
+<Card id="deeper" type="deeper">
+`lifecycle { ignore_changes = [tags] }` tells OpenTofu to stop caring about one argument that others change on purpose. Drift checks often run on a schedule in CI. `tofu refresh` is an old, deprecated twin of `tofu apply -refresh-only -auto-approve`. Use `tofu apply -refresh-only`: it asks before it writes.
+
+<Interactive name="Mission" id="iac-t3-l03-rep" steps={[{ id: 'build', text: 'In a practice folder with a local_file resource, build it.', command: 'tofu init && tofu apply' }, { id: 'edit', text: 'Edit the file by hand, like Ben did.' }, { id: 'see', text: 'See the drift, changing nothing.', command: 'tofu plan -refresh-only' }, { id: 'fix', text: 'Put it back from the blueprint.', command: 'tofu apply' }]} success="You found and fixed real drift." />
+</Card>

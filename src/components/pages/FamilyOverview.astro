@@ -1,0 +1,499 @@
+---
+// A family overview (/<lang>/ship-it/, /<lang>/level-up/): the parts side by side in their course
+// colours, every world as a tile with its code (an extra pack wears a calm "Extra pack" tag), the
+// capstone missions, the shared Rescue Center and the finish line. Nothing is locked.
+// Family-specific boxes go in the slots: `early` sits after the Rescue Center, the default slot last.
+import Base from '~/layouts/Base.astro';
+import Mascot from '~/components/ui/Mascot.astro';
+import FamilyExtra from './FamilyExtra.astro';
+import { t, type Lang } from '~/i18n';
+import {
+  flatten,
+  getCourses,
+  getFamily,
+  partLabel,
+  readyCount,
+  requiresHints,
+  worldLabel,
+} from '~/lib/course';
+import { getRescue } from '~/lib/content';
+import { familyKeys, worldCode } from '~/lib/catalog';
+interface Props {
+  lang: Lang;
+  family: string;
+}
+const { lang, family } = Astro.props;
+const k = familyKeys(family);
+const other = lang === 'en' ? 'ms' : 'en';
+const all = await getCourses();
+const parts = await getFamily(family);
+const hints = parts.flatMap((c) =>
+  requiresHints(lang, c, all).map((h) => ({ part: partLabel(lang, c), text: h })),
+);
+const finale = parts.flatMap((c) =>
+  c.worlds.filter((w) => w.finale).map((w) => ({ course: c, world: w })),
+)[0];
+const missions = parts.flatMap((c) =>
+  flatten(c)
+    .filter((x) => x.mission)
+    .map((x) => ({ course: c, item: x })),
+);
+const flowCount = (await Promise.all(parts.map((c) => getRescue(c.id)))).reduce(
+  (n, r) => n + r.flows.length,
+  0,
+);
+type W = (typeof parts)[number]['worlds'][number];
+// "Capstone mission 1: Pack it" → "Pack it" (the M1 tag says the rest).
+const shortTitle = (title: string) => title.split(': ').slice(1).join(': ') || title;
+const lessonCount = (w: W) => w.lessons.filter((l) => !l.mission).length;
+const readyIds = (w: W) => [
+  ...w.lessons.filter((l) => l.status === 'ready').map((l) => l.id),
+  ...(w.boss?.status === 'ready' ? [w.boss.id] : []),
+];
+const missionRange = missions.length
+  ? `M${missions[0]!.item.mission}–M${missions[missions.length - 1]!.item.mission}`
+  : '';
+---
+
+<Base
+  lang={lang}
+  title={t(lang, k.mapTitle)}
+  description={t(lang, k.summary)}
+  altPath={`/${other}/${family}/`}
+>
+  <div
+    class="container ship"
+    data-map
+    data-family={family}
+    data-progress-template={t(lang, 'map.progress')}
+  >
+    <header class="ship-head">
+      <p class="ship-sub">{t(lang, k.subtitle)}</p>
+      <h1 class="accent">{t(lang, k.title)}</h1>
+      <p class="ship-summary">{t(lang, k.summary)}</p>
+      <p>{t(lang, k.intro)}</p>
+    </header>
+
+    {hints.length > 0 && (
+      <section class="ship-before" aria-labelledby="before-h">
+        <h2 id="before-h">{t(lang, k.before)}</h2>
+        <ul>
+          {hints.map((h) => (
+            <li>
+              <strong>{h.part}:</strong> {h.text}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <div class="ship-parts">
+      {parts.map((c) => {
+        const worlds = c.worlds.filter((w) => !w.finale);
+        const total = worlds.filter((w) => !w.extra).reduce((n, w) => n + lessonCount(w), 0);
+        return (
+          <section
+            class="part"
+            aria-labelledby={`part-${c.id}`}
+            data-part={c.id}
+            style={`--part: var(--course-${c.id}, var(--brand-a))`}
+          >
+            <header class="part-head">
+              {c.hat && (
+                <span class="part-mascot" aria-hidden="true">
+                  <Mascot lang={lang} hat={c.hat} size={64} />
+                </span>
+              )}
+              <div>
+                <p class="part-label">
+                  {c.part && (
+                    <span class="part-num">{t(lang, 'catalog.partShort', { n: c.part })}</span>
+                  )}
+                  {c.partName?.[lang]}
+                </p>
+                <h2 class="part-title" id={`part-${c.id}`}>
+                  {c.title[lang]}
+                </h2>
+                <p class="part-meta">{t(lang, 'map.lessons', { n: total })}</p>
+              </div>
+            </header>
+            {c.story && <p class="part-story">{c.story[lang]}</p>}
+            <ol class="tiles pop-in">
+              {worlds.map((w, i) => {
+                const ready = readyCount(w);
+                const mission = w.lessons.find((l) => l.mission)?.mission;
+                return (
+                  <li style={`--sibling-index: ${i + 1}`}>
+                    <a
+                      class="tile lift"
+                      href={`/${lang}/${c.id}/#world-${w.id}`}
+                      data-color={w.color}
+                      data-island
+                      data-lessons={readyIds(w).join(',')}
+                    >
+                      <span class="tile-code" aria-hidden="true">
+                        {worldCode(w)}
+                      </span>
+                      <span class="tile-body">
+                        <span class="tile-title">
+                          <span class="visually-hidden">{worldLabel(lang, w)}: </span>
+                          {w.title[lang]}
+                        </span>
+                        <span class="tile-meta">
+                          {t(lang, 'map.lessons', { n: lessonCount(w) })}
+                          {ready === 0 ? (
+                            ` · ${t(lang, 'map.soon')}`
+                          ) : (
+                            <span data-island-progress>
+                              {' '}
+                              · {t(lang, 'map.progress', { done: 0, total: ready })}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      {w.extra && (
+                        <span
+                          class="tile-extra"
+                          data-extra-pack
+                          title={t(lang, 'map.extraPackWhy')}
+                        >
+                          {t(lang, 'map.extraPack')}
+                          <span class="visually-hidden">: {t(lang, 'map.extraPackWhy')}</span>
+                        </span>
+                      )}
+                      {mission && (
+                        <span
+                          class="tile-mission"
+                          title={t(lang, 'map.missionAfter', { n: mission })}
+                        >
+                          <span aria-hidden="true">
+                            {t(lang, 'map.missionTag', { n: mission })}
+                          </span>
+                          <span class="visually-hidden">
+                            {t(lang, 'map.missionAfter', { n: mission })}
+                          </span>
+                        </span>
+                      )}
+                      <span class="tile-done calm-hide" data-island-done hidden aria-hidden="true">
+                        ★
+                      </span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+            <a class="part-link" href={`/${lang}/${c.id}/`}>
+              {t(lang, k.openPart, { name: c.title[lang] })} →
+            </a>
+          </section>
+        );
+      })}
+    </div>
+
+    <div class="ship-extras">
+      <FamilyExtra
+        id="rescue-h"
+        tone="rescue"
+        icon="lifebuoy"
+        label={t(lang, 'map.rescueAnyTime')}
+        title={t(lang, 'nav.rescue')}
+        text={t(lang, k.rescueText)}
+        soon={flowCount === 0 ? t(lang, 'map.soon') : undefined}
+        href={`/${lang}/${family}/rescue/`}
+        linkText={t(lang, k.rescueTitle)}
+        data-rescue-link
+      />
+
+      <slot name="early" />
+
+      {missions.length > 0 && (
+        <FamilyExtra
+          id="missions-h"
+          tone="missions"
+          icon="stall"
+          title={t(lang, k.missions)}
+          text={t(lang, k.missionsText, { range: missionRange })}
+          data-missions
+        >
+          <ol class="mission-list">
+            {missions.map(({ course, item }) => (
+              <li>
+                <span class="mission-tag" aria-hidden="true">
+                  {t(lang, 'map.missionTag', { n: item.mission! })}
+                </span>{' '}
+                <a href={`/${lang}/${course.id}/#world-${item.world.id}`}>
+                  <span class="visually-hidden">
+                    {t(lang, 'map.mission', { n: item.mission! })}:{' '}
+                  </span>
+                  {shortTitle(item.title[lang])}
+                </a>{' '}
+                <span class="mission-after">· {worldLabel(lang, item.world)}</span>
+              </li>
+            ))}
+          </ol>
+        </FamilyExtra>
+      )}
+
+      {finale && (
+        <FamilyExtra
+          id="finish-h"
+          tone="finish"
+          icon={finale.world.icon}
+          label={t(lang, k.finish)}
+          title={finale.world.title[lang]}
+          text={finale.world.summary[lang]}
+          href={`/${lang}/${finale.course.id}/#world-${finale.world.id}`}
+          linkText={t(lang, 'map.openWorld', { n: worldCode(finale.world) })}
+          data-island
+          data-lessons={readyIds(finale.world).join(',')}
+        >
+          <p class="extra-meta">
+            {t(lang, 'map.lessons', { n: lessonCount(finale.world) })}
+            {readyCount(finale.world) === 0 ? (
+              ` · ${t(lang, 'map.soon')}`
+            ) : (
+              <span data-island-progress>
+                {' '}
+                · {t(lang, 'map.progress', { done: 0, total: readyCount(finale.world) })}
+              </span>
+            )}
+          </p>
+        </FamilyExtra>
+      )}
+
+      <slot />
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { applyMapMarks } from '~/lib/mapMarks';
+  const el = document.querySelector<HTMLElement>('[data-map]');
+  applyMapMarks(el?.dataset.progressTemplate ?? '{done}/{total}');
+</script>
+
+<style>
+  .ship {
+    padding-block: var(--space-5);
+  }
+  .ship-head {
+    max-width: var(--measure);
+    margin-bottom: var(--space-4);
+  }
+  .ship-sub {
+    margin: 0;
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .ship-summary {
+    font-size: var(--text-l);
+  }
+  .ship-before {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 6px solid var(--deco-working);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-5);
+    max-width: 48rem;
+  }
+  .ship-before h2 {
+    font-size: var(--text-m);
+    margin: 0 0 var(--space-1);
+  }
+  .ship-before ul {
+    margin: 0;
+    padding-left: var(--space-5);
+  }
+  .ship-parts {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: start;
+  }
+  /* Each part wears its course colour (--course-<id>): a thick top strip, a tinted header, the part pill. */
+  .part {
+    background:
+      linear-gradient(
+        color-mix(in oklab, var(--part) 10%, var(--color-surface)),
+        var(--color-surface) 9rem
+      ),
+      var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 6px solid var(--part);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+    box-shadow: var(--color-shadow);
+  }
+  .part-head {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .part-mascot {
+    flex: none;
+  }
+  .part-label {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  /* White text on the course accent (each --course-* passes 4.5:1, see tokens.test.ts). */
+  .part-num {
+    background: var(--part);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+  }
+  .part-title {
+    margin: 0;
+    font-size: var(--text-xl);
+  }
+  .part-meta {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .part-story {
+    font-size: var(--text-s);
+    margin: var(--space-2) 0 var(--space-3);
+  }
+  .tiles {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .tile {
+    --tile: var(--deco-working);
+    --tile-soft: var(--c-working-soft);
+    --tile-ink: var(--c-working-ink);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--tap);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-left: 5px solid var(--tile);
+    border-radius: var(--radius-m);
+    background: var(--color-bg);
+    text-decoration: none;
+    color: var(--color-text);
+  }
+  .tile:hover {
+    background: var(--color-surface-2);
+  }
+  .tile[data-color='staging'] {
+    --tile: var(--deco-staging);
+    --tile-soft: var(--c-staging-soft);
+    --tile-ink: var(--c-staging-ink);
+  }
+  .tile[data-color='repo'] {
+    --tile: var(--deco-repo);
+    --tile-soft: var(--c-repo-soft);
+    --tile-ink: var(--c-repo-ink);
+  }
+  .tile[data-color='remote'] {
+    --tile: var(--deco-remote);
+    --tile-soft: var(--c-remote-soft);
+    --tile-ink: var(--c-remote-ink);
+  }
+  .tile[data-color='head'] {
+    --tile: var(--deco-head);
+    --tile-soft: var(--c-head-soft);
+    --tile-ink: var(--c-head-ink);
+  }
+  .tile[data-color='danger'] {
+    --tile: var(--deco-danger);
+    --tile-soft: var(--c-danger-soft);
+    --tile-ink: var(--c-danger-ink);
+  }
+  .tile-code {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-s);
+    background: var(--tile-soft);
+    color: var(--tile-ink);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+  }
+  .tile-body {
+    display: grid;
+    min-width: 0;
+  }
+  .tile-title {
+    font-weight: var(--weight-bold);
+  }
+  .tile-meta {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .tile-mission,
+  .tile-extra,
+  .mission-tag {
+    flex: none;
+    margin-left: auto;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-2);
+    background: var(--c-head-soft);
+    color: var(--c-head-ink);
+    border: 1px solid var(--deco-head);
+  }
+  .tile-extra {
+    background: var(--c-remote-soft);
+    color: var(--c-remote-ink);
+    border: 1px dashed var(--deco-remote);
+  }
+  .tile-done {
+    flex: none;
+    margin-left: auto;
+    color: var(--deco-staging);
+  }
+  .tile-mission + .tile-done,
+  .tile-extra + .tile-done {
+    margin-left: var(--space-1);
+  }
+  .part-link {
+    font-weight: var(--weight-bold);
+    display: inline-flex;
+    min-height: var(--tap);
+    align-items: center;
+  }
+  .ship-extras {
+    margin-top: var(--space-5);
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: start;
+  }
+  .extra-meta {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .mission-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-2);
+    display: grid;
+    gap: var(--space-1);
+  }
+  .mission-list .mission-tag {
+    margin-left: 0;
+  }
+  .mission-after {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+</style>

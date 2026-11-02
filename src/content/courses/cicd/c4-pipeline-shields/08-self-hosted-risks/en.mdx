@@ -1,0 +1,64 @@
+---
+id: cicd-c4-l08
+world: 4
+title: Self-hosted runner risks
+summary: "You will learn: why your own runner must never serve a public repo, and how to keep it clean."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, TimelineTap, SwipeJudge, SpotTheHole]
+needs: [cicd-c4-l07]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Self-hosted runners", url: "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners" }
+  - { label: "Secure use: hardening self-hosted runners", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Big builds are slow on hosted runners. So you use the spare PC in your office. Your repo is public. What could go wrong?
+
+<Interactive name="Choice" options={[{ label: "A stranger's PR could run code on that office PC", correct: true, why: 'Anyone can open a PR on a public repo. Its job may land on your machine.' }, { label: 'Nothing: it is your own PC', why: 'Your own PC, running code from anyone. That is the problem.' }, { label: 'The builds get slower', why: 'Speed is fine. Safety is the worry.' }]} />
+</Card>
+
+<Card id="see-fresh" type="see">
+A hosted runner is a hired worker in a rented kitchen. Both are wiped after each shift. A **<Term id="self-hosted-runner">self-hosted runner</Term>** is your own worker, in your own back room. Sort the facts.
+
+<Interactive name="SortCards" buckets={[{ id: 'hosted', label: 'GitHub-hosted runner' }, { id: 'self', label: 'Self-hosted runner' }]} items={[{ label: 'A fresh, clean machine for every job', bucket: 'hosted', why: 'GitHub throws it away after the job.' }, { label: 'Can keep files from the last job', bucket: 'self', why: 'Nothing wipes it unless you set that up.' }, { label: 'Sits inside your office network', bucket: 'self', why: 'Code on it can reach your other machines.' }, { label: 'You must patch and update it', bucket: 'self', why: 'Your machine, your job to keep it safe.' }]} success="Sorted! Your own worker remembers everything." />
+</Card>
+
+<Card id="see-attack" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'A PR arrives', text: 'A stranger opens a PR. It changes the workflow to run their script.' }, { when: '2', title: 'The job lands', text: 'The job asks for `runs-on: self-hosted`. Your office PC picks it up.' }, { when: '3', title: 'Their code runs', text: 'Their script runs inside your network, on your machine.' }, { when: '4', title: 'It stays', text: 'It can leave a hidden program behind. The next job meets it.' }]} />
+
+Tap through it. GitHub's advice: self-hosted runners should almost never serve public repos.
+</Card>
+
+<Card id="predict" type="predict">
+The hidden program is still there. Next, your deploy job runs on the same PC, with your Cloudflare token. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The hidden program can grab the token', correct: true, why: 'Same machine, same back room. Old jobs can spy on new ones.' }, { label: 'Nothing: each job is separate', why: 'Not on a reused machine. Leftovers stay.' }, { label: 'GitHub cleans the PC first', why: 'GitHub does not wipe your own machine.' }]} />
+</Card>
+
+<Card id="try-judge" type="try">
+Safer setup, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A fresh runner for every job, removed afterwards', good: true, why: 'GitHub calls these just-in-time runners. Nothing carries over.' }, { text: 'A self-hosted runner on a public repo', good: false, why: "Any stranger's PR could reach it." }, { text: 'A private repo, with a runner group for that repo only', good: true, why: 'Fewer repos can send it jobs.' }, { text: 'A runner on your laptop, next to your SSH keys', good: false, why: 'A job could read your own keys.' }]} />
+</Card>
+
+<Card id="check" type="check">
+This repo is public. Tap the risky line.
+
+<Interactive name="SpotTheHole" file=".github/workflows/build.yml" workflow={['name: Build', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  build:',
+  { text: '    runs-on: self-hosted', hole: { kind: 'selfHosted', fixCode: '    runs-on: ubuntu-latest' } },
+  '    steps:', '      - uses: actions/checkout@v7', '      - run: npm ci && npm run build']} success="Found it! On a public repo, use a GitHub-hosted runner." />
+</Card>
+
+<Card id="win" type="win">
+You can now tell when your own runner is a risk.
+</Card>
+
+<Card id="deeper" type="deeper">
+Need your own runners anyway? Keep them for private repos. Make them do one job, then wipe them (just-in-time runners). Use runner groups to limit which repos reach them. Keep secrets and cloud access on the machine to a minimum. Even then, other jobs there may see secrets passed on a command line.
+</Card>

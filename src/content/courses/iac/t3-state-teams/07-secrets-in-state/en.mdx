@@ -1,0 +1,76 @@
+---
+id: iac-t3-l07
+world: 3
+title: Sensitive values and secrets in state
+summary: "You will learn: why sensitive hides a secret on screen only, and how to protect the register."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, SwipeJudge, Mission]
+needs: [iac-t3-l06]
+scenario: t3-secret-pin
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: sensitive data in state", url: "https://opentofu.org/docs/language/state/sensitive-data/" }
+  - { label: "OpenTofu: output values (sensitive)", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "OpenTofu: state encryption", url: "https://opentofu.org/docs/language/state/encryption/" }
+  - { label: "OpenTofu: ephemerality", url: "https://opentofu.org/docs/language/ephemerality/" }
+  - { label: "Terraform: manage sensitive data", url: "https://developer.hashicorp.com/terraform/language/manage-sensitive-data" }
+---
+
+<Card id="hook" type="hook">
+The shop safe gets a PIN from `random_password`. `tofu output` prints `pin = <sensitive>`. Is the PIN safe now?
+
+<Interactive name="Choice" options={[{ label: 'No: the register keeps it as plain text', correct: true, why: 'sensitive hides it on screen. The state file still holds it.' }, { label: 'Yes: it is hidden', why: 'Hidden on screen only. Anyone who opens the register can read it.' }, { label: 'Yes: OpenTofu always encrypts it', why: 'Not by default. OpenTofu can encrypt the state, but only when you set it up.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Run `tofu plan` and read the error. Then add `sensitive = true` to the output in `main.tf`, and run `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-secret-pin" goal={{ outputExists: ['pin'], resourceInState: ['random_password.pin'] }} hints={['Type tofu plan and read the error.', 'In the output block, under value, add: sensitive = true', 'Then tofu apply and yes.']} success="The output is marked sensitive, so the screen hides it." />
+
+<Hint>Plain words: an output that holds a secret must say so.</Hint>
+</Card>
+
+<Card id="see-state" type="see">
+<Interactive name="SpotLines" prompt="This is part of terraform.tfstate. Tap every line where the PIN shows." lines={[{ text: '  "outputs": {' }, { text: '    "pin": {' }, { text: '      "value": "elVryE",', target: true }, { text: '      "type": "string",' }, { text: '      "sensitive": true' }, { text: '  …' }, { text: '            "content": "pin=elVryE\\n",', target: true }, { text: '            "filename": "safe.txt",' }, { text: '  …' }, { text: '            "result": "elVryE",', target: true }, { text: '            "special": false,' }]} success="Three times, as plain text. sensitive only hides it from the screen." />
+
+A **<Term id="sensitive-value">sensitive value</Term>** is hidden in plans and outputs. The register still keeps it, as plain text.
+</Card>
+
+<Card id="try-raw" type="try">
+The screen hides it, but ask OpenTofu directly: `tofu output -raw pin`.
+
+<Interactive name="TofuSim" scenario="t3-secret-built" goal={{ lastTyped: '^tofu output -raw pin$' }} hints={['Type tofu output -raw pin and press Enter.']} success="There it is. Anyone who can read the register can read the PIN." />
+</Card>
+
+<Card id="predict" type="predict">
+Your repo is about to be pushed. Sort each file.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Fine to commit' }, { id: 'never', label: 'Never commit' }]} items={[{ label: 'main.tf with variable "db_password" { sensitive = true }', bucket: 'ok', why: 'It declares the variable. No value inside.' }, { label: 'main.tf with password = "hunter2"', bucket: 'never', why: 'A secret in the blueprint lands in Git history for good.' }, { label: 'terraform.tfvars with db_password = "…"', bucket: 'never', why: 'Values with secrets stay out of Git.' }, { label: 'terraform.tfstate', bucket: 'never', why: 'The register holds secrets as plain text.' }, { label: '.gitignore listing *.tfstate', bucket: 'ok', why: 'It keeps registers out of Git.' }]} success="The blueprint goes in Git. Secrets and registers never do." />
+</Card>
+
+<Card id="check" type="check">
+Who should be able to read the register?
+
+<Interactive name="Choice" options={[{ label: 'Only the people and the pipeline that run tofu', correct: true, why: 'Treat it like a key cabinet: few people, logged access.' }, { label: 'Everyone in the company: it is just a list', why: 'It holds passwords and keys too.' }, { label: 'Nobody, so delete it after apply', why: 'OpenTofu needs the register to know what it built.' }]} />
+</Card>
+
+<Card id="check-protect" type="check">
+Swipe: does this protect the register, or does it need work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A backend bucket with encryption and tight access rules', good: true, why: 'Encrypted at rest, and only a few can read it.' }, { text: 'Emailing the state file to a new teammate', good: false, why: 'Now the secrets sit in two inboxes. Give access to the backend instead.' }, { text: 'OpenTofu state encryption, with a key kept in a key manager', good: true, why: 'Even a copied file is unreadable without the key.' }, { text: 'Typing the password into main.tf "just for now"', good: false, why: 'It ends up in Git history. Use a variable and an environment variable.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell where secrets hide in OpenTofu, and how to protect the register.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTofu 1.11 added ephemeral resources and write-only attributes. They keep a secret out of the register and the plan altogether. Terraform has them too (1.10 and 1.11). Lesson T4·7 shows how a pipeline gets secrets without files.
+
+<Interactive name="Mission" id="iac-t3-l07-rep" steps={[{ id: 'build', text: 'In a practice folder, build a random_password with a sensitive output.', command: 'tofu init && tofu apply' }, { id: 'hidden', text: 'See it hidden.', command: 'tofu output' }, { id: 'plain', text: 'Find it as plain text in the register.', command: 'grep result terraform.tfstate' }, { id: 'ignore', text: 'Keep registers out of Git.', command: 'printf "*.tfstate\\n*.tfstate.*\\n.terraform/\\n" >> .gitignore' }]} success="You saw a secret in the register, and kept it out of Git." />
+</Card>

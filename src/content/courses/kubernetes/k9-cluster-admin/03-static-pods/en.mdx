@@ -1,0 +1,86 @@
+---
+id: k8s-k9-l03
+world: 9
+title: Static pods and the manifests folder
+summary: "You will learn: how the office runs from files, and how to bring a missing part back."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, SpotLines, Choice, SwipeJudge, SortCards, Mission]
+needs: [k8s-k9-l02]
+scenario: k9-scheduler-down
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Create static Pods", url: "https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" }
+  - { label: "Static Pods (concept)", url: "https://kubernetes.io/docs/concepts/workloads/pods/static-pods/" }
+  - { label: "kubeadm init: static Pod manifests", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-scheduler-down" commands={['kubectl get pods', 'kubectl get pods -n kube-system -l component=kube-scheduler']} label="The tray pod is Pending. In kube-system, no kube-scheduler pod is found." />
+
+A new tray waits in Pending, with no events at all. The scheduler’s pod is gone too. Who hires the office staff back?
+</Card>
+
+<Card id="try-look" type="try">
+The office can’t hire itself. So the kubelet on its stall starts them from files: **<Term id="static-pod">static pods</Term>**. Type `ssh dev-control-plane`, then `ls /etc/kubernetes/manifests`.
+
+<Interactive name="FoodCourtSim" scenario="k9-static-pods" goal={{ typed: '^(ssh dev-control-plane|docker exec -it dev-control-plane bash)$', lastTyped: '^ls( -l)? /etc/kubernetes/manifests/?$' }} hints={['Type ssh dev-control-plane and press Enter.', 'Then ls /etc/kubernetes/manifests']} success="Four job cards: the whole manager’s office." />
+
+<Hint>The kubelet watches this one folder. Its setting is called staticPodPath.</Hint>
+</Card>
+
+<Card id="try-spot" type="try">
+The office shows each static pod as a **<Term id="mirror-pod">mirror pod</Term>**: a read-only photo. Tap two lines: “from a file”, and its owner.
+
+<Interactive name="SpotLines" prompt="Tap the 2 lines that prove it is a static pod." lines={[{ text: 'Name:                 kube-scheduler-dev-control-plane' }, { text: 'Namespace:            kube-system' }, { text: 'Node:                 dev-control-plane/172.18.0.2' }, { text: 'Labels:               component=kube-scheduler' }, { text: 'Annotations:          kubernetes.io/config.hash: 51b81a1b99b1886456a705c195e7256a' }, { text: '                      kubernetes.io/config.mirror: 51b81a1b99b1886456a705c195e7256a' }, { text: '                      kubernetes.io/config.source: file', target: true }, { text: 'Status:               Running' }, { text: 'Controlled By:  Node/dev-control-plane', target: true }]} success="Made from a file, and owned by the node itself. No Deployment in sight." />
+
+<Hint>One line has the word file. One line starts with Controlled By.</Hint>
+</Card>
+
+<Card id="predict-delete" type="predict">
+You delete that mirror pod with kubectl. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It comes right back', correct: true, why: 'Yes. The job card is still in the folder, so the kubelet posts the photo again.' }, { label: 'The scheduler stops for good', why: 'You only deleted the photo. The real static pod kept running.' }, { label: 'A Deployment makes a new one', why: 'No Deployment owns it. Its owner is the node.' }]} />
+</Card>
+
+<Card id="see-back" type="see">
+<Interactive name="KubeReplay" scenario="k9-static-pods" commands={['kubectl delete pod kube-scheduler-dev-control-plane -n kube-system', 'sleep 3', 'kubectl get pods -n kube-system -l component=kube-scheduler']} label="The mirror pod is deleted. Three seconds later, kube-scheduler-dev-control-plane is listed again, Running, age 3s." />
+
+Gone, then back with a new age. The photo changed. The job card did not.
+</Card>
+
+<Card id="try-fix" type="try">
+Someone moved the scheduler’s job card to `/root`. Put it back. Careful: this folder runs the office. Change only what you mean.
+
+<Interactive name="FoodCourtSim" scenario="k9-scheduler-down" goal={{ staticPodRunning: { name: 'kube-scheduler' }, podsReady: { selector: 'run=tray', count: 1 } }} hints={['Type ssh dev-control-plane', 'Look in /root: ls /root', 'Move it back: mv /root/kube-scheduler.yaml /etc/kubernetes/manifests/', 'Then exit and press +30s. Watch the tray.']} success="The scheduler is back, and the waiting tray got a stall." />
+
+<Hint>ls /etc/kubernetes/manifests shows only three files. Which one is missing?</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit in the manifests folder? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Copy the file to /root before you change it', good: true, why: 'A backup outside the folder. You can always go back.' }, { text: 'Keep a backup called kube-apiserver.yaml.bak inside the folder', good: false, why: 'The kubelet reads every file there. Your old backup could run instead.' }, { text: 'Change one line, then wait and check the pod', good: true, why: 'The kubelet needs a moment to notice the change.' }, { text: 'Delete the mirror pod to stop the scheduler', good: false, why: 'The photo comes back. To stop it, move the file out.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Static pod or normal pod? Look at the names.
+
+<Interactive name="SortCards" buckets={[{ id: 'static', label: 'Static pod (a file on the node)' }, { id: 'normal', label: 'Normal pod (made by a controller)' }]} items={[{ label: 'etcd-dev-control-plane', bucket: 'static', why: 'From etcd.yaml. The name ends with the node.' }, { label: 'kube-apiserver-dev-control-plane', bucket: 'static', why: 'The front counter runs from a job card too.' }, { label: 'coredns-59d675bd9-8d9kv', bucket: 'normal', why: 'A Deployment made it: random letters at the end.' }, { label: 'kube-proxy-bnmrn', bucket: 'normal', why: 'A DaemonSet runs one on every stall.' }, { label: 'kindnet-6q866', bucket: 'normal', why: 'Also a DaemonSet: kind’s network helper.' }]} success="Office staff from files; everyone else from controllers." />
+
+<Hint>Static pod names end with the node’s name.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now find static pods and bring a lost one back.
+</Card>
+
+<Card id="deeper" type="deeper">
+The folder comes from the kubelet’s settings: `staticPodPath` in `/var/lib/kubelet/config.yaml`. Workers have the folder too, only empty. Files starting with a dot are skipped. Keep backups outside, for example in `/etc/kubernetes/backup/`.
+
+<Interactive name="Mission" id="k8s-k9-l03-real" steps={[{ id: 'where', text: 'Use your throwaway kind cluster only.', command: 'kubectl config current-context' }, { id: 'make', text: 'Put a tiny job card in a worker’s folder.', command: "docker exec dev-worker sh -c 'printf \"apiVersion: v1\\nkind: Pod\\nmetadata:\\n  name: static-web\\nspec:\\n  containers:\\n  - name: web\\n    image: nginx:1.29-alpine\\n\" > /etc/kubernetes/manifests/static-web.yaml'" }, { id: 'see', text: 'See its mirror pod: static-web-dev-worker.', command: 'kubectl get pods -o wide' }, { id: 'delete', text: 'Delete the photo. Look again: it comes back.', command: 'kubectl delete pod static-web-dev-worker' }, { id: 'clean', text: 'Clean up: take the job card out.', command: 'docker exec dev-worker rm /etc/kubernetes/manifests/static-web.yaml' }]} success="You made, watched and removed a real static pod!" />
+</Card>

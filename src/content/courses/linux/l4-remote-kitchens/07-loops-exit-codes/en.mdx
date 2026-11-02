@@ -1,0 +1,72 @@
+---
+id: linux-l4-l07
+world: 4
+title: "Loops and exit codes"
+summary: "You will learn: to repeat steps with a for loop, and to read a program's exit code."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [linux-l4-l06]
+scenario: linux-l4-loops
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: looping constructs", url: "https://www.gnu.org/software/bash/manual/html_node/Looping-Constructs.html" }
+  - { label: "Bash manual: exit status", url: "https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html" }
+  - { label: "Bash manual: lists (&& and ||)", url: "https://www.gnu.org/software/bash/manual/html_node/Lists.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-loops" intro={['./check.sh; echo $?']} />
+
+The dish checker says one dish is missing. Then `echo $?` prints `1`. What does that 1 mean?
+</Card>
+
+<Card id="see-loop" type="see">
+A <Term id="loop">loop</Term> repeats steps for each item. Here is `check.sh`. Tap the line that starts the loop.
+
+<Interactive name="SpotLines" lines={[{ text: 'missing=0' }, { text: 'for dish in nasi-lemak roti-canai teh-tarik; do', target: true }, { text: '  if [ -f "menu/$dish.txt" ]; then' }, { text: '    echo "ok: $dish"' }, { text: '  else' }, { text: '    echo "missing: $dish"' }, { text: '    missing=$((missing + 1))' }, { text: '  fi' }, { text: 'done' }, { text: 'exit "$missing"' }]} prompt="Tap the start of the loop." success="for dish in …; do … done: the steps run once per dish." />
+</Card>
+
+<Card id="try-loop" type="try">
+Type a loop of your own, all on one line.
+
+<Interactive name="LinuxSim" scenario="linux-l4-loops" goal={{ lastTyped: '^for ' }} hints={['for i in 1 2 3; do echo "table $i"; done']} solution={['for i in 1 2 3; do echo "table $i"; done']} success="Three tables, one line." />
+</Card>
+
+<Card id="see-codes" type="see">
+Every program ends with an **exit code**: a thumbs-up (0) or a number for trouble. `$?` shows the last one. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '0: all good' }, { id: 'bad', label: 'Not 0: something went wrong' }]} items={[{ label: 'true, then echo $? prints 0', bucket: 'ok', why: 'true always succeeds.' }, { label: 'ls nope, then echo $? prints 2', bucket: 'bad', why: 'No such file.' }, { label: 'check.sh with one dish missing: 1', bucket: 'bad', why: 'The script exits with the number missing.' }, { label: 'A command that does not exist: 127', bucket: 'bad', why: '127 means command not found.' }]} success="Zero is the only thumbs-up." />
+</Card>
+
+<Card id="predict" type="predict">
+One dish is still missing. You run `./check.sh && echo "Open the shop"`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The list prints, but not Open the shop', correct: true, why: '&& runs the next step only after a 0.' }, { label: 'Both print', why: 'check.sh ended with 1, so && stops there.' }, { label: 'Nothing prints', why: 'check.sh still prints its list first.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Add the missing dish, then run the checker again. It should end with 0.
+
+<Interactive name="LinuxSim" scenario="linux-l4-loops" goal={{ fileExists: ['~/menu/teh-tarik.txt'], scriptExitCode: { '~/check.sh': 0 } }} hints={['touch menu/teh-tarik.txt', './check.sh; echo $?']} solution={['touch menu/teh-tarik.txt', './check.sh']} success="ok, ok, ok. Exit code 0: open the shop!" />
+</Card>
+
+<Card id="check" type="check">
+Build: run the checker, and only if it fails, say "Not yet".
+
+<Interactive name="CommandBuilder" pieces={[{ text: './check.sh', means: 'run the checker' }, { text: '||', means: 'only if it failed (not 0)' }, { text: 'echo "Not yet"', means: 'say Not yet' }]} decoys={[{ text: '&&', means: 'only if it worked (0)' }]} success="|| for plan B. && for the next step." />
+</Card>
+
+<Card id="win" type="win">
+You can now loop over items and read exit codes.
+</Card>
+
+<Card id="deeper" type="deeper">
+`while [ … ]; do … done` loops while a question says yes. systemd reads your exit code too. A timer's service shows failed when its script ends with non-zero. So end scripts with a meaningful number.
+
+<Interactive name="Mission" id="linux-l4-l07-rep" steps={[{ id: 'loop', text: 'Count the lines of every .txt file here.', command: 'for f in *.txt; do wc -l "$f"; done' }, { id: 'code', text: 'Make a mistake on purpose and read its code.', command: 'ls nope; echo $?' }]} success="Loops and codes on your own machine." />
+</Card>

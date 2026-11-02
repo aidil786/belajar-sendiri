@@ -1,0 +1,73 @@
+---
+id: git-w11-l14
+world: 11
+title: Permission denied (publickey)
+summary: "Anda akan belajar: dua cara tenang bila GitHub kata Permission denied (publickey)."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Transcript, Choice, OrderList, Sim]
+needs: [git-w04-l03]
+scenario: w11-l14
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Error: Permission denied (publickey)", url: "https://docs.github.com/en/authentication/troubleshooting-ssh/error-permission-denied-publickey" }
+  - { label: "Testing your SSH connection", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection" }
+  - { label: "git remote set-url", url: "https://git-scm.com/docs/git-remote" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l14" commands={['git push']} fails={['git push']} label="git push jawab: git@github.com: Permission denied (publickey). fatal: Could not read from remote repository." />
+
+Anda taip `git push`. GitHub kata Permission denied. Kerja anda selamat! GitHub cuma tak kenal siapa anda. Ini berlaku pada semua orang.
+</Card>
+
+<Card id="see-test" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com jawab: git@github.com: Permission denied (publickey)." lines={[{ cmd: 'ssh -T git@github.com' }, { out: 'git@github.com: Permission denied (publickey).', color: 'red' }]} />
+
+Komputer anda buktikan siapa anda dengan kunci SSH. Uji kunci itu sendirian dengan `ssh -T git@github.com`. Jawapan sama: GitHub tak kenal kunci ini.
+</Card>
+
+<Card id="decide" type="try">
+Apa punca yang paling mungkin?
+
+<Interactive name="Choice" options={[{ label: 'GitHub tiada kunci awam anda, atau kunci tak dimuat', correct: true, why: 'Kunci mesti ada dalam komputer anda DAN dalam akaun GitHub anda.' }, { label: 'Repo anda dah dipadam', why: 'Repo yang hilang beri ralat lain. Yang ini tentang siapa anda.' }, { label: 'Commit anda rosak', why: 'Commit tiada kaitan. Ini tentang log masuk.' }]} />
+</Card>
+
+<Card id="order-fix" type="try">
+Susun cara baiki SSH, langkah pertama di atas.
+
+<Interactive name="OrderList" items={['ssh-add -l: ada kunci yang dimuat?', 'ssh-add ~/.ssh/id_ed25519: muat kunci anda', 'Tambah kunci awam (.pub) ke akaun GitHub anda', 'ssh -T git@github.com: uji semula']} label="Langkah pertama di atas" success="Susunan sempurna. Semak, muat, tambah, uji." />
+
+<Hint>Semak dulu. Uji paling akhir.</Hint>
+</Card>
+
+<Card id="see-hello" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com jawab: Hi you! You've successfully authenticated, but GitHub does not provide shell access." lines={[{ cmd: 'ssh -T git@github.com' }, { out: "Hi you! You've successfully authenticated, but GitHub does not provide shell access.", color: 'green' }]} />
+
+Bila berjaya, GitHub sapa nama anda. "No shell access" itu normal. Sekarang `git push` pun berjaya.
+</Card>
+
+<Card id="try-https" type="try">
+Tergesa-gesa? Tukar `origin` ke alamat HTTPS. Kemudian push semula.
+
+<Interactive name="Sim" scenario="w11-l14" panels={['graph']} goal={{ remotes: { origin: 'https://github.com/you/diary.git' }, pushed: ['main'] }} hints={['Taip git remote set-url origin https://github.com/you/diary.git', 'Kemudian taip git push']} success="Dah push melalui HTTPS! SSH boleh tunggu hari yang lebih tenang." />
+
+<Hint>Taip `git remote set-url origin https://github.com/you/diary.git`, kemudian `git push`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Di komputer sebenar, HTTPS minta anda log masuk. Apa yang boleh jadi kata laluan?
+
+<Interactive name="Choice" options={[{ label: 'Token, atau Git Credential Manager log masukkan anda', correct: true, why: 'GitHub dah tak terima kata laluan akaun untuk Git. Token atau pembantu log masuk boleh.' }, { label: 'Kata laluan akaun GitHub anda', why: 'GitHub tak terima lagi untuk Git. Guna token.' }, { label: 'Kunci SSH anda', why: 'Kunci SSH hanya untuk alamat SSH.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki Permission denied (publickey), dengan dua cara.
+</Card>
+
+<Card id="deeper" type="deeper">
+Belum ada kunci? Buat satu dengan `ssh-keygen -t ed25519 -C "you@example.com"` (Dunia 4). Hanya fail `.pub` dihantar ke GitHub. Jangan kongsi kunci peribadi. Guna `sudo git push`? Buang `sudo`. Kunci anda milik anda, bukan akaun admin.
+</Card>

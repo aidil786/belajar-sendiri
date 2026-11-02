@@ -1,0 +1,74 @@
+---
+id: cicd-c2-m2
+world: 2
+title: "Capstone mission 2: Ship it"
+summary: "You will learn: to give Kedai Kancil a real pipeline that lints, tests, scans and pushes."
+minutes: 5
+xp: 100
+interactives: [OrderList, YamlBuilder, Mission, MissionCheck]
+needs: [cicd-c2-l13]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "Working with the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+Mission 2: ship it! Your Kedai Kancil repo from Mission 1 gets its own green line. First, put the stations in order.
+
+<Interactive name="OrderList" items={['Lint the Dockerfiles', 'Run the tests', 'Build the images', 'Scan for critical CVEs', 'Push to GHCR (main only)']} label="First station at the top" success="That's the line. Now build it for real." />
+</Card>
+
+<Card id="try-yaml" type="try">
+Build `ci.yml`: lint and test, then build, scan and push both images. You will copy this file next.
+
+<Interactive name="YamlBuilder" workflow="Ship it" goal={{ order: ['push', 'pr', 'perms', 'lint', 'test', 'image', 'buildx', 'meta', 'build', 'scan', 'login', 'ship'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Every merge into main.' },
+  { id: 'pr', kind: 'trigger', label: 'On pull request', yaml: 'pull_request:', means: 'Every PR gets checked.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'By default, jobs only read.' },
+  { id: 'lint', kind: 'job', label: 'Job: lint', yaml: 'lint:\n  runs-on: ubuntu-latest\n  steps:\n    - uses: actions/checkout@v7\n    - uses: hadolint/hadolint-action@v3.1.0\n      with:\n        dockerfile: Dockerfile\n        recursive: true', means: 'Proofread every Dockerfile in the repo.' },
+  { id: 'test', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest\n  steps:\n    - uses: actions/checkout@v7\n    - run: docker compose up -d --wait\n    - run: docker compose run --rm api npm test', means: 'Start the set meal, then run the API tests.' },
+  { id: 'image', kind: 'job', label: 'Job: image (web and api)', yaml: 'image:\n  needs: [lint, test]\n  runs-on: ubuntu-latest\n  permissions:\n    contents: read\n    packages: write\n  strategy:\n    matrix:\n      app: [web, api]', means: 'Only after lint and test pass. One lane per app.' },
+  { id: 'buildx', kind: 'step', label: 'Set up Buildx', yaml: '- uses: docker/setup-buildx-action@v4', means: 'Start the packing machine.' },
+  { id: 'meta', kind: 'step', label: 'Make the tags', yaml: '- id: meta\n  uses: docker/metadata-action@v6\n  with:\n    images: ghcr.io/${{ github.repository }}-${{ matrix.app }}', means: 'main, pr-N and sha- labels.' },
+  { id: 'build', kind: 'step', label: 'Build for the scan', yaml: '- uses: docker/build-push-action@v7\n  with:\n    context: "{{defaultContext}}:${{ matrix.app }}"\n    load: true\n    tags: scan-me:${{ matrix.app }}\n    cache-from: type=gha,scope=${{ matrix.app }}\n    cache-to: type=gha,mode=max,scope=${{ matrix.app }}', means: 'Build the app folder, keep it on the runner, save the cache.' },
+  { id: 'scan', kind: 'step', label: 'Scan: stop on CRITICAL', yaml: "- uses: aquasecurity/trivy-action@v0.36.0\n  with:\n    image-ref: scan-me:${{ matrix.app }}\n    severity: CRITICAL\n    exit-code: '1'", means: 'A critical hole turns the station red.' },
+  { id: 'login', kind: 'step', label: 'Log in to GHCR (not on PRs)', yaml: "- if: github.event_name != 'pull_request'\n  uses: docker/login-action@v4\n  with:\n    registry: ghcr.io\n    username: ${{ github.actor }}\n    password: ${{ secrets.GITHUB_TOKEN }}", means: 'The job pass opens the freezer.' },
+  { id: 'ship', kind: 'step', label: 'Push (not on PRs)', yaml: "- uses: docker/build-push-action@v7\n  with:\n    context: \"{{defaultContext}}:${{ matrix.app }}\"\n    push: ${{ github.event_name != 'pull_request' }}\n    tags: ${{ steps.meta.outputs.tags }}\n    cache-from: type=gha,scope=${{ matrix.app }}", means: 'Same image from the cache, now pushed with its tags.' },
+  { id: 'pushall', kind: 'step', label: 'Push on every event', yaml: '- uses: docker/build-push-action@v7\n  with:\n    push: true', means: 'Push PR images too.', why: 'PR code is not reviewed yet, and forks get a read-only key. Push from main only.' },
+  { id: 'echo', kind: 'step', label: 'Print the token to check it', yaml: '- run: echo ${{ secrets.GITHUB_TOKEN }}', means: 'Show the token in the log.', why: 'Never print a secret, not even to check it.' }]}
+  success="Your green line is ready. Select the YAML and copy it." />
+
+<Hint>When, token, then three jobs: lint, test, image. In image: Buildx, tags, build, scan, login, push.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Now do it for real, step by step. Your ticks are saved.
+
+<Interactive name="Mission" id="c2-m2-ship" steps={[{ id: 'branch', text: 'In your kedai-kancil folder, start a new branch.', command: 'git switch -c add-green-line' }, { id: 'folder', text: 'Make the workflow folder.', command: 'mkdir -p .github/workflows' }, { id: 'file', text: 'Save the YAML you built as .github/workflows/ci.yml. Rename web, api or the compose service if yours differ.' }, { id: 'lint', text: 'Proofread it before you push.', command: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12' }, { id: 'push', text: 'Save it in Git and push the branch.', command: 'git add .github && git commit -m "Add the green line" && git push -u origin add-green-line' }, { id: 'pr', text: 'Open a pull request. Watch lint, test and image run, with no push.' }, { id: 'merge', text: 'Merge it. The run on main pushes both images to GHCR.' }, { id: 'fix', text: 'A red station? Read the red line, fix it, and push again.' }]} success="Mission steps done! Now let GitHub confirm it." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub can confirm part of it. Type your username and press Check now.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your kedai-kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: '.github/workflows/ci.yml', label: 'It has .github/workflows/ci.yml' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 2, label: 'Workflows ran at least twice: the PR and main' }]} success="GitHub sees your green line!" />
+</Card>
+
+<Card id="self-check" type="check">
+The rest only you can see. Open your repo and tick what is true.
+
+<Interactive name="Mission" id="c2-m2-self" title="Self-check" steps={[{ id: 'green', text: 'The latest run on main has a green tick.' }, { id: 'prrun', text: 'The PR run built, tested and scanned, but did not push.' }, { id: 'pkgs', text: 'Packages shows kedai-kancil-web and kedai-kancil-api.' }, { id: 'tags', text: 'Each image has a main tag and a sha- tag.' }, { id: 'perm', text: 'Only the image job has packages: write.' }]} success="Mission 2 complete: Kedai Kancil ships itself!" />
+</Card>
+
+<Card id="win" type="win">
+You can now ship a real app: lint, test, scan, push.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks. A real belt moves one pack at a time. A pipeline runs many jobs at once. Each worker forgets everything after its job. And a tag is not glued on. It can move to another pack. Only the digest (`sha256:…`) never changes.
+</Card>

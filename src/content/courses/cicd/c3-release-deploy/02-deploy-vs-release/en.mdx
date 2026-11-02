@@ -1,0 +1,64 @@
+---
+id: cicd-c3-l02
+world: 3
+title: "Deploy vs release: feature flags"
+summary: "You will learn: how to ship code today and switch it on for users later."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, SpotLines, SortCards, SwipeJudge]
+needs: [cicd-c3-l01]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenFeature: feature flag standard", url: "https://openfeature.dev/docs/reference/intro" }
+  - { label: "Cloudflare Flagship (feature flags)", url: "https://developers.cloudflare.com/flagship/" }
+---
+
+<Card id="hook" type="hook">
+Your new checkout is half done. But main must ship today. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Ship it, hidden behind an off switch', correct: true, why: 'The code goes live, but no user sees it yet.' }, { label: 'Wait until it is all done', why: 'Big, late merges are risky. Small daily merges are safer.' }, { label: 'Skip the tests to go faster', why: 'Tests are the gate. Never skip them.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Tuesday', title: 'Deploy', text: 'The new checkout code goes live, switched off. Nobody sees it.' }, { when: 'Thursday', title: 'Try it live', text: 'Switch it on for your own team only. Find bugs safely.' }, { when: 'Friday', title: 'Release', text: 'Switch it on for 10% of users. Then for everyone.' }]} />
+
+Two moments, not one. To **<Term id="deploy">deploy</Term>** is to put code on the servers. To release is to let users see it.
+</Card>
+
+<Card id="see-flag" type="see">
+The off switch is a **<Term id="feature-flag" course="git">feature flag</Term>**: one if, two paths. Tap the line that checks the switch.
+
+<Interactive name="SpotLines" prompt="Tap the line that checks the switch." success="Yes! Flag on: new checkout. Flag off: old checkout." lines={[{ text: 'function checkoutPage(user, flags) {' }, { text: "  if (flags.isOn('new-checkout', user)) {", target: true }, { text: '    return newCheckout(user);' }, { text: '  }' }, { text: '  return oldCheckout(user);' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Deploy or release? Sort each moment.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deploy (code reaches servers)' }, { id: 'release', label: 'Release (users see it)' }]} items={[{ label: '`npx wrangler deploy` uploads version 2', bucket: 'deploy', why: 'New code lands on the servers. The flag can still be off.' }, { label: 'Turn the flag on for 10% of users', bucket: 'release', why: 'No new code. Users start to see the feature.' }, { label: 'The deploy job finishes on main', bucket: 'deploy', why: 'The pipeline shipped code. Shipping is not showing.' }, { label: 'The shop tells customers about it', bucket: 'release', why: 'That is the moment users meet it.' }]} success="Sorted! Deploy ships code. Release shows it." />
+</Card>
+
+<Card id="predict" type="predict">
+The new checkout breaks for some users. What is the fastest fix?
+
+<Interactive name="Choice" options={[{ label: 'Turn the flag off', correct: true, why: 'One switch. No build, no deploy. Seconds, not minutes.' }, { label: 'Revert, then wait for a new deploy', why: 'That works, but a full pipeline run takes minutes.' }, { label: 'Wait for the next release', why: 'Users would keep hitting the bug until then.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good flag habits, or needs work? Swipe.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Remove a flag once everyone has the feature.', good: true, why: 'Old flags pile up and confuse people.' }, { text: 'Keep every flag forever, just in case.', good: false, why: 'Each flag doubles the paths to test. Clean up.' }, { text: 'Test both paths: flag on and flag off.', good: true, why: 'Either path may run in production.' }, { text: 'Put a password in a flag value.', good: false, why: 'Flags are settings, not secrets. Keep passwords in secrets.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now ship code today and switch it on later.
+</Card>
+
+<Card id="deeper" type="deeper">
+Flags need a home and a switch. OpenFeature is an open standard many flag tools share. Cloudflare has one too, called Flagship. A flag is also a kill switch for a broken feature.
+
+Real rep (optional): add one flag to your app as a setting. Deploy it off, then switch it on.
+</Card>

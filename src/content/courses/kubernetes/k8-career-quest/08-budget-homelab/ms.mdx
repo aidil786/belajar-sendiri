@@ -1,0 +1,73 @@
+---
+id: k8s-k8-l08
+world: 8
+title: Homelab bajet
+summary: "Anda akan belajar: cara berlatih Kubernetes di rumah secara percuma dan selamat."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, CommandBuilder, Transcript, SwipeJudge]
+needs: [k8s-k8-l07]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kind: quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "k3d", url: "https://k3d.io/" }
+  - { label: "K3s docs", url: "https://docs.k3s.io/" }
+  - { label: "minikube: get started", url: "https://minikube.sigs.k8s.io/docs/start/" }
+  - { label: "Codespaces billing (free monthly hours)", url: "https://docs.github.com/en/billing/concepts/product-billing/github-codespaces" }
+---
+
+<Card id="hook" type="hook">
+Anda mahu kluster yang boleh dirosakkan pukul 2 pagi. Tiada bil, tiada bos yang memerhati. Apa yang anda perlukan?
+
+<Interactive name="Choice" options={[{ label: 'Laptop lama atau PC kecil, dan alat percuma', correct: true, why: 'Alat percuma seperti kind dan k3s boleh jalan pada mesin biasa.' }, { label: 'Akaun cloud yang besar', why: 'Bil cloud cepat bertambah. Mula di rumah, secara percuma.' }, { label: 'Satu bilik penuh dengan server', why: 'Satu mesin lebihan dah cukup untuk mula.' }]} />
+</Card>
+
+<Card id="see-rungs" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Anak tangga 1', title: 'Simulator kursus ini', text: 'Percuma, dalam pelayar anda. Silap tak kena bayar apa-apa.' }, { when: 'Anak tangga 2', title: 'Makmal dalam talian percuma', text: 'Killercoda beri terminal sebenar untuk satu sesi pendek.' }, { when: 'Anak tangga 3', title: 'Codespaces', text: 'Komputer cloud dari GitHub, dengan jam percuma setiap bulan.' }, { when: 'Anak tangga 4', title: 'Laptop anda', text: 'kind atau k3d buat kluster di dalam Docker.' }, { when: 'Anak tangga 5', title: 'Laptop lama atau mini PC', text: 'Ia jalankan k3s sepanjang minggu, macam server sebenar di satu sudut.' }]} />
+
+**<Term id="homelab">Homelab (makmal di rumah)</Term>** ialah dapur latihan anda sendiri. Naik setinggi yang mesin anda mampu. Tekan setiap anak tangga.
+</Card>
+
+<Card id="try-sort" type="try">
+Ada dua gaya homelab yang popular. Asingkan setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'docker', label: 'kind atau k3d (di dalam Docker)' }, { id: 'k3s', label: 'k3s (pada mesinnya sendiri)' }]} items={[{ label: 'Buat dan padam kluster dalam beberapa minit', bucket: 'docker', why: 'Kluster di dalam Docker cepat dan pakai buang.' }, { label: 'Setiap node ialah satu container', bucket: 'docker', why: 'kind jalankan node sebagai container. k3d buat yang sama untuk k3s.' }, { label: 'Bagus untuk uji satu manifest dengan cepat', bucket: 'docker', why: 'Buat kluster, uji, padam. Siap.' }, { label: 'Jalan sepanjang minggu pada laptop lama', bucket: 'k3s', why: 'k3s ringan, jadi perkakasan lama boleh tahan.' }, { label: 'Boleh jalan pada papan ARM kecil juga', bucket: 'k3s', why: 'Dokumen K3s senaraikan komputer papan tunggal ARM.' }, { label: 'Rasa macam server sebenar', bucket: 'k3s', why: 'Ia jalan sendiri, siang dan malam.' }]} success="Siap! Ramai orang guna kedua-duanya." />
+
+<Hint>Adakah ia hidup di dalam Docker, atau pada mesinnya sendiri?</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Buat kluster homelab pertama anda dengan kind. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'alatnya: Kubernetes di dalam Docker' }, { text: 'create', means: 'buat sesuatu yang baharu' }, { text: 'cluster', means: 'satu kluster penuh' }, { text: '--name', means: 'beri ia nama' }, { text: 'homelab', means: 'namanya' }]} decoys={[{ text: 'delete', means: 'padam kluster' }, { text: 'kubectl', means: 'bercakap dengan kluster yang dah wujud' }]} success="Itu buat kluster satu node bernama homelab." />
+</Card>
+
+<Card id="check-context" type="check">
+<Interactive name="Transcript" title="bash" label="kubectl config current-context papar kind-homelab: anda berada dalam kluster homelab yang baharu." lines={[{ cmd: 'kubectl config current-context' }, { out: 'kind-homelab', color: 'green' }]} />
+
+kind halakan kubectl ke kluster baharu anda. Inilah <Term id="context">context</Term> anda, papan tanda "anda di sini". Semak sebelum setiap delete.
+</Card>
+
+<Card id="predict-codespaces" type="predict">
+Laptop anda lama dan perlahan. Apa pilihan percuma yang lain?
+
+<Interactive name="Choice" options={[{ label: 'Codespace: komputer cloud dengan jam percuma setiap bulan', correct: true, why: 'Akaun peribadi percuma dapat 120 jam sebulan. Itu lebih kurang 60 jam pada mesin 2 teras.' }, { label: 'Kluster cloud berbayar, dibiarkan hidup sebulan', why: 'Itu boleh jadi mahal. Pilihan percuma dulu.' }, { label: 'Putus asa dengan Kubernetes', why: 'Jangan! Codespaces dan makmal dalam talian cuma perlukan pelayar.' }]} />
+</Card>
+
+<Card id="check-safe" type="check">
+Tabiat selamat buat homelab seronok. Nilai setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Berlatih hanya pada kluster pakai buang.', good: true, why: 'Rosakkan, padam, buat yang baharu.' }, { text: 'Buka homelab kepada seluruh internet pada hari pertama.', good: false, why: 'Simpan di rumah dulu. K6 tunjuk cara mengunci.' }, { text: 'Sandarkan fail laptop lama sebelum anda format.', good: true, why: 'Gambar lama anda lebih penting daripada kluster.' }, { text: 'Berlatih pada kluster tempat kerja waktu malam.', good: false, why: 'Jangan sekali-kali. Guna kluster pakai buang anda sendiri.' }, { text: 'Hentikan codespace anda bila dah selesai.', good: true, why: 'Codespace yang dihentikan tak guna jam percuma anda.' }, { text: 'Tetapkan amaran bajet sebelum cuba cloud berbayar.', good: true, why: 'Amaran beritahu anda sebelum bil mengejutkan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina homelab percuma untuk berlatih Kubernetes.
+</Card>
+
+<Card id="deeper" type="deeper">
+Berapa banyak memori? Ini panduan kasar: 8 GB cukup untuk kluster kecil. 16 GB lebih selesa. minikube juga pilihan tempatan yang bagus. Di mana cerita ini tak tepat: homelab ialah dapur mainan. Sesuai untuk latihan, tapi bukan untuk pelanggan sebenar.
+</Card>

@@ -1,0 +1,91 @@
+---
+id: k8s-k9-l09
+world: 9
+title: etcd backup and restore
+summary: "You will learn: to photocopy the order book with etcdctl, and bring a lost object back with etcdutl."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l08]
+scenario: k9-etcd-backup
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: operating etcd clusters (backup and restore)", url: "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/" }
+  - { label: "etcd 3.7: disaster recovery", url: "https://etcd.io/docs/v3.7/op-guide/recovery/" }
+---
+
+<Card id="hook" type="hook">
+At 2 a.m. someone deleted the shop’s Deployment. Its YAML was never saved in Git. What could still bring it back?
+
+<Interactive name="Choice" options={[{ label: 'A copy of the order book (etcd) from before', correct: true, why: 'Yes. etcd holds every object. An old copy still has the shop.' }, { label: 'kubectl rollout undo', why: 'Undo needs the Deployment itself. It is gone.' }, { label: 'Restart the API server', why: 'The API server reads etcd. etcd no longer has the shop.' }]} />
+</Card>
+
+<Card id="see-save" type="see">
+<Interactive name="KubeReplay" scenario="k9-etcd-backup" picture={false} commands={['ssh dev-control-plane', 'etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db', 'exit']} label="On dev-control-plane, etcdctl saves a snapshot. Its log lines end with Snapshot saved at /opt/backup.db and Server version 3.7.0." />
+
+An **<Term id="etcd-snapshot">etcd snapshot</Term>** is a photocopy of the order book. etcdctl asks the running etcd for it. Keep the copy off the cluster.
+</Card>
+
+<Card id="try-build" type="try">
+Build the save command. Each piece shows what it means.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'etcdctl', means: 'talk to the running etcd' }, { text: '--endpoints=https://127.0.0.1:2379', means: 'where etcd listens' }, { text: '--cacert=/etc/kubernetes/pki/etcd/ca.crt', means: 'the etcd CA: who signs the ID cards' }, { text: '--cert=/etc/kubernetes/pki/etcd/server.crt', means: 'an ID card the etcd CA signed' }, { text: '--key=/etc/kubernetes/pki/etcd/server.key', means: 'the secret key for that card' }, { text: 'snapshot', means: 'work with snapshots' }, { text: 'save', means: 'make one now' }, { text: '/opt/backup.db', means: 'where the copy goes' }]} decoys={[{ text: 'etcdutl', means: 'works on files, not on a running etcd' }, { text: 'restore', means: 'put a copy back (etcdutl’s job)' }]} success="That is the exam-style backup. The three certificate flags are the key part." />
+
+<Hint>Tool, where, the three certificate flags, then snapshot save and the file.</Hint>
+</Card>
+
+<Card id="see-hang" type="see">
+<Interactive name="KubeReplay" scenario="k9-etcd-backup" picture={false} commands={['ssh dev-control-plane', 'etcdctl snapshot save /opt/backup.db', 'exit']} label="Without certificate flags, etcdctl prints one line about a temporary file, then waits. The learner presses Ctrl+C." />
+
+Trap: without certificate flags, etcdctl prints one line, then waits forever. Press Ctrl+C. Then add `--cacert`, `--cert` and `--key`.
+</Card>
+
+<Card id="try-save" type="try">
+Your turn. Open the office node, save a snapshot, then check it.
+
+<Interactive name="FoodCourtSim" scenario="k9-etcd-backup" goal={{ snapshotTaken: { path: '/opt/backup.db' }, typed: '^etcdutl .*snapshot status' }} hints={['Type ssh dev-control-plane', 'Copy the etcdctl … snapshot save command below.', 'Check it: etcdutl --write-out=table snapshot status /opt/backup.db']} success="Saved and checked. The table shows its revision and size." />
+
+```bash
+etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup.db
+etcdutl --write-out=table snapshot status /opt/backup.db
+```
+</Card>
+
+<Card id="predict" type="predict">
+On etcd 3.7, you type `etcdctl snapshot status /opt/backup.db`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It prints the snapshot help: status moved to etcdutl', correct: true, why: 'Yes. In 3.7, etcdctl only saves. etcdutl reads and restores.' }, { label: 'A table with the revision', why: 'Older guides show that. In 3.7, use etcdutl snapshot status.' }, { label: 'It restores the snapshot', why: 'status only reads. And restore moved to etcdutl too.' }]} />
+</Card>
+
+<Card id="try-restore" type="try">
+The shop was deleted after the snapshot. **<Term id="etcdutl">etcdutl</Term>** restores the copy into a new, empty folder. Then point etcd there. Danger: newer objects are lost.
+
+<Interactive name="FoodCourtSim" scenario="k9-etcd-restore" goal={{ deploymentRestored: { name: 'shop' } }} hints={['Type ssh dev-control-plane', 'Restore: etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db', 'Point etcd at it with the sed line below. Then exit and wait about 30 s.']} success="The shop is back, with its old uid and its trays." />
+
+```bash
+etcdutl --data-dir /var/lib/etcd-restore snapshot restore /opt/backup.db
+sed -i 's#/var/lib/etcd$#/var/lib/etcd-restore#' /etc/kubernetes/manifests/etcd.yaml
+```
+</Card>
+
+<Card id="check-order" type="check">
+Put a restore in order.
+
+<Interactive name="OrderList" items={['etcdutl snapshot status: is the copy healthy?', 'etcdutl --data-dir <new folder> snapshot restore', 'Point etcd.yaml at the new folder', 'Wait: etcd restarts, then the API answers', 'kubectl get deployments']} label="First step at the top" success="That is the restore routine. Check, restore, repoint, wait, look." />
+</Card>
+
+<Card id="win" type="win">
+You can now back up etcd and restore a lost object.
+</Card>
+
+<Card id="deeper" type="deeper">
+kind nodes have no etcdctl. There, run it inside the etcd pod. Only `/var/lib/etcd` and the certificates are shared with the node.
+
+<Interactive name="KubeReplay" scenario="k9-etcd-kind" picture={false} commands={['kubectl -n kube-system exec etcd-dev-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db']} label="On kind, kubectl exec runs etcdctl inside the etcd pod. The snapshot lands in /var/lib/etcd/backup.db." />
+
+<Interactive name="Mission" id="k8s-k9-l09-real" steps={[{ id: 'save', text: 'On a throwaway kind cluster, save a snapshot inside the etcd pod (command above).', command: 'kubectl -n kube-system exec etcd-<cluster>-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db' }, { id: 'copy', text: 'Copy it off the node, to your laptop.', command: 'docker cp <cluster>-control-plane:/var/lib/etcd/backup.db ./backup.db' }]} success="A real etcd snapshot sits safely on your laptop." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: aws-a1-l03
+world: 1
+title: "Shared responsibility: who guards what"
+summary: "You will learn: which jobs AWS does, and which jobs stay yours."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SecurityGroupGate, SwipeJudge]
+needs: [aws-a1-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Shared Responsibility Model", url: "https://aws.amazon.com/compliance/shared-responsibility-model/" }
+  - { label: "Amazon VPC: Security groups", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" }
+  - { label: "IAM security best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil leaves the unit key under the doormat. A stranger finds it and walks in. Whose fault is that?
+
+<Interactive name="Choice" options={[{ label: 'Kancil’s: the key was his to guard', correct: true, why: 'The mall built a strong door. Kancil left the key out.' }, { label: 'The mall’s: they built the building', why: 'The building was fine. The key was the weak spot.' }, { label: 'Nobody’s: it was bad luck', why: 'It was a choice. Keys belong in a pocket, not under a mat.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+The **<Term id="shared-responsibility">shared responsibility model</Term>** splits the work. AWS guards the building: security *of* the cloud. You guard your unit: security *in* the cloud. Sort the jobs.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS (the building)' }, { id: 'you', label: 'You (your unit)' }]} items={[{ label: 'Guards at the data centre doors', bucket: 'aws', why: 'Physical security of the buildings is AWS’s job.' }, { label: 'Power, cooling and the machines', bucket: 'aws', why: 'The hardware under every service is AWS’s.' }, { label: 'Who gets your account’s keys', bucket: 'you', why: 'Your users, passwords and MFA are yours.' }, { label: 'Your unit’s door rules', bucket: 'you', why: 'You set which visitors may come in.' }, { label: 'Your customers’ data', bucket: 'you', why: 'What you store, and who may read it, is yours.' }]} success="AWS guards the building. You guard the unit." />
+</Card>
+
+<Card id="try-door" type="try">
+Your unit’s door rules are a **security group**. AWS gives you the door; you write the rules. Let the shopper in on HTTPS. Keep the stranger out.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Shopper (HTTPS)', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'stranger', label: 'Stranger (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="The shopper is in. The stranger meets a closed door." />
+
+<Hint>Add one rule: TCP, port 443, from 0.0.0.0/0 (anyone).</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You rent a plain server on AWS (an EC2 instance). Its operating system needs a security patch. Who installs it?
+
+<Interactive name="Choice" options={[{ label: 'You do', correct: true, why: 'On EC2, the system inside the server is yours to update.' }, { label: 'AWS does, automatically', why: 'AWS patches its own machines, not the system you put on top.' }, { label: 'Nobody needs to', why: 'Unpatched systems are a favourite way in for attackers.' }]} />
+</Card>
+
+<Card id="see-line" type="see">
+The line moves with the service. A plain server leaves you more jobs. A ready-made service, like S3 storage, leaves you fewer. Which job always stays yours?
+
+<Interactive name="Choice" options={[{ label: 'Choosing who can read your data', correct: true, why: 'Every service, every time: access to your data is yours.' }, { label: 'Patching S3’s computers', why: 'AWS runs S3’s systems. You never see them.' }, { label: 'Fixing a broken disk in the data centre', why: 'Hardware is always AWS’s job.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Fair thought, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'AWS will close my door if I leave it open.', good: false, why: 'Door rules are yours. AWS does what you set.' }, { text: 'I must guard my keys and my data.', good: true, why: 'That is security in the cloud.' }, { text: 'I never worry about the data centre’s locks.', good: true, why: 'Physical security is AWS’s side.' }, { text: 'A managed service means zero work for me.', good: false, why: 'Fewer jobs, never zero. Access stays yours.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now say who guards what: AWS the building, you your unit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Some jobs are shared but split in two. AWS patches its machines; you patch your system and apps. AWS trains its staff; you train yours.
+
+The rules also depend on your country’s laws and the Regions you pick. World A3 builds real door rules, step by step.
+</Card>

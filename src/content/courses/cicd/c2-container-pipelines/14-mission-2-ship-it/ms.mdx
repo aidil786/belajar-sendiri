@@ -1,0 +1,74 @@
+---
+id: cicd-c2-m2
+world: 2
+title: "Misi capstone 2: Hantar"
+summary: "Anda akan belajar: beri Kedai Kancil pipeline sebenar yang lint, uji, imbas dan push."
+minutes: 5
+xp: 100
+interactives: [OrderList, YamlBuilder, Mission, MissionCheck]
+needs: [cicd-c2-l13]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "Working with the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+Misi 2: hantar! Repo Kedai Kancil anda dari Misi 1 dapat talian hijaunya sendiri. Mula-mula, susun stesen ikut urutan.
+
+<Interactive name="OrderList" items={['Lint Dockerfile', 'Jalankan ujian', 'Bina image', 'Imbas CVE kritikal', 'Push ke GHCR (main sahaja)']} label="Stesen pertama di atas" success="Itulah talian. Sekarang bina betul-betul." />
+</Card>
+
+<Card id="try-yaml" type="try">
+Bina `ci.yml`: lint dan uji, kemudian bina, imbas dan push kedua-dua image. Anda akan salin fail ini selepas ini.
+
+<Interactive name="YamlBuilder" workflow="Ship it" goal={{ order: ['push', 'pr', 'perms', 'lint', 'test', 'image', 'buildx', 'meta', 'build', 'scan', 'login', 'ship'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Setiap merge ke main.' },
+  { id: 'pr', kind: 'trigger', label: 'Bila ada pull request', yaml: 'pull_request:', means: 'Setiap PR disemak.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Secara lalai, job cuma baca.' },
+  { id: 'lint', kind: 'job', label: 'Job: lint', yaml: 'lint:\n  runs-on: ubuntu-latest\n  steps:\n    - uses: actions/checkout@v7\n    - uses: hadolint/hadolint-action@v3.1.0\n      with:\n        dockerfile: Dockerfile\n        recursive: true', means: 'Semak setiap Dockerfile dalam repo.' },
+  { id: 'test', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest\n  steps:\n    - uses: actions/checkout@v7\n    - run: docker compose up -d --wait\n    - run: docker compose run --rm api npm test', means: 'Hidupkan set hidangan, kemudian jalankan ujian API.' },
+  { id: 'image', kind: 'job', label: 'Job: image (web dan api)', yaml: 'image:\n  needs: [lint, test]\n  runs-on: ubuntu-latest\n  permissions:\n    contents: read\n    packages: write\n  strategy:\n    matrix:\n      app: [web, api]', means: 'Hanya selepas lint dan ujian lulus. Satu lorong untuk setiap aplikasi.' },
+  { id: 'buildx', kind: 'step', label: 'Sediakan Buildx', yaml: '- uses: docker/setup-buildx-action@v4', means: 'Hidupkan mesin pembungkus.' },
+  { id: 'meta', kind: 'step', label: 'Buat tag', yaml: '- id: meta\n  uses: docker/metadata-action@v6\n  with:\n    images: ghcr.io/${{ github.repository }}-${{ matrix.app }}', means: 'Label main, pr-N dan sha-.' },
+  { id: 'build', kind: 'step', label: 'Bina untuk imbasan', yaml: '- uses: docker/build-push-action@v7\n  with:\n    context: "{{defaultContext}}:${{ matrix.app }}"\n    load: true\n    tags: scan-me:${{ matrix.app }}\n    cache-from: type=gha,scope=${{ matrix.app }}\n    cache-to: type=gha,mode=max,scope=${{ matrix.app }}', means: 'Bina folder aplikasi, simpan di runner, simpan cache.' },
+  { id: 'scan', kind: 'step', label: 'Imbas: henti pada CRITICAL', yaml: "- uses: aquasecurity/trivy-action@v0.36.0\n  with:\n    image-ref: scan-me:${{ matrix.app }}\n    severity: CRITICAL\n    exit-code: '1'", means: 'Lubang kritikal jadikan stesen merah.' },
+  { id: 'login', kind: 'step', label: 'Log masuk GHCR (bukan pada PR)', yaml: "- if: github.event_name != 'pull_request'\n  uses: docker/login-action@v4\n  with:\n    registry: ghcr.io\n    username: ${{ github.actor }}\n    password: ${{ secrets.GITHUB_TOKEN }}", means: 'Pas job buka peti sejuk.' },
+  { id: 'ship', kind: 'step', label: 'Push (bukan pada PR)', yaml: "- uses: docker/build-push-action@v7\n  with:\n    context: \"{{defaultContext}}:${{ matrix.app }}\"\n    push: ${{ github.event_name != 'pull_request' }}\n    tags: ${{ steps.meta.outputs.tags }}\n    cache-from: type=gha,scope=${{ matrix.app }}", means: 'Image sama dari cache, kini di-push dengan tagnya.' },
+  { id: 'pushall', kind: 'step', label: 'Push pada setiap event', yaml: '- uses: docker/build-push-action@v7\n  with:\n    push: true', means: 'Push image PR juga.', why: 'Kod PR belum disemak, dan fork dapat kunci baca sahaja. Push dari main sahaja.' },
+  { id: 'echo', kind: 'step', label: 'Cetak token untuk semak', yaml: '- run: echo ${{ secrets.GITHUB_TOKEN }}', means: 'Tunjuk token dalam log.', why: 'Jangan sesekali cetak secret, walaupun untuk semak.' }]}
+  success="Talian hijau anda dah siap. Pilih YAML itu dan salin." />
+
+<Hint>Bila, token, kemudian tiga job: lint, test, image. Dalam image: Buildx, tag, build, imbas, log masuk, push.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Sekarang buat betul-betul, langkah demi langkah. Tanda anda disimpan.
+
+<Interactive name="Mission" id="c2-m2-ship" steps={[{ id: 'branch', text: 'Dalam folder kedai-kancil anda, mulakan branch baru.', command: 'git switch -c add-green-line' }, { id: 'folder', text: 'Buat folder workflow.', command: 'mkdir -p .github/workflows' }, { id: 'file', text: 'Simpan YAML yang anda bina sebagai .github/workflows/ci.yml. Tukar nama web, api atau service compose kalau milik anda berbeza.' }, { id: 'lint', text: 'Semak fail itu sebelum push.', command: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12' }, { id: 'push', text: 'Simpan dalam Git dan push branch itu.', command: 'git add .github && git commit -m "Add the green line" && git push -u origin add-green-line' }, { id: 'pr', text: 'Buka pull request. Tengok lint, test dan image jalan, tanpa push.' }, { id: 'merge', text: 'Merge. Run di main push kedua-dua image ke GHCR.' }, { id: 'fix', text: 'Ada stesen merah? Baca baris merah, baiki, dan push semula.' }]} success="Langkah misi selesai! Sekarang biar GitHub sahkan." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub boleh sahkan sebahagiannya. Taip nama pengguna anda dan tekan Semak sekarang.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo kedai-kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: '.github/workflows/ci.yml', label: 'Ia ada .github/workflows/ci.yml' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 2, label: 'Workflow dah jalan sekurang-kurangnya dua kali: PR dan main' }]} success="GitHub nampak talian hijau anda!" />
+</Card>
+
+<Card id="self-check" type="check">
+Yang selebihnya hanya anda boleh nampak. Buka repo anda dan tanda yang betul.
+
+<Interactive name="Mission" id="c2-m2-self" title="Semakan sendiri" steps={[{ id: 'green', text: 'Run terkini di main ada tanda hijau.' }, { id: 'prrun', text: 'Run PR bina, uji dan imbas, tapi tak push.' }, { id: 'pkgs', text: 'Packages tunjuk kedai-kancil-web dan kedai-kancil-api.' }, { id: 'tags', text: 'Setiap image ada tag main dan tag sha-.' }, { id: 'perm', text: 'Hanya job image ada packages: write.' }]} success="Misi 2 selesai: Kedai Kancil hantar dirinya sendiri!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar aplikasi sebenar: lint, uji, imbas, push.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat. Tali sawat sebenar gerakkan satu pek pada satu masa. Pipeline jalankan banyak job serentak. Setiap pekerja lupa semuanya selepas job. Dan tag tak melekat kekal: ia boleh beralih ke pek lain. Hanya digest (`sha256:…`) yang tak pernah berubah.
+</Card>

@@ -1,0 +1,79 @@
+---
+id: cicd-c3-l03
+world: 3
+title: "Persekitaran dengan penyemak wajib"
+summary: "Anda akan belajar: cara buat production tunggu seseorang kata ya."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SortCards, YamlBuilder, Choice]
+needs: [cicd-c3-l02]
+scenario: c3-reviewers
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "Reviewing deployments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c3-no-gate" label="Tengah malam: push ke main diuji, kemudian terus deploy." />
+
+Tengah malam. Rakan sepasukan push ke main. Van terus bertolak. Tiada siapa rasa makanan itu. Run dan perhati.
+</Card>
+
+<Card id="see-env" type="see">
+Beri production seorang pengawal. **<Term id="environment" course="git">Environment</Term>** (persekitaran) ialah tempat bernama untuk deploy, dengan peraturan sendiri. Yang mana peraturan environment?
+
+<Interactive name="SortCards" buckets={[{ id: 'rule', label: 'Peraturan environment' }, { id: 'not', label: 'Bukan peraturan environment' }]} items={[{ label: 'Seseorang mesti lulus dulu', bucket: 'rule', why: 'Penyemak wajib: job tunggu jawapan ya.' }, { label: 'Tunggu 10 minit sebelum deploy', bucket: 'rule', why: 'Pemasa tunggu beri anda masa untuk hentikannya.' }, { label: 'Hanya main boleh deploy ke sini', bucket: 'rule', why: 'Deployment branches: branch lain ditolak.' }, { label: 'Guna Node 24', bucket: 'not', why: 'Itu ada dalam langkah workflow.' }, { label: 'Secret sendiri', bucket: 'rule', why: 'Environment secret hanya terbuka untuk job yang menyebutnya.' }]} success="Siap! Environment ialah pintu yang ada peraturan." />
+</Card>
+
+<Card id="try-approve" type="try">
+Production kini ada **<Term id="required-reviewer">penyemak wajib</Term>**: Aina. Run. Job deploy menunggu. Anda ialah Aina: semak, kemudian luluskan.
+
+<Interactive name="ConveyorBelt" scenario="c3-reviewers" events={['push-main']} task={{ type: 'approve' }} success="Diluluskan! Baru sekarang deploy boleh bermula." />
+
+<Hint>Tekan Run. Bila stesen deploy menunggu, tekan butang lulus.</Hint>
+</Card>
+
+<Card id="try-yaml" type="try">
+Sekarang bina sendiri. Job masuk ke environment dengan satu kunci: `environment`.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'perms', 'job', 'ready', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baharu.' },
+  { id: 'pr', kind: 'trigger', label: 'Pada setiap pull request', yaml: 'pull_request:', means: 'Jalan untuk setiap pull request.', why: 'Deploy apa yang masuk ke main, bukan setiap pull request.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Token hanya boleh baca kod.' },
+  { id: 'bare', kind: 'job', label: 'Job: deploy (tanpa environment)', yaml: 'deploy:\n  runs-on: ubuntu-latest', means: 'Runner yang deploy.', why: 'Tanpa environment, tiada penyemak dan tiada pengawal.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment:\n    name: production\n    url: https://shop.example.com', means: 'Deploy ke production. Peraturannya dipakai dulu.' },
+  { id: 'ready', kind: 'step', label: 'Bersedia', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Salin kod. Pasang pakej.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Hantar dengan token dari secrets.' }]}
+  success="Deploy anda kini menunggu di pintu production." />
+
+<Hint>Trigger, permissions, job dengan environment, kemudian langkah-langkahnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang push ke branch `feature`. Production hanya benarkan `main`. Apa jadi pada job deploy?
+
+<Interactive name="Choice" options={[{ label: 'Ia gagal sebelum mana-mana langkah berjalan', correct: true, why: 'Peraturan branch kata tidak. Tiada apa di-deploy, dan tiada siapa ditanya.' }, { label: 'Ia tunggu Aina', why: 'Peraturan branch disemak dulu. Hanya main boleh minta.' }, { label: 'Ia deploy branch feature', why: 'Environment menolak branch lain.' }]} />
+</Card>
+
+<Card id="check-branch" type="check">
+Semak pada tali sawat. Cari push yang ditahan pengawal. Baca mesej sebenar.
+
+<Interactive name="ConveyorBelt" scenario="c3-branch-rule" task={{ type: 'event', job: 'deploy', result: 'failure' }} success="Ditahan di pintu. Maksudnya: hanya main boleh deploy ke production." />
+
+<Hint>Cuba push ke branch feature.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh letak pintu manusia di depan production.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sehingga enam orang atau pasukan boleh jadi penyemak. Satu kelulusan sudah cukup. Hidupkan "prevent self-review" supaya tiada siapa lulus deploy sendiri. Pemasa tunggu boleh tahan sehingga 30 hari. Untuk repo peribadi, penyemak wajib perlukan GitHub Enterprise.
+
+Latihan sebenar (pilihan): dalam repo ujian awam, buat environment `production`. Tambah diri anda sebagai penyemak.
+</Card>

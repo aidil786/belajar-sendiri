@@ -1,0 +1,82 @@
+---
+id: git-w00-l04
+world: 0
+title: Beritahu Git siapa anda
+summary: "Anda akan belajar: cara beri Git nama anda, e-mel anda dan beberapa tetapan yang bagus."
+minutes: 4
+xp: 25
+interactives: [TermReplay, CommandBuilder, Sim, Choice, Mission]
+needs: [git-w00-l03]
+scenario: w00-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git config", url: "https://git-scm.com/docs/git-config" }
+  - { label: "git init", url: "https://git-scm.com/docs/git-init" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w00-l04-log" commands={['git log -n 1']} label="git log tunjuk commit terbaru. Baris Author tertulis: You, you@example.com." />
+
+Setiap commit (titik simpan) ditandatangani dengan nama dan e-mel. Yang ini cuma tulis "You". Git tak boleh teka siapa anda.
+</Card>
+
+<Card id="see-config" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global user.name "Aiman Hakim"', 'git config --global user.name']} label="Arahan pertama simpan nama Aiman Hakim. Arahan kedua paparkan semula nama itu." />
+
+`git config` tukar tetapan Git, dipanggil **<Term id="config">config</Term>** (tetapan). Yang ini simpan nama anda. `--global` maksudnya: untuk semua projek anda.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang simpan e-mel anda. Ketik kepingan mengikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'config', means: 'tukar tetapan' }, { text: '--global', means: 'untuk semua projek anda' }, { text: 'user.email', means: 'tetapan: e-mel anda' }, { text: '"aiman@example.com"', means: 'nilainya' }]} decoys={[{ text: 'user.name', means: 'tetapan: nama anda' }, { text: 'commit', means: 'simpan gambar projek' }]} success="Betul! Sekarang Git tahu e-mel Aiman." />
+
+<Hint>Ia sama macam arahan nama. Tukar tetapan dan nilainya sahaja.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Sekarang tetapkan nama dan e-mel anda sendiri di sini.
+
+<Interactive name="Sim" scenario="w00-l04" panels={[]} prefill="git config --global user.name " goal={{ configSet: ['user.name', 'user.email'], typed: 'user\\.email\\s+\\S' }} hints={['Taip git config --global user.name "Nama Anda" dan tekan Enter.', 'Sekarang taip git config --global user.email "anda@example.com".']} success="Git dah kenal anda. Setiap commit akan bawa nama anda." />
+
+E-mel anda akan nampak pada setiap commit. Guna e-mel yang anda selesa kongsi.
+
+<Hint>Letak nama anda dalam tanda petik, contohnya `"Aiman Hakim"`.</Hint>
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global init.defaultBranch main', 'git init diary']} label="Selepas init.defaultBranch ditetapkan kepada main, git init buat projek baru bernama diary." />
+
+Setiap projek bermula dengan satu **<Term id="branch">branch</Term>** (jalan cerita), iaitu barisan titik simpan. Tetapan ini namakannya `main`. `git init diary` buat projek baru untuk mengujinya.
+</Card>
+
+<Card id="see-editor" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global core.editor "code --wait"', 'git config --global --list']} label="core.editor ditetapkan kepada code --wait. Senarai itu tunjuk semua tetapan." />
+
+Kadang-kadang Git buka **editor** (penyunting) untuk anda menaip. Tetapan ini pilih VS Code. `--wait` buat Git tunggu sampai anda tutupnya. `--list` tunjuk semua tetapan anda.
+</Card>
+
+<Card id="predict-levels" type="predict">
+Tetapan ada tiga peringkat: system, global dan **local**. Local untuk satu projek sahaja. E-mel global anda `home@example.com`. Satu projek ada e-mel local: `work@example.com`. Projek itu guna yang mana?
+
+<Interactive name="Choice" options={[{ label: '`work@example.com`', correct: true, why: 'Local menang lawan global. Tetapan paling dekat yang menang.' }, { label: '`home@example.com`', why: 'Global cuma sandaran. Dalam projek itu, local yang menang.' }, { label: 'Kedua-dua e-mel', why: 'Satu commit ada satu e-mel sahaja. Di sini, yang local menang.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Giliran anda, betul-betul. Buat ini dalam komputer anda sendiri. Salin setiap baris ke terminal anda.
+
+<Interactive name="Mission" id="w00-first-commit" title="Menang cepat: commit sebenar pertama anda" steps={[{ id: 'open', text: 'Buka terminal anda. Di Windows, buka **Git Bash**.' }, { id: 'name', text: 'Beritahu Git nama anda. Tukar "Your Name" dulu.', command: 'git config --global user.name "Your Name"' }, { id: 'email', text: 'Beritahu Git e-mel anda.', command: 'git config --global user.email "you@example.com"' }, { id: 'branch', text: 'Namakan branch pertama main dalam projek baru.', command: 'git config --global init.defaultBranch main' }, { id: 'folder', text: 'Buat folder untuk projek anda.', command: 'mkdir my-first-repo' }, { id: 'cd', text: 'Masuk ke dalamnya.', command: 'cd my-first-repo' }, { id: 'init', text: 'Minta Git jaga folder ini.', command: 'git init' }, { id: 'file', text: 'Buat fail dengan satu baris di dalamnya.', command: 'echo "Hello Git" > hello.txt' }, { id: 'add', text: 'Masukkan fail itu ke dalam kotak. Kotak simpan apa yang dah sedia untuk disimpan.', command: 'git add hello.txt' }, { id: 'commit', text: 'Simpan kotak itu sebagai commit pertama anda, dengan nota pendek.', command: 'git commit -m "Add hello file"' }, { id: 'log', text: 'Tengok titik simpan anda dalam sejarah.', command: 'git log --oneline' }]} success="Itu commit sebenar, dalam komputer anda sendiri. Hebat!" />
+
+<Hint>Tersangkut? Semak setiap baris ditaip tepat. Jarak dan tanda petik penting.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sediakan Git dan buat commit sebenar.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git config --list --show-origin` tunjuk setiap tetapan dan fail tempat ia disimpan. `--system` tukar tetapan untuk semua orang dalam komputer itu. Di Mac, `code --wait` perlukan arahan `code`. Tambahnya dari Command Palette dalam VS Code.
+</Card>

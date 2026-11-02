@@ -1,0 +1,68 @@
+---
+id: aws-a2-boss
+world: 2
+title: Kunci secukupnya
+summary: "Anda akan belajar: benarkan role CI push satu image ke satu repository, tiada lebih."
+minutes: 6
+xp: 50
+interactives: [Choice, OrderList, SpotLines, IamJudge, Mission]
+needs: [aws-a2-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon ECR: IAM permissions for pushing an image", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push-iam.html" }
+  - { label: "Create a role for OIDC (GitHub)", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html" }
+  - { label: "GitHub: OIDC in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "Policy evaluation logic", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: workflow Kedai Kancil mesti push imagenya ke rak `kedai` dalam ECR. Siapa patut buat push?
+
+<Interactive name="Choice" options={[{ label: 'Role yang dipinjam workflow dengan OIDC', correct: true, why: 'Jangka pendek, terikat pada satu repo, tiada kunci disimpan.' }, { label: 'Pengguna IAM dengan access key dalam GitHub secrets', why: 'Kunci yang tak pernah luput, duduk dalam tetapan repo. Elakkan.' }, { label: 'Kunci pengguna admin anda, sekali ini sahaja', why: 'Kunci “sekali sahaja” kekal selamanya. Admin pun terlalu banyak.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Bilik 1: rancang binaan. Susun langkah-langkahnya.
+
+<Interactive name="OrderList" items={['Tambah OIDC provider GitHub ke IAM', 'Buat role ci-deployer, percaya repo shop sahaja', 'Pasang polisi log masuk dan polisi push', 'Beri workflow id-token: write', 'Push image, kemudian semak siapa anda tadi']} label="Langkah pertama di atas" success="Bilik 1 selesai! Provider, role, polisi, workflow, push." />
+</Card>
+
+<Card id="try-trust" type="try">
+Bilik 2: rakan sepasukan tulis trust policy ini. Ketik baris yang benarkan orang asing masuk.
+
+<Interactive name="SpotLines" lines={[{ text: '"Action": "sts:AssumeRoleWithWebIdentity",' }, { text: '"Condition": {' }, { text: '  "StringEquals": {' }, { text: '    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"' }, { text: '  },' }, { text: '  "StringLike": {' }, { text: '    "token.actions.githubusercontent.com:sub": "repo:*"', target: true }, { text: '  }' }, { text: '}' }]} prompt="Ketik baris yang berisiko." success="Bilik 2 selesai! repo:* bermakna mana-mana repo di GitHub. Namakan repo anda." />
+</Card>
+
+<Card id="try-edit" type="try">
+Bilik 3: polisi push berfungsi pada setiap rak. Betulkan baris merah jambu supaya push ke `kedai-admin` dapat Deny. Namakan rak `kedai` sahaja.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-admin' }} policies={[{ name: 'ecr-push', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'], Resource: '*' }] } }]} task={{ type: 'edit', policy: 0, line: 13, want: 'Deny', forbid: ['\\*'] }} solution={'"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai"'} success="Bilik 3 selesai! Satu rak sahaja." />
+
+<Hint>`"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai"`</Hint>
+</Card>
+
+<Card id="predict-login" type="predict">
+Bilik 4: sebelum push, workflow mesti log masuk ke ECR. Itu perlukan satu kunci lagi. Yang mana?
+
+<Interactive name="Choice" options={[{ label: 'ecr:GetAuthorizationToken, pada "*"', correct: true, why: 'Dokumentasi ECR senaraikannya untuk push. Ia tak boleh disempitkan kepada satu rak.' }, { label: 'ecr:*, pada "*"', why: 'Itu buka setiap tindakan ECR, termasuk padam.' }, { label: 'iam:PassRole', why: 'Itu untuk serahkan role kepada servis. Push tak perlukannya.' }]} />
+</Card>
+
+<Card id="check-push" type="check">
+Bilik 5: set penuh. Role itu push ke rak `kedai`. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/ci-deployer/run-42', who: 'ci-deployer', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }} policies={[{ name: 'ecr-login', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:GetAuthorizationToken', Resource: '*' }] } }, { name: 'ecr-push', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'], Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai' }] } }]} success="Dibenarkan. Kunci secukupnya: satu rak, push sahaja." />
+</Card>
+
+<Card id="try-real" type="try">
+Bilik terakhir, betul-betul (hanya bila penggera bajet dipasang). IAM percuma; image yang disimpan ada kos sedikit. Senarai bersihkan: image, repository, role, provider.
+
+<Interactive name="Mission" id="aws-a2-boss-real" steps={[{ id: 'alarm', text: 'Pastikan penggera bajet anda hidup.' }, { id: 'provider', text: 'Tambah OIDC provider GitHub (audience sts.amazonaws.com).' }, { id: 'repo', text: 'Cipta repository ECR peribadi bernama kedai di ap-southeast-5.' }, { id: 'role', text: 'Buat ci-deployer, percaya branch main repo ujian anda sahaja.' }, { id: 'policies', text: 'Pasang ecr-login dan ecr-push (satu rak).' }, { id: 'push', text: 'Jalankan workflow: log masuk, bina image kecil, push.' }, { id: 'clean', text: 'Bersihkan: padam image dan repository, kemudian role dan provider.' }]} success="Boss tewas! Kunci secukupnya, dan tiada yang tertinggal." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri role CI kunci secukupnya: satu rak, push sahaja.
+</Card>

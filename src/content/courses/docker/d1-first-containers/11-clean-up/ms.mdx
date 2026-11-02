@@ -1,0 +1,78 @@
+---
+id: docker-d1-l11
+world: 1
+title: Kemas dengan selamat
+summary: "Anda akan belajar: lihat apa yang penuhi cakera anda, dan kemas tanpa hilang apa yang perlu."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d1-l10]
+scenario: d1-messy
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prune unused Docker objects", url: "https://docs.docker.com/engine/manage-resources/pruning/" }
+  - { label: "docker system df", url: "https://docs.docker.com/reference/cli/docker/system/df/" }
+  - { label: "docker container rm", url: "https://docs.docker.com/reference/cli/docker/container/rm/" }
+  - { label: "docker image rm", url: "https://docs.docker.com/reference/cli/docker/image/rm/" }
+  - { label: "docker system prune", url: "https://docs.docker.com/reference/cli/docker/system/prune/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-messy" commands={['docker system df']} label="docker system df tunjuk 4 image guna 268.4MB, dengan 162MB boleh dikosongkan, dan 3 container." />
+
+Laptop anda makin penuh. Bekas dan pek lama bertimbun, macam peti sejuk yang bersepah. `docker system df` tunjuk apa yang guna ruang.
+</Card>
+
+<Card id="try-rm" type="try">
+**docker rm** buang bekas yang berhenti, bersama fail di dalamnya. Buang old1 dan old2. Simpan web.
+
+<Interactive name="KitchenSim" scenario="d1-messy" goal={{ notExists: ['old1', 'old2'], running: ['web'] }} hints={['Lihat semua bekas: docker ps -a', 'Kemudian: docker rm old1 old2']} success="Dua bekas lama sudah hilang. web masih menghidang." />
+
+<Hint>`docker rm old1 old2`</Hint>
+</Card>
+
+<Card id="see-rmi" type="see">
+<Interactive name="KitchenReplay" scenario="d1-messy" commands={['docker rmi redis:8-alpine', 'docker rmi hello-world']} fails={['docker rmi hello-world']} label="docker rmi redis:8-alpine buang pek redis yang tak diguna. docker rmi hello-world ditolak: container old2 sedang guna image itu." />
+
+`docker rmi` buang pek beku. redis hilang. hello-world ditolak: ralat sebenar kata ada container `is using its referenced image`. Maksudnya: buang bekas itu dulu.
+</Card>
+
+<Card id="predict" type="predict">
+`docker system prune` tanya: anda pasti? Apa yang `y` akan padam?
+
+<Interactive name="Choice" options={[{ label: 'Bekas yang berhenti, rangkaian tak diguna, pek tanpa tag, cache binaan', correct: true, why: 'Itu senarai amarannya. Bekas yang berjalan, dan pek yang digunakannya, kekal.' }, { label: 'Semua, termasuk bekas yang berjalan', why: 'Prune tak pernah sentuh bekas yang berjalan.' }, { label: 'Tiada apa. Ia cuma mengira.', why: 'Mengira ialah docker system df. Prune betul-betul padam.' }]} />
+</Card>
+
+<Card id="see-prune" type="see">
+<Interactive name="KitchenReplay" scenario="d1-messy" commands={['docker system prune', 'y', 'docker ps -a']} label="docker system prune paparkan senarai amaran dan tanya untuk teruskan. Jawapan y padam bekas old1 dan old2 yang berhenti. docker ps -a kini tunjuk web sahaja." />
+
+**<Term id="prune">Prune</Term>** sapu semua yang tak digunakan. Ia sentiasa tanya dulu. `y` padam, dan tak boleh dibatalkan. `N` simpan semuanya.
+</Card>
+
+<Card id="try-sort" type="try">
+Selamat ditaip bila-bila masa, atau perlu hati-hati? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'look', label: 'Cuma tengok' }, { id: 'delete', label: 'Padam sesuatu' }]} items={[{ label: 'docker system df', bucket: 'look', why: 'Ia cuma kira ruang.' }, { label: 'docker ps -a', bucket: 'look', why: 'Ia cuma senaraikan bekas.' }, { label: 'docker rm old1', bucket: 'delete', why: 'old1 dan failnya hilang.' }, { label: 'docker rmi redis:8-alpine', bucket: 'delete', why: 'Pek itu hilang. Anda boleh tarik semula nanti.' }, { label: 'docker system prune', bucket: 'delete', why: 'Setiap bekas yang berhenti dan banyak lagi. Baca amarannya!' }, { label: 'docker image prune -a', bucket: 'delete', why: 'Setiap pek yang tiada bekas guna.' }]} success="Tengok dulu, padam dengan hati-hati." />
+</Card>
+
+<Card id="try-prune" type="try">
+Sapu setiap bekas yang berhenti sekali gus. Baca amaran sebelum anda jawab.
+
+<Interactive name="KitchenSim" scenario="d1-messy" goal={{ notExists: ['old1', 'old2'], running: ['web'], typed: 'prune' }} hints={['Taip docker container prune', 'Baca amaran. Kemudian taip y.']} success="Sudah disapu! web masih berjalan. Prune cuma ambil yang tiada siapa guna." />
+
+<Hint>`docker container prune`, kemudian `y`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kosongkan ruang tanpa hilang apa yang anda perlukan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: pek makanan sebenar habis bila dimasak. Image Docker tak pernah habis: satu pek isi bekas tanpa had. Pek juga kongsi layer, jadi `rmi` mungkin kosongkan kurang daripada jangkaan. Hati-hati: `docker volume prune -a` padam data yang disimpan (Dunia D3).
+
+<Interactive name="Mission" id="docker-d1-l11-rep" steps={[{ id: 'df', text: 'Lihat apa yang penuhi cakera anda.', command: 'docker system df' }, { id: 'list', text: 'Senaraikan semua bekas. Simpan yang masih perlu.', command: 'docker ps -a' }, { id: 'prune', text: 'Sapu bekas yang berhenti. Baca amaran dulu.', command: 'docker container prune' }]} success="Dapur yang kemas, betul-betul." />
+</Card>

@@ -1,0 +1,64 @@
+---
+id: k8s-k6-l10
+world: 6
+title: "User namespaces"
+summary: "You will learn: how one line lets an app be root inside its pod, and nobody on the node."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, SortCards, YamlDoctor, SwipeJudge]
+needs: [k8s-k6-l09]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "User namespaces", url: "https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/" }
+  - { label: "Use a user namespace with a pod", url: "https://kubernetes.io/docs/tasks/configure-pod-container/user-namespaces/" }
+---
+
+<Card id="hook" type="hook">
+An old app insists on running as root inside its box. Your restricted zone says no. Are you stuck?
+
+<Interactive name="Choice" options={[{ label: 'No: give it its own user namespace', correct: true, why: 'Root inside, nobody outside. It is stable since Kubernetes 1.36.' }, { label: 'Yes: switch the guard off', why: 'Never weaken the whole zone for one app.' }, { label: 'Run it on your laptop instead', why: 'Then it is not in your cluster at all.' }]} />
+</Card>
+
+<Card id="see-line" type="see">
+In its own **<Term id="user-namespace">user namespace</Term>**, the cook is boss inside the stall. Outside, the node sees a nobody. One line turns it on. Tap it.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Pod' }, { text: 'metadata:' }, { text: '  name: legacy' }, { text: 'spec:' }, { text: '  hostUsers: false', target: true }, { text: '  containers:' }, { text: '    - name: app' }, { text: '      image: busybox:1.37' }]} prompt="Tap the line that gives the pod its own users." success="Yes! hostUsers: false means: do not share the node's users." />
+</Card>
+
+<Card id="try-sort" type="try">
+A user-namespace pod cannot share the node's other spaces. Sort each setting.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Allowed with hostUsers: false' }, { id: 'no', label: 'Not allowed' }]} items={[{ label: 'Running as root inside', bucket: 'ok', why: 'That is the whole point. Root inside maps to nobody outside.' }, { label: 'An emptyDir volume', bucket: 'ok', why: 'Normal volumes work.' }, { label: '`hostNetwork: true`', bucket: 'no', why: 'It would share the node network again.' }, { label: '`hostPID: true`', bucket: 'no', why: "It would see the node's processes." }, { label: '`hostIPC: true`', bucket: 'no', why: "It would share the node's message space." }]} success="Sorted! Own users means no host spaces." />
+</Card>
+
+<Card id="predict" type="predict">
+Zone kedai enforces restricted. A pod sets `hostUsers: false` and `runAsUser: 0`, plus every other lock. Does the guard let it in?
+
+<Interactive name="Choice" options={[{ label: 'Yes: the guard relaxes the root checks', correct: true, why: 'Root inside is never root on the node, so runAsNonRoot and runAsUser are not checked.' }, { label: 'No: restricted always refuses root', why: 'Not for user-namespace pods. The docs relax those two checks.' }, { label: 'Only on Windows nodes', why: 'User namespaces are Linux only.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+Mei wrote the line, but the API server refuses it. Fix it.
+
+<Interactive name="YamlDoctor" file="legacy.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: legacy\nspec:\n  hostUsers: "false"\n  containers:\n    - name: app\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: legacy\nspec:\n  hostUsers: false\n  containers:\n    - name: app\n      image: busybox:1.37\n      command: ["sleep", "3600"]\n'} keep={['hostUsers: false']} keepHint="Keep hostUsers. It is the point of this pod." hint="Quotes make a word. hostUsers wants true or false, with no quotes." success="Applied! A real true/false, not a word." />
+</Card>
+
+<Card id="check" type="check">
+Does a user namespace need this? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Linux nodes with kernel 6.3 or newer', good: true, why: 'Older kernels lack what the pod volumes need.' }, { text: 'containerd 2.0+ or CRI-O 1.25+', good: true, why: 'The runtime must know how to set up the mapping.' }, { text: 'Windows nodes', good: false, why: 'User namespaces are Linux only.' }, { text: 'hostNetwork: true on the same pod', good: false, why: 'Not allowed with hostUsers: false.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now give a root-only app its own user namespace.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: real guards use judgement. Kubernetes gates only follow written rules. RBAC has no "deny" list at all. The gates check requests, not what a container does later. securityContext and the Linux kernel guard that part. A logbook only helps if someone reads it.
+
+<Interactive name="Mission" id="k6-l10-rep" steps={[{ id: 'check', text: 'On a throwaway cluster with Kubernetes 1.36 or newer, check your node: Linux kernel 6.3+ and containerd 2.0+.' }, { id: 'apply', text: 'Save the fixed legacy.yaml from this lesson and apply it.', command: 'kubectl apply -f legacy.yaml' }, { id: 'inside', text: 'Ask the pod who it is. Inside, it is root.', command: 'kubectl exec legacy -- id' }]} success="Boss inside, nobody outside!" />
+</Card>

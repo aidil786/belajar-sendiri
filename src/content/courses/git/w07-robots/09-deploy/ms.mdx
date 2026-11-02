@@ -1,0 +1,74 @@
+---
+id: git-w07-l09
+world: 7
+title: Deploy ke Pages dan Cloudflare
+summary: "Anda akan belajar: cara workflow terbitkan laman anda ke GitHub Pages atau Cloudflare."
+minutes: 5
+xp: 25
+interactives: [Transcript, OrderList, YamlBuilder, CommandBuilder, SortCards, Choice]
+needs: [git-w07-l08]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using custom workflows with GitHub Pages", url: "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages" }
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Cloudflare Workers Builds", url: "https://developers.cloudflare.com/workers/ci-cd/builds/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Dua arahan ditaip dengan tangan pada laptop: npm run build, kemudian npx wrangler deploy." lines={[{ cmd: 'npm run build' }, { cmd: 'npx wrangler deploy' }]} />
+
+Setiap kali ada catatan diari baru, anda taip ini pada laptop. Terlupa sekali, pembaca nampak halaman lama. Masa untuk serahkan kerja ini kepada robot.
+</Card>
+
+<Card id="see-flow" type="see">
+Deploy hanyalah lebih banyak langkah, selepas ujian. Susun workflow deploy ini.
+
+<Interactive name="OrderList" items={['Satu push sampai di main', 'Ambil kod', 'Pasang dan uji', 'Bina laman', 'Muat naik ke hos']} label="Langkah pertama di atas" success="Ya! Uji, bina, kemudian hantar." />
+</Card>
+
+<Card id="try-pages" type="try">
+**GitHub Pages** hos laman web terus dari repo anda. Tetapkan sumbernya kepada GitHub Actions. Kemudian bina workflow ini: bungkus laman, kemudian deploy.
+
+<Interactive name="YamlBuilder" workflow="Pages" goal={{ order: ['push', 'perms', 'job', 'checkout', 'node', 'build', 'upload', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baru.' },
+  { id: 'perms', kind: 'permissions', label: 'Kebenaran Pages', yaml: 'contents: read\npages: write\nid-token: write', means: 'Baca kod, tulis ke Pages, dan buktikan siapa yang deploy.' },
+  { id: 'writeAll', kind: 'permissions', label: 'Tulis ke kod', yaml: 'contents: write', means: 'Benarkan token ubah kod anda.', why: 'Job ini tak pernah ubah kod anda. Baca sahaja dah cukup.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy ke github-pages', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment:\n    name: github-pages\n    url: ${{ steps.deployment.outputs.page_url }}', means: 'Runner baru, deploy ke environment github-pages.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod anda ke runner.' },
+  { id: 'node', kind: 'step', label: 'Sediakan Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Pasang Node 24.' },
+  { id: 'build', kind: 'step', label: 'Pasang dan bina', yaml: '- run: npm ci && npm run build', means: 'Bina laman ke dalam dist/.' },
+  { id: 'upload', kind: 'step', label: 'Bungkus laman untuk Pages', yaml: '- uses: actions/upload-pages-artifact@v5\n  with:\n    path: dist', means: 'Bungkus dist/ jadi artifact untuk Pages.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy ke Pages', yaml: '- id: deployment\n  uses: actions/deploy-pages@v5', means: 'Terbitkan laman yang dah dibungkus.' },
+  { id: 'wrangler', kind: 'step', label: 'Deploy ke Cloudflare', yaml: '- run: npx wrangler deploy', means: 'Muat naik laman ke Cloudflare.', why: 'Yang itu untuk Cloudflare. Workflow ini untuk Pages.' }]}
+  success="Diari anda deploy ke Pages pada setiap push!" />
+
+<Hint>Trigger, permissions, job, kemudian steps. Bungkus sebelum deploy.</Hint>
+</Card>
+
+<Card id="see-cloudflare" type="see">
+Cloudflare pun hos laman. Kursus ini duduk di sana! Alatnya, Wrangler, muat naik laman anda. Dalam workflow, ia baca dua rahsia: `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID`. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'npx', means: 'jalankan alat dari npm' }, { text: 'wrangler', means: 'alat baris arahan Cloudflare' }, { text: 'deploy', means: 'muat naik laman dan jadikan live' }]} decoys={[{ text: 'dev', means: 'jalankan di komputer anda sahaja' }]} success="Itulah arahan deploy yang kursus ini guna!" />
+</Card>
+
+<Card id="see-alt" type="see">
+Cloudflare juga boleh perhati repo anda sendiri. Ia bina dan deploy pada setiap push, tanpa fail workflow. Namanya Workers Builds. Siapa buat apa? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'actions', label: 'GitHub Actions yang deploy' }, { id: 'builds', label: 'Workers Builds yang deploy' }]} items={[{ label: 'Anda tulis langkah deploy dalam YAML', bucket: 'actions', why: 'Fail workflow simpan setiap langkah.' }, { label: 'Tetapkan sekali dalam papan pemuka Cloudflare', bucket: 'builds', why: 'Cloudflare sambung ke repo anda dan jalankan build.' }, { label: 'Ujian dan deploy dalam satu workflow', bucket: 'actions', why: 'Satu fail: uji dulu, kemudian deploy.' }, { label: 'Tiada token Cloudflare dalam secrets GitHub anda', bucket: 'builds', why: 'Cloudflare bina di pihaknya sendiri, jadi GitHub tak perlu token.' }]} success="Siap! Dua-dua boleh. Pilih satu untuk setiap laman." />
+</Card>
+
+<Card id="predict" type="predict">
+Job deploy anda ada `needs: test`. Ujian gagal. Apa jadi pada deploy?
+
+<Interactive name="Choice" options={[{ label: 'Ia dilangkau. Laman lama kekal live.', correct: true, why: '`needs: test` maksudnya: hanya selepas test lulus.' }, { label: 'Ia tetap deploy', why: 'needs buat deploy tunggu ✓ dari test.' }, { label: 'Ia padam laman yang live', why: 'Tiada apa berubah. Pembaca masih dapat versi elok yang terakhir.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh deploy laman dari workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+`id-token: write` biar Pages semak bahawa deploy betul-betul datang dari workflow anda. Tiada kunci tersimpan diperlukan. Pages perlu sumbernya ditetapkan kepada GitHub Actions dalam tetapan repo. Cloudflare juga ada action sendiri, `cloudflare/wrangler-action`, yang jalankan Wrangler untuk anda.
+</Card>

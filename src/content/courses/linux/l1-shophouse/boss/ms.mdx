@@ -1,0 +1,82 @@
+---
+id: linux-l1-boss
+world: 1
+title: Kemaskan dapur bersepah
+summary: "Anda akan belajar: kemaskan folder bersepah sendiri: cari, alih dan padam dengan selamat."
+minutes: 6
+xp: 50
+interactives: [Choice, LinuxSim, SwipeJudge, OrderList, Mission]
+needs: [linux-l1-l09]
+scenario: linux-l1-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "mv (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mv.1.en.html" }
+  - { label: "rm (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rm.1.en.html" }
+  - { label: "find (Debian 13 man page)", url: "https://manpages.debian.org/trixie/findutils/find.1.en.html" }
+  - { label: "grep (Debian 13 man page)", url: "https://manpages.debian.org/trixie/grep/grep.1.en.html" }
+  - { label: "Bash manual: Filename Expansion", url: "https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: tukang masak siang tinggalkan `~/kitchen` bersepah. Resepi di lantai, fail sementara merata, dan nota pembekal hilang. Waktu sibuk makan malam dalam 10 minit. Apa dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tengok sekeliling sebelum sentuh apa-apa', correct: true, why: 'ls -a dan find tunjuk seluruh sepah. Lepas itu bertindak dengan tenang.' }, { label: 'Padam semua dan mula semula', why: 'Resepi dan nota pembekal akan hilang terus.' }, { label: 'Alih semua ke satu folder', why: 'Nanti sepah itu cuma pindah ke bilik baru.' }]} />
+</Card>
+
+<Card id="try-recipes" type="try">
+Kerja 1: tengok dengan `ls -a`. Kemudian buat bilik `recipes` dan alih tiga resepi `.txt` ke dalamnya. Biarkan `oven.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss" goal={{ fileExists: ['~/kitchen/recipes/sambal.txt', '~/kitchen/recipes/rendang.txt', '~/kitchen/recipes/kuih.txt', '~/kitchen/oven.log'], fileMissing: ['~/kitchen/sambal.txt'] }} hints={['Buat bilik: mkdir recipes', 'Satu corak alih ketiga-tiganya: mv *.txt recipes/']} solution={['ls -a', 'mkdir recipes', 'mv *.txt recipes/']} success="Kerja 1 siap! Tiga resepi di raknya, log ketuhar tak disentuh." />
+
+<Hint>Setiap resepi berakhir dengan `.txt`.</Hint>
+</Card>
+
+<Card id="check-star" type="check">
+Kenapa `mv *.txt recipes/` dan bukan `mv * recipes/`?
+
+<Interactive name="Choice" options={[{ label: '* akan ambil log, folder old, malah recipes sendiri', correct: true, why: '* padankan setiap nama. mv pun merungut ia tak boleh alih recipes ke dalam dirinya.' }, { label: '* lebih lambat', why: 'Lajunya sama. Masalahnya ialah apa yang * pilih.' }, { label: 'mv tak faham *', why: 'mv tak pernah nampak bintang itu. Shell tukar kepada nama dulu.' }]} />
+</Card>
+
+<Card id="try-tmp" type="try">
+Kerja 2: tiga fail `.tmp` kosong bersepah di lantai. Semak dulu, kemudian padam yang itu sahaja.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss-2" goal={{ fileMissing: ['~/kitchen/tmp1.tmp', '~/kitchen/tmp2.tmp', '~/kitchen/tmp3.tmp'], fileExists: ['~/kitchen/oven.log', '~/kitchen/recipes/kuih.txt', '~/kitchen/old/box/supplier.md'] }} hints={['Tengok dulu: ls *.tmp', 'Corak sama, sekarang padam: rm *.tmp']} solution={['ls *.tmp', 'rm *.tmp']} success="Kerja 2 siap! Fail sementara sudah tiada. Yang lain tak disentuh." />
+
+<Hint>Guna corak sama dua kali: sekali dengan `ls`, sekali dengan `rm`.</Hint>
+</Card>
+
+<Card id="judge-delete" type="check">
+Tukang masak malam cadangkan ini. Selamat di sini, atau berisiko?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'ls *.tmp, then rm *.tmp', good: true, why: 'Tengok, kemudian padam dengan corak yang sama.' }, { text: 'rm *', good: false, why: 'Ia padam oven.log juga. Tiada undo.' }, { text: 'rm -r old', good: false, why: 'old masih simpan nota pembekal!' }, { text: 'find . -name "*.tmp"', good: true, why: 'Carian tak ubah apa-apa. Sentiasa selamat.' }]} />
+</Card>
+
+<Card id="try-note" type="try">
+Kerja 3: nota pembekal hilang di dalam `old`. Cari ia. Kemudian simpan baris Pak Ali sahaja ke dalam `todo.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-boss-3" goal={{ fileContains: { '~/kitchen/todo.txt': 'Pak Ali brings chilli' }, fileNotContains: { '~/kitchen/todo.txt': 'Mak Su' } }} hints={['Cari: find . -name "*supplier*"', 'Simpan baris itu: grep "Pak Ali" old/box/supplier.md > todo.txt']} solution={['find . -name "*supplier*"', 'grep "Pak Ali" old/box/supplier.md > todo.txt']} success="Kerja 3 siap! Pak Ali bawa cili hari Jumaat. Ia ada dalam senarai todo." />
+
+<Hint>`find` beri path. `grep … > todo.txt` simpan baris itu.</Hint>
+</Card>
+
+<Card id="order-routine" type="check">
+Tulis rutin kemas untuk tukang masak seterusnya. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['Tengok: ls -a dan find', 'Kumpul: mkdir, kemudian mv dengan corak', 'Bersih: ls corak itu, kemudian rm', 'Cari: grep apa yang anda perlu', 'Semak: ls sekali lagi']} label="Langkah pertama di atas" success="Tengok, kumpul, bersih, cari, semak. Dapur sudah sedia!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kemaskan folder bersepah sendiri, dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alat yang anda guna: `ls -a`, `mkdir`, `mv` dengan `*`, `ls` sebelum `rm`, `find -name`, `grep … >`. Semuanya muncul lagi dalam Dunia L2.
+
+Latihan sebenar (pilihan): buat sepah sendiri dalam folder latihan, kemudian kemaskan.
+
+<Interactive name="Mission" id="linux-l1-boss-rep" steps={[{ id: 'mess', text: 'Buat dapur bersepah.', command: 'mkdir -p mess && cd mess && touch a.txt b.txt c.tmp d.tmp' }, { id: 'group', text: 'Kumpul fail .txt.', command: 'mkdir notes && mv *.txt notes/' }, { id: 'look', text: 'Tengok sebelum padam.', command: 'ls *.tmp' }, { id: 'clean', text: 'Padam fail sementara.', command: 'rm *.tmp' }, { id: 'check', text: 'Semak apa yang tinggal.', command: 'ls -R' }]} success="Dapur sebenar yang kemas!" />
+</Card>

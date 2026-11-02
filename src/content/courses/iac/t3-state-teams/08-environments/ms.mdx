@@ -1,0 +1,74 @@
+---
+id: iac-t3-l08
+world: 3
+title: Workspace atau folder setiap persekitaran?
+summary: "Anda akan belajar: bila daftar kedua (workspace) sudah cukup, dan bila setiap persekitaran perlu folder sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, TofuSim, SortCards, SpotLines, CommandBuilder, Mission]
+needs: [iac-t3-l07]
+scenario: t3-workspace
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: workspace (bahasa)", url: "https://opentofu.org/docs/language/state/workspaces/" }
+  - { label: "OpenTofu: workspace (CLI)", url: "https://opentofu.org/docs/cli/workspaces/" }
+  - { label: "Terraform: workspace", url: "https://developer.hashicorp.com/terraform/cli/workspaces" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil mahu salinan ujian kedai, di sebelah kedai sebenar. Pelan sama. Berapa daftar yang anda perlukan?
+
+<Interactive name="Choice" options={[{ label: 'Dua: satu untuk setiap salinan', correct: true, why: 'Setiap bangunan perlu daftar sendiri, kalau tidak ia bercampur.' }, { label: 'Satu, dikongsi kedua-duanya', why: 'Nanti salinan ujian tulis ganti apa yang kedai sebenar ada.' }, { label: 'Tiada: pelan sudah cukup', why: 'Pelan kata apa nak dibina. Daftar kata apa yang sudah dibina.' }]} />
+</Card>
+
+<Card id="see-ws" type="see">
+<Interactive name="Transcript" title="bash" label="OpenTofu sebenar: workspace list tunjuk default sahaja. workspace new test cipta dan tukar ke test. workspace list kemudian tunjuk default dan test, dengan bintang pada test." lines={[{ cmd: 'tofu workspace list' }, { out: '* default' }, { cmd: 'tofu workspace new test' }, { out: 'Created and switched to workspace "test"!', color: 'green' }, { out: '\nYou\'re now on a new, empty workspace. Workspaces isolate their state,\nso if you run "tofu plan" OpenTofu will not see any existing state\nfor this configuration.', color: 'green' }, { cmd: 'tofu workspace list' }, { out: '  default\n* test' }]} />
+
+**<Term id="workspace">Workspace</Term>** (ruang kerja) ialah daftar kedua untuk pelan yang sama, dalam backend yang sama. Bintang tunjuk yang anda sedang guna.
+</Card>
+
+<Card id="try-name" type="try">
+Pelan ini letak `terraform.workspace` dalam nama fail. Jalankan `tofu apply`. Papan tanda mana yang muncul?
+
+<Interactive name="TofuSim" scenario="t3-workspace" goal={{ filesExist: ['default-sign.txt'] }} hints={['Taip tofu apply dan tekan Enter, kemudian yes.', 'Kemudian ls untuk lihat fail.']} success="default-sign.txt: anda dalam workspace bernama default." />
+
+<Hint>Semua orang bermula dalam workspace bernama `default`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang seseorang tukar ke workspace `test` dan jalankan apply. Apa nama fail baharu?
+
+<Interactive name="Choice" options={[{ label: 'test-sign.txt', correct: true, why: 'terraform.workspace kini "test". Larian sebenar cetak kedai-test dengan cara sama.' }, { label: 'default-sign.txt, sekali lagi', why: 'Nama itu ikut workspace yang anda guna.' }, { label: 'Tiada: test tiada pelan', why: 'Setiap workspace guna pelan yang sama. Hanya daftarnya berbeza.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Workspace atau folder berasingan? Susun setiap keperluan.
+
+<Interactive name="SortCards" buckets={[{ id: 'ws', label: 'Workspace sudah cukup' }, { id: 'folder', label: 'Folder sendiri' }]} items={[{ label: 'Salinan ujian cepat untuk satu feature branch', bucket: 'ws', why: 'Sekejap, tetapan sama. Workspace memang untuk ini.' }, { label: 'Production, dengan kunci dan kelulusan sendiri', bucket: 'folder', why: 'Workspace kongsi satu backend, jadi kongsi peraturan aksesnya.' }, { label: 'Staging dan production dalam akaun cloud berbeza', bucket: 'folder', why: 'Kelayakan berbeza perlukan backend berbeza.' }, { label: 'Cuba satu perubahan, kemudian buang semua', bucket: 'ws', why: 'Destroy, kemudian padam workspace itu.' }]} success="Salinan sekejap: workspace. Persekitaran sebenar: folder sendiri." />
+</Card>
+
+<Card id="see-folders" type="see">
+<Interactive name="SpotLines" prompt="Tekan folder yang dikongsi kedua-dua persekitaran." lines={[{ text: 'kedai-infra/' }, { text: '  modules/' }, { text: '    shop/              reka bentuk, ditulis sekali', target: true }, { text: '  envs/' }, { text: '    staging/' }, { text: '      main.tf          guna modules/shop, backend staging' }, { text: '    production/' }, { text: '      main.tf          guna modules/shop, backend production' }]} success="Satu reka bentuk, dua folder, dua backend, dua set kunci." />
+
+Folder setiap persekitaran: setiap satu ada backend, kunci dan penyemak sendiri. Modul pastikan semuanya serupa. Itu Dunia T4.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang tukar ke `test`, dan ciptanya jika belum ada.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'bercakap dengan OpenTofu' }, { text: 'workspace', means: 'urus daftar' }, { text: 'select', means: 'tukar ke satu' }, { text: '-or-create', means: 'cipta jika belum wujud' }, { text: 'test', means: 'namanya' }]} decoys={[{ text: 'delete', means: 'buang satu workspace' }, { text: '-force', means: 'walaupun ia tak kosong' }]} success="tofu workspace select -or-create test. OpenTofu sebenar jawab: Created and switched to workspace." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih antara workspace dan folder untuk setiap persekitaran.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dengan backend local, daftar workspace duduk dalam `terraform.tfstate.d/<nama>/`. Terminal latihan ada satu workspace sahaja, jadi cuba yang lain di rumah. Di mana cerita ini tak tepat: bangunan sebenar tak boleh disalin dalam sesaat. Daftar boleh, jadi jaga ia baik-baik.
+
+<Interactive name="Mission" id="iac-t3-l08-rep" steps={[{ id: 'make', text: 'Dalam folder latihan dengan pelan pelajaran ini, cipta workspace test.', command: 'tofu init && tofu workspace new test' }, { id: 'apply', text: 'Bina dalam test. Fail itu tulis test.', command: 'tofu apply' }, { id: 'back', text: 'Kembali ke default. Daftarnya kosong.', command: 'tofu workspace select default && tofu state list' }, { id: 'clean', text: 'Kemas: destroy dalam test, kemudian padamnya.', command: 'tofu workspace select test && tofu destroy && tofu workspace select default && tofu workspace delete test' }]} success="Dua daftar, satu pelan, dan penamat yang kemas." />
+</Card>

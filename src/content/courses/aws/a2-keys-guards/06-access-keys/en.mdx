@@ -1,0 +1,66 @@
+---
+id: aws-a2-l06
+world: 2
+title: "Access keys: avoid them, rotate them"
+summary: "You will learn: why access keys are risky, what to use instead, and how to rotate one safely."
+minutes: 3
+xp: 15
+interactives: [Choice, Transcript, OrderList, CommandBuilder, SwipeJudge]
+needs: [aws-a2-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Manage access keys for IAM users", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html" }
+  - { label: "aws iam list-access-keys", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/list-access-keys.html" }
+  - { label: "aws iam update-access-key", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/update-access-key.html" }
+  - { label: "aws iam delete-access-key", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/delete-access-key.html" }
+---
+
+<Card id="hook" type="hook">
+A laptop is stolen from Kancil’s car. On it: an old AWS key in a file. The key never expires. What now?
+
+<Interactive name="Choice" options={[{ label: 'Switch the key off right away, then delete it', correct: true, why: 'A key that never expires keeps working for the thief until you act.' }, { label: 'Wait: the thief probably won’t find it', why: 'Attackers search stolen disks for keys first.' }, { label: 'Change the laptop’s password', why: 'The key file works without the laptop’s password.' }]} />
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="Transcript" title="bash" label="list-access-keys shows two keys for the user Bob: one Active, one Inactive, with their creation dates." lines={[{ cmd: 'aws iam list-access-keys --user-name Bob' }, { out: '{\n    "AccessKeyMetadata": [\n        {\n            "UserName": "Bob",\n            "Status": "Active",\n            "CreateDate": "2013-06-04T18:17:34Z",\n            "AccessKeyId": "AKIAIOSFODNN7EXAMPLE"\n        },\n        {\n            "UserName": "Bob",\n            "Status": "Inactive",\n            "CreateDate": "2013-06-06T20:42:26Z",\n            "AccessKeyId": "AKIAI44QH8DHBEXAMPLE"\n        }\n    ]\n}' }]} />
+
+An **<Term id="access-key">access key</Term>** is an ID plus a secret. It lasts until you delete it. A user can have two at most.
+</Card>
+
+<Card id="try-rotate" type="try">
+Swapping an old key for a new one is called rotating. Put the safe steps in order.
+
+<Interactive name="OrderList" items={['Create a second, new key', 'Move every app to the new key', 'Switch the old key to Inactive', 'Wait and check that nothing broke', 'Delete the old key']} label="First step at the top" success="New key first, old key off, then gone. Nothing breaks by surprise." />
+</Card>
+
+<Card id="try-off" type="try">
+Switch Bob’s old key off. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws iam update-access-key', means: 'change a key’s status' }, { text: '--access-key-id AKIAIOSFODNN7EXAMPLE', means: 'which key' }, { text: '--status Inactive', means: 'switch it off, but keep it' }, { text: '--user-name Bob', means: 'whose key' }]} decoys={[{ text: '--status Active', means: 'switches it on: the opposite' }]} success="Switched off. It prints nothing when it works." />
+</Card>
+
+<Card id="predict" type="predict">
+After you switch the old key off, an old script breaks. Can you fix it fast?
+
+<Interactive name="Choice" options={[{ label: 'Yes: switch the key back to Active, then move the script', correct: true, why: 'Inactive keys can be switched on again. That is why you wait before deleting.' }, { label: 'No: an inactive key is gone forever', why: 'Only delete is forever. Inactive is a pause.' }, { label: 'Make a third key', why: 'A user can hold two keys at most.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Better than a long-lived key, or still risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'On my laptop: aws login or aws sso login.', good: true, why: 'Short-lived badges. Nothing stored for long.' }, { text: 'On a server: a role, not a key file.', good: true, why: 'The server borrows keys that renew themselves.' }, { text: 'Keys in a private Git repo are fine.', good: false, why: 'Private repos get cloned, forked and leaked.' }, { text: 'Root access keys for scripts.', good: false, why: 'Never. Root keeps no keys at all.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now avoid access keys, and rotate one safely when you must.
+</Card>
+
+<Card id="deeper" type="deeper">
+AWS shows the secret part only once, when the key is made. Lost it? Delete the key and make a new one.
+
+`aws iam get-access-key-last-used` tells you when a key last worked. Unused for months? Delete it. Deleting is forever, so switch it off first.
+</Card>

@@ -1,0 +1,69 @@
+---
+id: docker-d3-l06
+world: 3
+title: Call containers by name
+summary: "You will learn: to reach another container by its name, not by localhost."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, TimelineTap, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l05]
+scenario: d3-shopnet
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Networking overview (DNS)", url: "https://docs.docker.com/engine/network/#dns-services" }
+  - { label: "Docker docs: Bridge network driver", url: "https://docs.docker.com/engine/network/drivers/bridge/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://localhost']} fails={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://localhost']} label="A new box on shopnet asks localhost for the menu. wget says: can't connect to remote host (127.0.0.1): Connection refused." />
+
+A new box wants the menu, so it asks localhost. `Connection refused`. Plain words: nobody serves pages inside this box itself.
+</Card>
+
+<Card id="see-dns" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'wget http://menu', title: 'Who is menu?', text: 'The box asks for the name menu.' }, { when: 'Phone book', title: 'Docker answers', text: 'On shopnet, Docker knows menu. It replies with an address like 172.18.0.2.' }, { when: 'The call', title: 'Connect', text: 'The box calls that address on port 80.' }, { when: 'The answer', title: 'Menu served', text: 'nginx in menu sends the page back.' }]} />
+
+On your own line, Docker keeps a phone book. Say a box's name, get its address. This is **<Term id="container-dns">container DNS</Term>**.
+</Card>
+
+<Card id="try-call" type="try">
+From a new box on shopnet, fetch the page at http://menu.
+
+<Interactive name="KitchenSim" scenario="d3-shopnet" goal={{ typed: 'http://menu', lastTyped: 'menu', lastExit: 0 }} hints={['Type docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu']} success="The menu answered by name!" />
+
+<Hint>The new box must be on shopnet: `--network shopnet`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Inside a container, who is localhost?
+
+<Interactive name="Choice" options={[{ label: 'That container itself', correct: true, why: 'Each box has its own localhost. To reach another box, use its name.' }, { label: 'Your laptop', why: 'Your laptop is outside the box. localhost never leaves the box.' }, { label: 'Every box on the line', why: 'localhost is only the box itself. Names reach the others.' }]} />
+</Card>
+
+<Card id="check-port" type="check">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu:8080']} fails={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu:8080']} label="wget to menu on port 8080 fails: can't connect to remote host, Connection refused." />
+
+`menu:8080` is refused too. nginx listens on port 80 inside the box. 8080 is only a hatch on your laptop.
+</Card>
+
+<Card id="check" type="check">
+An app box talks to db and menu. Good setting, or not?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'DB_HOST=db', good: true, why: 'The name works on your own network.' }, { text: 'DB_HOST=localhost', good: false, why: 'That is the app box itself. db lives in another box.' }, { text: 'DB_HOST=172.18.0.3', good: false, why: 'Addresses can change when db is made again. Names stay.' }, { text: 'MENU_URL=http://menu:80', good: true, why: 'The name, plus the port inside the box.' }, { text: 'MENU_URL=http://menu:8080', good: false, why: '8080 is a hatch on your laptop. On the line, use port 80.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now connect containers by name.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker's phone book lives at 127.0.0.11 inside each box on your own network. `--network-alias` adds a second name. Compose puts every service on one network and names them for you (World D4).
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d3-l06-rep" steps={[{ id: 'net', text: 'Make a line and a menu box.', command: 'docker network create practice-net && docker run -d --name menu --network practice-net nginx:1.30-alpine' }, { id: 'name', text: 'Call it by name.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://menu' }, { id: 'local', text: 'Now try localhost. Read the error.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://localhost' }, { id: 'clean', text: 'Clean up.', command: 'docker rm -f menu && docker network rm practice-net' }]} success="Names work. localhost is only the box itself." />
+</Card>

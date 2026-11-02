@@ -1,0 +1,68 @@
+---
+id: docker-d2-l03
+world: 2
+title: "CMD vs ENTRYPOINT"
+summary: "You will learn: which part of a start command you can swap, and which part stays."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l02]
+scenario: d2-l03
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: CMD", url: "https://docs.docker.com/reference/dockerfile/#cmd" }
+  - { label: "Dockerfile reference: ENTRYPOINT", url: "https://docs.docker.com/reference/dockerfile/#entrypoint" }
+  - { label: "Build check: JSONArgsRecommended", url: "https://docs.docker.com/reference/build-checks/json-args-recommended/" }
+---
+
+<Card id="hook" type="hook">
+The image `say:1.0` has `CMD ["echo", "Selamat datang!"]`. You type `docker run --rm say:1.0 echo Hai`. What prints?
+
+<Interactive name="Choice" options={[{ label: 'Hai', correct: true, why: 'Words after the image name replace CMD completely.' }, { label: 'Selamat datang!', why: 'That is only the default. You gave your own command.' }, { label: 'Selamat datang! Hai', why: 'CMD does not join with your words. It is swapped out.' }]} />
+</Card>
+
+<Card id="see-cmd" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l03" commands={['cat sayer/Dockerfile', 'docker run --rm say:1.0', 'docker run --rm say:1.0 echo Hai']} label="say:1.0 prints Selamat datang! by itself. With echo Hai after the image name, it prints only Hai." />
+
+`CMD` is the default order, like "the usual, please". Say something else after the image name, and your order replaces it.
+</Card>
+
+<Card id="try-entry" type="try">
+`greet:1.0` uses **<Term id="entrypoint">ENTRYPOINT</Term>**: a fixed first part. Run it. Then run it again with a place name at the end.
+
+<Interactive name="KitchenSim" scenario="d2-l03" intro={['cat greeter/Dockerfile']} goal={{ typed: '^docker run\\b.*greet:1\\.0 +\\S' }} hints={['Type docker run --rm greet:1.0', 'Now add a place: docker run --rm greet:1.0 Pasar Seni']} success="The fixed part stayed. Your words took the place of CMD." />
+
+<Hint>Put your words after `greet:1.0`, like `Pasar Seni`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`greet:1.0` has `ENTRYPOINT ["echo", "Selamat datang ke"]`. You type `docker run --rm greet:1.0 Aina`. What prints?
+
+<Interactive name="Choice" options={[{ label: 'Selamat datang ke Aina', correct: true, why: 'ENTRYPOINT stays. Your word replaces the CMD part at the end.' }, { label: 'Aina', why: 'That happens with CMD only. ENTRYPOINT is not swapped.' }, { label: 'Selamat datang ke Kedai Kancil', why: 'Kedai Kancil is the CMD default. Your word Aina replaced it.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which instruction does each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'entry', label: 'ENTRYPOINT' }, { id: 'cmd', label: 'CMD' }]} items={[{ label: 'The part that always runs', bucket: 'entry', why: 'ENTRYPOINT is the fixed part.' }, { label: 'The default you can swap', bucket: 'cmd', why: 'Type words after the image name to swap it.' }, { label: 'Gets your words added after it', bucket: 'entry', why: 'docker run words land after ENTRYPOINT.' }, { label: 'Changed only with --entrypoint', bucket: 'entry', why: 'Plain words never change it. You need the flag.' }, { label: 'Kedai Kancil in greet:1.0', bucket: 'cmd', why: 'It is the default place name.' }]} success="Fixed part: ENTRYPOINT. Swappable default: CMD." />
+</Card>
+
+<Card id="check-warning" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l03" commands={['cat shouter/Dockerfile', 'docker build -t shout:1.0 shouter']} label="The shout recipe writes CMD without brackets. The build works but shows a yellow warning: JSONArgsRecommended." />
+
+Real warning: `JSONArgsRecommended`. Plain words: write CMD as a list in brackets. Without brackets, a shell runs your app. A stop signal may not reach it.
+</Card>
+
+<Card id="win" type="win">
+You can now choose between CMD and ENTRYPOINT.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run --entrypoint whoami greet:1.0` swaps the fixed part for one run. The bracket form is called exec form. It runs your app as process 1, so `docker stop` reaches it quickly.
+
+<Interactive name="Mission" id="d2-l03-rep" steps={[{ id: 'file', text: 'Write a Dockerfile with an ENTRYPOINT echo and a CMD default, like greet.' }, { id: 'build', text: 'Build it.', command: 'docker build -t greet:1.0 .' }, { id: 'run', text: 'Run it with and without your own words.', command: 'docker run --rm greet:1.0 Pasar Seni' }]} success="You control the fixed part and the default!" />
+</Card>

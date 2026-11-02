@@ -1,0 +1,62 @@
+---
+id: git-w04-l10
+world: 4
+title: Force push, safely
+summary: "You will learn: when a force push is OK, and how --force-with-lease protects your team."
+minutes: 3
+xp: 15
+interactives: [Choice, Courier, CommandBuilder, SwipeJudge]
+needs: [git-w04-l09]
+scenario: w04-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+You pushed "Add about pgae". Oops! You fixed the message with `--amend`. Now `git push` is rejected. `git push --force` is tempting. What's the risk?
+
+<Interactive name="Choice" options={[{ label: 'It can wipe commits others pushed', correct: true, why: 'Force does not look. It just replaces. Watch it happen next.' }, { label: 'None. Force is always fine.', why: 'On a shared branch, force can delete a teammate’s work.' }, { label: 'It deletes the repo on your laptop', why: 'Your laptop is fine. The danger is on GitHub.' }]} />
+</Card>
+
+<Card id="see-force" type="see">
+<Interactive name="Courier" scenario="w04-l10-team" commands={['git push --force']} label="git push --force replaces GitHub's main with yours. Aisyah's commit and the old typo commit vanish from GitHub." />
+
+A **<Term id="force-push">force push</Term>** says: make GitHub's main exactly like mine. Aisyah pushed after your last fetch. Her commit just vanished.
+</Card>
+
+<Card id="try-build" type="try">
+Build the safer force push.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'push', means: 'send to GitHub' }, { text: '--force-with-lease', means: 'force, but only if GitHub is still where I last saw it' }]} decoys={[{ text: '--force', means: 'force with no check at all' }, { text: '--tags', means: 'sends tags; not this time' }]} success="That's the polite force push." />
+
+<Hint>Look for the one with a lease.</Hint>
+</Card>
+
+<Card id="see-lease" type="see">
+<Interactive name="Courier" scenario="w04-l10-team" commands={['git push --force-with-lease']} label="git push --force-with-lease checks GitHub first. GitHub moved since your last fetch, so the push stops and the parcel comes back. Aisyah's commit stays." />
+
+`--force-with-lease` checks first. Is GitHub still where my last fetch saw it? Aisyah pushed since, so it stops. Her work stays safe.
+</Card>
+
+<Card id="check-habits" type="check">
+Force push: OK, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Force push your own branch after you rebase it', good: true, why: 'Only you use it, so nobody loses work.' }, { text: 'Force push main, which the whole team shares', good: false, why: 'Teammates could lose commits. Pull and push instead.' }, { text: 'Use --force-with-lease instead of --force', good: true, why: 'It stops if someone pushed after your last fetch.' }, { text: 'Force push any time a push is rejected', good: false, why: 'A rejection usually means: pull first.' }]} />
+</Card>
+
+<Card id="try-courier" type="try">
+This time nobody pushed since your last fetch. Send your fixed commit safely.
+
+<Interactive name="Courier" scenario="w04-l10" actions={[{ cmd: 'git push' }, { cmd: 'git push --force-with-lease' }]} goal={{ pushed: ['main'] }} hints={['A plain push is refused after --amend. Use the lease.']} success="Fixed on GitHub, and nobody lost a thing." />
+</Card>
+
+<Card id="win" type="win">
+You can now force push only when it's safe, with --force-with-lease.
+</Card>
+
+<Card id="deeper" type="deeper">
+The lease trusts your `origin/main`. Some editors fetch quietly in the background, which updates it. Then the lease may pass without you seeing the new commits. `--force-if-includes` adds one more check for that. Shared mistakes on main? Use `git revert` instead.
+</Card>

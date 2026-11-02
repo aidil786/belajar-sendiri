@@ -1,0 +1,78 @@
+---
+id: aws-a4-l07
+world: 4
+title: "Deploy dari GitHub Actions dengan OIDC"
+summary: "Anda akan belajar: push image Kedai Kancil ke ECR dan lancarkannya di ECS dari GitHub Actions, tanpa kunci AWS yang disimpan."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, SpotLines, YamlBuilder, IamJudge]
+needs: [aws-a4-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM: Create an OIDC identity provider", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html" }
+  - { label: "IAM: Role for web identity (OIDC) federation", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html" }
+  - { label: "GitHub: OpenID Connect in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "GitHub: Deploy to Amazon ECS", url: "https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/amazon-elastic-container-service" }
+  - { label: "aws-actions/configure-aws-credentials", url: "https://github.com/aws-actions/configure-aws-credentials" }
+---
+
+<Card id="hook" type="hook">
+Workflow anda mesti push image baru ke ECR dan kemas kini service ECS. Ia perlukan kunci AWS. Yang mana?
+
+<Interactive name="Choice" options={[{ label: 'Role jangka pendek, dipinjam dengan lencana GitHub', correct: true, why: 'Ya. OIDC dari Dunia CI/CD C3. Tiada yang disimpan, jadi tiada yang lama boleh bocor.' }, { label: 'Access key yang disimpan dalam secret repo', why: 'Ia tak pernah tamat. Kebocoran berfungsi bertahun-tahun.' }, { label: 'Kunci pengguna root', why: 'Jangan sekali-kali. Kunci root buka seluruh akaun.' }]} />
+</Card>
+
+<Card id="see-flow" type="see">
+Inilah <Term id="oidc" course="cicd">OIDC</Term>, seperti dalam Dunia CI/CD C3, kini dihalakan ke AWS. Susun satu deploy.
+
+<Interactive name="OrderList" items={['Job minta ID token dari GitHub', 'AWS semak repo dan environment', 'AWS pinjamkan kunci role jangka pendek', 'Job push image ke ECR', 'ECS lancarkan task baru']} label="Langkah pertama di atas" success="Lencana, semak, kunci pinjaman, push, lancar. Kunci cair selepas job." />
+</Card>
+
+<Card id="see-trust" type="see">
+Trust policy role itu sebut lencana mana yang ia terima. Ketik baris yang benarkan satu repo dan satu environment sahaja.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang hadkan siapa boleh pinjam role." success="Hanya deploy production you/kedai-kancil dapat kunci." lines={[{ text: '"Principal": { "Federated": "arn:aws:iam::111122223333:oidc-provider/token.actions.githubusercontent.com" },' }, { text: '"Action": "sts:AssumeRoleWithWebIdentity",' }, { text: '"Condition": {' }, { text: '  "StringEquals": {' }, { text: '    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",' }, { text: '    "token.actions.githubusercontent.com:sub": "repo:you/kedai-kancil:environment:production"', target: true }, { text: '  }' }, { text: '}' }]} />
+</Card>
+
+<Card id="try-yaml" type="try">
+Bina workflow deploy. Tiada kunci disimpan.
+
+<Interactive name="YamlBuilder" workflow="Deploy to ECS" goal={{ order: ['push', 'perms', 'job', 'checkout', 'login', 'ecr', 'build', 'render', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baru.' },
+  { id: 'perms', kind: 'permissions', label: 'Minta lencana, baca kod', yaml: 'id-token: write\ncontents: read', means: 'Job boleh minta ID token dari GitHub.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Trust policy semak nama environment ini.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod ke runner.' },
+  { id: 'login', kind: 'step', label: 'Pinjam role AWS', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    role-to-assume: arn:aws:iam::111122223333:role/kedai-deploy\n    aws-region: ap-southeast-5', means: 'Tukar lencana dengan kunci jangka pendek.' },
+  { id: 'keys', kind: 'step', label: 'Log masuk dengan kunci disimpan', yaml: '- uses: aws-actions/configure-aws-credentials@v6\n  with:\n    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}\n    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}\n    aws-region: ap-southeast-5', means: 'Kunci yang disimpan dalam secret.', why: 'Itulah kunci jangka panjang yang kita mahu buang.' },
+  { id: 'ecr', kind: 'step', label: 'Log masuk ke ECR', yaml: '- id: ecr\n  uses: aws-actions/amazon-ecr-login@v2', means: 'Docker kini boleh push ke rak anda.' },
+  { id: 'build', kind: 'step', label: 'Bina dan push image', yaml: '- run: docker build -t $REGISTRY/kedai-kancil:$GITHUB_SHA . && docker push $REGISTRY/kedai-kancil:$GITHUB_SHA\n  env:\n    REGISTRY: ${{ steps.ecr.outputs.registry }}', means: 'Tag dengan commit, kemudian push.' },
+  { id: 'render', kind: 'step', label: 'Tulis image baru pada kad', yaml: '- id: render\n  uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc\n  with:\n    task-definition: taskdef.json\n    container-name: web\n    image: ${{ steps.ecr.outputs.registry }}/kedai-kancil:${{ github.sha }}', means: 'Kad resepi baru dengan image baru.' },
+  { id: 'deploy', kind: 'step', label: 'Lancar di ECS', yaml: '- uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a\n  with:\n    task-definition: ${{ steps.render.outputs.task-definition }}\n    cluster: kedai\n    service: shop\n    wait-for-service-stability: true', means: 'Daftar kad, kemas kini service, tunggu sehingga sihat.' }]}
+  success="Deploy tanpa kunci: lencana masuk, image keluar, task dilancar." />
+
+<Hint>Pencetus, kebenaran lencana, job, kemudian langkah ikut urutan deploy.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang push ke branch ujian tanpa environment production. Job mereka minta role itu. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'AWS tolak: lencana tak sebut environment production', correct: true, why: 'Baris sub mesti sama tepat. Milik mereka tidak.' }, { label: 'Ia berjaya, repo yang sama', why: 'Trust policy sebut environment juga.' }, { label: 'Ia guna kunci yang disimpan', why: 'Tiada kunci disimpan. Itulah tujuannya.' }]} />
+</Card>
+
+<Card id="check-key" type="check">
+Role deploy boleh kemas kini service. Kini satu run cuba padamnya. Adakah AWS benarkan?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-deploy/run-7', who: 'kedai-deploy', action: 'ecs:DeleteService', resource: 'arn:aws:ecs:ap-southeast-5:111122223333:service/kedai/shop' }} policies={[{ name: 'deploy-shop', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: ['ecs:UpdateService', 'ecs:DescribeServices'], Resource: 'arn:aws:ecs:ap-southeast-5:111122223333:service/kedai/shop' }] } }]} success="Betul. Kunci deploy boleh kemas kini. Ia tak boleh padam." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh deploy Kedai Kancil ke ECS dari GitHub Actions, tanpa kunci AWS disimpan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Role penuh juga perlukan hak push ECR, `ecs:RegisterTaskDefinition` dan `iam:PassRole` untuk role task. Panduan GitHub pin langkah ECS kepada commit tepat, seperti di sini. Repo baru mungkin guna format subject lain. Salin yang tepat dari dokumen OIDC GitHub.
+</Card>

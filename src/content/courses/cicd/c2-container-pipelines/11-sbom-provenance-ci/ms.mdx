@@ -1,0 +1,75 @@
+---
+id: cicd-c2-l11
+world: 2
+title: SBOM dan provenance dalam CI
+summary: "Anda akan belajar: hantar senarai ramuan dan label \"dibuat di sini\" yang ditandatangani."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotLines, ConveyorBelt, CommandBuilder, Mission]
+needs: [cicd-c2-l10]
+scenario: c2-attest
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using artifact attestations", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations" }
+  - { label: "Artifact attestations", url: "https://docs.github.com/en/actions/concepts/security/artifact-attestations" }
+  - { label: "Docker docs: build attestations", url: "https://docs.docker.com/build/metadata/attestations/" }
+  - { label: "SLSA", url: "https://slsa.dev/" }
+---
+
+<Card id="hook" type="hook">
+Seorang pelanggan tanya dua soalan. Apa ada dalam pek ini? Dan betulkah dapur anda yang buat?
+
+<Interactive name="Choice" options={[{ label: 'Senarai ramuan, dan label "dibuat di sini" yang ditandatangani', correct: true, why: 'Satu jawab apa di dalam. Satu lagi buktikan dari mana ia datang.' }, { label: 'Gambar pek yang cantik', why: 'Sesiapa boleh ambil gambar. Ia tak buktikan apa-apa.' }, { label: 'Percaya sajalah', why: 'Percaya itu bagus. Bukti yang komputer boleh semak lebih bagus.' }]} />
+</Card>
+
+<Card id="see-sbom" type="see">
+**<Term id="sbom">SBOM</Term>** ialah senarai ramuan: setiap pakej dan versinya. Provenance beritahu di mana dan bagaimana pek dibuat. Susun yang ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'sbom', label: 'SBOM (apa di dalam)' }, { id: 'prov', label: 'Provenance (siapa buat, bagaimana)' }]} items={[{ label: 'Setiap pakej dan versinya', bucket: 'sbom', why: 'Senarai ramuan.' }, { label: 'Commit yang dibina', bucket: 'prov', why: 'Dari mana resipi itu datang.' }, { label: 'Lesen setiap pustaka', bucket: 'sbom', why: 'Ia duduk di sebelah setiap ramuan.' }, { label: 'Fail workflow yang membinanya', bucket: 'prov', why: 'Dapur mana dan tali sawat mana.' }]} success="Siap! Isi lawan asal-usul." />
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- id: push' }, { text: '  uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    push: true' }, { text: '    sbom: true' }, { text: '- uses: actions/attest@v4', target: true }, { text: '  with:' }, { text: '    subject-name: ghcr.io/${{ github.repository }}' }, { text: '    subject-digest: ${{ steps.push.outputs.digest }}' }, { text: '    push-to-registry: true' }]} prompt='Ketik baris yang tandatangani label "dibuat di sini".' success="Ya! actions/attest tandatangani provenance." />
+
+`sbom: true` bungkus senarai ramuan bersama image. `actions/attest` tandatangani kenyataan <Term id="provenance">provenance</Term> untuk image yang tepat itu. Ia disimpan di sebelah image dalam GHCR.
+</Card>
+
+<Card id="try-fix" type="try">
+Tekan Run. Tandatangan gagal. Beri job ini kunci yang tiada.
+
+<Interactive name="ConveyorBelt" scenario="c2-attest" task={{ type: 'green' }} fixes={[
+  { label: 'Tambah id-token dan attestations', text: '    permissions:\n      contents: read\n      packages: write\n      id-token: write\n      attestations: write' },
+  { label: 'Tambah id-token sahaja', text: '    permissions:\n      contents: read\n      packages: write\n      id-token: write', why: 'Tandatangan dah jalan. Simpan attestation masih perlukan attestations: write.' },
+  { label: 'write-all', text: '    permissions: write-all', why: 'Semua kunci untuk setiap langkah. Jauh lebih dari yang perlu.', correct: false }]}
+  success="Ditandatangan dan disimpan. Pek anda ada label sebenar." />
+
+<Hint>Dua kunci: satu dapatkan kad pengenalan, satu simpan label.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kenapa tandatangan perlukan `id-token: write`?
+
+<Interactive name="Choice" options={[{ label: 'Job minta GitHub satu kad pengenalan jangka pendek untuk tandatangan', correct: true, why: 'Tiada kunci tersimpan yang boleh bocor. Kad itu buktikan repo dan workflow mana yang tandatangan.' }, { label: 'Untuk tulis fail SBOM', why: 'SBOM datang dari build. Kunci ini untuk tandatangan.' }, { label: 'Untuk log masuk ke GHCR', why: 'GITHUB_TOKEN dan packages: write uruskan log masuk.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Sesiapa boleh semak label itu. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'GitHub CLI' }, { text: 'attestation', means: 'urus attestation' }, { text: 'verify', means: 'semak label yang ditandatangani' }, { text: 'oci://ghcr.io/you/kedai-kancil:1.2.0', means: 'image itu (oci:// maksudnya image dalam registry)' }, { text: '-R', means: 'repo yang sepatutnya membinanya' }, { text: 'you/kedai-kancil', means: 'pemilik/repo' }]} decoys={[{ text: 'sign', means: 'buat tandatangan baru' }, { text: 'docker://ghcr.io/you/kedai-kancil:1.2.0', means: 'awalan yang salah' }]} success="Begitulah sesiapa boleh semak label anda." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar SBOM dan provenance bertandatangan dengan setiap image.
+</Card>
+
+<Card id="deeper" type="deeper">
+Attestation sahaja capai SLSA Build Level 2. Build dalam reusable workflow boleh capai Level 3. Repo awam catat tandatangan dalam log awam Sigstore. Repo peribadi guna Sigstore milik GitHub. Untuk fail SBOM, `actions/attest` terima `sbom-path`.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="c2-l11-rep" steps={[{ id: 'perm', text: 'Dalam repo latihan awam, tambah id-token: write dan attestations: write.' }, { id: 'attest', text: 'Tambah actions/attest selepas push, dengan digest image itu.' }, { id: 'verify', text: 'Push ke main, kemudian semak label itu.', command: 'gh attestation verify oci://ghcr.io/YOUR-NAME/YOUR-REPO:main -R YOUR-NAME/YOUR-REPO' }]} success="Image anda bawa bukti dari mana ia datang!" />
+</Card>

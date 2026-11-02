@@ -1,0 +1,63 @@
+---
+id: obs-o3-l05
+world: 3
+title: "Variables and templating"
+summary: "You will learn: to make one dashboard serve every shop with a drop-down."
+minutes: 4
+xp: 20
+interactives: [Choice, CommandBuilder, PromQLPlayground, SortCards, Mission]
+needs: [obs-o3-l04]
+scenario: o2-shop-requests
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana variables", url: "https://grafana.com/docs/grafana/latest/dashboards/variables/" }
+  - { label: "Prometheus template variables", url: "https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil has two shop servers, and soon five. Do you build one dashboard per shop?
+
+<Interactive name="Choice" options={[{ label: 'One dashboard with a drop-down to pick the shop', correct: true, why: 'Yes. Fix a panel once, every shop gets it.' }, { label: 'Five copies, one per shop', why: 'Change one panel, then remember the other four. Copies drift apart.' }]} />
+</Card>
+
+<Card id="see-swap" type="see">
+You picked shop-1 and shop-2. Grafana swaps `$instance` before Prometheus sees it. Write what Prometheus gets.
+
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial="sum by (instance) (rate(http_requests_total[5m]))" goal={{ resultCount: 2, labelNames: ['instance'], typed: 'shop-1\\|shop-2' }} hints={['After the metric name, add a matcher in braces: instance =~ "shop-1|shop-2".']} solution={'sum by (instance) (rate(http_requests_total{instance=~"shop-1|shop-2"}[5m]))'} success="Two shops, two lines. admin-1 stays off this screen." />
+
+A **<Term id="dashboard-variable">dashboard variable</Term>** is that drop-down. Every panel reads it.
+</Card>
+
+<Card id="try-build" type="try">
+Build a panel query that follows the drop-down. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sum(rate(', means: 'add up the per-second speed' }, { text: 'http_requests_total', means: 'of the request counter' }, { text: '{instance=~"$instance"}', means: 'only the shops picked in the drop-down' }, { text: '[$__rate_interval]', means: "Grafana's window: always 4 scrapes or more" }, { text: '))', means: 'close both brackets' }]} decoys={[{ text: '{instance="$instance"}', means: 'exact match: fails when two shops are picked' }]} success="That query follows the drop-down." />
+
+<Hint>`=~` matches a pattern. Two picked shops become `shop-1|shop-2`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Two shops are picked. A panel says `instance="$instance"`, with one `=`. What does it show?
+
+<Interactive name="Choice" options={[{ label: 'No data', correct: true, why: 'Yes. = wants one exact name, and no shop is called "shop-1|shop-2".' }, { label: 'Both shops', why: 'Only =~ reads the | as "or".' }, { label: 'Only shop-1', why: '= compares the whole text, not the first part.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'grafana', label: '[$__rate_interval]' }, { id: 'fixed', label: '[5m]' }]} items={[{ label: 'rate() in a Grafana panel', bucket: 'grafana', why: 'Grafana fits the window to the zoom and the scrape interval.' }, { label: 'rate() in a recording rule', bucket: 'fixed', why: 'Prometheus runs rules alone. It has no Grafana variables.' }, { label: 'rate() in an alert rule', bucket: 'fixed', why: 'Alert rules also run inside Prometheus: use a fixed window.' }]} success="Grafana words stay in Grafana." />
+
+**$__rate_interval** only works inside Grafana. Rules run in Prometheus, so they use a fixed window.
+</Card>
+
+<Card id="win" type="win">
+You can now make one dashboard serve every shop with a variable.
+</Card>
+
+<Card id="deeper" type="deeper">
+Make the variable a Query variable: type Label values, label `instance`, metric `up`. Turn on Multi-value and Include All. Variables can chain: pick a `job`, and the `instance` list shrinks to match.
+
+<Interactive name="Mission" id="obs-o3-l05-real" steps={[{ id: 'open', text: 'Open your practice Grafana (from the last lesson), with a Prometheus data source.' }, { id: 'var', text: 'Dashboard settings, Variables: add a Query variable named instance, Label values of instance.' }, { id: 'use', text: 'Change a panel query to use {instance=~"$instance"}. Pick two values and watch it change.' }]} success="Your first drop-down works!" />
+</Card>

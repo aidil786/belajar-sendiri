@@ -1,0 +1,63 @@
+---
+id: docker-d5-l03
+world: 5
+title: "No latest in production"
+summary: "You will learn: to tag images so you always know what is running."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, KitchenReplay, SwipeJudge, KitchenSim, Choice, Mission]
+needs: [docker-d5-l02]
+scenario: d5-tags
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "Docker build best practices", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+Production ran `kedai-api:latest` all week. Nobody touched production. So why did it break on Friday? Tap each day.
+
+<Interactive name="TimelineTap" events={[{ when: 'Monday', title: 'Push kedai-api:latest', text: 'Version 1.3. Production pulls latest. All good.' }, { when: 'Wednesday', title: 'Push kedai-api:latest again', text: 'Version 1.4, not tested yet. latest now points here.' }, { when: 'Friday, 3 a.m.', title: 'A server restarts', text: 'It pulls latest and gets 1.4. The shop breaks. Which version was it?' }]} />
+</Card>
+
+<Card id="see-latest" type="see">
+<Interactive name="KitchenReplay" scenario="d5-tags" commands={['echo "// v2" >> server.js', "docker build -t kedai-api:latest .", "docker images"]} label="After a small change, kedai-api:latest is built again. The label moves to the new image. The old one is left untagged." />
+
+`latest` is just a label name. It does not mean newest or tested. A **<Term id="tag">tag</Term>** moves to whatever you built last.
+</Card>
+
+<Card id="sort-tags" type="try">
+Good tag for production? Swipe right for yes.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'kedai-api:1.4.2', good: true, why: 'A version number. It names one exact release.' }, { text: 'kedai-api:latest', good: false, why: 'It moves with every build. You never know what you get.' }, { text: 'kedai-api:sha-3f9c2e1', good: true, why: 'The Git commit it came from. Easy to trace.' }, { text: 'kedai-api:new', good: false, why: 'New compared to what? Tomorrow it is old.' }, { text: 'kedai-api:1.4.2-final-v2', good: false, why: 'Final twice? Use a new version: 1.4.3.' }]} />
+</Card>
+
+<Card id="try-tags" type="try">
+Give one build two good tags: the version and the Git commit. One `docker build` takes two `-t` flags.
+
+<Interactive name="KitchenSim" scenario="d5-tags" goal={{ imageExists: ['kedai-api:1.4.2', 'kedai-api:sha-3f9c2e1'] }} hints={['Use -t twice: -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1', 'Type docker build -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1 .']} success="Two labels, one pack. Both name the same release." />
+
+<Hint>`docker build -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1 .` The dot means "this folder".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`kedai-api:1.4.2` is in production. You fix a typo. Which tag does the fix get?
+
+<Interactive name="Choice" options={[{ label: '`1.4.3`, a new version', correct: true, why: 'A released version never changes. A fix gets a new number.' }, { label: '`1.4.2` again, pushed over the old one', why: 'Then two different packs share one name. Rolling back gets messy.' }, { label: 'Only `latest`', why: 'Production would not know which pack it runs.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tag images so production always knows what it runs.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many teams also push moving tags like `1.4` and `1`, for people who want updates. Production should still name the full version, or a digest (next lesson). In CI, `docker/metadata-action` makes these tags from your Git tags ([Part 2, World C2](/en/cicd/#world-2)).
+
+Real rep (optional), in a folder with a Dockerfile and at least one Git commit:
+
+<Interactive name="Mission" id="d5-l03-rep" steps={[{ id: 'build', text: 'Build once with a version tag and a commit tag.', command: 'docker build -t practice:1.0.0 -t practice:sha-$(git rev-parse --short HEAD) .' }, { id: 'see', text: 'Both tags show the same image ID.', command: 'docker images practice' }]} success="Two honest labels on one pack!" />
+</Card>

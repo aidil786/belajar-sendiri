@@ -1,0 +1,72 @@
+---
+id: linux-l4-l04
+world: 4
+title: "Disk space: df and du"
+summary: "You will learn: to see how full a disk is, find what fills it, and free space with care."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, Choice, SwipeJudge, Mission]
+needs: [linux-l4-l03]
+scenario: linux-l4-disk
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GNU coreutils: df", url: "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html" }
+  - { label: "GNU coreutils: du", url: "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-disk" intro={['df -h /']} />
+
+The branch kitchen can't save new orders. The storeroom is 98% full! What is filling it?
+</Card>
+
+<Card id="see-df" type="see">
+`df -h` shows every disk: size, used, free. `-h` means sizes people can read. Tap the main disk, the one at `/`.
+
+<Interactive name="SpotLines" lines={[{ text: 'Filesystem      Size  Used Avail Use% Mounted on' }, { text: 'udev            963M     0  963M   0% /dev' }, { text: 'tmpfs           197M  528K  197M   1% /run' }, { text: '/dev/vda1        20G   19G  513M  98% /', target: true }, { text: '/dev/vda15      124M   12M  112M  10% /boot/efi' }]} prompt="Tap the disk mounted at /." success="20G disk, 19G used, 513M free. Time to look inside." />
+</Card>
+
+<Card id="try-du" type="try">
+`df` says how full. <Term id="disk-usage">du</Term> says which shelves are fat. Look in `/var/log`, then inside the biggest folder.
+
+<Interactive name="LinuxSim" scenario="linux-l4-disk" goal={{ lastTyped: '^sudo du -sh /var/log/kedai' }} hints={['sudo du -sh /var/log/*', 'sudo du -sh /var/log/kedai/*']} solution={['sudo du -sh /var/log/*', 'sudo du -sh /var/log/kedai/*']} success="Found it: one 17G debug log." />
+
+<Hint>`-s` gives one total per folder. `-h` gives readable sizes.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+du shows this. Which file is safe to delete?
+
+```
+17G	/var/log/kedai/debug.log
+46M	/var/log/kedai/orders.log
+```
+
+<Interactive name="Choice" options={[{ label: 'debug.log: an old switch left on', correct: true, why: 'Huge, and only for debugging. orders.log holds real orders.' }, { label: 'orders.log', why: 'Small, and it holds real orders. Keep it.' }, { label: 'The whole /var/log folder', why: 'Never. Programs need it, and other logs matter.' }]} />
+</Card>
+
+<Card id="try-free" type="try">
+Delete only `debug.log`. Then check `df -h /` again. There is no undo, so type the full path.
+
+<Interactive name="LinuxSim" scenario="linux-l4-disk" goal={{ fileMissing: ['/var/log/kedai/debug.log'], fileExists: ['/var/log/kedai/orders.log'] }} hints={['sudo rm /var/log/kedai/debug.log', 'df -h /']} solution={['sudo rm /var/log/kedai/debug.log', 'df -h /']} success="Back to 11% used. orders.log is safe." />
+</Card>
+
+<Card id="check" type="check">
+Good habit or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Look with du before you delete anything.', good: true, why: 'Find the fat shelf first.' }, { text: 'sudo rm -rf /var/log to make room.', good: false, why: 'That deletes every log and breaks programs.' }, { text: 'Ask why the log grew so big.', good: true, why: 'Or it fills up again next week.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find what fills a disk and free space safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real-world twist: a running program may still hold a deleted file open. Then the space returns only after a restart of that program. `journalctl --vacuum-size=200M` trims the journal. `ncdu` is a friendly du (`sudo apt install ncdu`). The full disk here is engine-only.
+
+<Interactive name="Mission" id="linux-l4-l04-rep" steps={[{ id: 'df', text: 'How full is your disk?', command: 'df -h' }, { id: 'du', text: 'Which folders in your home are fattest?', command: 'du -sh ~/* | sort -h | tail -n 5' }]} success="You know where your space goes." />
+</Card>

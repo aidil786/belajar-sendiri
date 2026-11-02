@@ -1,0 +1,83 @@
+---
+id: iac-t2-boss
+world: 2
+title: Three stalls from one list
+summary: "You will learn: to build many stalls from one list with variables, for_each and outputs."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, SortCards, Mission]
+needs: [iac-t2-l08]
+scenario: t2-boss
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: the for_each meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/for_each/" }
+  - { label: "OpenTofu: output values", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "OpenTofu: built-in functions", url: "https://opentofu.org/docs/language/functions/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil opens a food court with three stalls: nasi, mee and roti. The blueprint lists only nasi. What is the quickest safe change?
+
+<Interactive name="Choice" options={[{ label: 'Add mee and roti to the stalls map in terraform.tfvars', correct: true, why: 'for_each makes one file per entry. Two lines, two new stalls.' }, { label: 'Copy the resource block twice', why: 'for_each already does the copying. Just give it more items.' }, { label: 'Make two new folders', why: 'Three blueprints to keep in step. One list is enough.' }]} />
+</Card>
+
+<Card id="try-three" type="try">
+In `terraform.tfvars`, add `mee = 4` and `roti = 2` to the map. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t2-boss" open="terraform.tfvars" goal={{ stateCount: 3, filesExist: ['stalls/mee.txt', 'stalls/roti.txt'] }} hints={['Add two lines inside the braces: mee = 4 and roti = 2.', 'Then tofu apply. The plan adds 3. Type yes.']} success="Three stalls, one block, one list." />
+
+```hcl
+stalls = {
+  nasi = 5
+  mee  = 4
+  roti = 2
+}
+```
+</Card>
+
+<Card id="predict" type="predict">
+`stall_files` joins every file name with a `for` expression. What does `tofu output` print?
+
+<Interactive name="Choice" options={[{ label: 'stall_files = "stalls/mee.txt, stalls/nasi.txt, stalls/roti.txt"', correct: true, why: 'for collects the names; join glues them into one text, in key order.' }, { label: 'stall_files = "stalls/nasi.txt"', why: 'The for goes over every stall, not just the first.' }, { label: 'Nothing, outputs need a separate command', why: 'tofu output reads them from the state after apply.' }]} />
+</Card>
+
+<Card id="try-output" type="try">
+The boss wants the stall names too. In `outputs.tf`, add the output below. Then apply.
+
+<Interactive name="TofuSim" scenario="t2-boss-built" open="outputs.tf" goal={{ outputExists: ['stall_names'] }} hints={['Add a new output block under stall_files.', 'output "stall_names" { value = join(", ", keys(var.stalls)) }', 'Then tofu apply, and yes.']} success="stall_names = mee, nasi, roti. The boss can read the list." />
+
+```hcl
+output "stall_names" {
+  value = join(", ", keys(var.stalls))
+}
+```
+</Card>
+
+<Card id="check-tools" type="check">
+Which tool did each job today?
+
+<Interactive name="SortCards" buckets={[{ id: 'var', label: 'variable' }, { id: 'each', label: 'for_each' }, { id: 'out', label: 'output' }]} items={[{ label: 'Hold the list of stalls and prices', bucket: 'var', why: 'var.stalls, filled in from terraform.tfvars.' }, { label: 'Make one file per stall', bucket: 'each', why: 'One copy per map entry.' }, { label: 'Show the file names after apply', bucket: 'out', why: 'stall_files shares them.' }, { label: 'Name each copy stall["mee"]', bucket: 'each', why: 'The key becomes the copy\'s name.' }]} success="Variables in, for_each builds, outputs share." />
+</Card>
+
+<Card id="try-close" type="try">
+Mee closes. Remove its line from `terraform.tfvars`. Then type `tofu plan`. Only mee should go.
+
+<Interactive name="TofuSim" scenario="t2-boss-built" open="terraform.tfvars" goal={{ planSummary: { add: 0, change: 0, destroy: 1 } }} hints={['Delete the line mee  = 4.', 'Then type tofu plan.']} success="0 to add, 0 to change, 1 to destroy. nasi and roti never noticed." />
+
+<Hint>Delete one line, then `tofu plan`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now build many stalls from one list, and share what you built.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): build the food court on your own machine, then tidy up.
+
+<Interactive name="Mission" id="iac-t2-boss-rep" steps={[{ id: 'files', text: 'Copy variables.tf, main.tf, outputs.tf and terraform.tfvars from this boss into a folder.' }, { id: 'init', text: 'Get the provider.', command: 'tofu init' }, { id: 'apply', text: 'Build three stalls. Type yes.', command: 'tofu apply' }, { id: 'out', text: 'Read the outputs.', command: 'tofu output' }, { id: 'close', text: 'Remove mee from terraform.tfvars, then plan. Only mee goes.', command: 'tofu plan' }, { id: 'destroy', text: 'Tidy up. Type yes.', command: 'tofu destroy' }]} success="Three real stalls from one list." />
+</Card>

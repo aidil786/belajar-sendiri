@@ -1,0 +1,69 @@
+---
+id: k8s-k4-l04
+world: 4
+title: "Scratch space: emptyDir"
+summary: "You will learn: to let two containers in one pod share files, and when those files vanish."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, SortCards, Mission]
+needs: [k8s-k4-l03]
+scenario: k4-scratch
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Volumes (emptyDir)", url: "https://kubernetes.io/docs/concepts/storage/volumes/#emptydir" }
+  - { label: "Communicate between containers in the same Pod", url: "https://kubernetes.io/docs/tasks/access-application-cluster/communicate-containers-same-pod-shared-volume/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-scratch" commands={['kubectl get pods']} label="kubectl get pods shows one prep pod with 2/2 containers Running." />
+
+One tray, two cooks. The cook chops onions. The helper fries them. Each works in a separate box. Where do they pass the onions?
+</Card>
+
+<Card id="see-table" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: cook' }, { text: '    volumeMounts:' }, { text: '      - name: table' }, { text: '        mountPath: /table' }, { text: '  - name: helper' }, { text: '    volumeMounts:' }, { text: '      - name: table' }, { text: '        mountPath: /table' }, { text: 'volumes:' }, { text: '  - name: table' }, { text: '    emptyDir: {}', target: true }]} prompt="Tap the line that makes the shared table." success="emptyDir: a fresh, empty table for this tray." />
+
+An **<Term id="emptydir">emptyDir</Term>** is a scratch table on the tray. It starts empty. Both cooks mount it at `/table`, so they see the same files.
+</Card>
+
+<Card id="try-share" type="try">
+The cook puts onions on the table. Then the helper looks.
+
+<Interactive name="FoodCourtSim" scenario="k4-scratch" goal={{ typed: '-c cook -- touch /table/', lastTyped: '-c helper -- ls /table' }} hints={['Type kubectl exec deploy/prep -c cook -- touch /table/onions.txt', 'Then: kubectl exec deploy/prep -c helper -- ls /table']} success="The helper sees the cook's onions. One table, two boxes." />
+
+<Hint>`-c cook` picks which box in the tray runs the command.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The tray is deleted. The Deployment makes a new one. What is on the new table?
+
+<Interactive name="Choice" options={[{ label: 'Nothing. It is a new, empty table.', correct: true, why: 'An emptyDir is born and wiped with its pod.' }, { label: 'The onions, still there', why: 'Almost! A new pod gets a new emptyDir.' }, { label: 'The pod will not start', why: 'It starts fine, with an empty table.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k4-scratch" commands={['kubectl exec deploy/prep -c cook -- touch /table/onions.txt', 'kubectl delete pod {pod:app=prep}', 'kubectl rollout status deployment/prep --timeout=120s', 'kubectl exec deploy/prep -c helper -- ls /table']} label="The cook adds onions.txt. The pod is deleted and replaced. ls /table in the new pod prints nothing." />
+
+`ls` prints nothing. The new tray got a new table. Scratch space only, never your orders.
+</Card>
+
+<Card id="check-sort" type="check">
+Do the onions stay or go?
+
+<Interactive name="SortCards" buckets={[{ id: 'stay', label: 'Onions stay' }, { id: 'gone', label: 'Onions gone' }]} items={[{ label: 'The cook container crashes and restarts', bucket: 'stay', why: 'The pod lives on, so its table does too.' }, { label: 'The pod is deleted', bucket: 'gone', why: 'The table goes with the pod.' }, { label: 'The pod moves to another stall', bucket: 'gone', why: 'Moving means a new pod, with a new table.' }, { label: 'The helper reads the file', bucket: 'stay', why: 'Sharing is what the table is for.' }]} success="It lives as long as the pod." />
+</Card>
+
+<Card id="win" type="win">
+You can now share scratch files between containers with emptyDir.
+</Card>
+
+<Card id="deeper" type="deeper">
+`emptyDir: { medium: Memory }` keeps the table in RAM. Fast, but its files count toward the container's memory limit. `sizeLimit` caps the table. Good uses: a cache, or files a sidecar ships to a log service.
+
+Real rep (optional), on a practice cluster:
+
+<Interactive name="Mission" id="k8s-k4-l04-rep" steps={[{ id: 'copy', text: 'In the practice terminal above, type cat prep.yaml. Save it as prep.yaml on your machine.' }, { id: 'apply', text: 'Start the tray.', command: 'kubectl apply -f prep.yaml' }, { id: 'put', text: 'The cook puts onions down.', command: 'kubectl exec deploy/prep -c cook -- touch /table/onions.txt' }, { id: 'look', text: 'The helper looks.', command: 'kubectl exec deploy/prep -c helper -- ls /table' }, { id: 'tidy', text: 'Tidy up.', command: 'kubectl delete -f prep.yaml' }]} success="Two real boxes, one real table." />
+</Card>

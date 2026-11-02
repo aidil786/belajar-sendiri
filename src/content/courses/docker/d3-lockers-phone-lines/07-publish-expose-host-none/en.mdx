@@ -1,0 +1,70 @@
+---
+id: docker-d3-l07
+world: 3
+title: Publish, expose, host and none
+summary: "You will learn: which ports your laptop can reach, and the host and none network modes."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, OrderHatch, Choice, KitchenSim, SortCards, Mission]
+needs: [docker-d3-l06]
+scenario: d3-expose
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Port publishing", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "Docker docs: Host network driver", url: "https://docs.docker.com/engine/network/drivers/host/" }
+  - { label: "Docker docs: None network driver", url: "https://docs.docker.com/engine/network/drivers/none/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-expose" commands={['docker ps', 'curl localhost:8080']} fails={['curl localhost:8080']} label="docker ps shows web with 80/tcp in PORTS. curl localhost:8080 fails: Couldn't connect to server." />
+
+web is up. Its PORTS column says `80/tcp`. Yet curl says `Couldn't connect to server`. Plain words: no hatch is open on your laptop.
+</Card>
+
+<Card id="see-hatch" type="see">
+<Interactive name="OrderHatch" containers={[{ name: 'web', ports: [80], image: 'nginx:1.30-alpine' }, { name: 'db', ports: [5432], image: 'postgres:18-alpine' }]} task={{ type: 'map', host: 8080, container: 'web', port: 80 }} prompt="Open a hatch from laptop port 8080 to web port 80. Leave db alone." success="web has a hatch. db stays private." />
+
+To **publish** a port (`-p 8080:80`) opens a <Term id="port-mapping">hatch</Term> on your laptop. `EXPOSE 80` in a recipe only writes the port on the label.
+</Card>
+
+<Card id="predict" type="predict">
+db shows `5432/tcp`, with no `-p`. Who can reach it?
+
+<Interactive name="Choice" options={[{ label: 'Only boxes on its network', correct: true, why: 'Exposed is just a label. Without -p, your laptop has no hatch to it.' }, { label: 'Your laptop, at localhost:5432', why: 'No hatch was opened. That needs -p 5432:5432.' }, { label: 'Anyone on the internet', why: 'Nothing is published, so nobody outside can knock.' }]} />
+</Card>
+
+<Card id="try-publish" type="try">
+Give web a hatch on 8080. A box can't get a new hatch later, so make it again.
+
+<Interactive name="KitchenSim" scenario="d3-expose" goal={{ portMapped: { web: '8080:80' }, reachable: 'localhost:8080' }} hints={['Type docker rm -f web', 'Type docker run -d --name web -p 8080:80 nginx:1.30-alpine', 'Then curl localhost:8080']} success="Hatch 8080 is open. The page comes through." />
+
+<Hint>Hatches are set when a box is made. Remove web, then run it with `-p 8080:80`.</Hint>
+</Card>
+
+<Card id="see-modes" type="see">
+Each box gets a line type. The default is bridge. **host** shares your laptop's own line. none has no line at all. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'bridge', label: 'bridge (default)' }, { id: 'host', label: 'host' }, { id: 'none', label: 'none' }]} items={[{ label: 'Its own line; your laptop reaches it through -p', bucket: 'bridge', why: 'The normal setup. Hatches decide what your laptop sees.' }, { label: "Uses the laptop's ports directly", bucket: 'host', why: 'The app listens straight on your laptop.' }, { label: '-p is thrown away', bucket: 'host', why: 'No hatch is needed, so Docker drops -p with a warning.' }, { label: 'Only loopback inside', bucket: 'none', why: 'Not even the internet. Good for offline jobs.' }]} success="bridge, host, none: three kinds of line." />
+</Card>
+
+<Card id="check-host-none" type="check">
+<Interactive name="KitchenReplay" scenario="d3-expose" commands={['docker run -d --name hostbox --network host -p 8082:80 alpine:3.22 sleep 300', 'docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8']} fails={['docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8']} label="host mode prints: WARNING: Published ports are discarded when using host network mode. With none, ping says: Network unreachable." />
+
+Real words from Docker: host mode discards `-p`. With none, `Network unreachable`: the box has no line out.
+</Card>
+
+<Card id="win" type="win">
+You can now choose which ports your laptop can reach.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-p 8080:80` listens on every network card, so your Wi-Fi neighbours may reach it too. `-p 127.0.0.1:8080:80` keeps the hatch for your laptop only. `-P` opens a random hatch for each exposed port. On Docker Desktop, host mode needs a recent version; check the docs.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d3-l07-rep" steps={[{ id: 'local', text: 'Publish for your laptop only.', command: 'docker run -d --name web -p 127.0.0.1:8080:80 nginx:1.30-alpine' }, { id: 'port', text: 'See the hatch.', command: 'docker port web' }, { id: 'none', text: 'Try a box with no line.', command: 'docker run --rm --network none alpine:3.22 ping -c 1 8.8.8.8' }, { id: 'clean', text: 'Clean up.', command: 'docker rm -f web' }]} success="You opened only the hatch you needed." />
+</Card>

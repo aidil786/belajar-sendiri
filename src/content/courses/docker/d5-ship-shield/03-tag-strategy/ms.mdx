@@ -1,0 +1,63 @@
+---
+id: docker-d5-l03
+world: 5
+title: "Tiada latest dalam production"
+summary: "Anda akan belajar: tag image supaya anda sentiasa tahu apa yang sedang berjalan."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, KitchenReplay, SwipeJudge, KitchenSim, Choice, Mission]
+needs: [docker-d5-l02]
+scenario: d5-tags
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker image tag", url: "https://docs.docker.com/reference/cli/docker/image/tag/" }
+  - { label: "Amalan terbaik membina image", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+Production jalankan `kedai-api:latest` sepanjang minggu. Tiada siapa usik production. Jadi kenapa ia rosak hari Jumaat? Tekan setiap hari.
+
+<Interactive name="TimelineTap" events={[{ when: 'Isnin', title: 'Push kedai-api:latest', text: 'Versi 1.3. Production pull latest. Semua okey.' }, { when: 'Rabu', title: 'Push kedai-api:latest sekali lagi', text: 'Versi 1.4, belum diuji. latest kini tunjuk ke sini.' }, { when: 'Jumaat, 3 pagi', title: 'Satu server mula semula', text: 'Ia pull latest dan dapat 1.4. Kedai rosak. Versi mana tadi?' }]} />
+</Card>
+
+<Card id="see-latest" type="see">
+<Interactive name="KitchenReplay" scenario="d5-tags" commands={['echo "// v2" >> server.js', "docker build -t kedai-api:latest .", "docker images"]} label="Selepas satu perubahan kecil, kedai-api:latest dibina semula. Label itu pindah ke image baru. Yang lama tinggal tanpa tag." />
+
+`latest` cuma nama label. Ia bukan bermaksud terbaru atau sudah diuji. **<Term id="tag">Tag</Term>** pindah ke apa sahaja yang anda bina paling akhir.
+</Card>
+
+<Card id="sort-tags" type="try">
+Tag yang bagus untuk production? Leret ke kanan untuk ya.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'kedai-api:1.4.2', good: true, why: 'Nombor versi. Ia namakan satu keluaran yang tepat.' }, { text: 'kedai-api:latest', good: false, why: 'Ia pindah setiap kali bina. Anda tak tahu apa yang anda dapat.' }, { text: 'kedai-api:sha-3f9c2e1', good: true, why: 'Commit Git asalnya. Senang dijejak.' }, { text: 'kedai-api:new', good: false, why: 'Baru berbanding apa? Esok ia sudah lama.' }, { text: 'kedai-api:1.4.2-final-v2', good: false, why: 'Final dua kali? Guna versi baru: 1.4.3.' }]} />
+</Card>
+
+<Card id="try-tags" type="try">
+Beri satu binaan dua tag yang bagus: versi dan commit Git. Satu `docker build` boleh ambil dua `-t`.
+
+<Interactive name="KitchenSim" scenario="d5-tags" goal={{ imageExists: ['kedai-api:1.4.2', 'kedai-api:sha-3f9c2e1'] }} hints={['Guna -t dua kali: -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1', 'Taip docker build -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1 .']} success="Dua label, satu pek. Kedua-duanya namakan keluaran yang sama." />
+
+<Hint>`docker build -t kedai-api:1.4.2 -t kedai-api:sha-3f9c2e1 .` Titik itu bermaksud "folder ini".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`kedai-api:1.4.2` ada dalam production. Anda baiki satu salah ejaan. Tag apa untuk pembaikan itu?
+
+<Interactive name="Choice" options={[{ label: '`1.4.3`, versi baru', correct: true, why: 'Versi yang sudah keluar tak pernah berubah. Pembaikan dapat nombor baru.' }, { label: '`1.4.2` lagi, push atas yang lama', why: 'Nanti dua pek berbeza kongsi satu nama. Rollback jadi kelam-kabut.' }, { label: '`latest` sahaja', why: 'Production tak tahu pek mana yang ia jalankan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tag image supaya production sentiasa tahu apa yang ia jalankan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ramai pasukan juga push tag bergerak seperti `1.4` dan `1`, untuk orang yang mahu kemas kini. Production patut tetap guna versi penuh, atau digest (pelajaran seterusnya). Dalam CI, `docker/metadata-action` buat tag ini daripada tag Git anda ([Bahagian 2, Dunia C2](/ms/cicd/#world-2)).
+
+Latihan sebenar (pilihan), dalam folder yang ada Dockerfile dan sekurang-kurangnya satu commit Git:
+
+<Interactive name="Mission" id="d5-l03-rep" steps={[{ id: 'build', text: 'Bina sekali dengan tag versi dan tag commit.', command: 'docker build -t practice:1.0.0 -t practice:sha-$(git rev-parse --short HEAD) .' }, { id: 'see', text: 'Kedua-dua tag tunjuk ID image yang sama.', command: 'docker images practice' }]} success="Dua label jujur pada satu pek!" />
+</Card>

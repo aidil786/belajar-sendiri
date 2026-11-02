@@ -1,0 +1,67 @@
+---
+id: docker-d4-l06
+world: 4
+title: "Tambahan pilihan: profiles"
+summary: "Anda akan belajar: biarkan hidangan tambahan tutup sampai anda memintanya."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SortCards, KitchenSim, Choice, Mission]
+needs: [docker-d4-l05]
+scenario: d4-profiles
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using profiles with Compose", url: "https://docs.docker.com/compose/how-tos/profiles/" }
+  - { label: "Compose file reference: profiles", url: "https://docs.docker.com/reference/compose-file/services/#profiles" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-profiles" commands={['docker compose up -d', 'docker compose ps']} label="web, api dan db hidup. Cache dalam fail yang sama tidak." />
+
+Cache ada dalam `compose.yaml`. Anda dah jalankan `docker compose up -d`. Jadi kenapa ia tak berjalan?
+</Card>
+
+<Card id="see-profile" type="see">
+```yaml
+  cache:
+    image: redis:8-alpine
+    profiles: [cache]
+```
+
+Lauk tambahan datang hanya bila anda minta. Itulah **<Term id="compose-profile">profile</Term>**. Hidangan yang ada profile kekal tutup. Anda hidupkannya bila perlu. Susun hidangan ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'plain', label: 'Hidup dengan up -d biasa' }, { id: 'side', label: 'Hanya dengan --profile cache' }]} items={[{ label: 'web', bucket: 'plain', why: 'Tiada baris profiles: sentiasa hidup.' }, { label: 'api', bucket: 'plain', why: 'Tiada baris profiles: sentiasa hidup.' }, { label: 'db', bucket: 'plain', why: 'Tiada baris profiles: sentiasa hidup.' }, { label: 'cache', bucket: 'side', why: 'profiles: [cache] buat ia tutup secara lalai.' }]} success="Hanya cache yang tunggu diminta." />
+</Card>
+
+<Card id="try-profile" type="try">
+Pesan lauk tambahan juga. Hidupkan profile cache.
+
+<Interactive name="KitchenSim" scenario="d4-profiles" keys="compose" intro={['docker compose up -d']} goal={{ composeUp: { project: 'kedai-kancil', services: ['web', 'api', 'db', 'cache'] } }} hints={['--profile letak sebelum up.', 'Taip docker compose --profile cache up -d']} success="Empat hidangan sekarang: cache dah sertai meja." />
+
+<Hint>`docker compose --profile cache up -d`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Langsung tiada `--profile`. Anda taip `docker compose up -d cache`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Cache hidup', correct: true, why: 'Sebut nama hidangan akan hidupkan profilenya, untuk arahan itu sahaja.' }, { label: 'Tiada apa-apa: profile tutup', why: 'Sebut nama hidangan dah cukup untuk memesannya.' }, { label: 'Semua profile hidup', why: 'Hanya hidangan yang anda sebut (dan yang ia perlukan) hidup.' }]} />
+</Card>
+
+<Card id="check-down" type="check">
+<Interactive name="KitchenReplay" scenario="d4-profiles" commands={['docker compose --profile cache up -d', 'docker compose down', 'docker compose ps']} label="down biasa buang web, api dan db. Cache masih berjalan, begitu juga talian telefonnya." />
+
+Hati-hati masa tutup kedai. `down` biasa hanya kemas hidangan tanpa profile. Tambah `--profile cache` untuk kemas lauk tambahan juga.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biarkan hidangan tambahan tutup sampai anda memintanya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`COMPOSE_PROFILES=cache docker compose up -d` buat perkara sama seperti pilihan itu. Hidupkan dua dengan `--profile cache --profile debug`. Lauk tambahan yang sesuai: alat debug, laman admin, kerja yang muatkan data ujian. Nama profile guna huruf, nombor, `_`, `.` dan `-`.
+
+<Interactive name="Mission" id="d4-l06-rep" steps={[{ id: 'add', text: 'Tambah profiles: [cache] pada satu service tambahan dalam compose.yaml anda.' }, { id: 'list', text: 'Tengok service mana yang akan hidup.', command: 'docker compose config --services' }, { id: 'on', text: 'Senaraikan sekali lagi dengan profile dihidupkan.', command: 'docker compose --profile cache config --services' }]} success="Lauk tambahan, ikut permintaan." />
+</Card>

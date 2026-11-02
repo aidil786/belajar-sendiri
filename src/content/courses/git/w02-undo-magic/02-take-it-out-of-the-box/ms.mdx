@@ -1,0 +1,68 @@
+---
+id: git-w02-l02
+world: 2
+title: Keluarkan dari kotak
+summary: "Anda akan belajar: cara keluarkan fail dari kotak tanpa hilang kerja anda."
+minutes: 3
+xp: 15
+interactives: [AreasScene, DragToArea, Sim, Choice, TermReplay]
+needs: [git-w02-l01]
+scenario: w02-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'staging']} effect="wobble" label="Dua fail bergoyang dalam kotak: index.html dengan tanda hijau, dan style.css bertanda belum siap." frames={[{ working: [], staging: [{ name: 'index.html', tick: true }, { name: 'style.css', tag: 'notReady' }] }]} />
+
+Anda taip `git add .` terlalu cepat. Fail yang separuh siap pun masuk ke dalam kotak. Macam mana nak keluarkan?
+</Card>
+
+<Card id="see-unstage" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git restore --staged style.css" label="Arahan git restore --staged style.css menaip sendiri. style.css meluncur keluar dari kotak, balik ke folder kerja. index.html kekal dalam kotak." frames={[{ working: [], staging: [{ name: 'index.html', tick: true }, { name: 'style.css', tag: 'notReady', glow: true }] }, { working: [{ name: 'style.css', tag: 'notReady' }], staging: [{ name: 'index.html', tick: true }] }]} />
+
+`git restore --staged style.css` keluarkan fail itu dari kotak. Ini dipanggil **unstage** (keluarkan dari kotak).
+</Card>
+
+<Card id="try-drag" type="try">
+Seret fail yang separuh siap keluar dari kotak.
+
+<Interactive name="DragToArea" zones={['working', 'staging']} start="staging" items={[{ name: 'index.html', tick: true, target: 'staging', wrong: 'Yang ini dah siap. Biarkan dalam kotak!' }, { name: 'style.css', tag: 'notReady', target: 'working', wrong: 'Belum siap lagi!' }]} success="Ya! Hanya fail yang siap masih dalam kotak." />
+
+<Hint>Cari tanda "belum siap".</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Sekarang taip arahan itu sendiri.
+
+<Interactive name="Sim" scenario="w02-l02" panels={['areas']} goal={{ staged: ['index.html'], notStaged: ['style.css'], modified: ['style.css'] }} hints={['Taip git restore --staged style.css dan tekan Enter.', 'Jangan buang --staged. Bahagian itu maksudnya "kotak".']} success="Kotak ada index.html. style.css dah balik ke folder anda." />
+
+<Hint>Taip `git restore --staged style.css`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda baru unstage style.css. Di mana perubahan anda sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Masih dalam folder kerja', correct: true, why: 'Unstage cuma kosongkan kotak. Perubahan anda selamat.' }, { label: 'Dah dipadam', why: 'Unstage tak pernah padam perubahan. Hanya isi kotak yang berubah.' }, { label: 'Disimpan dalam commit', why: 'Tiada apa yang di-commit. Isi kotak cuma berkurang.' }]} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w02-l02" commands={['git status']} pulse label="git status senaraikan index.html dan style.css dalam kotak. Satu baris petunjuk sebut: guna git restore --staged untuk unstage." />
+
+Lupa arahannya? `git status` akan beritahu. Cari petunjuk yang sebut "to unstage".
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh keluarkan fail dari kotak dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git reset style.css` buat benda yang sama. Itu cara lama. `git restore --staged .` kosongkan seluruh kotak.
+
+<Interactive name="TermReplay" scenario="w02-l02" commands={['git reset style.css', 'git status -s']} label="git reset style.css juga keluarkan style.css dari kotak. Perubahannya kekal dalam folder." />
+</Card>

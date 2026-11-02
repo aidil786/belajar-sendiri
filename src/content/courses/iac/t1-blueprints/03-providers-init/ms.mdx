@@ -1,0 +1,86 @@
+---
+id: iac-t1-l03
+world: 1
+title: Provider dan init
+summary: "Anda akan belajar: apa itu provider, apa tofu init buat, dan cara bina gerai pertama anda."
+minutes: 4
+xp: 20
+interactives: [TofuSim, SortCards, Choice, SpotLines]
+needs: [iac-t1-l02]
+scenario: t1-first-blueprint
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu init", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "OpenTofu: providers", url: "https://opentofu.org/docs/language/providers/" }
+  - { label: "OpenTofu: provider requirements", url: "https://opentofu.org/docs/language/providers/requirements/" }
+  - { label: "OpenTofu: dependency lock file", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+---
+
+<Card id="hook" type="hook">
+Folder baru, terus dari Git. Taip `tofu plan`. Apa OpenTofu kata?
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" goal={{ typed: '^tofu plan' }} hints={['Taip tofu plan dan tekan Enter.']} success="Ralat, memang sengaja. Baca baris terakhir: jalankan tofu init." />
+
+`Error: Inconsistent dependency lock file`. Maksudnya: alatan belum ada di sini.
+</Card>
+
+<Card id="see-providers" type="see">
+OpenTofu tak boleh buat fail atau nama sendiri. **<Term id="provider">Provider (pembekal)</Term>** buat kerja itu. Siapa bekal apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'random', label: 'random (nama dan nombor)' }, { id: 'local', label: 'local (fail di komputer ini)' }]} items={[{ label: 'Nama gerai: `random_pet`', bucket: 'random', why: 'random buat nama, nombor dan string rawak.' }, { label: 'Fail papan tanda: `local_file`', bucket: 'local', why: 'local tulis fail di komputer ini.' }, { label: 'Nombor meja: `random_integer`', bucket: 'random', why: 'Nombor bulat rawak datang dari random.' }, { label: 'Fail menu', bucket: 'local', why: 'Fail ialah kerja local.' }]} success="Perkataan pertama jenis resource ialah nama provider-nya." />
+</Card>
+
+<Card id="see-version" type="check">
+`providers.tf` senaraikan pembekal. `~> 3.7` bermaksud "3.7 atau lebih baru, tapi bukan 4". Versi mana init boleh pilih?
+
+```hcl
+random = {
+  source  = "hashicorp/random"
+  version = "~> 3.7"
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '3.9.1', correct: true, why: 'Lebih baru dari 3.7, masih 3. Dibenarkan.' }, { label: '4.0.0', why: 'Versi 4 mungkin rosakkan sesuatu. ~> berhenti sebelum 4.' }, { label: '3.6.0', why: 'Lebih lama dari 3.7. Tak dibenarkan.' }]} />
+</Card>
+
+<Card id="try-init" type="try">
+Sekarang dapatkan pembekal. Taip `tofu init`.
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" goal={{ initialized: true }} hints={['Taip tofu init dan tekan Enter.']} success="init siap. Provider sudah ada, dan fail lock sudah ditulis." />
+
+<Hint>Taip `tofu init`.</Hint>
+</Card>
+
+<Card id="check-lines" type="check">
+Ini yang init paparkan. Tekan dua baris di mana muat turun bermula.
+
+<Interactive name="SpotLines" lines={[{ text: '- Finding hashicorp/local versions matching "~> 2.5"...' }, { text: '- Finding hashicorp/random versions matching "~> 3.7"...' }, { text: '- Installing hashicorp/local v2.9.1...', target: true }, { text: '- Installing hashicorp/random v3.9.1...', target: true }, { text: '- Installed hashicorp/local v2.9.1 (signed, key ID 0C0AF313E5FD9F80)' }, { text: '- Installed hashicorp/random v3.9.1 (signed, key ID 0C0AF313E5FD9F80)' }, { text: 'OpenTofu has created a lock file .terraform.lock.hcl to record the provider' }]} success="Cari, pasang, siap pasang. Fail lock ingat v2.9.1 dan v3.9.1." />
+
+`.terraform.lock.hcl` ialah **<Term id="lock-file">lock file (fail kunci)</Term>**: resit versi. Commit fail ini ke Git.
+</Card>
+
+<Card id="try-loop" type="try">
+Binaan sebenar pertama anda. Taip `tofu plan` dan baca. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" intro={['tofu init']} goal={{ resourceInState: ['random_pet.stall', 'local_file.sign'], outputExists: ['stall_name'] }} hints={['Taip tofu plan dulu. Ia tak ubah apa-apa.', 'Kemudian taip tofu apply, dan yes.']} success="Anda lukis, periksa, dan bina. Tengok stall_name!" />
+
+<Hint>`tofu plan`, kemudian `tofu apply`, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `tofu init` sekali lagi dalam folder yang sama. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia semak, guna semula apa yang ada, dan siap. Selamat.', correct: true, why: 'init selamat diulang. Fail lock kekalkan versi yang sama.' }, { label: 'Ia padam gerai yang anda bina', why: 'init tak pernah sentuh apa yang dibina. Hanya apply dan destroy.' }, { label: 'Ia pilih versi yang serba baru', why: 'Fail lock simpan pilihan lama. tofu init -upgrade minta yang lebih baru.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan provider dan jalankan init, plan dan apply pertama anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+init juga buat folder tersembunyi `.terraform/` berisi program provider. Jangan masukkan ke Git; commit `.terraform.lock.hcl`. OpenTofu muat turun provider dari registry sendiri, `registry.opentofu.org`. `terraform init` buat kerja sama dalam Terraform, dari registry HashiCorp.
+</Card>

@@ -1,0 +1,69 @@
+---
+id: aws-a4-l03
+world: 4
+title: "Fargate: no servers to look after"
+summary: "You will learn: to run ECS tasks on Fargate, pick the smallest size, and guard each task."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, CommandBuilder, SecurityGroupGate, SwipeJudge]
+needs: [aws-a4-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon ECS: AWS Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" }
+  - { label: "Amazon ECS: Task CPU and memory", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html" }
+  - { label: "Amazon ECS: Fargate task networking", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html" }
+  - { label: "AWS CLI: aws ecs run-task", url: "https://docs.aws.amazon.com/cli/latest/reference/ecs/run-task.html" }
+  - { label: "AWS Fargate pricing", url: "https://aws.amazon.com/fargate/pricing/" }
+---
+
+<Card id="hook" type="hook">
+ECS needs computers to run your tasks. You could rent EC2 servers, patch them and resize them. Is there a lazier way?
+
+<Interactive name="Choice" options={[{ label: 'Let AWS supply a right-sized spot for each task', correct: true, why: 'Yes. You bring the image. The mall brings the counter.' }, { label: 'No, servers are always your job', why: 'Not on Fargate. AWS looks after the machines.' }, { label: 'Run it on your laptop instead', why: 'Your laptop sleeps. The shop must stay open.' }]} />
+</Card>
+
+<Card id="see-fargate" type="see">
+**<Term id="fargate">Fargate</Term>** runs each task with no server for you to look after. Some jobs stay yours. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS looks after it' }, { id: 'you', label: 'Still your job' }]} items={[{ label: 'Patching the machine under the task', bucket: 'aws', why: 'With Fargate you never see that machine.' }, { label: 'Old packages inside your image', bucket: 'you', why: 'Your image, your packages. Rebuild and scan.' }, { label: 'Finding room for each task', bucket: 'aws', why: 'Fargate places tasks for you.' }, { label: 'The door guard of each task', bucket: 'you', why: 'You pick the security group and its rules.' }]} success="The machine is AWS's. The image and the doors stay yours." />
+</Card>
+
+<Card id="try-run" type="try">
+Start one task on Fargate, the smallest size, in your public row. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ecs run-task', means: 'start a task once' }, { text: '--cluster kedai', means: 'in the kedai cluster' }, { text: '--launch-type FARGATE', means: 'on Fargate, no servers' }, { text: '--task-definition kedai-web:1', means: 'from recipe card revision 1' }, { text: '--network-configuration "awsvpcConfiguration={subnets=[subnet-0e99b93155EXAMPLE],securityGroups=[sg-903004f8],assignPublicIp=ENABLED}"', means: 'which row, which guard, a public IP' }]} decoys={[{ text: '--launch-type EC2', means: 'on servers you look after' }]} success="One small task, in your row, behind your guard." />
+
+<Hint>The size lives on the recipe card: `"cpu": "256"` and `"memory": "512"`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your task uses 0.25 vCPU and 0.5 GB. What does Fargate bill you for?
+
+<Interactive name="Choice" options={[{ label: 'That CPU and memory, for each second it runs', correct: true, why: 'Stop the task, and the meter stops. Check the pricing page for today’s rates.' }, { label: 'A whole server, all month', why: 'No server is yours. You pay for the task’s size and time.' }, { label: 'Nothing, Fargate is free', why: 'ECS is free. Fargate’s CPU and memory are not.' }]} />
+</Card>
+
+<Card id="check-door" type="check">
+Each Fargate task gets its own door guard. For your test, only your laptop may visit on port 80.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'me', label: 'Your laptop', ip: '203.0.113.9', protocol: 'tcp', port: 80, want: 'in' }, { id: 'stranger', label: 'Stranger', ip: '192.0.2.77', protocol: 'tcp', port: 80, want: 'out' }, { id: 'ssh', label: 'Stranger (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="Only you can see the test shop." />
+
+<Hint>One rule: TCP 80 from 203.0.113.9/32.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good Fargate habits, or risky? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Start with 0.25 vCPU and 0.5 GB', good: true, why: 'The smallest size. Grow only if it struggles.' }, { text: 'Forget a test task for a month', good: false, why: 'It bills every second it runs. Stop it when done.' }, { text: 'Fargate Spot for tests that may stop', good: true, why: 'Cheaper, but AWS may take it back. Fine for tests.' }, { text: 'Open port 80 to everyone on a half-built app', good: false, why: 'Only your laptop needs it while you test.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run a small task on Fargate, behind its own guard.
+</Card>
+
+<Card id="deeper" type="deeper">
+Each Fargate task gets its own private IP, like a pod in [Kubernetes World K3](/en/kubernetes/#world-3). To pull from a private ECR shelf, the task needs a task execution role. That role holds the pull keys.
+</Card>

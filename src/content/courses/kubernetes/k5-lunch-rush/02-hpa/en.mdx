@@ -1,0 +1,78 @@
+---
+id: k8s-k5-l02
+world: 5
+title: "Scale out at lunch rush: HPA"
+summary: "You will learn: how an HPA adds trays when they get busy, and removes them later."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim]
+needs: [k8s-k5-l01]
+scenario: k5-rush
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Horizontal Pod Autoscaling", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" }
+  - { label: "Kubernetes: HPA walkthrough", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" }
+  - { label: "kubectl autoscale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_autoscale/" }
+---
+
+<Card id="hook" type="hook">
+At noon the queue triples. At 3 pm the food court is empty. How many trays do you want?
+
+<Interactive name="Choice" options={[{ label: 'Trays that follow the queue, up and down', correct: true, why: 'More trays at noon, fewer at 3 pm. You pay for what you use.' }, { label: '10 trays all day', why: 'At 3 pm you pay for 7 trays nobody needs.' }, { label: '3 trays all day', why: 'At noon the queue grows and customers walk away.' }]} />
+</Card>
+
+<Card id="see-hpa" type="see">
+<Interactive name="KubeReplay" scenario="k5-rush-on" commands={['kubectl get hpa shop', 'kubectl get deployment shop']} label="During lunch rush the HPA shop shows cpu 81% against a 50% target and 10 replicas. The shop Deployment is 10/10 ready." />
+
+A **<Term id="hpa">HorizontalPodAutoscaler</Term>** (HPA) is a helper manager. It checks every 15 seconds how busy the trays are. Busy? It orders more. Lunch took this shop from 3 to 10.
+</Card>
+
+<Card id="predict-math" type="predict">
+"Busy" means CPU use as a share of each tray's request. The target is 50%. Now 3 trays run at 100%. How many trays does the HPA want?
+
+<Interactive name="Choice" compact options={[{ label: '6', correct: true, why: '3 trays × 100% ÷ 50% target = 6. Twice as busy, twice the trays.' }, { label: '4', why: 'Almost! Here is the trick: trays × (now ÷ target). 3 × 2 = 6.' }, { label: '10', why: 'Only if it were way busier. The math says 6.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+An HPA is YAML too. This one will not apply. Read kubectl's error, then fix the one line.
+
+<Interactive name="YamlDoctor" file="hpa.yaml" manifest={'apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 3\n  maxReplicas: 1\n'} solution={'apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: shop\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: shop\n  minReplicas: 3\n  maxReplicas: 10\n'} keep={['minReplicas: 3', 'name: shop']} keepHint="Keep minReplicas at 3. Change the other number." hint="The most trays can't be fewer than the least. Try maxReplicas: 10." success="Applied! The HPA may now use 3 to 10 trays." />
+</Card>
+
+<Card id="try-autoscale" type="try">
+Now do it with one command. Make the HPA, then press Lunch rush. Watch the trays grow.
+
+```bash
+kubectl autoscale deployment shop --cpu=50% --min=3 --max=10
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-rush" faults={['traffic']} goal={{ hpaReplicas: { name: 'shop', min: 6 } }} hints={['Type kubectl autoscale deployment shop --cpu=50% --min=3 --max=10', 'Then press the Lunch rush button and wait about 30 seconds (+30s).', 'Check it with kubectl get hpa shop']} success="The HPA saw the rush and ordered more trays!" />
+
+<Hint>Make the HPA first. Then press Lunch rush and let the clock run.</Hint>
+</Card>
+
+<Card id="see-unknown" type="see">
+<Interactive name="KubeReplay" scenario="k5-no-request" commands={['kubectl get hpa shop']} label="An HPA on trays without a CPU request shows cpu: unknown out of 50%." />
+
+`cpu: <unknown>/50%` means: these trays have no CPU request. Without a request, "50% busy" has no meaning. Add `resources.requests.cpu` to the container.
+</Card>
+
+<Card id="predict-down" type="predict">
+Lunch ends. CPU drops to 5%. When do the extra trays go away?
+
+<Interactive name="Choice" options={[{ label: 'After about 5 minutes of low use', correct: true, why: 'The HPA waits 5 minutes before shrinking, so one quiet moment does not undo the rush.' }, { label: 'At once', why: 'Shrinking at once would flap: up, down, up again.' }, { label: 'Never. You must scale down by hand.', why: 'The HPA scales both ways. It just waits a little before shrinking.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now let an HPA add and remove trays for you.
+</Card>
+
+<Card id="deeper" type="deeper">
+Scaling down waits 5 minutes by default. Scaling up may double, or add 4 trays, per 15 seconds. Tune both with `behavior` in the YAML. In Kubernetes 1.37, `minReplicas: 0` (scale to zero) is beta and on by default. It needs an object or external metric, not CPU.
+
+Real rep (optional): try the HPA walkthrough on kubernetes.io. Use a throwaway kind cluster.
+</Card>

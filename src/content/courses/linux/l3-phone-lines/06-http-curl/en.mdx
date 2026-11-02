@@ -1,0 +1,66 @@
+---
+id: linux-l3-l06
+world: 3
+title: "HTTP with curl -v"
+summary: "You will learn: to read an HTTP order and its reply: methods, status codes and headers."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [linux-l3-l05]
+scenario: linux-l3-http
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl manual", url: "https://curl.se/docs/manpage.html" }
+  - { label: "curl: HTTP scripting", url: "https://curl.se/docs/httpscripting.html" }
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-http" intro={['curl -s localhost/promo.html']} network />
+
+The promo page shows `404 Not Found`. Is the shop broken? Or is the page just missing? The number tells you.
+</Card>
+
+<Card id="see-order" type="see">
+<Term id="http">HTTP</Term> is how orders are spoken at a web counter. `curl -v` shows the whole talk. Lines with `>` are what curl said. Tap them.
+
+<Interactive name="SpotLines" lines={[{ text: '*   Trying 127.0.0.1:80...' }, { text: '> GET /menu.html HTTP/1.1', target: true }, { text: '> Host: localhost', target: true }, { text: '> User-Agent: curl/8.14.1', target: true }, { text: '< HTTP/1.1 200 OK' }, { text: '< Content-Type: text/html' }, { text: '< Content-Length: 36' }, { text: '<h1>Menu</h1>' }]} prompt="Tap every line curl said." success="GET is the method: please give me /menu.html. Lines with < are the reply." />
+</Card>
+
+<Card id="try-codes" type="try">
+The reply starts with a **status code**. The first digit tells the story. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '2xx: here you go' }, { id: 'you', label: '4xx: something about your order' }, { id: 'kitchen', label: '5xx: the kitchen has trouble' }]} items={[{ label: '200 OK', bucket: 'ok', why: 'All good. The food comes too.' }, { label: '404 Not Found', bucket: 'you', why: 'No such page. Check the path.' }, { label: '403 Forbidden', bucket: 'you', why: 'It exists, but you may not have it.' }, { label: '503 Service Unavailable', bucket: 'kitchen', why: 'The server side is unwell or too busy.' }]} success="2 good, 4 your order, 5 the kitchen." />
+</Card>
+
+<Card id="try-v" type="try">
+Order the menu and watch the whole talk. Find the status line.
+
+<Interactive name="LinuxSim" scenario="linux-l3-http" goal={{ lastTyped: '^curl .*-v.*localhost/menu\\.html|^curl .*localhost/menu\\.html.*-v' }} hints={['Type curl -v localhost/menu.html', 'The status line starts with < HTTP/1.1']} solution={['curl -v localhost/menu.html']} success="< HTTP/1.1 200 OK, then the headers, then the menu." />
+</Card>
+
+<Card id="predict" type="predict">
+`curl -sI localhost/staff.html` says `403 Forbidden`. What is the likely cause?
+
+<Interactive name="Choice" options={[{ label: 'The file exists, but nginx may not read it', correct: true, why: 'Check its permissions with ls -l. World L2 has the keys.' }, { label: 'The page is missing', why: 'Missing would be 404.' }, { label: 'nginx is stopped', why: 'Then nobody would answer at all.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+Build the command that asks only for the top of the reply: status and headers.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'curl', means: 'talk to a web counter' }, { text: '-s', means: 'quietly: no progress meter' }, { text: '-I', means: 'only the top: status and headers' }, { text: 'localhost/menu.html', means: 'the address, then the path' }]} decoys={[{ text: '-o', means: 'save the food to a file' }]} success="curl -sI: the quick health check of any page." />
+</Card>
+
+<Card id="win" type="win">
+You can now read an HTTP reply: the status code, the headers and the body.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other methods: `POST` sends something, `PUT` replaces, `DELETE` removes. Headers carry facts like `Content-Type`. In scripts, `curl -f` fails on 4xx and 5xx: exit code 22. `curl -L` follows a redirect (3xx).
+
+<Interactive name="Mission" id="linux-l3-l06-rep" steps={[{ id: 'head', text: 'Ask a real site for its top part.', command: 'curl -sI https://example.com' }, { id: 'talk', text: 'Watch the whole talk, without the page.', command: 'curl -sv -o /dev/null https://example.com' }]} success="You spoke HTTP with a real counter." />
+</Card>

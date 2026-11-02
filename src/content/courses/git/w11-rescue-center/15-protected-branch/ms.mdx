@@ -1,0 +1,67 @@
+---
+id: git-w11-l15
+world: 11
+title: Saya push ke branch yang dilindungi
+summary: "Anda akan belajar: cara masukkan kerja anda ke branch dilindungi dengan cara yang betul."
+minutes: 3
+xp: 15
+interactives: [PracticeRepo, Choice, GraphScene, Sim]
+needs: [git-w05-l12]
+scenario: w11-l15
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About protected branches", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches" }
+  - { label: "git switch", url: "https://git-scm.com/docs/git-switch" }
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'you', name: 'diary', readme: '# My Diary\n\nOne page a day.\n' }} settings={{ rules: [{ id: 'requirePR', label: 'Wajib pull request sebelum merge ke main', on: true }, { id: 'requireReview', label: 'Wajib satu semakan yang meluluskan', on: true }, { id: 'noForce', label: 'Sekat force push', on: true }] }} />
+
+Anda push ke `main`. GitHub tolak: main dilindungi. Fuh! Peraturan buat kerjanya. Commit (titik simpan) anda masih selamat dalam komputer.
+</Card>
+
+<Card id="decide" type="try">
+Apa yang GitHub mahu dari anda?
+
+<Interactive name="Choice" options={[{ label: 'Push branch baru dan buka pull request', correct: true, why: 'main hanya terima perubahan melalui pull request yang disemak.' }, { label: 'Matikan peraturan itu', why: 'Peraturan itu jaga main. Tanya admin hanya kalau betul-betul perlu.' }, { label: 'git push --force', why: 'Branch dilindungi sekat force push juga. Dan ia berisiko.' }]} />
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="GraphScene" scenario="w11-l15" commands={['git switch -c fix-title']} label="Label baru, fix-title, muncul pada commit Fix the title. HEAD bergerak ke situ." />
+
+Commit anda cuma perlukan branch (cabang). `git switch -c fix-title` letak label baru padanya, di tempat anda sekarang.
+</Card>
+
+<Card id="try-push" type="try">
+Buat branch itu. Kemudian push ke GitHub.
+
+<Interactive name="Sim" scenario="w11-l15" panels={['graph']} goal={{ currentBranch: 'fix-title', pushed: ['fix-title'] }} hints={['Taip git switch -c fix-title', 'Kemudian taip git push -u origin fix-title']} success="Dah push! GitHub pun papar pautan untuk buka pull request." />
+
+<Hint>Taip `git switch -c fix-title`, kemudian `git push -u origin fix-title`.</Hint>
+</Card>
+
+<Card id="try-merge" type="try">
+Anda dah buka pull request. Mei dah luluskan. Merge (cantum) ke main.
+
+<Interactive name="PracticeRepo" screen="pull" at={8} repo={{ owner: 'you', name: 'diary', readme: '# My Diary\n\nOne page a day.\n' }} pulls={[{ number: 8, title: 'Fix the title', body: 'Jadikan tajuk diari lebih mesra.', author: 'anda', from: 'fix-title', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -1 +1 @@', '-<h1>My Diary</h1>', '+<h1>My Dear Diary</h1>'] }], reviews: [{ author: 'mei', state: 'approved', body: 'Cantik!' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Wajib satu semakan yang meluluskan', on: true }, { id: 'requireChecks', label: 'Wajib semakan automatik lulus', on: true }] }} task={{ type: 'merge', pr: 8 }} success="Merge dengan cara yang betul! main ada pembaikan anda." />
+
+<Hint>Tatal ke bawah dan ketik Merge pull request.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kenapa anda tak boleh force push saja ke main?
+
+<Interactive name="Choice" options={[{ label: 'Branch dilindungi sekat force push', correct: true, why: 'Secara lalai, GitHub sekat force push pada branch dilindungi.' }, { label: 'Force push kena bayar', why: 'Tidak! Ia disekat untuk jaga sejarah yang dikongsi.' }, { label: 'Ia akan berjaya saja', why: 'Peraturan itu sekatnya. Ia juga boleh padam kerja kawan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh masukkan kerja ke branch dilindungi dengan cara yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kemaskan selepas itu: `git switch main`, kemudian `git pull`. Pull kata branch dah berpecah (diverged)? Pull request itu mungkin di-squash. Kerja anda ada di GitHub, jadi `git reset --hard origin/main` selamat ketika itu. Atau, sejurus selepas push branch anda, jalankan `git branch -f main origin/main`.
+</Card>

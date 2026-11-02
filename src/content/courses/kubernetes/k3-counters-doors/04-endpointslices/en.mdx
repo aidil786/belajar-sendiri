@@ -1,0 +1,71 @@
+---
+id: k8s-k3-l04
+world: 3
+title: "EndpointSlices: who answers?"
+summary: "You will learn: to see which pods answer a Service, and fix one that nobody answers."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, LabelMatchmaker, FoodCourtSim, Choice, OrderList, Mission]
+needs: [k8s-k3-l03]
+scenario: k3-endpoints
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: EndpointSlices", url: "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/" }
+  - { label: "Kubernetes: debug Services", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-endpoints" commands={['kubectl get endpointslices -l kubernetes.io/service-name=menu', 'kubectl exec client -- wget -qO- -T 5 http://menu']} fails={['kubectl exec client -- wget -qO- -T 5 http://menu']} label="The menu's EndpointSlice shows unset ports and unset endpoints. wget gets Connection refused." />
+
+The menu has an order number, but you get `Connection refused`. Plain words: no tray stands behind that number.
+</Card>
+
+<Card id="try-labels" type="try">
+An **<Term id="endpointslice">EndpointSlice</Term>** is the list behind an order number. It names the trays that answer. This Service wants both labels. Make it pick the two shop trays.
+
+<Interactive name="LabelMatchmaker" pods={[{ name: 'shop-1', labels: { app: 'shop', tier: 'web' } }, { name: 'shop-2', labels: { app: 'shop' } }, { name: 'api-1', labels: { app: 'api', tier: 'web' } }]} labels={['tier=web', 'app=shop', 'app=api']} selector={{ app: 'shop', tier: 'web' }} task={{ type: 'select', pods: ['shop-1', 'shop-2'] }} success="Both shop trays are on the list. api-1 has tier=web, but not app=shop." />
+
+<Hint>A tray must have every label in the selector.</Hint>
+</Card>
+
+<Card id="see-ready" type="see">
+<Interactive name="KubeReplay" scenario="k3-endpoints" commands={['kubectl get endpointslices -l kubernetes.io/service-name=shop', 'kubectl scale deployment shop --replicas=1', 'sleep 10', 'kubectl get endpointslices -l kubernetes.io/service-name=shop']} label="The shop's list has three IPs. After scaling to one tray, it has one IP." />
+
+The list follows the trays. Scale down to one, and the list shrinks to one. A tray that is not ready drops off too.
+</Card>
+
+<Card id="try-fix" type="try">
+Detective time. Find why the menu has no trays. Then remake its order number.
+
+<Interactive name="FoodCourtSim" scenario="k3-endpoints" goal={{ serviceEndpoints: { name: 'menu', min: 1 }, reachable: { url: 'http://menu', from: 'client' } }} hints={['Compare the Selector in kubectl describe service menu with kubectl get pods --show-labels', 'The selector says app=menus. The pods say app=menu.', 'Remake it: kubectl delete service menu, then kubectl expose deployment menu --port=80']} success="The menu answers again. expose copied the right selector from the Deployment." />
+
+<Hint>`kubectl expose deployment menu --port=80` copies the Deployment's own selector, so it matches.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A tray fails its readiness probe. Does the order number still send it orders?
+
+<Interactive name="Choice" options={[{ label: 'No: it leaves the list until it is ready again', correct: true, why: 'Only ready trays get orders. That is what readiness is for.' }, { label: 'Yes: every tray with the label gets orders', why: 'The label gets it on the list. Readiness decides if it gets orders.' }, { label: 'The Service is deleted', why: 'The Service stays. Only that tray steps aside.' }]} />
+</Card>
+
+<Card id="check-ladder" type="check">
+A Service has no endpoints. Put the steps in order.
+
+<Interactive name="OrderList" items={['kubectl get endpointslices -l kubernetes.io/service-name=menu', 'kubectl describe service menu (read the Selector)', 'kubectl get pods --show-labels', 'Fix the selector or the labels', 'Check the endpoints again']} label="First step at the top" success="That's the ladder: look, compare, fix, check." />
+</Card>
+
+<Card id="win" type="win">
+You can now see who answers a Service, and fix it.
+</Card>
+
+<Card id="deeper" type="deeper">
+The older Endpoints object is deprecated since Kubernetes 1.33. Use EndpointSlices. One slice holds up to 100 endpoints by default. A big Service gets several slices. A pod that is shutting down stays listed for a moment, marked not ready.
+
+Real rep (optional), on a throwaway kind cluster:
+
+<Interactive name="Mission" id="k3-l04-rep" steps={[{ id: 'list', text: 'See who answers the shop.', command: 'kubectl get endpointslices -l kubernetes.io/service-name=shop' }, { id: 'break', text: 'Make a Service with a selector nobody has.', command: 'kubectl create service clusterip nobody --tcp=80:80' }, { id: 'empty', text: 'Its list is empty: no tray has app=nobody.', command: 'kubectl get endpointslices -l kubernetes.io/service-name=nobody' }]} success="You can read the list behind any order number!" />
+</Card>

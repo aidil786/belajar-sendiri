@@ -1,0 +1,69 @@
+---
+id: k8s-k4-l03
+world: 4
+title: "External Secrets and Sealed Secrets"
+summary: "You will learn: two ways to keep passwords safe when Git holds your whole setup."
+minutes: 3
+xp: 15
+interactives: [SpotLines, OrderList, Transcript, SortCards, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Sealed Secrets (project README)", url: "https://github.com/bitnami-labs/sealed-secrets" }
+  - { label: "External Secrets Operator", url: "https://external-secrets.io/latest/" }
+  - { label: "Good practices for Kubernetes Secrets", url: "https://kubernetes.io/docs/concepts/security/secrets-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Secret' }, { text: 'metadata:' }, { text: '  name: till' }, { text: 'data:' }, { text: '  PASSWORD: c3VwM3ItcmFoc2lh', target: true }]} prompt="This file sits in a public Git repo. Tap the line a stranger can read." success="One base64 -d, and the till is open." />
+
+Your team keeps every YAML file in Git. That is great, until one file is a Secret. How do you store passwords with everything else?
+</Card>
+
+<Card id="see-sealed" type="see">
+Put the **<Term id="sealed-secret">Sealed Secrets</Term>** steps in order, first at the top.
+
+<Interactive name="OrderList" items={['Write the Secret YAML on your laptop (a dry run)', 'kubeseal locks it with the cluster public key', 'Commit the SealedSecret file to Git', 'Apply it to the cluster', 'The controller unlocks it into a normal Secret']} label="First step at the top" success="Locked on your laptop. Unlocked only inside the cluster." />
+
+Only the controller in the cluster holds the private key.
+</Card>
+
+<Card id="see-kubeseal" type="see">
+<Interactive name="Transcript" title="bash" label="Three commands: make the Secret YAML without sending it, seal it with kubeseal, then delete the plain file." lines={[{ cmd: 'kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia --dry-run=client -o yaml > secret.yaml' }, { cmd: 'kubeseal --format yaml < secret.yaml > sealed-secret.yaml' }, { cmd: 'rm secret.yaml' }]} />
+
+`--dry-run=client` writes the Secret to a file only. `kubeseal` locks it. Commit the sealed file, and throw away the plain one.
+</Card>
+
+<Card id="see-external" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'sealed', label: 'Sealed Secrets' }, { id: 'external', label: 'External Secrets' }, { id: 'both', label: 'Both' }]} items={[{ label: 'Git holds the password, locked', bucket: 'sealed', why: 'The SealedSecret file is the locked password.' }, { label: 'Git holds only a pointer to a vault', bucket: 'external', why: 'The ExternalSecret names a key, not the value.' }, { label: 'Needs a vault outside the cluster', bucket: 'external', why: 'Like a cloud secret manager, or Vault.' }, { label: 'Ends as a normal Secret in the cluster', bucket: 'both', why: 'Pods read a plain Secret either way.' }]} success="Locked in Git, or fetched from a vault." />
+
+The **<Term id="external-secrets">External Secrets Operator</Term>** keeps the password in an outside vault. It copies it into a Secret, and keeps it fresh.
+</Card>
+
+<Card id="predict" type="predict">
+Your company already keeps passwords in a cloud vault. Which tool fits best?
+
+<Interactive name="Choice" options={[{ label: 'External Secrets Operator', correct: true, why: 'It fetches from the vault you already trust.' }, { label: 'Sealed Secrets', why: 'Almost! It works, but you would keep a second copy in Git.' }, { label: 'A plain Secret YAML in Git', why: 'base64 in Git is readable by everyone.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Safe to commit to Git? Swipe each file.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'sealed-secret.yaml made by kubeseal', good: true, why: 'Only the cluster can unlock it.' }, { text: 'secret.yaml with a base64 password', good: false, why: 'base64 is not a lock.' }, { text: 'An ExternalSecret that names a vault key', good: true, why: 'It holds a pointer, not the password.' }, { text: 'A Secret holding the vault access key', good: false, why: 'That key opens every password.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep passwords safe when Git holds your setup.
+</Card>
+
+<Card id="deeper" type="deeper">
+Both tools end with a plain Secret. So RBAC and encryption at rest still matter. A sealed file opens only with the same name and namespace. Back up the controller's private key. Lose it, and old sealed files never open. Other tools: SOPS, and the Secrets Store CSI driver.
+
+Real rep (optional), on a practice cluster only:
+
+<Interactive name="Mission" id="k8s-k4-l03-rep" steps={[{ id: 'install', text: 'Install the Sealed Secrets controller and kubeseal. Follow the project README only.' }, { id: 'draft', text: 'Write a practice Secret to a file.', command: 'kubectl create secret generic till --from-literal=PASSWORD=practice-only --dry-run=client -o yaml > secret.yaml' }, { id: 'seal', text: 'Seal it.', command: 'kubeseal --format yaml < secret.yaml > sealed-secret.yaml' }, { id: 'apply', text: 'Apply the sealed file.', command: 'kubectl apply -f sealed-secret.yaml' }, { id: 'see', text: 'See the plain Secret the controller made.', command: 'kubectl get secret till' }, { id: 'tidy', text: 'Delete the plain file.', command: 'rm secret.yaml' }]} success="Your password went to Git locked." />
+</Card>

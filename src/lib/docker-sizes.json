@@ -1,0 +1,109 @@
+{
+  "measured": "2026-10-31",
+  "docker": "29.9.2",
+  "note": "Unpacked layer sizes in bytes, as docker history --human=false prints them; an image = the sum of its layers.",
+  "bases": {
+    "node": {
+      "image": "node:24",
+      "bytes": 1220521984
+    },
+    "slim": {
+      "image": "node:24-slim",
+      "bytes": 249319424
+    },
+    "alpine": {
+      "image": "node:24-alpine",
+      "bytes": 181100544
+    },
+    "distroless": {
+      "image": "gcr.io/distroless/nodejs24-debian13",
+      "bytes": 159301632
+    },
+    "nginx": {
+      "image": "nginx:1.29",
+      "bytes": 174211072
+    },
+    "nginx-alpine": {
+      "image": "nginx:1.29-alpine",
+      "bytes": 66560000
+    }
+  },
+  "kekLapis": {
+    "good": [
+      {
+        "size": 8192,
+        "line": "WORKDIR /app"
+      },
+      {
+        "size": 53248,
+        "line": "COPY package.json package-lock.json ./"
+      },
+      {
+        "size": 12767232,
+        "line": "RUN npm ci --omit=dev"
+      },
+      {
+        "size": 36864,
+        "line": "COPY . ."
+      },
+      {
+        "size": 0,
+        "line": "CMD [\"node\" \"src/server.ts\"]"
+      }
+    ],
+    "slow": [
+      {
+        "size": 8192,
+        "line": "WORKDIR /app"
+      },
+      {
+        "size": 81920,
+        "line": "COPY . ."
+      },
+      {
+        "size": 12767232,
+        "line": "RUN npm ci --omit=dev"
+      },
+      {
+        "size": 0,
+        "line": "CMD [\"node\" \"src/server.ts\"]"
+      }
+    ],
+    "base": {
+      "image": "node:24-alpine",
+      "bytes": 181100544
+    }
+  },
+  "shrink": {
+    "node-api": {
+      "node|single|all|dev": 1361469440,
+      "node|single|ignore|dev": 1299365888,
+      "slim|single|all|dev": 390266880,
+      "slim|single|ignore|dev": 328163328,
+      "alpine|single|all|dev": 322048000,
+      "alpine|single|ignore|dev": 259944448,
+      "node|stage|all|dev": 1282658304,
+      "node|stage|all|prod": 1229389824,
+      "node|stage|ignore|dev": 1282658304,
+      "node|stage|ignore|prod": 1229389824,
+      "slim|stage|all|dev": 311455744,
+      "slim|stage|all|prod": 258187264,
+      "slim|stage|ignore|dev": 311455744,
+      "slim|stage|ignore|prod": 258187264,
+      "alpine|stage|all|dev": 243236864,
+      "alpine|stage|all|prod": 189968384,
+      "alpine|stage|ignore|dev": 243236864,
+      "alpine|stage|ignore|prod": 189968384,
+      "distroless|stage|all|dev": 221437952,
+      "distroless|stage|all|prod": 168169472,
+      "distroless|stage|ignore|dev": 221437952,
+      "distroless|stage|ignore|prod": 168169472
+    },
+    "static-site": {
+      "nginx|single|all|dev": 185606144,
+      "nginx|single|ignore|dev": 175476736,
+      "nginx-alpine|single|all|dev": 77955072,
+      "nginx-alpine|single|ignore|dev": 67825664
+    }
+  }
+}

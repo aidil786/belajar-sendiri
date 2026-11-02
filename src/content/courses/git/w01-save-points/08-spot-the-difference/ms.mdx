@@ -1,0 +1,72 @@
+---
+id: git-w01-l08
+world: 1
+title: Cari perbezaan
+summary: "Anda akan belajar: cara tengok apa sebenarnya yang berubah, baris demi baris."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, SpotLines, Choice, Sim]
+needs: [git-w01-l07]
+scenario: w01-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html bergoyang dalam folder kerja dengan tanda berubah." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+Anda ubah `index.html` semalam. Sekarang anda tak ingat apa yang diubah. Satu baris? Sepuluh baris?
+</Card>
+
+<Card id="see-diff" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git diff']} pulse label="git diff untuk index.html. Satu baris merah bermula dengan tolak: TODO: write day 3. Dua baris hijau bermula dengan tambah: Day 3 dan It felt great." />
+
+`git diff` bandingkan folder anda dengan kotak. Inilah **diff** (beza baris demi baris). Baris hijau `+` baru. Baris merah `-` dah hilang.
+</Card>
+
+<Card id="try-added" type="try">
+Tekan setiap baris yang anda tambah.
+
+<Interactive name="SpotLines" scenario="w01-l08" commands={['git diff']} targets="^\+[^+]" prompt="Tekan setiap baris yang ditambah." success="Ya! Dua baris baru: Day 3 dan It felt great." />
+
+<Hint>Baris tambahan bermula dengan satu `+`. Langkau baris `+++`: itu cuma nama fail.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda jalankan `git add index.html`. Kemudian jalankan `git diff` sekali lagi. Apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa-apa', correct: true, why: 'git diff bandingkan folder dengan kotak. Sekarang kedua-duanya sama.' }, { label: 'Baris merah dan hijau yang sama', why: 'Perubahan dah masuk kotak. Folder dan kotak kini sama.' }, { label: 'Baris merah sahaja', why: 'Kedua-dua jenis perubahan masuk kotak bersama.' }]} />
+</Card>
+
+<Card id="see-staged" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git add index.html', 'git diff', 'git diff --staged']} label="Selepas git add, git diff tak papar apa-apa. git diff --staged papar perubahan yang sama semula." />
+
+`git diff` biasa kini kosong. Untuk tengok isi kotak, tambah `--staged`. Ia bandingkan kotak dengan **commit terakhir** (titik simpan terakhir) anda.
+</Card>
+
+<Card id="see-commits" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git log --oneline', 'git diff 5ba4c72 e1ef438']} label="git log --oneline tunjuk tiga hash. git diff antara dua commit lama tunjuk TODO: write day 2 diganti dengan Day 2." />
+
+Anda juga boleh bandingkan dua **titik simpan**. Beri `git diff` dua hash, yang lama dulu. Ia tunjuk apa yang berubah di antaranya.
+</Card>
+
+<Card id="try-staged" type="try">
+Masukkan `index.html` ke dalam kotak. Kemudian tunjuk diff isi kotak.
+
+<Interactive name="Sim" scenario="w01-l08" panels={['areas']} goal={{ staged: ['index.html'], typed: '^git diff (--staged|--cached)' }} hints={['Mula-mula: git add index.html', 'Kemudian: git diff --staged']} success="Itulah tepat apa yang commit seterusnya akan simpan." />
+
+<Hint>`git add index.html`, kemudian `git diff --staged`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh nampak setiap perubahan sebelum menyimpannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--cached` sama maksudnya dengan `--staged`. `git diff --name-only` senaraikan nama fail yang berubah sahaja. Tambah nama fail untuk tengok fail itu sahaja, contohnya `git diff index.html`.
+
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git diff --name-only']} label="git diff --name-only papar satu nama sahaja: index.html." />
+</Card>

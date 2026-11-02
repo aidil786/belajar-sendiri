@@ -1,0 +1,81 @@
+---
+id: iac-t2-l06
+world: 2
+title: "for_each: satu setiap item"
+summary: "Anda akan belajar: buat satu salinan setiap item dengan for_each, dinamakan ikut item, bukan nombor."
+minutes: 5
+xp: 25
+interactives: [Choice, TofuSim, SortCards]
+needs: [iac-t2-l05]
+scenario: t2-for-each
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: the for_each meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/for_each/" }
+  - { label: "OpenTofu: count", url: "https://opentofu.org/docs/language/meta-arguments/count/" }
+---
+
+<Card id="hook" type="hook">
+Dengan `count`, tutup gerai mee buat fail roti dibina semula. Anda mahu setiap gerai kekal di tempatnya. Apa yang membantu?
+
+<Interactive name="Choice" options={[{ label: 'Namakan setiap salinan ikut gerainya, bukan nombor', correct: true, why: 'Itulah for_each. Buang mee, hanya mee yang hilang.' }, { label: 'Jangan sesekali tutup gerai', why: 'Kedai berubah. Pelan patut boleh ikut.' }, { label: 'Letak mee di hujung senarai', why: 'Ia jalan sekali. Perubahan seterusnya bawa balik perangkap itu.' }]} />
+</Card>
+
+<Card id="see-keys" type="see">
+Pelan ini guna `for_each`. Taip `tofu state list`.
+
+<Interactive name="TofuSim" scenario="t2-for-each" open="variables.tf" goal={{ lastTyped: '^tofu state list' }} hints={['Taip tofu state list dan tekan Enter.']} success={'stall["mee"], stall["nasi"], stall["roti"]. Nama, bukan nombor.'} />
+
+**<Term id="for-each">for_each</Term>** buat satu salinan setiap item. Setiap salinan dinamakan ikut kuncinya: `stall["mee"]`.
+</Card>
+
+<Card id="predict" type="predict">
+Anda buang "mee" dari set itu. Apa plan buat?
+
+<Interactive name="Choice" options={[{ label: 'Musnahkan stall["mee"] sahaja', correct: true, why: 'nasi dan roti kekal namanya, jadi yang lain tak bergerak.' }, { label: 'Tulis semula roti, kemudian musnahkan yang terakhir', why: 'Itu count. for_each tiada nombor untuk beralih.' }, { label: 'Bina semula ketiga-tiganya', why: 'Hanya kunci yang hilang akan pergi.' }]} />
+</Card>
+
+<Card id="try-remove" type="try">
+Semak. Dalam `variables.tf`, buang `"mee"` dari senarai. Kemudian taip `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t2-for-each" open="variables.tf" goal={{ planSummary: { add: 0, change: 0, destroy: 1 } }} hints={['Tukar default jadi ["nasi", "roti"].', 'Kemudian taip tofu plan.']} success="0 to add, 0 to change, 1 to destroy. Hanya mee yang pergi." />
+
+<Hint>Padam `"mee", ` dari senarai default, kemudian plan.</Hint>
+</Card>
+
+<Card id="check-pick" type="check">
+count atau for_each?
+
+<Interactive name="SortCards" buckets={[{ id: 'count', label: 'count' }, { id: 'each', label: 'for_each' }]} items={[{ label: 'Tiga pembantu yang semuanya sama', bucket: 'count', why: 'Salinan serupa: nombor sudah cukup.' }, { label: 'Satu fail untuk setiap nama gerai', bucket: 'each', why: 'Setiap salinan ada nama sendiri.' }, { label: 'Senarai gerai yang selalu berubah', bucket: 'each', why: 'Nama kekal bila item datang dan pergi.' }, { label: 'Hidupkan atau matikan satu benda', bucket: 'count', why: 'count = 1 atau count = 0.' }, { label: 'Map hidangan kepada harga', bucket: 'each', why: 'for_each terima map: kunci dan nilai.' }]} success="Salinan sama: count. Item bernama: for_each." />
+</Card>
+
+<Card id="try-map" type="try">
+`for_each` terima map juga: `each.key` ialah hidangan, `each.value` harganya. Bina tanda harga: `tofu apply`, `yes`.
+
+<Interactive name="TofuSim" scenario="t2-prices" goal={{ fileContains: { 'nasi-price.txt': 'RM5' } }} hints={['Taip tofu apply.', 'Baca plan: 2 to add. Taip yes.', 'Kemudian cat nasi-price.txt untuk baca satu tanda.']} success="nasi: RM5 dan teh: RM2. Satu fail untuk setiap entri map." />
+
+```hcl
+resource "local_file" "price" {
+  for_each = var.prices
+  filename = "${each.key}-price.txt"
+  content  = "${each.key}: RM${each.value}\n"
+}
+```
+</Card>
+
+<Card id="check-address" type="check">
+Macam mana nak sebut fail harga teh dalam arahan?
+
+<Interactive name="Choice" options={[{ label: '`local_file.price["teh"]`', correct: true, why: 'Kunci dalam tanda petik, di dalam kurungan segi empat.' }, { label: '`local_file.price[1]`', why: 'Nombor untuk count. for_each guna kunci.' }, { label: '`local_file.price.teh`', why: 'Hampir! Kunci perlukan ["…"].' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat satu salinan setiap item dengan for_each.
+</Card>
+
+<Card id="deeper" type="deeper">
+for_each terima map atau set string. Tukar list jadi set dengan `toset(var.stalls)`. Kunci mesti diketahui sebelum apply, jadi ia tak boleh datang dari nilai rawak. Dalam shell, letak tanda petik pada alamat berkurungan: `tofu state show 'local_file.stall["mee"]'`.
+</Card>

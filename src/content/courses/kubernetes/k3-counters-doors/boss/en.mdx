@@ -1,0 +1,90 @@
+---
+id: k8s-k3-boss
+world: 3
+title: Open the doors
+summary: "You will learn: to route / and /api through a Gateway with TLS, and lock the database."
+minutes: 6
+xp: 50
+interactives: [KubeReplay, YamlDoctor, FoodCourtSim, RequestTracer, Choice, Mission]
+needs: [k8s-k3-l11]
+scenario: k3-boss
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Gateway API: HTTP routing", url: "https://gateway-api.sigs.k8s.io/guides/http-routing/" }
+  - { label: "cert-manager: Gateway API support", url: "https://cert-manager.io/docs/usage/gateway/" }
+  - { label: "Kubernetes: Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-boss" commands={['kubectl get services', 'kubectl get gateway']} label="Three Services run: api, db and shop. There is no Gateway yet." />
+
+Boss: opening night at Kedai Kancil! Customers need `/` and `/api`, over HTTPS. The database must stay locked. Five rooms. Go!
+</Card>
+
+<Card id="try-sign" type="try">
+Room 1: Mei copied the /api sign from an old Ingress. It won't apply. Fix it.
+
+<Interactive name="YamlDoctor" file="api-route.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: Prefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} keep={['value: /api', 'name: api']} hint="Ingress says Prefix. HTTPRoute says something longer." success="Room 1 cleared! The sign says PathPrefix now." />
+
+<Hint>kubectl lists the path types it knows. Pick the prefix one.</Hint>
+</Card>
+
+<Card id="try-entrance" type="try">
+Room 2: build the entrance and put up the signs. Then knock on `/api`.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss" goal={{ objectExists: ['gateway/entrance', 'httproute/kedai'], reachable: { url: 'http://172.18.0.200/api', contains: 'nasi lemak' } }} hints={['Type ls to see the files.', 'Type kubectl apply -f entrance.yaml, then kubectl apply -f routes.yaml', 'Test it: curl -s http://172.18.0.200/api']} success="Room 2 cleared! / goes to the shop, /api to the api." />
+
+<Hint>The door is `entrance.yaml`. The signs are `routes.yaml`.</Hint>
+</Card>
+
+<Card id="try-trace" type="try">
+Room 3: on a teammate's copy, `/api` answers 503. Find the broken hop and switch it back.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/api', service: 'api', port: 80 }, { path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 8080, selector: { app: 'api' } }, { name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'api-6d8f7b9c5d-k2x8p', labels: { app: 'api' }, containerPort: 8080 }, { name: 'api-6d8f7b9c5d-w9q4z', labels: { app: 'api' }, containerPort: 8080 }, { name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/api/menu' } }} breaks={['path', 'selector', 'targetPort']} broken={['selector']} task={{ type: 'deliver' }} success="Room 3 cleared! The order number finds its trays again." />
+
+<Hint>503 means the order number has no ready trays. Check what it selects.</Hint>
+</Card>
+
+<Card id="try-tls" type="try">
+Room 4: lock the order on the way. The certificate Secret `kedai-tls` is ready. Open the HTTPS door.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss-tls" goal={{ reachable: { url: 'https://172.18.0.200/', host: 'kedai.example' } }} hints={['Type cat tls.yaml to read it.', 'Type kubectl apply -f tls.yaml', 'Check: kubectl get gateway entrance']} success="Room 4 cleared! HTTPS on port 443 for kedai.example." />
+
+<Hint>`tls.yaml` adds the HTTPS listener to the same entrance.</Hint>
+</Card>
+
+<Card id="check-renew" type="check">
+Your boss asks: "Who renews that certificate in three months?"
+
+<Interactive name="Choice" options={[{ label: 'cert-manager, by itself, before it expires', correct: true, why: 'The annotation on the Gateway tells it what to look after.' }, { label: 'You, with a calendar reminder', why: 'That is the old way. cert-manager watches the date for you.' }, { label: 'The Gateway renews its own certificate', why: 'The Gateway only uses the Secret. cert-manager fills it.' }]} />
+</Card>
+
+<Card id="try-lock" type="try">
+Final room: lock the database. Only the api may call it. Two files are ready: `db-deny.yaml` and `db-lock.yaml`. Read them first.
+
+<Interactive name="FoodCourtSim" scenario="k3-boss-lock" goal={{ unreachable: { url: 'http://db:5432', from: 'app=shop' }, reachable: { url: 'http://db:5432', from: 'app=api' } }} hints={['Type cat db-deny.yaml and cat db-lock.yaml. Which one lets the api in?', 'Type kubectl apply -f db-lock.yaml', 'Test: kubectl exec deploy/shop -- wget -qO- -T 5 http://db:5432']} success="Boss cleared! The shop times out at the database. The api gets in." />
+
+<Hint>Locking out everyone also locks out the api. You need a guest list.</Hint>
+</Card>
+
+<Card id="check-timeout" type="check">
+Last question. Why did the shop get a timeout, not an error page?
+
+<Interactive name="Choice" options={[{ label: 'The policy drops its packets, so nobody answers', correct: true, why: 'A locked door makes no sound. The caller waits, then gives up.' }, { label: 'The database is too slow', why: 'The database answers the api at once.' }, { label: 'The Service has no endpoints', why: 'That would be Connection refused, from every pod.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now open the doors safely, and lock the database.
+</Card>
+
+<Card id="deeper" type="deeper">
+In the practice cluster, the database answers web requests on 5432. So wget can test the lock. A real Postgres speaks its own protocol. Test it with a database client instead.
+
+Real rep (optional): the same rooms on your kind cluster (kind 0.24 or newer):
+
+<Interactive name="Mission" id="k3-boss-rep" steps={[{ id: 'routes', text: 'A Gateway with / to your web app and /api to your API.' }, { id: 'tls', text: 'An HTTPS listener with a certificate from cert-manager.' }, { id: 'lock', text: 'A NetworkPolicy: only the API may reach the database.' }, { id: 'test', text: 'Test from an allowed pod and a blocked pod.' }]} success="Your food court is open, and safe!" />
+</Card>

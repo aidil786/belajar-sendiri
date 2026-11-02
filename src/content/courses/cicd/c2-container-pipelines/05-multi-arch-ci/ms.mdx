@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l05
+world: 2
+title: Binaan multi-arch dalam CI
+summary: "Anda akan belajar: bina satu image untuk komputer Intel dan Arm."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l04]
+scenario: c2-multi-arch
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: multi-platform image with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/multi-platform/" }
+  - { label: "docker/setup-qemu-action", url: "https://github.com/docker/setup-qemu-action" }
+  - { label: "Docker docs: multi-platform builds", url: "https://docs.docker.com/build/building/multi-platform/" }
+---
+
+<Card id="hook" type="hook">
+Image anda jalan di server Intel kedai. Di server Arm yang baru, ia terus berhenti: `exec format error`. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Image itu cuma ada kod untuk jenis CPU yang lain', correct: true, why: 'Maksudnya: CPU salah. Pek untuk dapur gas tak boleh masak di dapur aruhan.' }, { label: 'Server Arm itu terlalu perlahan', why: 'Bukan soal laju. CPU itu langsung tak boleh baca kodnya.' }, { label: 'Docker rosak di server itu', why: 'Docker okey. Image itu dibina untuk amd64 sahaja.' }]} />
+</Card>
+
+<Card id="see-platforms" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    tags: kedai-kancil:ci' }, { text: '    platforms: linux/amd64,linux/arm64', target: true }]} prompt="Ketik baris yang minta dua jenis CPU." success="Ya! Satu nama, dua pek di dalamnya." />
+
+**<Term id="multi-arch">Image multi-arch</Term>** ialah satu nama dengan satu pek untuk setiap CPU. Setiap komputer tarik pek yang sesuai dengannya.
+</Card>
+
+<Card id="try-fix" type="try">
+Tekan Run. Pek arm64 gagal di runner Intel ini. Pilih pembaikan untuk baris kuning.
+
+<Interactive name="ConveyorBelt" scenario="c2-multi-arch" task={{ type: 'green' }} fixes={[
+  { label: 'Tambah QEMU sebelum Buildx', text: '      - uses: docker/setup-qemu-action@v4\n      - uses: docker/setup-buildx-action@v4' },
+  { label: 'Tambah Node sebelum Buildx', text: '      - uses: actions/setup-node@v7\n      - uses: docker/setup-buildx-action@v4', why: 'Node jalankan ujian di runner. Ia tak boleh jalankan kod arm64 dalam build.' },
+  { label: 'Tambah checkout sebelum Buildx', text: '      - uses: actions/checkout@v7\n      - uses: docker/setup-buildx-action@v4', why: 'Checkout salin kod anda. Masalah CPU masih ada.' }]}
+  success="Dua-dua pek siap dibina: amd64 dan arm64." />
+
+<Hint>Runner perlukan penyesuai yang boleh berlakon jadi Arm.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+**<Term id="qemu">QEMU</Term>** ialah penyesuai itu: pekerja Intel masak untuk dapur Arm. Apa kekurangannya?
+
+<Interactive name="Choice" options={[{ label: 'Build arm64 berjalan lebih perlahan', correct: true, why: 'Berlakon perlukan usaha. Build besar boleh ambil masa lebih lama.' }, { label: 'Pek arm64 itu rosak', why: 'Ia pek arm64 yang betul. Cuma build lebih perlahan.' }, { label: 'Hanya satu pek di-push', why: 'Dua-dua di bawah satu nama. Setiap komputer tarik pek sendiri.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Komputer mana tarik pek mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'amd', label: 'linux/amd64' }, { id: 'arm', label: 'linux/arm64' }]} items={[{ label: 'Runner ubuntu-latest GitHub', bucket: 'amd', why: 'Ia guna CPU x64 jenis Intel.' }, { label: 'Raspberry Pi 5 yang jalankan Linux', bucket: 'arm', why: 'Pi guna cip Arm.' }, { label: 'Laptop Windows dengan cip Intel', bucket: 'amd', why: 'Cip Intel dan AMD ialah amd64.' }, { label: 'Server awan dengan cip Arm', bucket: 'arm', why: 'Server Arm tarik pek arm64.' }]} success="Siap! Satu nama untuk semua." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina satu image untuk komputer Intel dan Arm.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub juga ada runner Arm, contohnya `ubuntu-24.04-arm`. Ia bina arm64 secara asli, tanpa QEMU, jadi lebih laju. `docker buildx imagetools inspect <image>` senaraikan pek dalam satu nama.
+
+Latihan sebenar (pilihan), dalam repo latihan awam:
+
+<Interactive name="Mission" id="c2-l05-rep" steps={[{ id: 'qemu', text: 'Tambah docker/setup-qemu-action sebelum setup-buildx-action.' }, { id: 'plat', text: 'Tambah platforms: linux/amd64,linux/arm64 pada langkah build.' }, { id: 'look', text: 'Push image itu, kemudian senaraikan peknya.', command: 'docker buildx imagetools inspect ghcr.io/YOUR-NAME/YOUR-REPO:main' }]} success="Image anda kini sesuai untuk dua jenis komputer!" />
+</Card>

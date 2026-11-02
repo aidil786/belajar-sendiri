@@ -1,0 +1,81 @@
+---
+id: git-w07-l02
+world: 7
+title: Dalam fail workflow
+summary: "Anda akan belajar: bahagian-bahagian fail workflow, dan cara menulisnya."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, Choice, SortCards, YamlBuilder, Sim, MissionCheck]
+needs: [git-w07-l01]
+scenario: w07-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w07-l02" commands={['cat .github/workflows/ci.yml']} label="cat tunjuk ci.yml: name CI, on push, kemudian satu job bernama test. Ia berjalan pada ubuntu-latest dan ada empat langkah." />
+
+Fail ini ialah **<Term id="workflow">workflow</Term>** (aliran kerja): senarai tugas untuk robot. Ia ditulis dalam <Term id="yaml">YAML</Term>. Nampak menakutkan? Baca sebagai tiga bahagian: bila, di mana, apa.
+</Card>
+
+<Card id="see-on" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: CI' }, { text: 'on: push', target: true }, { text: 'jobs:' }, { text: '  test:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - run: npm test' }]} prompt="Ketik baris yang beritahu bila robot bangun." success="Ya! on: push maksudnya setiap push kejutkan robot." />
+
+Bila: `on:` menamakan **<Term id="trigger">trigger</Term>** (pencetus). Ia beritahu bila workflow berjalan. Di sini, pada setiap push.
+</Card>
+
+<Card id="see-job" type="see">
+Di mana: bawah `jobs:` ada satu **<Term id="job">job</Term>**, iaitu kumpulan langkah pada satu komputer. Apa yang `runs-on: ubuntu-latest` minta?
+
+<Interactive name="Choice" options={[{ label: 'Komputer Linux baru dari GitHub', correct: true, why: 'GitHub pinjamkan komputer bersih untuk setiap job. Namanya runner.' }, { label: 'Laptop anda sendiri', why: 'Laptop anda boleh tutup. Job berjalan pada komputer GitHub.' }, { label: 'Versi terbaru kod anda', why: 'Kod anda datang dari langkah checkout. Baris ini pilih komputer.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+Apa: job ada **<Term id="step">steps</Term>** (langkah). Ia berjalan ikut urutan, atas ke bawah. `uses:` pinjam action siap pakai. `run:` taip satu arahan.
+
+<Interactive name="SortCards" buckets={[{ id: 'uses', label: 'uses: action siap pakai' }, { id: 'run', label: 'run: satu arahan' }]} items={[{ label: '`actions/checkout@v7`', bucket: 'uses', why: 'owner/nama@versi ialah action. Yang ini salin kod anda ke runner.' }, { label: '`npm test`', bucket: 'run', why: 'Arahan yang anda boleh taip dalam terminal sendiri.' }, { label: '`actions/setup-node@v7`', bucket: 'uses', why: 'Action yang pasang Node.' }, { label: '`npm ci`', bucket: 'run', why: 'Arahan yang pasang pakej anda.' }]} success="Siap! uses meminjam. run menaip." />
+</Card>
+
+<Card id="try-build" type="try">
+Giliran anda. Bina workflow yang uji setiap push.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'node', 'install', 'test'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push', yaml: 'push:', means: 'Jalan pada setiap push.' },
+  { id: 'job', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest', means: 'Dapatkan runner Linux yang baru.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod anda ke runner.' },
+  { id: 'node', kind: 'step', label: 'Sediakan Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Pasang Node 24.' },
+  { id: 'install', kind: 'step', label: 'Pasang pakej', yaml: '- run: npm ci', means: 'Pasang pakej yang tepat dari fail lock.' },
+  { id: 'test', kind: 'step', label: 'Jalankan ujian', yaml: '- run: npm test', means: 'Jalankan ujian.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Terbitkan laman.', why: 'Workflow ini cuma menguji. Deploy datang kemudian dalam dunia ini.' }]}
+  success="Robot anda dah sedia: bila, di mana, apa." />
+
+<Hint>Bila, kemudian di mana, kemudian apa: trigger, job, steps.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda alihkan `run: npm test` ke atas langkah checkout. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Langkah itu gagal: kod belum ada di runner', correct: true, why: 'Folder job bermula kosong. Checkout salin kod anda masuk dulu.' }, { label: 'Ia jalan: GitHub salin kod juga', why: 'Hanya langkah checkout yang salin kod anda ke runner.' }, { label: 'GitHub susun semula langkah itu', why: 'Langkah berjalan tepat ikut urutan yang anda tulis.' }]} />
+</Card>
+
+<Card id="try-commit" type="try">
+Workflow hanyalah fail dalam repo anda. Simpan dengan Git, macam fail lain.
+
+<Interactive name="Sim" scenario="w07-l02" panels={['areas']} goal={{ lastCommitHas: ['.github/workflows/ci.yml'], clean: true }} hints={['Masukkan ke kotak: git add .github', 'Sekarang simpan: git commit -m "Add CI workflow"']} success="Dah di-commit! Push, dan GitHub akan jalankannya." />
+
+<Hint>Taip `git add .github`, kemudian `git commit -m "Add CI workflow"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca dan tulis fail workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Buat betul-betul (pilihan). Buka repo diari anda di GitHub. Dalam tab Actions, pilih workflow permulaan yang ringkas dan commit. Tunggu seminit, kemudian semak di sini.
+
+<Interactive name="MissionCheck" checks={[{ type: 'workflowRuns', repo: 'diary', min: 1, label: 'Satu workflow dah berjalan dalam repo diari anda' }]} success="Robot pertama anda dah berjalan di GitHub!" />
+</Card>

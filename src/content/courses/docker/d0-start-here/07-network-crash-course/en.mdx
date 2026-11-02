@@ -1,0 +1,83 @@
+---
+id: docker-d0-l07
+world: 0
+title: Networking crash course
+summary: "You will learn: five network words, IP address, port, localhost, DNS and status codes, to find out why an app can’t be reached."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, Choice, TimelineTap, KitchenSim, SortCards]
+needs: [docker-d0-l06]
+scenario: d0-net
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "MDN: IP address", url: "https://developer.mozilla.org/en-US/docs/Glossary/IP_Address" }
+  - { label: "MDN: port", url: "https://developer.mozilla.org/en-US/docs/Glossary/Port" }
+  - { label: "MDN: DNS", url: "https://developer.mozilla.org/en-US/docs/Glossary/DNS" }
+  - { label: "MDN: HTTP status codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" }
+  - { label: "curl manual", url: "https://curl.se/docs/manpage.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d0-net" commands={['curl localhost:9090']} fails={['curl localhost:9090']} label="curl asks port 9090 and gets: Failed to connect to localhost port 9090. Couldn't connect to server." />
+
+Your app runs, but you can’t reach it. Is it the address? The door? The app itself? Five network words will tell you.
+</Card>
+
+<Card id="see-ip" type="see">
+Every computer on a network has an **<Term id="ip-address">IP address</Term>**. It is like a street address for a building. Which one is an IP address?
+
+<Interactive name="Choice" options={[{ label: '`192.168.1.20`', correct: true, why: 'Four numbers with dots. That is an IP address.' }, { label: '`kedai-kancil.my`', why: 'That is a name. A phone book turns names into numbers. Coming soon!' }, { label: '`8080`', why: 'That is a door number on the building. Next card!' }]} />
+</Card>
+
+<Card id="see-port" type="see">
+<Interactive name="TimelineTap" events={[{ when: '80', title: 'Web (HTTP)', text: 'The usual door for web pages.' }, { when: '443', title: 'Web, locked (HTTPS)', text: 'Web pages over a safe, locked line.' }, { when: '22', title: 'SSH', text: 'A remote terminal into another computer.' }, { when: '5432', title: 'Postgres', text: 'A database waits for orders here.' }, { when: '8080', title: 'Web, for testing', text: 'A popular spare door for apps you are testing.' }]} />
+
+One building has many numbered hatches. Each app waits for orders at its own **<Term id="port">port</Term>**. Tap a few famous ones.
+</Card>
+
+<Card id="try-localhost" type="try">
+**<Term id="localhost">localhost</Term>** means “this computer, right here”. The shop is open at hatch 8080. `curl` fetches a page, like a tiny browser. Type `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '127.0.0.1', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*(localhost|127\\.0\\.0\\.1):8080', lastExit: 0 }} hints={['Type curl localhost:8080 and press Enter.']} success="The shop answered from your own laptop. localhost is you!" />
+
+<Hint>`curl localhost:8080`: no spaces around the colon.</Hint>
+</Card>
+
+<Card id="see-dns" type="see">
+<Interactive name="KitchenReplay" scenario="d0-net" commands={['cat /etc/hosts', 'curl http://kedai-kancil:8080']} fails={['curl http://kedai-kancil:8080']} label="/etc/hosts lists localhost as 127.0.0.1. Then curl says: Could not resolve host: kedai-kancil." />
+
+**<Term id="dns">DNS</Term>** is the phone book: it turns a name into an IP address. Your laptop also keeps a tiny phone book, /etc/hosts. Nobody lists kedai-kancil, so curl gives up.
+</Card>
+
+<Card id="predict" type="predict">
+curl says `Could not resolve host`. Which part failed?
+
+<Interactive name="Choice" options={[{ label: 'Finding the name (DNS)', correct: true, why: 'No phone book knew the name, so curl had no address to visit.' }, { label: 'The port is closed', why: 'A closed port says Couldn’t connect to server instead.' }, { label: 'The page is missing', why: 'A missing page answers 404. Here nobody answered at all.' }]} />
+</Card>
+
+<Card id="try-codes" type="try">
+When a server answers, it starts with an **<Term id="http-status-code">HTTP status code</Term>**. 2xx: here you go. 4xx: your order is off. 5xx: kitchen trouble. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '2xx: here you go' }, { id: 'you', label: '4xx: your order is off' }, { id: 'kitchen', label: '5xx: kitchen trouble' }]} items={[{ label: '200 OK', bucket: 'ok', why: 'The page is on its way.' }, { label: '201 Created', bucket: 'ok', why: 'Your new thing was made.' }, { label: '404 Not Found', bucket: 'you', why: 'That page is not on the menu.' }, { label: '403 Forbidden', bucket: 'you', why: 'You may not have that one.' }, { label: '500 Internal Server Error', bucket: 'kitchen', why: 'Something broke in the kitchen.' }, { label: '503 Service Unavailable', bucket: 'kitchen', why: 'The kitchen is too busy or closed.' }]} success="2 is good, 4 is your order, 5 is the kitchen." />
+</Card>
+
+<Card id="check" type="check">
+Ask the shop for two pages. `curl -I` shows only the top of the reply. Try `/menu.html`, then `/sambal.html`. Read the first line each time.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '/', 'Tab', '↑']} goal={{ typed: '^curl\\b.*/menu\\.html', lastTyped: '^curl\\b.*/sambal\\.html' }} hints={['Type curl -I localhost:8080/menu.html', 'Now type curl -I localhost:8080/sambal.html']} success="menu.html: 200 OK. sambal.html: 404 Not Found. Not on the menu!" />
+
+<Hint>`curl -I localhost:8080/menu.html`, then the same with `sambal.html`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now find out why an app can’t be reached.
+</Card>
+
+<Card id="deeper" type="deeper">
+`127.0.0.1` is localhost’s own number. In Docker output, `0.0.0.0:8080` means “port 8080 on every address of this laptop”. A browser at http://localhost:8080 asks the same as curl.
+
+Real rep (optional): with Docker installed, run `docker run -d --name web -p 8080:80 nginx:1.30-alpine`. Open http://localhost:8080 in your browser. Clean up with `docker rm -f web`.
+</Card>

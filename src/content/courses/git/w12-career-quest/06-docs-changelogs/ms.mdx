@@ -1,0 +1,68 @@
+---
+id: git-w12-l06
+world: 12
+title: Dokumentasi dan changelog
+summary: "Anda akan belajar: cara beritahu pengguna apa yang berubah, dengan changelog."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, SortCards, Choice, Sim, SwipeJudge]
+needs: [git-w12-l05]
+scenario: w12-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Keep a Changelog", url: "https://keepachangelog.com/en/1.1.0/" }
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w12-l06" commands={['git log --oneline']} label="git log --oneline tunjuk tiga commit: fix again, stuff dan wip." />
+
+Aplikasi nota anda dapat kemas kini. Satu butang berpindah. Pengguna tanya: apa yang berubah? Log anda cuma tulis "wip" dan "stuff".
+</Card>
+
+<Card id="see-changelog" type="see">
+<Interactive name="SpotLines" lines={[{ text: '# Changelog' }, { text: '## [1.1.0] - 2026-10-30', target: true }, { text: '### Added' }, { text: '- Dark mode switch.' }, { text: '### Fixed' }, { text: '- Notes save on phones again.' }]} prompt="Tekan baris yang namakan versi ini dan tarikhnya." success="Ya! Nombor versi dulu, kemudian tarikh: tahun-bulan-hari." />
+
+**<Term id="changelog">Changelog</Term>** (senarai perubahan) ialah diari untuk pengguna. Setiap versi senaraikan apa yang ditambah, diubah atau dibaiki. Versi terbaru duduk di atas.
+</Card>
+
+<Card id="try-sort" type="try">
+Satu gaya yang popular, Keep a Changelog, kumpulkan entri bawah tajuk. Susun setiap entri.
+
+<Interactive name="SortCards" buckets={[{ id: 'added', label: 'Added' }, { id: 'changed', label: 'Changed' }, { id: 'fixed', label: 'Fixed' }]} items={[{ label: 'Butang baru "eksport ke PDF"', bucket: 'added', why: 'Ciri yang serba baru masuk bawah Added.' }, { label: 'Terjemahan Bahasa Melayu yang baru', bucket: 'added', why: 'Benda baru untuk pengguna: Added.' }, { label: 'Carian kini dua kali lebih laju', bucket: 'changed', why: 'Ciri lama berfungsi dengan cara lain: Changed.' }, { label: 'Tetapan dipindah ke menu atas', bucket: 'changed', why: 'Ia dah ada sebelum ini. Kini ia berpindah: Changed.' }, { label: 'Tiada lagi ranap bila nota kosong', bucket: 'fixed', why: 'Pepijat dah hilang: Fixed.' }, { label: 'Tarikh tunjuk zon waktu yang betul', bucket: 'fixed', why: 'Dulu rosak. Kini berfungsi: Fixed.' }]} success="Siap! Pengguna boleh imbas dalam beberapa saat." />
+
+<Hint>Benda baru? Added. Benda yang berubah? Changed. Benda rosak yang kini okey? Fixed.</Hint>
+</Card>
+
+<Card id="predict-unreleased" type="predict">
+Anda baiki pepijat hari ini. Versi seterusnya keluar minggu depan. Di mana nota itu ditulis?
+
+<Interactive name="Choice" options={[{ label: 'Bawah tajuk Unreleased, di bahagian atas', correct: true, why: 'Ia tunggu di situ. Pada hari keluaran, ia pindah ke bawah versi baru.' }, { label: 'Di bahagian bawah fail', why: 'Yang terbaru di atas, supaya pembaca nampak dulu.' }, { label: 'Tak perlu. Mesej commit dah cukup', why: 'Commit untuk pembangun. Pengguna baca changelog.' }]} />
+</Card>
+
+<Card id="try-commit" type="try">
+`CHANGELOG.md` anda dah siap ditulis. Simpan dalam satu commit (titik simpan). Mulakan mesej dengan `docs:`.
+
+<Interactive name="Sim" scenario="w12-l06" panels={['areas']} goal={{ lastCommitHas: ['CHANGELOG.md'], lastMessage: '^docs(\\(.+\\))?: \\S' }} hints={['Mula-mula masukkan ke kotak: git add CHANGELOG.md', 'Kemudian simpan: git commit -m "docs: add changelog"']} success="Dah disimpan! Pengguna anda akhirnya dapat cerita yang jelas." />
+
+<Hint>Dua langkah: `git add CHANGELOG.md`, kemudian `git commit -m "docs: add changelog"`.</Hint>
+</Card>
+
+<Card id="check-docs" type="check">
+Dokumentasi yang bagus membesar bersama kod. Nilai setiap tabiat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Kemas kini README dalam PR yang sama dengan ciri baru', good: true, why: 'Dokumentasi dan kod kekal seiring.' }, { text: 'Dokumentasi cuma kata: "baca kodnya"', good: false, why: 'Orang baru sesat. Terangkan asasnya dengan perkataan.' }, { text: 'Tambah bahagian "Cara jalankan"', good: true, why: 'Itu soalan pertama setiap pelawat.' }, { text: 'Tulis changelog ikut ingatan setahun kemudian', good: false, why: 'Butiran hilang. Tambah entri sambil anda bekerja.' }, { text: 'Terangkan kenapa, bukan apa sahaja', good: true, why: 'Kenapa itulah yang anda akan lupa nanti.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jaga changelog yang pengguna faham.
+</Card>
+
+<Card id="deeper" type="deeper">
+Conventional Commits membantu di sini. Commit `feat:` selalunya jadi Added. Commit `fix:` jadi Fixed. World 6 terangkan gaya ini. Sesetengah alat buat draf changelog daripada commit anda. Manusia tetap perlu suntingnya. Keep a Changelog juga ada tajuk Deprecated, Removed dan Security.
+</Card>

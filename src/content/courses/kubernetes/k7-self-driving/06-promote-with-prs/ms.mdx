@@ -1,0 +1,65 @@
+---
+id: k8s-k7-l06
+world: 7
+title: Naikkan dengan pull request
+summary: "Anda akan belajar: cara satu image bergerak dari staging ke production melalui pull request yang disemak."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PracticeRepo, OrderList, SortCards]
+needs: [k8s-k7-l05]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kustomize: images", url: "https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/" }
+  - { label: "Argo CD: best practices (separate config repo)", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/" }
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+---
+
+<Card id="hook" type="hook">
+Shop 1.5.0 berjalan lancar di staging sepanjang hari. Sekarang production pula patut dapat. Apa cara GitOps?
+
+<Interactive name="Choice" options={[{ label: 'Buka pull request yang tukar tag prod', correct: true, why: 'Rakan sepasukan menyemaknya. Merge itulah release.' }, { label: 'kubectl set image pada kluster prod', why: 'Itu drift. Self-heal akan undurkannya.' }, { label: 'Bina image baharu khas untuk prod', why: 'Bina sekali. Naikkan image yang sama yang dah diuji.' }]} />
+</Card>
+
+<Card id="see-week" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Isn', title: 'Bina sekali', text: 'CI bina shop:1.5.0 dan push.' }, { when: 'Isn', title: 'Staging', text: 'PR #12 tetapkan tag staging kepada 1.5.0.' }, { when: 'Sel', title: 'Uji', text: 'Staging jalankan 1.5.0. Ujian dan manusia menyemaknya.' }, { when: 'Rab', title: 'Production', text: 'PR #13 tetapkan tag prod kepada 1.5.0.' }, { when: 'Bila-bila', title: 'Undur', text: 'Revert PR #13. Tag lama kembali.' }]} />
+
+Satu image, dua folder. **<Term id="promote" course="cicd">Promote</Term>** (naikkan) bermaksud hantar image yang sama ke persekitaran seterusnya.
+</Card>
+
+<Card id="try-merge" type="try">
+Mei buka PR untuk naikkan versi. Peraturan kata ia perlu satu kelulusan. Semak, kemudian merge.
+
+<Interactive name="PracticeRepo" screen="pull" at={13} repo={{ owner: 'kedai-kancil', name: 'gitops', files: [{ path: 'README.md', content: '# Kedai Kancil GitOps\n\nSatu folder untuk setiap persekitaran. Argo CD pantau setiap satu.\n' }, { path: 'envs/staging/kustomization.yaml', content: 'resources:\n  - ../../base\nimages:\n  - name: ghcr.io/kedai-kancil/shop\n    newTag: 1.5.0\n' }, { path: 'envs/prod/kustomization.yaml', content: 'resources:\n  - ../../base\nimages:\n  - name: ghcr.io/kedai-kancil/shop\n    newTag: 1.4.0\n' }] }} pulls={[{ number: 13, title: 'Promote shop 1.5.0 to prod', body: 'Staging jalankan 1.5.0 selama sehari. Tiada ralat.\n\nImage yang sama, kini untuk prod.', author: 'mei', from: 'promote-1.5.0', to: 'main', state: 'open', checks: [{ name: 'kustomize build', status: 'pass' }], files: [{ path: 'envs/prod/kustomization.yaml', diff: ['@@ -3,3 +3,3 @@', ' images:', '   - name: ghcr.io/kedai-kancil/shop', '-    newTag: 1.4.0', '+    newTag: 1.5.0'] }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu semakan lulus', on: true }, { id: 'requireChecks', label: 'Semakan mesti lulus', on: true }] }} task={{ type: 'merge', pr: 13 }} success="Dah merge! Argo CD akan sync prod ke 1.5.0. Satu baris, dah disemak." />
+
+<Hint>Luluskan PR itu dulu. Kemudian merge.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Susun langkah naikkan versi yang selamat.
+
+<Interactive name="OrderList" items={['Staging jalankan tag baharu', 'Semakan di staging lulus', 'Buka PR untuk folder prod', 'Rakan sepasukan luluskannya', 'Merge: Argo CD sync prod']} label="Langkah pertama di atas" success="Itulah kenaikan versi yang ada rekod lengkap." />
+</Card>
+
+<Card id="predict" type="predict">
+Prod rosak sejurus selepas merge. Apa cara undur paling pantas dan selamat?
+
+<Interactive name="Choice" options={[{ label: 'Revert PR itu. Argo CD sync tag lama semula', correct: true, why: 'Pantas, direkod, dan Git kekal sebagai kebenaran.' }, { label: 'kubectl rollout undo pada prod', why: 'Self-heal mungkin terus kembalikan 1.5.0. Undur dalam Git.' }, { label: 'Padam folder prod', why: 'Dengan prune hidup, itu boleh padam seluruh aplikasi.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Sesetengah tetapan berbeza ikut persekitaran. Yang lain kekal sama dalam base kongsi. Susun semuanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'env', label: 'Ikut persekitaran' }, { id: 'base', label: 'Base kongsi' }]} items={[{ label: 'Tag image (1.4.0 atau 1.5.0)', bucket: 'env', why: 'Kenaikan versi tukar ini, satu persekitaran pada satu masa.' }, { label: 'Replicas (2 di staging, 5 di prod)', bucket: 'env', why: 'Prod perlu lebih banyak dulang.' }, { label: 'Port container 80', bucket: 'base', why: 'Aplikasi dengar pada port yang sama di mana-mana.' }, { label: 'Nama aplikasi, shop', bucket: 'base', why: 'Aplikasi sama, nama sama.' }]} success="Tersusun! Folder kecil untuk setiap persekitaran, satu base kongsi." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh naikkan satu image antara persekitaran dengan pull request.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pilih satu folder untuk setiap persekitaran, bukan satu branch untuk setiap persekitaran. Folder mudah dibanding dan tak perlu merge balik. Ada pasukan yang automasikan kenaikan versi dengan alat seperti Kargo. Latihan sebenar (pilihan): buat overlay `envs/staging` dan `envs/prod` untuk Kedai Kancil. Jalankan `kubectl kustomize envs/prod` untuk lihat hasilnya.
+</Card>

@@ -1,0 +1,67 @@
+---
+id: git-w11-l13
+world: 11
+title: Windows line-ending chaos
+summary: "You will learn: how one .gitattributes file calms line-ending chaos for everyone."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Sim, Transcript, CommandBuilder]
+needs: [git-w04-l07]
+scenario: w11-l13
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitattributes (end-of-line conversion)", url: "https://git-scm.com/docs/gitattributes" }
+  - { label: "git add --renormalize", url: "https://git-scm.com/docs/git-add" }
+  - { label: "Configuring Git to handle line endings", url: "https://docs.github.com/en/get-started/git-basics/configuring-git-to-handle-line-endings" }
+---
+
+<Card id="hook" type="hook">
+Mei fixed one typo on Windows. But `git diff` says every line changed! Why?
+
+<Interactive name="Choice" options={[{ label: 'The lines end with different invisible marks', correct: true, why: 'Windows ends lines one way, Mac and Linux another. Git sees every line as new.' }, { label: 'Mei rewrote the whole file', why: 'She only fixed one typo. Something invisible changed.' }, { label: 'Git is broken', why: 'Git is fine. It sees a real, invisible difference.' }]} />
+
+This happens to everyone. Here's the calm way out.
+</Card>
+
+<Card id="see-endings" type="see">
+Every line ends with an invisible **line ending**. Windows uses two marks: CRLF. Mac and Linux use one: LF. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'crlf', label: 'CRLF (two marks)' }, { id: 'lf', label: 'LF (one mark)' }]} items={[{ label: 'Windows', bucket: 'crlf', why: 'Windows tools often end lines with CRLF.' }, { label: 'macOS', bucket: 'lf', why: 'Mac uses LF.' }, { label: 'Linux', bucket: 'lf', why: 'Linux uses LF.' }, { label: 'Inside the repo, with text=auto', bucket: 'lf', why: 'Git stores text files with LF inside the repo.' }]} success="Sorted! Two styles. Git can keep them in line." />
+</Card>
+
+<Card id="try-attributes" type="try">
+One file fixes it for the whole team. Make `.gitattributes` with `* text=auto`. Then commit it.
+
+<Interactive name="Sim" scenario="w11-l13" panels={['areas']} goal={{ fileContains: { '.gitattributes': 'text=auto' }, lastCommitHas: ['.gitattributes'], clean: true }} hints={['Type echo "* text=auto" > .gitattributes', 'Then type git add .gitattributes', 'Then type git commit -m "Normalize line endings"']} success="Done! Git now handles line endings for everyone." />
+
+<Hint>Type `echo "* text=auto" > .gitattributes`, then `git add .gitattributes`. Then commit.</Hint>
+</Card>
+
+<Card id="see-renormalize" type="see">
+<Interactive name="Transcript" title="bash" label="Two commands: git add --renormalize dot, then git commit -m Normalize all the line endings." lines={[{ cmd: 'git add --renormalize .' }, { cmd: 'git commit -m "Normalize all the line endings"' }]} />
+
+Old files may still have the old endings. `git add --renormalize .` re-adds every tracked file with the new rule. Then commit once.
+</Card>
+
+<Card id="build" type="try">
+Each person can set a helper too. Build the Windows setting.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'config', means: 'change a setting' }, { text: '--global', means: 'for all your projects' }, { text: 'core.autocrlf', means: 'the line-ending helper' }, { text: 'true', means: 'Windows: CRLF on your desk, LF in Git' }]} decoys={[{ text: 'input', means: 'the Mac and Linux choice' }, { text: '--local', means: 'this project only' }]} success="That's it! On Mac or Linux, use input instead of true." />
+</Card>
+
+<Card id="predict" type="predict">
+Why commit `.gitattributes`, not just tell everyone the setting?
+
+<Interactive name="Choice" options={[{ label: 'It travels with the repo, so everyone gets it', correct: true, why: 'New teammates get the rule when they clone. Nobody has to remember.' }, { label: 'It makes files smaller', why: 'No, it only handles line endings.' }, { label: 'Settings are not allowed', why: 'Settings are fine. The file just works for everyone at once.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now calm line-ending chaos for the whole team.
+</Card>
+
+<Card id="deeper" type="deeper">
+Scripts that must keep LF? Add `*.sh text eol=lf`. Windows-only files? `*.bat text eol=crlf`. Mark pictures as `binary` so Git never touches them. Run `git add --renormalize .` from a clean working folder. GitHub Docs has a full guide.
+</Card>

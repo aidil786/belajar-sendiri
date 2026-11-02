@@ -1,0 +1,77 @@
+---
+id: git-w10-l08
+world: 10
+title: Hooks
+summary: "You will learn: how Git can run your own checks before a commit, and how to share them."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Transcript, OrderList, Sim, SwipeJudge]
+needs: [git-w10-l07]
+scenario: w10-hooks
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "githooks", url: "https://git-scm.com/docs/githooks" }
+  - { label: "git config (core.hooksPath)", url: "https://git-scm.com/docs/git-config" }
+  - { label: "git commit (--no-verify)", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+You keep committing with `console.log` left in. Your teammates sigh. Can Git stop you before the commit?
+
+<Interactive name="Choice" options={[{ label: 'Yes, with a script Git runs at the right moment', correct: true, why: 'That script is called a hook. Meet it next.' }, { label: 'No, Git saves whatever you add', why: 'By default, yes. But Git can run your checks first.' }, { label: 'Only GitHub can check that', why: 'Git on your own computer can check too, before anything leaves it.' }]} />
+</Card>
+
+<Card id="see-moments" type="see">
+A **<Term id="hook">hook</Term>** is a script that Git runs at a set moment. Hooks live in `.git/hooks`. Tap each moment.
+
+<Interactive name="TimelineTap" events={[{ when: 'Before the commit', title: 'pre-commit', text: 'Checks the staged changes. If it fails, no commit is made.' }, { when: 'After the message', title: 'commit-msg', text: 'Checks the commit message. If it fails, no commit is made.' }, { when: 'Before a push', title: 'pre-push', text: 'One last check before anything leaves your computer.' }]} />
+</Card>
+
+<Card id="see-pre-commit" type="see">
+<Interactive name="Transcript" title="bash" label="A pre-commit hook: if a staged line adds console.log, it prints Please remove console.log first and exits with 1. After chmod +x, git commit stops with that message." lines={[{ cmd: 'cat .git/hooks/pre-commit' }, { out: '#!/bin/sh\n# Stop the commit if a staged line adds console.log\nif git diff --cached | grep -q "^+.*console.log"; then\n  echo "Please remove console.log first."\n  exit 1\nfi' }, { cmd: 'chmod +x .git/hooks/pre-commit' }, { cmd: 'git commit -m "Add menu"' }, { out: 'Please remove console.log first.', color: 'yellow' }]} />
+
+A hook must be executable: `chmod +x`. If it ends with `exit 1`, Git stops the commit. `exit 0` lets it through.
+</Card>
+
+<Card id="try-order" type="try">
+Put the life of a pre-commit hook in order.
+
+<Interactive name="OrderList" items={['Write the script in .git/hooks/pre-commit', 'Make it executable with chmod +x', 'Run git commit', 'Git runs the hook first', 'The hook exits with 0, so the commit is made']} label="First step at the top" success="That's it! Git runs the hook before every commit." />
+</Card>
+
+<Card id="see-commit-msg" type="see">
+<Interactive name="Transcript" title="bash" label="A commit-msg hook: if the message file does not start with feat, fix or docs, it prints a tip and exits with 1. git commit -m stuff stops with that tip." lines={[{ cmd: 'cat .git/hooks/commit-msg' }, { out: '#!/bin/sh\n# $1 is the file that holds the message\nif ! grep -qE "^(feat|fix|docs): " "$1"; then\n  echo "Start the message with feat:, fix: or docs:"\n  exit 1\nfi' }, { cmd: 'git commit -m "stuff"' }, { out: 'Start the message with feat:, fix: or docs:', color: 'yellow' }]} />
+
+A `commit-msg` hook checks the message. Git hands it the message file as `$1`. Here, "stuff" does not get in.
+</Card>
+
+<Card id="predict" type="predict">
+You add a hook in `.git/hooks`. Mei clones the repo. Does the hook run on her computer?
+
+<Interactive name="Choice" options={[{ label: 'No. Clone does not copy .git/hooks', correct: true, why: 'Hooks stay on your computer. That is safe: nobody can send you a script that runs by itself.' }, { label: 'Yes, hooks travel with every push', why: '.git/hooks never travels. Only commits do.' }, { label: 'Only if she clones from GitHub', why: 'Where she clones from does not matter. Hooks are never copied.' }]} />
+</Card>
+
+<Card id="try-share" type="try">
+To share hooks, commit them in a folder like `.githooks`. Each person then sets `core.hooksPath`. Read the hook, then set it.
+
+<Interactive name="Sim" scenario="w10-hooks" panels={[]} goal={{ typed: 'config (--local )?core\\.hooks[Pp]ath (\\./)?\\.githooks' }} hints={['Type cat .githooks/pre-commit', 'Then type git config core.hooksPath .githooks']} success="Set! Your real Git now looks for hooks in .githooks. This practice terminal never runs hooks." />
+
+<Hint>Type `cat .githooks/pre-commit`. Then `git config core.hooksPath .githooks`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep hooks fast', good: true, why: 'A slow hook makes every commit slow.' }, { text: 'Share hooks in a folder, with core.hooksPath', good: true, why: 'Everyone gets the same checks.' }, { text: 'Trust hooks as your only safety net', good: false, why: 'Anyone can skip them with --no-verify. Run the checks in CI too.' }, { text: 'Skip hooks with --no-verify every time', good: false, why: 'Then the checks never help. Skip only in a real emergency.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make Git check your work before every commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+New repos get sample hooks in `.git/hooks`, ending in `.sample`. Remove the ending to try one. A hook can be any language: the first line names it. `git commit --no-verify` skips pre-commit and commit-msg. `git hook run pre-commit` runs a hook by hand.
+</Card>

@@ -1,0 +1,82 @@
+---
+id: k8s-k2-l07
+world: 2
+title: "Pod states and their errors"
+summary: "You will learn: what Pending, CrashLoopBackOff, ImagePullBackOff and OOMKilled mean, and where to look first."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, Choice, SortCards]
+needs: [k8s-k2-l06]
+scenario: k2-states
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pod lifecycle", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/" }
+  - { label: "Kubernetes: Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pods']} label="Four pods in trouble: big is Pending, hungry and oops show CrashLoopBackOff, typo shows ImagePullBackOff." />
+
+Four trays, four kinds of trouble. The words look scary. Each one has a plain meaning, and a first place to look.
+</Card>
+
+<Card id="see-crash" type="see">
+Real error: **<Term id="crashloopbackoff">CrashLoopBackOff</Term>**. Plain words: the app starts, crashes, and Kubernetes waits longer before each retry. Tap through it.
+
+<Interactive name="TimelineTap" events={[{ when: 'Start', title: 'It crashes', text: 'The app starts, prints a line, and exits with an error.' }, { when: 'Restart', title: 'Try again', text: 'The kubelet starts it again in the same tray. It crashes again.' }, { when: 'Back-off', title: 'Wait longer', text: 'Now it waits 10 s, then 20 s, then 40 s, up to 5 minutes. STATUS says CrashLoopBackOff.' }]} />
+</Card>
+
+<Card id="try-logs" type="try">
+Why does `oops` crash? Kubernetes cannot fix your app. Ask the tray: read its logs.
+
+<Interactive name="FoodCourtSim" scenario="k2-crashloop" goal={{ typed: '^(kubectl|k) logs ' }} hints={['Type kubectl get pods to find the pod name', 'Then type kubectl logs deployment/oops']} success="The app said: oh no, no gas. That is an app problem. Fix the app, not the cluster." />
+
+<Hint>`kubectl logs deployment/oops` shows what the app printed.</Hint>
+</Card>
+
+<Card id="see-pending" type="see">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pod big', 'kubectl get events --field-selector reason=FailedScheduling -o jsonpath={.items[0].message}']} label="big is Pending. The scheduler says: 0/3 nodes are available: 1 had a taint, 2 had too little CPU." />
+
+Real error: **<Term id="pod-pending">Pending</Term>** with `Insufficient cpu`. Plain words: no stall has room for this tray. It asks for 64 CPUs.
+</Card>
+
+<Card id="predict-oom" type="predict">
+`hungry` may use 64Mi of memory. Its app keeps eating more. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It gets killed, then restarted', correct: true, why: 'Going over the memory limit means killed. The kubelet restarts it, and it happens again.' }, { label: 'It just slows down', why: 'Slowing down happens with CPU. Memory has no slow lane.' }, { label: 'It moves to a bigger stall', why: 'Kubernetes never moves a running pod. It restarts it in place.' }]} />
+</Card>
+
+<Card id="see-oom" type="see">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pod hungry -o jsonpath={.status.containerStatuses[0].lastState.terminated.reason}', 'kubectl get pod hungry -o jsonpath={.status.containerStatuses[0].lastState.terminated.exitCode}']} label="The last run of hungry ended with reason OOMKilled and exit code 137." />
+
+Real error: **<Term id="oomkilled">OOMKilled</Term>**, exit code 137. Plain words: it used more memory than its limit. STATUS shows it for a moment, then `CrashLoopBackOff`.
+</Card>
+
+<Card id="try-fix" type="try">
+Real error: **<Term id="imagepullbackoff">ImagePullBackOff</Term>**. Plain words: the stall cannot fetch that image. Here the tag `1.299` is a typo. Ship `nginx:1.30-alpine` instead.
+
+<Interactive name="FoodCourtSim" scenario="k2-bad-rollout" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop' }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Type kubectl get pods to see the stuck tray', 'Type kubectl set image deployment/shop web=nginx:1.30-alpine']} success="Fixed forward! Every tray runs a real image now." />
+
+<Hint>`kubectl set image deployment/shop web=nginx:1.30-alpine` replaces the bad tag.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Where do you look first? Sort each error.
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Read the logs' }, { id: 'image', label: 'Check the image name' }, { id: 'room', label: 'Check requests and limits' }]} items={[{ label: 'CrashLoopBackOff', bucket: 'logs', why: 'The app keeps crashing. Its logs say why.' }, { label: 'ImagePullBackOff', bucket: 'image', why: 'The image cannot be fetched. Check the name, the tag and the registry.' }, { label: 'OOMKilled', bucket: 'room', why: 'It went over its memory limit. Raise the limit or fix the leak.' }, { label: 'Pending with Insufficient cpu', bucket: 'room', why: 'No stall has that much room. Ask for less.' }]} success="Sorted! Read the real error, then go to the right place." />
+</Card>
+
+<Card id="win" type="win">
+You can now read the four classic pod errors and know where to look.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe pod <name>` tells the whole story: Last State, Reason, Exit Code and Events at the end. A crashing app's last run is in `kubectl logs <pod> --previous`, if the kubelet still keeps it. World K5 teaches the full debug ladder.
+
+Real rep (optional): on a throwaway cluster, run a pod with a wrong tag. Then read `describe`.
+</Card>

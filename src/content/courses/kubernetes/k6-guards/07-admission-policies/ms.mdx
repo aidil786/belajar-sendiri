@@ -1,0 +1,76 @@
+---
+id: k8s-k6-l07
+world: 6
+title: "Polisi: CEL, Kyverno, Gatekeeper"
+summary: "Anda akan belajar: tulis peraturan rumah untuk pintu 3, lancarkannya dengan selamat, dan pilih penjaga peraturan."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k6-l06]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Validating Admission Policy", url: "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/" }
+  - { label: "CEL in Kubernetes", url: "https://kubernetes.io/docs/reference/using-api/cel/" }
+  - { label: "Kyverno docs", url: "https://kyverno.io/docs/" }
+  - { label: "Gatekeeper docs", url: "https://open-policy-agent.github.io/gatekeeper/website/docs/" }
+---
+
+<Card id="hook" type="hook">
+Pasukan anda dah setuju: tiada tag `:latest`. Hari Jumaat, seseorang hantar `nginx:latest` juga. Macam mana nak halang setiap kali?
+
+<Interactive name="Choice" options={[{ label: 'Tulis peraturan itu ke dalam pintu 3', correct: true, why: 'Peraturan di pintu tak pernah lupa, walaupun hari Jumaat.' }, { label: 'Letak dalam README', why: 'Orang baca README sekali imbas. Pintu baca setiap permintaan.' }, { label: 'Semak setiap YAML dengan tangan', why: 'Lambat, dan manusia boleh penat.' }]} />
+</Card>
+
+<Card id="see-vap" type="see">
+**<Term id="validating-admission-policy">ValidatingAdmissionPolicy</Term>** ialah peraturan rumah, terbina dalam Kubernetes. Peraturan itu sendiri cuma satu baris CEL. Tekan baris itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: admissionregistration.k8s.io/v1' }, { text: 'kind: ValidatingAdmissionPolicy' }, { text: 'metadata:' }, { text: '  name: no-latest' }, { text: 'spec:' }, { text: '  matchConstraints:' }, { text: '    resourceRules:' }, { text: '      - apiGroups: [""]' }, { text: '        apiVersions: ["v1"]' }, { text: '        operations: ["CREATE", "UPDATE"]' }, { text: '        resources: ["pods"]' }, { text: '  validations:' }, { text: "    - expression: \"object.spec.containers.all(c, !c.image.endsWith(':latest'))\"", target: true }, { text: '      message: "Pin a version tag, not latest."' }]} prompt="Tekan baris yang simpan peraturannya." success="Betul! Image setiap container tak boleh berakhir dengan :latest." />
+</Card>
+
+<Card id="predict" type="predict">
+`image: nginx` tiada tag langsung. Adakah peraturan ini menghalangnya?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Tiada tag bermakna latest, tapi teksnya tiada :latest', correct: true, why: 'Peraturan hanya nampak teks. Suruh ia minta tag versi pula.' }, { label: 'Ya. Kubernetes tambah :latest dulu', why: 'Kubernetes tak tulis semula image anda. Peraturan nampak nginx sahaja.' }, { label: 'Ya. CEL tahu maksud latest', why: 'CEL bandingkan teks. Ia tak tahu apa-apa tentang tag.' }]} />
+</Card>
+
+<Card id="try-order" type="try">
+Polisi sahaja tak buat apa-apa. **Binding** tentukan di mana ia berjalan, dan apa tindakannya: Deny, Warn atau Audit. Susun pelancaran yang selamat.
+
+<Interactive name="OrderList" items={['Tulis polisi (peraturannya)', 'Bind dengan validationActions: [Warn]', 'Baca amaran. Baiki YAML lama.', 'Tukar binding kepada [Deny]']} label="Langkah pertama di atas" success="Warn dulu, kemudian Deny. Tiada siapa terkunci tanpa diduga." />
+</Card>
+
+<Card id="see-denied" type="see">
+Mei hantar `nginx:latest` selepas tukar ke Deny. Ralatnya berakhir begini:
+
+```
+ValidatingAdmissionPolicy 'no-latest' with binding 'no-latest-kedai' denied request: Pin a version tag, not latest.
+```
+
+<Interactive name="Choice" options={[{ label: 'Guna tag versi, contohnya nginx:1.29-alpine', correct: true, why: 'Peraturan rumah kata tidak, dan beritahu sebabnya.' }, { label: 'Minta cluster-admin', why: 'Pintu 3 semak dulang, bukan hak dia. Admin pun ditolak.' }, { label: 'Cuba lagi sejam nanti', why: 'Peraturan tak tidur. Baiki tag itu.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Tambahan yang dipanggil **<Term id="policy-engine">enjin polisi</Term>** boleh buat lebih. Asingkan tiga penjaga peraturan ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'vap', label: 'ValidatingAdmissionPolicy' }, { id: 'kyverno', label: 'Kyverno' }, { id: 'gk', label: 'Gatekeeper' }]} items={[{ label: 'Terbina sejak Kubernetes 1.30. Tiada apa perlu dipasang.', bucket: 'vap', why: 'Ia sebahagian daripada API server.' }, { label: 'Peraturan dalam CEL, di dalam API server', bucket: 'vap', why: 'Tiada pod tambahan perlu dijalankan.' }, { label: 'Boleh juga ubah objek, cipta objek baharu dan semak meterai image', bucket: 'kyverno', why: 'Kyverno boleh validate, mutate, generate dan sahkan image.' }, { label: 'Polisi ialah resource Kubernetes dalam YAML', bucket: 'kyverno', why: 'Tiada bahasa baharu untuk dipelajari.' }, { label: 'Peraturan ditulis dalam Rego', bucket: 'gk', why: 'Rego datang dari projek OPA.' }, { label: 'ConstraintTemplate dan Constraint', bucket: 'gk', why: 'Template simpan Rego. Constraint menggunakannya.' }]} success="Siap! Terbina, tambahan YAML, tambahan Rego." />
+</Card>
+
+<Card id="check" type="check">
+Tabiat peraturan yang baik, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Mulakan peraturan baharu dengan Warn, kemudian tukar ke Deny', good: true, why: 'Anda nampak apa yang akan rosak dulu.' }, { text: 'Uji peraturan dengan kubectl apply --dry-run=server', good: true, why: 'Admission berjalan semasa dry run server. Tiada apa disimpan.' }, { text: 'Deny tanpa mesej', good: false, why: 'Sentiasa beri sebab. Mesej yang baik jimat sejam.' }, { text: 'Hidupkan Deny di semua tempat pada hari pertama', good: false, why: 'YAML lama terus rosak. Lancarkan zon demi zon.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis peraturan rumah untuk pintu 3.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sejak Kubernetes 1.36, MutatingAdmissionPolicy juga stabil: ia ubah objek dengan CEL. `failurePolicy: Fail` tolak permintaan bila peraturan itu sendiri rosak. `matchResources` dalam binding pilih zon ikut label. Kyverno dan Gatekeeper berjalan sebagai webhook: pod tambahan yang anda mesti jaga.
+
+<Interactive name="Mission" id="k6-l07-rep" steps={[{ id: 'policy', text: 'Dalam kluster buang sahaja, simpan polisi no-latest dari pelajaran ini sebagai policy.yaml dan apply.', command: 'kubectl apply -f policy.yaml' }, { id: 'zone', text: 'Buat zon ujian.', command: 'kubectl create namespace policy-test' }, { id: 'bind', text: 'Tulis binding dengan validationActions: [Warn] untuk zon itu, dan apply.' }, { id: 'try', text: 'Jalankan pod dengan tag latest dalam zon itu. Baca amarannya.', command: 'kubectl run test -n policy-test --image=nginx:latest' }, { id: 'deny', text: 'Tukar binding ke [Deny]. Cuba lagi: ditolak.' }]} success="Peraturan rumah anda kawal pintu 3!" />
+</Card>

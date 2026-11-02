@@ -1,0 +1,87 @@
+---
+id: cicd-c4-l06
+world: 4
+title: Suntikan skrip
+summary: "Anda akan belajar: bagaimana tajuk orang asing boleh jadi arahan, dan pembaikan env:."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotTheHole, YamlBuilder, SwipeJudge]
+needs: [cicd-c4-l05]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Script injections", url: "https://docs.github.com/en/actions/concepts/security/script-injections" }
+  - { label: "Secure use: good practices against script injection", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Robot anda ucap terima kasih bila isu baharu dibuka:
+
+```yaml
+- run: echo "Thanks for ${{ github.event.issue.title }}"
+```
+
+Siapa yang tulis tajuk itu?
+
+<Interactive name="Choice" options={[{ label: 'Sesiapa sahaja di internet', correct: true, why: 'Dalam repo awam, mana-mana orang asing boleh buka isu.' }, { label: 'Pasukan anda sahaja', why: 'Sesiapa boleh buka isu dalam repo awam.' }, { label: 'GitHub', why: 'GitHub cuma hantar. Seorang manusia yang tulis.' }]} />
+</Card>
+
+<Card id="see-paste" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Orang asing buka isu', text: 'Tajuknya: `Hi"; env; echo "`' }, { when: '2', title: 'GitHub isi tempat kosong', text: 'Sebelum bash mula, `${{ }}` diganti dengan tajuk itu. Siap dengan tanda petik.' }, { when: '3', title: 'Bash jalankan tiga arahan', text: 'Skrip kini jadi `echo "Thanks for Hi"; env; echo ""`. Bahagian `env` cetak setiap pemboleh ubah.' }]} />
+
+Tekan setiap langkah. Tajuk itu jadi kod. Slip pesanan dengan arahan tersembunyi: itulah **<Term id="script-injection">script injection</Term>** (suntikan skrip).
+</Card>
+
+<Card id="predict" type="predict">
+Pembaikannya: hantar tajuk melalui `env:` dulu. Bash kemudian nampak data biasa, bukan kod.
+
+```yaml
+- run: echo "Thanks for $TITLE"
+  env:
+    TITLE: ${{ github.event.issue.title }}
+```
+
+Tajuk licik yang sama. Apa bash cetak sekarang?
+
+<Interactive name="Choice" options={[{ label: '`Thanks for Hi"; env; echo "`', correct: true, why: 'Teks sahaja. Tanda petik kini sebahagian daripada tajuk.' }, { label: 'Setiap pemboleh ubah, macam tadi', why: 'Tajuk kekal dalam $TITLE. Bash tak pernah baca ia sebagai kod.' }, { label: 'Ralat', why: 'Tiada apa rosak. Tajuk pelik itu dicetak seadanya.' }]} />
+</Card>
+
+<Card id="try-spot" type="try">
+Tekan setiap baris di mana teks orang asing jadi kod.
+
+<Interactive name="SpotTheHole" file=".github/workflows/greet.yml" workflow={['name: Greet', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  greet:', '    runs-on: ubuntu-latest', '    steps:', '      - run: echo "PR number ${{ github.event.pull_request.number }}"',
+  { text: '      - run: echo "Branch ${{ github.head_ref }}"', hole: { kind: 'injection', fixCode: '      - run: echo "Branch $BRANCH"\n        env:\n          BRANCH: ${{ github.head_ref }}' } },
+  '      - run: echo "Title $TITLE"', '        env:', '          TITLE: ${{ github.event.pull_request.title }}',
+  { text: '      - run: echo "Hello ${{ github.event.pull_request.body }}"', hole: { kind: 'injection', fixCode: '      - run: echo "Hello $BODY"\n        env:\n          BODY: ${{ github.event.pull_request.body }}' } }]} success="Dua-dua jumpa! Nama branch dan isi PR pun datang dari orang asing." />
+
+<Hint>Lihat dalam baris `run:`. Nombor selamat. Nama dan teks tidak.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Bina robot sambutan yang selamat. Hantar tajuk melalui `env:`.
+
+<Interactive name="YamlBuilder" workflow="Welcome" goal={{ order: ['issues', 'read', 'job', 'safe'] }} blocks={[
+  { id: 'issues', kind: 'trigger', label: 'Bila isu baharu dibuka', yaml: 'issues:\n  types: [opened]', means: 'Jalan bila seseorang buka isu.' },
+  { id: 'read', kind: 'permissions', label: 'Baca kod sahaja', yaml: 'contents: read', means: 'Kunci itu hanya boleh baca.' },
+  { id: 'job', kind: 'job', label: 'Job: thank', yaml: 'thank:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baharu.' },
+  { id: 'unsafe', kind: 'step', label: 'Ucap terima kasih (tajuk ditampal)', yaml: '- run: echo "Thanks for ${{ github.event.issue.title }}"', means: 'Tajuk ditampal terus ke dalam skrip.', why: 'Tajuk licik akan jadi arahan. Hantar melalui env.' },
+  { id: 'safe', kind: 'step', label: 'Ucap terima kasih (tajuk dalam env)', yaml: '- run: echo "Thanks for $TITLE"\n  env:\n    TITLE: ${{ github.event.issue.title }}', means: 'Tajuk sampai sebagai data biasa.' }]}
+  success="Selamat! Tajuk itu data, bukan kod." />
+</Card>
+
+<Card id="check" type="check">
+Selamat terus dalam `run:`, atau patut melalui `env:`? Leret setiap nilai.
+
+<Interactive name="SwipeJudge" cards={[{ text: '${{ github.event.issue.title }}', good: false, why: 'Sesiapa boleh tulis tajuk.' }, { text: '${{ github.event.pull_request.number }}', good: true, why: 'Nombor tak boleh simpan arahan. env: tetap tabiat yang baik.' }, { text: '${{ github.event.comment.body }}', good: false, why: 'Sesiapa boleh tulis komen.' }, { text: '${{ github.head_ref }}', good: false, why: 'Nama branch pun boleh simpan aksara licik.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh halang teks orang asing daripada jadi arahan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alat boleh tangkap ini untuk anda. actionlint beri amaran bahawa nilai "is potentially untrusted". CodeQL juga ada semakan. Pembaikan lain: action JavaScript kecil yang terima nilai itu sebagai input. Latihan sebenar: cari `github.event` dalam baris `run:` workflow anda.
+</Card>

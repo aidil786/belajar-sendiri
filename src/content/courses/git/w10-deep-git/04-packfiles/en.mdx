@@ -1,0 +1,69 @@
+---
+id: git-w10-l04
+world: 10
+title: Packfiles, gc and maintenance
+summary: "You will learn: how Git keeps a big history small and fast, mostly by itself."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, Transcript, SortCards, SwipeJudge]
+needs: [git-w10-l03]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git gc", url: "https://git-scm.com/docs/git-gc" }
+  - { label: "git maintenance", url: "https://git-scm.com/docs/git-maintenance" }
+  - { label: "git count-objects", url: "https://git-scm.com/docs/git-count-objects" }
+  - { label: "gitglossary (pack)", url: "https://git-scm.com/docs/gitglossary" }
+---
+
+<Card id="hook" type="hook">
+Your project has 10,000 commits. Each one made new objects. Is `.git` now a mess of tiny files?
+
+<Interactive name="Choice" options={[{ label: 'No. Git packs them together now and then', correct: true, why: 'Git tidies up. Many small files become one pack.' }, { label: 'Yes, forever', why: 'Git does tidy up. Keep going to see how.' }, { label: 'Git deletes old commits', why: 'Git never drops commits that a branch can reach.' }]} />
+</Card>
+
+<Card id="see-pack" type="see">
+Git squeezes many objects into one **<Term id="packfile">packfile</Term>**. Tap each step to see how.
+
+<Interactive name="TimelineTap" events={[{ when: 'Commit', title: 'Loose objects', text: 'Each new object starts as its own small, squeezed file.' }, { when: 'Later', title: 'Packing', text: 'Git moves many objects into one packfile.' }, { when: 'Inside', title: 'Small differences', text: 'Similar versions are stored as small changes, not full copies.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+A big file has 10 versions. Each version changed one line. In a packfile, what takes the space?
+
+<Interactive name="Choice" options={[{ label: 'One full copy, plus small differences', correct: true, why: 'Git saves the changes between similar versions. That is how packs stay small.' }, { label: 'Ten full copies', why: 'Loose objects are full copies. A pack stores small differences instead.' }, { label: 'Only the newest version', why: 'Git keeps every version you committed. It just stores them cleverly.' }]} />
+</Card>
+
+<Card id="see-gc" type="see">
+<Interactive name="Transcript" title="bash" label="Two commands: git gc, then git count-objects -vH." lines={[{ cmd: 'git gc' }, { cmd: 'git count-objects -vH' }]} />
+
+`git gc` is **<Term id="garbage-collection">garbage collection</Term>**. It packs objects and drops junk that nothing can reach. `git count-objects -vH` shows the size. Git also tidies a little by itself.
+</Card>
+
+<Card id="try-sort" type="try">
+`gc` only throws away objects that nothing can reach. Which ones does it keep?
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'gc keeps it' }, { id: 'prune', label: 'gc may throw it away' }]} items={[{ label: 'A commit on a branch', bucket: 'keep', why: 'A branch reaches it.' }, { label: 'A commit a tag points to', bucket: 'keep', why: 'Tags reach commits too.' }, { label: 'A commit lost by reset, still in the reflog', bucket: 'keep', why: 'The reflog reaches it, for a while. You can still rescue it.' }, { label: 'An old blob from a git add you never committed', bucket: 'prune', why: 'Nothing reaches it. After a grace time, gc throws it away.' }]} success="Right! If anything can reach it, gc keeps it." />
+</Card>
+
+<Card id="see-maintenance" type="see">
+<Interactive name="Transcript" title="bash" label="One command: git maintenance start." lines={[{ cmd: 'git maintenance start' }]} />
+
+Big repo you use every day? `git maintenance start` tidies it in the background. Your computer runs the jobs on a schedule.
+</Card>
+
+<Card id="check" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Let Git pack objects for you', good: true, why: 'Git does it by itself. You rarely need to think about it.' }, { text: 'Delete files in .git/objects to save space', good: false, why: 'That can break your repo. Let git gc decide.' }, { text: 'Run git maintenance start on a big repo you use daily', good: true, why: 'Background tidying keeps it fast.' }, { text: 'Run git gc --aggressive every day', good: false, why: 'It is very slow and rarely needed.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain packfiles and let Git tidy up for you.
+</Card>
+
+<Card id="deeper" type="deeper">
+Packfiles live in `.git/objects/pack`. `git gc --prune=now` drops unreachable objects at once, with no grace time. `git maintenance stop` turns the background jobs off. `git maintenance run --task=gc` runs one job now. Git 3.0 removes the old `git pack-redundant` command.
+</Card>

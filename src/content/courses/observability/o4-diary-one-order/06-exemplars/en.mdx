@@ -1,0 +1,58 @@
+---
+id: obs-o4-l06
+world: 4
+title: "Exemplars and correlation"
+summary: "You will learn: to jump from a spike on a graph to the very order that caused it."
+minutes: 4
+xp: 20
+interactives: [PromQLPlayground, SpotLines, OrderList, Choice, SortCards]
+needs: [obs-o4-l05]
+scenario: o4-slow-step
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus feature flags (exemplar storage)", url: "https://prometheus.io/docs/prometheus/latest/feature_flags/" }
+  - { label: "Grafana: introduction to exemplars", url: "https://grafana.com/docs/grafana/latest/fundamentals/exemplars/" }
+  - { label: "OpenTelemetry: signals", url: "https://opentelemetry.io/docs/concepts/signals/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PromQLPlayground" scenario="o4-slow-step" initial="histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_seconds_bucket[5m])))" prompt="Press Run. Which service got slow, and when?" />
+
+The graph shows kedai-pay getting slow from 10m. But which order was slow? A graph can't name one.
+</Card>
+
+<Card id="see-exemplar" type="see">
+<Interactive name="SpotLines" prompt="What the pay service exposes, in OpenMetrics text. Tap the part that names one real order." lines={[{ text: '# TYPE http_server_request_duration_seconds histogram' }, { text: 'http_server_request_duration_seconds_bucket{le="2.5"} 11800' }, { text: 'http_server_request_duration_seconds_bucket{le="+Inf"} 12000 # {trace_id="3c9a51e0b7d24f6e9a18c2d4e6f80b15"} 2.86', target: true }, { text: 'http_server_request_duration_seconds_count 12000' }]} success="Yes. After the #: one trace ID, and that order took 2.86 s." />
+
+An **<Term id="exemplar">exemplar</Term>** pins one sample order to a metric. Grafana draws it as a dot you can click.
+</Card>
+
+<Card id="try-path" type="try">
+<Interactive name="OrderList" items={['Graph: p95 of kedai-pay jumps at 10m', 'Exemplar dot: trace 3c9a51e0…', 'Trace: SELECT payments took 2.8 s', 'Logs with that trace_id: slow query on payments']} label="Where you start at the top" success="Graph, dot, trace, logs: from a spike to the reason in four clicks." />
+
+Put the jumps in order, from the first clue to the reason.
+</Card>
+
+<Card id="predict" type="predict">
+Prometheus does not keep exemplars by default. Which flag turns them on?
+
+<Interactive name="Choice" options={[{ label: '--enable-feature=exemplar-storage', correct: true, why: 'Yes. It keeps recent exemplars in a fixed-size buffer in memory.' }, { label: '--web.enable-otlp-receiver', why: 'That lets Prometheus take metrics over OTLP. A different job.' }, { label: '--storage.tsdb.retention.time', why: 'That sets how long samples are kept on disk.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'metrics', label: 'Metrics' }, { id: 'traces', label: 'Traces' }, { id: 'logs', label: 'Logs' }]} items={[{ label: 'How many orders fail each second?', bucket: 'metrics', why: 'Counting over time is what metrics do best.' }, { label: 'Is it getting worse this hour?', bucket: 'metrics', why: 'A trend: a graph of a metric.' }, { label: 'Which step of order A1041 was slow?', bucket: 'traces', why: 'Spans show each step and its time.' }, { label: 'What did kedai-pay say about A1041?', bucket: 'logs', why: 'The diary holds the words.' }]} success="Each signal answers its own question. Links join them." />
+
+Which signal answers each question best?
+</Card>
+
+<Card id="win" type="win">
+You can now jump from a graph to one order's trace and logs.
+</Card>
+
+<Card id="deeper" type="deeper">
+In Grafana, the Prometheus data source can link an exemplar's `trace_id` to your trace store. A Loki data source can turn `trace_id` in a log line into a link too. Then the jump is one click, both ways.
+</Card>

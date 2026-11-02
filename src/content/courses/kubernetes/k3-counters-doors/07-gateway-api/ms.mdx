@@ -1,0 +1,76 @@
+---
+id: k8s-k3-l07
+world: 3
+title: "Gateway API: pintu masuk utama"
+summary: "Anda akan belajar: cara GatewayClass, Gateway dan HTTPRoute biar pelanggan masuk."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, RequestTracer, Choice, SortCards, Mission]
+needs: [k8s-k3-l06]
+scenario: k3-entrance
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Gateway API", url: "https://kubernetes.io/docs/concepts/services-networking/gateway/" }
+  - { label: "Dokumentasi Gateway API", url: "https://gateway-api.sigs.k8s.io/" }
+  - { label: "Gateway API: pelaksanaan", url: "https://gateway-api.sigs.k8s.io/implementations/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-entrance" commands={['kubectl get services', 'kubectl get gateway']} label="Service shop ialah ClusterIP. kubectl get gateway tak jumpa apa-apa: tiada pintu masuk." />
+
+Pelanggan menunggu di jalan. Nombor pesanan kedai hanya berfungsi di dalam. Dan belum ada pintu depan.
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'GatewayClass', title: 'Pembuat pintu', text: 'Controller mana yang bina pintu. Di sini: eg, dijalankan oleh Envoy Gateway. Pasukan platform pasangnya.' }, { when: 'Gateway', title: 'Pintu masuk utama', text: 'Satu pintu dengan listener, contohnya HTTP di port 80. Ia dapat alamat luar.' }, { when: 'HTTPRoute', title: 'Papan tanda', text: 'Laluan mana pergi ke Service mana. Pasukan aplikasi tulis ini.' }]} />
+
+**Gateway API** ialah cara utama untuk masuk. Ia ada tiga bahagian, milik tiga pasukan. Ketik setiap satu.
+</Card>
+
+<Card id="see-apply" type="see">
+<Interactive name="KubeReplay" scenario="k3-entrance" commands={['cat gateway.yaml', 'kubectl apply -f gateway.yaml', 'kubectl get gateway entrance']} label="gateway.yaml: Gateway bernama entrance, kelas eg, satu listener HTTP di port 80. Selepas apply ia ada alamat dan PROGRAMMED True." />
+
+**<Term id="gateway">Gateway</Term>** (pintu masuk utama) ialah pintu depan. `PROGRAMMED True` maksudnya pintu dah siap dibina. ADDRESS ialah tempat pelanggan mengetuk.
+</Card>
+
+<Card id="try-entrance" type="try">
+Bina pintu masuk dan satu papan tanda. Kemudian ketuk dari laptop anda.
+
+<Interactive name="FoodCourtSim" scenario="k3-entrance" goal={{ reachable: { url: 'http://172.18.0.200/', contains: 'Kedai Kancil' }, lastTyped: '^curl' }} hints={['Taip kubectl apply -f gateway.yaml', 'Taip kubectl apply -f route.yaml', 'Cari ADDRESS dengan kubectl get gateway, kemudian curl http://172.18.0.200/']} success="Pelanggan masuk dari jalan dan dapat halaman kedai!" />
+
+<Hint>Dua fail: `gateway.yaml` (pintu) dan `route.yaml` (papan tanda). Kemudian `curl` ADDRESS itu.</Hint>
+</Card>
+
+<Card id="see-trace" type="see">
+Ikut satu pesanan dari jalan sampai ke dulang. Tekan Send, atau Step untuk satu langkah demi satu.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-hjttw', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-pklq2', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/' } }} task={{ type: 'trace' }} />
+</Card>
+
+<Card id="predict" type="predict">
+Anda padam HTTPRoute. Gateway masih berjalan. Apa pelanggan dapat?
+
+<Interactive name="Choice" options={[{ label: '404 Not Found: pintu terbuka, tapi tiada papan tanda', correct: true, why: 'Pintu masuk mendengar, tapi tiada laluan yang sepadan.' }, { label: 'Ralat sambungan: pintu dah hilang', why: 'Gateway masih mendengar. Cuma tiada laluan.' }, { label: 'Halaman kedai, macam biasa', why: 'Tanpa papan tanda, pintu tak hantar sesiapa ke mana-mana.' }]} />
+</Card>
+
+<Card id="check-owners" type="check">
+Tiga bahagian, tiga pasukan. Siapa tulis apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'platform', label: 'Pasukan platform' }, { id: 'ops', label: 'Operator kluster' }, { id: 'app', label: 'Pasukan aplikasi' }]} items={[{ label: 'Pasang Envoy Gateway', bucket: 'platform', why: 'Pembuat pintu dipasang sekali, untuk semua.' }, { label: 'GatewayClass eg', bucket: 'platform', why: 'Ia namakan controller yang bina pintu.' }, { label: 'Gateway entrance, port 80', bucket: 'ops', why: 'Operator tentukan pintu mana dibuka.' }, { label: 'Pilih port yang pintu buka', bucket: 'ops', why: 'Pintu dikongsi, jadi operator yang jaga.' }, { label: 'HTTPRoute: /api ke api', bucket: 'app', why: 'Pasukan aplikasi pasang papan tanda sendiri.' }, { label: 'Hala /menu ke Service menu', bucket: 'app', why: 'Papan tanda milik gerai yang perlukannya.' }]} success="Siap! Setiap pasukan jaga bahagian sendiri." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka pintu masuk utama dengan Gateway API.
+</Card>
+
+<Card id="deeper" type="deeper">
+Gateway API tidak terbina dalam. Kluster perlukan CRD Gateway API serta satu controller. Envoy Gateway, Istio, Cilium dan NGINX Gateway Fabric antaranya. Setiap laluan di sini guna `gateway.networking.k8s.io/v1`. Di kind, alamat Gateway mungkin perlukan cloud-provider-kind.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l07-rep" steps={[{ id: 'install', text: 'Pasang CRD Gateway API dan satu controller, ikut quickstart rasmi controller itu.' }, { id: 'class', text: 'Cari pembuat pintu.', command: 'kubectl get gatewayclass' }, { id: 'door', text: 'Apply satu Gateway dan satu HTTPRoute untuk kedai anda.' }, { id: 'wait', text: 'Tunggu PROGRAMMED True, kemudian curl ADDRESS itu.', command: 'kubectl get gateway' }]} success="Pintu masuk sebenar di kluster anda sendiri!" />
+</Card>

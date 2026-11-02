@@ -1,0 +1,82 @@
+---
+id: git-w00-l04
+world: 0
+title: Tell Git who you are
+summary: "You will learn: how to give Git your name, your email and a few good settings."
+minutes: 4
+xp: 25
+interactives: [TermReplay, CommandBuilder, Sim, Choice, Mission]
+needs: [git-w00-l03]
+scenario: w00-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git config", url: "https://git-scm.com/docs/git-config" }
+  - { label: "git init", url: "https://git-scm.com/docs/git-init" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w00-l04-log" commands={['git log -n 1']} label="git log shows the newest commit. The Author line says: You, you@example.com." />
+
+Every commit is signed with a name and an email. This one just says "You". Git can't guess who you are.
+</Card>
+
+<Card id="see-config" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global user.name "Aiman Hakim"', 'git config --global user.name']} label="The first command saves the name Aiman Hakim. The second one prints it back." />
+
+`git config` changes Git's settings, called **<Term id="config">config</Term>**. This one saves your name. `--global` means: for all your projects.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that saves your email. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'config', means: 'change a setting' }, { text: '--global', means: 'for all your projects' }, { text: 'user.email', means: 'the setting: your email' }, { text: '"aiman@example.com"', means: 'the value' }]} decoys={[{ text: 'user.name', means: 'the setting: your name' }, { text: 'commit', means: 'save a snapshot' }]} success="That's it! Git now knows Aiman's email." />
+
+<Hint>It looks like the name command. Swap the setting and the value.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Now set your own name and email here.
+
+<Interactive name="Sim" scenario="w00-l04" panels={[]} prefill="git config --global user.name " goal={{ configSet: ['user.name', 'user.email'], typed: 'user\\.email\\s+\\S' }} hints={['Type git config --global user.name "Your Name" and press Enter.', 'Now type git config --global user.email "you@example.com".']} success="Git knows you now. Every commit will carry your name." />
+
+Your email shows on every commit. Use one you are happy to share.
+
+<Hint>Put your name in quotes, like `"Aiman Hakim"`.</Hint>
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global init.defaultBranch main', 'git init diary']} label="After setting init.defaultBranch to main, git init makes a new project called diary." />
+
+Each project starts with one **<Term id="branch">branch</Term>**, a line of save points. This setting names it `main`. `git init diary` makes a new project to test it.
+</Card>
+
+<Card id="see-editor" type="see">
+<Interactive name="TermReplay" scenario="w00-l04" commands={['git config --global core.editor "code --wait"', 'git config --global --list']} label="core.editor is set to code --wait. The list shows every setting." />
+
+Sometimes Git opens an **editor** for you to type in. This picks VS Code. `--wait` makes Git wait until you close it. `--list` shows all your settings.
+</Card>
+
+<Card id="predict-levels" type="predict">
+Settings have three levels: system, global and **local**. Local is for one project. Your global email is `home@example.com`. One project sets a local email: `work@example.com`. Which one does that project use?
+
+<Interactive name="Choice" options={[{ label: '`work@example.com`', correct: true, why: 'Local beats global. The closest setting wins.' }, { label: '`home@example.com`', why: 'Global is the backup. Inside that project, local wins.' }, { label: 'Both emails', why: 'A commit has one email. Here, the local one wins.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Your turn, for real. Do this on your own computer. Copy each line into your terminal.
+
+<Interactive name="Mission" id="w00-first-commit" title="Quick win: your first real commit" steps={[{ id: 'open', text: 'Open your terminal. On Windows, open **Git Bash**.' }, { id: 'name', text: 'Tell Git your name. Change "Your Name" first.', command: 'git config --global user.name "Your Name"' }, { id: 'email', text: 'Tell Git your email.', command: 'git config --global user.email "you@example.com"' }, { id: 'branch', text: 'Call the first branch main in new projects.', command: 'git config --global init.defaultBranch main' }, { id: 'folder', text: 'Make a folder for your project.', command: 'mkdir my-first-repo' }, { id: 'cd', text: 'Go into it.', command: 'cd my-first-repo' }, { id: 'init', text: 'Ask Git to look after this folder.', command: 'git init' }, { id: 'file', text: 'Make a file with one line in it.', command: 'echo "Hello Git" > hello.txt' }, { id: 'add', text: 'Put the file in the box. The box holds what is ready to save.', command: 'git add hello.txt' }, { id: 'commit', text: 'Save the box as your first commit, with a short note.', command: 'git commit -m "Add hello file"' }, { id: 'log', text: 'See your save point in the history.', command: 'git log --oneline' }]} success="That's a real commit, on your own computer. Amazing!" />
+
+<Hint>Stuck? Check each line is typed exactly. Spaces and quotes matter.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now set up Git and make a real commit.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git config --list --show-origin` shows each setting and the file it lives in. `--system` changes settings for everyone on the computer. On a Mac, `code --wait` needs the `code` command. Add it from VS Code's Command Palette.
+</Card>

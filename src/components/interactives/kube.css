@@ -1,0 +1,458 @@
+/* Food-court simulator (Kubernetes): the pink "you are here" bar, stalls (nodes), trays
+   (pods), order numbers (Services), the entrance (Gateway) and the Manager's board.
+   Colours: green healthy, amber waiting, red + icon failed, pink you-are-here. Tokens only. */
+
+.kube-sim,
+.kube-board-wrap {
+  display: grid;
+  gap: var(--space-2);
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* --- You are here ------------------------------------------------------- */
+.kube-here {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-m);
+  background: var(--c-head-soft);
+  border: 2px solid var(--deco-head);
+  color: var(--c-head-ink);
+  font-size: var(--text-s);
+}
+.kube-here-pin {
+  display: inline-flex;
+  color: var(--deco-head);
+}
+.kube-here-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  min-width: 0;
+}
+.kube-here-key {
+  font-weight: var(--weight-bold);
+}
+.kube-here-item code {
+  overflow-wrap: anywhere;
+}
+.kube-here-what {
+  color: var(--color-text-muted);
+}
+.kube-here-prod {
+  border-color: var(--c-danger);
+}
+.kube-here-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--c-danger-ink);
+  font-weight: var(--weight-bold);
+}
+.kube-here.is-changed {
+  animation: kube-flash var(--dur-slow) var(--ease-out) 1;
+}
+@keyframes kube-flash {
+  0% {
+    box-shadow: 0 0 0 0 var(--deco-head);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--c-head-soft);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* --- The food court ------------------------------------------------------ */
+.kube-court {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.kube-stalls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+@container (min-width: 560px) {
+  .kube-stalls {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+}
+.kube-stall {
+  min-width: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  padding: var(--space-2);
+}
+.kube-stall.is-cp {
+  background: var(--color-surface-2);
+}
+.kube-stall.is-down {
+  border-color: var(--c-danger);
+  border-style: dashed;
+}
+.kube-stall.is-cordoned {
+  border-color: var(--deco-staging);
+}
+.kube-stall-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+.kube-stall-icon {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+.kube-stall-name {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.kube-stall-btn {
+  margin-left: auto;
+  min-height: var(--tap);
+  font-size: var(--text-xs);
+}
+.kube-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.kube-chip-ok {
+  background: var(--c-repo-soft);
+  color: var(--c-repo-ink);
+  border-color: var(--deco-repo);
+}
+.kube-chip-bad {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  border-color: var(--c-danger);
+}
+.kube-chip-wait {
+  background: var(--c-staging-soft);
+  color: var(--c-staging-ink);
+  border-color: var(--deco-staging);
+}
+.kube-empty,
+.kube-muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  margin: 0;
+}
+.kube-trays {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.kube-tray {
+  min-width: 0;
+}
+.kube-tray-body,
+.kube-tray-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-s);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+}
+.kube-tray-btn {
+  cursor: pointer;
+  min-height: var(--tap);
+}
+.kube-tray-btn:hover {
+  border-color: var(--c-danger);
+}
+.kube-tray-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.kube-tray-name {
+  overflow-wrap: anywhere;
+}
+.kube-tray-icon {
+  display: inline-flex;
+}
+.kube-tray-restarts,
+.kube-tray-status {
+  font-size: var(--text-xs);
+  color: inherit;
+}
+.kube-tray-ready :is(.kube-tray-body, .kube-tray-btn),
+.kube-tray-done :is(.kube-tray-body, .kube-tray-btn) {
+  background: var(--c-repo-soft);
+  border-color: var(--deco-repo);
+  color: var(--c-repo-ink);
+}
+.kube-tray-starting :is(.kube-tray-body, .kube-tray-btn),
+.kube-tray-pending :is(.kube-tray-body, .kube-tray-btn) {
+  background: var(--c-staging-soft);
+  border-color: var(--deco-staging);
+  color: var(--c-staging-ink);
+}
+.kube-tray-failed :is(.kube-tray-body, .kube-tray-btn) {
+  background: var(--c-danger-soft);
+  border-color: var(--c-danger);
+  color: var(--c-danger-ink);
+}
+.kube-tray-terminating :is(.kube-tray-body, .kube-tray-btn) {
+  border-style: dashed;
+  color: var(--color-text-muted);
+}
+.kube-tray.is-glow :is(.kube-tray-body, .kube-tray-btn) {
+  box-shadow: 0 0 0 3px var(--color-flash);
+}
+.kube-danger-dot {
+  display: inline-flex;
+  color: var(--c-danger-ink);
+}
+.kube-queue {
+  border: 2px dashed var(--deco-staging);
+  border-radius: var(--radius-m);
+  padding: var(--space-2);
+  display: grid;
+  gap: var(--space-1);
+}
+.kube-queue-title {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--c-staging-ink);
+}
+
+/* Order numbers (Services) and the entrance (Gateway). */
+.kube-orders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.kube-order {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--deco-remote);
+  background: var(--c-remote-soft);
+  color: var(--c-remote-ink);
+  font-size: var(--text-xs);
+}
+.kube-order.is-empty {
+  border-color: var(--c-danger);
+}
+.kube-order-tag {
+  font-weight: var(--weight-bold);
+}
+.kube-order-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--c-danger-ink);
+}
+.kube-entrance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-m);
+  border: 2px solid var(--deco-remote);
+  background: var(--color-surface-2);
+  font-size: var(--text-s);
+}
+.kube-entrance.is-waiting {
+  border-color: var(--deco-staging);
+}
+.kube-entrance-title {
+  font-weight: var(--weight-bold);
+}
+.kube-entrance-routes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.kube-route code {
+  font-size: var(--text-xs);
+}
+
+/* --- Clock, actions, danger --------------------------------------------- */
+.kube-clock,
+.kube-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+.kube-clock .btn,
+.kube-actions .btn {
+  min-height: var(--tap);
+}
+.kube-clock-time {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.kube-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 2px solid var(--c-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+}
+.kube-action-cmd {
+  font-size: var(--text-xs);
+}
+/* K9: you are inside a node (purple = somewhere else than your laptop, like the remote colour). */
+.kube-node-shell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-s);
+  border: 2px solid var(--c-remote);
+  background: var(--c-remote-soft);
+  color: var(--c-remote-ink);
+  font-size: var(--text-s);
+}
+
+.kube-node-icon {
+  flex: none;
+}
+
+.kube-danger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-s);
+  border: 2px solid var(--c-danger);
+  background: var(--c-danger-soft);
+  color: var(--c-danger-ink);
+  font-size: var(--text-s);
+}
+
+/* --- Manager's board ------------------------------------------------------ */
+.kube-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.kube-board-cell {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-m);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  text-align: center;
+}
+.kube-board-want {
+  border-color: var(--deco-working);
+  background: var(--c-working-soft);
+}
+.kube-board-see {
+  border-color: var(--deco-repo);
+}
+.kube-board-do.is-acting {
+  border-color: var(--deco-staging);
+  background: var(--c-staging-soft);
+}
+.kube-board-key {
+  font-family: var(--font-lexend);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-s);
+}
+.kube-board-num {
+  font-family: var(--font-lexend);
+  font-size: var(--text-xxl);
+  line-height: 1;
+}
+.kube-board-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-s);
+  overflow-wrap: anywhere;
+}
+.kube-board-note {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.kube-board-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+}
+.kube-board-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 2px solid var(--deco-repo);
+}
+.kube-board-dot.is-ready {
+  background: var(--deco-repo);
+}
+.kube-board-dot.is-there {
+  border-color: var(--deco-staging);
+}
+.kube-board-dot.is-missing {
+  border-style: dashed;
+  border-color: var(--c-danger);
+}
+.kube-board.is-compact .kube-board-num {
+  font-size: var(--text-xl);
+}
+[data-anim='pop'] {
+  animation: kube-pop var(--dur-ui) var(--ease-out) 1;
+}
+@keyframes kube-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.kube-replay .kube-court {
+  margin-top: var(--space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kube-here.is-changed,
+  [data-anim='pop'] {
+    animation: none;
+  }
+}

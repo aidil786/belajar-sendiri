@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l02
+world: 2
+title: "Sidecars and init containers"
+summary: "You will learn: how to run a prep step before your app, and a helper beside it all day."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l01]
+scenario: k2-sidecar
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Init containers", url: "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" }
+  - { label: "Kubernetes: Sidecar containers", url: "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" }
+---
+
+<Card id="hook" type="hook">
+Your web server crashes at start. The menu file is not there yet. Something must lay it out first, then step aside. Who should do it?
+
+<Interactive name="Choice" options={[{ label: 'A helper that runs first, then stops', correct: true, why: 'A prep cook sets the table before the stall opens. Kubernetes has one of those.' }, { label: 'The web server, with extra code', why: 'Possible, but now one container does two jobs. Keep the prep step separate.' }, { label: 'You, by hand, every morning', why: 'Pods come and go all day. Nobody can be there for each one.' }]} />
+</Card>
+
+<Card id="see-init" type="see">
+<Interactive name="KubeReplay" scenario="k2-sidecar" commands={['kubectl apply -f kedai.yaml', 'sleep 2', 'kubectl get pod kedai', 'sleep 10', 'kubectl get pod kedai']} label="First the pod shows Init:0/2 while the prep step runs. Ten seconds later it is Running with READY 2/2." />
+
+An **<Term id="init-container">init container</Term>** is the prep cook. It runs first, finishes, then leaves. `Init:0/2` means 0 of 2 init containers are done. The web server waits for them.
+</Card>
+
+<Card id="try-order" type="try">
+How does the `kedai` tray start and stop? Put the steps in order.
+
+<Interactive name="OrderList" items={['prep lays out the menu, then exits', 'sweeper starts and keeps running', 'web starts serving', 'Closing time: web stops first', 'sweeper stops last']} label="First step at the top" success="Yes! Prep first, helper next, the app in the middle, the helper leaves last." />
+
+<Hint>Init containers run one by one, in the order the file lists them.</Hint>
+</Card>
+
+<Card id="see-sidecar" type="see">
+A **<Term id="sidecar">sidecar</Term>** is a helper who stays all day, like a log shipper. It sits under `initContainers`. Which of its lines makes `sweeper` stay all day?
+
+<Interactive name="Choice" options={[{ label: '`restartPolicy: Always`', correct: true, why: 'It starts before the app and keeps running. That is a native sidecar.' }, { label: '`name: sweeper`', why: 'A name is just a name. Any name works.' }, { label: '`image: busybox:1.37`', why: 'The image says what it runs, not how long it stays.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Your turn. Apply `kedai.yaml`. Watch STATUS change until READY says 2/2.
+
+<Interactive name="FoodCourtSim" scenario="k2-sidecar" goal={{ podsReady: { selector: 'app=kedai', count: 1 }, typed: 'get pods?' }} hints={['Type kubectl apply -f kedai.yaml', 'Type kubectl get pods again after a few seconds']} success="READY 2/2: the web server and its sweeper are both up." />
+
+<Hint>Type `kubectl apply -f kedai.yaml`, then `kubectl get pods` a few times.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+In `noprep.yaml`, the prep cook exits with an error. What does `kubectl get pods` show?
+
+<Interactive name="Choice" options={[{ label: '`Init:Error`, then `Init:CrashLoopBackOff`', correct: true, why: 'The prep step fails, so Kubernetes retries it and waits longer each time. web never starts.' }, { label: '`Running`', why: 'web waits until every init container has finished well.' }, { label: '`Completed`', why: 'Completed means exit code 0. This prep step exited with 1.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k2-sidecar" commands={['kubectl apply -f noprep.yaml', 'sleep 6', 'kubectl get pod noprep', 'kubectl logs noprep -c prep']} label="noprep shows Init:CrashLoopBackOff. The logs of the prep container say: where is the menu file." />
+
+Real error: `Init:CrashLoopBackOff`. Plain words: the prep step keeps failing, so the tray never opens. Read its logs with `-c prep`.
+</Card>
+
+<Card id="win" type="win">
+You can now add a prep step and an all-day helper to a pod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Native sidecars are stable since Kubernetes 1.33. Older guides put helpers under `containers:`. Then a Job never finishes while its helper runs. A native sidecar does not hold a Job open.
+
+Real rep (optional): on a throwaway cluster, apply `kedai.yaml` and watch it with `kubectl get pod kedai -w`.
+</Card>

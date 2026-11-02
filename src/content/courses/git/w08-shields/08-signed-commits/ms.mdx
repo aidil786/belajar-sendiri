@@ -1,0 +1,66 @@
+---
+id: git-w08-l08
+world: 8
+title: Commit bertandatangan
+summary: "Anda akan belajar: cara buktikan commit itu memang milik anda, dengan lencana Verified."
+minutes: 4
+xp: 20
+interactives: [TermReplay, CommandBuilder, Sim, Choice, SortCards]
+needs: [git-w08-l07]
+scenario: w08-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git config (gpg.format, user.signingKey, commit.gpgSign)", url: "https://git-scm.com/docs/git-config" }
+  - { label: "About commit signature verification", url: "https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification" }
+  - { label: "Telling Git about your signing key", url: "https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l08" commands={['git config --global user.name "Siti"', 'git commit -m "Add footer"', 'git log -n 1']} label="Satu arahan config tukar nama kepada Siti. Commit baru tulis Author: Siti, walaupun sesiapa pun boleh taip begitu." />
+
+Git percaya apa saja nama yang anda taip. Sesiapa pun boleh buat commit yang tulis "Siti". Jadi macam mana orang nak percaya commit itu betul-betul anda punya?
+</Card>
+
+<Card id="see-signed" type="see">
+**<Term id="signed-commit">Commit bertandatangan</Term>** (signed commit) bawa tandatangan digital anda. Hanya kunci peribadi anda boleh buat tandatangan itu. GitHub semak dengan kunci awam anda, macam padankan kunci dengan mangganya.
+</Card>
+
+<Card id="see-verified" type="see">
+Tandatangan sah? GitHub tunjuk lencana **<Term id="verified-badge">Verified</Term>** di sebelah commit itu. Bertandatangan, tapi GitHub tak dapat semak? Ia tulis Unverified. Tak bertandatangan? Tiada lencana langsung.
+</Card>
+
+<Card id="try-build" type="try">
+Git boleh tandatangan dengan kunci SSH, macam kunci anda dari Dunia 4. Bina tetapan yang pilih SSH.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'config', means: 'ubah tetapan' }, { text: '--global', means: 'untuk semua projek anda' }, { text: 'gpg.format', means: 'jenis kunci yang menandatangani' }, { text: 'ssh', means: 'guna kunci SSH' }]} decoys={[{ text: 'openpgp', means: 'guna kunci GPG (lalai)' }, { text: 'user.name', means: 'nama anda' }]} success="Ya! Git akan tandatangan dengan SSH sekarang." />
+</Card>
+
+<Card id="try-sim" type="try">
+Sekarang sediakan tandatangan di sini. Anda perlu tiga tetapan: format, kunci anda, dan "tandatangan setiap commit".
+
+<Interactive name="Sim" scenario="w08-l08" panels={[]} prefill="git config --global gpg.format ssh" goal={{ config: { 'gpg.format': 'ssh', 'commit.gpgsign': 'true' }, configSet: ['user.signingkey'] }} hints={['Tekan Enter untuk jalankan tetapan pertama.', 'Kunci anda: git config --global user.signingkey ~/.ssh/id_ed25519.pub', 'Tandatangan setiap commit: git config --global commit.gpgsign true']} success="Siap! Setiap commit baru akan bawa tandatangan anda." />
+
+<Hint>Halakan `user.signingkey` kepada kunci awam anda, fail yang berakhir dengan `.pub`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda push commit bertandatangan. Tapi kunci awam anda tiada di GitHub sebagai signing key. Apa yang GitHub tunjuk?
+
+<Interactive name="Choice" options={[{ label: 'Unverified', correct: true, why: 'Ia bertandatangan, tapi GitHub tiada kunci untuk menyemaknya.' }, { label: 'Verified', why: 'GitHub perlukan kunci awam anda untuk semak tandatangan itu.' }, { label: 'Tiada lencana', why: 'Tiada lencana maksudnya tak bertandatangan. Yang ini bertandatangan.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Lencana apa yang setiap commit dapat? Susun semuanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'verified', label: 'Verified' }, { id: 'unverified', label: 'Unverified' }, { id: 'none', label: 'Tiada lencana' }]} items={[{ label: 'Bertandatangan, dan signing key anda ada di GitHub', bucket: 'verified', why: 'Tandatangan itu padan dengan kunci anda.' }, { label: 'Bertandatangan, tapi kunci tiada di GitHub', bucket: 'unverified', why: 'GitHub tak dapat menyemaknya.' }, { label: 'Langsung tak bertandatangan', bucket: 'none', why: 'Tiada tandatangan, tiada lencana.' }, { label: 'Dibuat dalam editor web GitHub', bucket: 'verified', why: 'GitHub tandatangan commit itu untuk anda.' }]} success="Siap! Sekarang anda boleh baca lencana itu." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tandatangan commit anda dan baca lencana Verified.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kunci GPG pun boleh. Itu format lalai, `openpgp`. Tandatangan SSH perlukan Git 2.34 atau lebih baru. Hidupkan vigilant mode, dan commit anda yang tak bertandatangan akan tunjuk Unverified. `git log --show-signature` tunjuk tandatangan di komputer anda. Untuk SSH, Git perlukan `gpg.ssh.allowedSignersFile` dulu.
+</Card>

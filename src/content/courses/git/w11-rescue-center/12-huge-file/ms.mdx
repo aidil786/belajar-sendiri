@@ -1,0 +1,65 @@
+---
+id: git-w11-l12
+world: 11
+title: Saya commit fail yang besar
+summary: "Anda akan belajar: cara keluarkan fail besar dari commit sebelum ia tersebar."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice, TermReplay, Sim, SortCards]
+needs: [git-w01-l10]
+scenario: w11-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rm --cached", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "About large files on GitHub", url: "https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github" }
+  - { label: "About Git Large File Storage", url: "https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Dua commit dalam repositori. Yang terbaru, Add trip page, bercahaya dan bergoyang. Ia simpan trip.html dan video.mp4 yang sangat besar." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add trip page', kind: 'commit', glow: true }] }]} />
+
+Push anda merangkak. Kemudian GitHub tolak: `video.mp4` terlalu besar. Alamak! Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="decide" type="try">
+GitHub tolak push itu. Jadi, di mana video itu sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Hanya dalam commit di komputer saya', correct: true, why: 'Push yang ditolak tak ubah apa-apa di GitHub. Baiki dalam komputer anda.' }, { label: 'Di GitHub, separuh dimuat naik', why: 'Tidak. Push yang ditolak biarkan GitHub seperti asal.' }, { label: 'Tiada di mana-mana, Git dah padam', why: 'Fail itu masih atas meja dan dalam commit anda.' }]} />
+</Card>
+
+<Card id="see-untrack" type="see">
+<Interactive name="TermReplay" scenario="w11-l12" commands={['git rm --cached video.mp4', 'git status -s']} label="git rm --cached video.mp4 papar rm video.mp4. Kemudian git status -s tunjuk D video.mp4 dalam kotak, dan video.mp4 sebagai untracked." />
+
+`git rm --cached video.mp4` suruh Git berhenti jejak fail itu. Video kekal selamat dalam komputer anda.
+</Card>
+
+<Card id="try-fix" type="try">
+Keluarkan video dari commit (titik simpan) terakhir. Abaikan `*.mp4` supaya ia tak menyelinap balik.
+
+<Interactive name="Sim" scenario="w11-l12" panels={['areas']} goal={{ lastCommitLacks: ['video.mp4'], lastCommitHas: ['trip.html'], filesExist: ['video.mp4'], fileContains: { '.gitignore': 'mp4' }, commits: 4 }} hints={['Taip git rm --cached video.mp4', 'Kemudian: echo "*.mp4" >> .gitignore dan git add .gitignore', 'Akhir sekali: git commit --amend --no-edit']} success="Ringan semula! Commit itu simpan trip.html. Video kekal dalam komputer anda." />
+
+<Hint>Taip `git rm --cached video.mp4`, kemudian `echo "*.mp4" >> .gitignore` dan `git add .gitignore`. Akhir sekali, `git commit --amend --no-edit`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Cerita baru: video lebih kecil, dan push berjaya. Anda padam dalam commit baru. Adakah repo kecil semula?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Commit lama masih simpan video itu', correct: true, why: 'Setiap clone muat turun sejarah. Padam sejarah perlukan git filter-repo, dengan berhati-hati.' }, { label: 'Ya, serta-merta', why: 'Sejarah simpan setiap gambar, termasuk video itu.' }, { label: 'Ya, selepas sehari', why: 'Git tak pernah bersihkan sejarah sendiri.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Commit, atau jauhkan dari Git? Susun setiap fail.
+
+<Interactive name="SortCards" buckets={[{ id: 'git', label: 'Commit' }, { id: 'out', label: 'Jauhkan dari Git' }]} items={[{ label: 'index.html', bucket: 'git', why: 'Teks kecil yang selalu diubah. Sesuai untuk Git.' }, { label: 'style.css', bucket: 'git', why: 'Teks kecil. Git suka.' }, { label: 'holiday-video.mp4 (300 MB)', bucket: 'out', why: 'Terlalu besar. Guna Git LFS atau storan awan.' }, { label: 'node_modules/', bucket: 'out', why: 'npm boleh bina semula bila-bila masa.' }]} success="Tersusun! Teks kecil dalam Git. Yang besar atau boleh dibina semula, di luar." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh keluarkan fail besar dari commit sebelum ia tersebar.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub beri amaran melebihi 50 MiB dan sekat fail melebihi 100 MiB. Perlu fail besar dalam repo? Git LFS ialah tambahan: `git lfs track "*.mp4"` simpan video di luar sejarah biasa. Fail besar dalam commit lebih lama, belum push? `git reset --soft origin/main` masukkan semula semua kerja yang belum push ke dalam kotak. Keluarkan fail itu, kemudian commit semula.
+</Card>

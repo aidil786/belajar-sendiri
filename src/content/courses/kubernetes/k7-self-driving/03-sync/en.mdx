@@ -1,0 +1,71 @@
+---
+id: k8s-k7-l03
+world: 7
+title: "Sync: from Git to cluster"
+summary: "You will learn: what sync does, and how to read Argo CD's two status lights."
+minutes: 4
+xp: 20
+interactives: [Choice, GitOpsMirror, OrderList, SortCards, YamlDoctor, SwipeJudge]
+needs: [k8s-k7-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: automated sync policy", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "Argo CD: resource health", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/health/" }
+  - { label: "Argo CD: Git webhooks", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/" }
+---
+
+<Card id="hook" type="hook">
+You merged a new version at 12:00. At 12:01, the cluster still runs the old one. Is something broken?
+
+<Interactive name="Choice" options={[{ label: 'Not yet. Argo CD checks Git about every 3 minutes', correct: true, why: 'By default it looks every 3 minutes at most. A webhook makes it look at once.' }, { label: 'Yes. GitOps should be instant', why: 'Argo CD pulls on a timer. A short wait is normal.' }, { label: 'Yes. Run kubectl apply to help it', why: 'That skips Git. Give Argo CD a moment first.' }]} />
+</Card>
+
+<Card id="try-sync" type="try">
+Ship version 1.5.0 through Git. Watch both lights: **<Term id="sync">sync</Term>** (does the cluster match Git?) and health (does it work?).
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} images={['ghcr.io/kedai-kancil/shop:1.4.0', 'ghcr.io/kedai-kancil/shop:1.5.0']} task={{ type: 'gitChange', field: 'image', to: 'ghcr.io/kedai-kancil/shop:1.5.0' }} success="OutOfSync, Syncing, Synced. Progressing, then Healthy. That is one sync." />
+
+<Hint>Pick the 1.5.0 image, then Commit to Git. Press Step to go slowly.</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Put one sync in order.
+
+<Interactive name="OrderList" items={['You merge a commit in Git', 'Argo CD notices: OutOfSync', 'Argo CD applies the files: Syncing', 'New pods start: Progressing', 'Synced and Healthy']} label="First step at the top" success="That's the whole loop, from commit to cluster." />
+</Card>
+
+<Card id="see-lights" type="see">
+Argo CD shows two separate lights. Sort each word into the right light.
+
+<Interactive name="SortCards" buckets={[{ id: 'sync', label: 'Sync: Git vs cluster' }, { id: 'health', label: 'Health: is it working?' }]} items={[{ label: 'Synced', bucket: 'sync', why: 'The cluster matches Git.' }, { label: 'OutOfSync', bucket: 'sync', why: 'Git and the cluster differ.' }, { label: 'Healthy', bucket: 'health', why: 'Everything is up and ready.' }, { label: 'Progressing', bucket: 'health', why: 'Still rolling out. Wait a bit.' }, { label: 'Degraded', bucket: 'health', why: 'Something failed, like pods that keep crashing.' }]} success="Two lights. One asks 'same as Git?', one asks 'working?'" />
+</Card>
+
+<Card id="try-fix" type="try">
+A teammate's commit made sync fail. Argo CD shows the same error `kubectl apply` gives. Fix the file in Git.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: "3"\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: ghcr.io/kedai-kancil/shop:1.5.0\n'} keep={['replicas: 3', 'shop:1.5.0']} hint="replicas is a number. Remove the quotes around 3." success="Fixed in Git. The next sync goes green." />
+</Card>
+
+<Card id="predict" type="predict">
+Argo CD shows Synced, but Degraded. What does that mean?
+
+<Interactive name="Choice" options={[{ label: 'The cluster matches Git, but what Git asks for is broken', correct: true, why: 'Sync copied Git faithfully. Fix the commit, like a bad image tag.' }, { label: 'Argo CD itself is broken', why: 'Argo CD did its job. The app it synced has a problem.' }, { label: 'Someone changed the cluster by hand', why: 'That would show OutOfSync, not Synced.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Swipe: true or not quite?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A webhook from GitHub can make Argo CD sync at once.', good: true, why: 'Then it does not wait for the 3-minute timer.' }, { text: 'Synced always means your app works.', good: false, why: 'Synced only means "same as Git". Check health too.' }, { text: 'Automated sync does not delete things by default.', good: true, why: 'Deleting needs prune: true. It is off by default.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a sync, light by light.
+</Card>
+
+<Card id="deeper" type="deeper">
+Sync can be automated or manual. Manual sync waits for a button or `argocd app sync shop`. With `prune: true`, objects you delete from Git are deleted from the cluster too. Real rep (optional): install Argo CD on a throwaway kind cluster. Watch an example app sync. Mission 6 walks you through it.
+</Card>

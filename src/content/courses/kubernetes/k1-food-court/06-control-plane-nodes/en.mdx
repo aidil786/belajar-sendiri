@@ -1,0 +1,92 @@
+---
+id: k8s-k1-l06
+world: 1
+title: The control plane and node parts
+summary: "You will learn: who runs the manager’s office, and who cooks on every stall."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, SchedulerTetris, SortCards, OrderList]
+needs: [k8s-k1-l05]
+scenario: k1-empty
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes components", url: "https://kubernetes.io/docs/concepts/overview/components/" }
+  - { label: "kube-scheduler", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" }
+  - { label: "Container Runtime Interface (CRI)", url: "https://kubernetes.io/docs/concepts/architecture/cri/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-empty" namespace="kube-system" commands={['kubectl get pods -n kube-system']} label="A brand-new cluster: 12 pods already run in the kube-system namespace." />
+
+Your new cluster runs no apps yet. But 12 pods already run in `kube-system`. Who are they?
+</Card>
+
+<Card id="try-office" type="try">
+The manager’s office is the **<Term id="control-plane">control plane</Term>**. Tap its 4 pods. Their names end in dev-control-plane.
+
+<Interactive name="SpotLines" prompt="Tap the 4 pods of the manager’s office." lines={[{ text: 'pod/coredns-586c9d84b4-cncvd' }, { text: 'pod/coredns-586c9d84b4-vl48c' }, { text: 'pod/etcd-dev-control-plane', target: true }, { text: 'pod/kindnet-sc2x8' }, { text: 'pod/kindnet-tsfhh' }, { text: 'pod/kindnet-wj2hr' }, { text: 'pod/kube-apiserver-dev-control-plane', target: true }, { text: 'pod/kube-controller-manager-dev-control-plane', target: true }, { text: 'pod/kube-proxy-4fvbg' }, { text: 'pod/kube-proxy-5bm7l' }, { text: 'pod/kube-proxy-8jtpv' }, { text: 'pod/kube-scheduler-dev-control-plane', target: true }]} success="That’s the office: etcd, the API server, the controller manager and the scheduler." />
+
+<Hint>Look for etcd, kube-apiserver, kube-controller-manager and kube-scheduler.</Hint>
+</Card>
+
+<Card id="see-api" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl cluster-info']} label="kubectl cluster-info says the Kubernetes control plane is running at https://127.0.0.1:41000." />
+
+The **<Term id="api-server">API server</Term>** is the office’s front counter. Everyone talks only to it, even kubectl. `kubectl cluster-info` shows its address.
+</Card>
+
+<Card id="predict-etcd" type="predict">
+The office writes every order in one book: **<Term id="etcd">etcd</Term>**. The book is lost, and there is no backup. What then?
+
+<Interactive name="Choice" options={[{ label: 'The cluster forgets every order', correct: true, why: 'Yes. etcd holds all the cluster’s data. Real teams back it up.' }, { label: 'Nothing: the pods remember', why: 'Running pods may keep going for a while. But every order is gone.' }, { label: 'kubectl rebuilds it', why: 'kubectl only talks to the API server. It keeps no copy.' }]} />
+</Card>
+
+<Card id="try-scheduler" type="try">
+The **<Term id="scheduler">scheduler</Term>** picks a stall for each new tray. Be the scheduler: put every tray on a stall with room.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'dev-worker', cpu: '2', memory: '4Gi' }, { name: 'dev-worker2', cpu: '1', memory: '2Gi' }]} pods={[{ name: 'shop-1', cpu: '1500m', memory: '1Gi' }, { name: 'shop-2', cpu: '500m', memory: '512Mi' }, { name: 'shop-3', cpu: '1', memory: '1Gi' }]} success="Every tray has a stall. That is the scheduler’s whole job." />
+
+<Hint>Place the biggest tray first. shop-1 only fits on dev-worker.</Hint>
+</Card>
+
+<Card id="see-kubelet" type="see">
+Each stall has a supervisor: the **<Term id="kubelet">kubelet</Term>**. It starts the trays the office sends. Tap every line it wrote.
+
+<Interactive name="SpotLines" prompt="Tap every event from the kubelet." lines={[{ text: '  Type    Reason     Age   From               Message' }, { text: '  Normal  Scheduled  4s    default-scheduler  Successfully assigned default/tray to dev-worker' }, { text: '  Normal  Pulling    3s    kubelet            Pulling image "nginx:1.29-alpine"', target: true }, { text: '  Normal  Pulled     0s    kubelet            Successfully pulled image "nginx:1.29-alpine" in 3.801s (3.801s including waiting). Image size: 22400000 bytes.', target: true }, { text: '  Normal  Created    0s    kubelet            Created container: web', target: true }, { text: '  Normal  Started    0s    kubelet            Started container web', target: true }]} success="The scheduler picked the stall. The kubelet did the rest." />
+
+<Hint>Read the From column.</Hint>
+</Card>
+
+<Card id="see-runtime" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl get nodes -o custom-columns=NAME:.metadata.name,RUNTIME:.status.nodeInfo.containerRuntimeVersion']} label="Every node's container runtime is containerd." />
+
+The kubelet doesn’t cook. The stove does: **<Term id="containerd">containerd</Term>** runs the containers. They connect through a standard plug, the <Term id="cri">CRI</Term>.
+</Card>
+
+<Card id="try-sort" type="try">
+Office or stall? Sort each part.
+
+<Interactive name="SortCards" buckets={[{ id: 'office', label: 'Manager’s office (control plane)' }, { id: 'stall', label: 'Every stall (node)' }]} items={[{ label: 'API server', bucket: 'office', why: 'The front counter for every request.' }, { label: 'etcd', bucket: 'office', why: 'The order book.' }, { label: 'scheduler', bucket: 'office', why: 'It picks a stall for each tray.' }, { label: 'controller manager', bucket: 'office', why: 'It runs the controllers: want, see, do.' }, { label: 'kubelet', bucket: 'stall', why: 'The supervisor on each stall.' }, { label: 'containerd', bucket: 'stall', why: 'The stove that runs containers.' }, { label: 'kube-proxy', bucket: 'stall', why: 'It sends order-number traffic to the right trays. More in K3.' }]} success="Office decides. Stalls cook." />
+
+<Hint>The office decides. Every stall cooks and serves.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+You apply a Deployment. Put its journey in order.
+
+<Interactive name="OrderList" items={['kubectl sends your order to the API server', 'The API server saves it in etcd', 'A controller sees it and asks for pods', 'The scheduler picks a stall for each pod', 'The kubelet asks containerd to start them']} label="First step at the top" success="From your order to a hot tray, step by step." />
+</Card>
+
+<Card id="win" type="win">
+You can now name the parts of the office and of every stall.
+</Card>
+
+<Card id="deeper" type="deeper">
+The <Term id="controller-manager">controller manager</Term> is one program that runs many small controllers. With managed Kubernetes, the cloud runs the whole office for you. You only see the stalls.
+
+Real rep (optional): on your kind cluster, `kubectl get pods -n kube-system -o wide` shows which stall runs each part.
+</Card>

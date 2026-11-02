@@ -1,0 +1,70 @@
+---
+id: git-w01-l12
+world: 1
+title: "Small, focused commits"
+summary: "You will learn: how to split your work into small commits with git add -p."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, HunkPicker, Sim, Choice]
+needs: [git-w01-l11]
+scenario: w01-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git add (--patch)", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html wobbles with a changed tag. It holds two different changes." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+You fixed a typo in the title. You also wrote Day 4. Both changes are in `index.html`. Should they share one commit?
+</Card>
+
+<Card id="see-small" type="see">
+<Interactive name="AreasScene" zones={['repo']} label="One big commit called Fix typo and add day 4 splits into two small commits: Fix title typo, and Add day 4 entry." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Fix typo and add day 4', kind: 'commit' }] }, { repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Fix title typo', kind: 'commit' }, { name: 'Add day 4 entry', kind: 'commit' }] }]} />
+
+Good commits are small: **one change per commit**. Then every message tells the whole truth. And you can undo one change without losing the other.
+</Card>
+
+<Card id="see-hunk" type="see">
+<Interactive name="TermReplay" scenario="w01-l12" commands={['git diff']} pulse label="git diff for index.html shows two separate pieces. The first fixes the title. The second adds Day 4." />
+
+`git diff` shows two separate pieces of change. Each piece is a **hunk**. Git can save one hunk and leave the other.
+</Card>
+
+<Card id="try-pick" type="try">
+This commit will be "Add day 4 entry". Pick only the pieces that belong.
+
+<Interactive name="HunkPicker" file="index.html" hunks={[{ lines: ['-<title>My Dairy</title>', '+<title>My Diary</title>'], take: false, why: 'A typo fix is a different change. Give it its own commit.' }, { lines: ['+<p>Day 4: I learned small commits.</p>'], take: true, why: 'This is the Day 4 entry.' }, { lines: ['+<p>test test 123</p>'], take: false, why: 'Leftover test text. It belongs in no commit at all.' }]} success="Clean pick! Only the Day 4 entry goes in." />
+</Card>
+
+<Card id="try-addp" type="try">
+Type `git add -p`. Answer `n` for the typo fix, and `y` for Day 4.
+
+<Interactive name="Sim" scenario="w01-l12" panels={['areas']} goal={{ stagedContains: { 'index.html': 'Day 4' }, stagedNotContains: { 'index.html': '<title>My Diary' }, modified: ['index.html'], typed: '^git add (-p|--patch)' }} hints={['Type git add -p and press Enter.', 'The first piece is the typo fix: type n. The second is Day 4: type y.']} success="Only Day 4 is in the box. The typo fix waits for its own commit." />
+
+<Hint>`-p` means patch: Git asks about each hunk. `y` is yes, `n` is no.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now you run `git status -s`. What do you see for `index.html`?
+
+<Interactive name="Choice" options={[{ label: '`MM`: one M on each side', correct: true, why: 'Day 4 is in the box (left M). The typo fix is still in the folder (right M).' }, { label: 'One M on the left only', why: 'Not all of it is in the box. The typo fix is still in the folder.' }, { label: 'One M on the right only', why: 'Day 4 went into the box, so the left side changed too.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now split your work into small, focused commits.
+</Card>
+
+<Card id="deeper" type="deeper">
+More answers for `git add -p`:
+
+- `q` quits.
+- `a` takes this hunk and the rest of the file.
+- `d` skips the rest of the file.
+- `?` shows help.
+
+Real Git has even more, like `s` to split a big hunk.
+</Card>

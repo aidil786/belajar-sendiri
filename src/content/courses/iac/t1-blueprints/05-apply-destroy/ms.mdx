@@ -1,0 +1,67 @@
+---
+id: iac-t1-l05
+world: 1
+title: apply dan destroy
+summary: "Anda akan belajar: bina dengan apply, dan robohkan dengan selamat guna destroy."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, OrderList, SwipeJudge]
+needs: [iac-t1-l04]
+scenario: t1-ready
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu apply", url: "https://opentofu.org/docs/cli/commands/apply/" }
+  - { label: "tofu destroy", url: "https://opentofu.org/docs/cli/commands/destroy/" }
+---
+
+<Card id="hook" type="hook">
+Anda bina gerai ujian untuk cuba satu idea. Ujian sudah selesai. Dalam cloud, gerai kena bayar setiap jam. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'Robohkan semua yang pelan sudah bina', correct: true, why: 'Satu arahan buang semuanya. Tiada apa yang tinggal berjalan.' }, { label: 'Padam fail .tf', why: 'Bangunan masih ada. Cuma lukisan yang hilang.' }, { label: 'Biarkan. Ini cuma ujian.', why: 'Ujian yang dilupakan masih kena bayar.' }]} />
+</Card>
+
+<Card id="try-apply" type="try">
+Bina gerai itu dulu. Taip `tofu apply`. Baca plan yang ia tunjuk. Kemudian taip `yes`.
+
+<Interactive name="TofuSim" scenario="t1-ready" goal={{ resourceInState: ['random_pet.stall', 'local_file.sign'] }} hints={['Taip tofu apply.', 'Ia tunjuk plan, kemudian tunggu. Taip yes.']} success="Siap dibina. Gambar tunjuk kedua-dua benda dalam daftar." />
+
+<Hint>`tofu apply`, baca, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pada soalan itu anda taip `y`, bukan `yes`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa dibina. Hanya yes dikira.', correct: true, why: 'OpenTofu sendiri kata: hanya yes diterima. Jawapan lain batalkan.' }, { label: 'Ia bina, sebab y maksudnya yes', why: 'Bukan di sini. Salah taip tak patut bina secara tak sengaja.' }, { label: 'Ia tanya lagi', why: 'Ia terus berhenti dan tak ubah apa-apa.' }]} />
+</Card>
+
+<Card id="try-destroy" type="try">
+Sekarang robohkan. Taip `tofu destroy`. Baca nota merah, kemudian jawab `yes`.
+
+<Interactive name="TofuSim" scenario="t1-built" goal={{ stateCount: 0, filesMissing: ['sign.txt'] }} hints={['Taip tofu destroy.', 'Baca senarai apa yang akan hilang. Kemudian taip yes.']} success="Hilang. Daftar kosong, dan sign.txt sudah dipadam." />
+
+**<Term id="destroy">destroy</Term>** padam benda sebenar. Hati-hati: sentiasa baca senarainya dulu.
+</Card>
+
+<Card id="check-order" type="check">
+Susun kitaran bina yang selamat.
+
+<Interactive name="OrderList" items={['Ubah pelan (fail .tf)', 'tofu plan: baca apa yang akan berlaku', 'tofu apply: taip yes hanya jika plan nampak betul', 'tofu destroy: bila ujian sudah selesai']} label="Langkah pertama di atas" success="Lukis, periksa, bina, kemas." />
+</Card>
+
+<Card id="check-swipe" type="check">
+`-auto-approve` langkau soalan itu. Idea bagus atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'apply -auto-approve di laptop latihan anda', good: true, why: 'Fail latihan sahaja. Tiada benda penting boleh rosak.' }, { text: 'apply -auto-approve pada kedai sebenar, tanpa baca plan', good: false, why: 'Tiada siapa semak apa yang ia padam. Baca plan dulu.' }, { text: 'Taip yes selepas baca seluruh plan', good: true, why: 'Itulah tabiatnya.' }, { text: 'Taip yes sebab plan panjang dan membosankan', good: false, why: 'Plan panjang sorok kejutan. Sekurang-kurangnya baca baris ringkasan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina dengan apply dan robohkan dengan destroy, dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu plan -destroy` tunjuk apa yang destroy akan padam, dan tak padam apa-apa. `tofu destroy` sama dengan `tofu apply -destroy`. Hati-hati: `-auto-approve` langkau soalan. Guna hanya untuk latihan, atau dalam pipeline yang sudah tunjuk plan.
+</Card>

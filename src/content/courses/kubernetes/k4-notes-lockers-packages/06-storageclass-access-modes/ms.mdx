@@ -1,0 +1,78 @@
+---
+id: k8s-k4-l06
+world: 4
+title: "StorageClass dan mod akses"
+summary: "Anda akan belajar: siapa bina loker bila diminta, dan siapa boleh buka loker serentak."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, OrderList, Choice, SortCards, YamlDoctor, Mission]
+needs: [k8s-k4-l05]
+scenario: k4-sc
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Storage Classes", url: "https://kubernetes.io/docs/concepts/storage/storage-classes/" }
+  - { label: "Kubernetes: Dynamic Volume Provisioning", url: "https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/" }
+  - { label: "Persistent Volumes: access modes", url: "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-locker-bound" commands={['kubectl get pv']} picture={false} label="kubectl get pv senaraikan satu volume bernama pvc- dan id panjang, 1Gi, RWO, Bound kepada default/orders." />
+
+Pelajaran lepas, satu loker muncul sendiri. Namanya `pvc-` dan id panjang. Tiada siapa tulis YAML-nya. Jadi siapa yang bina?
+</Card>
+
+<Card id="try-look" type="try">
+Cari pembuat loker. Kemudian tanya claim yang menunggu itu apa yang ia buat.
+
+<Interactive name="FoodCourtSim" scenario="k4-sc" goal={{ typed: 'get (storageclass|storageclasses|sc)\\b', lastTyped: 'describe pvc' }} hints={['Taip kubectl get storageclass', 'Kemudian: kubectl describe pvc orders']} success="standard ialah pembuat lalai. Ia tunggu pod pertama." />
+
+<Hint>Baca bahagian Events di bawah `describe`.</Hint>
+</Card>
+
+<Card id="see-maker" type="see">
+Susun langkah bina loker, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Anda apply claim. Ia Pending.', 'Pod yang guna claim itu mendarat di satu gerai', 'Provisioner bina PV di gerai itu', 'Claim jadi Bound', 'Pod mula, dengan loker di-mount']} label="Langkah pertama di atas" success="Dibina bila diminta. Itulah dynamic provisioning." />
+
+Pembuat itu ialah **<Term id="storageclass">StorageClass</Term>**. Class `standard` dalam kind bina setiap PV di gerai tempat pod berjalan.
+</Card>
+
+<Card id="predict" type="predict">
+Satu claim minta `storageClassName: fast`. Kluster ini tiada class bernama `fast`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Claim itu kekal Pending', correct: true, why: 'Tiada pembuat boleh bina loker itu. describe pvc beritahu sebabnya.' }, { label: 'Ia guna standard sebagai ganti', why: 'Hampir! Class lalai hanya dipakai bila claim tak sebut apa-apa class.' }, { label: 'kubectl apply menolaknya', why: 'Claim itu dicipta. Cuma ia tak pernah Bound.' }]} />
+</Card>
+
+<Card id="see-modes" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'one', label: 'Penulis di satu gerai' }, { id: 'many', label: 'Penulis di banyak gerai' }, { id: 'read', label: 'Pembaca sahaja' }]} items={[{ label: 'ReadWriteOnce (RWO)', bucket: 'one', why: 'Satu node pada satu masa. Pod di node itu boleh kongsi.' }, { label: 'ReadWriteOncePod (RWOP)', bucket: 'one', why: 'Lebih ketat: satu pod sahaja.' }, { label: 'ReadWriteMany (RWX)', bucket: 'many', why: 'Pod di banyak node menulis serentak.' }, { label: 'ReadOnlyMany (ROX)', bucket: 'read', why: 'Banyak node boleh baca, tiada yang boleh tulis.' }]} success="Empat mod. RWO yang paling biasa." />
+
+**<Term id="access-mode">Access mode</Term>** (mod akses) sebut siapa boleh guna loker serentak. Bukan semua StorageClass beri semua mod.
+</Card>
+
+<Card id="predict-rwx" type="predict">
+Tiga dulang di tiga gerai mesti simpan gambar ke satu folder. Mod mana?
+
+<Interactive name="Choice" options={[{ label: 'ReadWriteMany', correct: true, why: 'Banyak node, semua menulis. Anda perlu storan yang menyokongnya, contohnya perkongsian fail rangkaian.' }, { label: 'ReadWriteOnce', why: 'Hampir! RWO benarkan satu node sahaja. Dulang di gerai lain tak boleh mount.' }, { label: 'ReadOnlyMany', why: 'Baca sahaja. Tiada siapa boleh simpan gambar.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Claim ini ditolak. Baiki saiznya.
+
+<Interactive name="YamlDoctor" file="claim.yaml" manifest={'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: orders\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gb\n'} solution={'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: orders\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi\n'} keep={['storage: 1G']} keepHint="Kekalkan loker sebesar satu gigabait. Baiki unitnya sahaja." hint="Kubernetes tulis saiz seperti 1Gi atau 500Mi. Gb bukan unit yang ia kenal." success="Berjaya! 1Gi ialah satu gibibait." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan StorageClass dan pilih mod akses.
+</Card>
+
+<Card id="deeper" type="deeper">
+`WaitForFirstConsumer` tunggu pod, jadi PV dibina di tempat pod berjalan. `Immediate` terus bina. `allowVolumeExpansion: true` benarkan claim membesar kemudian. Awan beri class seperti SSD laju atau storan fail rangkaian.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-l06-rep" steps={[{ id: 'classes', text: 'Kenali pembuat loker anda.', command: 'kubectl get storageclass' }, { id: 'yaml', text: 'Baca class lalai sepenuhnya.', command: 'kubectl get storageclass standard -o yaml' }, { id: 'claim', text: 'Apply claim dari pelajaran lepas, kemudian baca event-nya.', command: 'kubectl describe pvc orders' }, { id: 'tidy', text: 'Kemas.', command: 'kubectl delete pvc orders' }]} success="Anda sudah kenal pembuat loker sebenar." />
+</Card>

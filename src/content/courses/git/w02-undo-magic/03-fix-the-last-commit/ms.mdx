@@ -1,0 +1,73 @@
+---
+id: git-w02-l03
+world: 2
+title: Baiki commit terakhir
+summary: "Anda akan belajar: cara baiki mesej commit terakhir, atau tambah fail yang terlupa."
+minutes: 4
+xp: 20
+interactives: [AreasScene, CommandBuilder, Sim, Choice, GraphScene, TermReplay]
+needs: [git-w02-l02]
+scenario: w02-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Tiga commit dalam repositori. Yang terbaru, Add day 2 pgae, bergoyang. Ada salah taip." frames={[{ repo: [{ name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 pgae', kind: 'commit', glow: true }] }]} />
+
+Anda baru buat commit (titik simpan). Kemudian anda nampak: "Add day 2 pgae". Boleh baiki tak?
+</Card>
+
+<Card id="see-amend" type="see">
+<Interactive name="AreasScene" zones={['repo']} effect="flash" command={'git commit --amend -m "Add day 2 page"'} label="Arahan amend menaip sendiri. Kilat: commit Add day 2 pgae diganti dengan Add day 2 page." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 pgae', kind: 'commit', glow: true }] }, { repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 page', kind: 'commit' }] }]} />
+
+`git commit --amend` tukar commit terakhir anda dengan versi yang dibaiki. **<Term id="amend">Amend</Term>** (pinda) maksudnya "baiki". Tambah `-m` dengan mesej baru.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang membaiki salah taip itu.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'commit', means: 'buat commit' }, { text: '--amend', means: 'ganti yang terakhir' }, { text: '-m', means: 'ini mesejnya' }, { text: '"Add day 2 page"', means: 'mesej yang betul' }]} decoys={[{ text: '--no-edit', means: 'kekalkan mesej lama' }, { text: '"Add day 2 pgae"', means: 'salah taip yang lama' }]} success="Betul! Satu arahan, dan salah taip pun hilang." />
+
+<Hint>Mula dengan `git commit`. Mesej datang paling akhir.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Sekarang baiki salah taip itu betul-betul.
+
+<Interactive name="Sim" scenario="w02-l03" panels={['areas']} goal={{ lastMessage: '^Add day 2 page$', commits: 4 }} hints={['Taip git commit --amend -m "Add day 2 page" dan tekan Enter.', 'Semak ejaan: page, bukan pgae.']} success="Siap! Masih 4 commit, kini dengan mesej yang kemas." />
+
+<Hint>Taip `git commit --amend -m "Add day 2 page"`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="see-forgot" type="see">
+<Interactive name="AreasScene" zones={['staging', 'repo']} effect="flash" command="git commit --amend --no-edit" label="day2.css menunggu dalam kotak. Kilat: ia masuk ke commit terakhir, Add day 2 page. Kotak kosong semula." frames={[{ staging: [{ name: 'day2.css', glow: true }], repo: [{ name: 'Add day 2 page', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add day 2 page', kind: 'commit', tick: true }] }]} />
+
+Terlupa satu fail? Masukkan ke dalam kotak dengan `git add day2.css`. Kemudian jalankan `git commit --amend --no-edit`. `--no-edit` kekalkan mesej yang sama.
+</Card>
+
+<Card id="predict" type="predict">
+Anda amend satu commit. Adakah <Term id="hash">hash</Term> (id commit) kekal sama?
+
+<Interactive name="Choice" options={[{ label: 'Tidak, ia dapat hash baru', correct: true, why: 'Amend buat commit yang baru. Ia ganti commit yang lama.' }, { label: 'Ya, hash yang sama', why: 'Hash datang dari isi commit. Isi baru, hash baru.' }, { label: 'Ia tiada hash lagi', why: 'Setiap commit ada hash, sama ada di-amend atau tidak.' }]} />
+</Card>
+
+<Card id="see-pushed" type="see">
+<Interactive name="GraphScene" scenario="w02-l03" commands={['git commit --amend -m "Add day 2 page"']} label="Commit terbaru diganti dengan commit baru yang hash-nya lain. Commit yang lebih lama kekal sama." />
+
+⚠️ **Awas**: amend tukar ke commit baru. Jangan amend commit yang dah di-push (dihantar) ke GitHub. Pasukan anda mungkin ada versi lama.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki commit terakhir anda: mesej atau failnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tanpa `-m`, `git commit --amend` buka editor anda dengan mesej lama. Ubah, simpan dan tutup. Amend hanya baiki commit *terakhir*. Commit yang lebih lama perlukan rebase interaktif, dalam World 3.
+
+<Interactive name="TermReplay" scenario="w02-l03b" commands={['git status -s', 'git add day2.css', 'git commit --amend --no-edit', 'git log --oneline']} label="day2.css belum dijejak. Selepas git add dan git commit --amend --no-edit, ia masuk ke commit Add day 2 page." />
+</Card>

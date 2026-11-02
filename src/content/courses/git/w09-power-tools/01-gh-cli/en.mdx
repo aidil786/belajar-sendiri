@@ -1,0 +1,72 @@
+---
+id: git-w09-l01
+world: 9
+title: GitHub CLI
+summary: "You will learn: how to use GitHub from your terminal with gh."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SortCards, CommandBuilder, SwipeJudge]
+needs: [git-w04-l12]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "GitHub CLI manual", url: "https://cli.github.com/manual/" }
+  - { label: "gh issue create", url: "https://cli.github.com/manual/gh_issue_create" }
+  - { label: "gh pr create", url: "https://cli.github.com/manual/gh_pr_create" }
+  - { label: "About GitHub CLI", url: "https://docs.github.com/en/github-cli/github-cli/about-github-cli" }
+---
+
+<Card id="hook" type="hook">
+You are deep in the terminal. You spot a bug. Opening the browser breaks your flow. Can you report it from right here?
+
+<Interactive name="Choice" options={[{ label: 'Yes, with a tool that talks to GitHub', correct: true, why: 'It is called gh. Meet it on the next card.' }, { label: 'Yes, with git push', why: 'git push sends commits. It cannot open an issue.' }, { label: 'No, issues only live in the browser', why: 'Issues live on GitHub. A terminal tool can reach them too.' }]} />
+</Card>
+
+<Card id="see-gh" type="see">
+<Interactive name="Transcript" title="bash" label="gh auth login signs you in once. Then gh issue create opens an issue called Typo on home page, and prints its web address." lines={[{ cmd: 'gh auth login' }, { cmd: 'gh issue create --title "Typo on home page" --body "It says Dairy."' }, { out: 'https://github.com/aina-codes/diary/issues/5', color: 'cyan' }]} />
+
+**<Term id="github-cli">GitHub CLI</Term>** is a free tool. Its command is `gh`. Sign in once with `gh auth login`. Then `gh issue create` opens an issue, no browser needed.
+</Card>
+
+<Card id="try-sort" type="try">
+`gh` sorts its jobs into groups. Which group does each job belong to?
+
+<Interactive name="SortCards" buckets={[{ id: 'repo', label: 'gh repo' }, { id: 'issue', label: 'gh issue' }, { id: 'pr', label: 'gh pr' }]} items={[{ label: 'Copy a project to your computer', bucket: 'repo', why: 'gh repo clone does that.' }, { label: 'Report a bug', bucket: 'issue', why: 'gh issue create does that.' }, { label: 'Ask to merge your branch', bucket: 'pr', why: 'gh pr create opens a pull request.' }, { label: 'See the open bugs', bucket: 'issue', why: 'gh issue list shows open issues.' }, { label: 'Make a new repo on GitHub', bucket: 'repo', why: 'gh repo create does that.' }, { label: "Try a teammate's pull request on your laptop", bucket: 'pr', why: 'gh pr checkout brings it to you.' }]} success="Sorted! Repos, issues and pull requests each have a group." />
+
+<Hint>Ask: is it about the project, a bug, or a change?</Hint>
+</Card>
+
+<Card id="see-pr" type="see">
+<Interactive name="Transcript" title="bash" label="gh pr create with a title and a body prints the link to pull request 6. Then gh pr view --web opens it in the browser." lines={[{ cmd: 'gh pr create --title "Fix typo" --body "Closes #5"' }, { out: 'https://github.com/aina-codes/diary/pull/6', color: 'cyan' }, { cmd: 'gh pr view --web' }]} />
+
+Pushed your branch? `gh pr create` opens a <Term id="pull-request">pull request</Term> and prints its link. `gh pr view --web` opens it in your browser.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that lists open issues with the `bug` label.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'gh', means: 'Use GitHub CLI' }, { text: 'issue', means: 'work with issues' }, { text: 'list', means: 'show them' }, { text: '--label', means: 'only with this label' }, { text: 'bug', means: 'the label name' }]} decoys={[{ text: 'pr', means: 'pull requests, not issues' }, { text: 'git', means: 'Git has no issues' }]} success="That's it! You will see the open issues labelled bug." />
+
+<Hint>Start with the tool, then the group, then the job.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your friend Mei has a diary repo. You run `gh repo clone mei/diary`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'A copy lands in a new diary folder', correct: true, why: 'Just like git clone. gh runs Git for you.' }, { label: 'A new repo appears on GitHub', why: 'That is gh repo create. clone copies to your computer.' }, { label: 'You get a fork in your account', why: 'That is gh repo fork. clone only copies.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Sign in once with gh auth login', good: true, why: 'Then every gh command knows who you are.' }, { text: 'Add --help when you get stuck', good: true, why: 'Every gh command has built-in help.' }, { text: 'Use gh instead of git commit', good: false, why: 'gh does GitHub jobs. Commits still come from Git.' }, { text: 'Paste your token in a chat to share your login', good: false, why: 'Never share tokens. Each person signs in for themselves.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now use GitHub from your terminal with gh.
+</Card>
+
+<Card id="deeper" type="deeper">
+`gh browse` opens the current repo in your browser. `gh repo fork --clone` makes a fork and copies it in one go. `gh api` can ask GitHub for almost anything. Get gh from cli.github.com. It works on Windows, macOS and Linux.
+</Card>

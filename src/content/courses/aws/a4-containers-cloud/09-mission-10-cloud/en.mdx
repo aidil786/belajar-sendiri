@@ -1,0 +1,120 @@
+---
+id: aws-a4-m10
+world: 4
+title: "Capstone mission 10: Kedai Kancil in the cloud"
+summary: "You will learn: to run Kedai Kancil on ECS Fargate, deploy it from GitHub with no stored keys, then delete it all safely."
+minutes: 5
+xp: 100
+interactives: [Mission, OrderList, IdleBill, MissionCheck, Choice]
+needs: [aws-a4-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Budgets: Create a budget", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-create.html" }
+  - { label: "Amazon ECS: Getting started with Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/getting-started-fargate.html" }
+  - { label: "Amazon ECS: Task execution IAM role", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html" }
+  - { label: "Amazon ECR: Push a Docker image", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html" }
+  - { label: "GitHub: OpenID Connect in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Mission 10: Kedai Kancil goes live on AWS for one hour, then disappears. Real money is involved. So rule one comes first: a budget alarm, before anything else.
+
+<Interactive name="Mission" id="aws-m10-safety" steps={[
+  { id: 'admin', text: 'Sign in as your everyday admin user (World A1), never root. MFA on.' },
+  { id: 'budget', text: 'Billing and Cost Management → Budgets → a template budget. Send alerts to your email.' },
+  { id: 'region', text: 'Pick one Region for everything. Malaysia (ap-southeast-5) must be turned on first.' },
+  { id: 'who', text: 'Check who the CLI is. It must not say root.', command: 'aws sts get-caller-identity' }]}
+  success="The alarm is set. Now you may build." />
+</Card>
+
+<Card id="see-plan" type="see">
+Here is the whole mission. Put it in order.
+
+<Interactive name="OrderList" items={['Budget alarm', 'Image on your ECR shelf', 'One small Fargate task, behind a tight door', 'Keyless deploys from GitHub', 'Check it all works', 'Delete everything', 'Check the bill tomorrow']} label="First step at the top" success="Alarm first, clean-up last. Always." />
+</Card>
+
+<Card id="try-build" type="try">
+Step 2: the shelf and the shop. Use the smallest sizes, the default VPC, no NAT and no load balancer.
+
+<Interactive name="Mission" id="aws-m10-build" steps={[
+  { id: 'repo', text: 'Make the shelf, with scans on push.', command: 'aws ecr create-repository --repository-name kedai-kancil --image-scanning-configuration scanOnPush=true' },
+  { id: 'push', text: 'Log in (lesson A4-1), then tag and push your Kedai Kancil image from Docker World D4.', command: 'docker push ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/kedai-kancil:1.0' },
+  { id: 'cluster', text: 'Make the cluster. ECS itself is free.', command: 'aws ecs create-cluster --cluster-name kedai' },
+  { id: 'card', text: 'Save taskdef.json: cpu 256, memory 512, your image, port 80, the ecsTaskExecutionRole. Register it.', command: 'aws ecs register-task-definition --cli-input-json file://taskdef.json' },
+  { id: 'door', text: 'Make a door guard in the default VPC. Allow port 80 from YOUR_IP/32 only.', command: 'aws ec2 authorize-security-group-ingress --group-id SG_ID --protocol tcp --port 80 --cidr YOUR_IP/32' },
+  { id: 'service', text: 'Start a service with one task and a public IP.', command: 'aws ecs create-service --cluster kedai --service-name shop --task-definition kedai-web --desired-count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[SUBNET_ID],securityGroups=[SG_ID],assignPublicIp=ENABLED}"' },
+  { id: 'visit', text: 'Find the task’s public IP in the ECS console. Open it in your browser.' }]}
+  success="Kedai Kancil is open in the cloud. Only you can see it." />
+</Card>
+
+<Card id="predict-idle" type="predict">
+Your shop runs now. Which of these bill you while it sits idle? Some you skipped on purpose.
+
+<Interactive name="IdleBill" items={['ecrImages', 'ecsCluster', 'securityGroup', 'natGateway', 'loadBalancer', 'iam']} ordered />
+</Card>
+
+<Card id="try-deploy" type="try">
+Step 3: keyless deploys. Reuse lesson A4-7's workflow, with your own names.
+
+<Interactive name="Mission" id="aws-m10-deploy" steps={[
+  { id: 'provider', text: 'IAM → Identity providers → add OpenID Connect. Paste this provider URL. Audience: sts.amazonaws.com.', command: 'https://token.actions.githubusercontent.com' },
+  { id: 'role', text: 'Make the kedai-deploy role. Trust only your repo’s production environment (World A2).' },
+  { id: 'rights', text: 'Give it only: push to your shelf, register the card, update the shop service, pass the task roles.' },
+  { id: 'env', text: 'In your GitHub repo, create the production environment.' },
+  { id: 'workflow', text: 'Save the workflow from lesson A4-7, plus taskdef.json. Commit and push.', command: 'git add .github/workflows/deploy.yml taskdef.json && git commit -m "ci: deploy to ECS" && git push' },
+  { id: 'watch', text: 'Watch the run go green. Reload your shop: the new task answers.' }]}
+  success="Kedai Kancil deploys itself, with no AWS keys stored anywhere." />
+</Card>
+
+<Card id="check-api" type="check">
+Let GitHub's public API confirm the GitHub side. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your Kedai Kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: '.github/workflows/deploy.yml', label: 'It has the deploy workflow' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 1, label: 'The workflow ran at least once' }]} success="GitHub sees your deploy pipeline!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see inside AWS. Check these yourself.
+
+<Interactive name="Mission" id="aws-m10-self" steps={[
+  { id: 'page', text: 'Your shop page opened on the task’s public IP.' },
+  { id: 'door', text: 'Port 80 is open to your IP only. No port 22 anywhere.' },
+  { id: 'trust', text: 'The deploy role trusts only your repo and its production environment.' },
+  { id: 'keys', text: 'No AWS access keys sit in your repo or its secrets.' },
+  { id: 'alarm', text: 'Your budget alarm is still there.' }]}
+  success="All checked. Now the most important step." />
+</Card>
+
+<Card id="predict-bill" type="predict">
+You delete everything at 5 p.m. Tomorrow, the bill shows a small charge for today. Why?
+
+<Interactive name="Choice" options={[{ label: 'It is today’s real use, and bills arrive late', correct: true, why: 'That is normal. Check again the next day: it should stay flat.' }, { label: 'Something is still running for sure', why: 'Maybe, but charges lag. Check again the day after.' }, { label: 'AWS made a mistake', why: 'Usually not. You did use the task for an hour.' }]} />
+</Card>
+
+<Card id="try-clean" type="try">
+Last step: delete it all, in this order. Then check your bill tomorrow.
+
+<Interactive name="Mission" id="aws-m10-clean" steps={[
+  { id: 'service', text: 'Delete the service. Its task stops.', command: 'aws ecs delete-service --cluster kedai --service shop --force' },
+  { id: 'cluster', text: 'Delete the empty cluster.', command: 'aws ecs delete-cluster --cluster kedai' },
+  { id: 'cards', text: 'Deregister each recipe card revision you made.', command: 'aws ecs deregister-task-definition --task-definition kedai-web:1' },
+  { id: 'shelf', text: 'Delete the shelf and every image on it. Check the name twice.', command: 'aws ecr delete-repository --repository-name kedai-kancil --force' },
+  { id: 'door', text: 'Delete the door guard, once the task is gone.', command: 'aws ec2 delete-security-group --group-id SG_ID' },
+  { id: 'logs', text: 'Added logging? Delete the CloudWatch log group too.' },
+  { id: 'role', text: 'Optional: delete the kedai-deploy role and the GitHub identity provider. They cost nothing.' },
+  { id: 'keep', text: 'Keep the budget alarm. It guards your next mission.' },
+  { id: 'tomorrow', text: 'Tomorrow: open Bills and Cost Explorer. Today’s small charge is fine. Nothing new should appear.' }]}
+  success="Mission 10 done: in the cloud, out again, and the bill stays calm." />
+</Card>
+
+<Card id="win" type="win">
+You can now run Kedai Kancil on AWS, deploy it keylessly, and clean up.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safety: free tier rules change, so check the AWS Free Tier page before you start. Use a test account and your own email. Never paste real keys in chat or code. Did something go wrong? The Rescue Center has AWS flows for surprise bills and blocked access.
+</Card>

@@ -1,0 +1,71 @@
+---
+id: git-w09-l06
+world: 9
+title: Review AI-written code
+summary: "You will learn: five red flags to look for before you merge AI-written code."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SpotLines, SwipeJudge, PracticeRepo]
+needs: [git-w09-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About Copilot code review", url: "https://docs.github.com/en/copilot/concepts/agents/code-review" }
+  - { label: "About Copilot coding agent", url: "https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent" }
+  - { label: "About pull request reviews", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews" }
+---
+
+<Card id="hook" type="hook">
+The AI wrote 40 lines in five seconds. It even runs. Your teammate says: "Ship it!" Do you?
+
+<Interactive name="Choice" options={[{ label: "Not yet. Read it like a teammate's code", correct: true, why: 'Fast code still needs a careful review.' }, { label: 'Yes, the AI is smart', why: 'AI can be wrong and still sound sure.' }, { label: 'Ask the AI if it is correct', why: 'It may say yes, and still be wrong.' }]} />
+</Card>
+
+<Card id="see-flags" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Flag 1', title: 'Secrets typed in', text: 'A key or a password sits right in the code.' }, { when: 'Flag 2', title: 'No tests', text: 'New code, but nothing checks that it works.' }, { when: 'Flag 3', title: "You can't explain it", text: "If you can't explain a line, don't merge it." }, { when: 'Flag 4', title: 'Made-up names', text: 'A function or package that does not exist.' }, { when: 'Flag 5', title: 'Copied code', text: 'Code from another project may come with licence rules.' }]} />
+
+Read AI code like any pull request. Watch for five **red flags**. Tap each one.
+</Card>
+
+<Card id="try-spot" type="try">
+Here is part of an AI's change. Tap the line you must never merge.
+
+<Interactive name="SpotLines" lines={[{ text: '+import { sendMail } from "./mail.js";' }, { text: '+const API_KEY = "fake_demo_key_123";', target: true }, { text: '+export function signUp(email) {' }, { text: '+  return sendMail(email, API_KEY);' }, { text: '+}' }]} prompt="Tap the line you must never merge." success="Found it! Keys belong in secrets, never in code." />
+
+<Hint>Look for something that should stay secret.</Hint>
+</Card>
+
+<Card id="try-swipe" type="try">
+Ready to merge, or needs work? Swipe each finding.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The pull request adds tests for the new function', good: true, why: 'Tests prove it works, today and later.' }, { text: 'Line 12 works, but nobody can explain it', good: false, why: 'Ask, or rewrite it. You must understand what you merge.' }, { text: 'A big block matches another project word for word', good: false, why: 'Check its licence before you use it.' }, { text: 'The change is small and does one thing', good: true, why: 'Small changes are easy to review well.' }, { text: 'It installs a package nobody has heard of', good: false, why: 'AI can invent package names. Check it exists and is safe.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+To add up prices, the AI wrote `prices.sum()` in JavaScript. What happens when it runs?
+
+<Interactive name="Choice" options={[{ label: 'An error: arrays have no sum method', correct: true, why: 'The AI made it up. Check the docs before you trust a name.' }, { label: 'It adds up the prices', why: 'It sounds right. But JavaScript arrays have no sum method.' }, { label: 'It returns 0', why: 'No. It stops with an error: prices.sum is not a function.' }]} />
+</Card>
+
+<Card id="try-review" type="try">
+Your turn. Read the files in pull request #14. Then ask for changes on the Conversation tab.
+
+<Interactive name="PracticeRepo" screen="pull-files" at={14} repo={{ owner: 'aina-codes', name: 'diary', description: 'My little diary website.' }} pulls={[{ number: 14, title: 'Add newsletter sign-up', body: 'Adds a sign-up form that emails new readers.', author: 'coding-agent', from: 'agent/newsletter', to: 'main', state: 'open', checks: [{ name: 'build', status: 'pass' }], reviews: [{ author: 'ai-review', state: 'commented', body: 'Looks good. No problems found.' }], files: [{ path: 'signup.js', diff: ['@@ -0,0 +1,5 @@', '+import { sendMail } from "./mail.js";', '+const API_KEY = "fake_demo_key_123";', '+export function signUp(email) {', '+  return sendMail(email, API_KEY);', '+}'] }] }]} task={{ type: 'requestChanges', pr: 14 }} success="Changes requested. The key never reached main." />
+
+<Hint>Open Conversation. Write what to fix, pick Request changes, then Submit review.</Hint>
+</Card>
+
+<Card id="check" type="check">
+The AI review said "No problems found." Was it right?
+
+<Interactive name="Choice" options={[{ label: 'No. AI review can miss things, so people still review', correct: true, why: 'It is a helpful second pair of eyes. Not the final word.' }, { label: 'Yes. The AI checked it', why: 'It missed a key in plain sight.' }, { label: 'Yes. The build passed', why: 'A passing build can still leak a key.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now spot problems in AI-written code before they ship.
+</Card>
+
+<Card id="deeper" type="deeper">
+Treat AI code like code from a new teammate. Read it, run it, test it. Copilot has a setting that can block suggestions matching public code. Ask your team which rules apply. Whoever merges the code is responsible for it, not the AI.
+</Card>

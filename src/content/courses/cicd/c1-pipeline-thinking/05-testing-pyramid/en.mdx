@@ -1,0 +1,60 @@
+---
+id: cicd-c1-l05
+world: 1
+title: The testing pyramid
+summary: "You will learn: which tests to write lots of, and which to keep few."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, SortCards, ConveyorBelt, SwipeJudge]
+needs: [cicd-c1-l04]
+scenario: c1-pyramid
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Building and testing Node.js", url: "https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs" }
+  - { label: "Playwright: running tests in CI", url: "https://playwright.dev/docs/ci" }
+---
+
+<Card id="hook" type="hook">
+Mei's team has 300 slow browser tests and only 5 small ones. Their pipeline takes an hour. What would you change first?
+
+<Interactive name="Choice" options={[{ label: 'Add many small, fast tests', correct: true, why: 'Small tests check most things in seconds.' }, { label: 'Add even more browser tests', why: 'That makes the hour even longer.' }, { label: 'Turn the tests off', why: 'Then bugs reach users. Faster, but not better.' }]} />
+</Card>
+
+<Card id="see-pyramid" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Bottom', title: 'Unit tests', text: 'One spoon, one ingredient. Tests one small piece alone. Milliseconds each. Have lots.' }, { when: 'Middle', title: 'Integration tests', text: 'Taste the sauce. Tests a few parts working together, like code and a database. Have some.' }, { when: 'Top', title: 'End-to-end tests', text: 'A full meal at a real table. A robot browser clicks through like a user. Minutes each. Have a few.' }]} />
+
+Tap each layer, from the bottom. Wide at the bottom, thin at the top. That shape is the **<Term id="testing-pyramid">testing pyramid</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Which layer does each test belong to?
+
+<Interactive name="SortCards" buckets={[{ id: 'unit', label: 'Unit' }, { id: 'integration', label: 'Integration' }, { id: 'e2e', label: 'End-to-end' }]} items={[{ label: 'The tax maths adds 6%', bucket: 'unit', why: 'One small piece of code, alone.' }, { label: 'A price shows as RM 4.50', bucket: 'unit', why: 'One function, no database, no browser.' }, { label: 'The API saves an order in a real database', bucket: 'integration', why: 'Two parts together: the API and the database.' }, { label: 'The login page talks to the login API', bucket: 'integration', why: 'Two parts that must fit together.' }, { label: 'A robot browser buys kuih, start to finish', bucket: 'e2e', why: 'The whole app, like a real user.' }, { label: 'Sign up, then log in', bucket: 'e2e', why: 'A full trip through the app.' }]} success="Sorted! Small, together, whole." />
+
+<Hint>One piece alone is unit. A few parts is integration. The whole app is end-to-end.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A bug sneaks into the tax maths.
+
+<Interactive name="ConveyorBelt" scenario="c1-pyramid" task={{ type: 'predict' }} success="Unit tests caught it! The slow tests never had to start." />
+</Card>
+
+<Card id="check" type="check">
+Good test plan, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Test every price rule with unit tests', good: true, why: 'Fast and exact. Perfect for rules.' }, { text: 'Check every single button with end-to-end tests', good: false, why: 'Slow and flaky. Keep them for the main paths.' }, { text: 'A few end-to-end tests for sign up and paying', good: true, why: 'The money paths deserve a full check.' }, { text: 'Skip integration tests, unit tests are enough', good: false, why: 'Parts can work alone but not together.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now plan tests like a pyramid: many fast, few slow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Some teams draw a different shape, with more integration tests. The big idea stays: many fast tests, few slow ones. Slow end-to-end tests can also run nightly, on a schedule.
+
+Real rep (optional): count the tests in a project you know. Is it shaped like a pyramid, or upside down?
+</Card>

@@ -1,0 +1,127 @@
+---
+// Shared page shell: head, theme setup before first paint, top bar, footer.
+import '~/styles/global.css';
+import TopBar from '~/components/ui/TopBar.astro';
+import GentleTools from '~/components/ui/GentleTools.astro';
+import { t, type Lang } from '~/i18n';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description?: string;
+  /** Path of this page in the other language (for the toggle + hreflang). */
+  altPath: string;
+  /** Lesson pages draw their own slim top bar. */
+  bare?: boolean;
+  /** Hidden pages (e.g. test pages) ask search engines not to list them. */
+  noindex?: boolean;
+}
+const { lang, title, description, altPath, bare = false, noindex = false } = Astro.props;
+const other = lang === 'en' ? 'ms' : 'en';
+const fullTitle = title === t(lang, 'site.name') ? title : `${title} · ${t(lang, 'site.name')}`;
+const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+// Offline support: the service worker is registered in production builds only, never in dev.
+const registerSw = import.meta.env.PROD;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
+---
+
+<!doctype html>
+<html lang={lang} data-calm="false" data-font="atkinson">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description ?? t(lang, 'site.description')} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {
+      canonical && (
+        <>
+          <link rel="canonical" href={canonical} />
+          <link rel="alternate" hreflang={lang} href={canonical} />
+          <link rel="alternate" hreflang={other} href={new URL(altPath, Astro.site)} />
+        </>
+      )
+    }
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14161b" media="(prefers-color-scheme: dark)" />
+    <!-- Apply saved theme, calm mode and font before first paint. -->
+    <script is:inline>
+      try {
+        const p = JSON.parse(localStorage.getItem('fahamlah:v1') || '{}');
+        const s = p.settings || {};
+        const r = document.documentElement;
+        if (s.theme === 'light' || s.theme === 'dark') r.dataset.theme = s.theme;
+        r.dataset.calm = String(!!s.calm);
+        r.dataset.font = s.font === 'lexend' ? 'lexend' : 'atkinson';
+      } catch {}
+      // Page-to-page fade (global.css @view-transition): none in calm mode.
+      const skipInCalm = (e) => {
+        if (e.viewTransition && document.documentElement.dataset.calm === 'true') e.viewTransition.skipTransition();
+      };
+      addEventListener('pageswap', skipInCalm);
+      addEventListener('pagereveal', skipInCalm);
+    </script>
+    {
+      registerSw && (
+        <script is:inline>
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+              navigator.serviceWorker.register('/sw.js').catch(function () {});
+            });
+          }
+        </script>
+      )
+    }
+    {
+      analyticsToken && (
+        <script
+          is:inline
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: analyticsToken })}
+        />
+      )
+    }
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t(lang, 'nav.skip')}</a>
+    {!bare && <TopBar lang={lang} altPath={altPath} />}
+    <slot name="top" />
+    <main id="main" tabindex="-1">
+      {!bare && <GentleTools lang={lang} />}
+      <slot />
+      {bare && <GentleTools lang={lang} />}
+    </main>
+    {
+      !bare && (
+        <footer class="site-footer">
+          <div class="container">
+            <p>{t(lang, 'footer.made')}</p>
+            <p class="footer-small">
+              {t(lang, 'footer.docs')} {t(lang, 'footer.notAffiliated')}
+            </p>
+          </div>
+        </footer>
+      )
+    }
+  </body>
+</html>
+
+<style>
+  main {
+    outline: none;
+  }
+  .site-footer {
+    margin-top: var(--space-8);
+    padding-block: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .footer-small {
+    font-size: var(--text-xs);
+  }
+</style>

@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l06
+world: 5
+title: PodDisruptionBudgets
+summary: "You will learn: how to keep enough trays serving while you empty a stall."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, CommandBuilder, FoodCourtSim, SortCards]
+needs: [k8s-k5-l05]
+scenario: k5-pdb
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: disruptions", url: "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/" }
+  - { label: "Kubernetes: configure a PodDisruptionBudget", url: "https://kubernetes.io/docs/tasks/run-application/configure-pdb/" }
+  - { label: "kubectl drain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/" }
+---
+
+<Card id="hook" type="hook">
+Tonight you fix stall dev-worker. Two of your three shop trays sit there. If both leave at once, one tray serves the whole queue. How do you stop that?
+
+<Interactive name="Choice" options={[{ label: 'Set a rule: at least 2 trays stay up', correct: true, why: 'Then trays leave one at a time, and the queue keeps moving.' }, { label: 'Never fix stalls', why: 'Stalls need upgrades and repairs. Plan for them instead.' }, { label: 'Fix it at lunch time', why: 'The busiest time is the worst time to lose trays.' }]} />
+</Card>
+
+<Card id="see-pdb" type="see">
+<Interactive name="KubeReplay" scenario="k5-pdb" commands={['kubectl create pdb shop --selector=app=shop --min-available=2', 'kubectl get pdb shop']} label="The PodDisruptionBudget shop is created: min available 2, allowed disruptions 1." />
+
+That rule is a **<Term id="pdb">PodDisruptionBudget</Term>** (PDB). `--min-available=2` keeps 2 trays up. With 3 ready, ALLOWED DISRUPTIONS is 1: one may leave at a time.
+</Card>
+
+<Card id="try-build" type="try">
+Build that command yourself. Each piece shows what it means.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Talk to the cluster' }, { text: 'create', means: 'make a new object' }, { text: 'pdb', means: 'a PodDisruptionBudget' }, { text: 'shop', means: 'its name' }, { text: '--selector=app=shop', means: 'which trays it protects' }, { text: '--min-available=2', means: 'at least 2 stay up' }]} decoys={[{ text: '--max-unavailable=0', means: 'no tray may ever leave' }, { text: 'delete', means: 'remove an object' }]} success="That is the budget: protect app=shop, keep 2 up." />
+</Card>
+
+<Card id="try-drain" type="try">
+Now empty stall dev-worker. The danger badge shows: a drain moves trays. Watch the budget make one tray wait its turn.
+
+```bash
+kubectl drain dev-worker --ignore-daemonsets
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-drain" goal={{ nodeCordoned: { name: 'dev-worker', cordoned: true }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Type kubectl drain dev-worker --ignore-daemonsets', 'Let the clock run until 3 shop trays are ready again.']} success="Stall emptied, and the shop never dropped below 2 trays." />
+
+<Hint>Copy the command above. Then let the clock run.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+The drain printed: `Cannot evict pod as it would violate the pod's disruption budget.` What does it mean?
+
+<Interactive name="Choice" options={[{ label: 'Wait: another tray must be ready first', correct: true, why: 'The drain retries every 5 seconds, until the budget allows it.' }, { label: 'The drain failed for good', why: 'It said "will retry". It keeps trying.' }, { label: 'The budget is broken', why: 'The budget is working. That message is it doing its job.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+A PDB only slows down planned moves. Sort each event.
+
+<Interactive name="SortCards" buckets={[{ id: 'pdb', label: 'PDB protects' }, { id: 'no', label: 'PDB cannot help' }]} items={[{ label: 'kubectl drain before an upgrade', bucket: 'pdb', why: 'Drain asks politely (an eviction). The budget can say "wait".' }, { label: 'A node autoscaler removing a quiet stall', bucket: 'pdb', why: 'It evicts trays too, so it respects the budget.' }, { label: 'A power cut closes a stall', bucket: 'no', why: 'Nobody asked first. Spread and replicas help here.' }, { label: 'kubectl delete pod on a shop tray', bucket: 'no', why: 'A plain delete is not an eviction. It skips the budget.' }]} success="Right: budgets guard planned work, not accidents." />
+</Card>
+
+<Card id="win" type="win">
+You can now keep the shop serving while you empty a stall.
+</Card>
+
+<Card id="deeper" type="deeper">
+Use `--max-unavailable` instead to say how many may be down. Careful: a budget that allows 0 disruptions blocks every drain forever. After the work, `kubectl uncordon dev-worker` opens the stall again.
+
+Real rep (optional): on kind, make a PDB. Then drain a worker and read each line.
+</Card>

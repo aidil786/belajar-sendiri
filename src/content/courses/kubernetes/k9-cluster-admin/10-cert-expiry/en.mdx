@@ -1,0 +1,76 @@
+---
+id: k8s-k9-l10
+world: 9
+title: Certificates and when they expire
+summary: "You will learn: to read when the office's ID cards expire, and to renew them before they do."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, OrderList, SortCards, Mission]
+needs: [k8s-k9-l09]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: certificate management with kubeadm", url: "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/" }
+  - { label: "Kubernetes: PKI certificates and requirements", url: "https://kubernetes.io/docs/setup/best-practices/certificates/" }
+  - { label: "kubeadm certs", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-certs/" }
+---
+
+<Card id="hook" type="hook">
+A kubeadm cluster ran fine for a year. This morning the office stops talking. Nobody changed anything. What is a likely cause?
+
+<Interactive name="Choice" options={[{ label: 'The office’s ID cards (certificates) expired', correct: true, why: 'kubeadm’s certificates last one year. On that day they stop working.' }, { label: 'Someone deleted etcd', why: 'Possible, but nothing changed. A date fits better.' }, { label: 'The kubelets need more memory', why: 'Memory trouble does not start on one exact day.' }]} />
+</Card>
+
+<Card id="see-check" type="see">
+<Interactive name="KubeReplay" scenario="k9-certs" picture={false} commands={['docker exec -it dev-control-plane bash', 'kubeadm certs check-expiration', 'exit']} label="kubeadm certs check-expiration lists each certificate with its expiry date: 364d left for the usual ones, 9y for the three CAs." />
+
+Every part shows an ID card to the others. Each card has a **<Term id="cert-expiry">certificate expiry</Term>** date. `kubeadm certs check-expiration` lists them all.
+</Card>
+
+<Card id="try-spot" type="try">
+The last table lists the signers. Tap the lines that last 9 years.
+
+<Interactive name="SpotLines" prompt="Tap every signer that lasts 9 years." lines={[{ text: 'apiserver                  Oct 31, 2027 00:54 UTC   364d            ca                      no' }, { text: 'etcd-server                Oct 31, 2027 00:54 UTC   364d            etcd-ca                 no' }, { text: 'CERTIFICATE AUTHORITY   EXPIRES                  RESIDUAL TIME   EXTERNALLY MANAGED' }, { text: 'ca                      Oct 28, 2036 00:54 UTC   9y              no', target: true }, { text: 'etcd-ca                 Oct 28, 2036 00:54 UTC   9y              no', target: true }, { text: 'front-proxy-ca          Oct 28, 2036 00:54 UTC   9y              no', target: true }]} success="Yes. The signers last ten years. The cards they sign, one." />
+
+A **<Term id="certificate-authority">certificate authority</Term>** signs every card. kubeadm makes its CAs last ten years.
+</Card>
+
+<Card id="predict" type="predict">
+You run `kubeadm certs renew all`. It says “renewed” for each card. Yet the API server still shows the old one. Why?
+
+<Interactive name="Choice" options={[{ label: 'It read its card at start. Restart the control-plane pods.', correct: true, why: 'Yes. The docs say to restart them after a renew.' }, { label: 'The renew failed', why: 'It printed renewed for each card. The files are new.' }, { label: 'You must renew the CA too', why: 'The CAs last ten years. renew all leaves them alone.' }]} />
+</Card>
+
+<Card id="try-renew" type="try">
+Renew the API server’s card, then check the dates again. Renewing changes the office, so the danger note shows.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" goal={{ typed: '^kubeadm certs renew ', lastTyped: '^kubeadm certs check-expiration' }} hints={['Type docker exec -it dev-control-plane bash', 'Then kubeadm certs renew apiserver', 'Check: kubeadm certs check-expiration']} success="New date on the apiserver line. Next: restart its pod." />
+
+<Hint>Open the control-plane node first. Then renew, then check.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put a renewal day in order.
+
+<Interactive name="OrderList" items={['kubeadm certs check-expiration', 'kubeadm certs renew all', 'Restart the control-plane pods: move each manifest out, wait 20 s, move it back', 'Copy the new admin.conf to ~/.kube/config']} label="First step at the top" success="Look, renew, restart, then update your own kubeconfig." />
+</Card>
+
+<Card id="check-sort" type="check">
+Who keeps each card fresh? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'kubeadm', label: 'kubeadm renews it (or an upgrade)' }, { id: 'self', label: 'The kubelet rotates it itself' }, { id: 'ca', label: 'A CA: lasts ten years' }]} items={[{ label: 'apiserver', bucket: 'kubeadm', why: 'A one-year card. renew or upgrade makes a new one.' }, { label: 'admin.conf', bucket: 'kubeadm', why: 'Your admin card. Copy the new one to ~/.kube/config after.' }, { label: 'The kubelet’s client card', bucket: 'self', why: 'kubeadm sets the kubelet to rotate it under /var/lib/kubelet/pki.' }, { label: 'etcd-ca', bucket: 'ca', why: 'A signer. It is not in renew all.' }]} success="Sorted! Only the one-year cards need you." />
+</Card>
+
+<Card id="win" type="win">
+You can now read certificate expiry dates and renew in time.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubeadm upgrade` renews the certificates too. So a yearly upgrade keeps the cards fresh. Many teams also set an alarm a month before the date.
+
+<Interactive name="Mission" id="k8s-k9-l10-real" steps={[{ id: 'check', text: 'On a throwaway kind cluster, read the dates. It only looks.', command: 'docker exec <cluster>-control-plane kubeadm certs check-expiration' }, { id: 'renew', text: 'Renew one card on that practice cluster.', command: 'docker exec <cluster>-control-plane kubeadm certs renew apiserver' }, { id: 'again', text: 'Read the dates again. Spot the new one.', command: 'docker exec <cluster>-control-plane kubeadm certs check-expiration' }]} success="You renewed a real certificate on a practice cluster!" />
+</Card>

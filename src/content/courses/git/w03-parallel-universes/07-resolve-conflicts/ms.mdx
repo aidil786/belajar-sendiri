@@ -1,0 +1,72 @@
+---
+id: git-w03-l07
+world: 3
+title: Selesaikan konflik dalam VS Code
+summary: "Anda akan belajar: baiki konflik, habiskan merge, atau batalkannya dengan selamat."
+minutes: 5
+xp: 25
+interactives: [GraphScene, Hotspots, ConflictResolver, AreasScene, Sim, Choice, OrderList]
+needs: [git-w03-l06]
+scenario: w03-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge (--abort)", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "Merge conflicts in VS Code", url: "https://code.visualstudio.com/docs/sourcecontrol/merge-conflicts" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w03-l06" commands={['git merge cake']} label="Merge cake ke main berhenti. Lencana merah Conflict dengan tanda amaran ada di bawah HEAD." />
+
+Merge anda dengan cake berhenti kerana konflik. Masa untuk baiki. Dengan tenang, dalam tiga langkah kecil.
+</Card>
+
+<Card id="see-editor" type="see">
+<Interactive name="Hotspots" picture="vscode-merge" spots={[{ id: 'buttons', x: 46, y: 22, title: 'Butang pantas', text: 'Satu klik simpan pihak semasa, pihak yang masuk, atau kedua-dua. Penanda pun hilang.' }, { id: 'current', x: 84, y: 30, title: 'Current Change', text: 'Pihak anda: branch tempat anda berada (HEAD).' }, { id: 'incoming', x: 84, y: 45, title: 'Incoming Change', text: 'Pihak mereka: branch yang anda merge masuk.' }, { id: 'list', x: 21, y: 42, title: 'Merge Changes', text: 'Fail yang ada konflik. Bila dah baiki, stage dengan +. Itulah git add.' }, { id: 'editor', x: 86, y: 88, title: 'Merge Editor', text: 'Buka paparan lebih besar: anda, mereka, dan hasilnya.' }]} />
+
+Buka fail dalam VS Code. Ia warnakan setiap pihak dan letak butang di atas pertembungan. Ketik titik-titik itu.
+</Card>
+
+<Card id="try-resolve" type="try">
+Diari anda ada kedua-duanya pada hari 2! Kekalkan kedua-dua baris. Kemudian habiskan merge.
+
+<Interactive name="ConflictResolver" scenario="w03-l06" commands={['git merge cake']} look="editor" graph expect={['I learned branches', 'I baked a cake']} why="Hari anda ada kedua-duanya. Kekalkan kedua-dua baris." success="Konflik dah dibaiki dan merge dah siap. Tengok: ada merge commit!" />
+
+<Hint>Ketik “Accept Both Changes”. Kemudian butang untuk habiskan.</Hint>
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="AreasScene" command="git add index.html" label="index.html, yang dah dibaiki, meluncur dari folder kerja ke dalam kotak. Kemudian commit bernama Merge branch 'cake' masuk ke repositori." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }, { staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add day 2 entry', kind: 'commit' }] }, { repo: [{ name: 'Add day 2 entry', kind: 'commit' }, { name: "Merge branch 'cake'", kind: 'commit' }] }]} />
+
+`git add index.html` beritahu Git: fail ini dah dibaiki. Kemudian `git commit` buat merge commit. Butang + dan Commit dalam VS Code buat benda sama.
+</Card>
+
+<Card id="try-abort" type="try">
+Belum sedia nak pilih? Batalkan merge. Semuanya kembali macam sebelum.
+
+<Interactive name="Sim" scenario="w03-l06" intro={['git merge cake']} panels={['graph']} goal={{ inMerge: false, noConflicts: true, typed: 'merge --abort' }} hints={['Taip git merge --abort dan tekan Enter.']} success="Kembali macam sebelum merge. Tiada yang hilang. Cuba lagi bila-bila masa." />
+
+<Hint>Taip `git merge --abort`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda dah baiki fail tapi lupa `git add`. Anda jalankan `git commit`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Git tolak. Fail itu masih belum di-merge.', correct: true, why: 'git add ialah cara anda beritahu Git fail itu dah dibaiki.' }, { label: 'Git commit dengan penanda di dalamnya', why: 'Git semak dulu. Fail yang belum di-merge menghalang commit.' }, { label: 'Git padam fail itu', why: 'Git tak padam kerja anda di sini.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun langkah membaiki konflik.
+
+<Interactive name="OrderList" items={['Buka fail yang ada konflik', 'Pilih apa yang kekal dan padam penanda', 'git add fail itu', 'git commit untuk habiskan merge']} label="Langkah pertama di atas" success="Itulah cara penuh. Ia berfungsi dalam mana-mana editor." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki konflik merge, atau batalkannya dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Merge Editor dalam VS Code tunjuk anda, mereka dan hasilnya sebelah-menyebelah. Dari terminal, `git mergetool` buka alat merge yang anda tetapkan. `git merge --abort` berfungsi sehingga anda commit merge itu. Selepas itu, undur macam commit biasa.
+</Card>

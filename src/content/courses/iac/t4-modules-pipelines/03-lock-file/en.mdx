@@ -1,0 +1,71 @@
+---
+id: iac-t4-l03
+world: 4
+title: Provider pins and the lock file
+summary: "You will learn: how the lock file makes every laptop and pipeline use the same provider versions."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t4-l02]
+scenario: t4-lock
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: dependency lock file", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+  - { label: "tofu init (-upgrade)", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "tofu providers lock", url: "https://opentofu.org/docs/cli/commands/providers/lock/" }
+  - { label: "Terraform: dependency lock file", url: "https://developer.hashicorp.com/terraform/language/files/dependency-lock" }
+---
+
+<Card id="hook" type="hook">
+It worked yesterday. Today, on a new laptop, `tofu init` picked a newer provider, and the plan looks different. What would have kept them the same?
+
+<Interactive name="Choice" options={[{ label: 'The lock file, committed to Git', correct: true, why: 'It records the exact version every laptop must use.' }, { label: 'A faster internet connection', why: 'Speed is not the problem. The version was.' }, { label: 'Running tofu init twice', why: 'Without a lock file, init picks the newest match each time.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+This folder already ran `tofu init`. Read what it wrote down: `cat .terraform.lock.hcl`.
+
+<Interactive name="TofuSim" scenario="t4-lock" open="providers.tf" goal={{ lastTyped: '^cat \\.terraform\\.lock\\.hcl$' }} hints={['Type cat .terraform.lock.hcl and press Enter.']} success="Two providers, each with one exact version and a list of checksums." />
+
+<Hint>The file name starts with a dot: `.terraform.lock.hcl`.</Hint>
+</Card>
+
+<Card id="see-lock" type="see">
+<Interactive name="SpotLines" prompt="Tap the line with the exact version that init chose." lines={[{ text: '# This file is maintained automatically by "tofu init".' }, { text: '# Manual edits may be lost in future updates.' }, { text: '' }, { text: 'provider "registry.opentofu.org/hashicorp/random" {' }, { text: '  version     = "3.9.1"', target: true }, { text: '  constraints = "~> 3.7"' }, { text: '  hashes = [' }, { text: '    "h1:38E2VQmQDhws/3AL3D/EzBGuCseepyZRIswAOx8CqoQ=",' }, { text: '    … (29 more checksums)' }, { text: '  ]' }, { text: '}' }]} success="The pin allows ~> 3.7. The lock file says: exactly 3.9.1." />
+
+The **<Term id="lock-file">dependency lock file</Term>** records the exact provider version, plus checksums. Then every laptop installs the very same files.
+</Card>
+
+<Card id="predict" type="predict">
+The lock file is in Git. Next month, random 3.10 comes out. A teammate runs `tofu init`. Which version does she get?
+
+<Interactive name="Choice" options={[{ label: '3.9.1: the lock file wins', correct: true, why: 'init reuses the locked version. Only tofu init -upgrade moves it.' }, { label: '3.10: the newest match', why: 'That only happens with tofu init -upgrade.' }, { label: 'An error', why: '3.9.1 still fits ~> 3.7, so init is happy.' }]} />
+</Card>
+
+<Card id="try-new" type="try">
+Ben added a bell that needs a new provider, `null`. Run `tofu plan`, read the error, then fix it.
+
+<Interactive name="TofuSim" scenario="t4-lock-new" goal={{ fileContains: { '.terraform.lock.hcl': 'hashicorp/null' } }} hints={['Type tofu plan and read the error.', 'The lock file needs the new provider: type tofu init.']} success="init added null 3.3.2 to the lock file. Commit that change with Ben's." />
+
+<Hint>A new provider means: run `tofu init`, then commit the lock file.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Your `.gitignore` is ready. Sort each file.
+
+<Interactive name="SortCards" buckets={[{ id: 'commit', label: 'Commit it' }, { id: 'ignore', label: 'Keep it out of Git' }]} items={[{ label: '.terraform.lock.hcl', bucket: 'commit', why: 'So every laptop and pipeline gets the same providers.' }, { label: '.terraform/', bucket: 'ignore', why: 'Downloaded providers and modules. init fetches them again.' }, { label: 'providers.tf', bucket: 'commit', why: 'Part of the blueprint.' }, { label: 'terraform.tfstate', bucket: 'ignore', why: 'The register lives in a backend, never in Git.' }, { label: 'tfplan (a saved plan)', bucket: 'ignore', why: 'Saved plans can hold secrets. Make them fresh in CI.' }]} success="Lock file in, downloads and registers out." />
+</Card>
+
+<Card id="win" type="win">
+You can now read the lock file and keep provider versions the same everywhere.
+</Card>
+
+<Card id="deeper" type="deeper">
+To upgrade, change the pin if needed and run `tofu init -upgrade`. Then review the lock file change in a pull request. OpenTofu 1.13 writes checksums for every platform on init. `tofu providers lock` can still add them by hand. Terraform's lock file has the same name, but its entries point at `registry.terraform.io`.
+
+<Interactive name="Mission" id="iac-t4-l03-rep" steps={[{ id: 'init', text: 'In a practice folder with a pinned provider, run init.', command: 'tofu init' }, { id: 'read', text: 'Read the lock file.', command: 'cat .terraform.lock.hcl' }, { id: 'again', text: 'Run init again: it reuses the locked version.', command: 'tofu init' }, { id: 'commit', text: 'Commit the lock file with the blueprint.', command: 'git add .terraform.lock.hcl *.tf && git commit -m "Pin providers"' }]} success="Your providers are locked for every laptop." />
+</Card>

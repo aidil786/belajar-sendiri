@@ -1,0 +1,62 @@
+---
+id: obs-o4-boss
+world: 4
+title: "Find the slow step"
+summary: "You will learn: to follow one slow order from a graph, through logs and a trace, to its cause."
+minutes: 6
+xp: 50
+interactives: [PromQLPlayground, CommandBuilder, SpotLines, Transcript, Choice, OrderList]
+needs: [obs-o4-m9]
+scenario: o4-slow-step
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "histogram_quantile", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile" }
+  - { label: "LogQL: log queries", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+  - { label: "OpenTelemetry: traces", url: "https://opentelemetry.io/docs/concepts/signals/traces/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Customers say paying is slow. Room 1: which service has the slowest p95 at 18m? Show only that one.
+
+<Interactive name="PromQLPlayground" scenario="o4-slow-step" initial="histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket[5m])))" goal={{ resultCount: 1, labelNames: ['job'], resultIncludes: [{ labels: { job: 'kedai-pay' } }], usesFunction: ['topk', 'histogram_quantile'] }} hints={['Keep job in the sum: sum by (le, job).', 'Then wrap it all in topk(1, …).']} solution="topk(1, histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_seconds_bucket[5m]))))" success="Room 1 cleared! kedai-pay: its p95 is about 2.3 s." />
+</Card>
+
+<Card id="try-logs" type="try">
+Room 2: find the order that failed. Build a LogQL query for kedai-api's error lines.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{app="kedai-api"}', means: "pick kedai-api's diary" }, { text: '| json', means: 'read the JSON fields' }, { text: '| level="error"', means: 'keep only the errors' }]} decoys={[{ text: '{order_id="A1041"}', means: 'order_id is not a label: Loki would not find this diary' }]} success={'Room 2 cleared! Loki answers: payment timeout, order A1041, trace_id 3c9a51e0….'} />
+
+<Hint>Braces pick the diary. Then read the fields. Then filter.</Hint>
+</Card>
+
+<Card id="try-trace" type="try">
+<Interactive name="SpotLines" prompt="Room 3: the real trace of order A1041. Tap the name of the step where the time really went." lines={[{ text: 'Name           : POST /order' }, { text: 'Start time     : 2026-11-01 04:30:00 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:03.01 +0000 UTC' }, { text: 'Name           : pay card' }, { text: 'Start time     : 2026-11-01 04:30:00.01 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:03.01 +0000 UTC' }, { text: 'Name           : POST /pay' }, { text: 'Start time     : 2026-11-01 04:30:00.02 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:02.9 +0000 UTC' }, { text: 'Name           : SELECT payments', target: true }, { text: 'Start time     : 2026-11-01 04:30:00.06 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:02.86 +0000 UTC' }]} success="Room 3 cleared! The others only wait for it. SELECT payments took 2.8 s." />
+
+<Hint>Each step is the parent of the next. Which one has no child to wait for?</Hint>
+</Card>
+
+<Card id="check-pay" type="check">
+<Interactive name="Transcript" title="bash" label="logcli finds the trace ID in two diaries: kedai-api says payment timeout after 3000 ms; kedai-pay says slow query on the payments table, 2800 ms; kedai-api first said order received." lines={[{ cmd: 'logcli query --quiet \'{app=~"kedai-.*"} |= "3c9a51e0b7d24f6e9a18c2d4e6f80b15"\'' }, { out: '2026-11-01T17:45:22Z {app="kedai-api", detected_level="error", service_name="kedai-api"} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:21Z {app="kedai-pay", detected_level="warn", service_name="kedai-pay"}  {"level":"warn","msg":"slow query","table":"payments","duration_ms":2800,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:19Z {app="kedai-api", detected_level="info", service_name="kedai-api"}  {"level":"info","msg":"order received","order_id":"A1041","trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}' }]} />
+
+Room 4: search every diary for the trace ID. The pay diary agrees with the trace.
+</Card>
+
+<Card id="check-cause" type="check">
+Room 5: the payments table got slow after the 17:30 database change. What first?
+
+<Interactive name="Choice" options={[{ label: 'Roll back the 17:30 change, then study why', correct: true, why: 'Yes. Stop the pain, then learn. The postmortem comes later.' }, { label: 'Restart kedai-api', why: 'kedai-api is only waiting. The slow part is the payments query.' }, { label: 'Raise the 3-second timeout', why: 'Customers would just wait longer for the same slow query.' }]} />
+</Card>
+
+<Card id="check-path" type="check">
+Final room: put your investigation in order.
+
+<Interactive name="OrderList" items={['Metrics: kedai-pay has the worst p95', 'Logs: the failing order and its trace ID', 'Trace: SELECT payments takes 2.8 s', 'Logs again: kedai-pay says slow query', 'Fix: roll back the change']} label="First step at the top" success="Boss cleared! Graph, logs, trace, logs, fix." />
+</Card>
+
+<Card id="win" type="win">
+You can now follow one slow order from a graph to its cause.
+</Card>

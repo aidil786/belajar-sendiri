@@ -1,0 +1,77 @@
+---
+id: cicd-c4-l05
+world: 4
+title: pull_request_target and forks
+summary: "You will learn: why fork PRs get no secrets, and the trap in pull_request_target."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards, SpotTheHole, SwipeJudge]
+needs: [cicd-c4-l04]
+scenario: c4-pr-preview
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Events: pull_request and pull_request_target", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows" }
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+A stranger forks your shop repo and opens a PR. Your preview job needs your Cloudflare token. Should their code get it?
+
+<Interactive name="Choice" options={[{ label: 'No: their code could copy it', correct: true, why: "A token in a stranger's hands can deploy anything." }, { label: 'Yes: previews need it', why: 'Previews are nice. Your token is worth more.' }, { label: 'Only if their PR looks friendly', why: 'Friendly-looking code can still steal. You cannot read every line.' }]} />
+</Card>
+
+<Card id="try-fork" type="try">
+Run both events. Find the one where the preview stops.
+
+<Interactive name="ConveyorBelt" scenario="c4-pr-preview" task={{ type: 'event', job: 'preview', result: 'failure' }} success="A PR from a fork gets no secrets. That red stop keeps your token safe." />
+
+<Hint>Try the pull request from a fork.</Hint>
+</Card>
+
+<Card id="see-prt" type="see">
+Some teams want previews for forks too. So they switch to **<Term id="pull-request-target">pull_request_target</Term>**. It runs with your secrets and a write key, even for forks. Sort the two triggers.
+
+<Interactive name="SortCards" buckets={[{ id: 'pr', label: 'pull_request' }, { id: 'prt', label: 'pull_request_target' }]} items={[{ label: "Uses the workflow file from the PR's own code", bucket: 'pr', why: 'The PR can change the workflow, but forks get no secrets.' }, { label: 'Uses the workflow file from your default branch', bucket: 'prt', why: 'A stranger cannot edit it. That is why it is trusted with keys.' }, { label: 'Fork PRs: no secrets, read-only key', bucket: 'pr', why: 'The safe default for code from strangers.' }, { label: 'Fork PRs: your secrets and a write key', bucket: 'prt', why: 'Powerful, so it must never run their code.' }]} success="Sorted! One is safe for strange code. One holds your keys." />
+</Card>
+
+<Card id="predict" type="predict">
+This preview switches to `pull_request_target`. It also checks out the PR's own code. A stranger's fork PR arrives. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It runs green, and their code had your token', correct: true, why: 'Green does not mean safe. Watch it on the next card.' }, { label: 'It stops: forks get no secrets', why: 'That is pull_request. This trigger hands over your secrets.' }, { label: 'GitHub blocks the checkout', why: 'Checkout fetches whatever ref you ask for.' }]} />
+</Card>
+
+<Card id="see-green" type="see">
+<Interactive name="ConveyorBelt" scenario="c4-prt-preview" label="A stranger's PR on pull_request_target. Every station turns green, with your token in the job." />
+
+Green! The stranger's `npm ci` ran with your token in reach. One sneaky install script could copy it.
+</Card>
+
+<Card id="try-spot" type="try">
+Tap the two lines that turn this workflow into a trap.
+
+<Interactive name="SpotTheHole" file=".github/workflows/welcome.yml" workflow={['name: Welcome', 'on:', '  pull_request_target:',
+  { text: 'permissions: write-all', hole: { kind: 'writeAll', fixCode: 'permissions:\n  contents: read' } },
+  'jobs:', '  build:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@v7', '        with:',
+  { text: '          ref: ${{ github.event.pull_request.head.sha }}', hole: { kind: 'prTargetCheckout', fixCode: 'on:\n  pull_request:' } },
+  '      - run: npm ci && npm run build']} success="Both found! Every key, plus the stranger's code." />
+
+<Hint>Which code does the checkout fetch? And how many keys does the job get?</Hint>
+</Card>
+
+<Card id="check" type="check">
+Fine on `pull_request_target`, or a trap? Swipe each job.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Add a label to a fork PR, without checking out its code', good: true, why: 'Only your own trusted code runs.' }, { text: 'Check out the PR head and run `npm test`', good: false, why: 'Their code runs with your secrets and a write key.' }, { text: 'Post a fixed "Thanks!" comment', good: true, why: 'Fixed text, your code. Nothing from the stranger runs.' }, { text: "Build the PR's code for a preview, with your token", good: false, why: 'Build scripts are code. Their code would hold your token.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep a stranger's PR away from your keys.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safer pattern: test fork code with `pull_request`. Need secrets afterwards? Use a separate workflow on `workflow_run`, and treat its artifacts as untrusted. First-time contributors may need a maintainer to approve their runs. Real rep: search your repos for `pull_request_target` and check each one.
+</Card>

@@ -1,0 +1,62 @@
+---
+id: obs-o4-boss
+world: 4
+title: "Cari langkah yang lambat"
+summary: "Anda akan belajar: jejak satu pesanan lambat dari graf, melalui log dan trace, hingga puncanya."
+minutes: 6
+xp: 50
+interactives: [PromQLPlayground, CommandBuilder, SpotLines, Transcript, Choice, OrderList]
+needs: [obs-o4-m9]
+scenario: o4-slow-step
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "histogram_quantile", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile" }
+  - { label: "LogQL: log queries", url: "https://grafana.com/docs/loki/latest/query/log_queries/" }
+  - { label: "OpenTelemetry: traces", url: "https://opentelemetry.io/docs/concepts/signals/traces/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Pelanggan kata bayaran lambat. Bilik 1: servis mana ada p95 paling lambat pada minit 18? Tunjuk yang itu sahaja.
+
+<Interactive name="PromQLPlayground" scenario="o4-slow-step" initial="histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket[5m])))" goal={{ resultCount: 1, labelNames: ['job'], resultIncludes: [{ labels: { job: 'kedai-pay' } }], usesFunction: ['topk', 'histogram_quantile'] }} hints={['Kekalkan job dalam sum: sum by (le, job).', 'Kemudian balut semuanya dengan topk(1, …).']} solution="topk(1, histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_seconds_bucket[5m]))))" success="Bilik 1 lepas! kedai-pay: p95-nya lebih kurang 2.3 s." />
+</Card>
+
+<Card id="try-logs" type="try">
+Bilik 2: cari pesanan yang gagal. Bina query LogQL untuk baris ralat kedai-api.
+
+<Interactive name="CommandBuilder" pieces={[{ text: '{app="kedai-api"}', means: 'pilih diari kedai-api' }, { text: '| json', means: 'baca medan JSON' }, { text: '| level="error"', means: 'simpan ralat sahaja' }]} decoys={[{ text: '{order_id="A1041"}', means: 'order_id bukan label: Loki takkan jumpa diari ini' }]} success={'Bilik 2 lepas! Loki jawab: payment timeout, pesanan A1041, trace_id 3c9a51e0….'} />
+
+<Hint>Kurungan kerinting pilih diari. Kemudian baca medan. Kemudian tapis.</Hint>
+</Card>
+
+<Card id="try-trace" type="try">
+<Interactive name="SpotLines" prompt="Bilik 3: trace sebenar pesanan A1041. Ketik nama langkah yang betul-betul makan masa." lines={[{ text: 'Name           : POST /order' }, { text: 'Start time     : 2026-11-01 04:30:00 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:03.01 +0000 UTC' }, { text: 'Name           : pay card' }, { text: 'Start time     : 2026-11-01 04:30:00.01 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:03.01 +0000 UTC' }, { text: 'Name           : POST /pay' }, { text: 'Start time     : 2026-11-01 04:30:00.02 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:02.9 +0000 UTC' }, { text: 'Name           : SELECT payments', target: true }, { text: 'Start time     : 2026-11-01 04:30:00.06 +0000 UTC' }, { text: 'End time       : 2026-11-01 04:30:02.86 +0000 UTC' }]} success="Bilik 3 lepas! Yang lain cuma menunggunya. SELECT payments ambil 2.8 s." />
+
+<Hint>Setiap langkah ialah induk kepada yang seterusnya. Yang mana tiada anak untuk ditunggu?</Hint>
+</Card>
+
+<Card id="check-pay" type="check">
+<Interactive name="Transcript" title="bash" label="logcli jumpa trace ID dalam dua diari: kedai-api kata payment timeout selepas 3000 ms; kedai-pay kata slow query pada jadual payments, 2800 ms; kedai-api mula-mula kata order received." lines={[{ cmd: 'logcli query --quiet \'{app=~"kedai-.*"} |= "3c9a51e0b7d24f6e9a18c2d4e6f80b15"\'' }, { out: '2026-11-01T17:45:22Z {app="kedai-api", detected_level="error", service_name="kedai-api"} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:21Z {app="kedai-pay", detected_level="warn", service_name="kedai-pay"}  {"level":"warn","msg":"slow query","table":"payments","duration_ms":2800,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:19Z {app="kedai-api", detected_level="info", service_name="kedai-api"}  {"level":"info","msg":"order received","order_id":"A1041","trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}' }]} />
+
+Bilik 4: cari trace ID dalam setiap diari. Diari bayaran setuju dengan trace itu.
+</Card>
+
+<Card id="check-cause" type="check">
+Bilik 5: jadual payments jadi lambat selepas perubahan pangkalan data 17:30. Apa dulu?
+
+<Interactive name="Choice" options={[{ label: 'Rollback perubahan 17:30, kemudian kaji kenapa', correct: true, why: 'Betul. Hentikan kesakitan, kemudian belajar. Postmortem datang kemudian.' }, { label: 'Restart kedai-api', why: 'kedai-api cuma menunggu. Bahagian yang lambat ialah query payments.' }, { label: 'Naikkan had masa 3 saat', why: 'Pelanggan cuma tunggu lebih lama untuk query lambat yang sama.' }]} />
+</Card>
+
+<Card id="check-path" type="check">
+Bilik terakhir: susun siasatan anda mengikut urutan.
+
+<Interactive name="OrderList" items={['Metrik: kedai-pay ada p95 paling teruk', 'Log: pesanan yang gagal dan trace ID-nya', 'Trace: SELECT payments ambil 2.8 s', 'Log lagi: kedai-pay kata slow query', 'Baiki: rollback perubahan itu']} label="Langkah pertama di atas" success="Boss lepas! Graf, log, trace, log, baiki." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jejak satu pesanan lambat dari graf hingga puncanya.
+</Card>

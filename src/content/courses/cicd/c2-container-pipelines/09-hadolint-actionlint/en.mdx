@@ -1,0 +1,62 @@
+---
+id: cicd-c2-l09
+world: 2
+title: Lint with hadolint and actionlint
+summary: "You will learn: to let robots proofread your recipe and your workflows."
+minutes: 3
+xp: 15
+interactives: [Transcript, ConveyorBelt, SortCards, Choice, Mission]
+needs: [cicd-c2-l08]
+scenario: c2-lint
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "hadolint", url: "https://github.com/hadolint/hadolint" }
+  - { label: "actionlint", url: "https://github.com/rhysd/actionlint" }
+  - { label: "Docker docs: Dockerfile best practices", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="hadolint checks the Dockerfile and warns about DL3007: using latest." lines={[{ cmd: 'hadolint Dockerfile' }, { out: 'Dockerfile:1 DL3007 warning: Using latest is prone to errors if the image will ever update. Pin the version explicitly to a release tag', color: 'yellow' }]} />
+
+Last month `node:latest` jumped a version, and the shop broke overnight. A **<Term id="linter">linter</Term>** would have warned you. Plain words: pin a version, like `node:24-alpine`.
+</Card>
+
+<Card id="predict" type="predict">
+Your Dockerfile still says `FROM node:latest`. Tap the station that will stop the line, then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-lint" task={{ type: 'predict' }} success="Right! hadolint stopped the line before any build." />
+</Card>
+
+<Card id="see-actionlint" type="see">
+<Interactive name="Transcript" title="bash" label="actionlint reads image.yml and finds that job scan needs a job called imgae, which does not exist." lines={[{ cmd: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 .github/workflows/image.yml' }, { out: '.github/workflows/image.yml:14:3: job "scan" needs job "imgae" which does not exist in this workflow [job-needs]\n   |\n14 |   scan:\n   |   ^~~~~', color: 'red' }]} />
+
+actionlint proofreads workflow files. It caught a typo before GitHub did: `imgae`. The official image runs it with no install.
+</Card>
+
+<Card id="try-sort" type="try">
+Which robot catches which mistake?
+
+<Interactive name="SortCards" buckets={[{ id: 'hado', label: 'hadolint (Dockerfile)' }, { id: 'al', label: 'actionlint (workflow)' }]} items={[{ label: '`FROM node:latest`', bucket: 'hado', why: 'A base image with no version: rule DL3007.' }, { label: '`needs: imgae`', bucket: 'al', why: 'A job that needs a job that does not exist.' }, { label: '`RUN cd /app`', bucket: 'hado', why: 'hadolint says: use WORKDIR to switch folders.' }, { label: '`runs_on: ubuntu-latest`', bucket: 'al', why: 'The key is runs-on, with a dash.' }]} success="Two proofreaders, two kinds of file." />
+</Card>
+
+<Card id="check" type="check">
+Where should the lint job sit on the belt?
+
+<Interactive name="Choice" options={[{ label: 'On every PR, before the slow build', correct: true, why: 'Lint is cheap and fast. It catches mistakes before the long stations.' }, { label: 'On main only, after the deploy', why: 'Too late: the mistake has already shipped.' }, { label: 'Only on your laptop', why: 'Laptops forget. The belt never does.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now let hadolint and actionlint proofread every PR.
+</Card>
+
+<Card id="deeper" type="deeper">
+hadolint also checks the shell in `RUN` lines, with ShellCheck. To skip one rule, put `# hadolint ignore=DL3007` above that line. Only do it with a good reason. actionlint checks `run:` scripts too, when ShellCheck is installed.
+
+Real rep (optional), on your own machine with Docker:
+
+<Interactive name="Mission" id="c2-l09-rep" steps={[{ id: 'hado', text: 'Proofread a Dockerfile.', command: 'docker run --rm -i hadolint/hadolint:v2.14.0 < Dockerfile' }, { id: 'al', text: 'Proofread the workflows in a repo.', command: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12' }, { id: 'fix', text: 'Fix one finding, then run it again.' }]} success="Your files passed two proofreaders!" />
+</Card>

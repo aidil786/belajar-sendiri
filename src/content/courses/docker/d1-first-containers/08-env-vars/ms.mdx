@@ -1,0 +1,75 @@
+---
+id: docker-d1-l08
+world: 1
+title: Tetapan dengan -e
+summary: "Anda akan belajar: beri container tetapannya dengan -e, dan baca apa yang ia minta."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, KitchenSim, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [docker-d1-l07]
+scenario: d1-env
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run: set environment variables", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Overriding container defaults", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/overriding-container-defaults/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-pg" commands={['docker run -d --name db postgres:18-alpine', 'docker ps -a']} label="docker run mulakan bekas Postgres bernama db. Sekejap kemudian docker ps -a tunjuk db Exited (1)." />
+
+Anda mulakan bekas pangkalan data, db. Sesaat kemudian ia kata `Exited (1)`. Ada sesuatu yang tertinggal. Tapi apa?
+</Card>
+
+<Card id="try-logs" type="try">
+Tanya db kenapa. Baca lognya.
+
+<Interactive name="KitchenSim" scenario="d1-env" goal={{ lastTyped: '^docker (container )?logs (.* )?db$' }} hints={['Taip docker logs db']} success="db perlukan POSTGRES_PASSWORD. Ia tak mahu mula tanpanya." />
+
+<Hint>Taip `docker logs db`.</Hint>
+</Card>
+
+<Card id="see-e" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run --rm -e NAME=Aina alpine:3.22 printenv NAME']} label="docker run dengan -e NAME=Aina mulakan satu bekas. Di dalam, printenv NAME paparkan Aina." />
+
+`-e` lekatkan nota pada penutup bekas. Nota itu ialah **environment variable** (pemboleh ubah persekitaran): `NAME=Aina` tetapkan NAME kepada Aina. Aplikasi di dalam membacanya.
+</Card>
+
+<Card id="try-build" type="try">
+Bina arahan yang beri db kata laluannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Cakap dengan Docker' }, { text: 'run', means: 'isi dan mulakan bekas' }, { text: '-d', means: 'di belakang' }, { text: '--name db', means: 'namakan db' }, { text: '-e POSTGRES_PASSWORD=secret', means: 'nota: kata laluannya secret' }, { text: 'postgres:18-alpine', means: 'daripada pek beku Postgres' }]} decoys={[{ text: '-p POSTGRES_PASSWORD=secret', means: '-p untuk tingkap, bukan nota' }]} success="Itulah dia. Nota datang sebelum pek beku." />
+</Card>
+
+<Card id="try-sim" type="try">
+Baiki db. Buang bekas yang rosak. Kemudian mulakan yang baru dengan kata laluan.
+
+<Interactive name="KitchenSim" scenario="d1-env" goal={{ running: ['db'], containerEnv: { db: ['POSTGRES_PASSWORD'] } }} hints={['db lama menghalang. Taip docker rm db', 'Kemudian: docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine']} success="db sudah Up. Ia jumpa nota kata laluannya." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda beri db `-e POSTGRES_PASSWORD=secret`. Adakah pek beku postgres berubah?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Hanya bekas ini dapat nota itu.', correct: true, why: 'Pek kekal beku. Setiap bekas baru perlukan -e sendiri.' }, { label: 'Ya. Setiap bekas baru akan dapat.', why: 'Nota dilekat pada satu penutup. Pek tak pernah berubah.' }, { label: 'Ya. Docker simpan dalam image.', why: 'Tetapan tinggal pada bekas, bukan dalam pek beku.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Adakah Postgres jumpa kata laluannya? Leret setiap satu.
+
+<Interactive name="SwipeJudge" cards={[{ text: '-e POSTGRES_PASSWORD=secret', good: true, why: 'Nama, tanda sama dengan, nilai. Sempurna.' }, { text: '-e POSTGRES_PASSWORD = secret', good: false, why: 'Tiada jarak di sekeliling tanda =.' }, { text: '-e postgres_password=secret', good: false, why: 'Huruf besar kecil penting. Postgres cari POSTGRES_PASSWORD.' }, { text: '--env POSTGRES_PASSWORD=secret', good: true, why: '--env ialah nama panjang untuk -e.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri container tetapannya dengan -e.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker inspect -f '{{.Config.Env}}' db` senaraikan setiap nota pada bekas. Sesiapa yang boleh guna Docker boleh membacanya. Jadi jangan letak kata laluan sebenar dalam `-e` pada mesin yang dikongsi. Dunia D3 tunjuk cara lebih selamat. `-e NAME` tanpa nilai salin NAME dari laptop anda.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l08-rep" steps={[{ id: 'note', text: 'Beri bekas satu nota dan baca semula.', command: 'docker run --rm -e NAME=anda alpine:3.22 printenv NAME' }, { id: 'db', text: 'Mulakan Postgres dengan kata laluan latihan.', command: 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine' }, { id: 'logs', text: 'Tunggu: ready to accept connections.', command: 'docker logs db' }, { id: 'tidy', text: 'Kemas.', command: 'docker rm -f db' }]} success="Bekas pangkalan data sebenar pertama anda!" />
+</Card>

@@ -1,0 +1,120 @@
+---
+id: aws-a4-m10
+world: 4
+title: "Misi capstone 10: Kedai Kancil di cloud"
+summary: "Anda akan belajar: jalankan Kedai Kancil di ECS Fargate, deploy dari GitHub tanpa kunci disimpan, kemudian padam semuanya dengan selamat."
+minutes: 5
+xp: 100
+interactives: [Mission, OrderList, IdleBill, MissionCheck, Choice]
+needs: [aws-a4-l08]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS Budgets: Create a budget", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-create.html" }
+  - { label: "Amazon ECS: Getting started with Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/getting-started-fargate.html" }
+  - { label: "Amazon ECS: Task execution IAM role", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html" }
+  - { label: "Amazon ECR: Push a Docker image", url: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html" }
+  - { label: "GitHub: OpenID Connect in Amazon Web Services", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Misi 10: Kedai Kancil dibuka di AWS selama sejam, kemudian hilang. Ada duit sebenar terlibat. Jadi peraturan pertama datang dahulu: penggera bajet, sebelum apa-apa.
+
+<Interactive name="Mission" id="aws-m10-safety" steps={[
+  { id: 'admin', text: 'Log masuk sebagai pengguna admin harian anda (Dunia A1), bukan root. MFA hidup.' },
+  { id: 'budget', text: 'Billing and Cost Management → Budgets → bajet templat. Hantar amaran ke e-mel anda.' },
+  { id: 'region', text: 'Pilih satu Region untuk semua. Malaysia (ap-southeast-5) mesti dihidupkan dahulu.' },
+  { id: 'who', text: 'Semak siapa CLI itu. Ia tak boleh sebut root.', command: 'aws sts get-caller-identity' }]}
+  success="Penggera dah dipasang. Kini anda boleh membina." />
+</Card>
+
+<Card id="see-plan" type="see">
+Inilah seluruh misi. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['Penggera bajet', 'Image di rak ECR anda', 'Satu task Fargate kecil, di belakang pintu yang ketat', 'Deploy tanpa kunci dari GitHub', 'Semak semuanya berfungsi', 'Padam semuanya', 'Semak bil esok']} label="Langkah pertama di atas" success="Penggera dahulu, bersihkan terakhir. Sentiasa." />
+</Card>
+
+<Card id="try-build" type="try">
+Langkah 2: rak dan kedai. Guna saiz paling kecil, VPC lalai, tanpa NAT dan tanpa load balancer.
+
+<Interactive name="Mission" id="aws-m10-build" steps={[
+  { id: 'repo', text: 'Buat rak, dengan imbasan semasa push.', command: 'aws ecr create-repository --repository-name kedai-kancil --image-scanning-configuration scanOnPush=true' },
+  { id: 'push', text: 'Log masuk (pelajaran A4-1), kemudian tag dan push image Kedai Kancil dari Dunia Docker D4.', command: 'docker push ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/kedai-kancil:1.0' },
+  { id: 'cluster', text: 'Buat kluster. ECS sendiri percuma.', command: 'aws ecs create-cluster --cluster-name kedai' },
+  { id: 'card', text: 'Simpan taskdef.json: cpu 256, memory 512, image anda, port 80, ecsTaskExecutionRole. Daftarkan.', command: 'aws ecs register-task-definition --cli-input-json file://taskdef.json' },
+  { id: 'door', text: 'Buat pengawal pintu dalam VPC lalai. Benarkan port 80 dari YOUR_IP/32 sahaja.', command: 'aws ec2 authorize-security-group-ingress --group-id SG_ID --protocol tcp --port 80 --cidr YOUR_IP/32' },
+  { id: 'service', text: 'Mulakan service dengan satu task dan IP awam.', command: 'aws ecs create-service --cluster kedai --service-name shop --task-definition kedai-web --desired-count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[SUBNET_ID],securityGroups=[SG_ID],assignPublicIp=ENABLED}"' },
+  { id: 'visit', text: 'Cari IP awam task itu dalam konsol ECS. Buka dalam pelayar anda.' }]}
+  success="Kedai Kancil dibuka di cloud. Hanya anda boleh nampak." />
+</Card>
+
+<Card id="predict-idle" type="predict">
+Kedai anda dah berjalan. Yang mana caj anda semasa ia senyap? Ada yang anda langkau dengan sengaja.
+
+<Interactive name="IdleBill" items={['ecrImages', 'ecsCluster', 'securityGroup', 'natGateway', 'loadBalancer', 'iam']} ordered />
+</Card>
+
+<Card id="try-deploy" type="try">
+Langkah 3: deploy tanpa kunci. Guna semula workflow pelajaran A4-7, dengan nama anda sendiri.
+
+<Interactive name="Mission" id="aws-m10-deploy" steps={[
+  { id: 'provider', text: 'IAM → Identity providers → tambah OpenID Connect. Tampal URL provider ini. Audience: sts.amazonaws.com.', command: 'https://token.actions.githubusercontent.com' },
+  { id: 'role', text: 'Buat role kedai-deploy. Percaya environment production repo anda sahaja (Dunia A2).' },
+  { id: 'rights', text: 'Beri ia ini sahaja: push ke rak, daftar kad, kemas kini service kedai, serah role task.' },
+  { id: 'env', text: 'Dalam repo GitHub anda, cipta environment production.' },
+  { id: 'workflow', text: 'Simpan workflow dari pelajaran A4-7, tambah taskdef.json. Commit dan push.', command: 'git add .github/workflows/deploy.yml taskdef.json && git commit -m "ci: deploy to ECS" && git push' },
+  { id: 'watch', text: 'Tengok run jadi hijau. Muat semula kedai: task baru menjawab.' }]}
+  success="Kedai Kancil deploy sendiri, tanpa kunci AWS disimpan di mana-mana." />
+</Card>
+
+<Card id="check-api" type="check">
+Biar API awam GitHub sahkan bahagian GitHub. Taip nama pengguna anda, kemudian semak.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Repo Kedai Kancil anda awam' }, { type: 'file', repo: 'kedai-kancil', path: '.github/workflows/deploy.yml', label: 'Ia ada workflow deploy' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 1, label: 'Workflow itu dah berjalan sekurang-kurangnya sekali' }]} success="GitHub nampak saluran deploy anda!" />
+</Card>
+
+<Card id="check-self" type="check">
+API tak boleh tengok ke dalam AWS. Semak ini sendiri.
+
+<Interactive name="Mission" id="aws-m10-self" steps={[
+  { id: 'page', text: 'Halaman kedai anda dibuka pada IP awam task itu.' },
+  { id: 'door', text: 'Port 80 terbuka untuk IP anda sahaja. Tiada port 22 di mana-mana.' },
+  { id: 'trust', text: 'Role deploy percaya repo anda dan environment production sahaja.' },
+  { id: 'keys', text: 'Tiada access key AWS dalam repo atau secret anda.' },
+  { id: 'alarm', text: 'Penggera bajet anda masih ada.' }]}
+  success="Semua dah disemak. Kini langkah paling penting." />
+</Card>
+
+<Card id="predict-bill" type="predict">
+Anda padam semuanya pukul 5 petang. Esok, bil tunjuk caj kecil untuk hari ini. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Itu penggunaan sebenar hari ini, dan bil sampai lambat', correct: true, why: 'Itu biasa. Semak lagi keesokan harinya: ia patut kekal rata.' }, { label: 'Pasti ada sesuatu masih berjalan', why: 'Mungkin, tetapi caj lambat. Semak lagi lusa.' }, { label: 'AWS buat silap', why: 'Biasanya tidak. Anda memang guna task itu sejam.' }]} />
+</Card>
+
+<Card id="try-clean" type="try">
+Langkah terakhir: padam semuanya, ikut urutan ini. Kemudian semak bil anda esok.
+
+<Interactive name="Mission" id="aws-m10-clean" steps={[
+  { id: 'service', text: 'Padam service. Tasknya berhenti.', command: 'aws ecs delete-service --cluster kedai --service shop --force' },
+  { id: 'cluster', text: 'Padam kluster yang dah kosong.', command: 'aws ecs delete-cluster --cluster kedai' },
+  { id: 'cards', text: 'Deregister setiap revision kad resepi yang anda buat.', command: 'aws ecs deregister-task-definition --task-definition kedai-web:1' },
+  { id: 'shelf', text: 'Padam rak dan setiap image di atasnya. Semak nama dua kali.', command: 'aws ecr delete-repository --repository-name kedai-kancil --force' },
+  { id: 'door', text: 'Padam pengawal pintu, selepas task hilang.', command: 'aws ec2 delete-security-group --group-id SG_ID' },
+  { id: 'logs', text: 'Ada tambah logging? Padam log group CloudWatch juga.' },
+  { id: 'role', text: 'Pilihan: padam role kedai-deploy dan identity provider GitHub. Mereka percuma.' },
+  { id: 'keep', text: 'Kekalkan penggera bajet. Ia jaga misi anda yang seterusnya.' },
+  { id: 'tomorrow', text: 'Esok: buka Bills dan Cost Explorer. Caj kecil hari ini tak apa. Tiada caj baru patut muncul.' }]}
+  success="Misi 10 selesai: masuk ke cloud, keluar semula, dan bil kekal tenang." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan Kedai Kancil di AWS, deploy tanpa kunci, dan bersihkan selepas itu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keselamatan: peraturan free tier berubah, jadi semak halaman AWS Free Tier sebelum mula. Guna akaun ujian dan e-mel anda sendiri. Jangan tampal kunci sebenar dalam chat atau kod. Ada yang tak kena? Rescue Center ada aliran AWS untuk bil mengejut dan akses disekat.
+</Card>

@@ -1,0 +1,67 @@
+---
+id: docker-d2-l10
+world: 2
+title: "Run as a non-root USER"
+summary: "You will learn: to run your app as a normal user, so a break-in can do less."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d2-l09]
+scenario: d2-l10
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+  - { label: "Docker docs: Best practices (USER)", url: "https://docs.docker.com/build/building/best-practices/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l10" commands={['docker run --rm api:1.0 whoami']} label="whoami inside the api image prints root." />
+
+Your API runs as `root` inside the box. A bug lets a stranger in. Now the stranger is root too, with every key in the kitchen.
+</Card>
+
+<Card id="see-user" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'FROM node:24-alpine' }, { text: 'WORKDIR /app' }, { text: 'COPY server.js .' }, { text: 'USER node', target: true }, { text: 'CMD ["node", "server.js"]' }]} prompt="Tap the line that picks who runs the app." success="Yes! From that line on, the user node does the work." />
+
+A **<Term id="non-root">non-root user</Term>** has few rights, like a kitchen helper. `USER node` switches to one. The node images already have a user called `node`.
+</Card>
+
+<Card id="try-user" type="try">
+Add `USER node` to the end of the recipe. Build `api:1.1`. Then ask `whoami`.
+
+<Interactive name="KitchenSim" scenario="d2-l10" goal={{ imageUser: { 'api:1.1': 'node' }, lastTyped: 'whoami' }} hints={['Type echo "USER node" >> Dockerfile', 'Then docker build -t api:1.1 .', 'Then docker run --rm api:1.1 whoami']} success="node, not root. Smaller keys, smaller risk." />
+
+<Hint>USER can be the last line. It sets who runs CMD.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A recipe says `USER node`, and after it `RUN apk add --no-cache curl`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The build fails: node cannot install packages', correct: true, why: 'USER also applies to RUN lines below it. Installing needs root.' }, { label: 'It works the same as before', why: 'USER changes who runs every later RUN, too.' }, { label: 'curl is installed, just for node', why: 'apk installs for the whole system. A normal user may not.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l10" commands={['cat oops/Dockerfile', 'docker build -t api:oops oops']} fails={['docker build -t api:oops oops']} label="The oops recipe sets USER node before RUN apk add. The build fails: ERROR: Unable to open log: Permission denied, exit code 99." />
+
+Real error: `Permission denied`, exit code 99. Plain words: only root may install. Install first, then switch with USER.
+</Card>
+
+<Card id="check-swipe" type="check">
+Good habit? Swipe right for yes, left for "needs work".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Install packages first, then add USER near the end', good: true, why: 'Root does the setup. The app runs as a helper.' }, { text: 'Run every app as root, it is easier', good: false, why: 'Easy for attackers too.' }, { text: "Use the image's own user, like node or nginx", good: true, why: 'They already exist and own the right folders.' }, { text: 'Make every folder writable by everyone (chmod 777)', good: false, why: 'Then anyone can change anything. Give one user just what it needs.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run your app as a non-root user.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run -u 1000` picks a user for one run. A recipe USER is the safe default. Must the app write a folder? Give it to the user: `COPY --chown=node:node . .`. In World D5 you add more locks.
+
+<Interactive name="Mission" id="d2-l10-rep" steps={[{ id: 'who', text: 'Check who your own image runs as.', command: 'docker run --rm hello:1.0 whoami' }, { id: 'user', text: 'Add USER node near the end of the recipe and build again.' }, { id: 'again', text: 'Check again. It should say node.' }]} success="Your app runs with fewer keys now." />
+</Card>

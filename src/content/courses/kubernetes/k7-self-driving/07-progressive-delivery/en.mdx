@@ -1,0 +1,65 @@
+---
+id: k8s-k7-l07
+world: 7
+title: Progressive delivery
+summary: "You will learn: how Argo Rollouts and Flagger send a new version to a few users first, and roll back by themselves."
+minutes: 4
+xp: 20
+interactives: [Choice, TrafficDial, SpotLines, OrderList, SortCards]
+needs: [k8s-k7-l06]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo Rollouts: canary", url: "https://argoproj.github.io/argo-rollouts/features/canary/" }
+  - { label: "Argo Rollouts: analysis", url: "https://argoproj.github.io/argo-rollouts/features/analysis/" }
+  - { label: "Flagger: how it works", url: "https://docs.flagger.app/usage/how-it-works" }
+---
+
+<Card id="hook" type="hook">
+The rolling update finished. Every pod is ready and green. Yet 8 in 100 orders now fail. What did the rollout check?
+
+<Interactive name="Choice" options={[{ label: 'Only that pods were ready, not that orders work', correct: true, why: 'A probe asks "are you up?", not "do orders work?"' }, { label: 'The error rate of real orders', why: 'A plain Deployment never looks at error rates.' }, { label: 'Nothing at all', why: 'It checked readiness. That just was not enough.' }]} />
+</Card>
+
+<Card id="try-dial" type="try">
+**<Term id="progressive-delivery">Progressive delivery</Term>** sends a few users first. Step the new version up. Watch the errors. Roll back before 150 users get hurt.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} />
+
+<Hint>Send 5% first. When the line turns red, press roll back.</Hint>
+</Card>
+
+<Card id="see-rollout" type="see">
+Argo Rollouts writes those steps in YAML. A `Rollout` takes the place of a Deployment. Tap the lines that send more users to the new version.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: argoproj.io/v1alpha1' }, { text: 'kind: Rollout' }, { text: 'metadata:' }, { text: '  name: shop' }, { text: 'spec:' }, { text: '  strategy:' }, { text: '    canary:' }, { text: '      steps:' }, { text: '        - setWeight: 20', target: true }, { text: '        - pause: { duration: 2m }' }, { text: '        - setWeight: 50', target: true }, { text: '        - pause: { duration: 2m }' }, { text: '  # replicas, selector, template: as in a Deployment' }]} prompt="Tap every line that sends more users." success="Yes! 20%, then 50%. After the last step, everyone gets it." />
+</Card>
+
+<Card id="try-order" type="try">
+Add a robot judge that reads the error graph. Put its loop in order.
+
+<Interactive name="OrderList" items={['Send 20% of users to v2', 'Read the error rate', 'Errors low: send 50%', 'Still low: send everyone', 'Errors high at any step: back to v1']} label="First step at the top" success="That's automated analysis. No 2 a.m. pager needed." />
+</Card>
+
+<Card id="check-sort" type="check">
+Two popular tools do this. Sort the facts.
+
+<Interactive name="SortCards" buckets={[{ id: 'rollouts', label: 'Argo Rollouts' }, { id: 'flagger', label: 'Flagger' }, { id: 'both', label: 'Both' }]} items={[{ label: 'Replaces the Deployment with a Rollout object', bucket: 'rollouts', why: 'You change kind: Deployment to kind: Rollout.' }, { label: 'Keeps your Deployment and adds a Canary object', bucket: 'flagger', why: 'Flagger makes a primary copy and shifts traffic for you.' }, { label: 'Part of the Flux family', bucket: 'flagger', why: 'Flagger is a Flux project.' }, { label: 'Reads metrics and rolls back by itself', bucket: 'both', why: 'Both can judge a release with Prometheus numbers.' }]} success="Sorted! Same goal, different style." />
+</Card>
+
+<Card id="predict" type="predict">
+At 20%, the judge sees errors above the limit. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'The rollout stops, and all users go back to v1', correct: true, why: 'That is the point: only 20% saw the bug, briefly.' }, { label: 'It waits, then goes to 50% anyway', why: 'A failed check stops the steps.' }, { label: 'It deletes v1 to save space', why: 'v1 is the safe version. It stays until v2 proves itself.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now ship to a few users first and let numbers decide.
+</Card>
+
+<Card id="deeper" type="deeper">
+Without a traffic router, a weight is only roughly a share of pods. With Gateway API, a service mesh or an ingress, the split is exact. Both tools also do blue/green. Analysis needs metrics, often from Prometheus. Real rep (optional): try the Argo Rollouts demo on a kind cluster.
+</Card>

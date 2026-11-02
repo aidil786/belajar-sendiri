@@ -1,0 +1,83 @@
+---
+id: k8s-k5-l01
+world: 5
+title: metrics-server and kubectl top
+summary: "You will learn: how to see which tray uses the most CPU and memory right now."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, SpotLines, SortCards, Mission]
+needs: [k8s-k4-boss]
+scenario: k5-top
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: resource metrics pipeline", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/" }
+  - { label: "kubectl top", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/" }
+  - { label: "metrics-server (kubernetes-sigs)", url: "https://github.com/kubernetes-sigs/metrics-server" }
+---
+
+<Card id="hook" type="hook">
+Lunch is slow today. Every tray says Running. But one of them eats the stall's memory. How do you find it?
+
+<Interactive name="Choice" options={[{ label: 'Measure what each tray uses right now', correct: true, why: 'Numbers point straight at the hungry tray.' }, { label: 'Restart every tray', why: 'You would lose the clue, and it may come back.' }, { label: 'Add another stall', why: 'You would pay more and still not know why.' }]} />
+</Card>
+
+<Card id="see-meter" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl top pods']} fails={['kubectl top pods']} label="On a fresh kind cluster, kubectl top pods prints: error: Metrics API not available." />
+
+`kubectl top` needs a meter reader. That reader is **<Term id="metrics-server">metrics-server</Term>**. A fresh kind cluster has none.
+
+`error: Metrics API not available` means: nobody reads the meters yet.
+</Card>
+
+<Card id="try-top" type="try">
+This cluster has metrics-server. Type `kubectl top pods`. Which tray uses the most memory?
+
+<Interactive name="FoodCourtSim" scenario="k5-top" goal={{ typed: '^(kubectl|k) top (pods?|po)\\b' }} hints={['Type kubectl top pods and press Enter.']} success="There it is: report uses far more memory than the shop trays." />
+
+<Hint>Type `kubectl top pods`, then press Enter.</Hint>
+</Card>
+
+<Card id="check-hungry" type="check">
+`kubectl top pods` showed this. Who is hungry?
+
+```text
+NAME                   CPU(cores)   MEMORY(bytes)
+report                 1m           287Mi
+shop-bc64465c6-bdxbf   1m           3Mi
+shop-bc64465c6-nv7hj   1m           3Mi
+```
+
+<Interactive name="Choice" options={[{ label: 'report: 287Mi of memory', correct: true, why: 'Each shop tray needs about 3Mi. report holds almost 100 times more.' }, { label: 'The shop trays', why: 'They use about 3Mi each. Tiny.' }, { label: 'Nobody. Everyone uses 1m of CPU.', why: 'CPU is calm, but look at the MEMORY column.' }]} />
+</Card>
+
+<Card id="try-nodes" type="try">
+`kubectl top nodes` shows each stall. report sits on one worker stall. Tap that stall: it uses about 300Mi more than its twin.
+
+<Interactive name="SpotLines" lines={[{ text: 'NAME                CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)' }, { text: 'dev-control-plane   147m         3%       842Mi           10%' }, { text: 'dev-worker          70m          1%       780Mi           9%', target: true }, { text: 'dev-worker2         67m          1%       476Mi           5%' }]} prompt="Tap the worker stall where report runs." success="Yes! dev-worker holds the hungry tray." />
+</Card>
+
+<Card id="predict" type="predict">
+`kubectl top` says 287Mi now. You ask again in an hour. What can it show you?
+
+<Interactive name="Choice" options={[{ label: 'Only the number at that moment', correct: true, why: 'metrics-server keeps just the latest reading. No history.' }, { label: 'A chart of the last hour', why: 'No charts here. For history, you need a monitoring tool (lesson 9).' }, { label: 'The highest number ever', why: 'It only remembers the latest reading.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+metrics-server is built for autoscaling, not for monitoring. Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'ms', label: 'metrics-server does it' }, { id: 'mon', label: 'Needs a monitoring tool' }]} items={[{ label: 'kubectl top pods, right now', bucket: 'ms', why: 'Live numbers are its job.' }, { label: 'The HPA deciding to add trays', bucket: 'ms', why: 'Autoscalers read metrics-server.' }, { label: 'A chart of last Tuesday', bucket: 'mon', why: 'metrics-server keeps no history.' }, { label: 'An alert at 3 a.m.', bucket: 'mon', why: 'Alerts need stored numbers and rules.' }]} success="Sorted! Live numbers here, history elsewhere." />
+</Card>
+
+<Card id="win" type="win">
+You can now find the hungriest tray with `kubectl top`.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional), on a throwaway kind cluster only. The insecure flag is for testing, never a real cluster.
+
+<Interactive name="Mission" id="k5-l01-metrics" steps={[{ id: 'install', text: 'Install metrics-server from its official release.', command: 'kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml' }, { id: 'kind', text: 'kind only: let it skip the kubelet certificate check.', command: "kubectl patch deployment metrics-server -n kube-system --type=json -p '[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/args/-\",\"value\":\"--kubelet-insecure-tls\"}]'" }, { id: 'wait', text: 'Wait a minute, then read the stalls.', command: 'kubectl top nodes' }]} success="Your own cluster has a meter reader now." />
+</Card>

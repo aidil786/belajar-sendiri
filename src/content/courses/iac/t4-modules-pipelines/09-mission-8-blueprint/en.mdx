@@ -1,0 +1,119 @@
+---
+id: iac-t4-m8
+world: 4
+title: "Capstone mission 8: Blueprint Kedai Kancil"
+summary: "You will learn: to write Kedai Kancil's web counter as a blueprint, build it on your own Docker, and plan it on a pull request."
+minutes: 5
+xp: 100
+interactives: [Choice, Mission, YamlBuilder, MissionCheck]
+needs: [iac-t4-l08]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Install OpenTofu", url: "https://opentofu.org/docs/intro/install/" }
+  - { label: "Docker provider (kreuzwerker/docker) on the OpenTofu Registry", url: "https://search.opentofu.org/provider/kreuzwerker/docker/latest" }
+  - { label: "Docker provider docs (Terraform Registry)", url: "https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs" }
+  - { label: "Get Docker", url: "https://docs.docker.com/get-started/get-docker/" }
+  - { label: "opentofu/setup-opentofu", url: "https://github.com/opentofu/setup-opentofu" }
+---
+
+<Card id="hook" type="hook">
+Mission 8: write Kedai Kancil's web counter as a blueprint. Docker on your own laptop is the building site. What will your very first `tofu plan` show?
+
+<Interactive name="Choice" options={[{ label: '2 to add: the image and the container', correct: true, why: 'A real run of this blueprint said exactly that: Plan: 2 to add.' }, { label: '0 to add: Docker already has nginx', why: 'OpenTofu only trusts its register, and it starts empty.' }, { label: '1 to add: just the container', why: 'The image is a resource too, so it gets built first.' }]} />
+</Card>
+
+<Card id="try-setup" type="try">
+Step 1: tools and a folder. Then write `providers.tf` (below). It uses the Docker provider, version 4.6 or a newer 4.x.
+
+<Interactive name="Mission" id="iac-m8-setup" steps={[{ id: 'tofu', text: 'Install OpenTofu 1.13 (see Go deeper for the link). Check it.', command: 'tofu version' }, { id: 'docker', text: 'Start Docker on your laptop. Check it answers.', command: 'docker info' }, { id: 'folder', text: 'Make the project folder and a Git repo.', command: 'mkdir kedai-blueprint && cd kedai-blueprint && git init' }, { id: 'providers', text: 'Save providers.tf with the lines below.' }]} success="Tools ready, folder ready." />
+
+```hcl
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 4.6"
+    }
+  }
+}
+
+provider "docker" {}
+```
+</Card>
+
+<Card id="try-write" type="try">
+Step 2: the blueprint. Which line opens the shop on your laptop's port 8080?
+
+<Interactive name="Choice" compact options={[{ label: 'external = 8080', correct: true, why: 'external is the laptop side. internal = 80 is nginx inside.' }, { label: 'internal = 80', why: 'That is the port inside the container.' }, { label: 'keep_locally = true', why: 'That keeps the image after destroy.' }]} />
+
+Save this as `main.tf`. Add `outputs.tf` too: `output "url" { value = "http://localhost:8080" }`.
+
+```hcl
+resource "docker_image" "web" {
+  name         = "nginx:1.30-alpine"
+  keep_locally = true
+}
+
+resource "docker_container" "web" {
+  name  = "kedai-kancil-web"
+  image = docker_image.web.image_id
+
+  ports {
+    internal = 80
+    external = 8080
+  }
+}
+```
+</Card>
+
+<Card id="try-build" type="try">
+Step 3: build it on your laptop. Plan first, always.
+
+<Interactive name="Mission" id="iac-m8-build" steps={[{ id: 'init', text: 'Get the Docker provider. It writes the lock file.', command: 'tofu init' }, { id: 'tidy', text: 'Check layout and typos.', command: 'tofu fmt -check && tofu validate' }, { id: 'plan', text: 'Read the plan: 2 to add, 0 to destroy.', command: 'tofu plan' }, { id: 'apply', text: 'Build it. Type yes after reading.', command: 'tofu apply' }, { id: 'open', text: 'Open http://localhost:8080 in your browser. Kedai Kancil is open!' }]} success="Built from a blueprint, on your own laptop." />
+</Card>
+
+<Card id="try-ci" type="try">
+Step 4: the plan workflow. Build it, then save it as `.github/workflows/plan.yml`.
+
+<Interactive name="YamlBuilder" workflow="Plan" goal={{ order: ['pr', 'read', 'job', 'checkout', 'setup', 'fmt', 'init', 'validate', 'plan'] }} blocks={[
+  { id: 'pr', kind: 'trigger', label: 'On a pull request to main', yaml: 'pull_request:\n  branches: [main]', means: 'Plan every proposed change.' },
+  { id: 'read', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The job only reads the code.' },
+  { id: 'job', kind: 'job', label: 'Job: plan', yaml: 'plan:\n  runs-on: ubuntu-latest', means: 'This runner has Docker built in.' },
+  { id: 'checkout', kind: 'step', label: 'Check out the code', yaml: '- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n  with:\n    persist-credentials: false', means: 'Copy the blueprint, pinned to a commit.' },
+  { id: 'setup', kind: 'step', label: 'Install OpenTofu', yaml: '- uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2\n  with:\n    tofu_version: 1.13.5\n    tofu_wrapper: false', means: 'The same version as your laptop.' },
+  { id: 'fmt', kind: 'step', label: 'Check the layout', yaml: '- run: tofu fmt -check', means: 'Red if a file needs tofu fmt.' },
+  { id: 'init', kind: 'step', label: 'Init', yaml: '- run: tofu init -input=false', means: 'Providers from your lock file.' },
+  { id: 'validate', kind: 'step', label: 'Validate', yaml: '- run: tofu validate', means: 'Catch typos.' },
+  { id: 'plan', kind: 'step', label: 'Plan', yaml: '- run: tofu plan -input=false', means: 'Show what the change would do.' },
+  { id: 'apply', kind: 'step', label: 'Apply', yaml: '- run: tofu apply -auto-approve', means: 'Build it now.', why: 'This mission only plans in CI. Your laptop does the building.' }]} success="That is your plan.yml. Save it in .github/workflows/." />
+</Card>
+
+<Card id="try-pr" type="try">
+Step 5: push it, then open a pull request that changes the port.
+
+<Interactive name="Mission" id="iac-m8-pr" steps={[{ id: 'ignore', text: 'Keep the register and downloads out of Git.', command: 'printf "*.tfstate\\n*.tfstate.*\\n.terraform/\\n" > .gitignore' }, { id: 'commit', text: 'Commit the blueprint, the lock file and the workflow.', command: 'git add . && git commit -m "Blueprint Kedai Kancil"' }, { id: 'push', text: 'Make an empty public repo called kedai-blueprint on GitHub. Push main to it (use your username).', command: 'git remote add origin https://github.com/YOUR-NAME/kedai-blueprint.git && git push -u origin main' }, { id: 'branch', text: 'On a new branch, change external to 8081. Commit and push.', command: 'git switch -c port-8081' }, { id: 'pr', text: 'Open a pull request. Wait for the plan check, then read its log.' }]} success="Your blueprint now gets a plan on every pull request." />
+</Card>
+
+<Card id="check-api" type="check">
+Let GitHub's public API confirm it. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-blueprint', label: 'Your kedai-blueprint repo is public' }, { type: 'file', repo: 'kedai-blueprint', path: 'main.tf', label: 'It has main.tf' }, { type: 'file', repo: 'kedai-blueprint', path: '.terraform.lock.hcl', label: 'It has the lock file' }, { type: 'file', repo: 'kedai-blueprint', path: '.github/workflows/plan.yml', label: 'It has the plan workflow' }, { type: 'workflowRuns', repo: 'kedai-blueprint', min: 1, label: 'The workflow ran at least once' }, { type: 'pullRequest', repo: '{user}/kedai-blueprint', min: 1, label: 'You opened a pull request there' }]} success="GitHub sees your blueprint and its plan check!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see everything. Check these yourself, then clean up.
+
+<Interactive name="Mission" id="iac-m8-self" steps={[{ id: 'plan', text: 'The CI log shows a plan with 2 to add. (CI has no register, so it plans everything.)' }, { id: 'state', text: 'terraform.tfstate is not in your repo. The lock file is.' }, { id: 'secret', text: 'No passwords or keys are in any file.' }, { id: 'destroy', text: 'Tear it down on your laptop. Read the plan, then yes.', command: 'tofu destroy' }, { id: 'gone', text: 'Check the container is gone.', command: 'docker ps -a --filter name=kedai-kancil-web' }]} success="Mission 8 done: Kedai Kancil has a blueprint and a reviewer robot." />
+</Card>
+
+<Card id="win" type="win">
+You can now blueprint a real service, build it, and plan every change in CI.
+</Card>
+
+<Card id="deeper" type="deeper">
+Safety: only your own laptop, port 8080 free, and `tofu destroy` at the end. Install OpenTofu: [opentofu.org/docs/intro/install](https://opentofu.org/docs/intro/install/). With kind instead, the `kubernetes` provider works the same way. Where the story breaks: CI planned with an empty register. Real teams give CI the shared backend (T3·1), so its plan matches the building.
+</Card>

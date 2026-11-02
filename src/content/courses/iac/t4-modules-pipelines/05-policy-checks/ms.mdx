@@ -1,0 +1,66 @@
+---
+id: iac-t4-l05
+world: 4
+title: Semakan polisi
+summary: "Anda akan belajar: cara peraturan bertulis semak setiap plan, dan hentikan yang berisiko sebelum semakan."
+minutes: 4
+xp: 20
+interactives: [SwipeJudge, SpotLines, OrderList, Choice, Transcript, SortCards, Mission]
+needs: [iac-t4-l04]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Conftest", url: "https://www.conftest.dev/" }
+  - { label: "Dokumentasi Open Policy Agent", url: "https://www.openpolicyagent.org/docs" }
+  - { label: "tofu show -json", url: "https://opentofu.org/docs/cli/commands/show/" }
+  - { label: "OpenTofu: format output JSON", url: "https://opentofu.org/docs/internals/json-format/" }
+---
+
+<Card id="hook" type="hook">
+Robot baca setiap plan sebelum manusia. Leret: biar lalu (bagus), atau hentikan (perlu dibaiki)?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Plan tambah satu kiosk', good: true, why: 'Tiada risiko. Biar manusia semak.' }, { text: 'Plan musnahkan pangkalan data pesanan', good: false, why: 'Hentikan. Manusia mesti tengok dua kali.' }, { text: 'Plan ubah ayat pada papan tanda', good: true, why: 'Kecil dan selamat.' }, { text: 'Plan jadikan bucket storan terbuka kepada umum', good: false, why: 'Data peribadi boleh bocor. Hentikan.' }]} />
+</Card>
+
+<Card id="see-rule" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris yang cari benda yang akan dimusnahkan." lines={[{ text: 'package main' }, { text: '' }, { text: 'deny contains msg if {' }, { text: '  some rc in input.resource_changes' }, { text: '  "delete" in rc.change.actions', target: true }, { text: '  msg := sprintf("%s would be destroyed", [rc.address])' }, { text: '}' }]} success="Mana-mana perubahan yang ada delete dapat mesej deny." />
+
+**<Term id="policy-check">Semakan polisi</Term>** ialah peraturan bertulis yang robot semak pada setiap plan. Yang ini Rego, bahasa peraturan Open Policy Agent.
+</Card>
+
+<Card id="try-order" type="try">
+Susun langkah polisi mengikut urutan.
+
+<Interactive name="OrderList" items={['tofu plan -out tfplan', 'tofu show -json tfplan > plan.json', 'conftest test plan.json', 'Semakan merah hentikan merge sehingga seseorang tengok']} label="Yang pertama di atas" success="Simpan plan, tukar ke JSON, uji." />
+</Card>
+
+<Card id="predict" type="predict">
+Plan itu gantikan gerai (`-/+`). Ia tak musnahkannya secara terang. Adakah peraturan itu tangkap?
+
+<Interactive name="Choice" options={[{ label: 'Ya: replace ialah delete tambah create', correct: true, why: 'Dalam JSON, actions-nya ["delete", "create"].' }, { label: 'Tidak: replace tindakan tersendiri', why: 'Dalam JSON plan, replace senaraikan kedua-dua delete dan create.' }, { label: 'Hanya jika ada -auto-approve', why: 'Peraturan cuma baca plan. Flag tak penting.' }]} />
+</Card>
+
+<Card id="see-real" type="see">
+<Interactive name="Transcript" title="bash" label="Larian Conftest sebenar pada plan sebenar: dua baris FAIL, untuk random_pet.stall (diganti) dan terraform_data.fridge (dimusnahkan), kemudian 2 tests, 0 passed, 2 failures." lines={[{ cmd: 'conftest test plan.json' }, { out: 'FAIL - plan.json - main - random_pet.stall would be destroyed\nFAIL - plan.json - main - terraform_data.fridge would be destroyed', color: 'red' }, { out: '2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions', color: 'red' }]} />
+
+Larian sebenar, Conftest 0.71. Gerai diganti, peti sejuk dibuang. Kedua-duanya ditangkap, jadi semakan jadi merah.
+</Card>
+
+<Card id="check" type="check">
+Apa yang robot patut semak, dan apa perlukan manusia?
+
+<Interactive name="SortCards" buckets={[{ id: 'robot', label: 'Peraturan boleh semak' }, { id: 'human', label: 'Manusia mesti menilai' }]} items={[{ label: 'Tiada plan musnahkan pangkalan data', bucket: 'robot', why: 'JSON plan kata dengan jelas.' }, { label: 'Setiap bucket ada penyulitan dihidupkan', bucket: 'robot', why: 'Satu tetapan, mudah diuji.' }, { label: 'Minggu ini sesuai untuk ubah harga?', bucket: 'human', why: 'Itu perlukan orang yang kenal kedai.' }, { label: 'Setiap resource ada tag pemilik', bucket: 'robot', why: 'Ya atau tidak yang mudah untuk setiap satu.' }, { label: 'Adakah reka bentuk ini masuk akal?', bucket: 'human', why: 'Peraturan semak fakta. Manusia nilai idea.' }]} success="Robot semak fakta. Manusia nilai idea." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca peraturan polisi dan letakkannya dalam pipeline.
+</Card>
+
+<Card id="deeper" type="deeper">
+Alat lain: Checkov dan Trivy imbas fail `.tf` untuk tetapan berisiko. HCP Terraform boleh jalankan polisi Sentinel atau OPA. Dalam OpenTofu sendiri, `validation` variable dan blok `check` juga peraturan. Tip: mulakan peraturan baharu sebagai amaran, kemudian jadikan ralat.
+
+<Interactive name="Mission" id="iac-t4-l05-rep" steps={[{ id: 'plan', text: 'Dalam folder latihan, ubah sesuatu supaya plan musnahkan satu benda. Simpan plan.', command: 'tofu plan -out tfplan' }, { id: 'json', text: 'Tukar ke JSON.', command: 'tofu show -json tfplan > plan.json' }, { id: 'rule', text: 'Simpan peraturan dari pelajaran ini sebagai policy/plan.rego.' }, { id: 'test', text: 'Uji dengan Conftest dalam Docker.', command: 'docker run --rm -v "$PWD:/project" -w /project openpolicyagent/conftest:v0.71.1 test plan.json' }]} success="Semakan polisi pertama anda, pada plan sebenar." />
+</Card>

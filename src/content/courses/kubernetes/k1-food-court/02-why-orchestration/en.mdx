@@ -1,0 +1,61 @@
+---
+id: k8s-k1-l02
+world: 1
+title: One container is easy, 200 are not
+summary: "You will learn: why big apps need a manager for their containers."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, KubeReplay, SortCards, Choice]
+needs: [k8s-k1-l01]
+scenario: k1-first-cluster
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes overview", url: "https://kubernetes.io/docs/concepts/overview/" }
+  - { label: "Cluster architecture", url: "https://kubernetes.io/docs/concepts/architecture/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9:00 pm', title: '200 lunchboxes', text: '200 containers run on 10 machines. All fine.' }, { when: '1:12 am', title: 'A machine dies', text: 'Machine 4 stops. Its 20 containers are gone.' }, { when: '1:13 am', title: 'Customers notice', text: 'Orders fail. Nobody is awake to see it.' }, { when: '8:00 am', title: 'You wake up', text: 'You start 20 containers again by hand, one by one.' }]} />
+
+One container is easy to run. Now try 200, all night long. Tap through this night. What went wrong?
+</Card>
+
+<Card id="see-manager" type="see">
+<Interactive name="KubeReplay" scenario="k1-first-cluster" commands={['kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3', 'sleep 10', 'kubectl get pods']} label="One order asks for 3 shop trays. Ten seconds later, 3 trays run, spread over two stalls." />
+
+An **<Term id="orchestrator">orchestrator</Term>** is a food court manager for containers. You give one order: 3 trays. It finds stalls and spreads the trays out.
+</Card>
+
+<Card id="try-sort" type="try">
+Who does each job? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'You' }, { id: 'manager', label: 'The manager (Kubernetes)' }]} items={[{ label: 'Decide how many copies you want', bucket: 'you', why: 'You write that on the order.' }, { label: 'Choose the app’s image', bucket: 'you', why: 'You pick what goes on the tray.' }, { label: 'Pick a machine for each copy', bucket: 'manager', why: 'It finds a stall with room.' }, { label: 'Replace a copy that died', bucket: 'manager', why: 'It spots the gap and fills it.' }, { label: 'Spread copies over machines', bucket: 'manager', why: 'Then one dead stall can’t take them all.' }, { label: 'Keep every copy running at 3 a.m.', bucket: 'manager', why: 'It never sleeps.' }]} success="Right! You write the order. The manager does the running around." />
+
+<Hint>You decide what you want. The manager makes it true.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+This time a manager is on duty. A stall closes at 1 a.m. What happens to its trays?
+
+<Interactive name="Choice" options={[{ label: 'New trays are made on other stalls', correct: true, why: 'Yes. The manager rebuilds them where there is room.' }, { label: 'They stay gone until you wake up', why: 'That was the night without a manager.' }, { label: 'Every stall closes too', why: 'The other stalls keep serving. Only the lost trays are rebuilt.' }]} />
+</Card>
+
+<Card id="check-night" type="check">
+<Interactive name="KubeReplay" scenario="k1-night" commands={['kubectl get nodes', 'sleep 300', 'kubectl get pods']} label="dev-worker is NotReady. Five minutes later, its two trays show Terminating, and two new trays run on dev-worker2." />
+
+Here is that night, with a manager. `sleep 300` skips 5 minutes. Two new trays now run on another stall. Nobody woke up.
+</Card>
+
+<Card id="win" type="win">
+You can now explain why big apps need an orchestrator.
+</Card>
+
+<Card id="deeper" type="deeper">
+The name Kubernetes comes from Greek. It means helmsman: the one who steers a ship. K8s is the short form: 8 letters sit between K and s. Google shared it as open source in 2014.
+
+Real rep (optional): read “Why you need Kubernetes” on the overview page below.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: git-w08-l04
+world: 8
+title: Kunci bocor? Tukar dulu
+summary: "Anda akan belajar: apa nak buat, dan ikut urutan mana, bila kunci bocor."
+minutes: 5
+xp: 25
+interactives: [TermReplay, TimeMachine, OrderList, CommandBuilder, Choice, SwipeJudge]
+needs: [git-w08-l03]
+scenario: w08-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l04-leak" commands={['git show --stat']} label="git show --stat: commit terbaru, Add weather widget, tambah dua fail: .env dan app.js." />
+
+Alamak. Commit ini dah masuk ke repo awam sejam yang lalu. Ia ada `.env` dan kuncinya. Anggap ada orang dah salin.
+</Card>
+
+<Card id="see-rotate" type="see">
+Langkah pertama: **<Term id="rotate-key">rotate</Term>** (tukar) kunci itu. Pergi ke servis yang beri kunci itu. Batalkan kunci lama dan buat kunci baru. Sekarang salinan yang bocor tak berguna lagi.
+</Card>
+
+<Card id="try-history" type="try">
+Ada orang cuma berhenti jejak `.env` dalam commit baru. Kunci dah hilang? Leret balik ke masa lalu.
+
+<Interactive name="TimeMachine" scenario="w08-l04" file=".env" label=".env pada setiap commit" />
+
+Commit terbaru tiada `.env`. Satu langkah ke belakang, kunci masih ada. Sesiapa pun boleh tengok.
+</Card>
+
+<Card id="try-order" type="try">
+Ini pelan penyelamat penuh. Susun ikut urutan, langkah pertama di atas.
+
+<Interactive name="OrderList" items={['Rotate kunci: batalkan, buat yang baru', 'Berhenti jejak .env dan tambah ke .gitignore', 'Tulis semula sejarah dengan git filter-repo', 'Force-push dan beritahu pasukan anda', 'Semak amaran secret scanning, kemudian tutup']} label="Langkah pertama di atas" success="Pelan yang sempurna. Rotate sentiasa didahulukan." />
+
+<Hint>Kunci yang bocor mesti berhenti berfungsi sebelum apa-apa lagi.</Hint>
+</Card>
+
+<Card id="try-command" type="try">
+**<Term id="filter-repo">git filter-repo</Term>** tulis semula setiap commit. Ia alat berasingan yang anda pasang sendiri. Bina arahan yang padam `.env` dari seluruh sejarah.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'filter-repo', means: 'tulis semula sejarah (alat berasingan)' }, { text: '--sensitive-data-removal', means: 'pembersihan tambahan untuk rahsia' }, { text: '--invert-paths', means: 'buang laluan itu, simpan yang lain' }, { text: '--path .env', means: 'fail yang nak dipadam' }]} decoys={[{ text: 'rm', means: 'padam mulai sekarang sahaja' }, { text: '--path app.js', means: 'fail yang salah' }]} success="Betul! .env lesap dari setiap commit." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda dah tulis semula sejarah dan force-push. Tapi kunci lama tak pernah di-rotate. Selamatkah sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Salinan mungkin masih ada dalam clone, fork dan cache', correct: true, why: 'Anda tak boleh capai setiap salinan. Hanya rotate buat kunci itu tak berguna.' }, { label: 'Ya, ia dah hilang dari GitHub', why: 'Fork, clone lama dan laman cache masih boleh tunjuk kunci itu.' }, { label: 'Ya, kalau repo itu dah jadi peribadi', why: 'Ia awam selama sejam. Mungkin dah ada orang ambil.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Langkah bagus, atau perlu baiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Rotate kunci itu serta-merta', good: true, why: 'Ini buat salinan yang bocor tak berguna.' }, { text: 'Cuma berhenti jejak .env dalam commit baru', good: false, why: 'Kunci masih ada dalam commit lama.' }, { text: 'Minta rakan sepasukan clone semula selepas sejarah ditulis semula', good: true, why: 'Clone lama masih ada kunci itu. Mereka mungkin push kunci itu semula.' }, { text: 'Tulis semula sejarah, tapi terus guna kunci lama', good: false, why: 'Salinan mungkin dah wujud. Rotate kunci itu!' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh uruskan kunci yang bocor ikut urutan yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rotate itu wajib. Tulis semula sejarah cuma pembersihan tambahan. Ia juga tukar id setiap commit selepasnya. Kunci dalam fail biasa, contohnya `app.js`? Guna `--replace-text` dengan senarai rahsia. `--sensitive-data-removal` perlukan git filter-repo 2.47 atau lebih baru. Pull request lama mungkin masih tunjuk kunci itu. GitHub Support boleh bantu bersihkan.
+</Card>

@@ -1,0 +1,97 @@
+---
+id: obs-o2-l02
+world: 2
+title: "Exporters: node and blackbox"
+summary: "You will learn: how exporters translate a machine or a web page into numbers Prometheus can scrape."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, PromQLPlayground, Transcript, SortCards, Mission]
+needs: [obs-o2-l01]
+scenario: o2-machines
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: exporters and integrations", url: "https://prometheus.io/docs/instrumenting/exporters/" }
+  - { label: "Monitoring Linux with node exporter", url: "https://prometheus.io/docs/guides/node-exporter/" }
+  - { label: "Blackbox exporter (multi-target exporter guide)", url: "https://prometheus.io/docs/guides/multi-target-exporter/" }
+---
+
+<Card id="hook" type="hook">
+The stove cannot speak Prometheus. How do you get its temperature onto a screen?
+
+<Interactive name="Choice" options={[{ label: 'A translator reads the stove and shows /metrics', correct: true, why: 'Yes. That translator is called an exporter.' }, { label: 'Teach the stove PromQL', why: 'PromQL is for asking questions, not for stoves.' }, { label: 'You cannot watch a stove', why: 'You can, with a small translator next to it.' }]} />
+</Card>
+
+<Card id="see-node" type="see">
+<Interactive name="SpotLines" prompt="Tap the line that explains free disk space." lines={[{ text: '# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.' }, { text: '# HELP node_filesystem_avail_bytes Filesystem space available to non-root users in bytes.', target: true }, { text: '# HELP node_load1 1m load average.' }, { text: '# HELP node_memory_MemAvailable_bytes Memory information field MemAvailable_bytes.' }]} success="Yes: available filesystem space, in bytes." />
+
+An **<Term id="exporter">exporter</Term>** translates. Node exporter reads a machine: CPU, memory, disk, load. These lines are real.
+</Card>
+
+<Card id="try-memory" type="try">
+What share of memory is free on each machine? Divide available by total.
+
+<Interactive name="PromQLPlayground" scenario="o2-machines" metrics={['node_memory_MemAvailable_bytes', 'node_memory_MemTotal_bytes']} initial="node_memory_MemAvailable_bytes" prompt="Add / node_memory_MemTotal_bytes, then Run." goal={{ resultEquals: [{ labels: { job: 'node', instance: 'kedai-1:9100' }, value: 0.6 }, { labels: { job: 'node', instance: 'kedai-2:9100' }, value: 0.25 }] }} hints={['Type a space, /, a space, then tap node_memory_MemTotal_bytes.']} solution="node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes" success="kedai-2 has only 25% free. Keep an eye on it." />
+
+<Hint>The labels match on both sides, so Prometheus pairs the machines up for you.</Hint>
+</Card>
+
+<Card id="see-blackbox" type="see">
+<Interactive name="Transcript" title="bash" label="curl asks blackbox exporter to knock on a page. It reports status code 200 and probe_success 1." lines={[{ cmd: "curl -s 'localhost:9115/probe?target=http://prometheus:9090/-/ready&module=http_2xx' | grep -E 'probe_success|probe_http_status_code'" }, { out: '# HELP probe_http_status_code Response HTTP status code\n# TYPE probe_http_status_code gauge\nprobe_http_status_code 200\n# HELP probe_success Displays whether or not the probe was a success\n# TYPE probe_success gauge' }, { out: 'probe_success 1', color: 'green' }]} />
+
+Blackbox exporter knocks on a page from outside, like a customer. `probe_success 1` means the door opened. This output is real.
+</Card>
+
+<Card id="try-probe" type="try">
+Which shop page fails its knock at 12m?
+
+<Interactive name="PromQLPlayground" scenario="o2-machines" metrics={['probe_success', 'up']} prompt="Show only failed probes: type probe_success == 0 and Run." goal={{ typed: '==\\s*0', resultCount: 1 }} hints={['Type probe_success == 0', '== 0 keeps only the series that are 0 right now.']} solution="probe_success == 0" success="The home page fails. The menu page is fine." />
+</Card>
+
+<Card id="predict" type="predict">
+At 12m, blackbox’s own `up` is 1. But `probe_success` for the home page is 0. Why?
+
+<Interactive name="Choice" options={[{ label: 'The exporter works. The page it knocked on failed.', correct: true, why: 'Yes. up is about the scrape. probe_success is about the shop page.' }, { label: 'Prometheus is broken', why: 'Prometheus scraped fine: up is 1.' }, { label: 'The numbers disagree, so ignore both', why: 'They answer different questions. Both are true.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Inside view or outside view? Sort each check.
+
+<Interactive name="SortCards" buckets={[{ id: 'node', label: 'Node exporter' }, { id: 'blackbox', label: 'Blackbox exporter' }]} items={[{ label: 'CPU busy time', bucket: 'node', why: 'Read from inside the machine.' }, { label: 'Free memory', bucket: 'node', why: 'Read from inside the machine.' }, { label: 'Disk almost full', bucket: 'node', why: 'Read from inside the machine.' }, { label: 'Home page answers 200', bucket: 'blackbox', why: 'Checked from outside, like a customer.' }, { label: 'TLS certificate expires soon', bucket: 'blackbox', why: 'The probe reads the certificate it gets.' }, { label: 'Port 443 accepts connections', bucket: 'blackbox', why: 'A knock from outside.' }]} success="Inside and outside. You want both." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain exporters and read node and blackbox numbers.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many exporters exist: databases, Redis, message queues. Your own app can also show `/metrics` with a client library. Real rep: add blackbox to your `kedai-watch` stack. Add this service to `compose.yaml`, and this job to `prometheus.yml`.
+
+```yaml
+  blackbox-exporter:
+    image: quay.io/prometheus/blackbox-exporter:v0.29.1
+    ports:
+      - "9115:9115"
+```
+
+```yaml
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://prometheus:9090/-/ready"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+```
+
+<Interactive name="Mission" id="obs-o2-l02-real" steps={[{ id: 'edit', text: 'Add the service and the job above to your two files.' }, { id: 'up', text: 'Start the stack again.', command: 'docker compose up -d' }, { id: 'probe', text: 'Knock by hand.', command: "curl -s 'localhost:9115/probe?target=http://prometheus:9090/-/ready&module=http_2xx' | grep -E 'probe_success|probe_http_status_code'" }, { id: 'query', text: 'At http://localhost:9090, run probe_success. You see 1.' }, { id: 'stop', text: 'Stop it when you are done.', command: 'docker compose down' }]} success="Your control room now knocks from outside too." />
+</Card>

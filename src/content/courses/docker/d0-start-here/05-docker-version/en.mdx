@@ -1,0 +1,67 @@
+---
+id: docker-d0-l05
+world: 0
+title: "Say hello: docker version"
+summary: "You will learn: how to check that both halves of Docker, the client and the engine, are ready."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenSim, SpotLines, KitchenReplay, SortCards]
+needs: [docker-d0-l04]
+scenario: d0-hello
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "docker version", url: "https://docs.docker.com/reference/cli/docker/version/" }
+  - { label: "docker info", url: "https://docs.docker.com/reference/cli/docker/system/info/" }
+  - { label: "Docker architecture", url: "https://docs.docker.com/get-started/docker-overview/#docker-architecture" }
+---
+
+<Card id="hook" type="hook">
+You installed Docker. But is it really awake? How do you check?
+
+<Interactive name="Choice" options={[{ label: 'Type `docker version`', correct: true, why: 'Both halves of Docker answer. You will try it now.' }, { label: 'Restart the laptop and hope', why: 'Hope is not a test. One command tells you for sure.' }, { label: 'Look for a new icon on the screen', why: 'An icon cannot tell you if the engine runs.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Type `docker version`. It asks Docker to say hello.
+
+<Interactive name="KitchenSim" scenario="d0-hello" goal={{ lastTyped: '^docker\\s+version\\b', lastExit: 0 }} hints={['Type docker version and press Enter.']} success="Docker said hello. Both halves are awake!" />
+
+<Hint>Two words, one space: `docker version`.</Hint>
+</Card>
+
+<Card id="see-two" type="see">
+Docker has two halves. The **<Term id="docker-client">client</Term>** is the `docker` command: the waiter who takes your order. The server is the engine: the cook. Tap both halves.
+
+<Interactive name="SpotLines" lines={[{ text: 'Client: Docker Engine - Community', target: true }, { text: ' Version:           29.9.2' }, { text: ' API version:       1.56' }, { text: ' OS/Arch:           linux/amd64' }, { text: 'Server: Docker Engine - Community', target: true }, { text: ' Engine:' }, { text: '  Version:          29.9.2' }, { text: '  API version:      1.56 (minimum version 1.40)' }]} prompt="Tap the line that starts each half." success="Client takes the order. Server cooks it." />
+</Card>
+
+<Card id="see-daemon" type="see">
+<Interactive name="KitchenReplay" scenario="d0-down" commands={['docker version']} fails={['docker version']} label="With the engine stopped, docker version prints the Client half, then: Cannot connect to the Docker daemon." />
+
+The engine waits in the background as a **<Term id="daemon">daemon</Term>** called dockerd. No daemon, no cooking. Here the client answers, but the server half fails.
+</Card>
+
+<Card id="predict" type="predict">
+The Client half answers. The Server half says `Cannot connect to the Docker daemon`. Is Docker installed?
+
+<Interactive name="Choice" options={[{ label: 'Yes. The engine is just not running.', correct: true, why: 'The client answered, so Docker is installed. Start the engine.' }, { label: 'No, nothing is installed', why: 'The client answered, so it is installed.' }, { label: 'The internet is down', why: 'This talk happens inside your computer. No internet needed.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Client or server? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'client', label: 'Client (the waiter)' }, { id: 'server', label: 'Server (the cook)' }]} items={[{ label: 'The docker command you type', bucket: 'client', why: 'You type to the client.' }, { label: 'Runs your containers', bucket: 'server', why: 'The engine does the cooking.' }, { label: 'A daemon called dockerd', bucket: 'server', why: 'dockerd is the engine in the background.' }, { label: 'Turns your typing into an order', bucket: 'client', why: 'The client sends your order to the engine.' }, { label: 'Pulls images and keeps them', bucket: 'server', why: 'The engine keeps the freezer.' }]} success="The waiter takes orders. The cook does the work." />
+</Card>
+
+<Card id="win" type="win">
+You can now check that Docker’s client and engine are both ready.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker info` shows more: how many containers and images you have. `docker --version` prints just the client version on one line. The client can even send orders to an engine on another computer.
+
+Real rep (optional): run `docker version` on your own computer. Do both halves show the same version number?
+</Card>

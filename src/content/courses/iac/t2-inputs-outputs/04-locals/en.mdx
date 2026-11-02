@@ -1,0 +1,65 @@
+---
+id: iac-t2-l04
+world: 2
+title: "Locals: names for repeats"
+summary: "You will learn: to name a repeated value once with locals, and change it in one place."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TofuSim, SortCards]
+needs: [iac-t2-l03]
+scenario: t2-locals
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: local values", url: "https://opentofu.org/docs/language/values/locals/" }
+---
+
+<Card id="hook" type="hook">
+The opening hours appear twice in the blueprint. Now the shop opens at 7am. What could go wrong?
+
+```hcl
+content = "Open 8am to 10pm\n"
+content = "Kedai Kancil, 8am to 10pm\n"
+```
+
+<Interactive name="Choice" options={[{ label: 'You fix one and forget the other', correct: true, why: 'Then the door and the board disagree. Customers get confused.' }, { label: 'Nothing. OpenTofu fixes both.', why: 'OpenTofu builds what you wrote. Two copies, two edits.' }, { label: 'The plan refuses to run', why: 'The plan runs fine. It just builds what each line says.' }]} />
+</Card>
+
+<Card id="see-locals" type="see">
+Here the hours are written once, in a `locals` block. Tap every line that uses them.
+
+<Interactive name="SpotLines" lines={[{ text: 'locals {' }, { text: '  hours = "8am to 10pm"' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "door" {' }, { text: '  filename = "door.txt"' }, { text: '  content  = "Open ${local.hours}\\n"', target: true }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "board" {' }, { text: '  filename = "board.txt"' }, { text: '  content  = "Kedai Kancil, ${local.hours}\\n"', target: true }, { text: '}' }]} success="Two users, one value. local.hours." />
+
+A **<Term id="local-value">local value</Term>** gives a value one name, used anywhere in the blueprint.
+</Card>
+
+<Card id="predict" type="predict">
+You change `hours` once. How many files will the plan replace?
+
+<Interactive name="Choice" compact options={[{ label: 'Two', correct: true, why: 'Both files use local.hours, so both contents change.' }, { label: 'One', why: 'The door and the board both use it.' }, { label: 'None', why: 'Their content changes, so they are rebuilt.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+The shop opens at 7am now. Change `hours` once, to `7am to 11pm`. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t2-locals" goal={{ fileContains: { 'door.txt': '7am', 'board.txt': '7am' } }} hints={['In main.tf, change the line hours = "8am to 10pm".', 'Then tofu apply. The plan replaces 2 files. Type yes.']} success="One edit, two files updated. They can't disagree any more." />
+
+<Hint>Edit only the `locals` block, then apply.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Variable or local?
+
+<Interactive name="SortCards" buckets={[{ id: 'var', label: 'variable (filled in from outside)' }, { id: 'local', label: 'local (worked out inside)' }]} items={[{ label: 'The shop name, different for each branch', bucket: 'var', why: 'It changes per build. Fill it in from outside.' }, { label: 'Opening hours used in two files', bucket: 'local', why: 'Named once inside the blueprint.' }, { label: 'Number of tables someone picks', bucket: 'var', why: 'A choice made at build time.' }, { label: 'A name built from two others, like the shop plus "-sign"', bucket: 'local', why: 'Worked out inside, from other values.' }]} success="Variables come in. Locals are worked out inside." />
+</Card>
+
+<Card id="win" type="win">
+You can now name a repeated value once with locals.
+</Card>
+
+<Card id="deeper" type="deeper">
+The block is `locals` (plural); you read one value as `local.hours` (singular). A local can use variables, functions and other locals, like `upper(var.shop)`. Don't overdo it: a local used only once just adds a hop to follow.
+</Card>

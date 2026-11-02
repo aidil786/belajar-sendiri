@@ -1,0 +1,73 @@
+---
+id: k8s-k5-l09
+world: 5
+title: Prometheus, Grafana dan OpenTelemetry
+summary: "Anda akan belajar: cara nombor ikut masa, carta dan trace tunjuk apa yang berlaku Selasa lepas."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k5-l08]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Grafana documentation", url: "https://grafana.com/docs/grafana/latest/" }
+  - { label: "OpenTelemetry: what is it?", url: "https://opentelemetry.io/docs/what-is-opentelemetry/" }
+  - { label: "Kubernetes: system metrics", url: "https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/" }
+---
+
+<Card id="hook" type="hook">
+Selasa lepas pukul 12:30, kedai jadi lambat. `kubectl top` cuma tunjuk keadaan sekarang. Macam mana nak lihat Selasa lepas?
+
+<Interactive name="Choice" options={[{ label: 'Simpan nombor ikut masa dalam alat pemantauan', correct: true, why: 'Nombor bersama masa membolehkan anda imbas balik, dan lukis carta.' }, { label: 'Skrol ke atas dalam kubectl top', why: 'Ia cetak satu saat sahaja. Tiada apa-apa di atasnya.' }, { label: 'Minta sejarah daripada metrics-server', why: 'Ia simpan bacaan terkini sahaja.' }]} />
+</Card>
+
+<Card id="see-prom" type="see">
+**<Term id="prometheus">Prometheus</Term>** ialah kerani dengan papan klip. Ia lawat setiap gerai ikut jadual dan catat nombor, bersama masanya. Susun rondaannya.
+
+<Interactive name="OrderList" items={['Aplikasi anda tunjuk nombornya di /metrics', 'Prometheus lawat (scrape) /metrics ikut jadual', 'Ia simpan setiap nombor bersama masanya', 'Anda bertanya dengan PromQL', 'Carta atau amaran tunjuk jawapannya']} label="Langkah pertama di atas" success="Itulah rondaannya. Prometheus yang tarik; aplikasi anda cuma tunjuk." />
+</Card>
+
+<Card id="see-grafana" type="see">
+**<Term id="grafana">Grafana</Term>** ialah skrin besar di dinding. Ia lukis carta daripada nombor yang disimpan alat seperti Prometheus. Siapa buat apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'prom', label: 'Prometheus' }, { id: 'graf', label: 'Grafana' }]} items={[{ label: 'Lawat /metrics ikut jadual', bucket: 'prom', why: 'Prometheus yang buat rondaan.' }, { label: 'Simpan nombor bersama masanya', bucket: 'prom', why: 'Ia ada stor siri masa.' }, { label: 'Tunjuk papan pemuka penuh carta', bucket: 'graf', why: 'Grafana ialah skrin besar.' }, { label: 'Biar anda susun panel di skrin', bucket: 'graf', why: 'Papan pemuka dibina dalam Grafana.' }]} success="Siap! Satu kumpul, satu tunjuk." />
+</Card>
+
+<Card id="check-trace" type="check">
+**<Term id="trace">Trace</Term>** ikut seluruh perjalanan satu pesanan. Ia ukur masa setiap langkah. Ini pesanan 42:
+
+```text
+gateway   2 ms
+web      12 ms
+api      30 ms
+db      900 ms
+```
+
+Di mana bahagian yang lambat?
+
+<Interactive name="Choice" compact options={[{ label: 'db', correct: true, why: '900 daripada 944 ms. Lihat pangkalan data dulu.' }, { label: 'gateway', why: 'Cuma 2 ms. Pintu masuk laju.' }, { label: 'api', why: '30 ms okey. Ada bahagian lain yang ambil masa paling lama.' }]} />
+</Card>
+
+<Card id="see-signals" type="see">
+Metrik, log dan trace ialah tiga jenis petunjuk. **<Term id="opentelemetry">OpenTelemetry</Term>** (OTel) ialah satu cara bersama untuk kumpul ketiga-tiganya. Asingkan setiap petunjuk.
+
+<Interactive name="SortCards" buckets={[{ id: 'metric', label: 'Metrik (nombor ikut masa)' }, { id: 'log', label: 'Log (baris yang aplikasi tulis)' }, { id: 'trace', label: 'Trace (perjalanan satu pesanan)' }]} items={[{ label: 'CPU 80% pada 12:30', bucket: 'metric', why: 'Satu nombor bersama masa.' }, { label: 'order 42 oven too cold', bucket: 'log', why: 'Satu baris yang tukang masak tulis.' }, { label: 'order 42: gateway, web, api, db, dengan masa', bucket: 'trace', why: 'Satu permintaan, langkah demi langkah.' }, { label: '200 pesanan sesaat', bucket: 'metric', why: 'Satu kadar, dikira ikut masa.' }]} success="Tiga petunjuk, satu kit." />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tambah OTel pada aplikasi sekali. Hantar datanya ke alat pilihan anda.', good: true, why: 'Kod anda kekal sama kalau anda tukar alat kemudian.' }, { text: 'Guna metrics-server untuk carta bulan lepas', good: false, why: 'Ia tak simpan sejarah. Guna Prometheus atau stor lain.' }, { text: 'Cetak kata laluan pelanggan dalam log supaya cepat nyahpepijat', good: false, why: 'Log bergerak jauh. Jangan sekali-kali tulis rahsia di dalamnya.' }, { text: 'Beri amaran pada apa yang pelanggan rasa, contohnya pesanan lambat', good: true, why: 'Checkout yang lambat lebih penting daripada satu CPU yang sibuk.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan metrik, log dan trace, dan siapa yang simpannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Banyak pasukan pasang Prometheus dan Grafana bersama dengan satu chart Helm. Bahagian Kubernetes juga tunjuk `/metrics` sendiri. OTel Collector boleh terima, ubah dan hantar ketiga-tiga isyarat. Latihan sebenar (pilihan): cuba makmal siap di Killercoda. Atau guna kluster kind untuk dibuang.
+</Card>

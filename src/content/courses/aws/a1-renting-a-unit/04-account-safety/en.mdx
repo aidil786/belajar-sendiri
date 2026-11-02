@@ -1,0 +1,67 @@
+---
+id: aws-a1-l04
+world: 1
+title: Root user, MFA and account safety
+summary: "You will learn: why the root user stays locked away, and how MFA guards it."
+minutes: 5
+xp: 25
+interactives: [Choice, TimelineTap, SortCards, SwipeJudge, Mission]
+needs: [aws-a1-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "AWS account root user", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html" }
+  - { label: "Root user best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html" }
+  - { label: "MFA for the root user", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-mfa-for-root.html" }
+---
+
+<Card id="hook" type="hook">
+The mall hands you a master key. It opens your unit, your safe and your bill. Where should it live?
+
+<Interactive name="Choice" options={[{ label: 'Locked away, used only for rare jobs', correct: true, why: 'A key that opens everything should almost never leave the drawer.' }, { label: 'On your keyring, for daily use', why: 'Lose it once and someone owns everything.' }, { label: 'Copied for every staff member', why: 'More copies, more ways to lose it.' }]} />
+</Card>
+
+<Card id="see-root" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Sign-up', title: 'The master key is made', text: 'Your email and password become the root user.' }, { when: 'First sign-in', title: 'Add MFA', text: 'AWS requires MFA for root. You get 14 days, at most.' }, { when: 'Same day', title: 'Make an everyday admin', text: 'A separate sign-in for daily work. Lesson 6 shows how.' }, { when: 'After that', title: 'Lock root away', text: 'Use it only for the few jobs that need it.' }]} />
+
+The **<Term id="root-user">root user</Term>** is that master key. Tap each step of day one.
+</Card>
+
+<Card id="see-mfa" type="see">
+**<Term id="mfa">MFA</Term>** adds a second lock. After the password, you show something you hold. Which second lock does AWS like best?
+
+<Interactive name="Choice" options={[{ label: 'A passkey or a security key', correct: true, why: 'AWS recommends these. Fake sign-in pages cannot trick them.' }, { label: 'A second, longer password', why: 'Two passwords are still one kind of lock.' }, { label: 'The same password, typed twice', why: 'Anyone who knows it can type it twice.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Only a few jobs need the master key. Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'root', label: 'Root user only' }, { id: 'admin', label: 'Your everyday admin' }]} items={[{ label: 'Close the account', bucket: 'root', why: 'A standalone account needs root to close.' }, { label: 'Change the root email or password', bucket: 'root', why: 'Only the master key changes itself.' }, { label: 'Let IAM users see billing', bucket: 'root', why: 'Root switches on billing access, once.' }, { label: 'Create a budget alarm', bucket: 'admin', why: 'With billing access on, your admin can do it.' }, { label: 'Start a small server', bucket: 'admin', why: 'Daily building work never needs root.' }, { label: 'Make sign-ins for teammates', bucket: 'admin', why: 'An admin can hand out keys.' }]} success="Root does the rare jobs. Everything else uses your admin." />
+</Card>
+
+<Card id="predict" type="predict">
+You want to use the AWS command line as root. Should you make root access keys?
+
+<Interactive name="Choice" options={[{ label: 'No. Never make root access keys.', correct: true, why: 'A stolen root key opens everything. Use a short-lived sign-in instead.' }, { label: 'Yes, but keep them in a text file', why: 'Files get copied, synced and shared. Never for root.' }, { label: 'Yes, everyone does', why: 'AWS strongly recommends against it.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Safe habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Use a shared team email for the root user.', good: true, why: 'Someone can always read AWS’s messages.' }, { text: 'Register two MFA devices, kept apart.', good: true, why: 'Lose one, and the other still works.' }, { text: 'Post the root password in the team chat.', good: false, why: 'Chats get copied. Share it with nobody who doesn’t need it.' }, { text: 'Sign in as root every day to check the bill.', good: false, why: 'Give your admin billing access instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now lock the root user away, behind MFA.
+</Card>
+
+<Card id="deeper" type="deeper">
+You can register up to eight MFA devices for root. Keep the account’s email and phone number current. You need both to recover a lost MFA.
+
+Real rep (only if you already have an AWS account; no resources, no cost):
+
+<Interactive name="Mission" id="aws-a1-l04-rep" steps={[{ id: 'sign', text: 'Sign in as the root user, once.' }, { id: 'mfa', text: 'Add a passkey or security key as MFA.' }, { id: 'mfa2', text: 'Add a second MFA device, kept somewhere else.' }, { id: 'billing', text: 'Switch on IAM access to billing information (account settings).' }, { id: 'keys', text: 'Check that root has no access keys. Delete any you find.' }, { id: 'out', text: 'Sign out. Store the password in a password manager.' }]} success="The master key is locked away." />
+</Card>

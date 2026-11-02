@@ -1,0 +1,62 @@
+---
+id: obs-o3-boss
+world: 3
+title: "Quiet the pager"
+summary: "You will learn: to turn a night of noisy alerts into a few that matter."
+minutes: 6
+xp: 50
+interactives: [SortCards, AlertRuleBuilder, YamlPlayground, Choice, SwipeJudge]
+needs: [obs-o3-l08]
+scenario: o3-flappy
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alertmanager configuration", url: "https://prometheus.io/docs/alerting/latest/configuration/" }
+  - { label: "Alerting on SLOs (Google SRE workbook)", url: "https://sre.google/workbook/alerting-on-slos/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Kedai Kancil's pager buzzed 20 times last night. The on-call cook is tired. Room 1: sort these bells.
+
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Page' }, { id: 'ticket', label: 'Ticket' }, { id: 'delete', label: 'Delete (or a screen)' }]} items={[{ label: 'Orders failing: burn 14.4 over 1h and 5m', bucket: 'page', why: 'Customers hurt, and fast.' }, { label: 'Shop down for 5 minutes (up == 0)', bucket: 'page', why: 'Nobody can order at all.' }, { label: 'p95 checkout above 2s for 10 minutes', bucket: 'page', why: 'Slow checkout loses customers.' }, { label: 'Disk full in 4 hours', bucket: 'ticket', why: 'Fix it awake.' }, { label: 'Certificate ends in 10 days', bucket: 'ticket', why: 'Days of time. A ticket is enough.' }, { label: 'CPU above 80%', bucket: 'delete', why: 'Busy is not broken.' }, { label: 'Memory above 70%', bucket: 'delete', why: 'Normal for a database. Put it on a screen.' }, { label: 'One pod restarted', bucket: 'delete', why: 'It healed itself.' }]} success="Room 1 cleared! Three bells that page, two tickets, the rest on screens." />
+</Card>
+
+<Card id="try-flap" type="try">
+Room 2: the queue bell flaps all night. You may only wait 1 minute. Make it ring in one stretch.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-flappy" alert="QueueLong" exprs={[{ label: 'Queue right now', expr: 'kedai_queue_length > 25', why: 'The raw queue bounces over and under 25.' }, { label: 'Average queue over 5 minutes', expr: 'avg_over_time(kedai_queue_length[5m]) > 25' }]} fors={['0s', '1m']} labels={[{ labels: { severity: 'ticket' } }]} goal={{ noFlap: true, firingAt: ['13m'], quietAt: ['4m'] }} solution={{ expr: 1, for: 1 }} hints={['A one-minute wait is not enough here. Smooth the value instead.']} success="Room 2 cleared! The average stays calm through the bounces." />
+
+<Hint>`avg_over_time(…[5m])` smooths quick bounces before the check.</Hint>
+</Card>
+
+<Card id="try-inhibit" type="try">
+Room 3: when the whole shop is down, mute the ticket bells it causes. Add a `target_matchers` line.
+
+<Interactive name="YamlPlayground" file="alertmanager.yml" initial={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\nreceivers:\n  - name: team-chat\ninhibit_rules:\n  - source_matchers: [alertname="ShopDown"]\n    equal: [job]\n'} expect={[{ path: 'inhibit_rules.0.target_matchers', type: 'list', includes: 'severity="ticket"', hint: 'Under source_matchers: target_matchers: [severity="ticket"]' }, { path: 'inhibit_rules.0.source_matchers', type: 'list', includes: 'alertname="ShopDown"', hint: 'Keep the source_matchers line.' }]} solution={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\nreceivers:\n  - name: team-chat\ninhibit_rules:\n  - source_matchers: [alertname="ShopDown"]\n    target_matchers: [severity="ticket"]\n    equal: [job]\n'} hint="Same indent as equal: four spaces." success="Room 3 cleared! While ShopDown rings, its ticket bells stay quiet." />
+</Card>
+
+<Card id="try-burn" type="try">
+Room 4: one SLO bell replaces five error bells. Page for the fast burn only.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-fast-burn" alert="FastBurn" exprs={[{ label: 'Any error above the SLO (5m)', expr: 'job:shop_error_ratio:rate5m > 0.001', why: 'The 4-minute spike at 20m rings it.' }, { label: 'Burn 14.4 in the 1h AND 5m windows', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001) and job:shop_error_ratio:rate5m > (14.4 * 0.001)', graph: 'job:shop_error_ratio:rate1h', threshold: 0.0144 }]} fors={['2m']} labels={[{ labels: { severity: 'ticket' }, why: 'Two percent of the month in an hour should wake someone.' }, { labels: { severity: 'page' } }]} goal={{ firingAt: ['80m'], quietAt: ['25m', '100m'], noFlap: true, labels: { severity: 'page' } }} solution={{ expr: 1, labels: 1 }} success="Room 4 cleared! It pages for the real burn only." />
+</Card>
+
+<Card id="check-silence" type="check">
+Room 5: tonight, 1 a.m. to 2 a.m., the database gets a planned upgrade. What do you do?
+
+<Interactive name="Choice" options={[{ label: 'Add a 1-hour silence with your name and a reason', correct: true, why: 'Yes. It ends by itself, and everyone can see why.' }, { label: 'Delete the database alerts for the night', why: 'Easy to forget to put them back.' }, { label: 'Do nothing and ignore the buzzes', why: 'Then the team learns to ignore buzzes.' }]} />
+</Card>
+
+<Card id="check-final" type="check">
+Final room: swipe right for habits that keep the pager quiet.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Every paging alert links a runbook.', good: true, why: 'The sleepy person knows where to start.' }, { text: 'Review alerts that fired but changed nothing.', good: true, why: 'Tune or delete them.' }, { text: 'Add an alert for every metric, just in case.', good: false, why: 'That is how 20 buzzes a night happen.' }, { text: 'Page on symptoms, show causes on screens.', good: true, why: 'Customers decide what is urgent.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now turn a noisy pager into a few bells that matter.
+</Card>

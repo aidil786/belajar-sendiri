@@ -1,0 +1,75 @@
+---
+id: git-w10-l01
+world: 10
+title: Objects and hashes
+summary: "You will learn: what Git really stores, and how each piece gets its name."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, ObjectXray, SortCards, Sim]
+needs: [git-w04-l12]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git cat-file", url: "https://git-scm.com/docs/git-cat-file" }
+  - { label: "gitglossary (object, blob, tree)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git rev-parse", url: "https://git-scm.com/docs/git-rev-parse" }
+---
+
+<Card id="hook" type="hook">
+Your shop has 3 commits. `style.css` never changed. Does Git store it 3 times?
+
+<Interactive name="Choice" options={[{ label: 'No. Same content is kept once', correct: true, why: 'Git names content by a fingerprint. Same content, same name, one copy.' }, { label: 'Yes, one copy per commit', why: 'That would waste space. Git shares content that did not change.' }, { label: 'Git keeps only the newest copy', why: 'Git keeps every version you commit. It just never stores one twice.' }]} />
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git cat-file -p HEAD']} label="git cat-file -p HEAD prints the newest commit: a tree id, a parent id, the author, the committer and the message Add opening hours." />
+
+Git keeps everything as **<Term id="object">objects</Term>**. `git cat-file -p HEAD` opens the newest commit. It points to a <Term id="tree">tree</Term> (the files). Its parent is the commit before.
+</Card>
+
+<Card id="try-xray" type="try">
+A **<Term id="blob">blob</Term>** is the content of one file. Open the commit, then its tree, then css. Find the blob of `css/style.css`.
+
+<Interactive name="ObjectXray" scenario="w10-objects" task={{ type: 'findBlob', path: 'css/style.css' }} success="Found it! A blob holds a file's content. A tree lists files and folders." />
+
+<Hint>Click the id on the tree line. Then the id next to css.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Three kinds of object. Which one holds each thing?
+
+<Interactive name="SortCards" buckets={[{ id: 'blob', label: 'blob' }, { id: 'tree', label: 'tree' }, { id: 'commit', label: 'commit' }]} items={[{ label: 'The text inside index.html', bucket: 'blob', why: 'A blob is pure content. Not even the file name.' }, { label: 'The names in the css folder', bucket: 'tree', why: 'A tree lists names. Each name points to a blob or a tree.' }, { label: 'Author, date and message', bucket: 'commit', why: 'A commit holds who, when and why.' }, { label: 'The file name style.css', bucket: 'tree', why: 'Names live in trees. The blob has only the content.' }, { label: 'The id of the commit before', bucket: 'commit', why: 'That is the parent line of a commit.' }]} success="Sorted! Blobs hold content, trees hold names, commits hold the story." />
+</Card>
+
+<Card id="see-hash" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git rev-parse HEAD', 'git log --oneline -1']} label="git rev-parse HEAD prints the full 40-character id 9e8ddf8fb3a185e7920bc21542abe85b09f07e21. git log --oneline -1 shows the short id 9e8ddf8 and Add opening hours." />
+
+Each object's name is a **<Term id="sha-1">SHA-1</Term>** <Term id="hash">hash</Term>. It has 40 characters, made from the content. The short id is just the start.
+</Card>
+
+<Card id="predict" type="predict">
+You copy `about.html` to `about-copy.html` and commit. How many new blobs does Git store?
+
+<Interactive name="Choice" options={[{ label: 'None', correct: true, why: 'Same content, same hash. That blob already exists. Only the tree changes.' }, { label: 'One', why: 'A blob is only content. This content is already stored.' }, { label: 'Two', why: 'Neither file has new content. Git reuses the blob.' }]} />
+</Card>
+
+<Card id="try-tag" type="try">
+The fourth kind is a **tag object**: a label with a note. Open `v1.0` and see where it points.
+
+<Interactive name="Sim" scenario="w10-objects" panels={['graph']} goal={{ typed: 'cat-file -p v1\\.0' }} hints={['Type git cat-file -p v1.0']} success="The tag points to a commit. It has a name, a tagger and a note." />
+
+<Hint>Type `git cat-file -p v1.0`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now open Git's objects and name all four kinds.
+</Card>
+
+<Card id="deeper" type="deeper">
+Annotated tags (`git tag -a`) are objects. Lightweight tags are only refs. Git compresses each object and keeps it in `.git/objects`. `git cat-file -t` prints an object's type. `git cat-file -s` prints its size. Git 3.0 plans SHA-256 ids for new repos.
+
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git cat-file -t HEAD', 'git cat-file -t HEAD^{tree}', 'git cat-file -t v1.0']} label="cat-file -t prints commit for HEAD, tree for HEAD's tree, and tag for v1.0." />
+</Card>

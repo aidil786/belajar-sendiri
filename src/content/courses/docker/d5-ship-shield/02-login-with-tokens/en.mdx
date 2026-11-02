@@ -1,0 +1,70 @@
+---
+id: docker-d5-l02
+world: 5
+title: "Log in with a token"
+summary: "You will learn: to log in to a registry with a token you can cancel, never your password."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SortCards, CommandBuilder, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d5-l01]
+scenario: d5-login
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker login", url: "https://docs.docker.com/reference/cli/docker/login/" }
+  - { label: "Docker Hub access tokens", url: "https://docs.docker.com/security/access-tokens/" }
+  - { label: "GitHub: log in to the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-login" commands={["docker login -u you -p rahsia123"]} label="docker login with the password typed on the command line. Docker prints a warning, then Login Succeeded." />
+
+It worked, but Docker warns you. Plain words: your password now sits in your shell history. And that password opens your whole account.
+</Card>
+
+<Card id="see-token" type="see">
+An **<Term id="access-token">access token</Term>** is a spare key for one job. Lose it? Cancel that key. Your password stays the same. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'password', label: 'Your password' }, { id: 'token', label: 'An access token' }]} items={[{ label: 'Opens your whole account, settings too', bucket: 'password', why: 'That is why it never goes into scripts.' }, { label: 'Can be read-only', bucket: 'token', why: 'A pull-only key cannot push or delete.' }, { label: 'Cancel it alone, nothing else breaks', bucket: 'token', why: 'Delete that one token. Make a new one.' }, { label: 'The terminal needs it when two-step login is on', bucket: 'token', why: 'With 2FA on, docker login wants a token.' }]} success="Tokens are spare keys. Your password stays at home." />
+</Card>
+
+<Card id="see-stdin" type="see">
+The token waits in `$DOCKER_TOKEN`. `--password-stdin` reads it from a pipe, so it never shows on screen. Build the safe login.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'echo', means: 'print…' }, { text: '$DOCKER_TOKEN', means: 'the token in this variable' }, { text: '|', means: 'pipe it into the next command' }, { text: 'docker login', means: 'log in to Docker Hub' }, { text: '-u you', means: 'your user name' }, { text: '--password-stdin', means: 'read the secret from the pipe' }]} decoys={[{ text: '-p rahsia123', means: 'a password on the command line' }]} success="That's the safe login." />
+</Card>
+
+<Card id="try-login" type="try">
+Now log in for real, with the token.
+
+<Interactive name="KitchenSim" scenario="d5-login" goal={{ loggedIn: 'you', typed: 'password-stdin' }} hints={['The token is in $DOCKER_TOKEN. Pipe it in with echo.', 'Type echo $DOCKER_TOKEN | docker login -u you --password-stdin']} success="Logged in with a token. Your password never left home." />
+
+<Hint>`echo $DOCKER_TOKEN | docker login -u you --password-stdin`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Oops! Your token was in a file you pushed to a public repo. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Delete that token in your Docker account, then make a new one', correct: true, why: 'The token is public now. Cancel it first, then clean up.' }, { label: 'Delete the file and push again', why: 'Old commits and copies still hold it. Cancel the token first.' }, { label: 'Change your password', why: 'The token is its own key. Delete the token itself.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Safe habit, or risky? Swipe right for safe.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A read-only token for a robot that only pulls', good: true, why: 'It can pull. It can never push or delete.' }, { text: 'Paste your token in a group chat', good: false, why: 'Everyone in the chat can use it. Keep tokens private.' }, { text: 'One token per laptop or robot', good: true, why: 'Lose one laptop? Cancel only its token.' }, { text: 'Write the token inside the Dockerfile', good: false, why: 'Everyone who pulls the image can read it. Lesson 9 shows how.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now log in with a token you can cancel.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker saves your login in `~/.docker/config.json`. Without a credential helper, it is not encrypted, and Docker warns you. Docker Desktop uses your system's keychain. `docker logout` removes the login. To push to GHCR, use a GitHub personal access token (classic) with `write:packages`.
+
+Real rep (optional), on your own machine:
+
+<Interactive name="Mission" id="d5-l02-rep" steps={[{ id: 'make', text: 'In your Docker Hub account settings, make a personal access token. Pick read-only.' }, { id: 'save', text: 'Paste it into a variable. It stays out of your shell history.', command: 'read -s DOCKER_TOKEN && export DOCKER_TOKEN' }, { id: 'login', text: 'Log in with it.', command: 'echo $DOCKER_TOKEN | docker login -u YOUR-NAME --password-stdin' }, { id: 'logout', text: 'Log out when you are done.', command: 'docker logout' }]} success="You logged in like a pro: token, not password." />
+</Card>

@@ -1,0 +1,64 @@
+---
+id: iac-t4-boss
+world: 4
+title: Semak pelan
+summary: "Anda akan belajar: semak refactor ke dalam modul, baiki pin, dan tangkap plan berisiko dalam pull request, sendiri."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, SwipeJudge, SpotTheHole, PracticeRepo]
+needs: [iac-t4-l08]
+scenario: t4-boss-module
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "OpenTofu: refactor modul (moved)", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+  - { label: "OpenTofu: fail lock kebergantungan", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+  - { label: "GitHub: guna Actions dengan selamat", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Boss: hari ini anda penyemak. Pull request Ben tulis "Kemas: pindah gerai ke dalam modul". Plan-nya: `2 to add, 2 to destroy`. Luluskah anda?
+
+<Interactive name="Choice" options={[{ label: 'Belum: kerja mengemas patut tak bina semula apa-apa', correct: true, why: 'Pindah kod ke dalam modul perlukan blok moved. Barulah plan jadi 0 to destroy.' }, { label: 'Ya: fail baharu nampak sama', why: 'Isi sama, tapi OpenTofu tetap akan musnah dan bina semula.' }, { label: 'Ya: destroy dan add saling batal', why: 'Benda sebenar akan mati dan hidup semula. Itu bukan mengemas.' }]} />
+</Card>
+
+<Card id="try-module" type="try">
+Baiki sendiri. Jalankan `tofu init` untuk modul baharu, kemudian tambah dua blok moved. Plan mesti kata `0 to destroy`. Kemudian apply.
+
+<Interactive name="TofuSim" scenario="t4-boss-module" goal={{ fileContains: { 'main.tf': 'moved' }, resourceInState: ['module.nasi.local_file.sign', 'module.mee.local_file.sign'], resourceMissing: ['local_file.nasi', 'local_file.mee'] }} hints={['tofu plan kata Module not installed: jalankan tofu init.', 'Tambah: moved { from = local_file.nasi, to = module.nasi.local_file.sign }, satu tetapan satu baris. Sama untuk mee.', 'tofu plan: 0 to add, 0 to destroy. Kemudian tofu apply dan yes.']} success="Kedua-dua gerai sudah pindah ke dalam modul. Tiada apa dibina semula." />
+
+<Hint>Alamat baharunya `module.nasi.local_file.sign`.</Hint>
+</Card>
+
+<Card id="check-pins" type="check">
+Pin Ben. Leret: bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'required_providers: null dengan version = "~> 3.2"', good: true, why: 'Baikan masuk, versi yang merosakkan tunggu.' }, { text: 'Modul Git tanpa ?ref=', good: false, why: 'Ia ikut branch yang bergerak. Pin pada tag atau commit.' }, { text: '.terraform.lock.hcl tertinggal dari pull request', good: false, why: 'Nanti CI mungkin pilih versi provider lain. Commit fail itu.' }, { text: 'Perubahan fail lock disemak bersama perubahan kod', good: true, why: 'Provider baharu ialah kod baharu. Baca juga.' }]} />
+</Card>
+
+<Card id="try-lock" type="try">
+Ben tambah loceng yang perlukan provider `null`, tapi CI gagal. Cari sebabnya, baiki, kemudian apply.
+
+<Interactive name="TofuSim" scenario="t4-boss-lock" goal={{ fileContains: { '.terraform.lock.hcl': 'hashicorp/null' }, resourceInState: ['null_resource.bell'] }} hints={['Taip tofu plan dan baca ralatnya.', 'Fail lock perlukan provider baharu: tofu init.', 'Kemudian tofu apply dan yes.']} success="Fail lock dikemas kini, loceng dibina. Commit fail lock bersama perubahan itu." />
+
+<Hint>"Inconsistent dependency lock file" maksudnya: jalankan init.</Hint>
+</Card>
+
+<Card id="check-workflow" type="check">
+Ben juga tulis workflow plan. Cari tiga lubangnya.
+
+<Interactive name="SpotTheHole" file=".github/workflows/plan.yml" workflow={['name: Plan', 'on: pull_request', { text: 'permissions: write-all', hole: { kind: 'writeAll' } }, 'jobs:', '  plan:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1', { text: '      - uses: opentofu/setup-opentofu@v2', hole: { kind: 'unpinned' } }, '      - run: tofu init -input=false', '      - run: tofu plan -input=false', { text: '      - run: tofu apply -auto-approve -input=false', hole: { attack: 'Setiap pull request, walaupun belum disemak, bina benda sebenar.', fix: 'Padam. Apply hanya selepas semakan dan merge.', fixCode: '' } }]} success="Hak terlalu banyak, tag yang boleh beralih, dan apply yang tiada siapa semak." />
+</Card>
+
+<Card id="check-pr" type="check">
+Pull request terakhir hari ini. Baca komen plan. Kemudian pilih.
+
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'kedai-kancil', name: 'blueprint', readme: '# Blueprint\n\nKedai Kancil, ditulis sebagai OpenTofu.\n' }} pulls={[{ number: 12, title: 'Kemas kod gerai lama', body: 'Buang kod yang kita tak guna lagi.', author: 'ben', from: 'cleanup', to: 'main', state: 'open', checks: [{ name: 'tofu plan', status: 'pass' }], files: [{ path: 'main.tf', diff: ['@@ -1,9 +0,0 @@', '-module "nasi" {', '-  source = "./modules/stall"', '-  name   = "nasi"', '-}', '-', '-module "mee" {', '-  source = "./modules/stall"', '-  name   = "mee"', '-}'] }], comments: [{ author: 'plan-bot', body: 'Plan untuk pull request ini:\n\n```\n# module.mee.local_file.sign will be destroyed\n# module.nasi.local_file.sign will be destroyed\nPlan: 0 to add, 0 to change, 2 to destroy.\n```' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlukan satu kelulusan penyemak', on: true }] }} task={{ type: 'requestChanges', pr: 12 }} success="Minta perubahan: kod yang nampak tak terpakai itu masih jalankan dua gerai sebenar. Semakan hijau bukan cerita penuh." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak perubahan infrastruktur macam pro: modul, pin, pipeline dan plan.
+</Card>

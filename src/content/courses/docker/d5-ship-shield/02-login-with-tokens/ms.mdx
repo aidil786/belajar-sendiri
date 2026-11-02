@@ -1,0 +1,70 @@
+---
+id: docker-d5-l02
+world: 5
+title: "Log masuk dengan token"
+summary: "Anda akan belajar: log masuk ke registry dengan token yang boleh dibatalkan, bukan kata laluan."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SortCards, CommandBuilder, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d5-l01]
+scenario: d5-login
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker login", url: "https://docs.docker.com/reference/cli/docker/login/" }
+  - { label: "Token akses Docker Hub", url: "https://docs.docker.com/security/access-tokens/" }
+  - { label: "GitHub: log masuk ke Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-login" commands={["docker login -u you -p rahsia123"]} label="docker login dengan kata laluan ditaip dalam arahan. Docker beri amaran, kemudian Login Succeeded." />
+
+Ia berjaya, tapi Docker beri amaran. Maksudnya: kata laluan anda kini ada dalam sejarah shell. Dan kata laluan itu buka seluruh akaun anda.
+</Card>
+
+<Card id="see-token" type="see">
+**<Term id="access-token">Token akses</Term>** ialah kunci ganti untuk satu kerja. Hilang? Batalkan kunci itu. Kata laluan anda tak berubah. Asingkan kad ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'password', label: 'Kata laluan anda' }, { id: 'token', label: 'Token akses' }]} items={[{ label: 'Buka seluruh akaun, tetapan sekali', bucket: 'password', why: 'Sebab itu ia tak boleh masuk skrip.' }, { label: 'Boleh jadi baca sahaja', bucket: 'token', why: 'Kunci untuk pull sahaja tak boleh push atau padam.' }, { label: 'Batalkan satu, yang lain tak rosak', bucket: 'token', why: 'Padam token itu sahaja. Buat yang baru.' }, { label: 'Terminal perlukannya bila log masuk dua langkah dihidupkan', bucket: 'token', why: 'Dengan 2FA, docker login mahu token.' }]} success="Token ialah kunci ganti. Kata laluan kekal di rumah." />
+</Card>
+
+<Card id="see-stdin" type="see">
+Token itu menunggu dalam `$DOCKER_TOKEN`. `--password-stdin` baca token dari paip, jadi ia tak muncul di skrin. Bina log masuk yang selamat.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'echo', means: 'cetak…' }, { text: '$DOCKER_TOKEN', means: 'token dalam pemboleh ubah ini' }, { text: '|', means: 'salur ke arahan seterusnya' }, { text: 'docker login', means: 'log masuk ke Docker Hub' }, { text: '-u you', means: 'nama pengguna anda' }, { text: '--password-stdin', means: 'baca rahsia dari paip' }]} decoys={[{ text: '-p rahsia123', means: 'kata laluan dalam arahan' }]} success="Itulah log masuk yang selamat." />
+</Card>
+
+<Card id="try-login" type="try">
+Sekarang log masuk betul-betul, dengan token.
+
+<Interactive name="KitchenSim" scenario="d5-login" goal={{ loggedIn: 'you', typed: 'password-stdin' }} hints={['Token ada dalam $DOCKER_TOKEN. Salurkan dengan echo.', 'Taip echo $DOCKER_TOKEN | docker login -u you --password-stdin']} success="Log masuk dengan token. Kata laluan anda tak keluar rumah." />
+
+<Hint>`echo $DOCKER_TOKEN | docker login -u you --password-stdin`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Alamak! Token anda ada dalam fail yang anda push ke repo awam. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Padam token itu dalam akaun Docker, kemudian buat yang baru', correct: true, why: 'Token itu sudah awam. Batalkan dulu, baru kemas.' }, { label: 'Padam fail itu dan push semula', why: 'Commit lama dan salinan masih simpan token. Batalkan token dulu.' }, { label: 'Tukar kata laluan anda', why: 'Token ialah kunci tersendiri. Padam token itu sendiri.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat selamat, atau berisiko? Leret ke kanan untuk selamat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Token baca sahaja untuk robot yang cuma pull', good: true, why: 'Ia boleh pull. Ia tak boleh push atau padam.' }, { text: 'Tampal token dalam sembang kumpulan', good: false, why: 'Semua orang dalam sembang boleh guna. Simpan token secara peribadi.' }, { text: 'Satu token untuk setiap laptop atau robot', good: true, why: 'Hilang satu laptop? Batalkan token laptop itu sahaja.' }, { text: 'Tulis token dalam Dockerfile', good: false, why: 'Sesiapa yang pull image boleh baca. Pelajaran 9 tunjuk caranya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh log masuk dengan token yang boleh dibatalkan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker simpan log masuk anda dalam `~/.docker/config.json`. Tanpa credential helper, ia tak disulitkan, dan Docker beri amaran. Docker Desktop guna keychain sistem anda. `docker logout` buang log masuk itu. Untuk push ke GHCR, guna personal access token (classic) GitHub dengan `write:packages`.
+
+Latihan sebenar (pilihan), di komputer anda:
+
+<Interactive name="Mission" id="d5-l02-rep" steps={[{ id: 'make', text: 'Dalam tetapan akaun Docker Hub, buat personal access token. Pilih baca sahaja.' }, { id: 'save', text: 'Tampal ke dalam pemboleh ubah. Ia tak masuk sejarah shell.', command: 'read -s DOCKER_TOKEN && export DOCKER_TOKEN' }, { id: 'login', text: 'Log masuk dengannya.', command: 'echo $DOCKER_TOKEN | docker login -u YOUR-NAME --password-stdin' }, { id: 'logout', text: 'Log keluar bila selesai.', command: 'docker logout' }]} success="Anda log masuk macam pro: token, bukan kata laluan." />
+</Card>

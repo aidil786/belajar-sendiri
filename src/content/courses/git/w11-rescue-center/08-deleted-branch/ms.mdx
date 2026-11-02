@@ -1,0 +1,58 @@
+---
+id: git-w11-l08
+world: 11
+title: Saya terpadam branch
+summary: "Anda akan belajar: cara bawa balik branch yang terpadam."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l08]
+scenario: w11-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l08-before" commands={['git branch -D about']} label="git branch -D about papar: Deleted branch about, was, dan satu hash pendek." />
+
+Anda kemas branch (cabang) dengan `-D`. Kemudian anda teringat: `about` belum pernah di-merge (dicantum)! Kerja anda hilang? Tarik nafas. Ini berlaku pada semua orang.
+</Card>
+
+<Card id="spot-reflog" type="try">
+Padam branch cuma tanggalkan labelnya. Commit (titik simpan) kekal untuk sementara. **<Term id="reflog">Reflog</Term>** ingat semuanya.
+
+<Interactive name="SpotLines" scenario="w11-l08" commands={['git reflog']} targets="commit: Add about page" prompt="Ketik baris dengan commit halaman about anda." success="Jumpa! Namanya HEAD@{1}." />
+</Card>
+
+<Card id="try-restore" type="try">
+Lekatkan label `about` baru pada commit itu.
+
+<Interactive name="Sim" scenario="w11-l08" panels={['graph']} showLost goal={{ branchAt: { about: '^Add about page$' } }} hints={['Taip git branch about HEAD@{1}']} success="Dah balik! Branch about simpan halaman anda semula." />
+
+<Hint>Taip `git branch about HEAD@{1}`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Apa yang `git branch -D` betul-betul padam?
+
+<Interactive name="Choice" options={[{ label: 'Label sahaja. Commit menunggu untuk sementara', correct: true, why: 'Commit tanpa label dibersihkan kemudian. Selamatkan cepat!' }, { label: 'Semua commit dalam branch itu, serta-merta', why: 'Tidak. Commit menunggu. Reflog boleh cari.' }, { label: 'Seluruh repo', why: 'Fuh, tidak! Satu label sahaja.' }]} />
+</Card>
+
+<Card id="check-flags" type="check">
+Elakkan lain kali. Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'small', label: '-d (d kecil)' }, { id: 'big', label: '-D (D besar)' }]} items={[{ label: 'Berhenti kalau kerja belum di-merge', bucket: 'small', why: 'Ia lindungi kerja yang belum di-merge.' }, { label: 'Padam walaupun kerja belum di-merge', bucket: 'big', why: 'D besar maksudnya paksa.' }, { label: 'Pilihan selamat setiap hari', bucket: 'small', why: 'Biar Git beri amaran dulu.' }, { label: 'Guna hanya bila anda pasti', bucket: 'big', why: 'Pastikan branch dah di-merge, atau memang tak mahu.' }]} success="Tersusun! d kecil tanya dulu. D besar tidak." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bawa balik branch yang terpadam.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tengok semula hook tadi. Git papar hash lama selepas perkataan `was`. `git branch about` dengan hash itu pun boleh. Terpadam branch di GitHub juga? Halaman pull request selalunya boleh pulihkannya.
+</Card>

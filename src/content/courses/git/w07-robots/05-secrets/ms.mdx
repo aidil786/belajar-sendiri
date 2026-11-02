@@ -1,0 +1,71 @@
+---
+id: git-w07-l05
+world: 7
+title: Rahsia, pemboleh ubah, persekitaran
+summary: "Anda akan belajar: tempat simpan kunci dan tetapan, supaya workflow boleh guna dengan selamat."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SortCards, OrderList, YamlBuilder]
+needs: [git-w07-l04]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Variables reference", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/variables" }
+  - { label: "Managing environments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments" }
+---
+
+<Card id="hook" type="hook">
+Deploy anda perlukan token Cloudflare. Tampal terus dalam `ci.yml`? Sesiapa yang boleh baca repo anda akan nampak. Di mana patut simpan?
+
+<Interactive name="Choice" options={[{ label: 'Terus dalam fail workflow', why: 'Semua orang yang baca fail itu dapat token anda.' }, { label: 'Dalam repo secret di GitHub', correct: true, why: 'GitHub kunci ia. Workflow boleh guna. Orang tak boleh baca.' }, { label: 'Dalam mesej commit', why: 'Mesej commit ialah sejarah awam. Jangan sekali-kali.' }]} />
+</Card>
+
+<Card id="see-secret" type="see">
+<Interactive name="Transcript" title="Log larian" label="Satu langkah tercetak token itu. Log tunjuk tiga bintang, bukan token." lines={[{ cmd: 'echo "Token: $CLOUDFLARE_API_TOKEN"' }, { out: 'Token: ***', color: 'yellow' }]} />
+
+**<Term id="secret">Secret</Term>** (rahsia) duduk berkunci dalam tetapan repo anda. Workflow baca ikut nama, contohnya `${{ secrets.MY_TOKEN }}`. Tercetak tanpa sengaja? Log tunjuk `***`. Namun, jangan sekali-kali cetak.
+</Card>
+
+<Card id="see-variable" type="see">
+Bukan semua tetapan rahsia. Alamat laman boleh ditunjuk. Simpan sebagai **<Term id="variable">variable</Term>** (pemboleh ubah), dan baca sebagai `${{ vars.SITE_URL }}`. Susun yang ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'secret', label: 'Secret' }, { id: 'var', label: 'Variable' }]} items={[{ label: 'Token API Cloudflare', bucket: 'secret', why: 'Ia boleh ubah laman anda. Kunci ia.' }, { label: 'Kata laluan pangkalan data', bucket: 'secret', why: 'Ia buka semua data anda.' }, { label: 'Alamat awam laman', bucket: 'var', why: 'Semua orang boleh nampak pun.' }, { label: 'Versi Node yang hendak diguna', bucket: 'var', why: 'Tiada apa nak disorok. Variable pun cukup.' }]} success="Siap! Secret untuk kunci. Variable untuk tetapan biasa." />
+</Card>
+
+<Card id="see-env" type="see">
+**<Term id="environment">Environment</Term>** (persekitaran) ialah tempat bernama untuk deploy, contohnya `production`. Ia boleh simpan rahsia sendiri. Ia boleh tunggu kelulusan seseorang. Susun deploy yang dikawal ini.
+
+<Interactive name="OrderList" items={['Job deploy bermula, kemudian menunggu', 'Penyemak semak dan luluskan', 'Job dapat rahsia production', 'Laman baru dah live']} label="Langkah pertama di atas" success="Ya! Tiada kelulusan, tiada rahsia, tiada deploy." />
+</Card>
+
+<Card id="try-build" type="try">
+Bina workflow deploy. Kunci mesti datang dari secrets.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'job', 'checkout', 'build', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Jalan bila main dapat commit baru.' },
+  { id: 'pr', kind: 'trigger', label: 'Bila ada pull request', yaml: 'pull_request:', means: 'Jalan pada setiap pull request.', why: 'PR belum di-merge. Deploy dari main sahaja.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy ke production', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Runner baru, deploy ke environment production.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'Salin kod anda ke runner.' },
+  { id: 'build', kind: 'step', label: 'Pasang dan bina', yaml: '- run: npm ci && npm run build', means: 'Pasang pakej, kemudian bina laman.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy (kunci dari secrets)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Muat naik laman. Kunci datang dari secrets yang berkunci.' },
+  { id: 'typed', kind: 'step', label: 'Deploy (kunci ditaip)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: abc123-paste-here', means: 'Muat naik laman, dengan kunci ditaip dalam fail.', why: 'Jangan taip kunci dalam fail. Sesiapa yang baca akan dapat kunci itu.' }]}
+  success="Deploy yang selamat! Kunci tak pernah masuk ke fail." />
+
+<Hint>Trigger, kemudian job, kemudian steps. Bina sebelum deploy.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Orang asing buka PR dari fork mereka. Workflow anda berjalan padanya. Adakah ia dapat rahsia anda?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. PR dari fork tak dapat sebarang rahsia anda.', correct: true, why: 'GitHub tahan rahsia itu, supaya orang asing tak boleh ambil kunci anda.' }, { label: 'Ya, semuanya', why: 'Nanti sesiapa boleh curi kunci anda. GitHub tahan rahsia itu.' }, { label: 'Hanya rahsia production', why: 'PR dari fork tak dapat sebarang rahsia anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jaga kunci dengan selamat dalam workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rahsia ada tiga peringkat: organisasi, repo dan environment. Rahsia environment hanya sampai kepada job yang guna environment itu. Peraturan environment boleh hadkan deploy kepada `main` sahaja. Pada pelan percuma GitHub, environment hanya berfungsi dalam repo awam.
+</Card>

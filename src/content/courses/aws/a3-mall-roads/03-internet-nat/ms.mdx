@@ -1,0 +1,68 @@
+---
+id: aws-a3-l03
+world: 3
+title: "Gateway internet dan NAT"
+summary: "Anda akan belajar: cara baris awam sampai ke jalan, dan cara bilik belakang keluar tanpa benarkan sesiapa masuk."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, IdleBill, Transcript]
+needs: [aws-a3-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: Internet gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html" }
+  - { label: "Amazon VPC: NAT gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" }
+  - { label: "Amazon VPC: Pricing for NAT gateways", url: "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html" }
+  - { label: "AWS CLI: aws ec2 create-route", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-route.html" }
+---
+
+<Card id="hook" type="hook">
+Server aplikasi anda tinggal di bilik belakang. Ia perlukan kemas kini keselamatan dari internet. Tetapi orang luar tak boleh masuk. Apa yang anda tambah?
+
+<Interactive name="Choice" options={[{ label: 'Pintu staf sehala ke jalan', correct: true, why: 'Ya. Ia boleh keluar dan balik. Orang asing tak boleh mulakan lawatan.' }, { label: 'IP awam pada server', why: 'Bilik belakang tiada jalan ke luar. Dan IP awam jemput orang asing.' }, { label: 'Pindahkan server ke baris awam', why: 'Itu berjaya, tetapi orang asing boleh ketuk. Simpan di belakang.' }]} />
+</Card>
+
+<Card id="see-igw" type="see">
+**<Term id="internet-gateway">Internet gateway</Term>** (pintu masuk utama) ialah pintu utama pusat beli-belah. Trafik pergi dua hala. Susun langkah untuk buka baris awam.
+
+<Interactive name="OrderList" items={['Cipta internet gateway', 'Sambungkan ia ke VPC anda', 'Tambah papan tanda 0.0.0.0/0 → gateway itu', 'Beri server satu IP awam']} label="Langkah pertama di atas" success="Gateway, sambung, papan tanda, IP awam. Kini jalan boleh capai ia." />
+</Card>
+
+<Card id="see-nat" type="see">
+**<Term id="nat-gateway">NAT gateway</Term>** ialah pintu staf sehala. Bilik belakang boleh keluar. Orang luar tak boleh mulakan lawatan. Yang mana berjaya?
+
+<Interactive name="SortCards" buckets={[{ id: 'works', label: 'Berjaya melalui NAT gateway' }, { id: 'blocked', label: 'Disekat' }]} items={[{ label: 'Server aplikasi muat turun kemas kini', bucket: 'works', why: 'Bilik belakang yang mulakan perjalanan, jadi jawapan boleh balik.' }, { label: 'Orang asing sambung ke server aplikasi', bucket: 'blocked', why: 'Orang luar tak boleh mulakan lawatan melalui NAT.' }, { label: 'Pangkalan data panggil laman pembayaran', bucket: 'works', why: 'Ia yang mulakan panggilan, jadi ia boleh keluar.' }, { label: 'Pengimbas cuba port 22 pada pangkalan data', bucket: 'blocked', why: 'NAT tak pernah benarkan lawatan bermula dari luar.' }]} success="Keluar dan balik: ya. Masuk dari luar: tidak sekali-kali." />
+</Card>
+
+<Card id="try-route" type="try">
+Halakan papan tanda baris peribadi ke NAT gateway. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ec2 create-route', means: 'tambah satu papan tanda' }, { text: '--route-table-id rtb-22574640', means: 'pada jadual laluan baris peribadi' }, { text: '--destination-cidr-block 0.0.0.0/0', means: 'untuk semua alamat lain' }, { text: '--nat-gateway-id nat-0c61bf8a12EXAMPLE', means: 'lalu pintu staf sehala' }]} decoys={[{ text: '--gateway-id igw-c0a643a9', means: 'lalu pintu masuk utama' }]} success="Bilik belakang kini boleh keluar, dan tetap tiada siapa boleh masuk." />
+
+<Hint>Baris peribadi guna NAT gateway, bukan internet gateway.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+NAT gateway anda tak buat apa-apa sepanjang malam. Langsung tiada trafik. Adakah ia makan duit?
+
+<Interactive name="Choice" options={[{ label: 'Ya, setiap jam ia wujud', correct: true, why: 'AWS caj setiap jam ia ada, tambah setiap GB yang ia salurkan.' }, { label: 'Tidak, hanya bila data mengalir', why: 'Data tambah caj. Tetapi setiap jam pun ada caj, walaupun senyap.' }, { label: 'Hanya pada hari bekerja', why: 'Jam tak pernah berhenti. Padam ia bila anda dah siap.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Ada bahagian jalan yang makan duit walaupun senyap. Ada yang percuma. Nilai setiap satu.
+
+<Interactive name="IdleBill" items={['natGateway', 'internetGateway', 'elasticIpIdle', 'vpc']} ordered />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri baris awam pintu ke jalan, dan bilik belakang jalan keluar sehala.
+</Card>
+
+<Card id="deeper" type="deeper">
+NAT gateway awam duduk di baris awam dan perlukan Elastic IP. Ini jawapan contoh rasmi, dipendekkan. Sedang berlatih? Langkau NAT: VPC lalai tak perlukannya. Dah cipta satu? Padam ia, kemudian lepaskan Elastic IPnya.
+
+<Interactive name="Transcript" title="bash" label="aws ec2 create-nat-gateway dalam subnet awam dengan Elastic IP. State pending, connectivity public." lines={[{ cmd: 'aws ec2 create-nat-gateway --subnet-id subnet-0250c25a1fEXAMPLE --allocation-id eipalloc-09ad461b0dEXAMPLE' }, { out: '{\n    "NatGateway": {\n        "NatGatewayId": "nat-0c61bf8a12EXAMPLE",\n        "State": "pending",\n        "SubnetId": "subnet-0250c25a1fEXAMPLE",\n        "ConnectivityType": "public"\n        ...' }]} />
+</Card>

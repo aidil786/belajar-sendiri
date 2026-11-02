@@ -1,0 +1,67 @@
+---
+id: k8s-k2-l06
+world: 2
+title: "Restart or replace?"
+summary: "You will learn: when a container restarts inside its pod, and when the whole pod is replaced."
+minutes: 3
+xp: 15
+interactives: [Choice, FoodCourtSim, ManagersBoard, SortCards, KubeReplay]
+needs: [k8s-k2-l05]
+scenario: k2-restart
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Container restarts", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts" }
+  - { label: "kubectl rollout restart", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/" }
+---
+
+<Card id="hook" type="hook">
+Two trays had trouble this morning. One kept its name, and its RESTARTS column says 1. The other has a brand-new name. What is the difference?
+
+<Interactive name="Choice" options={[{ label: 'One container crashed. One whole tray was replaced.', correct: true, why: 'A crash is fixed inside the same tray. A lost tray gets a new one, with a new name.' }, { label: 'Nothing. Names change at random.', why: 'A pod keeps its name for life. A new name means a new pod.' }, { label: 'Both trays were deleted', why: 'Then both would have new names. One kept its name.' }]} />
+</Card>
+
+<Card id="try-crash" type="try">
+A container crash. Press "Crash a container", then run `kubectl get pods`. Watch the name and **<Term id="restart-count">RESTARTS</Term>**.
+
+<Interactive name="FoodCourtSim" scenario="k2-restart" faults={['crash']} goal={{ restarts: { selector: 'app=shop', min: 1 }, typed: 'get pods?' }} hints={['Press the Crash a container button', 'Now type kubectl get pods']} success="Same tray, same name. Only its container started again, so RESTARTS went up." />
+
+<Hint>The kubelet on the stall restarts the container. The pod stays.</Hint>
+</Card>
+
+<Card id="see-replace" type="see">
+<Interactive name="ManagersBoard" scenario="k2-restart" target="shop" actions={['deletePod']} goal={{ healed: 1 }} success="A new tray, with a new name, took its place." label="The board wants 3 and sees 3. Delete a tray: it sees 2 and makes a new pod with a new name." />
+
+Now a whole tray goes. Delete one and watch. The manager makes a new tray with a new name. Kubernetes replaces pods; it does not repair them.
+</Card>
+
+<Card id="try-sort" type="try">
+Restart in place, or a new tray? Sort what happens.
+
+<Interactive name="SortCards" buckets={[{ id: 'restart', label: 'Same name, RESTARTS +1' }, { id: 'replace', label: 'New pod, new name' }]} items={[{ label: 'The app crashes and exits', bucket: 'restart', why: 'The kubelet starts the container again, in the same tray.' }, { label: 'The liveness probe keeps failing', bucket: 'restart', why: 'The kubelet restarts that container. Lesson 8 shows this.' }, { label: 'You run kubectl delete pod', bucket: 'replace', why: 'The tray is gone. The ReplicaSet makes a new one.' }, { label: 'A stall closes for good', bucket: 'replace', why: 'Its trays are lost. New trays appear on other stalls.' }]} success="Sorted! Crashes restart in place. Lost trays are replaced." />
+</Card>
+
+<Card id="see-rollout-restart" type="see">
+<Interactive name="KubeReplay" scenario="k2-restart" commands={['kubectl get pods', 'kubectl rollout restart deployment/shop', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl get pods']} label="Before: 3 pods. After rollout restart: 3 pods with new names, made a few at a time." />
+
+`kubectl rollout restart` replaces every tray, a few at a time. Same recipe, fresh trays. Compare the names before and after.
+</Card>
+
+<Card id="check" type="check">
+You changed a setting the app reads only when it starts. How do all trays get it, with no downtime?
+
+<Interactive name="Choice" options={[{ label: '`kubectl rollout restart deployment/shop`', correct: true, why: 'Fresh trays read the new setting. The rollout keeps the stall open.' }, { label: 'Wait. The kubelet restarts them.', why: 'The kubelet restarts only containers that crash. Healthy ones keep running.' }, { label: '`kubectl delete deployment shop`', why: 'That closes the whole shop. Every tray would be gone.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell a container restart from a pod replacement.
+</Card>
+
+<Card id="deeper" type="deeper">
+Restarts wait longer each time: 10 s, 20 s, 40 s, up to 5 minutes. After 10 minutes without a crash, the wait resets. A new pod also gets a new IP address. That is why Services exist (World K3).
+
+Real rep (optional): on a throwaway cluster, watch `kubectl get pods -w` during a rollout restart.
+</Card>

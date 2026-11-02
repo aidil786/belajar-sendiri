@@ -1,0 +1,83 @@
+---
+id: k8s-k5-l01
+world: 5
+title: metrics-server dan kubectl top
+summary: "Anda akan belajar: cara lihat pod mana guna CPU dan memori paling banyak sekarang."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, SpotLines, SortCards, Mission]
+needs: [k8s-k4-boss]
+scenario: k5-top
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: resource metrics pipeline", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/" }
+  - { label: "kubectl top", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/" }
+  - { label: "metrics-server (kubernetes-sigs)", url: "https://github.com/kubernetes-sigs/metrics-server" }
+---
+
+<Card id="hook" type="hook">
+Waktu makan tengah hari lambat hari ini. Setiap pod (dulang) kata Running. Tapi satu daripadanya makan memori gerai. Macam mana nak cari?
+
+<Interactive name="Choice" options={[{ label: 'Ukur apa yang setiap pod guna sekarang', correct: true, why: 'Nombor terus tunjuk pod yang lapar.' }, { label: 'Restart semua pod', why: 'Petunjuk akan hilang, dan masalah mungkin kembali.' }, { label: 'Tambah satu lagi gerai', why: 'Anda bayar lebih, dan masih tak tahu sebabnya.' }]} />
+</Card>
+
+<Card id="see-meter" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl top pods']} fails={['kubectl top pods']} label="Pada kluster kind yang baharu, kubectl top pods cetak: error: Metrics API not available." />
+
+`kubectl top` perlukan pembaca meter. Pembaca itu ialah **<Term id="metrics-server">metrics-server</Term>**. Kluster kind yang baharu tiada pembaca ini.
+
+`error: Metrics API not available` maksudnya: belum ada sesiapa baca meter.
+</Card>
+
+<Card id="try-top" type="try">
+Kluster ini ada metrics-server. Taip `kubectl top pods`. Pod mana guna memori paling banyak?
+
+<Interactive name="FoodCourtSim" scenario="k5-top" goal={{ typed: '^(kubectl|k) top (pods?|po)\\b' }} hints={['Taip kubectl top pods dan tekan Enter.']} success="Itu dia: report guna memori jauh lebih banyak daripada pod kedai." />
+
+<Hint>Taip `kubectl top pods`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="check-hungry" type="check">
+`kubectl top pods` tunjuk ini. Siapa yang lapar?
+
+```text
+NAME                   CPU(cores)   MEMORY(bytes)
+report                 1m           287Mi
+shop-bc64465c6-bdxbf   1m           3Mi
+shop-bc64465c6-nv7hj   1m           3Mi
+```
+
+<Interactive name="Choice" options={[{ label: 'report: memori 287Mi', correct: true, why: 'Setiap pod kedai perlu kira-kira 3Mi. report pegang hampir 100 kali ganda.' }, { label: 'Pod kedai', why: 'Setiap satu guna kira-kira 3Mi sahaja. Kecil.' }, { label: 'Tiada. Semua guna CPU 1m.', why: 'CPU tenang, tapi lihat lajur MEMORY.' }]} />
+</Card>
+
+<Card id="try-nodes" type="try">
+`kubectl top nodes` tunjuk setiap gerai. report duduk di satu gerai pekerja. Tekan gerai itu: ia guna kira-kira 300Mi lebih daripada kembarnya.
+
+<Interactive name="SpotLines" lines={[{ text: 'NAME                CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)' }, { text: 'dev-control-plane   147m         3%       842Mi           10%' }, { text: 'dev-worker          70m          1%       780Mi           9%', target: true }, { text: 'dev-worker2         67m          1%       476Mi           5%' }]} prompt="Tekan gerai pekerja tempat report berjalan." success="Ya! dev-worker pegang pod yang lapar itu." />
+</Card>
+
+<Card id="predict" type="predict">
+`kubectl top` kata 287Mi sekarang. Anda tanya lagi sejam kemudian. Apa yang ia boleh tunjuk?
+
+<Interactive name="Choice" options={[{ label: 'Hanya nombor pada saat itu', correct: true, why: 'metrics-server simpan bacaan terkini sahaja. Tiada sejarah.' }, { label: 'Carta sejam yang lalu', why: 'Tiada carta di sini. Untuk sejarah, anda perlu alat pemantauan (pelajaran 9).' }, { label: 'Nombor paling tinggi pernah ada', why: 'Ia hanya ingat bacaan terkini.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+metrics-server dibina untuk autoskala, bukan untuk pemantauan. Asingkan setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'ms', label: 'metrics-server buat' }, { id: 'mon', label: 'Perlu alat pemantauan' }]} items={[{ label: 'kubectl top pods, sekarang juga', bucket: 'ms', why: 'Nombor langsung memang kerjanya.' }, { label: 'HPA putuskan untuk tambah pod', bucket: 'ms', why: 'Autoscaler baca daripada metrics-server.' }, { label: 'Carta hari Selasa lepas', bucket: 'mon', why: 'metrics-server tak simpan sejarah.' }, { label: 'Amaran pukul 3 pagi', bucket: 'mon', why: 'Amaran perlukan nombor tersimpan dan peraturan.' }]} success="Siap! Nombor langsung di sini, sejarah di tempat lain." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari pod paling lapar dengan `kubectl top`.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan), hanya pada kluster kind untuk dibuang. Flag tak selamat itu untuk ujian sahaja, jangan pada kluster sebenar.
+
+<Interactive name="Mission" id="k5-l01-metrics" steps={[{ id: 'install', text: 'Pasang metrics-server daripada keluaran rasminya.', command: 'kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml' }, { id: 'kind', text: 'Untuk kind sahaja: biar ia langkau semakan sijil kubelet.', command: "kubectl patch deployment metrics-server -n kube-system --type=json -p '[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/args/-\",\"value\":\"--kubelet-insecure-tls\"}]'" }, { id: 'wait', text: 'Tunggu seminit, kemudian baca gerai.', command: 'kubectl top nodes' }]} success="Kluster anda sendiri kini ada pembaca meter." />
+</Card>

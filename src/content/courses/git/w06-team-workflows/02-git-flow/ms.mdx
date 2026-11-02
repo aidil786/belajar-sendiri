@@ -1,0 +1,72 @@
+---
+id: git-w06-l02
+world: 6
+title: Git Flow
+summary: "Anda akan belajar: lima jenis branch Git Flow, dan bila pasukan perlukannya."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TimelineTap, SortCards, Choice, OrderList, SwipeJudge]
+needs: [git-w06-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitworkflows", url: "https://git-scm.com/docs/gitworkflows" }
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "A successful Git branching model (Git Flow)", url: "https://nvie.com/posts/a-successful-git-branching-model/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} effect="wobble" label="main ada Release 2.0, kemudian dua commit separuh siap: skrin peta dan log masuk. Semuanya bergoyang." frames={[{ repo: [{ name: 'Release 2.0', kind: 'commit' }, { name: 'Half-built map screen', kind: 'commit', tag: 'notReady' }, { name: 'Half-built login', kind: 'commit', tag: 'notReady' }] }]} />
+
+Game telefon anda keluar setiap dua bulan. Versi 2.0 dah live. Main pula dah ada kerja 2.1 yang separuh siap. Tiba-tiba 2.0 rosak. Macam mana nak baiki?
+</Card>
+
+<Card id="see-life" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'feature/…', title: 'Bina satu ciri', text: 'Setiap ciri dapat branch dari develop. Ia merge balik ke develop.' }, { when: 'develop', title: 'Kumpul kerja', text: 'Ciri yang dah siap tunggu di sini untuk versi seterusnya.' }, { when: 'release/…', title: 'Sedia untuk keluar', text: 'Branch dari develop. Sekarang hanya ujian dan pembaikan kecil.' }, { when: 'main', title: 'Lancarkan', text: 'Release merge ke main dan dapat tag, contohnya v2.1.0. Ia juga balik ke develop.' }, { when: 'hotfix/…', title: 'Baiki cepat', text: 'Ada bug dalam versi live? Branch dari main. Merge ke main dan develop.' }]} />
+
+**<Term id="git-flow">Git Flow</Term>** sebarkan kerja ke lima jenis branch (cabang). Dua kekal selamanya: main dan develop. Yang lain datang dan pergi. Ketik untuk ikut versi 2.1.
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="AreasScene" zoneLabels={{ working: 'develop', staging: 'release/2.1.0', repo: 'main' }} label="Dua ciri, Add map screen dan Add login, pindah dari develop ke release/2.1.0 untuk diuji. Kemudian versi v2.1.0 masuk ke main, sebelah v2.0.0." frames={[{ working: [{ name: 'Add map screen', kind: 'commit' }, { name: 'Add login', kind: 'commit' }], repo: [{ name: 'v2.0.0', kind: 'commit' }] }, { staging: [{ name: 'Add map screen', kind: 'commit' }, { name: 'Add login', kind: 'commit' }], repo: [{ name: 'v2.0.0', kind: 'commit' }] }, { repo: [{ name: 'v2.0.0', kind: 'commit' }, { name: 'v2.1.0', kind: 'commit' }] }]} />
+
+Ciri dah siap? Mulakan **<Term id="release-branch">release branch</Term>** dari develop. Penguji semak di situ. Kemudian ia merge ke main, dengan tag versi.
+</Card>
+
+<Card id="try-sort" type="try">
+Setiap branch bermula dari mana? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'develop', label: 'Dari develop' }, { id: 'main', label: 'Dari main' }]} items={[{ label: '`feature/map-screen`', bucket: 'develop', why: 'Ciri baru bermula dari develop.' }, { label: '`release/2.1.0`', bucket: 'develop', why: 'Release kumpul kerja yang ada dalam develop.' }, { label: '`hotfix/2.0.1`', bucket: 'main', why: 'Hotfix bermula dari kod live dalam main.' }, { label: '`feature/dark-mode`', bucket: 'develop', why: 'Kerja baru sentiasa bermula dari develop.' }, { label: '`hotfix/login-crash`', bucket: 'main', why: 'Masalah itu dah live, jadi mula dari main.' }]} success="Semua dah tersusun! Hanya hotfix bermula dari main." />
+
+<Hint>Tanya: ini kerja baru, atau pembaikan untuk versi live?</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Balik kepada masalah tadi. 2.0 dah live dan 2.1 separuh siap. Di mana anda mula baiki?
+
+<Interactive name="Choice" options={[{ label: 'Hotfix branch dari main', correct: true, why: 'main ada versi 2.0 yang live. Pembaikan keluar tanpa kerja separuh siap.' }, { label: 'Terus dalam develop', why: 'develop ada kerja 2.1 yang separuh siap. Belum boleh dihantar.' }, { label: 'Feature branch', why: 'Ciri baru tunggu release seterusnya. Pemain perlukan pembaikan sekarang.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun seluruh langkah hotfix ikut turutan.
+
+<Interactive name="OrderList" items={['Branch hotfix/2.0.1 dari main', 'Baiki masalah dan commit', 'Merge ke main', 'Letak tag v2.0.1', 'Merge ke develop juga', 'Padam branch hotfix']} label="Langkah pertama di atas" success="Sempurna! Develop pun dapat pembaikan itu." />
+
+<Hint>Dua kali merge: main dulu, kemudian develop.</Hint>
+</Card>
+
+<Card id="check-fit" type="check">
+Git Flow sesuai tak? Leret ke kanan kalau ya, ke kiri kalau tidak.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Game telefon, keluar setiap dua bulan', good: true, why: 'Release yang dirancang sesuai dengan Git Flow.' }, { text: 'Laman web yang deploy 10 kali sehari', good: false, why: 'Terlalu berat. GitHub Flow lebih ringkas di sini.' }, { text: 'Pengguna guna beberapa versi yang semuanya perlu dibaiki', good: true, why: 'Git Flow sesuai untuk perisian bernombor versi.' }, { text: 'Blog dua orang', good: false, why: 'Lima jenis branch terlalu banyak. Buat ringkas saja.' }, { text: 'Aplikasi desktop dengan penguji sebelum setiap release', good: true, why: 'Release branch beri penguji tempat yang tenang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan Git Flow dan bila ia sesuai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pencipta Git Flow tambah satu nota pada 2020. Aplikasi web yang selalu keluar mungkin tak perlukannya. Dia cadangkan cara lebih ringkas, macam GitHub Flow. Git Flow masih sesuai untuk perisian bernombor versi. Projek Git sendiri guna model lain. Baca gitworkflows untuk tengok.
+</Card>

@@ -1,0 +1,315 @@
+---
+import { safeJson } from '~/lib/safe-json';
+// Top bar: brand, a calm course switcher, the map and tools of the current course, settings, language.
+// The current course is the one in the URL (/en/docker/…). Pages without one (home, settings, review)
+// follow the course the learner is working on (their resume point), else the first course.
+import { t, type Lang } from '~/i18n';
+import { familyTitle, getCourses, type Course } from '~/lib/course';
+import { placeOfPath, ROOT_COURSE, toolHref } from '~/lib/catalog';
+import Icon from './Icon.astro';
+import LangToggle from './LangToggle.astro';
+interface Props {
+  lang: Lang;
+  altPath: string;
+}
+const { lang, altPath } = Astro.props;
+const here = Astro.url.pathname;
+const courses = await getCourses();
+const place = placeOfPath(here, courses.map((c) => c.id));
+const family = place.family ?? courses.find((c) => c.id === place.course)?.family;
+const current = courses.find((c) => c.id === place.course) ?? courses.find((c) => c.family === family) ?? courses.find((c) => c.id === ROOT_COURSE)!;
+// A family overview (/en/ship-it/) is its own map.
+const mapHref = (c: Course) => (place.family && c.family === place.family ? `/${lang}/${place.family}/` : `/${lang}/${c.id}/`);
+const toolsFor = (c: Course) => ({
+  map: mapHref(c),
+  glossary: toolHref(lang, c, 'glossary'),
+  cheatsheet: toolHref(lang, c, 'cheatsheet'),
+  commands: toolHref(lang, c, 'commands'),
+  rescue: toolHref(lang, c, 'rescue'),
+});
+const tools = toolsFor(current);
+const links = [
+  { tool: 'glossary', href: tools.glossary, label: t(lang, 'nav.glossary'), icon: 'book' },
+  { tool: 'cheatsheet', href: tools.cheatsheet, label: t(lang, 'nav.cheatsheet'), icon: 'sheet' },
+  { tool: 'commands', href: tools.commands, label: t(lang, 'nav.commands'), icon: 'terminal' },
+  { tool: 'rescue', href: tools.rescue, label: t(lang, 'nav.rescue'), icon: 'lifebuoy' },
+  { tool: 'review', href: `/${lang}/review/`, label: t(lang, 'nav.review'), icon: 'review' },
+];
+const shortName = (c: Course) => c.title[lang];
+// Menu: the first course, then each family with its parts.
+const families = [...new Set(courses.map((c) => c.family).filter((f): f is string => Boolean(f)))];
+const loose = courses.filter((c) => !c.family);
+// For the browser: tool links of every course, so pages without a course can follow the learner.
+const switchData = place.course || place.family ? null : Object.fromEntries(courses.map((c) => [c.id, { name: shortName(c), ...toolsFor(c) }]));
+const isCurrent = (href: string) => here.startsWith(href);
+---
+
+<header class="topbar">
+  <div class="topbar-inner container">
+    <a class="brand" href={`/${lang}/`} aria-label={`${t(lang, 'site.name')}, ${t(lang, 'nav.home')}`}>
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"
+        ><rect width="32" height="32" rx="9" class="brand-bg"></rect><path
+          d="M9 22V10h9M9 16h7M20 22V10l4 12"
+          class="brand-mark"></path></svg
+      >
+      <span class="brand-name">{t(lang, 'site.name')}</span>
+    </a>
+    <nav aria-label={t(lang, 'nav.main')} class="topnav">
+      <details class="menu courses" data-course-menu>
+        <summary class="topnav-link">
+          <Icon name="compass" size={20} />
+          <span class="topnav-label"><span class="visually-hidden">{t(lang, 'nav.course')}: </span><span data-current-course>{place.family && !place.course ? familyTitle(lang, place.family) : shortName(current)}</span></span>
+        </summary>
+        <ul class="menu-list">
+          {
+            loose.map((c) => (
+              <li>
+                <a href={`/${lang}/${c.id}/`} aria-current={place.course === c.id ? 'page' : undefined}>
+                  {shortName(c)}
+                </a>
+              </li>
+            ))
+          }
+          {
+            families.map((f) => (
+              <li>
+                <a href={`/${lang}/${f}/`} aria-current={place.family === f ? 'page' : undefined}>
+                  {familyTitle(lang, f)}
+                </a>
+                <ul class="menu-sub">
+                  {courses
+                    .filter((c) => c.family === f)
+                    .map((c) => (
+                      <li>
+                        <a href={`/${lang}/${c.id}/`} aria-current={place.course === c.id ? 'page' : undefined}>
+                          {c.part ? `${t(lang, 'catalog.partShort', { n: c.part })} · ` : ''}
+                          {shortName(c)}
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+              </li>
+            ))
+          }
+          <li class="menu-all">
+            <a href={`/${lang}/`}>{t(lang, 'nav.allCourses')}</a>
+          </li>
+        </ul>
+      </details>
+      <a href={tools.map} class="topnav-link" data-tool-link="map" aria-current={here === tools.map ? 'page' : undefined}>
+        <Icon name="map" size={20} /><span class="topnav-label">{t(lang, 'nav.map')}</span>
+      </a>
+      <details class="menu tools">
+        <summary class="topnav-link"><Icon name="tools" size={20} /><span class="topnav-label">{t(lang, 'nav.tools')}</span></summary>
+        <ul class="menu-list">
+          {
+            links.map((l) => (
+              <li>
+                <a href={l.href} data-tool-link={l.tool} aria-current={isCurrent(l.href) ? 'page' : undefined}>
+                  <Icon name={l.icon} size={18} />
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+      <a href={`/${lang}/settings/`} class="topnav-link" aria-current={here.startsWith(`/${lang}/settings/`) ? 'page' : undefined}>
+        <Icon name="settings" size={20} /><span class="topnav-label">{t(lang, 'nav.settings')}</span>
+      </a>
+      <LangToggle lang={lang} altPath={altPath} />
+    </nav>
+  </div>
+  {switchData && <script type="application/json" data-course-switch set:html={safeJson(switchData)} />}
+</header>
+
+<script>
+  import { $progress } from '~/stores/progress';
+  // Pages without a course in the URL: the map and tools follow the course the learner is working on.
+  const el = document.querySelector('[data-course-switch]');
+  if (el) {
+    const all = JSON.parse(el.textContent ?? '{}') as Record<string, Record<string, string>>;
+    const course = /^\/(?:en|ms)\/([\w-]+)\//.exec($progress.get().resume?.path ?? '')?.[1];
+    const tools = course ? all[course] : undefined;
+    if (tools) {
+      for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-tool-link]')) {
+        const href = tools[a.dataset.toolLink ?? ''];
+        if (href) a.href = href;
+      }
+      const label = document.querySelector('[data-current-course]');
+      if (label && tools.name) label.textContent = tools.name;
+    }
+  }
+  // Only one menu open at a time; Escape or a click outside closes it.
+  const menus = [...document.querySelectorAll<HTMLDetailsElement>('.topnav details.menu')];
+  for (const m of menus) {
+    m.addEventListener('toggle', () => {
+      if (m.open) for (const other of menus) if (other !== m) other.open = false;
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const m of menus) {
+      if (m.open) {
+        m.open = false;
+        m.querySelector('summary')?.focus();
+      }
+    }
+  });
+  document.addEventListener('click', (e) => {
+    for (const m of menus) if (m.open && !m.contains(e.target as Node)) m.open = false;
+  });
+</script>
+
+<style>
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: var(--topbar-h);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--weight-bold);
+    font-size: var(--text-l);
+    text-decoration: none;
+    min-height: var(--tap);
+  }
+  .brand-bg {
+    fill: var(--color-primary);
+  }
+  .brand-mark {
+    fill: none;
+    stroke: var(--color-primary-text);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .topnav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--tap);
+    min-width: var(--tap);
+    justify-content: center;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-s);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+    font-size: var(--text-s);
+  }
+  .topnav-link::-webkit-details-marker {
+    display: none;
+  }
+  .topnav-link:hover {
+    background: var(--color-surface-2);
+  }
+  .topnav-link[aria-current='page'] {
+    font-weight: var(--weight-bold);
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .menu {
+    position: relative;
+  }
+  .menu-list {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 14rem;
+    max-width: calc(100vw - 2 * var(--space-4));
+    list-style: none;
+    margin: 0;
+    padding: var(--space-2);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    box-shadow: var(--color-shadow);
+  }
+  .courses .menu-list {
+    right: auto;
+    left: 0;
+    /* Two families of parts: the list scrolls on short screens instead of running off them. */
+    max-height: calc(100dvh - var(--topbar-h) - var(--space-5));
+    overflow-y: auto;
+  }
+  @media (max-width: 640px) {
+    /* Phones: the course list spans the screen under the bar, so it never sticks out. */
+    .courses .menu-list {
+      position: fixed;
+      top: calc(var(--topbar-h) + 4px);
+      left: var(--space-4);
+      right: var(--space-4);
+      min-width: 0;
+      max-width: none;
+    }
+  }
+  .menu-sub {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--space-4);
+    border-left: 2px solid var(--color-border);
+    margin-left: var(--space-3);
+  }
+  .menu-all {
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-1);
+  }
+  .menu-list a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    min-height: var(--tap);
+    border-radius: var(--radius-s);
+    text-decoration: none;
+  }
+  .menu-list a:hover {
+    background: var(--color-surface-2);
+  }
+  .menu-list a[aria-current='page'] {
+    font-weight: var(--weight-bold);
+    background: var(--color-surface-2);
+  }
+  @media (max-width: 640px) {
+    .topnav-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .brand span {
+      font-size: var(--text-m);
+    }
+  }
+  @media (max-width: 480px) {
+    /* Room for the course switcher at 360 px: the logo alone keeps its name for screen readers. */
+    .brand-name {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+</style>

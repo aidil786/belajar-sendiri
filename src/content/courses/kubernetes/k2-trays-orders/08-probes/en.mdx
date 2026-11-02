@@ -1,0 +1,73 @@
+---
+id: k8s-k2-l08
+world: 2
+title: "Liveness, readiness and startup probes"
+summary: "You will learn: how Kubernetes checks that your app is awake, ready and started."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, KubeReplay, FoodCourtSim, YamlDoctor]
+needs: [k8s-k2-l07]
+scenario: k2-probes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Liveness, readiness and startup probes", url: "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/" }
+  - { label: "Kubernetes: Configure probes", url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" }
+---
+
+<Card id="hook" type="hook">
+A cook dozes off at the stove. The stall still looks open, so orders keep coming. Nothing gets cooked. How would the manager know?
+
+<Interactive name="Choice" options={[{ label: 'Ask the cook a question every few seconds', correct: true, why: 'No answer, or a wrong one? Something is off. Kubernetes asks questions like this.' }, { label: 'Wait for customers to complain', why: 'By then many orders are lost. Ask before they notice.' }, { label: 'Check that the stall lights are on', why: 'The lights are on: the process runs. The cook inside is still asleep.' }]} />
+</Card>
+
+<Card id="try-sort" type="try">
+Kubernetes asks each container up to three questions. Each question is a **probe**. Sort what each one does.
+
+<Interactive name="SortCards" buckets={[{ id: 'live', label: 'Liveness: awake?' }, { id: 'ready', label: 'Readiness: ready to serve?' }, { id: 'start', label: 'Startup: warmed up?' }]} items={[{ label: 'Fails: the kubelet restarts the container', bucket: 'live', why: 'An app that is stuck gets a fresh start.' }, { label: 'Fails: no customers from the Service, no restart', bucket: 'ready', why: 'The tray steps back until it is ready again.' }, { label: 'Until it passes, the other two wait', bucket: 'start', why: 'A slow starter is not killed while it warms up.' }, { label: 'The app is loading a huge menu at start', bucket: 'start', why: 'Give it time first. Then liveness takes over.' }]} success="Sorted! Awake, ready, warmed up: three different questions." />
+</Card>
+
+<Card id="see-liveness" type="see">
+<Interactive name="KubeReplay" scenario="k2-liveness" commands={['kubectl apply -f sleepy.yaml', 'sleep 30', 'kubectl get pod sleepy', 'kubectl get events --field-selector reason=Killing -o jsonpath={.items[0].message}']} label="sleepy asks nginx for /healthz, which does not exist. After 3 failed checks the container is restarted: RESTARTS goes up and the event says it failed its liveness probe." />
+
+A **<Term id="liveness-probe">liveness probe</Term>** asks: awake? `sleepy` checks `/healthz`, a page nginx does not have. Three 404s in a row: the kubelet restarts the container.
+</Card>
+
+<Card id="try-ready" type="try">
+Press "App says not ready". Watch the trays turn amber. Then run `kubectl get pods`: READY drops, RESTARTS stays 0.
+
+<Interactive name="FoodCourtSim" scenario="k2-probes" faults={['readinessFail']} goal={{ serviceEndpoints: { name: 'shop', count: 0 }, typed: 'get pods?' }} hints={['Press the App says not ready button, then wait 15 seconds', 'Type kubectl get pods']} success="0/1 everywhere, no restarts. The order number has no trays to send customers to." />
+
+<Hint>A **<Term id="readiness-probe">readiness probe</Term>** never restarts anything. It only takes the tray off the order number.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+All 3 shop trays fail readiness. What happens to customers who call the Service?
+
+<Interactive name="Choice" options={[{ label: 'Nobody serves them: no ready trays', correct: true, why: 'The Service only sends customers to ready trays. With none left, requests fail.' }, { label: 'The trays restart', why: 'Readiness never restarts. That is the liveness probe.' }, { label: 'They still reach all 3 trays', why: 'Not-ready trays are taken off the order number.' }]} />
+</Card>
+
+<Card id="try-startup" type="try">
+A **<Term id="startup-probe">startup probe</Term>** gives a slow cook time. 30 tries, 10 seconds apart: up to 5 minutes. Liveness waits until it passes. Fix the typo.
+
+<Interactive name="YamlDoctor" file="slow.yaml" manifest={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: slow\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      startupProbe:\n        httpGet:\n          path: /\n          port: 80\n        periodSeconds: 10\n        failureTreshold: 30\n'} solution={'apiVersion: v1\nkind: Pod\nmetadata:\n  name: slow\nspec:\n  containers:\n    - name: web\n      image: nginx:1.29-alpine\n      startupProbe:\n        httpGet:\n          path: /\n          port: 80\n        periodSeconds: 10\n        failureThreshold: 30\n'} keep={['startupProbe:', ': 30']} hint="Read the unknown field slowly. One letter is missing." success="Fixed! The slow cook gets up to 5 minutes to warm up." />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-liveness" commands={['kubectl apply -f shy.yaml', 'sleep 20', 'kubectl get pod shy']} label="shy fails only its readiness probe: READY 0/1, STATUS Running, RESTARTS 0." />
+
+`shy` fails readiness only. READY 0/1, STATUS Running, RESTARTS 0. Not ready is not broken. It just gets no customers.
+</Card>
+
+<Card id="win" type="win">
+You can now pick the right probe: awake, ready or warmed up.
+</Card>
+
+<Card id="deeper" type="deeper">
+A probe can be `httpGet`, `tcpSocket`, `exec` or `grpc`. Keep liveness about the app itself. If it checks the database, one slow database restarts every tray.
+
+Real rep (optional): on a throwaway cluster, apply `sleepy.yaml` and run `kubectl describe pod sleepy`. Read the Events.
+</Card>

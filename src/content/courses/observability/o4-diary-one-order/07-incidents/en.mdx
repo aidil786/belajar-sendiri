@@ -1,0 +1,58 @@
+---
+id: obs-o4-l07
+world: 4
+title: "Incidents: who does what"
+summary: "You will learn: how a calm team splits the jobs when something big breaks."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, OrderList, SwipeJudge, TimelineTap]
+needs: [obs-o4-l06]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing incidents (Google SRE book)", url: "https://sre.google/sre-book/managing-incidents/" }
+  - { label: "Incident response (Google SRE workbook)", url: "https://sre.google/workbook/incident-response/" }
+---
+
+<Card id="hook" type="hook">
+Payments fail. Five people jump in. Two restart things at the same time. Nobody tells the customers. What is missing?
+
+<Interactive name="Choice" options={[{ label: 'One person in charge, and clear jobs', correct: true, why: 'Yes. Busy hands without a plan make a big problem bigger.' }, { label: 'More people', why: 'Five was already too many without a plan.' }, { label: 'A faster server', why: 'The problem is the team, not the machine.' }]} />
+</Card>
+
+<Card id="see-roles" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'ic', label: 'Incident commander' }, { id: 'ops', label: 'Fixer (ops)' }, { id: 'comms', label: 'Communicator' }]} items={[{ label: 'Decides the plan and gives out jobs', bucket: 'ic', why: 'The commander holds the big picture.' }, { label: 'Keeps the shared incident notes up to date', bucket: 'comms', why: 'Notes plus updates: the communicator.' }, { label: 'Rolls back the database change', bucket: 'ops', why: 'Only the fixers change the systems.' }, { label: 'Posts an update for customers every 30 minutes', bucket: 'comms', why: 'Regular news keeps everyone calm.' }, { label: 'Reads the trace and finds the slow query', bucket: 'ops', why: 'Hands-on digging is ops work.' }]} success="Three jobs, never mixed up." />
+
+The **<Term id="incident-commander">incident commander</Term>** runs the show but does not fix things. Sort the jobs.
+</Card>
+
+<Card id="see-flow" type="see">
+<Interactive name="OrderList" items={['Detect: an alert or a customer', 'Declare: "This is an incident. I am commander."', 'Mitigate: stop the pain', 'Resolve: fix what broke', 'Learn: write the postmortem']} label="First step at the top" success="Detect, declare, mitigate, resolve, learn." />
+
+Every incident walks the same path. Put it in order.
+</Card>
+
+<Card id="predict" type="predict">
+Payments fail since the 17:30 database change. You don't know why yet. What first?
+
+<Interactive name="Choice" options={[{ label: 'Roll back the change, then find out why', correct: true, why: 'Yes. Stop the pain first. Study the cause when customers are safe.' }, { label: 'Find the root cause, then fix it', why: 'Customers keep failing while you study. Mitigate first.' }, { label: 'Wait and see if it heals', why: 'Hope is not a plan. The budget is burning.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Swipe right for a calm-incident habit. Swipe left for one that makes it worse.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Declare an incident early, even if it may be small.', good: true, why: 'Closing a small incident is easy. Starting late is hard.' }, { text: 'The commander jumps into the database to fix it herself.', good: false, why: 'Then nobody holds the big picture.' }, { text: 'Two people restart services without telling anyone.', good: false, why: 'Only the fixers change things, and they say what they do.' }, { text: 'Hand over command out loud, and wait for "got it".', good: true, why: 'Everyone must know who leads now.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now run an incident with clear roles: command, fix, talk.
+</Card>
+
+<Card id="deeper" type="deeper">
+A calm incident for order A1041, as the notes saw it:
+
+<Interactive name="TimelineTap" events={[{ when: '17:46', title: 'FastBurn pages Aina', text: 'Orders fail. The error budget burns fast.' }, { when: '17:48', title: 'Aina declares an incident', text: 'She is commander. Ben fixes. Mei talks to customers.' }, { when: '17:52', title: 'Ben follows one order', text: 'Trace and logs: SELECT payments takes 2.8 s.' }, { when: '17:58', title: 'Ben rolls back the 17:30 change', text: 'Payments are fast again. Errors fall.' }, { when: '18:20', title: 'Aina closes the incident', text: 'A postmortem is booked for tomorrow.' }]} />
+</Card>

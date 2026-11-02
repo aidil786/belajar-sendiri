@@ -1,0 +1,72 @@
+---
+id: obs-o2-l06
+world: 2
+title: rate() and increase()
+summary: "You will learn: how to turn a counter into 'how fast' and 'how many', even when the app restarts."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o2-l05]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL functions: rate()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#rate" }
+  - { label: "PromQL functions: increase()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#increase" }
+  - { label: "Prometheus: metric types (counter)", url: "https://prometheus.io/docs/concepts/metric_types/#counter" }
+---
+
+<Card id="hook" type="hook">
+The nasi lemak counter at SS15 says 300. Is the stall busy right now?
+
+<Interactive name="Choice" options={[{ label: 'Cannot tell: you need how fast it grows', correct: true, why: 'Yes. 300 since opening says nothing about this minute.' }, { label: 'Yes, 300 is a lot', why: '300 over 10 minutes, or over 10 hours? The total alone cannot say.' }, { label: 'No, 300 is small', why: 'Small or big depends on the time it took.' }]} />
+</Card>
+
+<Card id="try-rate" type="try">
+**<Term id="rate">rate()</Term>** tells how fast a counter grows, per second, over a window.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="kedai_orders_total" prompt="Wrap it: rate(kedai_orders_total[5m]). Then Run." goal={{ usesFunction: ['rate'], resultCount: 5, resultIncludes: [{ labels: { stall: 'nasi-lemak', outlet: 'ss15' }, value: 0.5 }] }} hints={['Type rate( before the name and [5m]) after it.']} solution="rate(kedai_orders_total[5m])" success="Orders per second, for each stall and outlet." />
+</Card>
+
+<Card id="predict" type="predict">
+Nasi lemak at SS15 goes 0, 30, 60, 90… one step each minute. What does `rate()` say?
+
+<Interactive name="Choice" options={[{ label: '0.5 per second', correct: true, why: 'Yes. 30 orders a minute is 30 ÷ 60 = 0.5 per second.' }, { label: '30', why: 'That is per minute. rate() always answers per second.' }, { label: '300', why: '300 is the counter itself, not how fast it grows.' }]} />
+</Card>
+
+<Card id="see-reset" type="see">
+Restarts **reset** counters to 0. `rate()` notices the drop and keeps counting up.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial={'kedai_orders_total{outlet="bangsar"}'} at="16m" prompt="Run it at 16m: the Bangsar till restarted. Then wrap it in rate(…[5m]) and Run again." goal={{ at: '18m', usesFunction: ['rate'], resultCount: 2 }} hints={['Put rate( in front of the name, and [5m]) at the end.']} solution={'rate(kedai_orders_total{outlet="bangsar"}[5m])'} success="No crash to zero, no negative orders. rate() handled the restart." />
+</Card>
+
+<Card id="try-swipe" type="try">
+Good use of `rate()`? Swipe right for good.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'rate(kedai_orders_total[5m])', good: true, why: 'A counter, with a window. Perfect.' }, { text: 'rate(kedai_customers_waiting[5m])', good: false, why: 'That is a gauge. It goes down too, so rate() misreads it as restarts.' }, { text: 'rate(kedai_orders_total[30s])', good: false, why: 'With 1m scrapes, 30s holds fewer than 2 samples. Use a few scrapes’ worth.' }, { text: 'sum(rate(kedai_orders_total[5m]))', good: true, why: 'rate first, then sum. The right order.' }, { text: 'rate(kedai_orders_total)', good: false, why: 'rate() needs a window, like [5m].' }]} />
+</Card>
+
+<Card id="try-increase" type="try">
+**increase()** says how much a counter grew in the window. How many 500 errors in the last 10 minutes?
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['http_requests_total']} prompt={'Filter code="500", add [10m], then wrap it all in increase( ). Run it.'} goal={{ usesFunction: ['increase'], resultCount: 2, resultIncludes: [{ labels: { job: 'shop', instance: 'shop-1', code: '500' }, value: 150 }] }} hints={['Filter code="500" inside the curly brackets, then add [10m].']} solution={'increase(http_requests_total{code="500"}[10m])'} success="150 errors on each shop instance in 10 minutes." />
+</Card>
+
+<Card id="check" type="check">
+`rate()` says 0.25 per second. What does `increase()` say over `[10m]`?
+
+<Interactive name="Choice" options={[{ label: '150', correct: true, why: 'Yes. 0.25 × 600 seconds = 150. increase() is rate() times the window.' }, { label: '2.5', why: 'That is 0.25 × 10. The window is 600 seconds, not 10.' }, { label: '0.25', why: 'That is the rate. increase() multiplies by the window.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now turn a counter into a speed with `rate()` and a total with `increase()`.
+</Card>
+
+<Card id="deeper" type="deeper">
+`irate()` uses only the last two samples: twitchy, good for fast graphs. Both guess the edges of the window. So `increase()` can show 133.33, not a whole number. In Grafana, `$__rate_interval` picks a safe window for you.
+
+<Interactive name="Mission" id="obs-o2-l06-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack.', command: 'docker compose up -d' }, { id: 'rate', text: 'At http://localhost:9090, run rate(prometheus_http_requests_total[1m]). Which handler is busiest?' }, { id: 'inc', text: 'Now run increase(prometheus_http_requests_total[5m]). Spot the numbers that are not whole.' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="rate() and increase() on real counters." />
+</Card>

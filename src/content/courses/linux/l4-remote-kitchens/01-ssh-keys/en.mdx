@@ -1,0 +1,83 @@
+---
+id: linux-l4-l01
+world: 4
+title: "SSH keys"
+summary: "You will learn: to make a key pair and hang your padlock on a server's door."
+minutes: 5
+xp: 25
+interactives: [Transcript, SortCards, LinuxSim, SpotLines, Choice, Mission]
+needs: [linux-l3-boss]
+scenario: linux-l4-keygen
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: ssh-keygen", url: "https://man.openbsd.org/ssh-keygen" }
+  - { label: "OpenSSH: ssh-copy-id", url: "https://manpages.debian.org/trixie/openssh-client/ssh-copy-id.1.en.html" }
+  - { label: "Debian wiki: SSH", url: "https://wiki.debian.org/SSH" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop" label="ssh you@10.0.0.5 asks for a password."
+  lines={[{ cmd: 'ssh you@10.0.0.5' }, { out: "you@10.0.0.5's password:" }]} />
+
+<Term id="ssh">SSH</Term> is a sealed phone line to a far-away kitchen. But every call asks for a password. Robots guess passwords all day. There is a better lock.
+</Card>
+
+<Card id="try-pair" type="try">
+A **key pair** is a padlock and its only key. The padlock (`.pub`) is safe to give away. The key stays with you. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'share', label: 'Safe to share' }, { id: 'secret', label: 'Never share' }]} items={[{ label: 'id_ed25519.pub', bucket: 'share', why: 'The padlock. Hang it on any door.' }, { label: 'id_ed25519', bucket: 'secret', why: 'The key. Anyone who has it can open your doors.' }, { label: 'Paste into a server: authorized_keys', bucket: 'share', why: 'Servers only ever get the padlock.' }, { label: 'Send in a chat message', bucket: 'secret', why: 'A private key never travels. Make a new pair if it leaks.' }]} success="Padlocks travel. The key stays home." />
+</Card>
+
+<Card id="try-keygen" type="try">
+Make your pair. On a real machine, press Enter at each question (or pick a passphrase). Here, they answer themselves.
+
+<Interactive name="LinuxSim" scenario="linux-l4-keygen" goal={{ fileExists: ['~/.ssh/id_ed25519', '~/.ssh/id_ed25519.pub'] }} hints={['Type ssh-keygen -t ed25519 -C "you@laptop"', 'Then ls -l ~/.ssh']} solution={['ssh-keygen -t ed25519 -C "you@laptop"']} success="Two files: the key (id_ed25519) and the padlock (id_ed25519.pub)." />
+</Card>
+
+<Card id="see-ls" type="see">
+`ls -l ~/.ssh` after making the pair. Tap the line only you may read.
+
+<Interactive name="SpotLines" lines={[{ text: 'total 8' }, { text: '-rw------- 1 you you 399 Nov  1 09:00 id_ed25519', target: true }, { text: '-rw-r--r-- 1 you you  92 Nov  1 09:00 id_ed25519.pub' }]} prompt="Tap the private key." success="rw------- (600): only you. ssh refuses a key that others can read." />
+</Card>
+
+<Card id="see-copy" type="see">
+<Interactive name="Transcript" title="laptop (lab)" label="ssh-copy-id installs the public key on 10.0.0.5 after one last password. Then ssh you@10.0.0.5 hostname prints kedai with no password."
+  lines={[{ cmd: 'ssh-copy-id you@10.0.0.5' }, { out: '/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/you/.ssh/id_ed25519.pub"\n/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys\nyou@10.0.0.5\'s password:\n\nNumber of key(s) added: 1\n\nNow try logging into the machine, with: "ssh \'you@10.0.0.5\'"\nand check to make sure that only the key(s) you wanted were added.' }, { cmd: 'ssh you@10.0.0.5 hostname' }, { out: 'kedai' }]} />
+
+`ssh-copy-id` hangs your padlock on the server's door, after one last password. No password after that.
+</Card>
+
+<Card id="try-door" type="try">
+Now be the server. Hang Aina's padlock: add `aina.pub` to `~/.ssh/authorized_keys`, then `chmod 600` it.
+
+<Interactive name="LinuxSim" scenario="linux-l4-authkeys" goal={{ fileContains: { '~/.ssh/authorized_keys': 'aina@laptop' }, fileMode: { '~/.ssh/authorized_keys': '600' } }} hints={['cat aina.pub >> ~/.ssh/authorized_keys', 'chmod 600 ~/.ssh/authorized_keys']} solution={['cat aina.pub >> ~/.ssh/authorized_keys', 'chmod 600 ~/.ssh/authorized_keys']} success="Aina's padlock is on the door. She can log in with her key." />
+
+<Hint>Use `>>` to add. A single `>` would wipe the other padlocks!</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your first call to a new server shows this. What is ssh checking?
+
+```
+The authenticity of host '10.0.0.5 (10.0.0.5)' can't be established.
+ED25519 key fingerprint is SHA256:aYFyPi8Iw5RKqAeYPFwKCGKES8fXkU1HvaXk3yHsckY.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+<Interactive name="Choice" options={[{ label: "The server's own ID card", correct: true, why: 'Compare the fingerprint with the owner. Then ssh saves it in known_hosts.' }, { label: 'Your password', why: 'This comes before any password. It is about the server.' }, { label: 'Your private key', why: 'Your key is checked after you trust the server.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make a key pair and hang your padlock on a server.
+</Card>
+
+<Card id="deeper" type="deeper">
+A passphrase locks your key file too; `ssh-agent` remembers it for a session. The server's ID card is its <Term id="host-key">host key</Term>. Practice keys here are made up. The lab outputs came from two real Debian 13 machines.
+
+<Interactive name="Mission" id="linux-l4-l01-rep" steps={[{ id: 'keygen', text: 'On your laptop: make a pair.', command: 'ssh-keygen -t ed25519 -C "you@laptop"' }, { id: 'copy', text: 'Hang the padlock on a throwaway VM.', command: 'ssh-copy-id you@YOUR-VM-IP' }, { id: 'login', text: 'Log in with no password.', command: 'ssh you@YOUR-VM-IP' }]} success="Your first key login." />
+</Card>

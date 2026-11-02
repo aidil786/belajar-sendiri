@@ -1,0 +1,77 @@
+---
+id: k8s-k4-l08
+world: 4
+title: "Kustomize bases and overlays"
+summary: "You will learn: to run one app in two kitchens with a base and overlays, using kubectl apply -k."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, CommandBuilder, Mission]
+needs: [k8s-k4-l07]
+scenario: k4-kz
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "kubectl kustomize", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_kustomize/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kz" commands={['ls', 'ls overlays', 'ls overlays/prod']} picture={false} label="ls shows two folders, base and overlays. overlays holds dev and prod. prod holds kustomization.yaml, namespace.yaml and settings-patch.yaml." />
+
+Same shop, two kitchens. Dev wants 1 tray and chatty logs. Prod wants 3 trays and quiet logs. Copy all the YAML twice? Then you fix every bug twice.
+</Card>
+
+<Card id="see-overlay" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: kustomize.config.k8s.io/v1beta1' }, { text: 'kind: Kustomization' }, { text: 'namespace: prod', target: true }, { text: 'resources:' }, { text: '  - ../../base' }, { text: '  - namespace.yaml' }, { text: 'replicas:' }, { text: '  - name: shop' }, { text: '    count: 3', target: true }, { text: 'patches:' }, { text: '  - path: settings-patch.yaml', target: true }]} prompt="This is overlays/prod/kustomization.yaml. Tap the three lines that make prod different." success="Its own zone, 3 trays, and a patch for the note." />
+
+**<Term id="kustomize">Kustomize</Term>** keeps one base recipe. Each <Term id="overlay">overlay</Term> is a sticky note on top, for one kitchen. The base never changes.
+</Card>
+
+<Card id="try-build" type="try">
+Preview prod first. This only prints YAML. Nothing reaches the cluster.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" goal={{ lastTyped: 'kustomize overlays/prod/?$' }} hints={['Type kubectl kustomize overlays/prod']} success="That is the YAML prod would get: namespace prod, replicas 3, LOG_LEVEL warn." />
+
+<Hint>`kubectl kustomize <folder>` builds the overlay and prints it.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You just ran `kubectl kustomize overlays/prod`. How many prod trays are running now?
+
+<Interactive name="Choice" options={[{ label: 'None', correct: true, why: 'It only printed YAML. A safe dry look.' }, { label: 'Three', why: 'Almost! Printing is not applying. You need apply -k.' }, { label: 'One, from the base', why: 'Nothing was sent to the cluster at all.' }]} />
+</Card>
+
+<Card id="try-apply" type="try">
+Now open the prod kitchen for real.
+
+<Interactive name="FoodCourtSim" scenario="k4-kz" namespace="prod" goal={{ replicas: { name: 'shop', count: 3, namespace: 'prod' }, podsReady: { selector: 'app=shop', count: 3, namespace: 'prod' } }} hints={['Type kubectl apply -k overlays/prod', 'Watch them: kubectl get pods -n prod']} success="Prod is open: its own zone, 3 trays." />
+
+<Hint>`-k` means: build this folder with Kustomize, then apply it.</Hint>
+</Card>
+
+<Card id="check-logs" type="check">
+<Interactive name="KubeReplay" scenario="k4-kz" namespace="prod" commands={['kubectl apply -k overlays/dev', 'kubectl apply -k overlays/prod', 'kubectl rollout status deployment/shop -n prod --timeout=120s', 'kubectl exec -n dev deploy/shop -- printenv LOG_LEVEL', 'kubectl exec -n prod deploy/shop -- printenv LOG_LEVEL']} label="Both overlays are applied. The dev tray prints debug. A prod tray prints warn." />
+
+One base, two kitchens. Dev says `debug`, prod says `warn`. The patch changed one line of the note.
+</Card>
+
+<Card id="check-build" type="check">
+Build the command that opens the dev kitchen.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'Talk to the cluster' }, { text: 'apply', means: 'make it match' }, { text: '-k', means: 'build a Kustomize folder first' }, { text: 'overlays/dev', means: 'the dev sticky note' }]} decoys={[{ text: '-f', means: '-f takes plain YAML files, not an overlay' }, { text: 'base', means: 'The base alone has no dev changes' }]} success="That opens dev, built from the base plus its note." />
+</Card>
+
+<Card id="win" type="win">
+You can now run one app in many kitchens with Kustomize.
+</Card>
+
+<Card id="deeper" type="deeper">
+Overlays can do more: `images:` swaps a tag, `namePrefix:` renames things, `labels:` adds labels. `configMapGenerator` adds a hash to the note's name, so a change rolls the trays. `kubectl diff -k overlays/prod` shows changes first.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-l08-rep" steps={[{ id: 'copy', text: 'In the practice terminal above, cat each file under base and overlays. Make the same folders on your machine.' }, { id: 'preview', text: 'Preview prod.', command: 'kubectl kustomize overlays/prod' }, { id: 'apply', text: 'Open prod.', command: 'kubectl apply -k overlays/prod' }, { id: 'diff', text: 'Change count to 2 in the prod overlay. See the change before applying it.', command: 'kubectl diff -k overlays/prod' }, { id: 'tidy', text: 'Close it. This deletes the prod zone.', command: 'kubectl delete -k overlays/prod' }]} success="Two kitchens, one recipe." />
+</Card>

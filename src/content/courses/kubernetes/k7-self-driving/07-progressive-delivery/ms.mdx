@@ -1,0 +1,65 @@
+---
+id: k8s-k7-l07
+world: 7
+title: Penghantaran berperingkat
+summary: "Anda akan belajar: cara Argo Rollouts dan Flagger hantar versi baharu kepada sedikit pengguna dulu, dan rollback sendiri."
+minutes: 4
+xp: 20
+interactives: [Choice, TrafficDial, SpotLines, OrderList, SortCards]
+needs: [k8s-k7-l06]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo Rollouts: canary", url: "https://argoproj.github.io/argo-rollouts/features/canary/" }
+  - { label: "Argo Rollouts: analysis", url: "https://argoproj.github.io/argo-rollouts/features/analysis/" }
+  - { label: "Flagger: how it works", url: "https://docs.flagger.app/usage/how-it-works" }
+---
+
+<Card id="hook" type="hook">
+Rolling update dah selesai. Setiap pod sedia dan hijau. Tetapi 8 daripada 100 pesanan kini gagal. Apa yang rollout itu semak?
+
+<Interactive name="Choice" options={[{ label: 'Hanya pod dah sedia, bukan pesanan berjaya', correct: true, why: 'Probe tanya "awak hidup?", bukan "pesanan berjaya?"' }, { label: 'Kadar ralat pesanan sebenar', why: 'Deployment biasa tak pernah lihat kadar ralat.' }, { label: 'Tiada apa langsung', why: 'Ia semak readiness. Cuma itu tak cukup.' }]} />
+</Card>
+
+<Card id="try-dial" type="try">
+**<Term id="progressive-delivery">Progressive delivery</Term>** (penghantaran berperingkat) hantar kepada sedikit pengguna dulu. Naikkan versi baharu selangkah demi selangkah. Perhati ralat. Rollback sebelum 150 pengguna terkena.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} />
+
+<Hint>Hantar 5% dulu. Bila garisan jadi merah, tekan Roll back.</Hint>
+</Card>
+
+<Card id="see-rollout" type="see">
+Argo Rollouts tulis langkah itu dalam YAML. `Rollout` ambil tempat Deployment. Tekan baris yang hantar lebih ramai pengguna ke versi baharu.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: argoproj.io/v1alpha1' }, { text: 'kind: Rollout' }, { text: 'metadata:' }, { text: '  name: shop' }, { text: 'spec:' }, { text: '  strategy:' }, { text: '    canary:' }, { text: '      steps:' }, { text: '        - setWeight: 20', target: true }, { text: '        - pause: { duration: 2m }' }, { text: '        - setWeight: 50', target: true }, { text: '        - pause: { duration: 2m }' }, { text: '  # replicas, selector, template: sama seperti Deployment' }]} prompt="Tekan setiap baris yang hantar lebih ramai pengguna." success="Ya! 20%, kemudian 50%. Selepas langkah terakhir, semua orang dapat." />
+</Card>
+
+<Card id="try-order" type="try">
+Tambah hakim robot yang baca graf ralat. Susun gelungnya.
+
+<Interactive name="OrderList" items={['Hantar 20% pengguna ke v2', 'Baca kadar ralat', 'Ralat rendah: hantar 50%', 'Masih rendah: hantar kepada semua', 'Ralat tinggi pada mana-mana langkah: kembali ke v1']} label="Langkah pertama di atas" success="Itulah analisis automatik. Tak perlu dikejutkan pukul 2 pagi." />
+</Card>
+
+<Card id="check-sort" type="check">
+Dua alat popular buat kerja ini. Susun fakta-faktanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'rollouts', label: 'Argo Rollouts' }, { id: 'flagger', label: 'Flagger' }, { id: 'both', label: 'Kedua-duanya' }]} items={[{ label: 'Ganti Deployment dengan objek Rollout', bucket: 'rollouts', why: 'Anda tukar kind: Deployment kepada kind: Rollout.' }, { label: 'Kekalkan Deployment anda dan tambah objek Canary', bucket: 'flagger', why: 'Flagger buat salinan primary dan alihkan trafik untuk anda.' }, { label: 'Sebahagian daripada keluarga Flux', bucket: 'flagger', why: 'Flagger ialah projek Flux.' }, { label: 'Baca metrik dan rollback sendiri', bucket: 'both', why: 'Kedua-duanya boleh nilai release dengan angka Prometheus.' }]} success="Tersusun! Matlamat sama, gaya berbeza." />
+</Card>
+
+<Card id="predict" type="predict">
+Pada 20%, hakim nampak ralat melebihi had. Apa jadi seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Rollout berhenti, dan semua pengguna kembali ke v1', correct: true, why: 'Itulah tujuannya: hanya 20% nampak pepijat itu, sekejap sahaja.' }, { label: 'Ia tunggu, kemudian tetap naik ke 50%', why: 'Semakan yang gagal hentikan langkah-langkah itu.' }, { label: 'Ia padam v1 untuk jimat ruang', why: 'v1 ialah versi selamat. Ia kekal sehingga v2 terbukti bagus.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar kepada sedikit pengguna dulu, dan biar angka memutuskan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tanpa penghala trafik, weight hanya anggaran bahagian pod. Dengan Gateway API, service mesh atau ingress, pembahagiannya tepat. Kedua-dua alat juga boleh buat blue/green. Analisis perlukan metrik, selalunya dari Prometheus. Latihan sebenar (pilihan): cuba demo permulaan Argo Rollouts pada kluster kind.
+</Card>

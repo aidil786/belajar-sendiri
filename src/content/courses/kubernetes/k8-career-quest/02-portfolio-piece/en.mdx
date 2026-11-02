@@ -1,0 +1,73 @@
+---
+id: k8s-k8-l02
+world: 8
+title: Turn Kedai Kancil into a portfolio
+summary: "You will learn: how a README, a diagram and a 2-minute video show off your capstone."
+minutes: 5
+xp: 25
+interactives: [Choice, PracticeRepo, OrderList, MarkdownPlayground, TimelineTap, SwipeJudge]
+needs: [k8s-k8-l01]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "Creating diagrams (Mermaid)", url: "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams" }
+  - { label: "Pinning items to your profile", url: "https://docs.github.com/en/account-and-profile/how-tos/profile-customization/pinning-items-to-your-profile" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil works. All six missions are done. But your repo page shows only a list of files. Will a busy reviewer get it?
+
+<Interactive name="Choice" options={[{ label: 'Probably not. Show the story first', correct: true, why: 'Reviewers skim. A clear README tells the story in one minute.' }, { label: 'Yes. Good code explains itself', why: 'Code shows how. A README shows what and why, fast.' }, { label: 'Only if they clone it and run it', why: 'Most reviewers will not. Make it easy to see without running.' }]} />
+</Card>
+
+<Card id="try-repo" type="try">
+Here is a strong **<Term id="portfolio">portfolio</Term>** repo. A reviewer has one minute. Find the proof of all six missions.
+
+<Interactive name="PracticeRepo" screen="code" repo={{ owner: 'aina-codes', name: 'kedai-kancil', description: 'A tiny shop app: containerised, tested in CI, run on Kubernetes by GitOps.', files: [{ path: 'README.md', content: '# Kedai Kancil\n\nA tiny shop app. Containerised, tested in CI, run on Kubernetes by GitOps.\n\nWatch the 2-minute demo: [video](https://example.com/kedai-kancil-demo)\n\n## How it fits together\n\n```mermaid\nflowchart LR\n  browser --> gateway --> web\n  gateway --> api --> db\n```\n\n## Run it\n\n```sh\ndocker compose up\n```\n\n## Proof\n\nEvery mission, with links: [docs/missions.md](docs/missions.md)\n\n## What I learned\n\nSmall images, green pipelines and pods that heal.\n' }, { path: 'docs/missions.md', content: '# Mission evidence\n\n- [x] M1 Pack it: one command starts the whole shop\n- [x] M2 Ship it: a green pipeline run on main\n- [x] M3 Release it: a bad release, rolled back by the pipeline\n- [x] M4 Run it: survives a pod kill and a load spike\n- [x] M5 Guard it: a policy rejects a root image\n- [x] M6 Hands off: one Git change, no kubectl\n' }, { path: 'compose.yaml', content: 'services:\n  web:\n    build: ./web\n  api:\n    build: ./api\n  db:\n    image: postgres:18-alpine\n' }, { path: 'k8s/base/kustomization.yaml', content: 'resources:\n  - web.yaml\n  - api.yaml\n  - db.yaml\n' }] }} task={{ type: 'openFile', path: 'docs/missions.md' }} success="Found it! Every mission, ticked, with proof." />
+
+<Hint>The README has a Proof section with a link.</Hint>
+</Card>
+
+<Card id="try-trip" type="try">
+An **<Term id="architecture-diagram">architecture diagram</Term>** is a map of your app's parts. Arrows show who talks to whom. Put one order's trip in order.
+
+<Interactive name="OrderList" items={['Browser: a customer opens the menu', 'Gateway: the main entrance reads /api', 'Service: the order number for the API', 'api pod: the small API cooks the answer', 'Postgres: the database holds the menu']} label="Start of the trip at the top" success="That's the main arrow path on your diagram." />
+
+<Hint>Outside first. The data lives at the very end.</Hint>
+</Card>
+
+<Card id="try-mermaid" type="try">
+GitHub draws <Term id="mermaid" course="git">Mermaid</Term> text as a diagram. Each `-->` is an arrow. Add the last arrow: from api to db.
+
+<Interactive name="MarkdownPlayground" initial={'## How it fits together\n\n```mermaid\nflowchart LR\n  browser --> gateway\n  gateway --> web\n  gateway --> api\n```\n'} prompt="Add the arrow api --> db inside the mermaid block." goal={{ mustMatch: ['^\\s*api\\s*-->\\s*db\\b'], hint: ['Add a new line inside the block: api --> db'] }} success="Nice! Now the diagram shows where the data lives." />
+</Card>
+
+<Card id="see-video" type="see">
+<Interactive name="TimelineTap" events={[{ when: '0:00', title: 'The problem', text: 'One line: a tiny shop that should never go down.' }, { when: '0:15', title: 'The map', text: 'Show the architecture diagram. Name each part.' }, { when: '0:35', title: 'Live change', text: 'Change one line in Git. The pipeline goes green. Argo CD syncs it.' }, { when: '1:20', title: 'Break it', text: 'Delete a pod. Watch Kubernetes replace it.' }, { when: '1:45', title: 'What you learned', text: 'One honest lesson, and what you would add next.' }]} />
+
+A 2-minute **<Term id="demo-video">demo video</Term>** shows it working. You don't need to show your face. Your screen and your voice are enough.
+</Card>
+
+<Card id="check-lines" type="check">
+Judge each README line.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '"Kedai Kancil: a tiny shop app on Kubernetes, shipped by GitOps."', good: true, why: 'One clear line. The reader knows what it is.' }, { text: '"This is my project."', good: false, why: 'Which project? Say what it does.' }, { text: '"Run it with one command: docker compose up"', good: true, why: 'One command to try it. Reviewers love that.' }, { text: '"TODO: write the README later."', good: false, why: 'Later rarely comes. Write three lines today.' }, { text: '"Mission 2 proof: a link to the green run on main."', good: true, why: 'A link is proof. A claim alone is not.' }]} />
+</Card>
+
+<Card id="check-secret" type="check">
+You record your terminal for the demo. What must you check first?
+
+<Interactive name="Choice" options={[{ label: 'No tokens, passwords or keys on screen', correct: true, why: 'Anyone can pause a video. Hide every secret first.' }, { label: 'That your terminal font looks cool', why: 'Nice, but secrets matter far more.' }, { label: 'Nothing. It is only a video', why: 'Anyone can pause a video and copy a token.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now turn Kedai Kancil into a portfolio piece.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub draws Mermaid diagrams in Markdown files. Your diagram lives next to your code. Upload the video anywhere with a share link. Be honest in the README. Say it runs in a kind cluster, not a paid cloud. Honesty builds trust.
+</Card>

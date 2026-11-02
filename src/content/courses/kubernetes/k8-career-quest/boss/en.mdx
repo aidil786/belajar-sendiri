@@ -1,0 +1,74 @@
+---
+id: k8s-k8-boss
+world: 8
+title: Publish the capstone
+summary: "You will learn: to share Kedai Kancil with its diagram, demo video and proof."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, MarkdownPlayground, Choice, SwipeJudge, Mission, MissionCheck, OrderList]
+needs: [k8s-k8-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "Creating diagrams (Mermaid)", url: "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams" }
+  - { label: "Pinning items to your profile", url: "https://docs.github.com/en/account-and-profile/how-tos/profile-customization/pinning-items-to-your-profile" }
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+---
+
+<Card id="hook" type="hook">
+Final quest. The food court is hiring, and Kedai Kancil is your proof. But right now, nobody can see it. Tap each mission you finished.
+
+<Interactive name="TimelineTap" events={[{ when: 'M1', title: 'Pack it', text: 'docker compose up starts the whole shop.' }, { when: 'M2', title: 'Ship it', text: 'A green pipeline pushes images to GHCR.' }, { when: 'M3', title: 'Release it', text: 'The pipeline rolled back a bad release.' }, { when: 'M4', title: 'Run it', text: 'The shop survived a pod kill and a load spike.' }, { when: 'M5', title: 'Guard it', text: 'A policy check rejected a root image.' }, { when: 'M6', title: 'Hands off', text: 'One line in Git reached the cluster. No kubectl.' }]} />
+</Card>
+
+<Card id="try-readme" type="try">
+Stage 1: draft the README. Add a demo link and your mission proof.
+
+<Interactive name="MarkdownPlayground" initial={'# Kedai Kancil\n\nA tiny shop app, shipped by a pipeline to Kubernetes.\n\n## How it fits together\n\n```mermaid\nflowchart LR\n  browser --> gateway --> web\n  gateway --> api --> db\n```\n'} prompt="Add a ## Demo section with a link. Then add a ## Missions section with ticked tasks." goal={{ mustMatch: ['^##\\s+Demo', '\\]\\(https?://', '^##\\s+(Missions|Misi)', '^- \\[x\\] '], hint: ['Start a line with ## Demo', 'Add a link, like [Watch the demo](https://example.com/demo)', 'Start a line with ## Missions', 'Add a ticked task, like - [x] M1 Pack it'] }} success="That README tells the whole story!" />
+
+<Hint>A ticked task starts with a dash, a space, then [x].</Hint>
+</Card>
+
+<Card id="predict-evidence" type="predict">
+Stage 2: proof. What is the best evidence for Mission 2?
+
+<Interactive name="Choice" options={[{ label: 'A link to the green pipeline run on main', correct: true, why: 'Anyone can click it and see. That is real proof.' }, { label: '"Trust me, it works."', why: 'Claims are easy. A link is proof.' }, { label: "A screenshot of someone else's pipeline", why: 'Never show other people’s work as yours. Link your own run.' }]} />
+</Card>
+
+<Card id="check-video" type="check">
+Stage 3: the demo video. Judge each idea.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Change one line in Git, then show the cluster follow', good: true, why: 'That is the whole course in one moment.' }, { text: 'Ten silent minutes of typing', good: false, why: 'Keep it near 2 minutes. Talk through each step.' }, { text: 'A real token visible in the terminal', good: false, why: 'Hide every secret before you record.' }, { text: 'Delete a pod and watch it come back', good: true, why: 'Self-healing, live. Viewers remember that.' }, { text: 'End with what you would improve next', good: true, why: 'It shows you keep learning.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Stage 4: publish for real. Tick each step as you go. It may take a few evenings, and that is fine.
+
+<Interactive name="Mission" id="k8s-k8-boss-publish" steps={[{ id: 'secrets', text: 'Check the repo has no tokens or passwords. If one slipped in, change it first.' }, { id: 'readme', text: 'Write the README: one clear line, the diagram, and how to run it.' }, { id: 'video', text: 'Record the 2-minute demo. Upload it and link it in the README.' }, { id: 'm1', text: 'Mission 1 proof: compose.yaml and the one-line start command.' }, { id: 'm2', text: 'Mission 2 proof: a link to a green pipeline run on main.' }, { id: 'm3', text: 'Mission 3 proof: a link to the run that rolled back a bad release.' }, { id: 'm4', text: 'Mission 4 proof: your notes on the pod kill and the load spike.' }, { id: 'm5', text: 'Mission 5 proof: the log where a policy rejected a root image.' }, { id: 'm6', text: 'Mission 6 proof: a link to the one-line commit Argo CD synced.' }, { id: 'add', text: 'Put the README in the box.', command: 'git add README.md' }, { id: 'commit', text: 'Commit it with a clear message.', command: 'git commit -m "docs: add README with diagram and demo"' }, { id: 'push', text: 'Send it to GitHub.', command: 'git push' }, { id: 'public', text: 'Make sure the repo is public.' }, { id: 'pin', text: 'Pin Kedai Kancil on your GitHub profile.' }]} success="Kedai Kancil is out in the world!" />
+
+<Hint>Missions 4 to 6 ran on your own cluster. Your notes and logs are the proof.</Hint>
+</Card>
+
+<Card id="check-real" type="check">
+Ask GitHub to confirm it. Type your username and your repo name.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Kedai Kancil is public' }, { type: 'file', repo: 'kedai-kancil', path: 'README.md', label: 'It has a README' }, { type: 'workflowRuns', repo: 'kedai-kancil', min: 1, label: 'Its pipeline has run at least once' }]} success="GitHub can see it all. You shipped it!" />
+</Card>
+
+<Card id="check-launch" type="check">
+Last stage: tell people. Put your launch steps in order.
+
+<Interactive name="OrderList" items={['Check for secrets one last time', 'Make the repo public', 'Pin it on your profile', 'Add the link to your CV', 'Share a short post about what you learned']} label="First step at the top" success="Launched! Now people can find your work." />
+</Card>
+
+<Card id="win" type="win">
+You can now show your Ship It journey in one public repo.
+</Card>
+
+<Card id="deeper" type="deeper">
+No job offer yet? That is normal. Hiring takes time for almost everyone. Keep the repo alive with small updates. Ask a friend to follow your README from scratch. Help one open-source project. Every world stays open. Sharpen any skill you like.
+</Card>

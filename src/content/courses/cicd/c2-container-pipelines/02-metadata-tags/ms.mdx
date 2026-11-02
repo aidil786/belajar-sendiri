@@ -1,0 +1,67 @@
+---
+id: cicd-c2-l02
+world: 2
+title: Tag pintar dengan metadata-action
+summary: "Anda akan belajar: melabel setiap image dengan branch, versi dan commit."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, SwipeJudge, Mission]
+needs: [cicd-c2-l01]
+scenario: c2-tags
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker/metadata-action", url: "https://github.com/docker/metadata-action" }
+  - { label: "Docker docs: tags and labels with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/manage-tags-labels/" }
+---
+
+<Card id="hook" type="hook">
+Peti sejuk kedai ada 40 pek, semuanya berlabel `latest`. Satu pek buat pelanggan sakit. Pek yang mana satu?
+
+<Interactive name="Choice" options={[{ label: 'Tiada cara untuk tahu', correct: true, why: 'Semua label sama. Anda perlukan versi atau kod kelompok.' }, { label: 'Yang paling baru', why: 'latest beralih ke setiap pek baru. Pek rosak itu mungkin lebih lama.' }, { label: 'Yang paling besar', why: 'Saiz tak beritahu bila atau bagaimana pek itu dibuat.' }]} />
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- id: meta' }, { text: '  uses: docker/metadata-action@v6' }, { text: '  with:' }, { text: '    images: ghcr.io/you/kedai-kancil' }, { text: '    tags: |' }, { text: '      type=ref,event=branch' }, { text: '      type=ref,event=pr' }, { text: '      type=semver,pattern={{version}}' }, { text: '      type=sha', target: true }]} prompt="Ketik peraturan yang tulis kod kelompok: commit." success="Ya! type=sha tambah sha- dan id commit yang pendek." />
+
+**<Term id="image-tag">Tag</Term>** (label) ialah label pada pek. `docker/metadata-action` tulis untuk anda. Setiap peraturan tambah satu label bila ia sesuai dengan event.
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-tags" label="Langkah metadata cetak tag untuk event yang anda pilih: push ke main, pull request, atau tag versi." />
+
+Pilih satu event dan tekan Run. Kemudian ketik stesen untuk baca log. Log itu senaraikan tag. Cuba ketiga-tiga event.
+</Card>
+
+<Card id="try-sort" type="try">
+Event mana buat tag mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'main', label: 'Push ke main' }, { id: 'pr', label: 'Pull request #7' }, { id: 'tag', label: 'Tag v1.2.0' }]} items={[{ label: '`main`', bucket: 'main', why: 'type=ref,event=branch guna nama branch.' }, { label: '`pr-7`', bucket: 'pr', why: 'type=ref,event=pr tulis pr- dan nombor PR.' }, { label: '`1.2.0`', bucket: 'tag', why: 'type=semver baca versi dari tag Git, tanpa v.' }, { label: '`latest`', bucket: 'tag', why: 'Secara lalai, tag versi juga alihkan latest ke pek ini.' }]} success="Siap! Setiap push juga dapat sha-3f9c2a7." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda push tag `v1.3.0-rc.1`, satu release ujian. Tag apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: '`1.3.0-rc.1` dan `sha-3f9c2a7`', correct: true, why: 'Pre-release kekalkan -rc.1 dan tak pernah ambil latest.' }, { label: '`1.3.0-rc.1`, `sha-3f9c2a7` dan `latest`', why: 'latest langkau pre-release. Tiada siapa dapat pek ujian secara mengejut.' }, { label: '`latest` sahaja', why: 'Setiap peraturan masih tambah labelnya sendiri.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Leret ke kanan kalau tag itu bagus untuk production. Leret ke kiri kalau perlu dibaiki.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'kedai-kancil:1.2.0', good: true, why: 'Satu versi. Anda sentiasa tahu apa yang berjalan.' }, { text: 'kedai-kancil:latest', good: false, why: 'Ia beralih pada setiap release. Anda tak tahu apa yang anda dapat.' }, { text: 'kedai-kancil:sha-3f9c2a7', good: true, why: 'Commit yang tepat. Sesuai untuk jejak masalah.' }, { text: 'kedai-kancil:main', good: false, why: 'Ia beralih pada setiap merge. Okey untuk ujian, bukan production.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri setiap image tag yang jelas dan boleh dijejak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tambah `type=semver,pattern={{major}}.{{minor}}` untuk dapat `1.2` juga. Letak `flavor: latest=false` untuk hentikan `latest`. metadata-action juga tulis label: hantar `labels: ${{ steps.meta.outputs.labels }}` kepada build.
+
+Latihan sebenar (pilihan), dalam repo latihan awam:
+
+<Interactive name="Mission" id="c2-l02-rep" steps={[{ id: 'meta', text: 'Tambah langkah metadata dari pelajaran ini ke workflow image anda.' }, { id: 'tag', text: 'Buat tag versi.', command: 'git tag v0.1.0' }, { id: 'push', text: 'Push tag itu.', command: 'git push origin v0.1.0' }, { id: 'log', text: 'Buka run itu dan baca tag dalam langkah metadata.' }]} success="Image anda kini ada label sebenar!" />
+</Card>

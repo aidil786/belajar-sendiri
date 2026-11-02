@@ -1,0 +1,71 @@
+---
+id: docker-d3-l01
+world: 3
+title: Ke mana data saya?
+summary: "Anda akan belajar: kenapa fail yang disimpan dalam container boleh hilang."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, TimelineTap, KitchenSim, LockerTest, SortCards, Choice, Transcript, Mission]
+needs: [docker-d2-l13]
+scenario: d3-kedai
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Storage", url: "https://docs.docker.com/engine/storage/" }
+  - { label: "Docker docs: docker container diff", url: "https://docs.docker.com/reference/cli/docker/container/diff/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-kedai" commands={['docker exec kedai cat /orders.txt', 'docker rm -f kedai', 'docker run -d --name kedai nginx:1.30-alpine', 'docker exec kedai ls /orders.txt']} fails={['docker exec kedai ls /orders.txt']} label="orders.txt tulis nasi lemak. Aina buang container kedai dan mulakan yang baru. Kini ls kata No such file or directory." />
+
+Aina simpan pesanan hari ini dalam container. Lepas itu dia tukar dengan container baru. Pesanan itu lesap. Ke mana perginya?
+</Card>
+
+<Card id="see-layer" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'docker run', title: 'Bekas baru', text: 'Docker letak satu lapisan nipis yang kosong di atas image. Aplikasi menulis di situ.' }, { when: 'docker exec … echo', title: 'Anda simpan orders.txt', text: 'Fail itu masuk ke lapisan atas. Image tak berubah langsung.' }, { when: 'docker restart', title: 'Bekas yang sama', text: 'Henti dan mula semula guna container yang sama. Fail kekal.' }, { when: 'docker rm', title: 'Bekas dibuang', text: 'Lapisan atas ikut hilang. Container baru bermula bersih.' }]} />
+
+Setiap container ada lapisan atas yang nipis. Inilah **<Term id="writable-layer">writable layer</Term>** (lapisan tulis). Tekan setiap langkah untuk ikut orders.txt.
+</Card>
+
+<Card id="try-restart" type="try">
+Restart kedai. Kemudian semak orders.txt masih ada.
+
+<Interactive name="KitchenSim" scenario="d3-kedai" goal={{ running: ['kedai'], typed: '^docker (container )?restart', lastTyped: 'orders\\.txt', lastExit: 0 }} hints={['Taip docker restart kedai', 'Kemudian taip docker exec kedai cat /orders.txt']} success="Masih ada! Restart kekalkan bekas yang sama dan lapisannya." />
+
+<Hint>`docker restart kedai`, kemudian `docker exec kedai cat /orders.txt`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Teka dulu, kemudian jalankan. Adakah fail itu kekal?
+
+<Interactive name="LockerTest" mounts={[{ kind: 'writable', target: '/app', file: 'orders.txt' }]} ask={['restart', 'recreate']} image="nginx:1.30-alpine" />
+</Card>
+
+<Card id="check-gone" type="check">
+Selepas `docker rm`, apa yang hilang dan apa yang kekal?
+
+<Interactive name="SortCards" buckets={[{ id: 'gone', label: 'Hilang bersama bekas' }, { id: 'stays', label: 'Masih ada' }]} items={[{ label: 'orders.txt yang anda tulis di dalam', bucket: 'gone', why: 'Ia tinggal dalam writable layer.' }, { label: 'Image nginx:1.30-alpine', bucket: 'stays', why: 'Container tak pernah ubah image-nya.' }, { label: 'Log container itu', bucket: 'gone', why: 'Log milik container. docker rm padam log juga.' }, { label: 'Fail yang datang bersama image', bucket: 'stays', why: 'Container baru dapat semula daripada image.' }]} success="Siap! Hanya lapisan milik bekas itu yang hilang." />
+</Card>
+
+<Card id="check-plan" type="check">
+Aplikasi kedai anda simpan gambar yang dimuat naik dalam /app/uploads. Macam mana nak jaga gambar itu?
+
+<Interactive name="Choice" options={[{ label: 'Simpan dalam loker di luar bekas', correct: true, why: 'Ya! Loker itu ialah volume. Itu pelajaran seterusnya.' }, { label: 'Jangan sesekali buang container', why: 'Kemas kini perlukan container baru. Data mesti tinggal di luar.' }, { label: 'Simpan dalam image', why: 'Image ialah pek beku, bukan stor. Setiap binaan akan makin besar.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa fail dalam container boleh hilang.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker diff` senaraikan apa yang berubah dalam writable layer. `A` maksudnya ditambah, `C` diubah, `D` dipadam.
+
+<Interactive name="Transcript" title="bash" label="docker diff pada container alpine baru tunjuk satu fail ditambah: A /orders.txt." lines={[{ cmd: 'docker run -d --name box alpine:3.22 sleep 600' }, { cmd: 'docker exec box sh -c "echo nasi lemak > /orders.txt"' }, { cmd: 'docker diff box' }, { out: 'A /orders.txt', color: 'green' }]} />
+
+Latihan sebenar (pilihan), dengan Docker anda sendiri atau di Codespaces:
+
+<Interactive name="Mission" id="d3-l01-rep" steps={[{ id: 'run', text: 'Mulakan satu bekas latihan.', command: 'docker run -d --name box alpine:3.22 sleep 600' }, { id: 'write', text: 'Tulis satu fail di dalamnya.', command: 'docker exec box sh -c "echo hi > /note.txt"' }, { id: 'rm', text: 'Buang bekas itu. Hati-hati: bekas latihan sahaja!', command: 'docker rm -f box' }, { id: 'look', text: 'Cari dalam bekas baru. Nota itu dah hilang.', command: 'docker run --rm alpine:3.22 cat /note.txt' }]} success="Anda nampak sendiri writable layer hilang." />
+</Card>

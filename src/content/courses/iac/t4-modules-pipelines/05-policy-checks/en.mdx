@@ -1,0 +1,66 @@
+---
+id: iac-t4-l05
+world: 4
+title: Policy checks
+summary: "You will learn: how a written rule checks every plan, and stops the risky ones before review."
+minutes: 4
+xp: 20
+interactives: [SwipeJudge, SpotLines, OrderList, Choice, Transcript, SortCards, Mission]
+needs: [iac-t4-l04]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Conftest", url: "https://www.conftest.dev/" }
+  - { label: "Open Policy Agent docs", url: "https://www.openpolicyagent.org/docs" }
+  - { label: "tofu show -json", url: "https://opentofu.org/docs/cli/commands/show/" }
+  - { label: "OpenTofu: JSON output format", url: "https://opentofu.org/docs/internals/json-format/" }
+---
+
+<Card id="hook" type="hook">
+A robot reads every plan before a human does. Swipe: let it through (good), or stop it (needs work)?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The plan adds one kiosk', good: true, why: 'Nothing risky. Let the humans review it.' }, { text: 'The plan destroys the orders database', good: false, why: 'Stop it. A human must look twice.' }, { text: 'The plan changes the wording on a sign', good: true, why: 'Small and safe.' }, { text: 'The plan makes a storage bucket public', good: false, why: 'Private data could leak. Stop it.' }]} />
+</Card>
+
+<Card id="see-rule" type="see">
+<Interactive name="SpotLines" prompt="Tap the line that looks for things being destroyed." lines={[{ text: 'package main' }, { text: '' }, { text: 'deny contains msg if {' }, { text: '  some rc in input.resource_changes' }, { text: '  "delete" in rc.change.actions', target: true }, { text: '  msg := sprintf("%s would be destroyed", [rc.address])' }, { text: '}' }]} success="Any change whose actions include delete gets a deny message." />
+
+A **<Term id="policy-check">policy check</Term>** is a written rule a robot checks on every plan. This one is Rego, the rule language of Open Policy Agent.
+</Card>
+
+<Card id="try-order" type="try">
+Put the policy steps in order.
+
+<Interactive name="OrderList" items={['tofu plan -out tfplan', 'tofu show -json tfplan > plan.json', 'conftest test plan.json', 'A red check stops the merge until someone looks']} label="First at the top" success="Save the plan, turn it into JSON, test it." />
+</Card>
+
+<Card id="predict" type="predict">
+The plan replaces the stall (`-/+`). It does not plainly destroy it. Does the rule catch it?
+
+<Interactive name="Choice" options={[{ label: 'Yes: a replace is a delete plus a create', correct: true, why: 'In the JSON its actions are ["delete", "create"].' }, { label: 'No: replace is its own action', why: 'In the plan JSON, a replace lists both delete and create.' }, { label: 'Only if it says -auto-approve', why: 'The rule only reads the plan. Flags do not matter.' }]} />
+</Card>
+
+<Card id="see-real" type="see">
+<Interactive name="Transcript" title="bash" label="A real Conftest run on a real plan: two FAIL lines, for random_pet.stall (replaced) and terraform_data.fridge (destroyed), then 2 tests, 0 passed, 2 failures." lines={[{ cmd: 'conftest test plan.json' }, { out: 'FAIL - plan.json - main - random_pet.stall would be destroyed\nFAIL - plan.json - main - terraform_data.fridge would be destroyed', color: 'red' }, { out: '2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions', color: 'red' }]} />
+
+A real run, Conftest 0.71. The stall was replaced, the fridge removed. Both are caught, so the check turns red.
+</Card>
+
+<Card id="check" type="check">
+What should a robot rule check, and what needs a human?
+
+<Interactive name="SortCards" buckets={[{ id: 'robot', label: 'A rule can check it' }, { id: 'human', label: 'A human must judge' }]} items={[{ label: 'No plan destroys the database', bucket: 'robot', why: 'The plan JSON says it plainly.' }, { label: 'Every bucket has encryption turned on', bucket: 'robot', why: 'One setting, easy to test.' }, { label: 'Is this a good week to change prices?', bucket: 'human', why: 'That needs people who know the shop.' }, { label: 'Every resource has an owner tag', bucket: 'robot', why: 'A simple yes or no for each one.' }, { label: 'Does this design make sense?', bucket: 'human', why: 'Rules check facts. People judge ideas.' }]} success="Robots check the facts. Humans judge the ideas." />
+</Card>
+
+<Card id="win" type="win">
+You can now read a policy rule and put it in the pipeline.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other tools: Checkov and Trivy scan `.tf` files for risky settings. HCP Terraform can run Sentinel or OPA policies. Inside OpenTofu, variable `validation` and `check` blocks are rules too. Tip: start new rules as warnings, then make them errors.
+
+<Interactive name="Mission" id="iac-t4-l05-rep" steps={[{ id: 'plan', text: 'In a practice folder, change something so the plan destroys one thing. Save the plan.', command: 'tofu plan -out tfplan' }, { id: 'json', text: 'Turn it into JSON.', command: 'tofu show -json tfplan > plan.json' }, { id: 'rule', text: 'Save the rule from this lesson as policy/plan.rego.' }, { id: 'test', text: 'Test it with Conftest in Docker.', command: 'docker run --rm -v "$PWD:/project" -w /project openpolicyagent/conftest:v0.71.1 test plan.json' }]} success="Your first policy check, on a real plan." />
+</Card>

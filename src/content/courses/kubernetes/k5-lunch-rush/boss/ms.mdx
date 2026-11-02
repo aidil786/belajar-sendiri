@@ -1,0 +1,80 @@
+---
+id: k8s-k5-boss
+world: 5
+title: Waktu puncak
+summary: "Anda akan belajar: bertahan lonjakan trafik dengan HPA, kemudian panjat tangga nyahpepijat untuk cari punca kedai lambat."
+minutes: 6
+xp: 50
+interactives: [Choice, FoodCourtSim, OrderList, SwipeJudge]
+needs: [k8s-k5-l12]
+scenario: k5-boss-rush
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Kubernetes: HPA walkthrough", url: "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" }
+  - { label: "Kubernetes: debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl top", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/" }
+---
+
+<Card id="hook" type="hook">
+11:55. Medan selera dibuka lima minit lagi. Kedai anda ada 3 pod (dulang) dan metrics-server. Misi bos: bertahan waktu makan, kemudian cari apa yang melambatkannya. Apa yang anda sediakan dulu?
+
+<Interactive name="Choice" options={[{ label: 'HPA: 3 hingga 10 pod, sasar CPU 50%', correct: true, why: 'Ia tambah pod bila barisan panjang, dan kurangkan kemudian.' }, { label: 'PodDisruptionBudget', why: 'Berguna untuk kerja terancang. Ia tak tambah pod waktu makan.' }, { label: 'Taint pada setiap gerai', why: 'Kunci halang pod masuk. Anda perlu lebih banyak pod masuk.' }]} />
+</Card>
+
+<Card id="try-rush" type="try">
+Bilik 1: cipta HPA. Kemudian tekan Waktu makan tengah hari. Bertahan dengan sekurang-kurangnya 6 pod sedia.
+
+<Interactive name="FoodCourtSim" scenario="k5-boss-rush" faults={['traffic']} goal={{ hpaReplicas: { name: 'shop', min: 6 }, podsReady: { selector: 'app=shop', count: 6 } }} hints={['Taip kubectl autoscale deployment shop --cpu=50% --min=3 --max=10', 'Tekan Waktu makan tengah hari, kemudian biar jam berjalan (+30s membantu).', 'kubectl get hpa shop tunjuk betapa sibuk pod.']} success="Bilik 1 selesai! HPA sambut waktu puncak dengan lebih banyak pod." />
+
+<Hint>Satu arahan cipta HPA. Butang Waktu makan tengah hari bawa pelanggan.</Hint>
+</Card>
+
+<Card id="predict-wait" type="predict">
+Hari berikutnya, HPA minta 10 pod. Hanya 6 bermula. 4 kekal Pending. Apa yang mungkin menahannya?
+
+<Interactive name="Choice" options={[{ label: 'Tiada gerai ada ruang untuk requests mereka', correct: true, why: 'Pending maksudnya scheduler tak jumpa gerai yang muat.' }, { label: 'HPA rosak', why: 'Ia minta 10. Bahagiannya berjaya. Meletak pod ialah kerja scheduler.' }, { label: 'Pod terlalu sibuk untuk bermula', why: 'Pod Pending belum bermula langsung. Ia tunggu gerai.' }]} />
+</Card>
+
+<Card id="try-ladder" type="try">
+Bilik 2: sebelum memanjat, semak tangga anda. Anak tangga paling bawah di atas.
+
+<Interactive name="OrderList" items={['get', 'describe', 'logs', 'events', 'exec', 'debug']} label="Anak tangga paling bawah di atas" success="Tangga sedia. Jom naik." />
+</Card>
+
+<Card id="try-slow" type="try">
+Bilik 3: waktu puncak sedang berlaku, dan 4 pod menunggu. Panjat tangga. Cari siapa yang pegang gerai, kemudian bebaskannya. Matlamat: 10 pod kedai sedia.
+
+<Interactive name="FoodCourtSim" scenario="k5-boss-slow" goal={{ podsReady: { selector: 'app=shop', count: 10 } }} hints={['Anak tangga 1: kubectl get pods. Sesetengah pod kedai Pending.', 'Papan notis: kubectl get events --field-selector reason=FailedScheduling kata Insufficient memory.', 'Siapa pegang memori? Cuba kubectl top pods, kemudian kubectl logs deploy/loadtest.', 'Ujian beban yang terlupa! kubectl scale deployment loadtest --replicas=0']} success="10 daripada 10 sedia! Anda jumpa ujian beban yang terlupa dan bebaskan gerai." />
+
+<Hint>Pending? Baca event. Kemudian guna `kubectl top pods` untuk cari pod yang lapar.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+`kubectl top` tunjuk loadtest guna kira-kira 5.7Gi setiap satu. Tapi YAMLnya minta 7Gi setiap satu. Nombor mana yang sekat pod kedai?
+
+<Interactive name="Choice" options={[{ label: 'Requests 7Gi', correct: true, why: 'Scheduler tempah ruang gerai ikut requests, bukan guna sebenar.' }, { label: 'Guna sebenar 5.7Gi', why: 'Hampir! Guna sebenar penting untuk had memori. Meletak pod guna requests.' }, { label: 'Kedua-duanya tidak. HPA yang sekat.', why: 'HPA minta 10. Gerai sudah ditempah penuh.' }]} />
+</Card>
+
+<Card id="check-next" type="check">
+Rancang waktu makan esok. Idea baik, atau perlu diperbaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jalankan ujian beban dalam zon sendiri, dengan ResourceQuota', good: true, why: 'Bajet halang ujian daripada makan seluruh medan selera.' }, { text: 'Beri setiap pod request 7Gi, untuk berjaga-jaga', good: false, why: 'Request besar penuhkan gerai dengan pinggan kosong.' }, { text: 'Tambah PodDisruptionBudget untuk kedai', good: true, why: 'Kerja terancang tak akan turunkannya bawah bajet.' }, { text: 'Padam HPA selepas waktu makan', good: false, why: 'Simpan. Ia kecilkan kedai sendiri selepas waktu puncak.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bertahan waktu puncak dan cari apa yang melambatkannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan), pada kluster kind untuk dibuang yang ada metrics-server. Mulakan Service bernama shop, kemudian buat pod beban. Padamnya bila siap.
+
+```bash
+kubectl run load --image=busybox:1.37 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://shop; done"
+kubectl get hpa shop --watch
+kubectl delete pod load
+```
+</Card>

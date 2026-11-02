@@ -1,0 +1,67 @@
+---
+id: k8s-k1-l10
+world: 1
+title: "Zones: namespaces"
+summary: "You will learn: how namespaces split one cluster into zones."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, FoodCourtSim, SortCards]
+needs: [k8s-k1-l09]
+scenario: k1-zones
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Namespaces", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" }
+  - { label: "kubectl create namespace", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_namespace/" }
+---
+
+<Card id="hook" type="hook">
+Two teams both want a pod called web, in one cluster. Will the names clash?
+
+<Interactive name="Choice" options={[{ label: 'Not if each team has its own zone', correct: true, why: 'Right. A name only needs to be unique inside one zone.' }, { label: 'Yes, always: rename one', why: 'Renaming works, but zones are the cleaner way.' }, { label: 'Kubernetes renames the second one', why: 'It does not. Same zone and same name means the same pod.' }]} />
+</Card>
+
+<Card id="see-zones" type="see">
+<Interactive name="KubeReplay" scenario="k1-zones" commands={['kubectl get namespaces', 'kubectl get pods', 'kubectl get pods -n food']} label="The namespaces include default and food. Each one has a pod called web." />
+
+A **<Term id="namespace">namespace</Term>** is one zone of the food court. Here, default and food each have a pod called web. No clash.
+</Card>
+
+<Card id="try-create" type="try">
+Open a new zone for the drinks team. Type `kubectl create namespace drinks`.
+
+<Interactive name="FoodCourtSim" scenario="k1-zones" goal={{ objectExists: ['namespace/drinks'] }} hints={['Type kubectl create namespace drinks and press Enter.']} success="The drinks zone is open. It is empty for now." />
+</Card>
+
+<Card id="predict" type="predict">
+You type `kubectl get pods`. Which zone’s pods do you see?
+
+<Interactive name="Choice" options={[{ label: 'Only default: the zone in your context', correct: true, why: 'Yes. kubectl uses the namespace in your context. Here that is default.' }, { label: 'Every zone', why: 'That needs -A, short for all namespaces.' }, { label: 'Only drinks, the newest', why: 'New zones don’t change where you stand.' }]} />
+</Card>
+
+<Card id="try-n" type="try">
+Look inside the food zone: `kubectl get pods -n food`. Then try `-A` to see every zone at once.
+
+<Interactive name="FoodCourtSim" scenario="k1-zones" namespace="all" goal={{ typed: '(-n|--namespace)[ =]?food\\b' }} hints={['Type kubectl get pods -n food and press Enter.']} success="-n picks one zone. -A shows them all." />
+
+<Hint>`-n` means namespace. `-A` means all of them.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Does it live inside a zone, or across the whole food court?
+
+<Interactive name="SortCards" buckets={[{ id: 'zone', label: 'Inside one zone' }, { id: 'court', label: 'Whole food court' }]} items={[{ label: 'Pod', bucket: 'zone', why: 'Every tray sits in one zone.' }, { label: 'Deployment', bucket: 'zone', why: 'An order belongs to one zone.' }, { label: 'Service', bucket: 'zone', why: 'An order number belongs to one zone.' }, { label: 'Node', bucket: 'court', why: 'A stall serves every zone.' }, { label: 'Namespace', bucket: 'court', why: 'A zone can’t sit inside another zone.' }]} success="Trays and orders live in zones. Stalls and zones belong to the whole court." />
+</Card>
+
+<Card id="win" type="win">
+You can now split a cluster into zones and look inside each one.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl config set-context --current --namespace=food` makes food your default zone. The pink bar shows it. Careful: `kubectl delete namespace food` deletes everything inside it. Zones keep names apart, not traffic. NetworkPolicies, in World K3, do that.
+
+Real rep (optional): on your kind cluster, `kubectl get namespaces` shows the zones kind made for you.
+</Card>

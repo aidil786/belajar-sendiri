@@ -1,0 +1,64 @@
+---
+id: iac-t4-l06
+world: 4
+title: Cost checks
+summary: "You will learn: how a cost check turns a plan into a price change on the pull request."
+minutes: 3
+xp: 15
+interactives: [Choice, PlanReader, SortCards, OrderList, SwipeJudge]
+needs: [iac-t4-l05]
+scenario: t4-grow
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Infracost docs", url: "https://www.infracost.io/docs/" }
+  - { label: "Infracost: GitHub Actions", url: "https://www.infracost.io/docs/integrations/github_actions/" }
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+---
+
+<Card id="hook" type="hook">
+A one-line change: `count = 1` becomes `count = 20`. The plan says `19 to add`. It looks tiny in the diff. Who notices the bill?
+
+<Interactive name="Choice" options={[{ label: 'Nobody, unless a check shows the price', correct: true, why: 'Plans show things, not money. A cost check adds the money.' }, { label: 'OpenTofu warns about big bills', why: 'OpenTofu has no idea what things cost.' }, { label: 'The cloud refuses to build it', why: 'The cloud builds what you ask, and sends the bill later.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Read this plan. Each `+` is something new to pay for.
+
+<Interactive name="PlanReader" scenario="t4-grow" commands={['cp .next/main.tf main.tf']} prompt="Tap what OpenTofu will do to each one." success="Two new stalls, a bigger oven, one fridge gone." />
+</Card>
+
+<Card id="see-cost" type="see">
+A **<Term id="cost-check">cost check</Term>** prices each change in the plan. It posts the monthly difference on the pull request. Sort these changes.
+
+<Interactive name="SortCards" buckets={[{ id: 'up', label: 'Bill goes up' }, { id: 'down', label: 'Bill goes down or stays' }]} items={[{ label: 'Two new stalls (+)', bucket: 'up', why: 'More things running, more to pay.' }, { label: 'The oven goes from small to large (~)', bucket: 'up', why: 'Bigger sizes cost more.' }, { label: 'The old fridge is removed (-)', bucket: 'down', why: 'One less thing to pay for.' }, { label: 'A rename with a moved block', bucket: 'down', why: 'Nothing real changes, so the price stays.' }]} success="That is what a cost check does, line by line." />
+</Card>
+
+<Card id="predict" type="predict">
+The cost check says: about RM400 more per month. The team rule: over RM100 needs the boss's OK. What should happen?
+
+<Interactive name="Choice" options={[{ label: 'The check asks for one more approval: the boss', correct: true, why: 'Big costs get a second look. Small ones flow through.' }, { label: 'Merge it, the estimate is only a guess', why: 'An estimate is still a warning. Let someone decide.' }, { label: 'Block every change that costs money', why: 'Then nothing could ever grow. Use a limit instead.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the pull request checks in order.
+
+<Interactive name="OrderList" items={['tofu fmt -check and validate', 'tofu plan', 'Policy and cost checks read the plan', 'A human reviews it all', 'Merge, then apply']} label="First at the top" success="Robots first, humans last, building at the very end." />
+</Card>
+
+<Card id="check" type="check">
+Swipe: good money habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tag every resource with an owner, so the bill can be split', good: true, why: 'Then each team sees its own costs.' }, { text: 'Treat the estimate as the final bill', good: false, why: 'Traffic and usage change the real bill. It is a guide.' }, { text: 'Also set a budget alarm in the cloud account', good: true, why: 'The alarm catches costs no plan can see.' }, { text: 'Turn the cost check off because it was red once', good: false, why: 'Red means "look". Fix the limit or the change instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now see the price of a plan before anyone merges it.
+</Card>
+
+<Card id="deeper" type="deeper">
+Infracost is a well-known cost tool. It works as a GitHub App, or as a step in CI. It reads the code, looks up public price lists, and comments the monthly change. Usage-based costs, like traffic, need your own guesses. The AWS course (A1) sets up budget alarms.
+</Card>

@@ -1,0 +1,69 @@
+---
+id: git-w10-boss
+world: 10
+title: "Detektif: cari commit pepijat"
+summary: "Anda akan belajar: cara jejak commit yang rosakkan satu laman, dengan bisect, ujian dan blame."
+minutes: 6
+xp: 50
+interactives: [TermReplay, Choice, BisectDetective, Sim]
+needs: [git-w10-l14]
+scenario: w10-boss
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git bisect", url: "https://git-scm.com/docs/git-bisect" }
+  - { label: "git blame", url: "https://git-scm.com/docs/git-blame" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w10-boss" commands={['git log --oneline']} label="git log --oneline senaraikan empat belas commit, dari Add order page hingga Update footer year." />
+
+Kecemasan di Kedai Kancil! Butang Buy jadi kelabu. Tiada siapa boleh pesan kuih. Empat belas suspek. Cari commit (titik simpan) yang bersalah, detektif!
+</Card>
+
+<Card id="read-clue" type="try">
+Petunjuk anda ialah `test.sh`. Ia jalankan `! grep -q "disabled" order.html`. Bila ujian itu lulus?
+
+<Interactive name="Choice" options={[{ label: 'Bila order.html tak sebut disabled', correct: true, why: 'grep jumpa disabled, kemudian ! terbalikkan jadi gagal. Tiada disabled bermaksud lulus.' }, { label: 'Bila order.html sebut disabled', why: 'Tanda ! terbalikkan jawapan. Jumpa disabled buat ujian gagal.' }, { label: 'Sentiasa', why: 'Ia semak order.html setiap kali dijalankan.' }]} />
+</Card>
+
+<Card id="round-1" type="try">
+Pusingan 1: soal siasat suspek. Jalankan ujian, kemudian tandakan setiap commit good atau bad.
+
+<Interactive name="BisectDetective" scenario="w10-boss" test={{ file: 'order.html', bad: 'disabled', label: 'Ujian: butang Buy dalam order.html tak boleh disabled.' }} success="Pesalah ditangkap! Bisect cuma perlukan beberapa ujian." />
+
+<Hint>Hati-hati: nama yang bunyi bersalah mungkin tak bersalah. Percaya pada ujian.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+"Fix button colour" bunyi macam bersalah. Betul ke?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Ujian lulus di situ', correct: true, why: 'Ia cuma tambah style.css. Bisect percaya ujian, bukan nama.' }, { label: 'Ya, namanya sebut button', why: 'Nama boleh menipu. Pada commit itu, ujian lulus.' }, { label: 'Bisect tak pernah uji commit itu', why: 'Ada, sebagai ujian terakhir. Dan ia lulus.' }]} />
+</Card>
+
+<Card id="round-2" type="try">
+Pusingan 2: terminal sebenar. Mulakan bisect, biar `test.sh` menilai setiap langkah, kemudian balik ke `main`.
+
+<Interactive name="Sim" scenario="w10-boss" panels={['graph']} goal={{ bisectFound: '^Clean up the form$', bisectActive: false }} hints={['Taip git bisect start HEAD HEAD~13', 'Biar skrip menilai: git bisect run sh test.sh', 'Akhir sekali, taip git bisect reset']} success="Kes selesai! Clean up the form yang matikan butang Buy. Anda kembali di main." />
+
+<Hint>`git bisect start HEAD HEAD~13`, kemudian `git bisect run sh test.sh`, kemudian `git bisect reset`.</Hint>
+</Card>
+
+<Card id="evidence" type="check">
+<Interactive name="TermReplay" scenario="w10-boss" commands={['git blame -L 6,6 order.html']} label="git blame -L 6,6 order.html tunjuk baris butang, kali terakhir diubah oleh commit 7bb484d1, Clean up the form." />
+
+Semak semula bukti. `git blame -L 6,6` namakan perubahan terakhir pada baris butang. Suspek yang sama!
+</Card>
+
+<Card id="next-move" type="check">
+Pesalah itu dah dikongsi dengan pasukan. Apa langkah anda seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Tengok perubahannya, kemudian baiki baris itu dalam commit baru', correct: true, why: 'Sejarah kekal jujur, dan lima commit selepasnya kekal selamat.' }, { label: 'git reset --hard ke sebelum commit itu', why: 'Itu buang lima commit yang elok dan tulis semula sejarah yang dikongsi.' }, { label: 'Marah pengarangnya dalam sembang pasukan', why: 'Bersikap baik. Kongsi apa yang bisect jumpa dan baiki bersama.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jejak commit yang merosakkan sesuatu, macam detektif sebenar.
+</Card>

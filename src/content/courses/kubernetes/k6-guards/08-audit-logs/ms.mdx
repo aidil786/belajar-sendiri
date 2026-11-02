@@ -1,0 +1,65 @@
+---
+id: k8s-k6-l08
+world: 6
+title: "Log audit"
+summary: "Anda akan belajar: cari siapa buat apa dalam kluster anda, dan berapa banyak buku log patut catat."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k6-l07]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Auditing", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/" }
+  - { label: "Audit annotations", url: "https://kubernetes.io/docs/reference/labels-annotations-taints/audit-annotations/" }
+  - { label: "Audit event API (audit.k8s.io/v1)", url: "https://kubernetes.io/docs/reference/config-api/apiserver-audit.v1/" }
+---
+
+<Card id="hook" type="hook">
+Jumaat, pukul 3 pagi: seseorang padam Deployment shop. Siapa buat?
+
+<Interactive name="Choice" options={[{ label: 'Baca log audit', correct: true, why: 'Buku log pengawal catat siapa minta, apa, dan bila.' }, { label: 'Jalankan kubectl get events', why: 'Event cerita apa jadi pada objek, bukan siapa yang minta. Secara lalai ia hilang selepas sejam.' }, { label: 'Tanya dalam chat pasukan', why: 'Mungkin. Buku log tak pernah lupa dan tak pernah malu.' }]} />
+</Card>
+
+<Card id="see-event" type="see">
+**<Term id="audit-log">Log audit</Term>** ialah buku log pengawal. Setiap permintaan jadi satu event. Ini satu, dipendekkan. Tekan baris yang sebut siapa.
+
+<Interactive name="SpotLines" lines={[{ text: '"level": "Metadata",' }, { text: '"stage": "ResponseComplete",' }, { text: '"verb": "delete",' }, { text: '"user": { "username": "mei@kedai.example", "groups": ["devs", "system:authenticated"] },', target: true }, { text: '"objectRef": { "resource": "deployments", "namespace": "shop", "name": "shop", "apiGroup": "apps" },' }, { text: '"responseStatus": { "code": 200 },' }, { text: '"annotations": { "authorization.k8s.io/decision": "allow" }' }]} prompt="Tekan baris yang sebut siapa yang buat." success="Mei, dari kumpulan devs. Pintu 2 benarkannya." />
+</Card>
+
+<Card id="try-order" type="try">
+Setiap peraturan dalam polisi audit pilih satu tahap: berapa banyak pengawal catat. Susun tahap dari paling sikit ke paling banyak.
+
+<Interactive name="OrderList" items={['None: tak catat apa-apa', 'Metadata: siapa, apa, bila', 'Request: juga apa yang dihantar', 'RequestResponse: juga apa yang dibalas']} label="Paling sikit butiran di atas" success="Itulah tangganya. Lebih butiran, log lebih besar." />
+</Card>
+
+<Card id="try-sort" type="try">
+Pilih tahap untuk setiap jenis permintaan.
+
+<Interactive name="SortCards" buckets={[{ id: 'meta', label: 'Metadata' }, { id: 'full', label: 'RequestResponse' }, { id: 'none', label: 'None' }]} items={[{ label: 'Apa-apa tentang Secret', bucket: 'meta', why: 'Isi permintaan akan salin secret ke dalam log.' }, { label: 'Perubahan pada pod dalam zon aplikasi', bucket: 'full', why: 'Anda mahu cerita penuh tentang apa yang berubah.' }, { label: 'Semakan kesihatan berterusan pada /healthz', bucket: 'none', why: 'Beribu baris yang membosankan. Langkau sahaja.' }]} success="Siap! Siapa untuk secret, semua untuk perubahan, tiada untuk bising." />
+</Card>
+
+<Card id="predict" type="predict">
+Polisi anda catat Secret pada tahap RequestResponse. Apa yang anda baru buat?
+
+<Interactive name="Choice" options={[{ label: 'Salin setiap secret ke dalam fail log', correct: true, why: 'Isi sebuah Secret ialah rahsia itu sendiri. Guna Metadata untuk Secret.' }, { label: 'Buat Secret lebih selamat', why: 'Kini rahsia ada di dua tempat. Itu kurang selamat.' }, { label: 'Tiada apa: Secret tak pernah dicatat', why: 'Ia dicatat, kalau polisi anda kata begitu.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat buku log yang baik, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Hantar log audit keluar dari kluster ke storan selamat', good: true, why: 'Pencuri dengan hak admin boleh ubah log di node.' }, { text: 'Mulakan API server tanpa fail polisi audit', good: false, why: 'Tiada fail polisi bermakna tiada event langsung.' }, { text: 'Di Kubernetes terurus, hidupkan log control plane penyedia', good: true, why: 'Anda tak boleh capai API server di sana. Penyedia tulis log untuk anda.' }, { text: 'Catat setiap permintaan pada RequestResponse', good: false, why: 'Log besar, dengan rahsia di dalamnya. Pilih tahap ikut peraturan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca buku log pengawal, dan pilih apa yang ia catat.
+</Card>
+
+<Card id="deeper" type="deeper">
+API server perlukan `--audit-policy-file` dan `--audit-log-path`. Tanpa fail polisi, tiada apa dicatat. Pod Security pun tambah nota, contohnya `pod-security.kubernetes.io/audit-violations`. kind boleh hidupkan audit dengan sedikit tetapan tambahan. Dokumennya ada halaman Auditing.
+
+<Interactive name="Mission" id="k6-l08-rep" steps={[{ id: 'docs', text: 'Baca halaman Auditing Kubernetes. Cari contoh polisinya.' }, { id: 'cluster', text: 'Buat kluster kind buang sahaja dengan audit hidup. Ikut halaman Auditing dalam dokumen kind.' }, { id: 'act', text: 'Padam satu pod ujian.', command: 'kubectl run audit-me --image=nginx:1.29-alpine && kubectl delete pod audit-me' }, { id: 'find', text: 'Cari event delete dalam log. Siapa, apa, bila?' }]} success="Anda baca buku log sebenar!" />
+</Card>

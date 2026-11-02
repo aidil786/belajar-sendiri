@@ -1,0 +1,78 @@
+---
+id: docker-d2-l01
+world: 2
+title: "Resepi pertama: FROM, COPY, CMD"
+summary: "Anda akan belajar: tulis Dockerfile tiga baris dan bakar menjadi image."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, OrderList, KitchenSim, Mission]
+needs: [docker-d1-boss]
+scenario: d2-l01
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Writing a Dockerfile", url: "https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/" }
+  - { label: "Dockerfile reference", url: "https://docs.docker.com/reference/dockerfile/" }
+  - { label: "docker build", url: "https://docs.docker.com/reference/cli/docker/buildx/build/" }
+---
+
+<Card id="hook" type="hook">
+Aplikasi hello anda jalan di laptop anda. Di laptop Aina, ia gagal. Node dia versi lama. Apa yang boleh baiki untuk selamanya?
+
+<Interactive name="Choice" options={[{ label: 'Bungkus Node dan aplikasi bersama, ikut satu resepi', correct: true, why: 'Lepas itu setiap laptop jalankan pek yang sama. Itulah image.' }, { label: 'Suruh Aina pasang semula Node', why: 'Mungkin jalan hari ini. Bulan depan orang lain pula ada Node berbeza.' }, { label: 'Hantar kod sekali lagi', why: 'Kod sama, Node lama sama. Ia gagal lagi.' }]} />
+</Card>
+
+<Card id="see-recipe" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['cat Dockerfile']} label="cat tunjuk Dockerfile tiga baris: FROM node:24-alpine, COPY hello.js /hello.js, CMD node /hello.js." />
+
+**<Term id="dockerfile">Dockerfile</Term>** ialah resepi untuk image. `FROM` pilih pek beku asas. `COPY` masukkan makanan anda. `CMD` beritahu apa nak buat bila bekas dibuka.
+</Card>
+
+<Card id="try-order" type="try">
+Susun resepi ini. Baris paling atas jalan dulu.
+
+<Interactive name="OrderList" items={['FROM node:24-alpine', 'COPY hello.js /hello.js', 'CMD ["node", "/hello.js"]']} label="Baris pertama di atas" success="Asas dulu, kemudian makanan, kemudian apa nak dijalankan." />
+
+<Hint>Anda perlu pek asas dulu sebelum boleh tambah makanan.</Hint>
+</Card>
+
+<Card id="see-build" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['docker build -t hello:1.0 .', 'docker images hello']} label="docker build bakar dua langkah: FROM node:24-alpine, kemudian COPY hello.js. docker images kini senaraikan hello:1.0." />
+
+`docker build -t hello:1.0 .` bakar resepi menjadi image. `-t` beri nama dan tag. Titik itu maksudnya "guna folder ini".
+</Card>
+
+<Card id="try-build" type="try">
+Giliran anda. Bina image itu, kemudian jalankan sekali.
+
+<Interactive name="KitchenSim" scenario="d2-l01" goal={{ imageExists: 'hello:1.0', lastTyped: '^docker run\\b.*hello:1\\.0' }} hints={['Bina dulu: docker build -t hello:1.0 .', 'Kemudian jalankan: docker run --rm hello:1.0']} success="Image buatan sendiri yang pertama sudah bercakap!" />
+
+<Hint>Taip `docker build -t hello:1.0 .` dulu. Kemudian `docker run --rm hello:1.0`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda tukar mesej dalam `hello.js`. Kemudian anda jalankan `hello:1.0` lagi. Apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Mesej lama', correct: true, why: 'Image ialah pek beku. Ia simpan fail dari masa anda bina.' }, { label: 'Mesej baharu', why: 'Pek itu dibekukan sebelum anda tukar fail. Bina semula untuk bungkus perubahan.' }, { label: 'Ralat', why: 'Tiada yang rosak. Pek itu cuma ada fail lama di dalamnya.' }]} />
+</Card>
+
+<Card id="check-rebuild" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l01" commands={['docker build -t hello:1.0 .', "echo \"console.log('Hai lagi!');\" > hello.js", 'docker run --rm hello:1.0', 'docker build -t hello:1.1 .', 'docker run --rm hello:1.1']} label="Selepas hello.js berubah, hello:1.0 masih cetak Hello from Kedai Kancil. Binaan baharu, hello:1.1, cetak Hai lagi." />
+
+Pek lama masih kata hello. Binaan baharu bungkus fail baharu. Tukar resepi atau makanan? Bina semula.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis resepi tiga baris dan bakar menjadi image.
+</Card>
+
+<Card id="deeper" type="deeper">
+Laman web atas asas `nginx` tak perlu `CMD`. Pek asas itu sudah ada satu. `docker build` baca fail bernama `Dockerfile` dalam folder yang anda beri.
+
+Latihan sebenar (pilihan), di komputer anda sendiri:
+
+<Interactive name="Mission" id="d2-l01-rep" steps={[{ id: 'folder', text: 'Buat folder dengan hello.js yang cetak satu baris.', command: 'mkdir hello && cd hello' }, { id: 'file', text: 'Tambah Dockerfile dengan tiga baris dari pelajaran ini.' }, { id: 'build', text: 'Bina ia.', command: 'docker build -t hello:1.0 .' }, { id: 'run', text: 'Jalankan sekali dan kemas.', command: 'docker run --rm hello:1.0' }]} success="Resepi sebenar pertama anda berjaya!" />
+</Card>

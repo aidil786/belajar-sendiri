@@ -1,0 +1,78 @@
+---
+id: linux-l4-boss
+world: 4
+title: "Fix the nightly backup"
+summary: "You will learn: to turn a backup that fails quietly into one that is loud, correct and on the roster."
+minutes: 6
+xp: 50
+interactives: [LinuxSim, Choice, SpotLines, SwipeJudge, Mission]
+needs: [linux-l4-m7]
+scenario: linux-l4-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Bash manual: the set builtin", url: "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html" }
+  - { label: "Debian: crontab(5)", url: "https://manpages.debian.org/trixie/cron/crontab.5.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={['./backup.sh; echo $?', 'ls backups']} />
+
+Boss! The backup said `backup done` every night. Today the menu broke, and you need yesterday's copy. The backups folder is empty!
+</Card>
+
+<Card id="check-why" type="check">
+It printed an error, then `backup done`, and exit code 0. Why did it look fine?
+
+<Interactive name="Choice" options={[{ label: 'No strict mode: cp failed, the script kept going, and echo ended with 0', correct: true, why: 'A script ends with its last command\'s code. echo always works.' }, { label: 'cp worked, but slowly', why: 'cp said No such file or directory. Nothing was copied.' }, { label: 'The backups folder is hidden', why: 'ls backups shows nothing because nothing arrived.' }]} />
+</Card>
+
+<Card id="try-loud" type="try">
+Stage 1: make it loud. Turn on strict mode (line 3), then run it. It should fail, out loud.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" goal={{ fileContains: { '~/backup.sh': '^set -euo pipefail' }, scriptExitCode: { '~/backup.sh': 1 } }} hints={["sed -i 's/^# set/set/' backup.sh", './backup.sh; echo $?']} solution={["sed -i 's/^# set/set/' backup.sh", './backup.sh']} success="Exit code 1, and an error you can read. No more quiet lies." />
+</Card>
+
+<Card id="see-error" type="see">
+The real error says `cp: cannot create directory '/home/you/backup/menu-2026-11-01': No such file or directory`. Tap the line with the wrong folder.
+
+<Interactive name="SpotLines" lines={[{ text: '#!/bin/bash' }, { text: '# backup.sh: copy the menu to the backups folder, every night.' }, { text: 'set -euo pipefail' }, { text: 'src="$HOME/kedai/menu"' }, { text: 'dest="$HOME/backup"', target: true }, { text: 'cp -r "$src" "$dest/menu-$(date +%F)"' }, { text: 'echo "backup done"' }]} prompt="Tap the line with the wrong folder." success="The folder is backups, with an s." />
+</Card>
+
+<Card id="try-fix" type="try">
+Stage 2: fix the folder name, then run it. A dated copy should land in `backups`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={["sed -i 's/^# set/set/' backup.sh"]} goal={{ scriptExitCode: { '~/backup.sh': 0 }, dirExists: ['~/backups/menu-2026-11-01'] }} hints={["sed -i 's#/backup\"#/backups\"#' backup.sh", 'grep dest= backup.sh, then ./backup.sh', 'ls backups']} solution={["sed -i 's#/backup\"#/backups\"#' backup.sh", './backup.sh']} success="backups/menu-2026-11-01 is there. Exit code 0, and it means it." />
+</Card>
+
+<Card id="predict" type="predict">
+Stage 3 needs a roster line for 2 a.m., every night. Which one?
+
+<Interactive name="Choice" options={[{ label: '0 2 * * * /home/you/backup.sh', correct: true, why: 'Minute 0, hour 2, every day.' }, { label: '2 0 * * * /home/you/backup.sh', why: 'That is 00:02: minute 2, hour 0.' }, { label: '* 2 * * * /home/you/backup.sh', why: 'That runs every minute from 2:00 to 2:59!' }]} />
+</Card>
+
+<Card id="try-roster" type="try">
+Stage 3: put it on the roster for 2 a.m. Bonus: keep its words in a log with `>> /home/you/backup.log 2>&1`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={["sed -i 's/^# set/set/' backup.sh", "sed -i 's#/backup\"#/backups\"#' backup.sh"]} goal={{ crontabHas: { you: '^0 2 \\* \\* \\* /home/you/backup\\.sh' } }} hints={["echo '0 2 * * * /home/you/backup.sh' | crontab -", 'crontab -l']} solution={["echo '0 2 * * * /home/you/backup.sh >> /home/you/backup.log 2>&1' | crontab -"]} success="On the roster: every night at 2:00, loud when it fails." />
+</Card>
+
+<Card id="check" type="check">
+Lessons from the night. Good rule or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A loud failure beats a quiet one.', good: true, why: 'You fix what you can see.' }, { text: 'Exit code 0 always means the job really worked.', good: false, why: 'Only if the script stops on errors. Strict mode makes 0 honest.' }, { text: 'Now and then, test a restore, not only the backup.', good: true, why: 'A backup you never restored is only a hope.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make a backup script loud, correct and scheduled.
+</Card>
+
+<Card id="deeper" type="deeper">
+A systemd timer is the other way to schedule it (lesson 5). Its failures show in `systemctl status` and `journalctl`. Many teams also send an alert when a backup fails. The Monitoring & Observability course shows how.
+
+<Interactive name="Mission" id="linux-l4-boss-rep" steps={[{ id: 'break', text: 'On a VM: write a backup script with a wrong folder and no strict mode. Run it.' }, { id: 'code', text: 'See the quiet lie.', command: './backup.sh; echo $?' }, { id: 'strict', text: 'Add set -euo pipefail as line 2. Run it again and see it fail loudly.' }, { id: 'restore', text: 'Fix it, back up, then restore one file from the backup.' }]} success="A backup you have tested, end to end." />
+</Card>

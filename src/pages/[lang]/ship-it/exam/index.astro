@@ -1,0 +1,213 @@
+---
+// Exam practice hub (docs/LEVEL-UP-PLAN.md §4): what the KCNA mock and the CKAD practice are,
+// "practice, not the real exam", the official domains, and links to the official exam pages.
+// Nothing is locked; all of it is optional.
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/ui/Icon.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { KCNA_DOMAINS, KCNA_MINUTES, KCNA_URL, kcnaQuestions } from '~/content/exams/kcna';
+import { CKAD_DOCS, CKAD_DOMAINS, CKAD_MINUTES, CKAD_URL, ckadTasks } from '~/content/exams/ckad';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const exams = [
+  {
+    id: 'kcna',
+    code: 'KCNA',
+    title: t(lang, 'mock.kcnaTitle'),
+    text: t(lang, 'mock.kcnaText'),
+    count: t(lang, 'mock.bankSize', { n: kcnaQuestions.length }),
+    real: t(lang, 'mock.realKcna', { n: KCNA_MINUTES }),
+    domains: KCNA_DOMAINS.map((d) => ({ name: d.name[lang], weight: d.weight })),
+    href: `/${lang}/ship-it/exam/kcna/`,
+    open: t(lang, 'mock.kcnaOpen'),
+    url: KCNA_URL,
+  },
+  {
+    id: 'ckad',
+    code: 'CKAD',
+    title: t(lang, 'mock.ckadTitle'),
+    text: t(lang, 'mock.ckadText'),
+    count: t(lang, 'mock.taskCount', { n: ckadTasks.length }),
+    real: t(lang, 'mock.realCkad', { n: CKAD_MINUTES, docs: CKAD_DOCS.join(', ') }),
+    domains: CKAD_DOMAINS.map((d) => ({ name: d.name[lang], weight: d.weight })),
+    href: `/${lang}/ship-it/exam/ckad/`,
+    open: t(lang, 'mock.ckadOpen'),
+    url: CKAD_URL,
+  },
+];
+---
+
+<Base lang={lang} title={t(lang, 'mock.hubTitle')} description={t(lang, 'mock.hubSummary')} altPath={`/${other}/ship-it/exam/`}>
+  <div class="container hub" data-exam-hub>
+    <p class="crumb"><a href={`/${lang}/ship-it/`}>{t(lang, 'shipit.title')}</a></p>
+    <header>
+      <h1 class="accent">{t(lang, 'mock.hubTitle')}</h1>
+      <p class="hub-summary">{t(lang, 'mock.hubSummary')}</p>
+    </header>
+
+    <aside class="not-real" aria-label={t(lang, 'mock.notRealLabel')} data-not-real>
+      <span class="not-real-icon"><Icon name="book" size={22} /></span>
+      <div>
+        <p><strong>{t(lang, 'mock.notReal')}</strong></p>
+        <p>{t(lang, 'certs.notAffiliated')}</p>
+      </div>
+    </aside>
+
+    <div class="hub-exams">
+      {
+        exams.map((x) => (
+          <section class="hub-exam" aria-labelledby={`hub-${x.id}`} data-hub-exam={x.id}>
+            <header class="hub-exam-head">
+              <span class="hub-code" aria-hidden="true">
+                {x.code}
+              </span>
+              <h2 id={`hub-${x.id}`}>{x.title}</h2>
+            </header>
+            <p>{x.text}</p>
+            <p class="hub-meta">
+              {x.count} · {x.real}
+            </p>
+            <details class="hub-domains">
+              <summary>{t(lang, 'mock.domainsTitle')}</summary>
+              <ul>
+                {x.domains.map((d) => (
+                  <li>
+                    {d.name} <span class="hub-weight">{t(lang, 'mock.weight', { n: d.weight })}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <p>
+              <a class="btn" href={x.href} data-hub-open={x.id}>
+                {x.open} →
+              </a>
+            </p>
+            <p class="hub-official">
+              <a href={x.url} rel="noopener">
+                {t(lang, 'certs.official', { code: x.code })} →
+              </a>
+            </p>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="hub-foot">
+      <a href={`/${lang}/settings/#exam`}>{t(lang, 'mock.examModeNote')}</a>
+    </p>
+    <p class="hub-foot">
+      <a href={`/${lang}/ship-it/certifications/`}>{t(lang, 'certs.open')} →</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .hub {
+    padding-block: var(--space-5);
+    max-width: 52rem;
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .hub-summary {
+    font-size: var(--text-l);
+  }
+  .not-real {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 6px solid var(--deco-remote);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+    margin: var(--space-4) 0 var(--space-5);
+  }
+  .not-real p {
+    margin: 0 0 var(--space-1);
+  }
+  .not-real p:last-child {
+    margin: 0;
+  }
+  .not-real-icon {
+    color: var(--c-remote-ink);
+    display: inline-flex;
+    margin-top: 2px;
+  }
+  .hub-exams {
+    display: grid;
+    gap: var(--space-4);
+  }
+  @media (min-width: 48rem) {
+    .hub-exams {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .hub-exam {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-l);
+    background: var(--color-surface);
+    box-shadow: var(--color-shadow);
+    min-width: 0;
+  }
+  .hub-exam p {
+    margin: 0;
+  }
+  .hub-exam-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .hub-exam h2 {
+    font-size: var(--text-l);
+    margin: 0;
+  }
+  .hub-code {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-s);
+    background: var(--course-kubernetes);
+    color: var(--color-primary-text);
+    border-radius: var(--radius-s);
+    padding: var(--space-1) var(--space-2);
+  }
+  .hub-meta {
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .hub-domains summary {
+    cursor: pointer;
+    font-weight: var(--weight-bold);
+    min-height: var(--tap);
+    display: flex;
+    align-items: center;
+  }
+  .hub-domains ul {
+    margin: 0;
+    padding-left: var(--space-5);
+  }
+  .hub-weight {
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .hub-official {
+    font-size: var(--text-s);
+  }
+  .hub-official a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+  .hub-foot {
+    margin-top: var(--space-5);
+    font-size: var(--text-s);
+  }
+</style>

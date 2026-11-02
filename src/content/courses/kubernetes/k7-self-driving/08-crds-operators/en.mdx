@@ -1,0 +1,77 @@
+---
+id: k8s-k7-l08
+world: 7
+title: CRDs and operators
+summary: "You will learn: how CRDs teach a cluster new kinds, and how operators run them with the same loop."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, ManagersBoard, Choice, SortCards, OrderList]
+needs: [k8s-k7-l07]
+scenario: k7-crd
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: custom resources", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" }
+  - { label: "Kubernetes: operator pattern", url: "https://kubernetes.io/docs/concepts/extend-kubernetes/operator/" }
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-crd" commands={['kubectl apply -f app.yaml']} fails={['kubectl apply -f app.yaml']} label="kubectl apply -f app.yaml fails: resource mapping not found, no matches for kind Application in version argoproj.io/v1alpha1, ensure CRDs are installed first." />
+
+In plain words: this cluster has never heard of an `Application`. Nobody taught it that kind yet.
+</Card>
+
+<Card id="see-crd" type="see">
+A cluster knows built-in kinds, like Pod and Deployment. A **<Term id="crd">CRD</Term>** teaches it a new kind, like adding a dish to the menu. Installing Argo CD adds `Application` this way.
+
+<Interactive name="SortCards" buckets={[{ id: 'built', label: 'Built in' }, { id: 'crd', label: 'Added by a CRD' }]} items={[{ label: 'Deployment', bucket: 'built', why: 'Every cluster knows it.' }, { label: 'Service', bucket: 'built', why: 'Every cluster knows it.' }, { label: 'Application (Argo CD)', bucket: 'crd', why: 'Argo CD installs it.' }, { label: 'Rollout (Argo Rollouts)', bucket: 'crd', why: 'Argo Rollouts installs it.' }, { label: 'HTTPRoute (Gateway API)', bucket: 'crd', why: 'Surprise! Gateway API kinds are CRDs you install.' }]} success="Sorted! A CRD is just a new word for the cluster." />
+</Card>
+
+<Card id="try-board" type="try">
+A new kind needs a manager too. Every manager runs the same loop. Delete a tray and watch this one.
+
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={['deletePod']} goal={{ healed: 1 }} label="Want 3, see 3. Delete a pod: see 2, make 1 more." />
+
+<Hint>Tap a tray's delete button.</Hint>
+</Card>
+
+<Card id="see-operator" type="see">
+An **<Term id="operator">operator</Term>** is a new kind plus its own manager. This one, below, runs Postgres. Who makes the 3 database pods?
+
+<Interactive name="Choice" options={[{ label: 'The operator’s controller, reading this object', correct: true, why: 'Want 3. See 0. Make 3. It also handles failover.' }, { label: 'The object makes them by itself', why: 'An object is only a wish on the board. A controller acts on it.' }, { label: 'You, with kubectl run', why: 'The whole point: the operator does it for you.' }]} />
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: kedai-db
+spec:
+  instances: 3
+  storage:
+    size: 1Gi
+```
+</Card>
+
+<Card id="try-order" type="try">
+Put the operator setup in order.
+
+<Interactive name="OrderList" items={['Install the CRD: the cluster learns the new kind', 'Run the operator: its controller starts watching', 'Apply your object: kind Cluster, 3 instances', 'The operator makes pods, Services and storage']} label="First step at the top" success="That's how Argo CD works too: CRDs plus controllers." />
+</Card>
+
+<Card id="predict" type="predict">
+You remove the operator but keep the `Cluster` object. A database pod dies. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Nothing replaces it. No controller watches that kind now', correct: true, why: 'The object is still on the board. Nobody reads it.' }, { label: 'The Deployment controller replaces it', why: 'It only manages Deployments, not the Cluster kind.' }, { label: 'The CRD replaces it', why: 'A CRD only teaches a word. It does no work.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain CRDs and operators as the same loop, reused.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get crds` lists the kinds your cluster learned. `kubectl explain` works on them too, when the CRD has a schema. Popular operators: cert-manager, CloudNativePG and the Prometheus Operator. Real rep (optional): install Argo CD on kind, then run `kubectl get crds`. Spot `applications.argoproj.io`.
+</Card>

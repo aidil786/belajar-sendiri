@@ -1,0 +1,74 @@
+---
+id: docker-d3-l04
+world: 3
+title: Back up and restore a volume
+summary: "You will learn: to copy a volume into one file on your laptop, and to bring it back."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l03]
+scenario: d3-backup
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Back up, restore, or migrate volumes", url: "https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes" }
+  - { label: "Docker docs: docker volume inspect", url: "https://docs.docker.com/reference/cli/docker/volume/inspect/" }
+  - { label: "PostgreSQL: pg_dump", url: "https://www.postgresql.org/docs/current/app-pgdump.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-backup" commands={['docker volume ls', 'docker volume inspect -f "{{.Mountpoint}}" kedai-data']} label="docker volume ls shows kedai-data. Its mountpoint is /var/lib/docker/volumes/kedai-data/_data, deep inside Docker's own folder." />
+
+Your laptop is getting old. The orders sit in the kedai-data locker, deep in Docker's own folder. On Docker Desktop, it hides inside a Linux VM. How do you copy it out?
+</Card>
+
+<Card id="see-backup" type="see">
+A **backup** packs the whole locker into one bag on your shelf. A tiny helper box does it, then leaves. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run --rm', means: 'A helper box, thrown away after' }, { text: '-v kedai-data:/from', means: 'Open the locker at /from' }, { text: '-v "$PWD":/to', means: 'Open this laptop folder at /to' }, { text: 'alpine:3.22', means: 'A tiny meal pack that has tar' }, { text: 'tar czf /to/backup.tar.gz', means: 'Pack one zipped bag into /to' }, { text: '-C /from .', means: 'Everything inside /from' }]} decoys={[{ text: 'tar xzf /to/backup.tar.gz', means: 'Unpack a bag. That is for restoring.' }]} success="That's the backup command!" />
+</Card>
+
+<Card id="try-backup" type="try">
+Back up kedai-data into backup.tar.gz, in this folder.
+
+<Interactive name="KitchenSim" scenario="d3-backup" goal={{ filesExist: ['backup.tar.gz'], lastExit: 0 }} hints={['Type docker run --rm -v kedai-data:/from -v "$PWD":/to alpine:3.22 tar czf /to/backup.tar.gz -C /from .', 'Then type ls to see the bag.']} success="backup.tar.gz is on your laptop. The orders are safe." />
+
+<Hint>`"$PWD"` means this folder. Keep the quotes.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+To restore, you unpack the bag into a locker. Which tar letters?
+
+<Interactive name="Choice" options={[{ label: '`tar xzf`', correct: true, why: 'x = extract: unpack the bag.' }, { label: '`tar czf`', why: 'c makes a new bag. It would overwrite your backup!' }, { label: '`tar tzf`', why: 't only lists what is inside.' }]} />
+</Card>
+
+<Card id="try-restore" type="try">
+New laptop! The locker is gone. Only backup.tar.gz is left. Unpack it into a new kedai-data locker.
+
+<Interactive name="KitchenSim" scenario="d3-restore" goal={{ fileInVolume: { 'kedai-data': ['orders.txt', 'menu/drinks.txt'] } }} hints={['Type docker run --rm -v kedai-data:/to -v "$PWD":/from alpine:3.22 tar xzf /from/backup.tar.gz -C /to', 'Check it: docker run --rm -v kedai-data:/data alpine:3.22 cat /data/orders.txt']} success="Restored! The orders and the menu are back." />
+
+<Hint>Same helper box. Swap the folders: the bag is in /from now.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Good backup habit, or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep a copy of the bag off this laptop.', good: true, why: 'A backup on the same disk dies with the disk.' }, { text: 'Copy a database folder while it is writing.', good: false, why: 'You may catch half-written files. Stop it first, or use its own dump tool.' }, { text: 'Try a restore now and then.', good: true, why: 'A backup you never restored is only a hope.' }, { text: 'Put the date in the file name.', good: true, why: 'backup-2026-10-31.tar.gz says which day it holds.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now back up a volume and restore it.
+</Card>
+
+<Card id="deeper" type="deeper">
+For Postgres, `pg_dump` saves the data safely while it runs. `--volumes-from db` borrows every locker of db, which is handy for backups.
+
+<Interactive name="KitchenReplay" scenario="d3-backup" commands={['docker run --rm -v kedai-data:/from -v "$PWD":/to alpine:3.22 tar czvf /to/backup.tar.gz -C /from .']} label="With v added, tar lists every file it packs: ./, ./menu/, ./menu/drinks.txt, ./orders.txt." />
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d3-l04-rep" steps={[{ id: 'backup', text: 'Back up one of your volumes.', command: 'docker run --rm -v practice-data:/from -v "$PWD":/to alpine:3.22 tar czf /to/backup.tar.gz -C /from .' }, { id: 'restore', text: 'Restore it into a new volume.', command: 'docker run --rm -v practice-copy:/to -v "$PWD":/from alpine:3.22 tar xzf /from/backup.tar.gz -C /to' }, { id: 'check', text: 'Look inside the copy.', command: 'docker run --rm -v practice-copy:/data alpine:3.22 ls -la /data' }]} success="Backed up and restored for real." />
+</Card>

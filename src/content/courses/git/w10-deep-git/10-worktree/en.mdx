@@ -1,0 +1,63 @@
+---
+id: git-w10-l10
+world: 10
+title: git worktree
+summary: "You will learn: how to work on two branches at once, in two folders, with one repo."
+minutes: 3
+xp: 15
+interactives: [Choice, TermReplay, Sim, OrderList]
+needs: [git-w10-l09]
+scenario: w10-worktree
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git worktree", url: "https://git-scm.com/docs/git-worktree" }
+---
+
+<Card id="hook" type="hook">
+You are halfway through a big change. Then a bug report: fix `main` right now! Which way leaves your half-done work untouched?
+
+<Interactive name="Choice" options={[{ label: 'Open a second folder from the same repo', correct: true, why: 'That is git worktree. Your half-done work stays exactly where it is.' }, { label: 'Commit the half-done work first', why: 'That works, but it saves broken work in your history.' }, { label: 'Copy the whole folder by hand', why: 'Then you have two repos to keep in sync. Messy!' }]} />
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="TermReplay" scenario="w10-worktree" commands={['git worktree add ../diary-fix -b fix', 'git worktree list']} label="git worktree add makes ../diary-fix on a new branch fix. git worktree list shows two folders: diary on main and diary-fix on fix." />
+
+`git worktree add` makes a second working folder, on its own branch. Same repo, same history. Each folder is a **<Term id="worktree">worktree</Term>**.
+</Card>
+
+<Card id="try-add" type="try">
+Make a worktree at `../diary-fix` on a new branch called `fix`.
+
+<Interactive name="Sim" scenario="w10-worktree" panels={['graph']} goal={{ worktrees: ['/home/you/diary-fix'], branches: ['fix'] }} hints={['Type git worktree add ../diary-fix -b fix', 'Then git worktree list to check']} success="Two folders, one repo! diary is on main, diary-fix is on fix." />
+
+<Hint>Type `git worktree add ../diary-fix -b fix`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You commit a fix inside `diary-fix`. Then you go back to `diary`. Can you see that commit there?
+
+<Interactive name="Choice" options={[{ label: 'Yes. Both folders share one repo', correct: true, why: 'One history, many folders. git log --all in diary shows the fix.' }, { label: 'No, until you push and pull', why: 'No push needed. It is the same repo on the same computer.' }, { label: 'No, worktrees are separate repos', why: 'A worktree is only another working folder. Commits are shared.' }]} />
+</Card>
+
+<Card id="see-remove" type="see">
+<Interactive name="TermReplay" scenario="w10-worktree" commands={['git worktree add ../diary-fix -b fix', 'git worktree remove ../diary-fix', 'git worktree list', 'git branch']} label="After git worktree remove, the list shows only diary. git branch still lists fix and main." />
+
+Done? `git worktree remove` deletes the extra folder. The branch and its commits stay safe.
+</Card>
+
+<Card id="check-order" type="check">
+Put the bug-fix trip in order.
+
+<Interactive name="OrderList" items={['git worktree add ../diary-fix -b fix', 'cd ../diary-fix', 'Fix the bug and commit', 'cd ../diary', 'git worktree remove ../diary-fix']} label="First step at the top" success="Smooth! Your big change never moved. Merge fix when you are ready." />
+</Card>
+
+<Card id="win" type="win">
+You can now work on two branches at once, in two folders.
+</Card>
+
+<Card id="deeper" type="deeper">
+A branch can be checked out in just one worktree at once. Git refuses a second one. `git worktree remove` refuses if the folder has changes; `--force` drops them. Deleted a worktree folder by hand? `git worktree prune` cleans up Git's notes about it.
+</Card>

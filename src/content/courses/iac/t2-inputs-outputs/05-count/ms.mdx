@@ -1,0 +1,74 @@
+---
+id: iac-t2-l05
+world: 2
+title: "count: banyak yang sama"
+summary: "Anda akan belajar: buat salinan bernombor dengan count, dan perangkapnya bila senarai berubah."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, PlanReader]
+needs: [iac-t2-l04]
+scenario: t2-count
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: the count meta-argument", url: "https://opentofu.org/docs/language/meta-arguments/count/" }
+  - { label: "OpenTofu: splat expressions", url: "https://opentofu.org/docs/language/expressions/splat/" }
+---
+
+<Card id="hook" type="hook">
+Pesta perlukan tiga pembantu, bukan dua. Setiap pembantu ialah nama `random_pet`. Macam mana nak dapat yang ketiga?
+
+<Interactive name="Choice" options={[{ label: 'Tetapkan count = 3 pada satu blok itu', correct: true, why: 'Satu blok, tiga salinan. Tukar satu nombor.' }, { label: 'Salin seluruh blok tiga kali', why: 'Tiga blok perlu diselaraskan. count buat dengan satu.' }, { label: 'Jalankan apply tiga kali', why: 'apply bina apa yang pelan kata. Pelan kata dua.' }]} />
+</Card>
+
+<Card id="see-list" type="see">
+Taip `tofu state list`. Tengok nombor dalam kurungan segi empat.
+
+<Interactive name="TofuSim" scenario="t2-count" goal={{ lastTyped: '^tofu state list' }} hints={['Taip tofu state list dan tekan Enter.']} success="helper[0] dan helper[1]. Salinan bernombor dari 0." />
+
+**<Term id="count">count</Term>** buat salinan bernombor bagi satu blok. Nombor bermula dari 0.
+</Card>
+
+<Card id="predict" type="predict">
+Dengan `count = 3`, apa nama pembantu terakhir?
+
+```hcl
+resource "random_pet" "helper" {
+  count  = 3
+  length = 1
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '`random_pet.helper[2]`', correct: true, why: 'Kira dari 0: [0], [1], [2].' }, { label: '`random_pet.helper[3]`', why: 'Tiga salinan, tapi yang pertama ialah [0]. Jadi yang terakhir [2].' }, { label: '`random_pet.helper3`', why: 'Salinan kekal satu nama, dengan nombor dalam kurungan.' }]} />
+</Card>
+
+<Card id="try-three" type="try">
+Tukar `count = 2` jadi `count = 3` dalam `main.tf`. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t2-count" goal={{ resourceInState: ['random_pet.helper[2]'] }} hints={['Cari count = 2 dalam blok helper. Jadikan 3.', 'Kemudian tofu apply. Plan tambah 1. Taip yes.']} success="1 to add: helper[2]. Dua yang pertama kekal seperti asal." />
+
+<Hint>Tukar satu nombor, kemudian apply.</Hint>
+</Card>
+
+<Card id="try-trap" type="try">
+Fail gerai guna `count` atas senarai `["nasi", "mee", "roti"]`. Gerai mee tutup, jadi "mee" dibuang. Baca plan.
+
+<Interactive name="PlanReader" scenario="t2-count" commands={['cp .next/variables.tf variables.tf']} />
+</Card>
+
+<Card id="check" type="check">
+Cuma mee yang tutup. Kenapa plan sentuh dua fail?
+
+<Interactive name="Choice" options={[{ label: 'Semua selepas mee naik satu nombor', correct: true, why: 'roti dulu [2], kini [1]. Jadi [1] ditulis semula dan [2] dimusnahkan.' }, { label: 'count sentiasa bina semula semuanya', why: 'nasi, di [0], tak disentuh.' }, { label: 'OpenTofu buat silap', why: 'Ia buat tepat seperti count kata: salinan ikut nombor.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat salinan dengan count, dan kenal perangkap nombornya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`random_pet.helper[*].id` senaraikan id setiap salinan; `[*]` itu dipanggil splat. `count = var.open ? 1 : 0` hidupkan atau matikan satu resource. Untuk senarai yang berubah, `for_each` namakan setiap salinan ikut itemnya, bukan nombor. Itu pelajaran seterusnya.
+</Card>

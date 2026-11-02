@@ -1,0 +1,84 @@
+---
+id: k8s-k4-boss
+world: 4
+title: "Satu aplikasi, tiga dapur"
+summary: "Anda akan belajar: jalankan satu aplikasi di dev, staging dan prod, setiap satu dengan tetapan dan dulang sendiri."
+minutes: 6
+xp: 50
+interactives: [KubeReplay, FoodCourtSim, YamlDoctor, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l12]
+scenario: k4-kitchens
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Declarative management with Kustomize", url: "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/" }
+  - { label: "Kubernetes: ConfigMaps", url: "https://kubernetes.io/docs/concepts/configuration/configmap/" }
+  - { label: "Namespaces", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-kitchens" commands={['ls overlays', 'cat overlays/staging/kustomization.yaml']} picture={false} label="ls overlays tunjuk dev, prod dan staging. Kustomization staging letak semua dalam namespace staging, dengan 2 replika dan satu patch tetapan." />
+
+Bos: satu kedai, tiga dapur. Dev: 1 dulang, log `debug`. Staging: 2 dulang, `info`. Prod: 3 dulang, `warn`. Satu base, tiga nota lekat. Buka semuanya.
+</Card>
+
+<Card id="try-dev" type="try">
+Dapur 1: dev. Pratonton dahulu, kemudian buka.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens" namespace="dev" goal={{ replicas: { name: 'shop', count: 1, namespace: 'dev' }, objectExists: ['dev/configmap/settings'], podsReady: { selector: 'app=shop', count: 1, namespace: 'dev' } }} hints={['Pratonton: kubectl kustomize overlays/dev', 'Buka: kubectl apply -k overlays/dev']} success="Dev sudah dibuka: 1 dulang, log yang banyak cakap." />
+
+<Hint>Pratonton tak pernah ubah kluster. Kemudian `apply -k` yang ubah.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Dapur 2 ada masalah. Rakan sepasukan tambah suis cache pada nota staging. API server menolaknya. Baiki nota itu.
+
+<Interactive name="YamlDoctor" file="settings-patch.yaml" manifest={'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: settings\ndata:\n  LOG_LEVEL: info\n  CACHE: true\n'} solution={'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: settings\ndata:\n  LOG_LEVEL: info\n  CACHE: "true"\n'} keep={['LOG_LEVEL: info', 'CACHE: ']} keepHint="Kekalkan kedua-dua tetapan. Tukar cara CACHE ditulis." hint="Data ConfigMap sentiasa teks. Letak true dalam petikan." success="Sudah baik! Nota kata CACHE ialah teks true." />
+</Card>
+
+<Card id="try-staging-prod" type="try">
+Pembaikan anda sudah ada dalam fail. Buka staging, kemudian prod.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens" namespace="prod" goal={{ objectExists: ['staging/deployment/shop', 'staging/configmap/settings', 'prod/configmap/settings'], replicas: { name: 'shop', count: 3, namespace: 'prod' }, podsReady: { selector: 'app=shop', count: 3, namespace: 'prod' } }} hints={['Taip kubectl apply -k overlays/staging', 'Kemudian: kubectl apply -k overlays/prod', 'Semak: kubectl get pods -n prod']} success="Staging dan prod sudah dibuka. Tiga dapur, satu resepi." />
+</Card>
+
+<Card id="check-level" type="check">
+Base kata `LOG_LEVEL: debug`. Nota staging kata `info`. Apa dulang staging cetak untuk `printenv LOG_LEVEL`?
+
+<Interactive name="Choice" options={[{ label: 'info', correct: true, why: 'Patch overlay duduk di atas base.' }, { label: 'debug', why: 'Hampir! Base cuma permulaan. Patch menang.' }, { label: 'debug dan info', why: 'Satu kunci, satu nilai. Patch menggantikannya.' }]} />
+</Card>
+
+<Card id="check-all" type="check">
+<Interactive name="KubeReplay" scenario="k4-kitchens-up" namespace="all" commands={['kubectl get deployments -A -l app=shop', 'kubectl exec -n staging deploy/shop -- printenv CACHE']} label="get deployments untuk semua namespace tunjuk shop di dev 1/1, prod 3/3 dan staging 2/2. Dulang staging cetak true untuk CACHE." />
+
+Tiga zon, tiga pesanan: 1, 2 dan 3 dulang. Staging baca nota yang anda baiki: `true`.
+</Card>
+
+<Card id="try-where" type="try">
+Sebelum buat apa-apa pada prod, jadikan prod zon "anda di sini". Kemudian senaraikan dulangnya.
+
+<Interactive name="FoodCourtSim" scenario="k4-kitchens-up" goal={{ namespaceIs: 'prod', lastTyped: 'get pods' }} hints={['Taip kubectl config set-context --current --namespace=prod', 'Kemudian: kubectl get pods']} success="Bar merah jambu kata prod. Setiap arahan kini mendarat di situ, jadi berhati-hati." />
+
+<Hint>Perhatikan bar merah jambu di atas berubah.</Hint>
+</Card>
+
+<Card id="check-safe" type="check">
+Langkah selamat atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pratonton dengan kubectl kustomize sebelum apply -k.', good: true, why: 'Anda lihat YAML sebelum kluster melihatnya.' }, { text: 'Ubah base untuk beri prod 3 dulang.', good: false, why: 'Base beri makan setiap dapur. Ubah overlay prod.' }, { text: 'Baca bar merah jambu sebelum kubectl delete.', good: true, why: 'Tahu zon mana anda berada dahulu.' }, { text: 'Salin base ke dalam setiap folder overlay.', good: false, why: 'Nanti setiap pembaikan perlu dibuat tiga kali.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan satu aplikasi di tiga dapur, ikut cara masing-masing.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pasukan sebenar simpan folder ini dalam Git. Perubahan pada `overlays/prod` melalui pull request. Dalam Dunia K7, alat GitOps akan apply untuk anda.
+
+Latihan sebenar (pilihan), pada kluster kind untuk latihan:
+
+<Interactive name="Mission" id="k8s-k4-boss-rep" steps={[{ id: 'copy', text: 'Dalam terminal latihan di atas, cat setiap fail dalam base dan overlays. Buat folder yang sama di mesin anda.' }, { id: 'dev', text: 'Buka dev.', command: 'kubectl apply -k overlays/dev' }, { id: 'staging', text: 'Buka staging.', command: 'kubectl apply -k overlays/staging' }, { id: 'prod', text: 'Buka prod.', command: 'kubectl apply -k overlays/prod' }, { id: 'look', text: 'Lihat ketiga-tiga dapur.', command: 'kubectl get deployments -A -l app=shop' }, { id: 'tidy', text: 'Tutup prod. Ini padam zonnya. Kemudian buat sama untuk staging dan dev.', command: 'kubectl delete -k overlays/prod' }]} success="Tiga dapur sebenar daripada satu resepi." />
+</Card>

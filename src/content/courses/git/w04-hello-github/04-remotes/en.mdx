@@ -1,0 +1,65 @@
+---
+id: git-w04-l04
+world: 4
+title: Remotes and origin
+summary: "You will learn: how to tell Git where your GitHub repo lives."
+minutes: 3
+xp: 15
+interactives: [Choice, TermReplay, CommandBuilder, Sim, SpotLines]
+needs: [git-w04-l03]
+scenario: w04-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git remote", url: "https://git-scm.com/docs/git-remote" }
+  - { label: "About remote repositories", url: "https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories" }
+---
+
+<Card id="hook" type="hook">
+Your empty diary repo on GitHub has a long web address. Must you type it on every push?
+
+<Interactive name="Choice" options={[{ label: 'No. Save it once under a short name.', correct: true, why: 'Git keeps a little address book. Let us add GitHub to it.' }, { label: 'Yes, every single time', why: 'That would be slow. Git can remember it.' }, { label: 'No. Git finds it by itself.', why: 'Git cannot guess. You tell it once.' }]} />
+</Card>
+
+<Card id="see-remote" type="see">
+<Interactive name="TermReplay" scenario="w04-l04" commands={['git remote add origin https://github.com/you/diary.git', 'git remote -v']} label="git remote add saves the GitHub address as origin. git remote -v lists origin twice: once for fetch, once for push." />
+
+A **<Term id="remote">remote</Term>** is a contact in Git's address book. `git remote add origin <url>` saves GitHub as `origin`. `git remote -v` lists your contacts.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that saves your GitHub address as origin.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'remote', means: 'the address book' }, { text: 'add', means: 'add a contact' }, { text: 'origin', means: 'its short name' }, { text: 'https://github.com/you/diary.git', means: 'the address' }]} decoys={[{ text: 'push', means: 'sends commits; not yet!' }, { text: 'set-url', means: 'changes an address you already saved' }]} success="Yes! Name first, then the address." />
+
+<Hint>Address book, add, name, address.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Now type it in your diary. Then check with `git remote -v`.
+
+<Interactive name="Sim" scenario="w04-l04" panels={[]} goal={{ remotes: { origin: 'https://github.com/you/diary.git' } }} hints={['Type git remote add origin https://github.com/you/diary.git']} success="Saved! Your diary knows where GitHub lives." />
+
+<Hint>Copy the address exactly, with `.git` at the end.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Is the name `origin` special to Git?
+
+<Interactive name="Choice" options={[{ label: 'No. It is just the usual nickname.', correct: true, why: 'You could call it github. Everyone uses origin, so stick with it.' }, { label: 'Yes. Git only works with origin.', why: 'Any name works. origin is simply the habit.' }, { label: 'It is the name of GitHub itself', why: 'No, it is a name on your laptop. GitHub never sees it.' }]} />
+</Card>
+
+<Card id="check-lines" type="check">
+<Interactive name="SpotLines" scenario="w04-l04" commands={['git remote add origin https://github.com/you/diary.git', 'git remote -v']} targets="\(push\)" prompt="Tap the line Git uses when you push." success="That's it. Fetch and push can even use different addresses." />
+</Card>
+
+<Card id="win" type="win">
+You can now connect your project to a repo on GitHub.
+</Card>
+
+<Card id="deeper" type="deeper">
+Typo in the address? `git remote set-url origin <new-url>` fixes it. `git remote rename` and `git remote remove` exist too. Removing a remote only deletes the contact. The repo on GitHub stays.
+
+<Interactive name="TermReplay" scenario="w04-l04" commands={['git remote add origin https://github.com/you/diry.git', 'git remote set-url origin https://github.com/you/diary.git', 'git remote -v']} label="A remote with a typo in the address gets fixed with git remote set-url." />
+</Card>

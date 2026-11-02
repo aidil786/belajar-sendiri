@@ -1,0 +1,72 @@
+---
+id: git-w01-l08
+world: 1
+title: Spot the difference
+summary: "You will learn: how to see exactly what changed, line by line."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, SpotLines, Choice, Sim]
+needs: [git-w01-l07]
+scenario: w01-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html wobbles in the working folder with a changed tag." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+You edited `index.html` last night. Now you can't remember what you changed. One line? Ten lines?
+</Card>
+
+<Card id="see-diff" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git diff']} pulse label="git diff for index.html. One red line starts with a minus: TODO: write day 3. Two green lines start with a plus: Day 3 and It felt great." />
+
+`git diff` compares your folder with the box. This is a **diff**. Green `+` lines are new. Red `-` lines are gone.
+</Card>
+
+<Card id="try-added" type="try">
+Tap every line you added.
+
+<Interactive name="SpotLines" scenario="w01-l08" commands={['git diff']} targets="^\+[^+]" prompt="Tap every added line." success="Yes! Two new lines: Day 3 and It felt great." />
+
+<Hint>Added lines start with one `+`. Skip the `+++` line: that is just the file name.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You run `git add index.html`. Then you run `git diff` again. What shows?
+
+<Interactive name="Choice" options={[{ label: 'Nothing at all', correct: true, why: 'git diff compares folder and box. Now they match.' }, { label: 'The same red and green lines', why: 'The changes moved into the box. Folder and box match now.' }, { label: 'Only the red lines', why: 'Both kinds of change moved into the box together.' }]} />
+</Card>
+
+<Card id="see-staged" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git add index.html', 'git diff', 'git diff --staged']} label="After git add, git diff prints nothing. git diff --staged prints the same changes again." />
+
+Plain `git diff` is empty now. To see what is in the box, add `--staged`. It compares the box with your **last commit**.
+</Card>
+
+<Card id="see-commits" type="see">
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git log --oneline', 'git diff 5ba4c72 e1ef438']} label="git log --oneline shows three hashes. git diff between the two older commits shows TODO: write day 2 replaced by Day 2." />
+
+You can also compare two **save points**. Give `git diff` two hashes, older first. It shows what changed between them.
+</Card>
+
+<Card id="try-staged" type="try">
+Put `index.html` in the box. Then show the diff of the box.
+
+<Interactive name="Sim" scenario="w01-l08" panels={['areas']} goal={{ staged: ['index.html'], typed: '^git diff (--staged|--cached)' }} hints={['First: git add index.html', 'Then: git diff --staged']} success="That is exactly what your next commit will save." />
+
+<Hint>`git add index.html`, then `git diff --staged`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now spot every change before you save it.
+</Card>
+
+<Card id="deeper" type="deeper">
+`--cached` means the same as `--staged`. `git diff --name-only` lists only the names of changed files. Add a file name to see only that file, like `git diff index.html`.
+
+<Interactive name="TermReplay" scenario="w01-l08" commands={['git diff --name-only']} label="git diff --name-only prints just one name: index.html." />
+</Card>

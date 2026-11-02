@@ -1,0 +1,62 @@
+---
+id: git-w08-boss
+world: 8
+title: "Leak drill"
+summary: "You will learn: to fix a leaked key fast, in the right order."
+minutes: 6
+xp: 50
+interactives: [AreasScene, TermReplay, Challenge, Choice, OrderList]
+needs: [git-w08-l08]
+scenario: w08-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+  - { label: "git commit (--amend)", url: "https://git-scm.com/docs/git-commit" }
+  - { label: "Removing sensitive data from a repository", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'repo']} effect="wobble" label="Drill alarm. .env sits in the working folder with a warning tag. The newest commit, Add weather widget, holds it too. Everything wobbles." frames={[{ working: ['app.js', { name: '.env', tag: 'notReady' }], repo: [{ name: 'Ignore log files', kind: 'commit' }, { name: 'Add weather widget', kind: 'commit' }] }]} />
+
+Drill time! A fake key slipped into your last commit. Good news: you have not pushed yet. Fix it fast.
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w08-boss-1" commands={['git show --stat']} label="git show --stat: the newest commit, Add weather widget, added .env and app.js." />
+
+There it is: `.env` in the newest commit. Three rooms, three fixes. Stuck? After 2 tries, a hint appears.
+</Card>
+
+<Card id="try-drill" type="try">
+Clean up the leak, room by room.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Stop tracking the key', text: 'Take .env out of the box, but keep the file on your computer.', scenario: 'w08-boss-1', goal: { stagedNotContains: { '.env': 'fake_demo_key' }, filesExist: ['.env'] }, hints: ['git rm --cached keeps the file. Plain git rm deletes it.', 'Type git rm --cached .env'] },
+  { title: 'Ignore it for good', text: 'Add .env to .gitignore. Then put .gitignore in the box.', scenario: 'w08-boss-2', goal: { fileContains: { '.gitignore': '.env' }, staged: ['.gitignore'], noUntracked: true, filesExist: ['.env'] }, hints: ['Two arrows add a line: echo ".env" >> .gitignore', 'Then type git add .gitignore'] },
+  { title: 'Fix the commit', text: 'Replace the last commit, so .env was never in it.', scenario: 'w08-boss-3', goal: { lastCommitLacks: ['.env'], lastCommitHas: ['app.js', '.gitignore'], commits: 4, clean: true }, hints: ['A new commit would leave the key in the old one. Fix the old one instead.', 'Type git commit --amend --no-edit'] }
+]} />
+
+<Hint>Run `git status` in each room first.</Hint>
+</Card>
+
+<Card id="check-first" type="check">
+Plot twist: that commit was already pushed to a public repo. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Rotate the key', correct: true, why: 'Assume it is stolen. A new key makes the old one useless.' }, { label: 'Rewrite history with git filter-repo', why: 'Good later. But copies may exist already. Rotate first.' }, { label: 'Amend and force-push', why: 'The key is already out there. Rotate first.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Now put the full rescue in order. First step at the top.
+
+<Interactive name="OrderList" items={['Rotate the key', 'Untrack .env and add it to .gitignore', 'Rewrite history with git filter-repo', 'Force-push and tell your team', 'Close the secret scanning alert']} label="First step at the top" success="Drill complete! Rotate first, clean up after." />
+
+<Hint>A leaked key must stop working before anything else.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now handle a leaked key, pushed or not.
+</Card>

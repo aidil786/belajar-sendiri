@@ -1,0 +1,73 @@
+---
+id: linux-l3-l03
+world: 3
+title: "Port dan mendengar: ss"
+summary: "Anda akan belajar: apa itu port, dan cara tengok siapa menjawab setiap satu."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SortCards, SpotLines, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l02]
+scenario: linux-l3-ports
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "Debian: /etc/services", url: "https://manpages.debian.org/trixie/manpages/services.5.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ports" intro={['curl -sS localhost:8080; echo $?']} network />
+
+Seorang pelanggan dail kedai, sambungan 8080. Ralat sebenar kata `Could not connect to server`. Maksudnya: tiada siapa menunggu di sambungan itu.
+</Card>
+
+<Card id="try-ports" type="try">
+Alamat IP sampai ke bangunan. <Term id="port">Port</Term> pilih sambungan di dalamnya. Ada yang terkenal. Padankan setiap kerja dengan port.
+
+<Interactive name="SortCards" buckets={[{ id: 'p22', label: '22' }, { id: 'p80', label: '80' }, { id: 'p443', label: '443' }]} items={[{ label: 'ssh you@kedai', bucket: 'p22', why: 'SSH, talian log masuk jarak jauh, guna 22.' }, { label: 'http://kedai.example', bucket: 'p80', why: 'Halaman web biasa guna 80.' }, { label: 'https://kedai.example', bucket: 'p443', why: 'Halaman web bermeterai guna 443.' }]} success="22 untuk SSH, 80 untuk web, 443 untuk web bermeterai." />
+</Card>
+
+<Card id="see-ss" type="see">
+Program yang menunggu di satu sambungan sedang **listening** (mendengar). `ss -tln` senaraikannya: TCP, mendengar, nombor. Tekan baris untuk kaunter web.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:80        0.0.0.0:*', target: true }]} prompt="Tekan baris untuk port 80." success="Port 80 ialah kaunter web. Tiada siapa mendengar di 8080." />
+</Card>
+
+<Card id="try-who" type="try">
+Siapa menjawab setiap port? Tambah `-p` untuk nama program. Hanya root boleh lihat, jadi guna `sudo`.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ports" goal={{ lastTyped: '^sudo ss -\\w*p' }} hints={['Taip sudo ss -tlnp', 'Baca bahagian users:(...) di hujung.']} solution={['sudo ss -tlnp']} success="sshd jawab 22. nginx jawab 80." />
+
+<Hint>Tanpa sudo, lajur proses kekal kosong.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda hentikan nginx. Kemudian anda jalankan `curl localhost`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'curl kata ia tak dapat bersambung', correct: true, why: 'Tiada lagi yang mendengar di 80. Panggilan ditolak serta-merta.' }, { label: 'curl tunggu dua minit', why: 'Penolakan datang serta-merta. Menunggu ialah tanda pengawal: pelajaran nanti.' }, { label: 'curl tunjuk halaman kosong', why: 'Tiada program, langsung tiada halaman.' }]} />
+</Card>
+
+<Card id="try-stop" type="try">
+Cuba. Hentikan nginx, tengok dengan `ss -tln`, kemudian hidupkan semula.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ports" goal={{ typed: '^sudo systemctl stop nginx', serviceActive: ['nginx'], portListening: [80] }} hints={['sudo systemctl stop nginx', 'ss -tln kini tunjuk 22 sahaja.', 'sudo systemctl start nginx']} solution={['sudo systemctl stop nginx', 'ss -tln', 'sudo systemctl start nginx']} success="Port 80 senyap, kemudian kembali bersama nginx." />
+</Card>
+
+<Card id="check" type="check">
+Betul atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Satu alamat boleh ada banyak port yang mendengar.', good: true, why: 'kedai mendengar di 22 dan 80 serentak.' }, { text: 'Could not connect bermaksud server itu mati.', good: false, why: 'Selalunya server okey. Cuma port itu tiada orang.' }, { text: 'ss -tln tunjuk port dalam nombor.', good: true, why: '-n bermaksud nombor, bukan nama seperti http.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lihat port mana yang mendengar, dan siapa menjawabnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Huruf dalam `ss -tln`: `t` TCP, `l` mendengar, `n` nombor, `p` program. Tambah `u` untuk UDP. Panduan lama guna `netstat`; Debian 13 tak memasangnya. `/etc/services` senaraikan nama port yang terkenal.
+
+<Interactive name="Mission" id="linux-l3-l03-rep" steps={[{ id: 'ss', text: 'Linux atau WSL: senaraikan port yang mendengar dan programnya.', command: 'sudo ss -tlnp' }, { id: 'guess', text: 'Pilih satu port. Teka programnya sebelum membaca.' }]} success="Anda baca sambungan mesin sebenar." />
+</Card>

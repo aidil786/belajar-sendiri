@@ -1,0 +1,81 @@
+---
+id: docker-d1-boss
+world: 1
+title: Syif malam
+summary: "Anda akan belajar: cari dan baiki tiga container yang rosak dengan sendiri."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, Choice, SortCards, Mission]
+needs: [docker-d1-l11]
+scenario: d1-night-1
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+  - { label: "docker logs", url: "https://docs.docker.com/reference/cli/docker/container/logs/" }
+  - { label: "Port publishing and mapping", url: "https://docs.docker.com/engine/network/port-publishing/" }
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-night-1" commands={['docker ps -a']} label="docker ps -a senaraikan tiga bekas. db: Exited (1). timer: Exited (127). web: Up, dengan tingkap 0.0.0.0:8080->8080/tcp." />
+
+Boss: syif malam! Tukang masak siang tinggalkan tiga bekas rosak. Kedai buka pukul 7. Baiki web, timer dan db.
+</Card>
+
+<Card id="try-web" type="try">
+Bekas 1: web Up, tapi `curl localhost:8080` gagal. Semak tingkapnya, kemudian baiki.
+
+<Interactive name="KitchenSim" scenario="d1-night-1" goal={{ running: ['web'], reachable: 'localhost:8080' }} hints={['docker port web tunjuk tingkapnya. nginx dengar di port 80 dalam bekas.', 'Buang dengan docker rm -f web. Kemudian: docker run -d --name web -p 8080:80 nginx:1.30-alpine']} success="Bekas 1 sudah baik! Pesanan di 8080 sampai ke nginx di 80." />
+
+<Hint>`docker port web` tunjuk ke mana tingkap itu menuju.</Hint>
+</Card>
+
+<Card id="check-port" type="check">
+curl kata `Connection reset by peer`. Kenapa `-p 8080:8080` gagal?
+
+<Interactive name="Choice" options={[{ label: 'Tingkap menuju port 8080 di dalam, tapi nginx dengar di 80', correct: true, why: 'Maksudnya: pesanan sampai ke bekas, tapi tiada orang di kaunter itu.' }, { label: 'Port laptop 8080 sudah diguna', why: 'Kalau begitu, docker run tolak untuk mulakan web. Ia bermula dengan baik.' }, { label: 'nginx sudah berhenti', why: 'docker ps kata Up. Tingkap itu tuju kaunter yang kosong.' }]} />
+</Card>
+
+<Card id="try-timer" type="try">
+Bekas 2: timer terus berhenti dengan `Exited (127)`. Cari sebabnya, kemudian buat ia berdetik selama sejam.
+
+<Interactive name="KitchenSim" scenario="d1-night-2" goal={{ running: ['timer'] }} hints={['Baca kenapa ia berhenti: docker logs timer', 'Buang: docker rm timer. Kemudian: docker run -d --name timer alpine:3.22 sleep 3600']} success="Bekas 2 sudah baik! timer Up dan berdetik." />
+
+<Hint>Baca lognya dulu.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Nota untuk syif malam seterusnya. Di mana anda tengok dulu?
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Baca log' }, { id: 'port', label: 'Semak tingkap' }]} items={[{ label: 'Exited (1), sesaat selepas bermula', bucket: 'logs', why: 'Aplikasi sudah beritahu sebabnya sebelum berhenti.' }, { label: 'Up, tapi pelayar tak dapat sambung', bucket: 'port', why: 'Bekas berjalan. Tingkap itu yang disyaki.' }, { label: 'Exited (127)', bucket: 'logs', why: '127 selalunya bermaksud arahan tak dijumpai. Log sebut namanya.' }, { label: 'curl kata Connection reset by peer', bucket: 'port', why: 'Tingkap itu menuju kaunter kosong di dalam.' }]} success="Bekas berhenti: log. Berjalan tapi tak boleh dicapai: tingkap." />
+</Card>
+
+<Card id="try-db" type="try">
+Bekas 3: db berhenti dengan `Exited (1)`. Baca apa yang ia minta. Kemudian berikan.
+
+<Interactive name="KitchenSim" scenario="d1-night-3" goal={{ running: ['db'], containerEnv: { db: ['POSTGRES_PASSWORD'] } }} hints={['Baca sebabnya: docker logs db', 'Buang: docker rm db. Kemudian: docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine']} success="Bekas 3 sudah baik! db jumpa nota kata laluannya." />
+
+<Hint>Log db sebut tetapan yang ia perlukan.</Hint>
+</Card>
+
+<Card id="check-morning" type="check">
+<Interactive name="KitchenReplay" scenario="d1-night-done" commands={['docker ps', 'curl -sI localhost:8080']} label="Semakan pukul 7 pagi. docker ps senaraikan db, timer dan web, semuanya Up. curl -sI localhost:8080 jawab HTTP/1.1 200 OK." />
+
+Semakan pukul 7 pagi: tiga bekas Up. Tingkap jawab `200 OK`. Kedai boleh dibuka. Syif malam selesai!
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari dan baiki container yang rosak dengan sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Senarai semak syif malam anda. 1: `docker ps -a` tunjuk keadaannya. 2: `docker logs` beritahu kenapa ia berhenti. 3: `docker port` atau `docker inspect` semak tetapannya. 4: buang bekas itu, kemudian jalankan semula dengan betul.
+
+Latihan sebenar (pilihan): rosakkan satu bekas dengan sengaja, kemudian baiki.
+
+<Interactive name="Mission" id="docker-d1-boss-rep" steps={[{ id: 'break', text: 'Mulakan Postgres tanpa kata laluan.', command: 'docker run -d --name db postgres:18-alpine' }, { id: 'state', text: 'Lihat ia berhenti.', command: 'docker ps -a' }, { id: 'why', text: 'Baca sebabnya.', command: 'docker logs db' }, { id: 'fix', text: 'Buang, kemudian jalankan dengan betul.', command: 'docker rm db' }, { id: 'run', text: 'Beri kata laluan latihan.', command: 'docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:18-alpine' }, { id: 'tidy', text: 'Kemas bila selesai.', command: 'docker rm -f db' }]} success="Syif malam sebenar, anda yang buat." />
+</Card>

@@ -1,0 +1,72 @@
+---
+id: git-w04-l07
+world: 4
+title: Fetch vs pull
+summary: "You will learn: how to get your team's new commits, and peek before you join them in."
+minutes: 4
+xp: 20
+interactives: [Courier, TermReplay, Choice, GraphScene, SortCards, Sim]
+needs: [git-w04-l06]
+scenario: w04-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git fetch", url: "https://git-scm.com/docs/git-fetch" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "Getting changes from a remote repository", url: "https://docs.github.com/en/get-started/using-git/getting-changes-from-a-remote-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Courier" scenario="w04-team" commands={['@teammate']} teammate={{ name: 'Aisyah', dir: '/home/aisyah/diary', commits: [{ file: 'index.html', append: '<p>Day 2: Aisyah says hi!</p>\n', message: "Add Aisyah's day 2" }] }} label="Aisyah's parcel lands on GitHub. GitHub now has her new commit. Your laptop still shows the old picture." />
+
+Aisyah just pushed her diary entry. Your laptop has no idea. How do you find out?
+</Card>
+
+<Card id="see-fetch" type="see">
+<Interactive name="TermReplay" scenario="w04-l07" commands={['git fetch', 'git status']} label="git fetch downloads main to origin/main. git status says your branch is behind origin/main by 1 commit." />
+
+**<Term id="fetch">Fetch</Term>** downloads the news. It moves `origin/main` only. Your own main and your files stay put.
+</Card>
+
+<Card id="try-courier" type="try">
+Fetch first and look at your laptop. Then pull Aisyah's entry into main.
+
+<Interactive name="Courier" scenario="w04-l07" actions={['fetch', 'pull']} goal={{ typed: '^git fetch$', branchAt: { main: 'Aisyah' } }} hints={['Tap Fetch first. Watch only origin/main move.', 'Now tap Fetch, then Pull.']} success="Her entry is in your main now. Peek, then join: nice!" />
+
+<Hint>Fetch peeks. Pull joins.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You ran `git fetch`. Did your `index.html` change?
+
+<Interactive name="Choice" options={[{ label: 'No. Fetch never touches your files.', correct: true, why: 'It only updates origin/main. You decide when to join it in.' }, { label: 'Yes. It now has Aisyah’s day.', why: 'Not yet. That needs a pull (or a merge).' }, { label: 'It was deleted', why: 'Fetch is safe. It never deletes your work.' }]} />
+</Card>
+
+<Card id="see-tracking" type="see">
+<Interactive name="GraphScene" scenario="w04-l07" commands={['git fetch']} label="After git fetch, a purple commit appears with the origin/main label on it. The main label stays one commit behind." />
+
+`origin/main` is a **<Term id="remote-tracking-branch">remote-tracking branch</Term>**. It is your laptop's memory of GitHub. It moves only when you fetch, pull or push.
+</Card>
+
+<Card id="check-sort" type="check">
+Fetch or pull? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'fetch', label: 'git fetch' }, { id: 'pull', label: 'git pull' }]} items={[{ label: 'Only downloads the news', bucket: 'fetch', why: 'Fetch never changes your branch.' }, { label: 'Changes your files', bucket: 'pull', why: 'Pull joins the new commits into your branch.' }, { label: 'Safe to run any time', bucket: 'fetch', why: 'Nothing of yours moves.' }, { label: 'Fetch plus join, in one go', bucket: 'pull', why: 'That is exactly what pull does.' }, { label: 'Moves your main branch', bucket: 'pull', why: 'After a pull, main has the new commits.' }]} success="Sorted! Fetch peeks. Pull joins." />
+</Card>
+
+<Card id="try-type" type="try">
+Type it yourself: fetch, look with `git status`, then pull.
+
+<Interactive name="Sim" scenario="w04-l07" panels={['graph']} goal={{ typed: '^git fetch', branchAt: { main: 'Aisyah' } }} hints={['Start with git fetch', 'Then git status, then git pull']} success="Main and origin/main point at the same commit now." />
+
+<Hint>`git status` tells you how far behind you are.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now fetch to peek and pull to catch up.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git pull` is `git fetch` plus a merge (or a rebase: next lesson). After a fetch, `git log --oneline main..origin/main` lists what is new. `git fetch --prune` forgets remote branches that were deleted on GitHub.
+</Card>

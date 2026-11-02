@@ -1,0 +1,69 @@
+---
+id: cicd-c1-l02
+world: 1
+title: CI, delivery atau deployment?
+summary: "Anda akan belajar: beza antara CI, continuous delivery dan continuous deployment."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards]
+needs: [cicd-c1-l01]
+scenario: c1-delivery
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+---
+
+<Card id="hook" type="hook">
+Pasukan Aina kata, “Kami buat CD.” Pasukan Ben pun kata begitu. Aina tekan butang untuk hantar. Pasukan Ben tak pernah tekan. Siapa betul?
+
+<Interactive name="Choice" options={[{ label: 'Kedua-duanya', correct: true, why: 'CD ada dua maksud. Pelajaran ini tunjuk kedua-duanya.' }, { label: 'Aina sahaja', why: 'Ben pun betul. CD boleh bermaksud dua perkara.' }, { label: 'Ben sahaja', why: 'Aina pun betul. CD boleh bermaksud dua perkara.' }]} />
+</Card>
+
+<Card id="try-delivery" type="try">
+Run dahulu. Ujian lulus, kemudian van menunggu. Luluskan untuk hantar.
+
+<Interactive name="ConveyorBelt" scenario="c1-delivery" task={{ type: 'approve' }} success="Dah dihantar! Seseorang kata jalan." />
+
+Setiap perubahan yang lulus dah siap dibungkus. Seseorang tentukan bila ia dihantar. Itulah **<Term id="continuous-delivery">continuous delivery</Term>** (penghantaran berterusan).
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang buang penyemak dari production. Ujian lulus. Apa jadi lepas ni?
+
+<Interactive name="Choice" options={[{ label: 'Ia dihantar sendiri', correct: true, why: 'Tiada siapa perlu tekan jalan. Hijau bermaksud live.' }, { label: 'Ia menunggu selama-lamanya', why: 'Hanya penyemak yang buat ia menunggu. Sekarang tiada.' }, { label: 'Ujian jalan sekali lagi', why: 'Ujian dah lulus. Seterusnya deploy.' }]} />
+</Card>
+
+<Card id="see-deployment" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-deployment" />
+
+Tiada butang, tiada menunggu. Setiap perubahan yang lulus terus live. Itulah **<Term id="continuous-deployment">continuous deployment</Term>** (deployment berterusan). Tekan Run untuk tengok.
+</Card>
+
+<Card id="try-sort" type="try">
+CI, delivery atau deployment? Susun setiap ayat.
+
+<Interactive name="SortCards" buckets={[{ id: 'ci', label: 'CI' }, { id: 'delivery', label: 'Continuous delivery' }, { id: 'deployment', label: 'Continuous deployment' }]} items={[{ label: 'Setiap push diuji oleh robot', bucket: 'ci', why: 'Uji rasa setiap perubahan ialah CI.' }, { label: 'Lint dan ujian jalan pada setiap pull request', bucket: 'ci', why: 'Menyemak, bukan menghantar. Itu CI.' }, { label: 'Release sentiasa sedia. Bos pilih harinya.', bucket: 'delivery', why: 'Sedia dihantar, tapi seseorang kata jalan.' }, { label: 'Production tunggu seseorang luluskan', bucket: 'delivery', why: 'Ada orang tekan bermaksud delivery.' }, { label: 'Setiap merge ke main live dalam beberapa minit', bucket: 'deployment', why: 'Langsung tiada butang. Itu deployment.' }, { label: 'Hijau bermaksud live. Tiada siapa tekan jalan.', bucket: 'deployment', why: 'Van bergerak sendiri.' }]} success="Siap! CI menyemak. Delivery menunggu. Deployment terus jalan." />
+
+<Hint>Ada orang tekan jalan? Itu delivery.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Aplikasi tempahan sebuah klinik perlukan pengurus tandatangan setiap release. Yang mana sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Continuous delivery', correct: true, why: 'Sentiasa sedia, dan pengurus kata jalan.' }, { label: 'Continuous deployment', why: 'Itu terus hantar tanpa tandatangan. Klinik perlukan satu.' }, { label: 'Langsung tiada CI', why: 'Klinik tetap mahu setiap perubahan diuji.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan CI, continuous delivery dan continuous deployment.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ketiga-tiganya perlukan CI dahulu. Continuous deployment perlukan paling banyak kepercayaan pada ujian. Dalam GitHub, penyemak wajib ialah langkah “seseorang kata jalan”. Pelan percuma benarkannya dalam repo awam.
+
+Latihan sebenar (pilihan): dalam repo awam, buka Settings, kemudian Environments. Tambah `production` dengan anda sebagai penyemak. Kemudian tambah `environment: production` pada job deploy.
+</Card>

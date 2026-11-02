@@ -1,0 +1,77 @@
+---
+id: docker-d1-l04
+world: 1
+title: "Keadaan container: ps -a dan inspect"
+summary: "Anda akan belajar: keadaan yang container lalui, dan cara membacanya."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, KitchenSim, TimelineTap, Choice, SwipeJudge, Mission]
+needs: [docker-d1-l03]
+scenario: d1-states
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker ps", url: "https://docs.docker.com/reference/cli/docker/container/ls/" }
+  - { label: "docker inspect", url: "https://docs.docker.com/reference/cli/docker/inspect/" }
+  - { label: "docker stop", url: "https://docs.docker.com/reference/cli/docker/container/stop/" }
+  - { label: "docker pause", url: "https://docs.docker.com/reference/cli/docker/container/pause/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-states" commands={['docker ps']} label="docker ps senaraikan satu bekas: web, Up. Bekas bernama job tiada dalam senarai." />
+
+Anda buat dua bekas: web dan job. Tapi `docker ps` tunjuk web sahaja. Ke mana job pergi?
+</Card>
+
+<Card id="try-ps-a" type="try">
+`docker ps` senaraikan bekas yang berjalan sahaja. Tambah `-a` untuk lihat semua, termasuk yang berhenti.
+
+<Interactive name="KitchenSim" scenario="d1-states" goal={{ lastTyped: '^docker (ps|container ls) (-a|--all)$' }} hints={['Taip docker ps -a']} success="Itu dia job: Exited (0). Ia sudah siap kerjanya." />
+
+<Hint>Taip `docker ps -a`.</Hint>
+</Card>
+
+<Card id="see-states" type="see">
+Bekas ada **<Term id="container-lifecycle">kitaran hidup</Term>**. Setiap arahan gerakkannya satu langkah. Ketik setiap langkah.
+
+<Interactive name="TimelineTap" events={[{ when: 'docker create', title: 'Created', text: 'Sudah dibungkus dan dilabel. Belum dimulakan.' }, { when: 'docker start', title: 'Running', text: 'Aplikasi di dalam sedang bekerja. ps kata Up.' }, { when: 'docker pause', title: 'Paused', text: 'Dibekukan seketika. docker unpause bangunkannya.' }, { when: 'docker stop', title: 'Exited', text: 'Aplikasi berhenti. Bekas dan failnya kekal.' }, { when: 'docker rm', title: 'Removed', text: 'Bekas itu hilang terus.' }]} />
+</Card>
+
+<Card id="try-pause" type="try">
+Bekukan web dengan `docker pause web`. Kemudian semak `docker ps`. Apa kata STATUS?
+
+<Interactive name="KitchenSim" scenario="d1-states" goal={{ paused: ['web'], lastTyped: '^docker (ps|container ls)' }} hints={['Taip docker pause web', 'Kemudian taip docker ps']} success="(Paused)! docker unpause web bangunkannya semula." />
+</Card>
+
+<Card id="predict" type="predict">
+job tunjuk `Exited (0)`. Adakah itu teruk?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. 0 bermaksud ia selesai dengan baik.', correct: true, why: 'Bekas hidup selagi program utamanya berjalan. job paparkan satu baris, kemudian siap.' }, { label: 'Ya. Exited selalu bermaksud rosak.', why: 'Exited cuma bermaksud program tamat. Nombor itu beritahu bagaimana.' }, { label: 'Ya. Ia paparkan 0 baris.', why: 'Nombor itu kod keluar, bukan bilangan baris. 0 bermaksud semua okey.' }]} />
+</Card>
+
+<Card id="see-inspect" type="see">
+<Interactive name="KitchenReplay" scenario="d1-states" commands={["docker inspect -f '{{.State.Status}}' web", "docker inspect -f '{{.State.ExitCode}}' job"]} label="docker inspect dengan -f paparkan satu butiran. Status web ialah running. Kod keluar job ialah 0." />
+
+**docker inspect** baca label penuh pada bekas: setiap butiran yang Docker tahu. `-f` pilih satu baris sahaja.
+</Card>
+
+<Card id="check" type="check">
+Betul, atau belum tepat? Leret setiap kad.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'docker ps tunjuk bekas yang berhenti juga.', good: false, why: 'Yang berjalan sahaja. Tambah -a untuk semua.' }, { text: 'Exited (0) bermaksud kerja itu selesai dengan baik.', good: true, why: '0 ialah kod keluar semua okey.' }, { text: 'Bekas yang paused masih wujud.', good: true, why: 'Ia dibekukan seketika. docker unpause bangunkannya.' }, { text: 'docker stop padam bekas itu.', good: false, why: 'Bekas kekal, Exited. docker rm yang padam.' }, { text: 'docker inspect tunjuk setiap butiran bekas.', good: true, why: 'Tambah -f untuk pilih satu sahaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca keadaan container dan kenal yang rosak.
+</Card>
+
+<Card id="deeper" type="deeper">
+Keadaan yang jarang: `restarting` (polisi restart hidupkannya semula), `removing` dan `dead`. `docker ps --filter status=exited` senaraikan bekas yang berhenti sahaja. `docker stop` minta dengan baik, kemudian paksa bekas selepas 10 saat.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l04-rep" steps={[{ id: 'web', text: 'Mulakan bekas di belakang.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'stop', text: 'Hentikannya. Ia masih wujud.', command: 'docker stop web' }, { id: 'all', text: 'Cari dengan -a.', command: 'docker ps -a' }, { id: 'state', text: 'Tanya keadaannya.', command: "docker inspect -f '{{.State.Status}}' web" }, { id: 'tidy', text: 'Buang bekas itu.', command: 'docker rm web' }]} success="Anda sudah ikut kitaran hidup satu bekas." />
+</Card>

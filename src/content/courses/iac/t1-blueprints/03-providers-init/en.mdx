@@ -1,0 +1,86 @@
+---
+id: iac-t1-l03
+world: 1
+title: Providers and init
+summary: "You will learn: what providers are, what tofu init does, and how to build your first stall."
+minutes: 4
+xp: 20
+interactives: [TofuSim, SortCards, Choice, SpotLines]
+needs: [iac-t1-l02]
+scenario: t1-first-blueprint
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu init", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "OpenTofu: providers", url: "https://opentofu.org/docs/language/providers/" }
+  - { label: "OpenTofu: provider requirements", url: "https://opentofu.org/docs/language/providers/requirements/" }
+  - { label: "OpenTofu: dependency lock file", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+---
+
+<Card id="hook" type="hook">
+A new folder, straight from Git. Type `tofu plan`. What does OpenTofu say?
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" goal={{ typed: '^tofu plan' }} hints={['Type tofu plan and press Enter.']} success="An error, on purpose. Read the last lines: run tofu init." />
+
+`Error: Inconsistent dependency lock file`. Plain words: the tools are not here yet.
+</Card>
+
+<Card id="see-providers" type="see">
+OpenTofu can't make files or names by itself. **<Term id="provider">Providers</Term>** do the work, like suppliers. Who supplies what?
+
+<Interactive name="SortCards" buckets={[{ id: 'random', label: 'random (names and numbers)' }, { id: 'local', label: 'local (files on this computer)' }]} items={[{ label: 'A stall name: `random_pet`', bucket: 'random', why: 'random makes random names, numbers and strings.' }, { label: 'A sign file: `local_file`', bucket: 'local', why: 'local writes files on this computer.' }, { label: 'A table number: `random_integer`', bucket: 'random', why: 'A random whole number comes from random.' }, { label: 'A menu file', bucket: 'local', why: 'Files are local work.' }]} success="The first word of a resource type names its provider." />
+</Card>
+
+<Card id="see-version" type="check">
+`providers.tf` lists the suppliers. `~> 3.7` means "3.7 or newer, but not 4". Which version may init pick?
+
+```hcl
+random = {
+  source  = "hashicorp/random"
+  version = "~> 3.7"
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '3.9.1', correct: true, why: 'Newer than 3.7, still a 3. Allowed.' }, { label: '4.0.0', why: 'A 4 could break things. ~> stops before 4.' }, { label: '3.6.0', why: 'Older than 3.7. Not allowed.' }]} />
+</Card>
+
+<Card id="try-init" type="try">
+Now get the suppliers. Type `tofu init`.
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" goal={{ initialized: true }} hints={['Type tofu init and press Enter.']} success="init done. The providers are here, and the lock file is written." />
+
+<Hint>Type `tofu init`.</Hint>
+</Card>
+
+<Card id="check-lines" type="check">
+This is what init printed. Tap the two lines where a download starts.
+
+<Interactive name="SpotLines" lines={[{ text: '- Finding hashicorp/local versions matching "~> 2.5"...' }, { text: '- Finding hashicorp/random versions matching "~> 3.7"...' }, { text: '- Installing hashicorp/local v2.9.1...', target: true }, { text: '- Installing hashicorp/random v3.9.1...', target: true }, { text: '- Installed hashicorp/local v2.9.1 (signed, key ID 0C0AF313E5FD9F80)' }, { text: '- Installed hashicorp/random v3.9.1 (signed, key ID 0C0AF313E5FD9F80)' }, { text: 'OpenTofu has created a lock file .terraform.lock.hcl to record the provider' }]} success="Find, install, installed. The lock file remembers v2.9.1 and v3.9.1." />
+
+`.terraform.lock.hcl` is the **<Term id="lock-file">lock file</Term>**: a receipt of the versions. Commit it to Git.
+</Card>
+
+<Card id="try-loop" type="try">
+Your first real build. Type `tofu plan` and read it. Then `tofu apply`, and `yes`.
+
+<Interactive name="TofuSim" scenario="t1-first-blueprint" intro={['tofu init']} goal={{ resourceInState: ['random_pet.stall', 'local_file.sign'], outputExists: ['stall_name'] }} hints={['Type tofu plan first. It changes nothing.', 'Then type tofu apply, and yes.']} success="You drew it, inspected it, built it. Look at stall_name!" />
+
+<Hint>`tofu plan`, then `tofu apply`, then `yes`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You run `tofu init` again in the same folder. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It checks, reuses what it has, and finishes. Safe.', correct: true, why: 'init is safe to repeat. The lock file keeps the same versions.' }, { label: 'It deletes the stall you built', why: 'init never touches what is built. Only apply and destroy do.' }, { label: 'It picks brand new versions', why: 'The lock file keeps the old picks. tofu init -upgrade asks for newer ones.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain providers and run your first init, plan and apply.
+</Card>
+
+<Card id="deeper" type="deeper">
+init also makes a hidden `.terraform/` folder with the provider programs. Keep it out of Git; commit `.terraform.lock.hcl`. OpenTofu downloads providers from its own registry, `registry.opentofu.org`. `terraform init` does the same job in Terraform, from HashiCorp's registry.
+</Card>

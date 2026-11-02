@@ -1,0 +1,63 @@
+---
+id: git-w10-l10
+world: 10
+title: git worktree
+summary: "Anda akan belajar: cara kerja di dua branch serentak, dalam dua folder, dengan satu repo."
+minutes: 3
+xp: 15
+interactives: [Choice, TermReplay, Sim, OrderList]
+needs: [git-w10-l09]
+scenario: w10-worktree
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git worktree", url: "https://git-scm.com/docs/git-worktree" }
+---
+
+<Card id="hook" type="hook">
+Anda separuh jalan buat perubahan besar. Kemudian ada laporan pepijat: baiki `main` sekarang juga! Cara mana yang tak usik kerja separuh siap anda?
+
+<Interactive name="Choice" options={[{ label: 'Buka folder kedua daripada repo yang sama', correct: true, why: 'Itulah git worktree. Kerja separuh siap anda kekal di tempatnya.' }, { label: 'Commit kerja separuh siap dulu', why: 'Boleh, tapi kerja yang rosak masuk dalam sejarah anda.' }, { label: 'Salin seluruh folder dengan tangan', why: 'Nanti ada dua repo yang perlu diselaraskan. Bersepah!' }]} />
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="TermReplay" scenario="w10-worktree" commands={['git worktree add ../diary-fix -b fix', 'git worktree list']} label="git worktree add buat ../diary-fix di branch baru fix. git worktree list tunjuk dua folder: diary di main dan diary-fix di fix." />
+
+`git worktree add` buat folder kerja kedua, di branch (cabang) sendiri. Repo sama, sejarah sama. Setiap folder ialah **<Term id="worktree">worktree</Term>**.
+</Card>
+
+<Card id="try-add" type="try">
+Buat worktree di `../diary-fix` pada branch baru bernama `fix`.
+
+<Interactive name="Sim" scenario="w10-worktree" panels={['graph']} goal={{ worktrees: ['/home/you/diary-fix'], branches: ['fix'] }} hints={['Taip git worktree add ../diary-fix -b fix', 'Kemudian git worktree list untuk semak']} success="Dua folder, satu repo! diary di main, diary-fix di fix." />
+
+<Hint>Taip `git worktree add ../diary-fix -b fix`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda commit pembaikan dalam `diary-fix`. Kemudian anda balik ke `diary`. Boleh nampak commit itu di sana?
+
+<Interactive name="Choice" options={[{ label: 'Boleh. Kedua-dua folder kongsi satu repo', correct: true, why: 'Satu sejarah, banyak folder. git log --all dalam diary tunjuk pembaikan itu.' }, { label: 'Tak boleh, sehingga anda push dan pull', why: 'Tak perlu push. Ia repo yang sama dalam komputer yang sama.' }, { label: 'Tak boleh, worktree ialah repo berasingan', why: 'Worktree cuma folder kerja lain. Commit dikongsi.' }]} />
+</Card>
+
+<Card id="see-remove" type="see">
+<Interactive name="TermReplay" scenario="w10-worktree" commands={['git worktree add ../diary-fix -b fix', 'git worktree remove ../diary-fix', 'git worktree list', 'git branch']} label="Selepas git worktree remove, senarai tunjuk diary sahaja. git branch masih senaraikan fix dan main." />
+
+Dah siap? `git worktree remove` padam folder tambahan itu. Branch dan commitnya kekal selamat.
+</Card>
+
+<Card id="check-order" type="check">
+Susun perjalanan baiki pepijat ini.
+
+<Interactive name="OrderList" items={['git worktree add ../diary-fix -b fix', 'cd ../diary-fix', 'Baiki pepijat dan commit', 'cd ../diary', 'git worktree remove ../diary-fix']} label="Langkah pertama di atas" success="Lancar! Perubahan besar anda tak berganjak langsung. Merge fix bila anda dah sedia." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kerja di dua branch serentak, dalam dua folder.
+</Card>
+
+<Card id="deeper" type="deeper">
+Satu branch hanya boleh di-checkout dalam satu worktree pada satu masa. Git tolak yang kedua. `git worktree remove` menolak kalau folder itu ada perubahan; `--force` buang perubahan itu. Terpadam folder worktree dengan tangan? `git worktree prune` bersihkan nota Git tentangnya.
+</Card>

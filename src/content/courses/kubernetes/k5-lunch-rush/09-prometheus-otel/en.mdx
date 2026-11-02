@@ -1,0 +1,73 @@
+---
+id: k8s-k5-l09
+world: 5
+title: Prometheus, Grafana and OpenTelemetry
+summary: "You will learn: how numbers over time, charts and traces show what happened last Tuesday."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, SwipeJudge]
+needs: [k8s-k5-l08]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Grafana documentation", url: "https://grafana.com/docs/grafana/latest/" }
+  - { label: "OpenTelemetry: what is it?", url: "https://opentelemetry.io/docs/what-is-opentelemetry/" }
+  - { label: "Kubernetes: system metrics", url: "https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/" }
+---
+
+<Card id="hook" type="hook">
+Last Tuesday at 12:30 the shop was slow. `kubectl top` only shows right now. How do you see last Tuesday?
+
+<Interactive name="Choice" options={[{ label: 'Keep the numbers over time in a monitoring tool', correct: true, why: 'Numbers with times let you look back, and draw charts.' }, { label: 'Scroll up in kubectl top', why: 'It prints one moment. There is nothing above it.' }, { label: 'Ask metrics-server for history', why: 'It keeps only the latest reading.' }]} />
+</Card>
+
+<Card id="see-prom" type="see">
+**<Term id="prometheus">Prometheus</Term>** is a clerk with a clipboard. It visits every stall on a timer and writes the numbers down, with the time. Put its rounds in order.
+
+<Interactive name="OrderList" items={['Your app shows its numbers at /metrics', 'Prometheus visits (scrapes) /metrics on a timer', 'It stores each number with its time', 'You ask questions in PromQL', 'A chart or an alert shows the answer']} label="First step at the top" success="That is the round. Prometheus pulls; your app just shows." />
+</Card>
+
+<Card id="see-grafana" type="see">
+**<Term id="grafana">Grafana</Term>** is the big screen on the wall. It draws charts from numbers that tools like Prometheus keep. Who does what?
+
+<Interactive name="SortCards" buckets={[{ id: 'prom', label: 'Prometheus' }, { id: 'graf', label: 'Grafana' }]} items={[{ label: 'Visits /metrics on a timer', bucket: 'prom', why: 'Prometheus does the rounds.' }, { label: 'Stores numbers with their time', bucket: 'prom', why: 'It keeps a time-series store.' }, { label: 'Shows a dashboard of charts', bucket: 'graf', why: 'Grafana is the big screen.' }, { label: 'Lets you arrange panels on a screen', bucket: 'graf', why: 'Dashboards are built in Grafana.' }]} success="Sorted! One collects, one shows." />
+</Card>
+
+<Card id="check-trace" type="check">
+A **<Term id="trace">trace</Term>** follows one order's whole journey. It times each step. Here is order 42:
+
+```text
+gateway   2 ms
+web      12 ms
+api      30 ms
+db      900 ms
+```
+
+Where is the slow part?
+
+<Interactive name="Choice" compact options={[{ label: 'db', correct: true, why: '900 of 944 ms. Look at the database first.' }, { label: 'gateway', why: 'Only 2 ms. The entrance is fast.' }, { label: 'api', why: '30 ms is fine. Something else takes most of the time.' }]} />
+</Card>
+
+<Card id="see-signals" type="see">
+Metrics, logs and traces are three kinds of clues. **<Term id="opentelemetry">OpenTelemetry</Term>** (OTel) is one shared way to collect all three. Sort each clue.
+
+<Interactive name="SortCards" buckets={[{ id: 'metric', label: 'Metric (a number over time)' }, { id: 'log', label: 'Log (a line the app wrote)' }, { id: 'trace', label: 'Trace (one order’s journey)' }]} items={[{ label: 'CPU at 80% at 12:30', bucket: 'metric', why: 'A number with a time.' }, { label: 'order 42 oven too cold', bucket: 'log', why: 'A line the cook wrote.' }, { label: 'order 42: gateway, web, api, db, with times', bucket: 'trace', why: 'One request, step by step.' }, { label: '200 orders per second', bucket: 'metric', why: 'A rate, counted over time.' }]} success="Three clues, one kit." />
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Add OTel to the app once. Send its data to the tool you choose.', good: true, why: 'Your code stays the same if you switch tools later.' }, { text: 'Use metrics-server for last month’s charts', good: false, why: 'It keeps no history. Use Prometheus or another store.' }, { text: 'Print customer passwords in logs to debug faster', good: false, why: 'Logs travel far. Never write secrets into them.' }, { text: 'Alert on what customers feel, like slow orders', good: true, why: 'A slow checkout matters more than one busy CPU.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain metrics, logs and traces, and who keeps them.
+</Card>
+
+<Card id="deeper" type="deeper">
+Many teams install Prometheus and Grafana together with a Helm chart. Kubernetes parts show their own `/metrics` too. An OTel Collector can receive, change and send on all three signals. Real rep (optional): try a ready lab on Killercoda. Or use a throwaway kind cluster.
+</Card>

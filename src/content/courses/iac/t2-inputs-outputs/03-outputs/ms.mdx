@@ -1,0 +1,71 @@
+---
+id: iac-t2-l03
+world: 2
+title: Output
+summary: "Anda akan belajar: kongsi nilai yang dibina dengan output, dan baca dengan tofu output."
+minutes: 3
+xp: 15
+interactives: [Choice, TofuSim, CommandBuilder, SwipeJudge]
+needs: [iac-t2-l02]
+scenario: t2-outputs
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: output values", url: "https://opentofu.org/docs/language/values/outputs/" }
+  - { label: "tofu output", url: "https://opentofu.org/docs/cli/commands/output/" }
+---
+
+<Card id="hook" type="hook">
+OpenTofu pilih nama gerai secara rawak. Pencetak menu perlukan nama itu. Di mana rakan anda boleh jumpa?
+
+<Interactive name="Choice" options={[{ label: 'Dalam output yang pelan kongsi selepas apply', correct: true, why: 'Output serahkan nilai yang dibina kepada manusia dan skrip.' }, { label: 'Dengan korek terraform.tfstate', why: 'Boleh, tapi bersepah. Output beri jawapan yang kemas.' }, { label: 'Mereka teka', why: 'Rawak bermaksud tiada siapa boleh teka. Kongsikan.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Bina dulu, kemudian baca output: `tofu apply`, `yes`, kemudian `tofu output`.
+
+<Interactive name="TofuSim" scenario="t2-outputs" open="outputs.tf" goal={{ outputExists: ['stall_name'], lastTyped: '^tofu output' }} hints={['Taip tofu apply, kemudian yes.', 'Kemudian taip tofu output.']} success="stall_name = nama yang OpenTofu pilih. Sesiapa boleh baca sekarang." />
+
+**<Term id="output-value">Output</Term>** ialah nilai yang pelan kongsi selepas apply.
+</Card>
+
+<Card id="see-raw" type="see">
+Satu skrip cuma perlukan nama itu, tanpa tanda petik. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'cakap dengan OpenTofu' }, { text: 'output', means: 'baca output' }, { text: '-raw', means: 'nilai sahaja, tanpa tanda petik' }, { text: 'stall_name', means: 'output yang mana' }]} decoys={[{ text: 'apply', means: 'bina benda' }, { text: '-json', means: 'semua output sebagai JSON' }]} success="tofu output -raw stall_name paparkan nama itu sahaja." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda cuma tambah satu blok output baru, tiada yang lain. Apa plan kata?
+
+<Interactive name="Choice" options={[{ label: '0 to add, 0 to change, 0 to destroy', correct: true, why: 'Tiada benda sebenar berubah. Plan senaraikannya di bawah Changes to Outputs.' }, { label: '1 to add', why: 'Output bukan resource. Tiada apa dibina.' }, { label: 'Semuanya diganti', why: 'Output cuma baca nilai. Ia tak pernah bina semula apa-apa.' }]} />
+</Card>
+
+<Card id="try-add" type="try">
+Buka `outputs.tf`. Tambah output di bawah. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t2-outputs" open="outputs.tf" goal={{ outputEquals: { sign_filename: 'sign.txt' } }} hints={['Tambah blok baru di bawah blok pertama, dalam outputs.tf.', 'output "sign_filename" { value = local_file.sign.filename }', 'Kemudian tofu apply, dan yes.']} success="sign_filename = sign.txt. Anda kongsi nilai kedua." />
+
+```hcl
+output "sign_filename" {
+  value = local_file.sign.filename
+}
+```
+</Card>
+
+<Card id="check-swipe" type="check">
+Output yang baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Nama gerai, untuk pencetak menu', good: true, why: 'Nilai dibina yang seseorang perlukan.' }, { text: 'Nama fail yang skrip baca', good: true, why: 'tofu output -raw serahkannya dengan kemas.' }, { text: 'Kata laluan pangkalan data, tanpa apa-apa yang menyoroknya', good: false, why: 'Tanda output rahsia dengan sensitive = true. Ia masih dalam state (Dunia T3).' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi nilai yang dibina dengan output.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu output -json` paparkan semua output sebagai JSON untuk program lain. `sensitive = true` pada output sorok nilainya di skrin; `tofu output -raw` masih tunjuk. Output juga hantar nilai keluar dari modul (Dunia T4).
+</Card>

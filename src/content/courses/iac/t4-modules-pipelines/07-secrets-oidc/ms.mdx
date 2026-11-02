@@ -1,0 +1,73 @@
+---
+id: iac-t4-l07
+world: 4
+title: Rahsia dan OIDC
+summary: "Anda akan belajar: cara pipeline dapat akses cloud dan kata laluan tanpa simpan kunci dalam fail."
+minutes: 4
+xp: 20
+interactives: [SpotTheHole, OrderList, Choice, TofuSim, SortCards]
+needs: [iac-t4-l06]
+scenario: t4-secret-env
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GitHub: OpenID Connect", url: "https://docs.github.com/en/actions/concepts/security/openid-connect" }
+  - { label: "GitHub: OIDC dalam AWS", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" }
+  - { label: "GitHub: guna secrets", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "OpenTofu: pemboleh ubah persekitaran (TF_VAR_)", url: "https://opentofu.org/docs/cli/config/environment-variables/" }
+---
+
+<Card id="hook" type="hook">
+Ben salin workflow plan ini dari sebuah blog. Cari tiga lubangnya.
+
+<Interactive name="SpotTheHole" file=".github/workflows/plan.yml" workflow={['name: Plan', 'on: pull_request', { text: 'permissions: write-all', hole: { kind: 'writeAll' } }, 'jobs:', '  plan:', '    runs-on: ubuntu-latest', '    env:', { text: '      AWS_SECRET_ACCESS_KEY: pasted-key-example', hole: { attack: 'Sesiapa yang boleh baca repo boleh guna kunci ini. Ia tak pernah luput.', fix: 'Padam. Guna OIDC: cloud pinjamkan kunci yang cepat luput.', fixCode: '' } }, '    steps:', '      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1', '      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2', { text: '      - run: echo "Password is ${{ secrets.DB_PASSWORD }}"', hole: { kind: 'secretEcho' } }, '      - run: tofu init -input=false', '      - run: tofu plan -input=false']} success="Tiga lubang: hak terlalu banyak, kunci tersimpan, rahsia dicetak." />
+</Card>
+
+<Card id="see-oidc" type="see">
+**<Term id="oidc" course="cicd">OIDC</Term>** macam pas pelawat. Job buktikan siapa dirinya, dan cloud pinjamkan kunci yang cepat luput. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Job minta token ID jangka pendek dari GitHub', 'Ia tunjuk token itu kepada cloud', 'Cloud semak: repo dan branch yang betul?', 'Cloud pinjamkan kunci yang cepat luput', 'tofu plan berjalan dengan kunci itu']} label="Langkah pertama di atas" success="Tiada kunci disimpan di mana-mana. Setiap larian dapat kunci sendiri, sekejap." />
+</Card>
+
+<Card id="predict" type="predict">
+Kebenaran mana yang benarkan job minta token ID itu dari GitHub?
+
+<Interactive name="Choice" options={[{ label: 'id-token: write', correct: true, why: 'Ia benarkan job minta token OIDC. Tambah contents: read juga.' }, { label: 'contents: write', why: 'Itu ubah repo. Ia tiada kaitan dengan token.' }, { label: 'write-all', why: 'Terlalu banyak. Beri job apa yang ia perlu sahaja.' }]} />
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+```
+</Card>
+
+<Card id="try-env" type="try">
+Kata laluan pangkalan data tak boleh duduk dalam fail. Beri melalui pemboleh ubah persekitaran: `export TF_VAR_db_password=teh-tarik-42`. Kemudian `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t4-secret-env" goal={{ typed: '^export TF_VAR_db_password=', resourceInState: ['local_sensitive_file.db_conf'] }} hints={['Taip export TF_VAR_db_password=teh-tarik-42', 'Kemudian tofu apply dan yes. Plan tunjuk (sensitive value).']} success="Kata laluan datang dari persekitaran, bukan dari fail dalam Git." />
+
+<Hint>`TF_VAR_name` isi `var.name`. Dalam CI, ia datang dari secret.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Susun setiap cara bawa rahsia ke dalam pipeline.
+
+<Interactive name="SortCards" buckets={[{ id: 'safe', label: 'Selamat' }, { id: 'leaky', label: 'Bocor' }]} items={[{ label: 'GitHub secret, diberi sebagai TF_VAR_db_password', bucket: 'safe', why: 'Disimpan bersulit, disorok dalam log, tak pernah dalam Git.' }, { label: 'OIDC: kunci cloud jangka pendek', bucket: 'safe', why: 'Tiada apa untuk dicuri esok.' }, { label: 'Kunci cloud ditampal dalam fail workflow', bucket: 'leaky', why: 'Sesiapa yang baca repo boleh guna.' }, { label: 'echo rahsia untuk debug satu larian', bucket: 'leaky', why: 'Log disalin dan dikongsi. Jangan sekali-kali cetak rahsia.' }, { label: 'terraform.tfvars dengan kata laluan, di-commit', bucket: 'leaky', why: 'Sejarah Git simpan selamanya.' }]} success="Rahsia datang dari peti besi atau pas pelawat, bukan dari fail." />
+</Card>
+
+<Card id="check-oidc" type="check">
+Pasukan sudah tukar ke OIDC. Apa yang repo simpan untuk cloud sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tiada kunci: cuma role mana yang perlu diminta', correct: true, why: 'Nama role bukan rahsia. Cloud percaya pas pelawat, bukan kunci tersimpan.' }, { label: 'Kunci jangka panjang, dalam secret', why: 'Itu cara lama. OIDC buangnya.' }, { label: 'Kata laluan cloud dalam main.tf', why: 'Jangan sekali-kali. Rahsia kekal di luar pelan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri pipeline akses cloud dan rahsia tanpa simpan kunci.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peraturan percaya di cloud patut namakan repo dan branch anda. Jadi repo lain tak boleh pinjam pas itu. Letak job apply dalam GitHub environment dengan penyemak wajib. Kursus CI/CD pergi lebih dalam: [Dunia C3: OIDC](/ms/cicd/release-deploy/oidc/). Ingat: daftar masih boleh simpan rahsia (T3·7).
+</Card>

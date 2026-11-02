@@ -1,0 +1,70 @@
+---
+id: obs-o1-l08
+world: 1
+title: "Prometheus, Grafana, OpenTelemetry: who does what"
+summary: "You will learn: which tool collects, which one draws, which one sends, and how a number travels to your phone."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, CommandBuilder, Transcript, Mission]
+needs: [obs-o1-l07]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Prometheus: installation (Docker)", url: "https://prometheus.io/docs/prometheus/latest/installation/" }
+  - { label: "Grafana: introduction", url: "https://grafana.com/docs/grafana/latest/introduction/" }
+  - { label: "OpenTelemetry: what is OpenTelemetry?", url: "https://opentelemetry.io/docs/what-is-opentelemetry/" }
+---
+
+<Card id="hook" type="hook">
+A friend says: “<Term id="grafana">Grafana</Term> keeps all our metrics.” True?
+
+<Interactive name="Choice" options={[{ label: 'No. Grafana draws. Prometheus keeps the metrics.', correct: true, why: 'Yes. Grafana asks a data source, like Prometheus, and draws the answer.' }, { label: 'Yes. Grafana is a database.', why: 'Grafana stores dashboards, not your metrics.' }, { label: 'Only on Mondays', why: 'Nice try. Grafana draws every day, and stores no metrics.' }]} />
+</Card>
+
+<Card id="see-path" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'The app', text: 'It counts orders and shows them at /metrics.' }, { when: '2', title: 'Prometheus scrapes', text: 'Every 15 s it copies the numbers and keeps them.' }, { when: '3', title: 'Grafana draws', text: 'It asks Prometheus with PromQL and draws the screen.' }, { when: '4', title: 'A rule checks', text: 'Prometheus checks alert rules on a timer.' }, { when: '5', title: 'Alertmanager calls', text: 'It sends the alert to the on-call phone.' }]} />
+
+Follow one number from the till to your phone. **<Term id="prometheus">Prometheus</Term>** sits in the middle. Tap each step.
+</Card>
+
+<Card id="try-sort" type="try">
+Who does what? Sort each job.
+
+<Interactive name="SortCards" buckets={[{ id: 'prom', label: 'Prometheus' }, { id: 'graf', label: 'Grafana' }, { id: 'otel', label: 'OpenTelemetry' }]} items={[{ label: 'Scrapes /metrics on a timer', bucket: 'prom', why: 'Prometheus pulls the numbers.' }, { label: 'Keeps metrics with their times', bucket: 'prom', why: 'Its own time-series database.' }, { label: 'Runs PromQL and alert rules', bucket: 'prom', why: 'Questions and alarms live there.' }, { label: 'Draws dashboards from many data sources', bucket: 'graf', why: 'Grafana is the big screen.' }, { label: 'Shows metrics, logs and traces side by side', bucket: 'graf', why: 'One screen, many sources.' }, { label: 'Libraries that make metrics, logs and traces in your app', bucket: 'otel', why: 'The OpenTelemetry SDKs.' }, { label: 'A collector that receives and forwards data', bucket: 'otel', why: 'The OpenTelemetry Collector.' }]} success="Collect, draw, send. Three jobs, three tools." />
+</Card>
+
+<Card id="predict" type="predict">
+<Term id="opentelemetry">OpenTelemetry</Term> sends metrics, logs and traces. Where does it keep them?
+
+<Interactive name="Choice" options={[{ label: 'Nowhere. It sends them to a backend, like Prometheus.', correct: true, why: 'Yes. Its docs say it is not an observability backend.' }, { label: 'In its own database', why: 'It has no database. Storage is left to other tools.' }, { label: 'In Grafana', why: 'Grafana draws. It is not where the data lives.' }]} />
+</Card>
+
+<Card id="try-run" type="try">
+Start a real Prometheus on your laptop. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker run -d', means: 'start a container in the background' }, { text: '--name prom-peek', means: 'call it prom-peek' }, { text: '-p 9090:9090', means: 'open port 9090 on your laptop' }, { text: 'quay.io/prometheus/prometheus:v3.13.5', means: 'the official Prometheus 3.13 image' }]} decoys={[{ text: 'grafana/grafana', means: 'Grafana draws. It does not collect.' }, { text: '-p 3000:3000', means: 'Grafana’s usual port, not Prometheus’s' }]} success="That starts Prometheus 3.13 on port 9090." />
+
+<Hint>Docker first, then a name, then the port, then the image.</Hint>
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="Transcript" title="bash" label="curl asks Prometheus if it is ready. It answers: Prometheus Server is Ready." lines={[{ cmd: 'curl localhost:9090/-/ready' }, { out: 'Prometheus Server is Ready.', color: 'green' }]} />
+
+Prometheus answered. The control room is open. This answer is real, from Prometheus 3.13.
+</Card>
+
+<Card id="win" type="win">
+You can now say who collects, who draws and who sends.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real control room has people staring at screens. Here, machines watch, and people are called only by alerts. And Prometheus cannot see the shop. It only knows numbers that apps and exporters share.
+
+Real rep (needs Docker):
+
+<Interactive name="Mission" id="obs-o1-l08-real" steps={[{ id: 'run', text: 'Start Prometheus.', command: 'docker run -d --name prom-peek -p 9090:9090 quay.io/prometheus/prometheus:v3.13.5' }, { id: 'ready', text: 'Ask if it is ready.', command: 'curl localhost:9090/-/ready' }, { id: 'ui', text: 'Open http://localhost:9090 in your browser. Type up in the query box and run it. You see 1: it watches itself.' }, { id: 'clean', text: 'Clean up.', command: 'docker rm -f prom-peek' }]} success="Your first real control room ran on your laptop." />
+</Card>

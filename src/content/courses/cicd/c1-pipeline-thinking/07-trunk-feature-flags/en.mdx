@@ -1,0 +1,69 @@
+---
+id: cicd-c1-l07
+world: 1
+title: Trunk-based work and feature flags
+summary: "You will learn: how small daily merges and feature flags keep main ready to ship."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, ConveyorBelt, SortCards, SwipeJudge]
+needs: [cicd-c1-l06]
+scenario: c1-flag-matrix
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Running variations of jobs (matrix)", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations" }
+  - { label: "Managing a merge queue", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+---
+
+<Card id="hook" type="hook">
+Git World 6 had a lesson called [Trunk-based and feature flags](/en/git/team-workflows/trunk-based/). Now your team merges into main 20 times a day. What must stay true about main?
+
+<Interactive name="Choice" options={[{ label: 'It always passes the line, so it is safe to ship', correct: true, why: 'Yes. Any merge could go out next.' }, { label: 'It never holds half-built code', why: 'Half-built code is fine, if it is switched off.' }, { label: 'Only one person may merge', why: 'Everyone merges. The belt checks each one.' }]} />
+</Card>
+
+<Card id="see-day" type="see">
+<Interactive name="TimelineTap" events={[{ when: '9:05', title: 'Aina merges a tiny fix', text: 'Her branch lived two hours. The belt runs. Green. Live by 9:20.' }, { when: '11:30', title: 'Ben merges half a checkout', text: 'It is switched off. The belt runs. Green. Users see nothing new.' }, { when: '14:00', title: 'Staff try it', text: 'Ben switches it on for staff only. No new deploy needed.' }, { when: '16:00', title: 'Everyone gets it', text: 'The switch goes on for all users. Main was ready all day.' }]} />
+
+Small merges, many times a day, each one checked by the belt. That is **<Term id="trunk-based" course="git">trunk-based development</Term>** with CI.
+</Card>
+
+<Card id="try-predict" type="predict">
+Ben's pull request finishes the new checkout. The belt tests it with the switch off and on.
+
+<Interactive name="ConveyorBelt" scenario="c1-flag-matrix" task={{ type: 'predict' }} success="The “on” lane is red. Ben fixes it before anyone switches it on." />
+
+A **<Term id="feature-flag" course="git">feature flag</Term>** is like a covered menu card: cooked, but hidden. Test both sides.
+</Card>
+
+<Card id="try-sort" type="try">
+Ready to merge into main today?
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge today' }, { id: 'wait', label: 'Not yet' }]} items={[{ label: 'Half-built checkout, switched off, tests green', bucket: 'merge', why: 'Users can’t see it, and the line is green.' }, { label: 'A tiny typo fix, tests green', bucket: 'merge', why: 'Small and checked. Merge it.' }, { label: 'A finished feature, but a test fails', bucket: 'wait', why: 'Red means stop. Fix it first.' }, { label: 'Half-built page with no switch', bucket: 'wait', why: 'Users would see a broken page. Add a flag first.' }]} success="Sorted! Green and safe goes in. Red waits." />
+
+<Hint>Ask: is the line green? Can users see half-built work?</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The new checkout is on for everyone. Payments start failing. What is the fastest safe fix?
+
+<Interactive name="Choice" options={[{ label: 'Switch the flag off', correct: true, why: 'Seconds, with no new build and no deploy. Then fix it calmly.' }, { label: 'Revert, then wait for the whole line', why: 'That works too, but it takes a full pipeline run.' }, { label: 'Delete the main branch', why: 'Never! That breaks everything for everyone.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good trunk habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Run the whole line on every merge to main', good: true, why: 'Every merge could ship, so check every merge.' }, { text: 'Keep a flag forever, just in case', good: false, why: 'Old flags double the paths to test. Remove them when done.' }, { text: 'Switch a flag on for staff first', good: true, why: 'Your team finds bugs before users do.' }, { text: 'Merge a red pull request to keep things moving', good: false, why: 'Then main is red, and nobody can ship.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep main ready to ship, every day.
+</Card>
+
+<Card id="deeper" type="deeper">
+A busy repo can add a merge queue. It tests each pull request with the newest main, then merges it. Each flag adds paths to test. Keep few, and remove old ones. Switching a feature on is a release, not a deploy (World C3).
+
+Real rep (optional): give a test job a matrix with your flag `off` and `on`.
+</Card>

@@ -1,0 +1,86 @@
+---
+id: docker-d0-l06
+world: 0
+title: Linux crash course
+summary: "You will learn: five Linux words that explain most container errors: paths, permissions, processes, environment variables and exit codes."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, OrderList, KitchenSim, SortCards, SpotLines, Choice, SwipeJudge]
+needs: [docker-d0-l05]
+scenario: d0-linux
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Ubuntu: the Linux command line for beginners", url: "https://ubuntu.com/tutorials/command-line-for-beginners" }
+  - { label: "chmod manual", url: "https://man7.org/linux/man-pages/man1/chmod.1.html" }
+  - { label: "ps manual", url: "https://man7.org/linux/man-pages/man1/ps.1.html" }
+  - { label: "Environment variables (environ)", url: "https://man7.org/linux/man-pages/man7/environ.7.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d0-linux" commands={['./cook.sh']} fails={['./cook.sh']} label="The script refuses to run: bash: ./cook.sh: Permission denied." />
+
+This script stops with `Permission denied`. A container is a small Linux computer. So most container errors are Linux errors. Five Linux words will save you.
+</Card>
+
+<Card id="see-path" type="see">
+Linux keeps files in folders inside folders, like jars on shelves. A file’s full address is its **<Term id="path">path</Term>**. Build the path to the menu, from the top down.
+
+<Interactive name="OrderList" items={['/ (the top folder)', 'home', 'you', 'kitchen', 'menu.txt']} label="Top folder first" success="/home/you/kitchen/menu.txt. That is a path!" />
+</Card>
+
+<Card id="try-chmod" type="try">
+Every file has **<Term id="permissions">permissions</Term>**: `r` read, `w` write, `x` run. `ls -l` shows them. `chmod +x cook.sh` adds the run permission. Do it, then run `./cook.sh`.
+
+<Interactive name="KitchenSim" scenario="d0-linux" picture={false} keys={['ls', '-l', 'chmod', '+x', './', 'Tab', '↑']} goal={{ fileMode: { '/home/you/kitchen/cook.sh': 'x' }, lastTyped: '^\\./cook\\.sh', lastExit: 0 }} hints={['Type ls -l first. cook.sh has no x yet.', 'Type chmod +x cook.sh, then ./cook.sh']} success="Nasi lemak is ready! cook.sh may run now." />
+
+<Hint>`chmod +x cook.sh`, then `./cook.sh`.</Hint>
+</Card>
+
+<Card id="see-process" type="see">
+A file just sits on the shelf. A program that is running is a **<Term id="process">process</Term>**. Each one gets a number, its PID. File or process? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'file', label: 'File (sits still)' }, { id: 'process', label: 'Process (running now)' }]} items={[{ label: 'menu.txt on the shelf', bucket: 'file', why: 'It just sits there until someone reads it.' }, { label: 'cook.sh, waiting on the disk', bucket: 'file', why: 'A script is a file until you run it.' }, { label: 'cook.sh while it runs', bucket: 'process', why: 'Running it makes a process with its own PID.' }, { label: 'dockerd, the engine', bucket: 'process', why: 'The daemon runs all the time, so it is a process.' }, { label: 'A container that is up', bucket: 'process', why: 'A running container is a process on the laptop.' }]} success="Files sit still. Processes run." />
+</Card>
+
+<Card id="try-env" type="try">
+An **<Term id="environment-variable">environment variable</Term>** is a sticky note on the kitchen wall. Every program you start can read it. Stick one up with `export`. Read it with `echo`.
+
+<Interactive name="KitchenSim" scenario="d0-linux" picture={false} keys={['export', 'echo', '$', '=', 'Tab', '↑']} goal={{ envVar: { CHEF: 'Kancil' }, lastTyped: '^echo\\s+.*\\$\\{?CHEF' }} hints={['Type export CHEF=Kancil', 'Then type echo $CHEF']} success="The note says Kancil. Programs you start can read it too." />
+
+<Hint>`export CHEF=Kancil`, then `echo $CHEF`.</Hint>
+</Card>
+
+<Card id="see-exit" type="see">
+Every process ends with a number: its **<Term id="exit-code">exit code</Term>**. 0 means all good. Anything else means trouble. `echo $?` shows the last one. Tap every exit code.
+
+<Interactive name="SpotLines" lines={[{ text: '$ cat menu.txt' }, { text: 'nasi lemak' }, { text: 'laksa' }, { text: 'satay' }, { text: '$ echo $?' }, { text: '0', color: 'green', target: true }, { text: '$ cat nope.txt' }, { text: 'cat: nope.txt: No such file or directory', color: 'red' }, { text: '$ echo $?' }, { text: '1', color: 'yellow', target: true }]} prompt="Tap the two exit codes." success="0 after the menu: fine. 1 after nope.txt: trouble." />
+</Card>
+
+<Card id="predict" type="predict">
+`docker ps -a` says your container `Exited (1)`. What does the 1 tell you?
+
+<Interactive name="Choice" options={[{ label: 'Something broke inside', correct: true, why: 'Not 0, so its main process hit trouble. Its logs will say more.' }, { label: 'It finished perfectly', why: 'That would be Exited (0).' }, { label: 'It ran for 1 second', why: 'The number is the exit code, not the time.' }]} />
+</Card>
+
+<Card id="check" type="check">
+True or not? Swipe right when it is true.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'chmod +x lets a script run', good: true, why: 'x is the run permission.' }, { text: 'Exit code 0 means an error', good: false, why: '0 means all good. Other numbers mean trouble.' }, { text: 'Every running program has a PID', good: true, why: 'Each process gets its own number.' }, { text: 'A path that starts with / begins at the top folder', good: true, why: '/ is the very top of the shelves.' }, { text: 'A running container is not a process', good: false, why: 'It is! ps aux on the laptop lists it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read the five Linux words behind most container errors.
+</Card>
+
+<Card id="deeper" type="deeper">
+<Interactive name="KitchenReplay" scenario="d0-linux" commands={['docker run -d --name stall nginx:1.30-alpine', 'ps aux']} label="After docker run, ps aux on the laptop lists nginx: master process. The container is a process." />
+
+Look near the bottom: nginx runs as a process on the laptop. World D6 shows how Docker fences it in.
+
+Real rep (optional): on your computer, type `ls -l`, then `echo $HOME`, then `ls nope` and `echo $?`.
+
+Want more Linux? Try [Level Up L1: The Shophouse](/en/linux/#world-1).
+</Card>

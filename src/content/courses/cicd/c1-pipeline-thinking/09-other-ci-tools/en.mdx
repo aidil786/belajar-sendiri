@@ -1,0 +1,87 @@
+---
+id: cicd-c1-l09
+world: 1
+title: Same ideas in GitLab, Jenkins, Azure
+summary: "You will learn: how your pipeline ideas carry over to GitLab CI, Jenkins and Azure Pipelines."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TimelineTap, SortCards, YamlBuilder]
+needs: [cicd-c1-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "GitLab: CI/CD YAML syntax", url: "https://docs.gitlab.com/ci/yaml/" }
+  - { label: "Jenkins: using a Jenkinsfile", url: "https://www.jenkins.io/doc/book/pipeline/jenkinsfile/" }
+  - { label: "Azure Pipelines: create your first pipeline", url: "https://learn.microsoft.com/en-us/azure/devops/pipelines/create-first-pipeline" }
+  - { label: "Migrating from GitLab CI/CD to GitHub Actions", url: "https://docs.github.com/en/actions/tutorials/migrate-to-github-actions/manual-migrations/migrate-from-gitlab-cicd" }
+---
+
+<Card id="hook" type="hook">
+Your new job uses GitLab, not GitHub. Do you start from zero?
+
+<Interactive name="Choice" options={[{ label: 'No. Same stations, different words.', correct: true, why: 'Lint, test, build and deploy work the same everywhere.' }, { label: 'Yes. Everything is different.', why: 'The ideas carry over. Only the file and the words change.' }, { label: 'Only GitHub can run pipelines', why: 'Many tools run pipelines. This lesson meets three more.' }]} />
+</Card>
+
+<Card id="see-same" type="see">
+<Interactive name="SpotLines" lines={[{ text: "GitHub:  - run: npm test" }, { text: "GitLab:  script: [npm test]" }, { text: "Jenkins: sh 'npm test'", target: true }, { text: "Azure:   - script: npm test" }]} prompt="Tap the one that is not YAML." success="Yes! Jenkins writes pipelines in Groovy code. The other three use YAML." />
+
+Four tools, one station: run the tests. Only the words change.
+</Card>
+
+<Card id="see-words" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Workflow → pipeline', text: 'GitLab, Jenkins and Azure all say pipeline.' }, { when: '2', title: 'Job → job', text: 'Job almost everywhere. All three also group work into stages.' }, { when: '3', title: 'run: → script or sh', text: 'GitLab and Azure say script. Jenkins says sh inside steps.' }, { when: '4', title: 'Runner → runner or agent', text: 'GitLab says runner too. Jenkins and Azure say agent.' }]} />
+
+Tap each GitHub word to see its twins. The worker machine is often called an **<Term id="agent">agent</Term>**.
+</Card>
+
+<Card id="try-sort" type="try">
+Which tool does each clue belong to?
+
+<Interactive name="SortCards" buckets={[{ id: 'gitlab', label: 'GitLab CI' }, { id: 'jenkins', label: 'Jenkins' }, { id: 'azure', label: 'Azure Pipelines' }]} items={[{ label: '`.gitlab-ci.yml`', bucket: 'gitlab', why: 'GitLab reads this file from the repo root.' }, { label: '`stages: [build, test, deploy]`', bucket: 'gitlab', why: 'GitLab lists its stages at the top.' }, { label: '`Jenkinsfile`', bucket: 'jenkins', why: 'Jenkins reads this file from the repo root.' }, { label: '`pipeline { agent any }`', bucket: 'jenkins', why: 'Curly braces: Groovy, the Jenkins way.' }, { label: '`azure-pipelines.yml`', bucket: 'azure', why: 'Azure Pipelines reads this YAML file.' }, { label: '`pool: vmImage: ubuntu-latest`', bucket: 'azure', why: 'Azure picks a hosted agent with pool.' }]} success="Sorted! Three tools, same ideas." />
+
+<Hint>Look for the file names first. The other clues match their files.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+In GitLab, every job in the `test` stage passes. What runs next?
+
+<Interactive name="Choice" options={[{ label: 'The jobs in the next stage, like deploy', correct: true, why: 'Stages go in order. Jobs inside one stage run side by side.' }, { label: 'Every stage at once', why: 'Stages wait for the stage before them.' }, { label: 'Nothing, until someone clicks', why: 'GitLab moves on by itself when a stage passes.' }]} />
+</Card>
+
+<Card id="try-yaml" type="try">
+Here is a GitLab job. Build the same job in GitHub Actions.
+
+```yaml
+test:
+  image: node:24
+  script:
+    - npm ci
+    - npm test
+```
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'node', 'install', 'test'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push', yaml: 'push:', means: 'GitLab runs on every push by default. Here we say it.' },
+  { id: 'job', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'GitLab copies the code for you. GitHub needs this step.' },
+  { id: 'node', kind: 'step', label: 'Set up Node 24', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Like image: node:24 in GitLab.' },
+  { id: 'install', kind: 'step', label: 'Install packages', yaml: '- run: npm ci', means: 'The first script line.' },
+  { id: 'test', kind: 'step', label: 'Run tests', yaml: '- run: npm test', means: 'The second script line.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Ship it.', why: 'The GitLab job only tests. Keep it the same.' }]}
+  success="Same job, new words. You just moved a pipeline!" />
+
+<Hint>GitHub needs a checkout step first. Then set up Node, install and test.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now read a pipeline in GitLab, Jenkins or Azure Pipelines.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real belt carries one dish at a time. A pipeline can run many jobs side by side. And copying a build is free, so one pack can go many places.
+
+Jenkins usually runs on your team's own servers.
+
+Real rep (optional): open a public GitLab project. Find its `.gitlab-ci.yml` and name its stages.
+</Card>

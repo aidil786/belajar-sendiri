@@ -1,0 +1,70 @@
+---
+id: git-w01-l12
+world: 1
+title: "Commit kecil dan fokus"
+summary: "Anda akan belajar: cara pecahkan kerja jadi commit kecil dengan git add -p."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, HunkPicker, Sim, Choice]
+needs: [git-w01-l11]
+scenario: w01-l12
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git add (--patch)", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git diff", url: "https://git-scm.com/docs/git-diff" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html bergoyang dengan tanda berubah. Ia ada dua perubahan yang berbeza." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+Anda baiki salah taip pada tajuk. Anda juga tulis Day 4. Kedua-duanya dalam `index.html`. Patutkah ia berkongsi satu commit (titik simpan)?
+</Card>
+
+<Card id="see-small" type="see">
+<Interactive name="AreasScene" zones={['repo']} label="Satu commit besar bernama Fix typo and add day 4 berpecah jadi dua commit kecil: Fix title typo, dan Add day 4 entry." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Fix typo and add day 4', kind: 'commit' }] }, { repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Fix title typo', kind: 'commit' }, { name: 'Add day 4 entry', kind: 'commit' }] }]} />
+
+Commit yang bagus itu kecil: **satu perubahan bagi setiap commit**. Jadi setiap mesej tepat dengan isinya. Anda juga boleh undur satu perubahan tanpa hilang yang lain.
+</Card>
+
+<Card id="see-hunk" type="see">
+<Interactive name="TermReplay" scenario="w01-l12" commands={['git diff']} pulse label="git diff untuk index.html tunjuk dua bahagian berasingan. Yang pertama baiki tajuk. Yang kedua tambah Day 4." />
+
+`git diff` tunjuk dua cebisan perubahan yang berasingan. Setiap cebisan ialah satu **hunk** (cebisan perubahan). Git boleh simpan satu hunk dan tinggalkan yang lain.
+</Card>
+
+<Card id="try-pick" type="try">
+Commit ini akan jadi "Add day 4 entry". Pilih hanya cebisan yang sesuai.
+
+<Interactive name="HunkPicker" file="index.html" hunks={[{ lines: ['-<title>My Dairy</title>', '+<title>My Diary</title>'], take: false, why: 'Baiki salah taip ialah perubahan lain. Beri ia commit sendiri.' }, { lines: ['+<p>Day 4: I learned small commits.</p>'], take: true, why: 'Inilah entri Day 4.' }, { lines: ['+<p>test test 123</p>'], take: false, why: 'Teks ujian yang tertinggal. Ia tak patut masuk mana-mana commit.' }]} success="Pilihan yang kemas! Hanya entri Day 4 yang masuk." />
+</Card>
+
+<Card id="try-addp" type="try">
+Taip `git add -p`. Jawab `n` untuk baiki salah taip, dan `y` untuk Day 4.
+
+<Interactive name="Sim" scenario="w01-l12" panels={['areas']} goal={{ stagedContains: { 'index.html': 'Day 4' }, stagedNotContains: { 'index.html': '<title>My Diary' }, modified: ['index.html'], typed: '^git add (-p|--patch)' }} hints={['Taip git add -p dan tekan Enter.', 'Cebisan pertama ialah baiki salah taip: taip n. Yang kedua ialah Day 4: taip y.']} success="Hanya Day 4 dalam kotak. Baiki salah taip tunggu commit sendiri." />
+
+<Hint>`-p` maksudnya patch: Git tanya tentang setiap hunk. `y` ya, `n` tidak.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang anda jalankan `git status -s`. Apa yang anda nampak untuk `index.html`?
+
+<Interactive name="Choice" options={[{ label: '`MM`: satu M di setiap sisi', correct: true, why: 'Day 4 dalam kotak (M kiri). Baiki salah taip masih dalam folder (M kanan).' }, { label: 'Satu M di kiri sahaja', why: 'Bukan semua dalam kotak. Baiki salah taip masih dalam folder.' }, { label: 'Satu M di kanan sahaja', why: 'Day 4 dah masuk kotak, jadi sisi kiri pun berubah.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pecahkan kerja anda jadi commit yang kecil dan fokus.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jawapan lain untuk `git add -p`:
+
+- `q` berhenti.
+- `a` ambil hunk ini dan yang selebihnya dalam fail itu.
+- `d` langkau yang selebihnya dalam fail itu.
+- `?` tunjuk bantuan.
+
+Git sebenar ada lebih banyak, contohnya `s` untuk pecahkan hunk besar.
+</Card>

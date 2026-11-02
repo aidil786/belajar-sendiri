@@ -1,0 +1,67 @@
+---
+id: cicd-c2-l02
+world: 2
+title: Smart tags with metadata-action
+summary: "You will learn: to label every image with its branch, version and commit."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, SwipeJudge, Mission]
+needs: [cicd-c2-l01]
+scenario: c2-tags
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker/metadata-action", url: "https://github.com/docker/metadata-action" }
+  - { label: "Docker docs: tags and labels with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/manage-tags-labels/" }
+---
+
+<Card id="hook" type="hook">
+The shop freezer holds 40 packs, all labelled `latest`. One pack made a customer sick. Which pack was it?
+
+<Interactive name="Choice" options={[{ label: 'There is no way to tell', correct: true, why: 'Every label is the same. You need a version or a batch code.' }, { label: 'The newest one', why: 'latest moves to each new pack. The bad one may be older.' }, { label: 'The biggest one', why: 'Size says nothing about when or how a pack was made.' }]} />
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- id: meta' }, { text: '  uses: docker/metadata-action@v6' }, { text: '  with:' }, { text: '    images: ghcr.io/you/kedai-kancil' }, { text: '    tags: |' }, { text: '      type=ref,event=branch' }, { text: '      type=ref,event=pr' }, { text: '      type=semver,pattern={{version}}' }, { text: '      type=sha', target: true }]} prompt="Tap the rule that writes the batch code: the commit." success="Yes! type=sha adds sha- and the short commit id." />
+
+**<Term id="image-tag">Tags</Term>** are labels on the pack. `docker/metadata-action` writes them for you. Each rule adds a label when it fits the event.
+</Card>
+
+<Card id="see-run" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-tags" label="The metadata step prints the tags for the event you pick: push to main, a pull request, or a version tag." />
+
+Pick an event and press Run. Then tap the station to read its log. The log lists the tags. Try all three events.
+</Card>
+
+<Card id="try-sort" type="try">
+Which event makes which tag?
+
+<Interactive name="SortCards" buckets={[{ id: 'main', label: 'Push to main' }, { id: 'pr', label: 'Pull request #7' }, { id: 'tag', label: 'Tag v1.2.0' }]} items={[{ label: '`main`', bucket: 'main', why: 'type=ref,event=branch uses the branch name.' }, { label: '`pr-7`', bucket: 'pr', why: 'type=ref,event=pr writes pr- and the PR number.' }, { label: '`1.2.0`', bucket: 'tag', why: 'type=semver reads the version from the Git tag, without the v.' }, { label: '`latest`', bucket: 'tag', why: 'By default, a version tag also moves latest to this pack.' }]} success="All sorted! Every push also gets sha-3f9c2a7." />
+</Card>
+
+<Card id="predict" type="predict">
+You push the tag `v1.3.0-rc.1`, a test release. Which tags appear?
+
+<Interactive name="Choice" options={[{ label: '`1.3.0-rc.1` and `sha-3f9c2a7`', correct: true, why: 'A pre-release keeps its -rc.1 and never takes latest.' }, { label: '`1.3.0-rc.1`, `sha-3f9c2a7` and `latest`', why: 'latest skips pre-releases. Nobody gets a test pack by surprise.' }, { label: 'Only `latest`', why: 'Each rule still adds its own label.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Swipe right if the tag is good for production. Swipe left if it needs work.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'kedai-kancil:1.2.0', good: true, why: 'A version. You always know what you run.' }, { text: 'kedai-kancil:latest', good: false, why: 'It moves with every release. You cannot tell what you got.' }, { text: 'kedai-kancil:sha-3f9c2a7', good: true, why: 'The exact commit. Perfect for tracing a problem.' }, { text: 'kedai-kancil:main', good: false, why: 'It moves on every merge. Fine for testing, not for production.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now give every image clear, traceable tags.
+</Card>
+
+<Card id="deeper" type="deeper">
+Add `type=semver,pattern={{major}}.{{minor}}` to also get `1.2`. Set `flavor: latest=false` to stop `latest`. metadata-action also writes labels: pass `labels: ${{ steps.meta.outputs.labels }}` to the build.
+
+Real rep (optional), in a public practice repo:
+
+<Interactive name="Mission" id="c2-l02-rep" steps={[{ id: 'meta', text: 'Add the metadata step from this lesson to your image workflow.' }, { id: 'tag', text: 'Make a version tag.', command: 'git tag v0.1.0' }, { id: 'push', text: 'Push the tag.', command: 'git push origin v0.1.0' }, { id: 'log', text: 'Open the run and read the tags in the metadata step.' }]} success="Your images now carry real labels!" />
+</Card>

@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l13
+world: 2
+title: Concurrency, penapis laluan dan cache
+summary: "Anda akan belajar: tiga helah yang buat tali sawat lebih laju dan murah."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l12]
+scenario: c2-concurrency
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Control the concurrency of workflows and jobs", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency" }
+  - { label: "Workflow syntax: paths and paths-ignore", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushpull_requestpull_request_targetpathspaths-ignore" }
+  - { label: "Dependency caching", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching" }
+---
+
+<Card id="hook" type="hook">
+Anda push 3 pembaikan kecil dalam 2 minit. Tali sawat jalankan ketiga-tiganya sepenuhnya. Hanya yang terakhir penting. Apa yang boleh bantu?
+
+<Interactive name="Choice" options={[{ label: 'Batalkan run lama bila run baru bermula', correct: true, why: 'Pesanan lama untuk meja yang sama tak diperlukan. Masak yang terbaru sahaja.' }, { label: 'Kurangkan push', why: 'Push kecil yang kerap itu bagus. Biar tali sawat uruskannya.' }, { label: 'Beli runner yang lebih laju', why: 'Ia tetap jalankan 3 build. Dua daripadanya membazir.' }]} />
+</Card>
+
+<Card id="see-concurrency" type="see">
+<Interactive name="ConveyorBelt" scenario="c2-concurrency" label="Push ke menu-page mulakan satu run. Run lama pada branch yang sama dibatalkan dulu. Kemudian ujian berjalan dan lulus." />
+
+**<Term id="concurrency">Concurrency</Term>** letak run dalam satu kumpulan: workflow sama, branch sama. `cancel-in-progress: true` batalkan run yang lama. Tekan Run.
+</Card>
+
+<Card id="check-group" type="check">
+Anda push ke `main` dan ke `menu-page` serentak. Adakah satu batalkan yang lain?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: branch berbeza, kumpulan berbeza', correct: true, why: 'Nama kumpulan ada github.ref, jadi setiap branch dapat kumpulan sendiri.' }, { label: 'Ya: workflow sama, jadi satu menang', why: 'Kumpulan itu ada nama branch juga. Branch lain, kumpulan lain.' }, { label: 'Kedua-duanya dibatalkan', why: 'Pembatalan hanya kena run lama dalam kumpulan yang sama.' }]} />
+</Card>
+
+<Card id="try-paths" type="try">
+**<Term id="path-filter">Penapis laluan</Term>** langkau tali sawat bila hanya fail tertentu berubah. Yang ini tulis `paths-ignore: ['docs/**', '**.md']`. Susun setiap push.
+
+<Interactive name="SortCards" buckets={[{ id: 'run', label: 'Mulakan tali sawat' }, { id: 'skip', label: 'Dilangkau' }]} items={[{ label: '`docs/menu.md`', bucket: 'skip', why: 'Dalam docs/, dan fail Markdown.' }, { label: '`README.md`', bucket: 'skip', why: 'Fail Markdown.' }, { label: '`src/cart.js`', bucket: 'run', why: 'Kod berubah: uji.' }, { label: '`Dockerfile`', bucket: 'run', why: 'Resipi berubah: bina.' }, { label: '`package-lock.json`', bucket: 'run', why: 'Pakej baru: uji.' }]} success="Push yang ubah docs sahaja langkau tali sawat." />
+</Card>
+
+<Card id="try-cache" type="try">
+`cache: npm` simpan muat turun npm dalam pantri antara run. Tekan Run dua kali. `npm ci` kedua lebih cepat.
+
+<Interactive name="ConveyorBelt" scenario="c2-concurrency" task={{ type: 'cacheHit' }} success="Cache hit! npm ambil jalan pintas." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu PR ubah `README.md` sahaja. Semakan CI wajibnya guna penapis laluan ini. Boleh anda merge?
+
+<Interactive name="Choice" options={[{ label: 'Tidak: semakan itu menunggu sebagai Pending, jadi merge disekat', correct: true, why: 'Workflow yang dilangkau tak pernah lapor balik. Jangan wajibkan semakan yang mungkin dilangkau.' }, { label: 'Boleh: dilangkau dikira lulus', why: 'Workflow yang dilangkau tak pernah lapor, jadi semakan kekal Pending.' }, { label: 'Boleh: perubahan README langkau semua peraturan', why: 'Peraturan branch tetap terpakai. Semakan wajib itu tak pernah tiba.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat tali sawat langkau, batal dan guna semula kerja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jangan batalkan deploy separuh jalan: `cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}` jaga main. Penapis laluan tak disemak untuk push tag. Cache yang lama tak diguna akan dipadam.
+
+Latihan sebenar (pilihan), dalam repo latihan awam:
+
+<Interactive name="Mission" id="c2-l13-rep" steps={[{ id: 'conc', text: 'Tambah kumpulan concurrency dengan cancel-in-progress: true.' }, { id: 'twice', text: 'Push dua kali dengan cepat. Cari run yang dibatalkan dalam tab Actions.' }, { id: 'paths', text: 'Tambah paths-ignore untuk docs/**, kemudian push perubahan docs sahaja.' }]} success="Tali sawat anda kini jimat masa dan minit!" />
+</Card>

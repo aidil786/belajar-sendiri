@@ -1,0 +1,87 @@
+---
+id: cicd-c1-l09
+world: 1
+title: Idea sama dalam GitLab, Jenkins, Azure
+summary: "Anda akan belajar: cara idea pipeline anda dibawa ke GitLab CI, Jenkins dan Azure Pipelines."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, TimelineTap, SortCards, YamlBuilder]
+needs: [cicd-c1-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "GitLab: CI/CD YAML syntax", url: "https://docs.gitlab.com/ci/yaml/" }
+  - { label: "Jenkins: using a Jenkinsfile", url: "https://www.jenkins.io/doc/book/pipeline/jenkinsfile/" }
+  - { label: "Azure Pipelines: create your first pipeline", url: "https://learn.microsoft.com/en-us/azure/devops/pipelines/create-first-pipeline" }
+  - { label: "Migrating from GitLab CI/CD to GitHub Actions", url: "https://docs.github.com/en/actions/tutorials/migrate-to-github-actions/manual-migrations/migrate-from-gitlab-cicd" }
+---
+
+<Card id="hook" type="hook">
+Tempat kerja baru anda guna GitLab, bukan GitHub. Adakah anda kena mula dari kosong?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Stesen sama, perkataan berbeza.', correct: true, why: 'Lint, test, build dan deploy sama di mana-mana.' }, { label: 'Ya. Semuanya berbeza.', why: 'Idea dibawa bersama. Hanya fail dan perkataan yang berubah.' }, { label: 'Hanya GitHub boleh jalankan pipeline', why: 'Banyak alat boleh jalankan pipeline. Pelajaran ini kenalkan tiga lagi.' }]} />
+</Card>
+
+<Card id="see-same" type="see">
+<Interactive name="SpotLines" lines={[{ text: "GitHub:  - run: npm test" }, { text: "GitLab:  script: [npm test]" }, { text: "Jenkins: sh 'npm test'", target: true }, { text: "Azure:   - script: npm test" }]} prompt="Ketik yang bukan YAML." success="Ya! Jenkins tulis pipeline dalam kod Groovy. Tiga lagi guna YAML." />
+
+Empat alat, satu stesen: jalankan ujian. Hanya perkataan yang berubah.
+</Card>
+
+<Card id="see-words" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Workflow → pipeline', text: 'GitLab, Jenkins dan Azure semua sebut pipeline.' }, { when: '2', title: 'Job → job', text: 'Job hampir di mana-mana. Ketiga-tiganya juga kumpulkan kerja dalam stage.' }, { when: '3', title: 'run: → script atau sh', text: 'GitLab dan Azure sebut script. Jenkins sebut sh di dalam steps.' }, { when: '4', title: 'Runner → runner atau agent', text: 'GitLab pun sebut runner. Jenkins dan Azure sebut agent.' }]} />
+
+Ketik setiap perkataan GitHub untuk lihat kembarnya. Mesin pekerja selalu dipanggil **<Term id="agent">agent</Term>** (ejen).
+</Card>
+
+<Card id="try-sort" type="try">
+Setiap petunjuk ini milik alat mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'gitlab', label: 'GitLab CI' }, { id: 'jenkins', label: 'Jenkins' }, { id: 'azure', label: 'Azure Pipelines' }]} items={[{ label: '`.gitlab-ci.yml`', bucket: 'gitlab', why: 'GitLab baca fail ini dari akar repo.' }, { label: '`stages: [build, test, deploy]`', bucket: 'gitlab', why: 'GitLab senaraikan stage di bahagian atas.' }, { label: '`Jenkinsfile`', bucket: 'jenkins', why: 'Jenkins baca fail ini dari akar repo.' }, { label: '`pipeline { agent any }`', bucket: 'jenkins', why: 'Kurungan kerinting: Groovy, cara Jenkins.' }, { label: '`azure-pipelines.yml`', bucket: 'azure', why: 'Azure Pipelines baca fail YAML ini.' }, { label: '`pool: vmImage: ubuntu-latest`', bucket: 'azure', why: 'Azure pilih agent yang dihoskan dengan pool.' }]} success="Siap! Tiga alat, idea yang sama." />
+
+<Hint>Cari nama fail dulu. Petunjuk lain padan dengan failnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dalam GitLab, setiap job dalam stage `test` lulus. Apa yang jalan seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Job dalam stage seterusnya, seperti deploy', correct: true, why: 'Stage berjalan ikut urutan. Job dalam satu stage jalan serentak.' }, { label: 'Semua stage serentak', why: 'Setiap stage tunggu stage sebelumnya.' }, { label: 'Tiada apa, sampai seseorang klik', why: 'GitLab teruskan sendiri bila satu stage lulus.' }]} />
+</Card>
+
+<Card id="try-yaml" type="try">
+Ini satu job GitLab. Bina job yang sama dalam GitHub Actions.
+
+```yaml
+test:
+  image: node:24
+  script:
+    - npm ci
+    - npm test
+```
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'node', 'install', 'test'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push', yaml: 'push:', means: 'GitLab jalan pada setiap push secara lalai. Di sini kita tulis.' },
+  { id: 'job', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baru.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7', means: 'GitLab salin kod untuk anda. GitHub perlukan step ini.' },
+  { id: 'node', kind: 'step', label: 'Sediakan Node 24', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Macam image: node:24 dalam GitLab.' },
+  { id: 'install', kind: 'step', label: 'Pasang pakej', yaml: '- run: npm ci', means: 'Baris script pertama.' },
+  { id: 'test', kind: 'step', label: 'Jalankan ujian', yaml: '- run: npm test', means: 'Baris script kedua.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Hantar.', why: 'Job GitLab itu cuma menguji. Kekalkan sama.' }]}
+  success="Job sama, perkataan baru. Anda baru pindahkan satu pipeline!" />
+
+<Hint>GitHub perlukan step ambil kod dulu. Kemudian sediakan Node, pasang dan uji.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca pipeline dalam GitLab, Jenkins atau Azure Pipelines.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita tak tepat: tali sawat sebenar bawa hidangan satu demi satu. Pipeline boleh jalankan banyak job serentak. Salin build pula percuma, jadi satu pek boleh pergi ke banyak tempat.
+
+Jenkins biasanya jalan pada server pasukan anda sendiri.
+
+Latihan sebenar (pilihan): buka satu projek awam di GitLab. Cari `.gitlab-ci.yml` dan namakan stage-nya.
+</Card>

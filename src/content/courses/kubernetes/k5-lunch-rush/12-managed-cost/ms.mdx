@@ -1,0 +1,63 @@
+---
+id: k8s-k5-l12
+world: 5
+title: Kubernetes terurus dan kos
+summary: "Anda akan belajar: apa yang kluster terurus buat untuk anda, dan apa yang buat bil naik."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Mission]
+needs: [k8s-k5-l11]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: production environment", url: "https://kubernetes.io/docs/setup/production-environment/" }
+  - { label: "Kubernetes: resource management for pods", url: "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" }
+  - { label: "Kubernetes: node autoscaling", url: "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" }
+---
+
+<Card id="hook" type="hook">
+Medan selera perlukan pejabat juga: control plane. Seseorang mesti pastikan ia berjalan, ditampal dan disandar. Anda mahu kerja itu pada hari pertama?
+
+<Interactive name="Choice" options={[{ label: 'Sewa medan selera yang tuan punyanya urus pejabat', correct: true, why: 'Itulah Kubernetes terurus. Anda fokus pada gerai dan pod anda.' }, { label: 'Bina setiap bahagian sendiri, hari ini', why: 'Boleh, dan anda belajar banyak. Tapi kerja besar untuk kekal selamat.' }, { label: 'Tak perlu pejabat', why: 'Tiada control plane, tiada Kubernetes. Sesuatu mesti menjalankannya.' }]} />
+</Card>
+
+<Card id="see-managed" type="see">
+Dengan **<Term id="managed-kubernetes">Kubernetes terurus</Term>**, satu cloud jalankan control plane. Contoh: Amazon EKS, Google GKE, Azure AKS dan DigitalOcean DOKS. Siapa jaga apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'cloud', label: 'Cloud (tuan punya)' }, { id: 'you', label: 'Anda (pemilik gerai)' }]} items={[{ label: 'Jalankan API server dan etcd', bucket: 'cloud', why: 'Itulah pejabat. Tuan punya yang urus.' }, { label: 'Deployment, Service dan YAML anda', bucket: 'you', why: 'Menu anda masih kerja anda.' }, { label: 'Siapa boleh buat apa (RBAC)', bucket: 'you', why: 'Tuan punya beri kunci. Anda tentukan siapa dapat salinan.' }, { label: 'Saiz setiap gerai', bucket: 'you', why: 'Anda pilih saiz node dan bilangannya.' }]} success="Siap! Pejabat disewa. Memasak kerja anda." />
+</Card>
+
+<Card id="check-pick" type="check">
+Pasukan anda sudah guna Microsoft Azure untuk semuanya. Kubernetes terurus mana yang paling wajar dilihat dulu?
+
+<Interactive name="Choice" compact options={[{ label: 'AKS', correct: true, why: 'Azure Kubernetes Service sesuai di sebelah benda Azure anda yang lain.' }, { label: 'EKS', why: 'Itu milik Amazon. Okey, tapi pasukan anda di Azure.' }, { label: 'GKE', why: 'Itu milik Google. Idea sama, cloud berbeza.' }]} />
+</Card>
+
+<Card id="see-bill" type="see">
+Kluster kind di laptop anda percuma. Kluster cloud dibil ikut jam. Asingkan setiap perkara.
+
+<Interactive name="SortCards" buckets={[{ id: 'bill', label: 'Tambah bil' }, { id: 'save', label: 'Jimat duit' }]} items={[{ label: 'Node dibiar hidup sepanjang hujung minggu', bucket: 'bill', why: 'Gerai kos duit setiap jam ia dibuka.' }, { label: 'Service LoadBalancer yang terlupa', bucket: 'bill', why: 'Ia sewa load balancer cloud sehingga anda padamnya.' }, { label: 'Cakera disimpan selepas aplikasi tiada', bucket: 'bill', why: 'Storan dibil walaupun tiada pod gunanya.' }, { label: 'Request yang jujur, jadi kurang node', bucket: 'save', why: 'Autoscaler ukur medan selera ikut requests.' }, { label: 'Padam kluster latihan bila siap', bucket: 'save', why: 'Kluster paling murah ialah yang sudah tiada.' }]} success="Siap! Gerai yang buka kos duit. Yang tutup tidak." />
+</Card>
+
+<Card id="predict" type="predict">
+Setiap pod minta 2 CPU tapi sebenarnya guna 0.1. Node autoscaler hidup. Apa jadi pada bil?
+
+<Interactive name="Choice" options={[{ label: 'Ia naik: gerai ditambah untuk muatkan requests', correct: true, why: 'Scheduler dan autoscaler percaya requests, bukan guna sebenar.' }, { label: 'Tiada apa: anda bayar guna sebenar sahaja', why: 'Anda bayar mesin. Saiznya ikut requests.' }, { label: 'Ia turun, sebab guna rendah', why: 'Guna rendah tak bebaskan ruang yang requests simpan.' }]} />
+</Card>
+
+<Card id="try-safety" type="try">
+Sebelum mana-mana kluster cloud sebenar, tandakan senarai keselamatan anda. Ia kekal disimpan di sini.
+
+<Interactive name="Mission" id="k5-l12-cloud" steps={[{ id: 'kind', text: 'Berlatih dengan kind dulu. Ia percuma.', command: 'kind create cluster --name practice' }, { id: 'budget', text: 'Dalam akaun cloud anda, tetapkan amaran bajet sebelum buat apa-apa.' }, { id: 'small', text: 'Mula dengan saiz node paling kecil dan 1 atau 2 node.' }, { id: 'delete', text: 'Padam kluster bila siap, pada hari yang sama.' }, { id: 'leftovers', text: 'Kemudian semak load balancer dan cakera yang tertinggal.' }]} success="Selamat dan murah. Bil anda akan berterima kasih." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih kluster terurus dan kekalkan bilnya kecil.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: dalam medan selera kita, masa melompat dan gerai percuma. HPA sebenar semak setiap 15 saat dan tunggu 5 minit sebelum kecilkan. Scheduler sebenar timbang lebih banyak markah. Gerai sebenar ialah mesin yang dibil ikut jam. Harga selalu berubah, jadi baca halaman harga penyedia anda.
+</Card>

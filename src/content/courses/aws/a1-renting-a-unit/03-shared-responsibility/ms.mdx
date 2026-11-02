@@ -1,0 +1,67 @@
+---
+id: aws-a1-l03
+world: 1
+title: "Tanggungjawab bersama: siapa jaga apa"
+summary: "Anda akan belajar: kerja mana AWS buat, dan kerja mana kekal milik anda."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SecurityGroupGate, SwipeJudge]
+needs: [aws-a1-l02]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Shared Responsibility Model", url: "https://aws.amazon.com/compliance/shared-responsibility-model/" }
+  - { label: "Amazon VPC: Security groups", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" }
+  - { label: "IAM security best practices", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil tinggalkan kunci unit di bawah alas kaki. Orang asing jumpa dan terus masuk. Salah siapa?
+
+<Interactive name="Choice" options={[{ label: 'Salah Kancil: kunci itu tugasnya untuk dijaga', correct: true, why: 'Pusat beli-belah bina pintu yang kukuh. Kancil tinggalkan kunci di luar.' }, { label: 'Salah pusat beli-belah: mereka bina bangunan', why: 'Bangunan itu okey. Kunci itulah titik lemahnya.' }, { label: 'Tiada siapa: nasib malang', why: 'Itu satu pilihan. Kunci patut dalam poket, bukan bawah alas kaki.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+**<Term id="shared-responsibility">Model tanggungjawab bersama</Term>** bahagikan kerja. AWS jaga bangunan: keselamatan *bagi* cloud. Anda jaga unit anda: keselamatan *dalam* cloud. Susun kerja-kerja ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'AWS (bangunan)' }, { id: 'you', label: 'Anda (unit anda)' }]} items={[{ label: 'Pengawal di pintu pusat data', bucket: 'aws', why: 'Keselamatan fizikal bangunan ialah kerja AWS.' }, { label: 'Elektrik, penyejuk dan mesin', bucket: 'aws', why: 'Perkakasan di bawah setiap servis milik AWS.' }, { label: 'Siapa dapat kunci akaun anda', bucket: 'you', why: 'Pengguna, kata laluan dan MFA anda tanggungjawab anda.' }, { label: 'Peraturan pintu unit anda', bucket: 'you', why: 'Anda tetapkan pelawat mana boleh masuk.' }, { label: 'Data pelanggan anda', bucket: 'you', why: 'Apa yang anda simpan, dan siapa boleh baca, milik anda.' }]} success="AWS jaga bangunan. Anda jaga unit." />
+</Card>
+
+<Card id="try-door" type="try">
+Peraturan pintu unit anda ialah **security group** (kumpulan keselamatan). AWS beri pintu; anda tulis peraturannya. Benarkan pelanggan masuk guna HTTPS. Halang orang asing.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Pelanggan (HTTPS)', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'stranger', label: 'Orang asing (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} success="Pelanggan sudah masuk. Orang asing jumpa pintu tertutup." />
+
+<Hint>Tambah satu peraturan: TCP, port 443, dari 0.0.0.0/0 (sesiapa sahaja).</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda sewa server biasa di AWS (instance EC2). Sistem pengendaliannya perlukan patch keselamatan. Siapa yang pasang?
+
+<Interactive name="Choice" options={[{ label: 'Anda', correct: true, why: 'Di EC2, sistem dalam server itu tugas anda untuk dikemas kini.' }, { label: 'AWS, secara automatik', why: 'AWS patch mesinnya sendiri, bukan sistem yang anda letak di atasnya.' }, { label: 'Tak perlu sesiapa', why: 'Sistem tanpa patch ialah jalan masuk kegemaran penyerang.' }]} />
+</Card>
+
+<Card id="see-line" type="see">
+Garisan itu bergerak ikut servis. Server biasa beri anda lebih banyak kerja. Servis siap guna, seperti storan S3, beri kurang. Kerja mana sentiasa milik anda?
+
+<Interactive name="Choice" options={[{ label: 'Pilih siapa boleh baca data anda', correct: true, why: 'Setiap servis, setiap masa: akses kepada data anda milik anda.' }, { label: 'Patch komputer S3', why: 'AWS jalankan sistem S3. Anda tak pernah nampak.' }, { label: 'Baiki cakera rosak di pusat data', why: 'Perkakasan sentiasa kerja AWS.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Fikiran yang adil, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'AWS akan tutup pintu saya kalau saya biar terbuka.', good: false, why: 'Peraturan pintu milik anda. AWS ikut apa yang anda tetapkan.' }, { text: 'Saya mesti jaga kunci dan data saya.', good: true, why: 'Itulah keselamatan dalam cloud.' }, { text: 'Saya tak perlu risau kunci pusat data.', good: true, why: 'Keselamatan fizikal di pihak AWS.' }, { text: 'Servis terurus bermakna tiada kerja langsung untuk saya.', good: false, why: 'Kurang kerja, bukan sifar. Akses tetap milik anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kata siapa jaga apa: AWS jaga bangunan, anda jaga unit.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ada kerja yang dikongsi tetapi dibelah dua. AWS patch mesinnya; anda patch sistem dan aplikasi anda. AWS latih stafnya; anda latih staf anda.
+
+Peraturan juga bergantung pada undang-undang negara anda dan Region yang anda pilih. Dunia A3 bina peraturan pintu sebenar, langkah demi langkah.
+</Card>

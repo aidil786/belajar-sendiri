@@ -1,0 +1,65 @@
+---
+id: git-w07-l07
+world: 7
+title: Status checks and badges
+summary: "You will learn: how checks guard your main branch, and how a badge shows them off."
+minutes: 3
+xp: 15
+interactives: [Choice, PracticeRepo, MarkdownPlayground]
+needs: [git-w07-l06]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About status checks", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks" }
+  - { label: "Adding a workflow status badge", url: "https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge" }
+  - { label: "Available rules for rulesets", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets" }
+---
+
+<Card id="hook" type="hook">
+Mei's pull request shows a red ✗ next to "CI / test". The merge button still works. What should you do?
+
+<Interactive name="Choice" options={[{ label: 'Merge it. The button works.', why: 'The button works, but the ✗ says something broke.' }, { label: 'Find out what failed first', correct: true, why: 'The ✗ is a message. Read it before you merge.' }, { label: 'Close the pull request', why: 'No need. Fix it, push again, and the check runs again.' }]} />
+</Card>
+
+<Card id="see-check" type="see">
+That ✗ is a **<Term id="status-check">status check</Term>**. Each workflow job reports one: passed, failed, or still running. Find out why this one failed. Tap the step with ✗.
+
+<Interactive name="PracticeRepo" screen="run" at={52} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 52, workflow: 'CI', event: 'pull_request', branch: 'contact-page', status: 'fail', jobs: [{ name: 'test', steps: [{ name: 'Check out code', status: 'pass', log: ['Copied the repo onto the runner.'] }, { name: 'Install packages', status: 'pass', log: ['npm ci', 'All packages installed.'] }, { name: 'Run tests', status: 'fail', log: ['npm test', 'FAIL contact.test.js', 'Expected the title "Contact"', 'Received "Contcat"', 'Error: Process completed with exit code 1.'] }] }] }]} task={{ type: 'findFailingStep', run: 52 }} />
+</Card>
+
+<Card id="predict" type="predict">
+Teams can make checks a rule. With the rule on, a check fails. You press merge. What happens?
+
+<Interactive name="Choice" options={[{ label: 'GitHub blocks the merge', correct: true, why: 'The rule guards main until every required check passes.' }, { label: 'It merges with a warning', why: 'Without the rule, yes. With it, merging is blocked.' }, { label: 'GitHub fixes the failing test', why: 'GitHub only blocks. You fix the test, then push again.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+Make it a rule for `main`. Turn on the switch that requires checks to pass.
+
+<Interactive name="PracticeRepo" screen="settings" repo={{ owner: 'aina-codes', name: 'diary' }} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: false }, { id: 'requireChecks', label: 'Require status checks to pass before merging', on: false }] }} task={{ type: 'toggleRule', rule: 'requireChecks', on: true }} success="Done! Now main only takes changes with a ✓." />
+</Card>
+
+<Card id="try-badge" type="try">
+A **<Term id="badge">status badge</Term>** is a little sign in your README. It shows if your workflow passes. Add one `!` before `[CI]`. The link becomes a picture.
+
+<Interactive name="MarkdownPlayground" initial={'# My Diary\n\n[CI](https://github.com/aina-codes/diary/actions/workflows/ci.yml/badge.svg)\n\nA tiny diary website.\n'} prompt="Turn the link into a badge picture." goal={{ mustMatch: ['^!\\[CI\\]\\(https://github\\.com/aina-codes/diary/actions/workflows/ci\\.yml/badge\\.svg\\)'], hint: ['Type ! right before [CI], with no space.'] }} success="Badge added! Visitors see at a glance that CI passes." />
+
+<Hint>Markdown pictures look like links with a `!` in front.</Hint>
+</Card>
+
+<Card id="check-merge" type="check">
+The rule is on. Two pull requests wait. Merge the one that is safe.
+
+<Interactive name="PracticeRepo" screen="pulls" repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 7, title: 'Add contact page', body: 'Adds a contact page.', author: 'mei', from: 'contact-page', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'fail' }] }, { number: 8, title: 'Fix typo on home page', body: 'It said "Dairy". Now it says "Diary".', author: 'sam', from: 'fix-typo', to: 'main', state: 'open', checks: [{ name: 'CI / test', status: 'pass' }] }]} settings={{ rules: [{ id: 'requireChecks', label: 'Require status checks to pass before merging', on: true }] }} task={{ type: 'merge', pr: 8 }} success="Merged! #7 waits until its check passes." />
+
+<Hint>Open each pull request. Look at its checks.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now use checks to guard main, and show a badge.
+</Card>
+
+<Card id="deeper" type="deeper">
+These rules live in rulesets or branch protection. You pick which checks are required, by name. Add `?branch=main` to a badge link to show only main's status.
+</Card>

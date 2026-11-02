@@ -1,0 +1,81 @@
+---
+id: k8s-k3-l08
+world: 3
+title: "HTTPRoute: papan tanda ke gerai"
+summary: "Anda akan belajar: hantar setiap laluan ke Service yang betul dengan peraturan HTTPRoute."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, YamlDoctor, RequestTracer, SortCards, Mission]
+needs: [k8s-k3-l07]
+scenario: k3-routes
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Gateway API: HTTPRoute", url: "https://gateway-api.sigs.k8s.io/api-types/httproute/" }
+  - { label: "Gateway API: panduan HTTP routing", url: "https://gateway-api.sigs.k8s.io/guides/http-routing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-routes" commands={['curl -s http://172.18.0.200/api/menu']} label="curl minta /api/menu daripada pintu masuk. nginx kedai menjawab 404 Not Found." />
+
+API menu tinggal di `/api`. Tapi setiap pesanan sampai ke kaunter kedai. Kedai tiada `/api/menu`, jadi ia kata 404.
+</Card>
+
+<Card id="see-match" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Pesanan sampai', text: 'GET /api/menu sampai ke pintu masuk.' }, { when: '2', title: 'Baca papan tanda', text: 'Satu papan kata / ke shop. Satu lagi kata /api ke api.' }, { when: '3', title: 'Paling khusus menang', text: '/api lebih panjang daripada /, jadi papan /api menang.' }, { when: '4', title: 'Dihidang', text: 'Service api dapat pesanan itu.' }]} />
+
+**<Term id="httproute">HTTPRoute</Term>** pegang papan tanda. Setiap peraturan ialah satu laluan, kemudian satu Service. Papan paling khusus menang.
+</Card>
+
+<Card id="try-routes" type="try">
+`routes.yaml` tambah papan tanda ini. Apply, kemudian minta `/api/menu` sekali lagi.
+
+```yaml
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: api
+          port: 80
+```
+
+<Interactive name="FoodCourtSim" scenario="k3-routes" goal={{ reachable: { url: 'http://172.18.0.200/api/menu', contains: 'nasi lemak' } }} hints={['Taip kubectl apply -f routes.yaml', 'Kemudian taip curl -s http://172.18.0.200/api/menu']} success="nasi lemak ready! Papan /api hantar pesanan ke api." />
+</Card>
+
+<Card id="check-doctor" type="check">
+Mei tulis papan /api sendiri. Ia tak boleh apply. Baikinya.
+
+<Interactive name="YamlDoctor" file="route.yaml" manifest={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: api\n      backendRefs:\n        - name: api\n          port: 80\n'} solution={'apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: kedai-api\nspec:\n  parentRefs:\n    - name: entrance\n  rules:\n    - matches:\n        - path:\n            type: PathPrefix\n            value: /api\n      backendRefs:\n        - name: api\n          port: 80\n'} keep={['name: kedai-api', 'name: api']} hint="Laluan bermula dari akar, dengan garis condong." success="Berjaya! Setiap laluan bermula dengan /." />
+
+Maksudnya: laluan mesti bermula dengan `/`.
+</Card>
+
+<Card id="predict-500" type="predict">
+Silap mana yang buat pintu masuk jawab 500? Cuba setiap kerosakan, satu demi satu.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/api', service: 'api', port: 80 }, { path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 8080, selector: { app: 'api' } }, { name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'api-6d8f7b9c5d-k2x8p', labels: { app: 'api' }, containerPort: 8080 }, { name: 'api-6d8f7b9c5d-w9q4z', labels: { app: 'api' }, containerPort: 8080 }, { name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/api/menu' } }} breaks={['path', 'listener', 'serviceName']} task={{ type: 'outcome', want: '500' }} />
+
+<Hint>Papan tanda yang tunjuk ke Service yang tak wujud.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Dua papan: `PathPrefix /api` dan `PathPrefix /`. Ke mana setiap pesanan pergi?
+
+<Interactive name="SortCards" buckets={[{ id: 'api', label: 'Papan /api: api' }, { id: 'shop', label: 'Papan /: shop' }]} items={[{ label: '/api', bucket: 'api', why: 'Tepat kena papan /api.' }, { label: '/api/menu', bucket: 'api', why: '/api tambah bahagian lain: papan /api menang.' }, { label: '/apiary', bucket: 'shop', why: 'PathPrefix padankan bahagian penuh. /apiary bukan /api/…' }, { label: '/', bucket: 'shop', why: 'Hanya papan / yang sepadan.' }, { label: '/menu', bucket: 'shop', why: 'Hanya papan / yang sepadan.' }]} success="Betul! Bahagian penuh, dan papan paling panjang menang." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar setiap laluan ke Service yang betul.
+</Card>
+
+<Card id="deeper" type="deeper">
+Peraturan juga boleh padankan hostname dan header. Dua `backendRefs` dengan weight, contohnya 90 dan 10, jadi canary. Filter boleh hala HTTP ke HTTPS. `kubectl describe httproute` tunjuk `ResolvedRefs`: Service yang hilang tunjuk `BackendNotFound`.
+
+Latihan sebenar (pilihan), di kluster kind anda dengan controller Gateway:
+
+<Interactive name="Mission" id="k3-l08-rep" steps={[{ id: 'two', text: 'Jalankan dua aplikasi kecil, setiap satu dengan Service.' }, { id: 'rule', text: 'Tulis satu HTTPRoute dengan peraturan / dan /api.' }, { id: 'try', text: 'curl / dan /api/menu. Setiap satu patut sampai ke aplikasinya sendiri.' }, { id: 'check', text: 'Baca keadaan laluan itu.', command: 'kubectl describe httproute' }]} success="Papan tanda anda tunjuk arah yang betul!" />
+</Card>

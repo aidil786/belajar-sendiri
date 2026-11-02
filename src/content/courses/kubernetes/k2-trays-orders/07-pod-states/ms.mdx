@@ -1,0 +1,82 @@
+---
+id: k8s-k2-l07
+world: 2
+title: "Keadaan pod dan ralatnya"
+summary: "Anda akan belajar: maksud Pending, CrashLoopBackOff, ImagePullBackOff dan OOMKilled, dan di mana nak semak dulu."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, Choice, SortCards]
+needs: [k8s-k2-l06]
+scenario: k2-states
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Pod lifecycle", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/" }
+  - { label: "Kubernetes: Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pods']} label="Empat pod bermasalah: big Pending, hungry dan oops tunjuk CrashLoopBackOff, typo tunjuk ImagePullBackOff." />
+
+Empat dulang, empat jenis masalah. Perkataannya nampak menakutkan. Setiap satu ada maksud mudah, dan tempat pertama untuk disemak.
+</Card>
+
+<Card id="see-crash" type="see">
+Ralat sebenar: **<Term id="crashloopbackoff">CrashLoopBackOff</Term>**. Maksudnya: aplikasi mula, crash, dan Kubernetes tunggu lebih lama sebelum cuba lagi. Tekan setiap langkah.
+
+<Interactive name="TimelineTap" events={[{ when: 'Mula', title: 'Ia crash', text: 'Aplikasi mula, cetak satu baris, dan keluar dengan ralat.' }, { when: 'Restart', title: 'Cuba lagi', text: 'kubelet mulakan semula dalam dulang yang sama. Ia crash lagi.' }, { when: 'Back-off', title: 'Tunggu lebih lama', text: 'Kini ia tunggu 10 s, kemudian 20 s, kemudian 40 s, sehingga 5 minit. STATUS tunjuk CrashLoopBackOff.' }]} />
+</Card>
+
+<Card id="try-logs" type="try">
+Kenapa `oops` crash? Kubernetes tak boleh baiki aplikasi anda. Tanya dulang itu: baca lognya.
+
+<Interactive name="FoodCourtSim" scenario="k2-crashloop" goal={{ typed: '^(kubectl|k) logs ' }} hints={['Taip kubectl get pods untuk cari nama pod', 'Kemudian taip kubectl logs deployment/oops']} success="Aplikasi kata: oh no, no gas. Itu masalah aplikasi. Baiki aplikasi, bukan kluster." />
+
+<Hint>`kubectl logs deployment/oops` tunjuk apa yang aplikasi cetak.</Hint>
+</Card>
+
+<Card id="see-pending" type="see">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pod big', 'kubectl get events --field-selector reason=FailedScheduling -o jsonpath={.items[0].message}']} label="big Pending. Scheduler kata: 0/3 node tersedia: 1 ada taint, 2 tak cukup CPU." />
+
+Ralat sebenar: **<Term id="pod-pending">Pending</Term>** dengan `Insufficient cpu`. Maksudnya: tiada gerai yang ada ruang untuk dulang ini. Ia minta 64 CPU.
+</Card>
+
+<Card id="predict-oom" type="predict">
+`hungry` boleh guna 64Mi memori. Aplikasinya asyik makan lebih. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia dibunuh, kemudian dihidupkan semula', correct: true, why: 'Lebih had memori bermakna dibunuh. kubelet hidupkan semula, dan ia berulang.' }, { label: 'Ia jadi perlahan sahaja', why: 'Jadi perlahan berlaku pada CPU. Memori tiada lorong perlahan.' }, { label: 'Ia pindah ke gerai lebih besar', why: 'Kubernetes tak pernah pindahkan pod yang sedang berjalan. Ia hidupkan semula di tempat.' }]} />
+</Card>
+
+<Card id="see-oom" type="see">
+<Interactive name="KubeReplay" scenario="k2-states" commands={['kubectl get pod hungry -o jsonpath={.status.containerStatuses[0].lastState.terminated.reason}', 'kubectl get pod hungry -o jsonpath={.status.containerStatuses[0].lastState.terminated.exitCode}']} label="Larian terakhir hungry tamat dengan sebab OOMKilled dan kod keluar 137." />
+
+Ralat sebenar: **<Term id="oomkilled">OOMKilled</Term>**, kod keluar 137. Maksudnya: ia guna memori lebih daripada hadnya. STATUS tunjuk sekejap, kemudian `CrashLoopBackOff`.
+</Card>
+
+<Card id="try-fix" type="try">
+Ralat sebenar: **<Term id="imagepullbackoff">ImagePullBackOff</Term>**. Maksudnya: gerai tak dapat ambil image itu. Di sini tag `1.299` salah taip. Hantar `nginx:1.30-alpine`.
+
+<Interactive name="FoodCourtSim" scenario="k2-bad-rollout" board="shop" goal={{ deploymentImage: { name: 'shop', image: 'nginx:1.30-alpine' }, rolloutComplete: { name: 'shop' }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Taip kubectl get pods untuk lihat dulang yang tersangkut', 'Taip kubectl set image deployment/shop web=nginx:1.30-alpine']} success="Dibaiki ke hadapan! Setiap dulang kini guna image yang wujud." />
+
+<Hint>`kubectl set image deployment/shop web=nginx:1.30-alpine` ganti tag yang salah.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Di mana anda semak dulu? Susun setiap ralat.
+
+<Interactive name="SortCards" buckets={[{ id: 'logs', label: 'Baca log' }, { id: 'image', label: 'Semak nama image' }, { id: 'room', label: 'Semak requests dan limits' }]} items={[{ label: 'CrashLoopBackOff', bucket: 'logs', why: 'Aplikasi asyik crash. Lognya beritahu sebabnya.' }, { label: 'ImagePullBackOff', bucket: 'image', why: 'Image tak dapat diambil. Semak nama, tag dan registry.' }, { label: 'OOMKilled', bucket: 'room', why: 'Ia lebih had memori. Naikkan had atau baiki kebocoran.' }, { label: 'Pending dengan Insufficient cpu', bucket: 'room', why: 'Tiada gerai dengan ruang sebanyak itu. Minta kurang.' }]} success="Siap! Baca ralat sebenar, kemudian pergi ke tempat yang betul." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca empat ralat pod yang biasa dan tahu di mana nak semak.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe pod <nama>` cerita semuanya: Last State, Reason, Exit Code dan Events di hujung. Larian terakhir aplikasi yang crash ada dalam `kubectl logs <pod> --previous`, kalau kubelet masih simpan. Dunia K5 ajar tangga nyahpepijat penuh.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, jalankan pod dengan tag yang salah. Kemudian baca `describe`.
+</Card>

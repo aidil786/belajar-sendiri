@@ -1,0 +1,74 @@
+---
+id: linux-l3-l05
+world: 3
+title: "DNS: dig and /etc/hosts"
+summary: "You will learn: how a name becomes a number, and how to check it."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, TimelineTap, SpotLines, Choice, Mission]
+needs: [linux-l3-l04]
+scenario: linux-l3-dns
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "BIND 9: dig", url: "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility" }
+  - { label: "hosts(5)", url: "https://man7.org/linux/man-pages/man5/hosts.5.html" }
+  - { label: "getent(1)", url: "https://man7.org/linux/man-pages/man1/getent.1.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-dns" intro={['curl -s kedai.example']} network />
+
+You typed a name, not a number. Yet the call reached 203.0.113.10. Who turned the name into a number?
+</Card>
+
+<Card id="see-path" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: '/etc/hosts', text: "The shop's own short list. Checked first." }, { when: '2', title: 'The resolver', text: '/etc/resolv.conf names it: 10.0.0.2. It asks DNS for you.' }, { when: '3', title: 'DNS answers', text: 'kedai.example is 203.0.113.10. Remember it for 300 seconds.' }, { when: '4', title: 'The call', text: 'curl rings 203.0.113.10.' }]} />
+
+**DNS** is the internet's phone book. Tap each step to follow one name.
+</Card>
+
+<Card id="try-dig" type="try">
+Ask the phone book yourself. `dig +short` prints only the answer.
+
+<Interactive name="LinuxSim" scenario="linux-l3-dns" goal={{ lastTyped: '^dig (\\+short )?menu\\.kedai\\.example' }} hints={['Type dig +short menu.kedai.example', 'Try it without +short too.']} solution={['dig +short menu.kedai.example']} success="menu.kedai.example is 203.0.113.20." />
+</Card>
+
+<Card id="see-dig" type="see">
+Without `+short`, dig shows the whole reply. Tap the line with the answer.
+
+<Interactive name="SpotLines" lines={[{ text: ';; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 55600' }, { text: ';; QUESTION SECTION:' }, { text: ';kedai.example.                 IN	A' }, { text: ';; ANSWER SECTION:' }, { text: 'kedai.example.          300	IN	A	203.0.113.10', target: true }, { text: ';; SERVER: 10.0.0.2#53(10.0.0.2) (UDP)' }]} prompt="Tap the answer line." success="A record: kedai.example is 203.0.113.10, for 300 seconds." />
+</Card>
+
+<Card id="predict" type="predict">
+`/etc/hosts` says kedai.example is 10.0.0.99. DNS says 203.0.113.10. Which number does curl call?
+
+<Interactive name="Choice" options={[{ label: '10.0.0.99', correct: true, why: 'The shop checks its own list first.' }, { label: '203.0.113.10', why: 'Only when /etc/hosts has no line for it.' }, { label: 'Both, in turn', why: 'The first answer wins.' }]} />
+</Card>
+
+<Card id="try-hosts" type="try">
+Teach kedai a new name: `stock.kedai` is 10.0.0.21. Add a line to <Term id="hosts-file">/etc/hosts</Term>.
+
+<Interactive name="LinuxSim" scenario="linux-l3-hosts" goal={{ resolves: { 'stock.kedai': '10.0.0.21' } }} hints={["Type echo '10.0.0.21 stock.kedai' | sudo tee -a /etc/hosts", 'Check with getent hosts stock.kedai']} solution={["echo '10.0.0.21 stock.kedai' | sudo tee -a /etc/hosts"]} success="getent hosts stock.kedai now finds 10.0.0.21." />
+
+<Hint>`tee -a` adds a line. Without `-a`, tee replaces the whole file!</Hint>
+</Card>
+
+<Card id="check" type="check">
+You add a name to /etc/hosts. Then `dig +short` that name prints nothing. Why?
+
+<Interactive name="Choice" options={[{ label: 'dig asks DNS only, not /etc/hosts', correct: true, why: 'Use getent hosts to check what programs really see.' }, { label: 'The line was not saved', why: 'getent would show it. dig just never reads that file.' }, { label: 'DNS is down', why: 'dig would print an error then, not nothing.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now follow a name to its number with dig and getent.
+</Card>
+
+<Card id="deeper" type="deeper">
+The `300` is the TTL: how long others may remember the answer. That is why a DNS change can take time to reach everyone. `www.kedai.example` is a CNAME: a nickname for kedai.example.
+
+<Interactive name="Mission" id="linux-l3-l05-rep" steps={[{ id: 'dig', text: 'Ask DNS for a real name. No dig? sudo apt install bind9-dnsutils', command: 'dig +short example.com' }, { id: 'getent', text: 'Ask the way programs do.', command: 'getent hosts example.com' }, { id: 'hosts', text: 'Read your own phone list.', command: 'cat /etc/hosts' }]} success="You read a real phone book." />
+</Card>

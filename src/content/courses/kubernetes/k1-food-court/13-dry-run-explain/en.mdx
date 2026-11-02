@@ -1,0 +1,76 @@
+---
+id: k8s-k1-l13
+world: 1
+title: Dry run and kubectl explain
+summary: "You will learn: to rehearse a command safely, and to look up any YAML field."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder, SortCards]
+needs: [k8s-k1-l12]
+scenario: k1-dry-run
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl create", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/" }
+  - { label: "kubectl explain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_explain/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+You need a Deployment file. Twenty lines of YAML, from memory? What is the smart move?
+
+<Interactive name="Choice" options={[{ label: 'Ask kubectl to write a starter, then edit it', correct: true, why: 'Yes. A dry run prints the YAML for you.' }, { label: 'Copy one from a random blog', why: 'It may be old or wrong. kubectl writes one for your version.' }, { label: 'Type it all from memory', why: 'Possible, but slow. One typo and it is refused.' }]} />
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3 --dry-run=client -o yaml', 'kubectl get deployments']} label="The dry run prints a full Deployment in YAML. Then get deployments says: No resources found." />
+
+A **<Term id="dry-run">dry run</Term>** is a rehearsal. `--dry-run=client -o yaml` prints the order and creates nothing. `get deployments` proves it: no resources found.
+</Card>
+
+<Card id="try-dry" type="try">
+Your turn. Add the flags that print this pod’s YAML without making it.
+
+<Interactive name="FoodCourtSim" scenario="k1-dry-run" prefill="kubectl run tray --image=nginx:1.29-alpine " goal={{ typed: 'run tray\\b.*(--dry-run=client.*-o ?yaml|-o ?yaml.*--dry-run=client)', objectMissing: ['pod/tray'] }} hints={['Add --dry-run=client -o yaml to the end, then press Enter.']} success="YAML on screen, and no tray in the food court." />
+
+<Hint>Add `--dry-run=client -o yaml` at the end.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`--dry-run=client` stays on your laptop. `--dry-run=server` asks the cluster to check, then throws it away. Which one catches more mistakes?
+
+<Interactive name="Choice" options={[{ label: 'server: the cluster checks it for real', correct: true, why: 'Yes. The API server runs its full checks, then saves nothing.' }, { label: 'client: it is faster', why: 'Faster, but your laptop can’t check everything the cluster knows.' }, { label: 'They are the same', why: 'Only server sends the order to the API server.' }]} />
+</Card>
+
+<Card id="see-explain" type="see">
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl explain deployment.spec.replicas']} label="kubectl explain deployment.spec.replicas: an integer, the number of desired pods, default 1." />
+
+Forgot what a field means? **kubectl explain** reads the cluster’s own docs. Join the field path with dots: deployment, then spec, then replicas.
+</Card>
+
+<Card id="try-explain" type="try">
+Build the command that explains a Pod’s restartPolicy.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'talk to the cluster' }, { text: 'explain', means: 'read the built-in docs' }, { text: 'pod.spec.restartPolicy', means: 'the field: pod, then spec, then restartPolicy' }]} decoys={[{ text: '--dry-run=client', means: 'rehearse a change' }, { text: 'get', means: 'list objects' }]} success="That prints Always, Never and OnFailure, with what each means." />
+</Card>
+
+<Card id="check-sort" type="check">
+Dry run or explain? Which one helps here?
+
+<Interactive name="SortCards" buckets={[{ id: 'dry', label: 'Dry run' }, { id: 'explain', label: 'kubectl explain' }]} items={[{ label: 'Get starter YAML for a Deployment', bucket: 'dry', why: 'create … --dry-run=client -o yaml writes it.' }, { label: 'Check a file without changing the cluster', bucket: 'dry', why: 'apply --dry-run=server checks and saves nothing.' }, { label: 'Rehearse a risky apply', bucket: 'dry', why: 'Rehearse first, every time.' }, { label: 'Find out what replicas means', bucket: 'explain', why: 'explain reads the field’s docs.' }, { label: 'See the allowed values of restartPolicy', bucket: 'explain', why: 'explain lists them.' }]} success="Rehearse with a dry run. Look things up with explain." />
+</Card>
+
+<Card id="win" type="win">
+You can now rehearse with a dry run and look up any field.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real manager can improvise. Kubernetes can’t. It only chases what the order board says. And a closed stall’s trays never walk away. New trays are cooked elsewhere, with new names.
+
+Real rep (optional): try these two on your kind cluster.
+
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl apply -f shop.yaml --dry-run=server', 'kubectl explain pod.spec.restartPolicy']} label="The server dry run says deployment.apps/shop created (server dry run). explain lists Always, Never and OnFailure." />
+</Card>

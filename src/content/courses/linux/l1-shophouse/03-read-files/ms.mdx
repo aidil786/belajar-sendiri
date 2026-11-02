@@ -1,0 +1,77 @@
+---
+id: linux-l1-l03
+world: 1
+title: "Baca fail: cat, less, head, tail"
+summary: "Anda akan belajar: baca seluruh fail, baris pertamanya, baris terbaru, dan perhati ia bertambah."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-l02]
+scenario: linux-l1-counter
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "cat (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cat.1.en.html" }
+  - { label: "head (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/head.1.en.html" }
+  - { label: "tail (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/tail.1.en.html" }
+  - { label: "less (Debian 13 man page)", url: "https://manpages.debian.org/trixie/less/less.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Kaunter ada buku pesanan, `orders.log`. Ia bertambah sepanjang hari. Anda cuma perlu pesanan terbaru. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Baca beberapa baris terakhir sahaja', correct: true, why: 'Pesanan baru masuk di bawah. Baca hujungnya sahaja.' }, { label: 'Cetak seluruh buku dan skrol', why: 'Okey untuk 15 baris. Penat untuk 9,000.' }, { label: 'Padam pesanan lama dulu', why: 'Jangan padam untuk membaca! Server tiada undo.' }]} />
+</Card>
+
+<Card id="see-cat" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-counter" intro={['cat orders.log']} />
+
+`cat orders.log` cetak seluruh fail sekali gus. Bagus untuk fail pendek. Fail panjang pula laju terbang lepas mata anda.
+</Card>
+
+<Card id="sort-tools" type="check">
+Pilih alat yang betul untuk setiap kerja.
+
+<Interactive name="SortCards" buckets={[{ id: 'head', label: 'head: baris pertama' }, { id: 'tail', label: 'tail: baris terakhir' }, { id: 'less', label: 'less: muka demi muka' }]} items={[{ label: '3 pesanan pertama hari ini', bucket: 'head', why: 'Baris paling lama ada di atas.' }, { label: 'Pesanan paling baru', bucket: 'tail', why: 'Baris baru ditambah di bawah.' }, { label: 'Skrol log 9,000 baris perlahan-lahan', bucket: 'less', why: 'less tunjuk satu skrin pada satu masa.' }, { label: 'Baris terakhir yang ditulis', bucket: 'tail', why: 'tail -n 1 tunjuk hujung sahaja.' }]} success="Atas: head. Bawah: tail. Panjang: less." />
+</Card>
+
+<Card id="try-tail" type="try">
+Tunjuk 3 pesanan terakhir sahaja: `tail -n 3 orders.log`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ lastTyped: '^tail (-n ?3|-3) orders\\.log$' }} hints={['Taip tail -n 3 orders.log']} solution={['tail -n 3 orders.log']} success="Tiga baris: pesanan terbaru, hingga 08:44." />
+
+<Hint>`-n 3` maksudnya "3 baris".</Hint>
+</Card>
+
+<Card id="predict-head" type="predict">
+Apa yang `head -n 1 orders.log` cetak?
+
+<Interactive name="Choice" options={[{ label: '08:01 T1 nasi-lemak 5 paid', correct: true, why: 'head bermula dari atas. Pesanan pertama masuk pukul 08:01.' }, { label: '08:44 T3 roti-canai 2 paid', why: 'Itu baris terakhir. tail yang akan tunjuk.' }, { label: 'Semua 15 pesanan', why: '-n 1 minta satu baris sahaja.' }]} />
+</Card>
+
+<Card id="try-follow" type="try">
+Perhati buku itu bertambah dengan `tail -f orders.log`. Ia pegang terminal. Hentikan dengan **Ctrl+C**.
+
+<Interactive name="LinuxSim" scenario="linux-l1-counter" goal={{ typed: '^tail (.* )?-f', noForeground: true }} hints={['Taip tail -f orders.log', 'Tekan butang Ctrl+C untuk berhenti memerhati.']} solution={['tail -f orders.log', '^C']} success="Anda perhati, kemudian berhenti. Ctrl+C hentikan kebanyakan program yang pegang terminal." />
+
+<Hint>`-f` maksudnya "follow": terus perhati baris baru.</Hint>
+</Card>
+
+<Card id="check-less" type="check">
+Anda buka log panjang dengan `less orders.log`. Sudah cukup baca. Macam mana nak keluar?
+
+<Interactive name="Choice" options={[{ label: 'Tekan q', correct: true, why: 'q keluar dari less. Anda kembali ke prompt.' }, { label: 'Tekan Ctrl+Z', why: 'Itu cuma jeda less di belakang. q yang keluar.' }, { label: 'Tutup tingkap terminal', why: 'Boleh, tapi seluruh sesi anda tamat. q lebih lembut.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca atas fail, hujungnya, atau semuanya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam `less`, Space tunjuk muka seterusnya dan `q` keluar. `/sambal` mencari, dan `G` lompat ke hujung. `head` dan `tail` tunjuk 10 baris kecuali anda beri `-n`. `cat -n` nomborkan baris. `wc -l` mengiranya.
+
+Latihan sebenar (pilihan): di Linux, cuba `tail -n 5 /var/log/dpkg.log`, kemudian `less /etc/os-release` dan tekan q.
+</Card>

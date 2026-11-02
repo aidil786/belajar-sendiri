@@ -1,0 +1,78 @@
+---
+id: git-w06-boss
+world: 6
+title: Pilih aliran kerja
+summary: "Anda akan belajar: padankan tiga pasukan sebenar dengan aliran kerja yang sesuai."
+minutes: 5
+xp: 50
+interactives: [TimelineTap, Choice, SortCards]
+needs: [git-w06-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "gitworkflows", url: "https://git-scm.com/docs/gitworkflows" }
+  - { label: "GitHub flow", url: "https://docs.github.com/en/get-started/using-github/github-flow" }
+  - { label: "A successful Git branching model (Git Flow)", url: "https://nvie.com/posts/a-successful-git-branching-model/" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9 pagi', title: 'Kopi Kita', text: 'Laman web kedai kopi. Empat pembangun. Mereka nak hantar perubahan setiap hari.' }, { when: '11 pagi', title: 'Kancil Games', text: 'Game telefon. Versi baru setiap dua bulan. Pemain benci crash.' }, { when: '2 petang', title: 'Pasar Besar', text: 'Pasar dalam talian yang sangat besar. 150 pembangun. Mereka merge sepanjang hari.' }]} />
+
+Tiga syarikat tanya soalan yang sama: macam mana pasukan kami patut bekerja? Ketik untuk kenal mereka. Kemudian pilih aliran kerja untuk setiap satu.
+</Card>
+
+<Card id="kopi-pick" type="check">
+Kopi Kita: empat pembangun, satu laman web. PR yang di-merge boleh live pada hari yang sama. Hanya ada satu versi live. Aliran kerja mana yang sesuai?
+
+<Interactive name="Choice" options={[{ label: 'GitHub Flow', correct: true, why: 'Branch pendek, PR, deploy selepas merge. Ringkas dan cepat untuk pasukan web kecil.' }, { label: 'Git Flow', why: 'Terlalu berat di sini. Mereka ada satu versi live dan tiada jadual release.' }, { label: 'Satu branch dikongsi, tiada semakan', why: 'Nanti kerja separuh siap masuk live. Mereka masih perlukan PR.' }]} />
+</Card>
+
+<Card id="kopi-steps" type="try">
+Sediakan GitHub Flow untuk Kopi Kita. Langkah mana yang mereka perlukan?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Mereka perlukannya' }, { id: 'no', label: 'Langkau' }]} items={[{ label: 'Branch pendek untuk setiap perubahan', bucket: 'yes', why: 'Setiap perubahan kekal berasingan sampai siap.' }, { label: 'Pull request dan semakan', bucket: 'yes', why: 'Rakan sepasukan semak dulu sebelum main berubah.' }, { label: 'Merge, kemudian deploy', bucket: 'yes', why: 'Main sentiasa sedia, jadi ia boleh terus live.' }, { label: 'Branch develop yang kekal selamanya', bucket: 'no', why: 'Satu versi live hanya perlukan main.' }, { label: 'Release branch setiap dua bulan', bucket: 'no', why: 'Mereka hantar setiap hari. Tak perlu tunggu.' }]} success="Kopi Kita dah sedia. Pendek, ringkas, selamat." />
+</Card>
+
+<Card id="kancil-pick" type="check">
+Kancil Games keluarkan game telefon setiap dua bulan. Penguji semak setiap versi dulu. Pemain versi 3.1 perlukan pembaikan semasa 3.2 sedang dibina. Aliran kerja mana yang sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Git Flow', correct: true, why: 'Release branch beri penguji masa. Hotfix branch baiki 3.1 yang live.' }, { label: 'GitHub Flow', why: 'Hampir! Tapi mereka keluar ikut jadual, dengan penguji. Git Flow ada release branch untuk itu.' }, { label: 'Satu branch dikongsi, tiada semakan', why: 'Pemain benci crash. Pasukan ini perlukan semakan dan ujian.' }]} />
+</Card>
+
+<Card id="kancil-branches" type="try">
+Kancil Games kini guna Git Flow. Setiap branch (cabang) bermula dari mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'develop', label: 'Dari develop' }, { id: 'main', label: 'Dari main' }]} items={[{ label: '`feature/boss-level`', bucket: 'develop', why: 'Ciri baru bermula dari develop.' }, { label: '`release/3.2.0`', bucket: 'develop', why: 'Release kumpul kerja yang ada dalam develop.' }, { label: '`hotfix/3.1.1`', bucket: 'main', why: 'Pembaikan ini untuk 3.1 yang live, jadi bermula dari main.' }, { label: '`feature/new-skins`', bucket: 'develop', why: 'Satu lagi ciri, jadi develop.' }]} success="Betul! Dan 3.1.0 tambah satu pembaikan jadi 3.1.1: satu PATCH." />
+
+<Hint>Hanya pembaikan untuk versi live bermula dari main.</Hint>
+</Card>
+
+<Card id="pasar-pick" type="check">
+Pasar Besar ada 150 pembangun. Mereka merge ke main banyak kali sehari. Ujian automatik yang kuat jaga main. Ciri besar ambil masa berbulan. Aliran kerja mana yang sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Berasaskan trunk, dengan feature flag', correct: true, why: 'Merge kecil setiap hari elak konflik besar. Flag sorok ciri besar sampai siap.' }, { label: 'Git Flow', why: 'Dengan 150 orang, branch yang hidup lama akan bertembung teruk. Mereka perlukan merge kecil.' }, { label: 'Feature branch selama sebulan', why: 'Kalau berbulan berasingan, 150 orang akan hadapi konflik merge yang besar.' }]} />
+</Card>
+
+<Card id="pasar-flags" type="try">
+Pasar Besar merge semua ini hari ini. Hantar dalam keadaan hidup, atau sorok di sebalik flag?
+
+<Interactive name="SortCards" buckets={[{ id: 'on', label: 'Hantar, hidupkan' }, { id: 'flag', label: 'Sorok di sebalik flag' }]} items={[{ label: 'Bahagian pertama halaman bayaran baru', bucket: 'flag', why: 'Belum siap. Merge, tapi biar tutup.' }, { label: 'Pembaikan untuk penapis carian yang rosak', bucket: 'on', why: 'Dah siap dan diperlukan. Hidupkan.' }, { label: 'Separuh papan pemuka penjual baru', bucket: 'flag', why: 'Separuh siap. Biar tersorok.' }, { label: 'Baiki ejaan di bahagian bawah halaman', bucket: 'on', why: 'Kecil dan dah siap. Hantar saja.' }]} success="Pasar Besar kekal laju dan selamat!" />
+</Card>
+
+<Card id="check-common" type="check">
+Soalan terakhir. Apa persamaan ketiga-tiga syarikat?
+
+<Interactive name="Choice" options={[{ label: 'Main mesti sentiasa berfungsi', correct: true, why: 'Setiap aliran kerja lindungi main. Cuma jalan ke main yang berbeza.' }, { label: 'Semua orang perlukan Git Flow', why: 'Git Flow sesuai untuk release yang dirancang. Bukan untuk semua pasukan.' }, { label: 'Branch panjang paling selamat', why: 'Branch panjang makin jauh dan bertembung. Pastikan ia pendek.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih aliran kerja yang sesuai untuk satu pasukan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pasukan sebenar campur dan padankan. Ramai pasukan web guna GitHub Flow dengan feature flag. Ada pasukan aplikasi yang merge ke main setiap hari. Kemudian mereka buat release branch daripadanya. Pilih yang sesuai untuk pasukan anda. Kemudian tulis, supaya semua orang bekerja dengan cara yang sama.
+</Card>

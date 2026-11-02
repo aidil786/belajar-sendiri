@@ -1,0 +1,68 @@
+---
+id: docker-d5-l06
+world: 5
+title: "Scan for holes: Scout and Trivy"
+summary: "You will learn: to scan an image for known holes, read the report and fix the worst ones."
+minutes: 4
+xp: 20
+interactives: [Transcript, SpotLines, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [docker-d5-l05]
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Scout", url: "https://docs.docker.com/scout/" }
+  - { label: "docker scout cves", url: "https://docs.docker.com/reference/cli/docker/scout/cves/" }
+  - { label: "Trivy", url: "https://trivy.dev/" }
+  - { label: "Rebuild your images often", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Trivy scans the image nginx:1.29-alpine. The last line says: Total 232, with 1 CRITICAL and 47 HIGH." lines={[{ cmd: 'trivy image nginx:1.29-alpine' }, { out: '…', color: 'dim' }, { out: 'Total: 232 (UNKNOWN: 4, LOW: 96, MEDIUM: 84, HIGH: 47, CRITICAL: 1)', color: 'yellow' }]} />
+
+An older nginx image. The food inspector found 232 known holes. One is CRITICAL. Where do you even start?
+</Card>
+
+<Card id="see-scanner" type="see">
+A **<Term id="vulnerability-scanner">scanner</Term>** reads every package in the pack. It checks each one against public lists of known holes, called <Term id="cve" course="cicd">CVEs</Term>. Here is the CRITICAL one.
+
+<Interactive name="SpotLines" lines={[{ text: 'Library:            brotli-libs' }, { text: 'Vulnerability:      CVE-2026-111497' }, { text: 'Severity:           CRITICAL' }, { text: 'Installed Version:  1.2.0-r0' }, { text: 'Fixed Version:      1.2.1-r0', target: true }]} prompt="Tap the line that tells you the fix." success="Yes! Version 1.2.1-r0 closes the hole." />
+</Card>
+
+<Card id="try-scout" type="try">
+Docker's own inspector is Docker Scout. It needs a free Docker login. Build the command that lists only the worst holes.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'talk to Docker' }, { text: 'scout', means: 'the inspector' }, { text: 'cves', means: 'list known holes' }, { text: '--only-severity critical,high', means: 'only the two worst kinds' }, { text: 'kedai:1.0', means: 'the pack to check' }]} decoys={[{ text: '--severity CRITICAL', means: "that is Trivy's flag" }]} success="Scout and Trivy, two inspectors, one job." />
+</Card>
+
+<Card id="predict" type="predict">
+The CRITICAL hole is in `brotli-libs`, which came with the base image. What is the best fix?
+
+<Interactive name="Choice" options={[{ label: 'Use a fresher base, or upgrade that package. Then scan again.', correct: true, why: 'A fix exists: 1.2.1-r0. Rebuild with it, then check.' }, { label: 'Turn the scanner off', why: 'The hole is still in the pack.' }, { label: 'Ship it. It is only one.', why: 'One CRITICAL hole can be enough to break in.' }]} />
+</Card>
+
+<Card id="see-fixed" type="see">
+<Interactive name="Transcript" title="bash" label="kedai:1.0 has 1 CRITICAL hole, so Trivy exits with 1. kedai:1.1 upgrades brotli-libs and Trivy exits with 0." lines={[{ cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai:1.0' }, { out: '…', color: 'dim' }, { out: 'Total: 1 (CRITICAL: 1)', color: 'red' }, { cmd: 'echo $?' }, { out: '1', color: 'red' }, { cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai:1.1' }, { out: '…', color: 'dim' }, { cmd: 'echo $?' }, { out: '0', color: 'green' }]} />
+
+`kedai:1.0` is built on `nginx:1.30-alpine`, with the same hole. `--exit-code 1` turns a CRITICAL into a failure. Version 1.1 adds one recipe line: `RUN apk upgrade --no-cache brotli-libs`. Now it passes.
+</Card>
+
+<Card id="check" type="check">
+Good scanning habit? Swipe right for yes.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Scan the pack before you push it', good: true, why: 'Catch the hole before anyone pulls it.' }, { text: 'Scanned once in June, so it is safe forever', good: false, why: 'New holes are found every day. Scan again often.' }, { text: 'Fix CRITICAL first, then plan for HIGH', good: true, why: 'Worst first. A clear rule your team can follow.' }, { text: 'Hide the report so the build stays green', good: false, why: 'The hole is still there. Fix the package or the base.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now scan an image and fix its worst holes.
+</Card>
+
+<Card id="deeper" type="deeper">
+Scout needs a Docker account and checks your local images. Trivy is open source and needs no account. Both read the packages in the image, so neither finds bugs in code you wrote. `docker scout cves --exit-code` returns 2 when it finds holes. Trivy's `--ignore-unfixed` hides holes with no fix yet.
+
+Real rep (optional), with Trivy installed from its official docs:
+
+<Interactive name="Mission" id="d5-l06-rep" steps={[{ id: 'install', text: 'Install Trivy from the official docs at trivy.dev.' }, { id: 'scan', text: 'Scan a small image for the two worst kinds.', command: 'trivy image --severity HIGH,CRITICAL alpine:3.22' }, { id: 'mine', text: 'Scan one of your own images. Count the CRITICAL holes.' }, { id: 'scout', text: 'Optional, after docker login: try Scout too.', command: 'docker scout quickview alpine:3.22' }]} success="You read a scan like a food inspector!" />
+</Card>

@@ -1,0 +1,70 @@
+---
+id: iac-t1-l07
+world: 1
+title: fmt dan validate
+summary: "Anda akan belajar: tangkap kesilapan dengan validate dan kemaskan susun atur dengan fmt."
+minutes: 3
+xp: 15
+interactives: [TofuSim, SpotLines, Choice, SortCards]
+needs: [iac-t1-l06]
+scenario: t1-fix-me
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu validate", url: "https://opentofu.org/docs/cli/commands/validate/" }
+  - { label: "tofu fmt", url: "https://opentofu.org/docs/cli/commands/fmt/" }
+  - { label: "OpenTofu: style conventions", url: "https://opentofu.org/docs/language/syntax/style/" }
+---
+
+<Card id="hook" type="hook">
+Seorang arkitek yang penat lukis pelan ini. Taip `tofu validate` untuk menyemaknya.
+
+<Interactive name="TofuSim" scenario="t1-fix-me" goal={{ lastTyped: '^tofu validate' }} hints={['Taip tofu validate dan tekan Enter.']} success="Dua kesilapan dijumpai sebelum apa-apa dibina." />
+
+`Error: Reference to undeclared resource`. Maksudnya: `stal` bukan nama dalam pelan ini.
+</Card>
+
+<Card id="see-where" type="see">
+Ralat beritahu di mana nak tengok. Tekan baris yang sebut nama fail dan nombor baris.
+
+<Interactive name="SpotLines" lines={[{ text: 'Error: Reference to undeclared resource' }, { text: '' }, { text: '  on main.tf line 7, in resource "local_file" "sign":', target: true }, { text: '   7:   content  = "Welcome to ${random_pet.stal.id}\\n"' }, { text: '' }, { text: 'There is no managed resource "random_pet" "stal" definition in the root' }, { text: 'module.' }]} success="main.tf, baris 7. Baris seterusnya pun tunjuk." />
+</Card>
+
+<Card id="try-fix" type="try">
+Baiki pelan sampai `tofu apply` berjaya. Jalankan `tofu validate` selepas setiap pembetulan.
+
+<Interactive name="TofuSim" scenario="t1-fix-me" goal={{ resourceInState: ['local_file.sign'] }} hints={['random_pet tiada colour. Padam baris colour = "red".', 'Tukar random_pet.stal.id jadi random_pet.stall.id.', 'Semua sah? Taip tofu apply, kemudian yes.']} success="Sah dan siap dibina. Kedua-dua kesilapan ditangkap sebelum membina." />
+
+<Hint>Baiki satu ralat, kemudian `tofu validate` lagi. Ralat baru mungkin muncul.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`tofu fmt` susun tanda `=` sebaris dan betulkan ruang. Adakah ia ubah apa yang dibina?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Maksud sama, susun atur lebih kemas.', correct: true, why: 'fmt cuma alih ruang. Plan kekal sama.' }, { label: 'Ya. Ia baiki kesilapan juga.', why: 'Kesilapan ialah kerja validate. fmt cuma kemaskan.' }, { label: 'Ya. Ia bina versi yang kemas.', why: 'fmt tak pernah bina. Hanya apply yang bina.' }]} />
+</Card>
+
+<Card id="try-fmt" type="try">
+Pelan ini berfungsi tapi nampak bersepah. Taip `tofu fmt`. Kemudian buka `main.tf` semula.
+
+<Interactive name="TofuSim" scenario="t1-messy" goal={{ formatted: true }} hints={['Taip tofu fmt dan tekan Enter.']} success="Kemas. fmt senaraikan fail yang ia ubah." />
+
+<Hint>Taip `tofu fmt`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Kerja siapa ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'fmt', label: 'tofu fmt' }, { id: 'validate', label: 'tofu validate' }, { id: 'neither', label: 'Bukan kedua-duanya' }]} items={[{ label: 'Susun tanda = sebaris', bucket: 'fmt', why: 'Susun atur ialah fmt.' }, { label: 'Cari rujukan kepada nama yang tak wujud', bucket: 'validate', why: 'Nama salah ialah kesilapan. validate cari.' }, { label: 'Betulkan inden', bucket: 'fmt', why: 'Ruang ialah fmt.' }, { label: 'Cari argument wajib yang tiada', bucket: 'validate', why: 'Tetapan yang tiada ialah kesilapan.' }, { label: 'Semak sign.txt masih wujud', bucket: 'neither', why: 'Hanya plan yang tengok benda sebenar.' }]} success="fmt kemaskan. validate semak. plan banding dengan dunia sebenar." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh semak pelan dengan validate dan kemaskan dengan fmt.
+</Card>
+
+<Card id="deeper" type="deeper">
+`tofu fmt -check` tak ubah apa-apa. Ia senaraikan fail bersepah dan gagal. Jadi CI boleh hentikan kod yang tak kemas. `-diff` tunjuk perubahan; `-recursive` kemaskan sub-folder juga. validate perlu `tofu init` dulu, tapi tak pernah baca state atau benda sebenar. Banyak editor jalankan fmt setiap kali anda simpan.
+</Card>

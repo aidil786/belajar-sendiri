@@ -1,0 +1,73 @@
+---
+id: aws-a3-l05
+world: 3
+title: "EC2 basics"
+summary: "You will learn: to rent a server by the hour, pick its size, and know stop from terminate."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, IdleBill, SpotLines]
+needs: [aws-a3-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon EC2: What is Amazon EC2?", url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" }
+  - { label: "Amazon EC2: Instance types", url: "https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-types.html" }
+  - { label: "Amazon EC2: How stop and start works", url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-ec2-instance-stop-start-works.html" }
+  - { label: "AWS CLI: aws ec2 run-instances", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html" }
+  - { label: "AWS Free Tier", url: "https://aws.amazon.com/free/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil needs a server for one week of testing. Then never again. What makes sense?
+
+<Interactive name="Choice" options={[{ label: 'Rent one by the hour, then give it back', correct: true, why: 'Yes. Pay only for the week. Delete it when done.' }, { label: 'Buy a server for the back room', why: 'A whole machine for one week? Renting is cheaper and faster.' }, { label: 'Rent the biggest one, just in case', why: 'Bigger costs more every hour. Start small.' }]} />
+</Card>
+
+<Card id="see-launch" type="see">
+An **<Term id="ec2">EC2 instance</Term>** is a server you rent by the hour. Launching one is four choices. Put them in order.
+
+<Interactive name="OrderList" items={['Pick the starting disk (an AMI)', 'Pick the size (the instance type)', 'Pick the row and the door guard', 'Launch, and watch it start']} label="First choice at the top" success="Disk, size, row and guard, launch. Every server starts this way." />
+</Card>
+
+<Card id="see-size" type="see">
+The **<Term id="instance-type">instance type</Term>** sets CPU and memory. Bigger costs more per hour. For practice, pick the smallest that works. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Fine for a practice server' }, { id: 'big', label: 'Far too big for practice' }]} items={[{ label: 't3.micro (2 vCPU, 1 GiB)', bucket: 'ok', why: 'Small and cheap. Check the Free Tier page for what it covers today.' }, { label: 't4g.nano (2 vCPU, 0.5 GiB)', bucket: 'ok', why: 'Tiny, on Arm chips. Enough for a test page.' }, { label: 'm7i.4xlarge (16 vCPU, 64 GiB)', bucket: 'big', why: 'Made for heavy work. It burns money fast.' }, { label: 'p5.48xlarge (GPUs)', bucket: 'big', why: 'For training AI models. Never for a practice page.' }]} success="Small first. You can always change size later." />
+</Card>
+
+<Card id="try-launch" type="try">
+Build the launch command. Use a small size, your public row and your door guard.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws ec2 run-instances', means: 'rent a new server' }, { text: '--image-id ami-0abcdef1234567890', means: 'from this starting disk' }, { text: '--instance-type t3.micro', means: 'a small size' }, { text: '--subnet-id subnet-0e99b93155EXAMPLE', means: 'in your public row' }, { text: '--security-group-ids sg-903004f8', means: 'behind your door guard' }]} decoys={[{ text: '--instance-type m7i.4xlarge', means: 'a very big size' }]} success="That launches one small server in the right row, behind the right guard." />
+</Card>
+
+<Card id="predict" type="predict">
+You **stop** the server for a week. Stopped means paused. What still costs money?
+
+<Interactive name="Choice" options={[{ label: 'Its disk, and any Elastic IP on it', correct: true, why: 'Compute stops. Stored disks and public addresses keep billing.' }, { label: 'Nothing at all', why: 'Almost! The CPU rests, but the disk is still stored.' }, { label: 'The full hourly price', why: 'Stopped servers do not pay for compute. Their disks still do.' }]} />
+</Card>
+
+<Card id="check-idle" type="check">
+Stopped is not deleted. Judge what still costs money while it rests.
+
+<Interactive name="IdleBill" items={['stoppedInstance', 'ebsOfStopped', 'elasticIpStopped', 'securityGroup']} ordered />
+</Card>
+
+<Card id="check-end" type="check">
+Done for good? **Terminate** deletes the server. Here is the official example's answer, cut short. Tap the line with its new state.
+
+<Interactive name="SpotLines" prompt="Tap the line with the new state." success="shutting-down, then terminated. Its root disk goes too, by default." lines={[{ text: '$ aws ec2 terminate-instances --instance-ids i-1234567890abcdef0' }, { text: '"InstanceId": "i-1234567890abcdef0",' }, { text: '"CurrentState": {' }, { text: '    "Code": 32,' }, { text: '    "Name": "shutting-down"', target: true }, { text: '},' }, { text: '"PreviousState": {' }, { text: '    "Code": 16,' }, { text: '    "Name": "running"' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now rent a small server, and stop or end it safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+Terminate cannot be undone. Extra disks you attached may stay behind, still billing. Check the Volumes list after.
+
+Real rep (optional), with a budget alarm set. Launch a small instance in the default VPC. Look at it. Terminate it the same hour.
+</Card>

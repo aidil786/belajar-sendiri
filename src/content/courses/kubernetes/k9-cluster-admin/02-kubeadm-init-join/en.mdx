@@ -1,0 +1,87 @@
+---
+id: k8s-k9-l02
+world: 9
+title: "kubeadm: how a cluster is born"
+summary: "You will learn: what kubeadm init builds, and how a new stall joins with a token."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, SortCards, CommandBuilder, Choice, OrderList, Mission]
+needs: [k8s-k9-l01]
+scenario: k9-certs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Creating a cluster with kubeadm", url: "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/" }
+  - { label: "kubeadm init", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/" }
+  - { label: "kubeadm join", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/" }
+  - { label: "kubeadm token", url: "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-certs" commands={['kubectl get nodes']} label="kubectl get nodes: three stalls, all Ready, made by kind in about a minute." />
+
+kind built this food court in about a minute. On three bare machines, nobody does it for you. Who builds the manager’s office?
+</Card>
+
+<Card id="see-init" type="see">
+The builder is **<Term id="kubeadm">kubeadm</Term>**. `kubeadm init` turns the first machine into the manager’s office. Tap each step it takes.
+
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Preflight checks', text: 'Is this machine ready? A wrong setting stops it here.' }, { when: '2', title: 'Keys and certificates', text: 'A new cluster CA and badges, in /etc/kubernetes/pki.' }, { when: '3', title: 'Kubeconfig files', text: 'admin.conf, plus one file for each office part, in /etc/kubernetes.' }, { when: '4', title: 'Job cards for the office', text: 'etcd, API server, controller manager and scheduler, in /etc/kubernetes/manifests.' }, { when: '5', title: 'Start the kubelet', text: 'It reads those job cards and starts the office.' }, { when: '6', title: 'Keep apps away', text: 'The office machine gets a control-plane label and taint.' }, { when: '7', title: 'A ticket for new stalls', text: 'A join token. Then CoreDNS and kube-proxy are added.' }]} />
+</Card>
+
+<Card id="try-look" type="try">
+See what the builder left behind. Type `docker exec -it dev-control-plane bash`. Then `ls /etc/kubernetes`.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" goal={{ typed: '^(ssh dev-control-plane|docker exec -it dev-control-plane bash)$', lastTyped: '^ls( -l)? /etc/kubernetes/?$' }} hints={['Type docker exec -it dev-control-plane bash and press Enter.', 'Now type ls /etc/kubernetes']} success="Kubeconfig files, a manifests folder and a pki folder: all from kubeadm init." />
+
+<Hint>Want more? Try ls /etc/kubernetes/pki and ls /etc/kubernetes/manifests.</Hint>
+</Card>
+
+<Card id="check-files" type="check">
+Where did kubeadm put each file? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'pki', label: 'pki/: keys and certificates' }, { id: 'manifests', label: 'manifests/: office job cards' }, { id: 'conf', label: '/etc/kubernetes: kubeconfig files' }]} items={[{ label: 'ca.crt', bucket: 'pki', why: 'The cluster’s own CA. It signs every badge.' }, { label: 'apiserver.key', bucket: 'pki', why: 'The front counter’s private key.' }, { label: 'kube-scheduler.yaml', bucket: 'manifests', why: 'A job card: the kubelet starts the scheduler from it.' }, { label: 'etcd.yaml', bucket: 'manifests', why: 'The job card for the order book, etcd.' }, { label: 'admin.conf', bucket: 'conf', why: 'The master key for kubectl.' }, { label: 'scheduler.conf', bucket: 'conf', why: 'How the scheduler reaches the API server.' }]} success="Badges in pki, job cards in manifests, keys to the office as .conf files." />
+
+<Hint>.crt and .key are badges and keys. .yaml files here are job cards.</Hint>
+</Card>
+
+<Card id="try-admin" type="try">
+kubeadm left a master key on the office machine: **<Term id="admin-conf">admin.conf</Term>**. Use it on purpose. Type `kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes`.
+
+<Interactive name="FoodCourtSim" scenario="k9-certs" intro={['docker exec -it dev-control-plane bash']} goal={{ typed: 'KUBECONFIG=/etc/kubernetes/admin\\.conf|--kubeconfig[= ]/etc/kubernetes/admin\\.conf', lastTyped: '^kubectl\\b.*\\bget (nodes?|no)\\b' }} hints={['Type kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes', 'Or first export KUBECONFIG=/etc/kubernetes/admin.conf, then kubectl get nodes.']} success="kubectl reached the office with the master key. admin.conf can do anything, so guard it." />
+
+<Hint>Workers get no admin.conf. Only the office machine has it.</Hint>
+</Card>
+
+<Card id="try-join" type="try">
+A new stall joins with a ticket: a **<Term id="bootstrap-token">join token</Term>**. Build the join command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubeadm join', means: 'bring this machine into a cluster' }, { text: '172.18.0.2:6443', means: 'the office’s front counter (API server)' }, { text: '--token abcdef.0123456789abcdef', means: 'the ticket' }, { text: '--discovery-token-ca-cert-hash sha256:<hash>', means: 'check the office’s ID, so you join the right food court' }]} decoys={[{ text: 'kubeadm init', means: 'builds a new office: not what a new stall needs' }, { text: '--discovery-token-unsafe-skip-ca-verification', means: 'skips the ID check: not safe' }]} success="That’s the join command. kubeadm init prints one like it." />
+
+<Hint>Start with kubeadm join. Address, then ticket, then the ID check.</Hint>
+</Card>
+
+<Card id="predict-token" type="predict">
+Your join command is from yesterday morning. Thirty hours have passed. What now?
+
+<Interactive name="Choice" options={[{ label: 'Make a fresh one: kubeadm token create --print-join-command', correct: true, why: 'Yes. Tokens last 24 hours by default. This prints a new join command.' }, { label: 'Run kubeadm init again', why: 'init builds an office. You need a ticket for the office you have.' }, { label: 'Use the old command anyway', why: 'That ticket expired after 24 hours. The office would refuse it.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Put the whole build in order.
+
+<Interactive name="OrderList" items={['Install a container runtime, kubeadm and the kubelet on every machine', 'Run kubeadm init on the first machine', 'Copy admin.conf so kubectl can reach the office', 'Install one Pod network add-on', 'Run kubeadm join on each worker', 'Check that every stall shows up: kubectl get nodes']} label="First step at the top" success="From bare machines to a food court, step by step." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how kubeadm builds a cluster and how stalls join.
+</Card>
+
+<Card id="deeper" type="deeper">
+kubeadm adds no Pod network. You install one yourself, and only one per cluster. CoreDNS will not start before a network is there. The join token is a secret: anyone holding it can add machines.
+
+<Interactive name="Mission" id="k8s-k9-l02-real" steps={[{ id: 'where', text: 'Use your throwaway kind cluster only.', command: 'kubectl config current-context' }, { id: 'files', text: 'Look at what kubeadm left on the office machine.', command: 'docker exec dev-control-plane ls /etc/kubernetes' }, { id: 'ticket', text: 'Make a fresh join command. Never paste it anywhere public.', command: 'docker exec dev-control-plane kubeadm token create --print-join-command' }, { id: 'tokens', text: 'List the tickets that exist now.', command: 'docker exec dev-control-plane kubeadm token list' }]} success="You looked inside a real kubeadm build!" />
+</Card>

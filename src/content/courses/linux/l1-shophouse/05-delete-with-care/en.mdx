@@ -1,0 +1,78 @@
+---
+id: linux-l1-l05
+world: 1
+title: "Delete with care: rm has no undo"
+summary: "You will learn: to delete files and folders safely, because there is no bin."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SwipeJudge, OrderList, Mission]
+needs: [linux-l1-l04]
+scenario: linux-l1-delete
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "rm (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rm.1.en.html" }
+  - { label: "rmdir (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/rmdir.1.en.html" }
+  - { label: "GNU coreutils: rm invocation", url: "https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+On your laptop, deleted files wait in a bin. On a Linux server, where does `rm` send them?
+
+<Interactive name="Choice" options={[{ label: 'Nowhere. They are gone for good.', correct: true, why: 'rm has no bin and no undo. Only a backup can bring a file back.' }, { label: 'To a trash folder', why: 'The shell has no trash folder. rm deletes at once.' }, { label: 'To a backup, by magic', why: 'Only if you made a backup yourself.' }]} />
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-delete" intro={['ls', 'rm a.tmp', 'ls']} />
+
+`rm a.tmp` deleted the file. No question, no bin. **rm** means "remove". Try `rm b.tmp`: a Careful note appears.
+</Card>
+
+<Card id="predict-dir" type="predict">
+`old` is a folder full of old menus. You type `rm old`. What does the server say?
+
+<Interactive name="Choice" options={[{ label: "rm: cannot remove 'old': Is a directory", correct: true, why: 'Plain words: rm guards folders. A folder needs rm -r.' }, { label: 'Nothing. old is gone.', why: 'Plain rm refuses folders. That is a small safety net.' }, { label: 'It deletes only the files inside', why: 'rm does nothing here. It stops and explains.' }]} />
+</Card>
+
+<Card id="try-tmp" type="try">
+Delete the two empty temp files, `a.tmp` and `b.tmp`. Keep everything else.
+
+<Interactive name="LinuxSim" scenario="linux-l1-delete" goal={{ fileMissing: ['~/kedai/a.tmp', '~/kedai/b.tmp'], fileExists: ['~/kedai/menu/today.txt'], dirExists: ['~/kedai/old'] }} hints={['Look first: ls', 'Then: rm a.tmp b.tmp']} solution={['rm a.tmp b.tmp']} success="Both temp files are gone. The menu and old are safe." />
+
+<Hint>`rm` takes several names: `rm a.tmp b.tmp`.</Hint>
+</Card>
+
+<Card id="judge-habits" type="check">
+Safe habit, or risky?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Run ls first. Then rm exactly what you saw.', good: true, why: 'Look before you delete. Typos hide in names.' }, { text: 'Use sudo rm -rf to save time.', good: false, why: 'sudo plus -rf deletes anything, with no questions. Huge risk.' }, { text: 'Not sure? Copy it somewhere first.', good: true, why: 'A backup is your only undo.' }, { text: 'Delete in a hurry before closing time.', good: false, why: 'Tired and rushed is when files vanish. Slow down.' }]} />
+</Card>
+
+<Card id="try-old" type="try">
+The 2025 menus are not needed. Delete the `old` folder and everything inside: `rm -r old`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-delete" goal={{ fileMissing: ['~/kedai/old'], dirExists: ['~/kedai/menu'] }} hints={['Peek inside first: ls old', 'Then: rm -r old']} solution={['ls old', 'rm -r old']} success="old is gone, with both files. Notice the Careful note: -r deletes a whole room." />
+
+<Hint>`-r` means "the folder and everything inside it".</Hint>
+</Card>
+
+<Card id="order-routine" type="check">
+Put the safe delete routine in order.
+
+<Interactive name="OrderList" items={['pwd: am I in the right room?', 'ls old: what is inside?', 'cp -r old ~/old-backup: only if unsure', 'rm -r old: delete it', 'ls: check it is gone']} label="First step at the top" success="Where, what, backup, delete, check. A calm routine." />
+</Card>
+
+<Card id="win" type="win">
+You can now delete files and folders, carefully, with no undo.
+</Card>
+
+<Card id="deeper" type="deeper">
+`rmdir old` deletes a folder only when it is empty: a gentle choice. `rm -i` asks before each file on a real machine. `-f` never asks and hides errors, so treat it like a sharp knife.
+
+Real rep (optional), in a practice folder:
+
+<Interactive name="Mission" id="linux-l1-l05-rep" steps={[{ id: 'make', text: 'Make a folder with two files.', command: 'mkdir -p trash-test && touch trash-test/a.tmp trash-test/b.tmp' }, { id: 'ask', text: 'Delete one, with a question first. Answer y.', command: 'rm -i trash-test/a.tmp' }, { id: 'look', text: 'Look before the big delete.', command: 'ls trash-test' }, { id: 'all', text: 'Delete the folder.', command: 'rm -r trash-test' }]} success="Careful and real!" />
+</Card>

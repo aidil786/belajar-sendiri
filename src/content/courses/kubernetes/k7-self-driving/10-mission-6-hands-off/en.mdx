@@ -1,0 +1,136 @@
+---
+id: k8s-k7-m6
+world: 7
+title: "Capstone mission 6: Hands off"
+summary: "You will learn: to let Argo CD run Kedai Kancil from a Git repo, so one Git change reaches the cluster with no kubectl."
+minutes: 5
+xp: 100
+interactives: [GitOpsMirror, Mission, Choice, MissionCheck]
+needs: [k8s-k7-l09]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: getting started", url: "https://argo-cd.readthedocs.io/en/stable/getting_started/" }
+  - { label: "Argo CD: declarative setup", url: "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/" }
+  - { label: "Argo CD: automated sync", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "kind: quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GitOpsMirror" app={{ name: 'kedai-kancil', namespace: 'default', replicas: 2, image: 'nginx:1.30-alpine', repo: 'https://github.com/you/kedai-kancil.git', path: 'apps' }} task={{ type: 'gitChange', field: 'replicas', to: 3 }} success="That is the goal. Now do it for real." />
+
+Mission 6: Hands off. Your goal: one line changed in Git reaches your cluster. No kubectl for the change. Try it here first.
+</Card>
+
+<Card id="try-install" type="try">
+Step 1: a throwaway cluster with Argo CD. Use the official manifests only. Read the "you are here" sign before every command.
+
+<Interactive name="Mission" id="k8s-m6-install" steps={[
+  { id: 'cluster', text: 'Start a fresh practice cluster with kind.', command: 'kind create cluster --name kedai' },
+  { id: 'context', text: 'Check the sign. It must say kind-kedai.', command: 'kubectl config current-context' },
+  { id: 'ns', text: 'Make a zone for Argo CD.', command: 'kubectl create namespace argocd' },
+  { id: 'install', text: 'Install Argo CD from its official manifest.', command: 'kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml' },
+  { id: 'wait', text: 'Wait until every Argo CD part is ready.', command: 'kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s' }]}
+  success="Argo CD is running in your practice cluster." />
+</Card>
+
+<Card id="see-file" type="see">
+Step 2: the order board. In your `kedai-kancil` repo, make `apps/kedai-kancil.yaml` with the YAML below. Which line will you change in step 4?
+
+<Interactive name="Choice" options={[{ label: 'replicas: 2', correct: true, why: 'One number. The easiest one-line change to see.' }, { label: 'kind: Deployment', why: 'That would change what the object is.' }, { label: 'app: kedai-kancil', why: 'Labels tie the trays to the order. Leave them.' }]} />
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedai-kancil
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kedai-kancil
+  template:
+    metadata:
+      labels:
+        app: kedai-kancil
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.30-alpine
+```
+</Card>
+
+<Card id="try-connect" type="try">
+Step 3: point Argo CD at Git. Save the YAML below as `argocd/application.yaml`. Put your username in `repoURL`.
+
+<Interactive name="Mission" id="k8s-m6-connect" steps={[
+  { id: 'push', text: 'Commit both files and push them to your public repo.', command: 'git add apps argocd && git commit -m "Add GitOps app" && git push' },
+  { id: 'app', text: 'Hand the Application to Argo CD. This is the last change by kubectl.', command: 'kubectl apply -f argocd/application.yaml' },
+  { id: 'synced', text: 'Wait a minute. Two kedai-kancil pods appear. Reading is fine.', command: 'kubectl get deployment kedai-kancil' }]}
+  success="Argo CD now drives Kedai Kancil from Git." />
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kedai-kancil
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR-USERNAME/kedai-kancil.git
+    path: apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+```
+</Card>
+
+<Card id="predict" type="predict">
+You push `replicas: 3`. Who changes the cluster?
+
+<Interactive name="Choice" options={[{ label: 'Argo CD, after it pulls the commit', correct: true, why: 'It checks Git about every 3 minutes, then syncs.' }, { label: 'GitHub pushes it into the cluster', why: 'GitHub cannot reach your laptop cluster. Argo CD pulls.' }, { label: 'You, with kubectl apply', why: 'Not this time. Hands off!' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Step 4: the one-line change. No kubectl allowed for it.
+
+<Interactive name="Mission" id="k8s-m6-change" steps={[
+  { id: 'edit', text: 'In apps/kedai-kancil.yaml, change replicas: 2 to replicas: 3.' },
+  { id: 'commit', text: 'Commit and push the change.', command: 'git commit -am "Scale kedai-kancil to 3" && git push' },
+  { id: 'wait', text: 'Wait up to 3 minutes. Make a cup of teh tarik.' },
+  { id: 'look', text: 'Look, don’t touch: the Deployment now says 3/3.', command: 'kubectl get deployment kedai-kancil' }]}
+  success="One line in Git reached the cluster. Hands off!" />
+</Card>
+
+<Card id="check-api" type="check">
+Let GitHub's public API confirm your order board. Type your username, then check.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your Kedai Kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: 'apps/kedai-kancil.yaml', label: 'It has apps/kedai-kancil.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'argocd/application.yaml', label: 'It has argocd/application.yaml' }]} success="GitHub sees your GitOps repo!" />
+</Card>
+
+<Card id="check-self" type="check">
+The API can't see inside your cluster. Check these yourself.
+
+<Interactive name="Mission" id="k8s-m6-self" steps={[
+  { id: 'synced', text: 'Argo CD shows the app Synced and Healthy.', command: 'kubectl get applications -n argocd' },
+  { id: 'three', text: 'The Deployment shows 3/3 after your commit.' },
+  { id: 'hands', text: 'You changed no replicas with kubectl.' },
+  { id: 'drift', text: 'Bonus: scale it to 1 by hand. Self-heal puts 3 back.', command: 'kubectl scale deployment kedai-kancil --replicas=1' },
+  { id: 'clean', text: 'Done? Delete the practice cluster.', command: 'kind delete cluster --name kedai' }]}
+  success="Mission 6 done: Kedai Kancil drives itself from Git." />
+</Card>
+
+<Card id="win" type="win">
+You can now run Kedai Kancil with GitOps, hands off.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the whole food-court story breaks. Real stalls stay put, but pods move and get new names. A real manager improvises; controllers only follow the board. And the order board is code: reviewed, versioned, undoable. Safety: throwaway clusters only. Use your Mission 2 image only if its package is public.
+</Card>

@@ -1,0 +1,72 @@
+---
+id: obs-o1-l05
+world: 1
+title: SLIs, SLOs and error budgets
+summary: "You will learn: how to turn 'the shop works' into a number, a target and a budget for mistakes."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o1-l04]
+scenario: o1-checkout-slo
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Google SRE book: service level objectives", url: "https://sre.google/sre-book/service-level-objectives/" }
+  - { label: "Google SRE book: embracing risk (error budgets)", url: "https://sre.google/sre-book/embracing-risk/" }
+  - { label: "Prometheus: operators", url: "https://prometheus.io/docs/prometheus/latest/querying/operators/" }
+---
+
+<Card id="hook" type="hook">
+Your boss says: “Checkout must never, ever fail.” Is 100% a good target?
+
+<Interactive name="Choice" options={[{ label: 'No. 100% is impossible, and it freezes every change.', correct: true, why: 'Yes. Phones, networks and banks fail too. Aim a bit lower, on purpose.' }, { label: 'Yes. Customers deserve 100%.', why: 'They deserve honesty. Their own Wi-Fi fails more than 0.1% of the time.' }, { label: 'Targets do not matter', why: 'Without a target, nobody knows when to stop and fix.' }]} />
+</Card>
+
+<Card id="try-sli" type="try">
+Divide good checkouts by all checkouts. That share is your **<Term id="sli">SLI</Term>**.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_good_total" prompt="Add / kedai_checkout_total after the name, then Run." goal={{ typed: '/', resultEquals: [{ labels: {}, value: 0.9995 }] }} hints={['Type a space, a slash, then tap the chip kedai_checkout_total.', 'The box should say kedai_checkout_good_total / kedai_checkout_total']} solution="kedai_checkout_good_total / kedai_checkout_total" success="0.9995: 99.95% of checkouts worked." />
+
+<Hint>`/` means divide.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your target, the **<Term id="slo">SLO</Term>**, is 99.9% good checkouts over 30 days. The SLI says 99.95%. OK?
+
+<Interactive name="Choice" options={[{ label: 'Yes. 99.95% is above 99.9%.', correct: true, why: 'Right. You are meeting the target, with room to spare.' }, { label: 'No. It is not 100%.', why: 'The target is 99.9%, not 100%.' }, { label: 'Cannot tell', why: 'Compare the two numbers: 99.95 is more than 99.9.' }]} />
+</Card>
+
+<Card id="check-sli" type="check">
+A good SLI is something users feel. Swipe right for good SLIs.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Share of checkouts that succeed', good: true, why: 'Customers feel every failed checkout.' }, { text: 'Share of checkouts done in under 1 second', good: true, why: 'Speed is part of “it works”.' }, { text: 'CPU use of the database server', good: false, why: 'Users never see CPU. Keep it on a dashboard.' }, { text: 'Number of servers running', good: false, why: 'Ten servers can all serve errors.' }, { text: 'Share of menu pages that load', good: true, why: 'A page that loads is what users want.' }]} />
+</Card>
+
+<Card id="see-budget" type="see">
+The **<Term id="error-budget">error budget</Term>** is what is left: 0.1% may fail. Over 30 days, how much full downtime is that?
+
+<Interactive name="Choice" options={[{ label: 'About 43 minutes', correct: true, why: '30 days is 43,200 minutes. 0.1% of that is 43.2 minutes.' }, { label: 'About 7 hours', why: 'That is the budget for 99%, not 99.9%.' }, { label: 'Zero', why: 'Zero is a 100% target. The budget is 0.1%.' }]} />
+
+<Hint>30 × 24 × 60 = 43,200 minutes.</Hint>
+</Card>
+
+<Card id="try-outage" type="try">
+An outage starts at 40m. Show the SLI only when it misses the SLO.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_good_total / kedai_checkout_total" at="60m" prompt="Add < 0.999 at the end, then Run. Slide between 30m and 60m." goal={{ at: '60m', typed: '<\\s*0\\.999', resultCount: 1 }} hints={['Type a space, then < 0.999 at the end.', 'A filter keeps a series only when it is true.']} solution="kedai_checkout_good_total / kedai_checkout_total < 0.999" success="At 60m it shows up: the SLO is missed." />
+
+<Hint>`<` keeps the answer only when it is below 0.999.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now set an SLI, an SLO and an error budget.
+</Card>
+
+<Card id="deeper" type="deeper">
+Spend the budget on purpose: new releases, experiments, planned work. Budget nearly gone? Slow down and fix reliability first. Most teams use a rolling window, like the last 30 days. World O3 turns this into burn-rate alerts.
+
+<Interactive name="Mission" id="obs-o1-l05-real" steps={[{ id: 'sli', text: 'For one app you know, write an SLI: good events ÷ all events.' }, { id: 'slo', text: 'Pick a target and a window, like 99.5% over 30 days.' }, { id: 'budget', text: 'Work out the budget in minutes: 43,200 × (100% − target).' }]} success="Your first SLO is on paper." />
+</Card>

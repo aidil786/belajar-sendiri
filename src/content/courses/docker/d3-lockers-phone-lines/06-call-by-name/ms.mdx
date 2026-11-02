@@ -1,0 +1,69 @@
+---
+id: docker-d3-l06
+world: 3
+title: Panggil container ikut nama
+summary: "Anda akan belajar: capai container lain ikut namanya, bukan localhost."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, TimelineTap, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l05]
+scenario: d3-shopnet
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Networking overview (DNS)", url: "https://docs.docker.com/engine/network/#dns-services" }
+  - { label: "Docker docs: Bridge network driver", url: "https://docs.docker.com/engine/network/drivers/bridge/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://localhost']} fails={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://localhost']} label="Satu bekas baru di shopnet minta menu daripada localhost. wget kata: can't connect to remote host (127.0.0.1): Connection refused." />
+
+Satu bekas baru mahukan menu, jadi ia tanya localhost. `Connection refused`. Maksudnya: tiada siapa hidangkan halaman dalam bekas ini sendiri.
+</Card>
+
+<Card id="see-dns" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'wget http://menu', title: 'Siapa menu?', text: 'Bekas itu tanya tentang nama menu.' }, { when: 'Buku telefon', title: 'Docker jawab', text: 'Di shopnet, Docker kenal menu. Ia balas dengan alamat seperti 172.18.0.2.' }, { when: 'Panggilan', title: 'Sambung', text: 'Bekas itu panggil alamat tersebut di port 80.' }, { when: 'Jawapan', title: 'Menu dihidang', text: 'nginx dalam menu hantar halaman itu balik.' }]} />
+
+Dalam talian sendiri, Docker simpan buku telefon. Sebut nama bekas, dapat alamatnya. Inilah **<Term id="container-dns">container DNS</Term>**.
+</Card>
+
+<Card id="try-call" type="try">
+Dari bekas baru di shopnet, ambil halaman di http://menu.
+
+<Interactive name="KitchenSim" scenario="d3-shopnet" goal={{ typed: 'http://menu', lastTyped: 'menu', lastExit: 0 }} hints={['Taip docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu']} success="Menu jawab ikut nama!" />
+
+<Hint>Bekas baru itu mesti di shopnet: `--network shopnet`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dalam satu container, siapa localhost?
+
+<Interactive name="Choice" options={[{ label: 'Container itu sendiri', correct: true, why: 'Setiap bekas ada localhost sendiri. Untuk capai bekas lain, guna namanya.' }, { label: 'Laptop anda', why: 'Laptop anda di luar bekas. localhost tak pernah keluar dari bekas.' }, { label: 'Semua bekas di talian', why: 'localhost cuma bekas itu sendiri. Nama capai yang lain.' }]} />
+</Card>
+
+<Card id="check-port" type="check">
+<Interactive name="KitchenReplay" scenario="d3-shopnet" commands={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu:8080']} fails={['docker run --rm --network shopnet alpine:3.22 wget -qO- http://menu:8080']} label="wget ke menu di port 8080 gagal: can't connect to remote host, Connection refused." />
+
+`menu:8080` pun ditolak. nginx dengar di port 80 dalam bekas. 8080 cuma tingkap di laptop anda.
+</Card>
+
+<Card id="check" type="check">
+Satu bekas aplikasi berhubung dengan db dan menu. Tetapan yang baik, atau tidak?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'DB_HOST=db', good: true, why: 'Nama berfungsi dalam rangkaian sendiri.' }, { text: 'DB_HOST=localhost', good: false, why: 'Itu bekas aplikasi itu sendiri. db tinggal dalam bekas lain.' }, { text: 'DB_HOST=172.18.0.3', good: false, why: 'Alamat boleh berubah bila db dibuat semula. Nama kekal.' }, { text: 'MENU_URL=http://menu:80', good: true, why: 'Nama, ditambah port dalam bekas.' }, { text: 'MENU_URL=http://menu:8080', good: false, why: '8080 ialah tingkap di laptop. Dalam talian, guna port 80.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sambungkan container ikut nama.
+</Card>
+
+<Card id="deeper" type="deeper">
+Buku telefon Docker ada di 127.0.0.11 dalam setiap bekas di rangkaian sendiri. `--network-alias` tambah nama kedua. Compose letak semua servis dalam satu rangkaian dan namakan untuk anda (Dunia D4).
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="d3-l06-rep" steps={[{ id: 'net', text: 'Buat satu talian dan bekas menu.', command: 'docker network create practice-net && docker run -d --name menu --network practice-net nginx:1.30-alpine' }, { id: 'name', text: 'Panggil ia ikut nama.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://menu' }, { id: 'local', text: 'Sekarang cuba localhost. Baca ralatnya.', command: 'docker run --rm --network practice-net alpine:3.22 wget -qO- http://localhost' }, { id: 'clean', text: 'Kemas.', command: 'docker rm -f menu && docker network rm practice-net' }]} success="Nama berfungsi. localhost cuma bekas itu sendiri." />
+</Card>

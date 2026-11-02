@@ -1,0 +1,76 @@
+---
+id: git-w07-boss
+world: 7
+title: "Auto-deploy laman diari"
+summary: "Anda akan belajar: cara bina, debug dan percaya robot yang deploy setiap kali merge."
+minutes: 6
+xp: 50
+interactives: [PracticeRepo, TimelineTap, YamlBuilder, Choice]
+needs: [git-w07-l11]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Using custom workflows with GitHub Pages", url: "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="PracticeRepo" screen="pull" at={12} repo={{ owner: 'aina-codes', name: 'diary' }} pulls={[{ number: 12, title: 'Add day 5 entry', body: 'Hari 5: saya belajar GitHub Actions.', author: 'mei', from: 'day-5', to: 'main', state: 'merged', mergedWith: 'squash', checks: [{ name: 'CI / test', status: 'pass' }] }]} />
+
+Hari 5 dah di-merge. Tapi diari yang live masih tunjuk hari 4. Anda deploy dengan tangan, dan anda terlupa. Misi boss: setiap merge deploy dengan sendirinya.
+</Card>
+
+<Card id="see-plan" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Merge', text: 'Merge ke main ialah push ke main. Itu kejutkan robot.' }, { when: '2', title: 'Uji', text: 'Runner baru, kod anda, Node, pakej. Kemudian setiap ujian berjalan.' }, { when: '3', title: 'Bina', text: 'Hanya jika ujian lulus: bina laman.' }, { when: '4', title: 'Deploy', text: 'Muat naik dengan kunci dari secrets. Pembaca nampak hari 5.' }]} />
+
+Ini rancangannya. Ketik setiap hentian. Kemudian bina, debug, dan terangkan. Petunjuk mesra akan bantu kalau anda buntu.
+</Card>
+
+<Card id="try-build" type="try">
+Bilik 1: bina robot itu. Deploy pada setiap push ke main, tapi hanya selepas ujian lulus.
+
+<Interactive name="YamlBuilder" workflow="Deploy diary" goal={{ order: ['push', 'perms', 'job', 'checkout', 'node', 'install', 'test', 'build', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Bila push ke main', yaml: 'push:\n  branches: [main]', means: 'Merge ke main ialah push ke main.' },
+  { id: 'pr', kind: 'trigger', label: 'Bila ada pull request', yaml: 'pull_request:', means: 'Jalan pada setiap pull request.', why: 'PR belum di-merge. Deploy hanya apa yang sampai di main.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Token itu cuma boleh baca kod anda.' },
+  { id: 'write', kind: 'permissions', label: 'Token tulis', yaml: 'contents: write', means: 'Token itu boleh ubah kod anda.', why: 'Job ini tak pernah ubah kod anda. Baca sahaja dah cukup.' },
+  { id: 'job', kind: 'job', label: 'Job: deploy', yaml: 'deploy:\n  runs-on: ubuntu-latest', means: 'Runner Linux yang baru.' },
+  { id: 'checkout', kind: 'step', label: 'Ambil kod', yaml: '- uses: actions/checkout@v7\n  with:\n    persist-credentials: false', means: 'Salin kod anda. Jauhkan token dari config Git.' },
+  { id: 'node', kind: 'step', label: 'Sediakan Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24\n    cache: npm', means: 'Pasang Node 24, dengan cache npm.' },
+  { id: 'install', kind: 'step', label: 'Pasang pakej', yaml: '- run: npm ci', means: 'Pasang pakej yang tepat dari fail lock.' },
+  { id: 'test', kind: 'step', label: 'Jalankan ujian', yaml: '- run: npm test', means: 'Setiap ujian mesti lulus.' },
+  { id: 'build', kind: 'step', label: 'Bina laman', yaml: '- run: npm run build', means: 'Bina laman ke dalam dist/.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy (kunci dari secrets)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Muat naik laman. Kunci datang dari secrets.' },
+  { id: 'typed', kind: 'step', label: 'Deploy (kunci ditaip)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: abc123-paste-here', means: 'Muat naik, dengan kunci ditaip dalam fail.', why: 'Jangan taip kunci dalam fail. Baca dari secrets.' }]}
+  success="Bilik 1 selesai! Robot anda uji, bina, kemudian deploy." />
+
+<Hint>Bila, kuasa token, di mana, kemudian steps. Uji, kemudian bina, kemudian deploy.</Hint>
+</Card>
+
+<Card id="try-run" type="try">
+Bilik 2: larian sebenar yang pertama berwarna merah! Cari langkah yang gagal.
+
+<Interactive name="PracticeRepo" screen="run" at={31} repo={{ owner: 'aina-codes', name: 'diary' }} runs={[{ id: 31, workflow: 'Deploy diary', event: 'push', branch: 'main', status: 'fail', jobs: [{ name: 'deploy', steps: [{ name: 'Ambil kod', status: 'pass', log: ['Repo disalin ke runner.'] }, { name: 'Sediakan Node', status: 'pass', log: ['Node 24 dah sedia.', 'Cache npm dipulihkan.'] }, { name: 'Pasang pakej', status: 'pass', log: ['npm ci', 'Semua pakej dipasang.'] }, { name: 'Jalankan ujian', status: 'fail', log: ['npm test', 'FAIL entries.test.js', 'Expected the newest entry "Day 5"', 'Received "Day 4"', 'Error: Process completed with exit code 1.'] }, { name: 'Bina laman', status: 'skipped' }, { name: 'Deploy (kunci dari secrets)', status: 'skipped' }] }] }]} task={{ type: 'findFailingStep', run: 31 }} success="Jumpa! Ujian tangkap satu pepijat, jadi bina dan deploy dilangkau." />
+
+<Hint>Cari ✗. Ketik untuk baca log-nya.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+Bilik 3: ujian gagal, dan laman yang live kekal selamat. Kenapa deploy mesti datang selepas ujian?
+
+<Interactive name="Choice" options={[{ label: 'Supaya kod rosak tak pernah sampai kepada pembaca', correct: true, why: 'Ujian ialah pintu pagar. Hanya ✓ yang membukanya.' }, { label: 'YAML wajibkan langkah dalam urutan itu', why: 'YAML jalankan apa sahaja urutan yang anda tulis. Anda pilih urutan yang selamat.' }, { label: 'Deploy jadi lebih laju', why: 'Bukan soal laju. Soal selamat: tiada ✓, tiada deploy.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh auto-deploy laman dengan selamat, setiap kali merge.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kursus ini deploy dengan cara yang sama. Job `deploy`-nya ada `needs: check` dan hanya berjalan pada push ke `main`. Buat betul-betul (pilihan). Hidupkan GitHub Pages untuk repo diari anda. Tetapkan sumbernya kepada GitHub Actions. Pilih workflow permulaan HTML statik. Kemudian semak di sini.
+
+<Interactive name="MissionCheck" checks={[{ type: 'workflowRuns', repo: 'diary', min: 1, label: 'Satu workflow dah berjalan dalam repo diari anda' }, { type: 'pages', repo: 'diary', label: 'GitHub Pages dah hidup' }]} success="Diari anda dah live, dan robot jaga ia sentiasa baru!" />
+</Card>

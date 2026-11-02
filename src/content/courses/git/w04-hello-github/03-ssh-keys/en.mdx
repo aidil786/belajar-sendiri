@@ -1,0 +1,86 @@
+---
+id: git-w04-l03
+world: 4
+title: SSH keys and gh auth login
+summary: "You will learn: how to let your computer prove who you are, with a key pair or with gh."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, CommandBuilder, Transcript, SwipeJudge, Mission]
+needs: [git-w04-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Generating a new SSH key", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent" }
+  - { label: "Adding a new SSH key to your account", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account" }
+  - { label: "Testing your SSH connection", url: "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection" }
+  - { label: "gh auth login", url: "https://cli.github.com/manual/gh_auth_login" }
+---
+
+<Card id="hook" type="hook">
+You push many times a day. Can your laptop prove it's you, with nothing to type?
+
+<Interactive name="Choice" options={[{ label: 'Yes, with a key pair saved on it', correct: true, why: 'That is SSH. Let us make one.' }, { label: 'No. You must type something every time.', why: 'Not with SSH keys or a sign-in helper.' }, { label: 'Yes, by saving your password in a text file', why: 'Never! Anyone who opens that file gets in.' }]} />
+</Card>
+
+<Card id="see-pair" type="see">
+Think of a padlock and its key. Give GitHub the padlock. Keep the key. An **<Term id="ssh-key">SSH key</Term>** works the same way. Sort the two halves.
+
+<Interactive name="SortCards" buckets={[{ id: 'keep', label: 'Keep it secret' }, { id: 'give', label: 'Give it to GitHub' }]} items={[{ label: 'id_ed25519', bucket: 'keep', why: 'No .pub: this is the private key. It never leaves your computer.' }, { label: 'id_ed25519.pub', bucket: 'give', why: '.pub means public. This is the padlock.' }, { label: 'The public key (the padlock)', bucket: 'give', why: 'GitHub uses it to check your private key.' }, { label: 'The private key (the key)', bucket: 'keep', why: 'Whoever has it can push as you.' }]} success="Right! The .pub file goes to GitHub. The other one stays home." />
+
+<Hint>.pub means public. Public is the padlock.</Hint>
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that makes a new key pair.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'ssh-keygen', means: 'Make a key pair' }, { text: '-t', means: 'of this type' }, { text: 'ed25519', means: 'a modern, strong type' }, { text: '-C', means: 'with a label' }, { text: '"you@example.com"', means: 'your email as the label' }]} decoys={[{ text: 'git', means: 'Git does not make SSH keys' }, { text: '--force', means: 'not an ssh-keygen option here' }]} success="That's the command GitHub's guide uses too." />
+
+<Hint>The tool is ssh-keygen. The type is ed25519.</Hint>
+</Card>
+
+<Card id="see-keygen" type="see">
+<Interactive name="Transcript" title="bash" label="ssh-keygen starts making an ed25519 key pair. Then cat shows the public key: one long line that ends with your email. The key here is a fake example." lines={[{ cmd: 'ssh-keygen -t ed25519 -C "you@example.com"' }, { out: 'Generating public/private ed25519 key pair.' }, { cmd: 'cat ~/.ssh/id_ed25519.pub' }, { out: 'ssh-ed25519 AAAA...FAKE-EXAMPLE-KEY... you@example.com', color: 'cyan' }]} />
+
+It asks where to save. Press Enter for the usual place. Then pick a passphrase: a password for the key itself. `cat` prints the public key to copy.
+</Card>
+
+<Card id="predict" type="predict">
+GitHub has your padlock now. Which remote address uses SSH?
+
+<Interactive name="Choice" options={[{ label: '`git@github.com:you/diary.git`', correct: true, why: 'SSH addresses start with git@ and use a colon.' }, { label: '`https://github.com/you/diary.git`', why: 'That one is HTTPS. It uses a token or a helper.' }]} />
+</Card>
+
+<Card id="see-test" type="see">
+<Interactive name="Transcript" title="bash" label="ssh -T git@github.com answers: Hi you! You've successfully authenticated, but GitHub does not provide shell access." lines={[{ cmd: 'ssh -T git@github.com' }, { out: "Hi you! You've successfully authenticated, but GitHub does not provide shell access.", color: 'green' }]} />
+
+Paste the `.pub` key in GitHub: Settings, then SSH and GPG keys. Then test it. "Hi you!" means the padlock fits.
+</Card>
+
+<Card id="check-habits" type="check">
+Key habits: good, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Protect your key with a passphrase', good: true, why: 'A stolen key file is useless without it.' }, { text: 'Email your private key to yourself as a backup', good: false, why: 'Email is not a safe. Make a new key instead.' }, { text: 'Make a separate key for each computer', good: true, why: 'Lose one laptop? Remove just its key on GitHub.' }, { text: 'Paste id_ed25519 (no .pub) into GitHub', good: false, why: 'That is the private key! Only the .pub file goes to GitHub.' }]} />
+</Card>
+
+<Card id="see-gh" type="see">
+<Interactive name="Transcript" title="bash" label="The command gh auth login. It asks a few questions and signs you in with your browser." lines={[{ cmd: 'gh auth login' }]} />
+
+Shortcut: the **<Term id="github-cli">GitHub CLI</Term>**. Run `gh auth login`. Pick GitHub.com, then HTTPS or SSH. Sign in with your browser. It can set up Git for you too.
+</Card>
+
+<Card id="try-mission" type="try">
+Pick one way and do it for real. Tick each step.
+
+<Interactive name="Mission" id="w04-ssh" title="Mission: Git signs in by itself" steps={[{ id: 'keygen', text: 'Make a key pair. Use your own email.', command: 'ssh-keygen -t ed25519 -C "you@example.com"' }, { id: 'copy', text: 'Show the public key and copy all of it.', command: 'cat ~/.ssh/id_ed25519.pub' }, { id: 'add', text: 'On GitHub: Settings, then SSH and GPG keys, then New SSH key. Paste it.' }, { id: 'test', text: 'Test it. Look for "Hi" and your username.', command: 'ssh -T git@github.com' }, { id: 'or-gh', text: 'Or skip all that: install gh and run gh auth login.' }]} success="Your computer can prove who you are now." />
+
+<Hint>On Windows, use Git Bash for these commands.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now connect to GitHub with an SSH key or gh.
+</Card>
+
+<Card id="deeper" type="deeper">
+Already have an HTTPS remote? Switch it: `git remote set-url origin git@github.com:you/diary.git`. The ssh-agent can remember your passphrase for a whole session. The first SSH test asks you to trust github.com. Check its fingerprint on docs.github.com first.
+</Card>

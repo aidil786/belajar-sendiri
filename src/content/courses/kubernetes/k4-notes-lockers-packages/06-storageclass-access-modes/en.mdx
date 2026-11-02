@@ -1,0 +1,78 @@
+---
+id: k8s-k4-l06
+world: 4
+title: "StorageClass and access modes"
+summary: "You will learn: who builds lockers on demand, and who may open a locker at once."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, FoodCourtSim, OrderList, Choice, SortCards, YamlDoctor, Mission]
+needs: [k8s-k4-l05]
+scenario: k4-sc
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Storage Classes", url: "https://kubernetes.io/docs/concepts/storage/storage-classes/" }
+  - { label: "Kubernetes: Dynamic Volume Provisioning", url: "https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/" }
+  - { label: "Persistent Volumes: access modes", url: "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-locker-bound" commands={['kubectl get pv']} picture={false} label="kubectl get pv lists one volume named pvc- and a long id, 1Gi, RWO, Bound to default/orders." />
+
+Last lesson, a locker appeared by itself. Its name is `pvc-` plus a long id. Nobody wrote its YAML. So who built it?
+</Card>
+
+<Card id="try-look" type="try">
+Find the locker maker. Then ask the waiting claim what it is doing.
+
+<Interactive name="FoodCourtSim" scenario="k4-sc" goal={{ typed: 'get (storageclass|storageclasses|sc)\\b', lastTyped: 'describe pvc' }} hints={['Type kubectl get storageclass', 'Then: kubectl describe pvc orders']} success="standard is the default maker. It waits for the first pod." />
+
+<Hint>Read the Events at the bottom of `describe`.</Hint>
+</Card>
+
+<Card id="see-maker" type="see">
+Put the locker-building steps in order, first at the top.
+
+<Interactive name="OrderList" items={['You apply a claim. It is Pending.', 'A pod that uses the claim lands on a stall', 'The provisioner builds a PV on that stall', 'The claim turns Bound', 'The pod starts, with the locker mounted']} label="First step at the top" success="Built on demand. That is dynamic provisioning." />
+
+The maker is a **<Term id="storageclass">StorageClass</Term>**. kind's `standard` class builds each PV on the stall where the pod runs.
+</Card>
+
+<Card id="predict" type="predict">
+A claim asks for `storageClassName: fast`. This cluster has no class called `fast`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The claim stays Pending', correct: true, why: 'No maker can build that locker. describe pvc tells you why.' }, { label: 'It uses standard instead', why: 'Almost! The default is used only when a claim names no class.' }, { label: 'kubectl apply refuses it', why: 'The claim is created. It just never binds.' }]} />
+</Card>
+
+<Card id="see-modes" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'one', label: 'Writers on one stall' }, { id: 'many', label: 'Writers on many stalls' }, { id: 'read', label: 'Readers only' }]} items={[{ label: 'ReadWriteOnce (RWO)', bucket: 'one', why: 'One node at a time. Its pods may share it.' }, { label: 'ReadWriteOncePod (RWOP)', bucket: 'one', why: 'Stricter still: one single pod.' }, { label: 'ReadWriteMany (RWX)', bucket: 'many', why: 'Pods on many nodes write at once.' }, { label: 'ReadOnlyMany (ROX)', bucket: 'read', why: 'Many nodes may read, none may write.' }]} success="Four modes. RWO is the usual one." />
+
+An **<Term id="access-mode">access mode</Term>** says who may use the locker at once. Not every StorageClass offers every mode.
+</Card>
+
+<Card id="predict-rwx" type="predict">
+Three trays on three stalls must all save photos to one folder. Which mode?
+
+<Interactive name="Choice" options={[{ label: 'ReadWriteMany', correct: true, why: 'Many nodes, all writing. You need storage that supports it, like a network file share.' }, { label: 'ReadWriteOnce', why: 'Almost! RWO allows one node only. Trays on other stalls cannot mount it.' }, { label: 'ReadOnlyMany', why: 'Read only. Nobody could save a photo.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+This claim is refused. Fix the size.
+
+<Interactive name="YamlDoctor" file="claim.yaml" manifest={'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: orders\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gb\n'} solution={'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: orders\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi\n'} keep={['storage: 1G']} keepHint="Keep one gigabyte-sized locker. Only fix the unit." hint="Kubernetes writes sizes like 1Gi or 500Mi. Gb is not a unit it knows." success="Applied! 1Gi is one gibibyte." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain StorageClasses and pick an access mode.
+</Card>
+
+<Card id="deeper" type="deeper">
+`WaitForFirstConsumer` waits for a pod, so the PV lands where the pod runs. `Immediate` builds it at once. `allowVolumeExpansion: true` lets a claim grow later. Clouds offer classes like fast SSDs or network file storage.
+
+Real rep (optional), on a practice kind cluster:
+
+<Interactive name="Mission" id="k8s-k4-l06-rep" steps={[{ id: 'classes', text: 'Meet your locker makers.', command: 'kubectl get storageclass' }, { id: 'yaml', text: 'Read the default class in full.', command: 'kubectl get storageclass standard -o yaml' }, { id: 'claim', text: 'Apply the claim from the last lesson, then read its events.', command: 'kubectl describe pvc orders' }, { id: 'tidy', text: 'Tidy up.', command: 'kubectl delete pvc orders' }]} success="You met the real locker maker." />
+</Card>

@@ -1,0 +1,82 @@
+---
+id: linux-l4-l09
+world: 4
+title: "Web server kecil dengan nginx"
+summary: "Anda akan belajar: memasang halaman sendiri dengan nginx, menambah laman, dan menguji sebelum reload."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, OrderList, Choice, Mission]
+needs: [linux-l4-l08]
+scenario: linux-l4-nginx-page
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+  - { label: "nginx: server names and listen", url: "https://nginx.org/en/docs/http/request_processing.html" }
+  - { label: "Debian wiki: nginx", url: "https://wiki.debian.org/Nginx" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-page" intro={['curl -s localhost | grep title']} network />
+
+Kaunter depan kedai anda tunjuk poster orang lain: `Welcome to nginx!`. Masa untuk pasang papan tanda anda sendiri.
+</Card>
+
+<Card id="see-site" type="see">
+<Term id="web-server">Web server</Term> ialah kaunter depan: ia beri halaman dari satu folder. Ini laman lalai nginx. Tekan baris yang namakan folder itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'server {' }, { text: '	listen 80 default_server;' }, { text: '	root /var/www/html;', target: true }, { text: '	index index.html index.htm index.nginx-debian.html;' }, { text: '	server_name _;' }, { text: '	location / {' }, { text: '		try_files $uri $uri/ =404;' }, { text: '	}' }, { text: '}' }]} prompt="Tekan folder tempat halaman datang." success="root /var/www/html: rak tempat nginx beri halaman. index.html datang dahulu." />
+</Card>
+
+<Card id="try-page" type="try">
+Tulis papan tanda anda dalam `/var/www/html/index.html`. root memiliki folder itu, jadi guna `sudo tee`. Kemudian `curl localhost`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-page" goal={{ reachable: { localhost: { status: 200, contains: 'Kedai Kancil' } } }} hints={["echo '<h1>Kedai Kancil</h1>' | sudo tee /var/www/html/index.html", 'curl localhost']} solution={["echo '<h1>Kedai Kancil</h1>' | sudo tee /var/www/html/index.html"]} success="Papan tanda anda sudah naik. Tak perlu reload: nginx baca halaman setiap kali." />
+</Card>
+
+<Card id="see-door" type="see">
+Pintu kedua, di port 8080, menunggu dalam `sites-available`. Laman dalam `sites-enabled` sedang hidup. Susun langkahnya. Failnya di bawah.
+
+<Interactive name="OrderList" items={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx', 'curl localhost:8080']} label="Langkah pertama di atas" success="Pautkan, uji, reload, semak." />
+
+```nginx
+server {
+	listen 8080;
+	root /var/www/html;
+	index index.html;
+}
+```
+</Card>
+
+<Card id="try-door" type="try">
+Sekarang lakukannya. Tengok `ss -tln`: port 8080 hanya dibuka selepas reload.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx" goal={{ portListening: [8080], reachable: { 'localhost:8080': 200 } }} hints={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx, kemudian curl localhost:8080']} solution={['sudo ln -s /etc/nginx/sites-available/kedai /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx']} success="Dua pintu: 80 dan 8080, rak yang sama." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu fail laman ada salah taip, dan anda reload juga. Apa jadi kepada kedai?
+
+<Interactive name="Choice" options={[{ label: 'Reload gagal; nginx terus beri halaman dengan tetapan lama', correct: true, why: 'Nasib baik! Tetapi restart penuh akan hentikannya. Sentiasa jalankan nginx -t dahulu.' }, { label: 'nginx berhenti, dan kedai jadi gelap', why: 'Reload kekalkan pekerja lama. Restart yang berisiko.' }, { label: 'nginx baiki salah taip itu', why: 'nginx tak pernah baiki fail. Ia beritahu barisnya.' }]} />
+</Card>
+
+<Card id="try-typo" type="try">
+Seseorang tambah laman yang ada salah taip. `sudo nginx -t` namakan fail dan barisnya. Baiki, uji, kemudian reload.
+
+<Interactive name="LinuxSim" scenario="linux-l4-nginx-typo" goal={{ portListening: [8080], serviceActive: ['nginx'] }} hints={['sudo nginx -t', 'cat /etc/nginx/sites-available/kedai: baris root tiada ;', "sudo sed -i 's#root /var/www/html$#root /var/www/html;#' /etc/nginx/sites-available/kedai"]} solution={["sudo sed -i 's#root /var/www/html$#root /var/www/html;#' /etc/nginx/sites-available/kedai", 'sudo nginx -t', 'sudo systemctl reload nginx']} success="test is successful, reload siap, 8080 terbuka." />
+
+<Hint>Ralat itu namakan baris 4. `;` yang hilang ada di hujung baris 3.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri halaman sendiri dengan nginx dan mengubahnya dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+nginx juga boleh hantar pesanan kepada aplikasi di interkom: `proxy_pass http://127.0.0.1:3000;` (ingat Dunia L3). Untuk HTTPS, certbot daripada Let's Encrypt dapatkan sijil dan membaharuinya. Buka pintu dalam ufw juga: `sudo ufw allow 'Nginx Full'`.
+
+<Interactive name="Mission" id="linux-l4-l09-rep" steps={[{ id: 'install', text: 'Di VM pakai buang: pasang nginx.', command: 'sudo apt install nginx' }, { id: 'page', text: 'Pasang papan tanda anda.', command: "echo '<h1>Hello from my VM</h1>' | sudo tee /var/www/html/index.html" }, { id: 'test', text: 'Uji tetapan.', command: 'sudo nginx -t' }, { id: 'look', text: 'Dari laptop anda, buka http://YOUR-VM-IP dalam pelayar.' }]} success="Halaman anda sendiri di server anda sendiri." />
+</Card>

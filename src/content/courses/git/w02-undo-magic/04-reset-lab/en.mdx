@@ -1,0 +1,73 @@
+---
+id: git-w02-l04
+world: 2
+title: Reset lab
+summary: "You will learn: how git reset moves your branch back, in three modes."
+minutes: 5
+xp: 25
+interactives: [AreasScene, GraphScene, ResetLab, Choice, Sim, TermReplay]
+needs: [git-w02-l03]
+scenario: w02-l04
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD~1)", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Three commits in the repository. The newest one, Add day 2 entry, wobbles." frames={[{ repo: [{ name: 'Add day 1 page', kind: 'commit' }, { name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit', glow: true }] }]} />
+
+Your last commit was a mistake. It is only on your laptop. Can you step back one commit?
+</Card>
+
+<Card id="see-reset" type="see">
+<Interactive name="GraphScene" scenario="w02-l04" commands={['git reset HEAD~1']} showLost label="The main label and HEAD move back from Add day 2 entry to Add style. Add day 2 entry fades to a dashed dot." />
+
+**<Term id="reset">Reset</Term>** moves your branch back. `HEAD~1` means "one commit before HEAD". The mode decides where the undone changes go.
+</Card>
+
+<Card id="try-lab" type="try">
+Try all three modes. Watch where the changes land.
+
+<Interactive name="ResetLab" scenario="w02-l04" />
+
+<Hint>Soft, then mixed, then hard. Each one runs `git reset --<mode> HEAD~1`.</Hint>
+</Card>
+
+<Card id="predict-soft" type="predict">
+You want to redo the commit. The changes should stay in the box. Which mode?
+
+<Interactive name="Choice" compact options={[{ label: '`--soft`', correct: true, why: 'Soft only moves the branch. The changes wait in the box.' }, { label: '`--mixed`', why: 'Mixed empties the box. The changes go back to your folder.' }, { label: '`--hard`', why: 'Hard wipes the changes. Not what you want here!' }]} />
+</Card>
+
+<Card id="see-hard" type="see">
+<Interactive name="AreasScene" command="git reset --hard HEAD~1" label="Before: index.html has an unsaved change, and Add day 2 entry is the newest commit. After: the commit and the change are both gone." frames={[{ working: [{ name: 'index.html', tag: 'changed' }], staging: [], repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Add day 2 entry', kind: 'commit', glow: true }] }, { working: ['index.html'], staging: [], repo: [{ name: 'Add style', kind: 'commit' }] }]} />
+
+⚠️ **Danger**: `--hard` wipes the changes from your files too. Edits you never committed are lost for good. Use it only when you're sure.
+</Card>
+
+<Card id="try-sim" type="try">
+Undo the last commit. Keep the changes in your folder.
+
+<Interactive name="Sim" scenario="w02-l04" panels={['areas', 'graph']} showLost goal={{ commits: 3, modified: ['index.html'], notStaged: ['index.html'] }} hints={['Type git reset HEAD~1 and press Enter.', 'No mode means --mixed. It puts the changes back in your folder.']} success="The commit is undone. Your day 2 entry waits in the folder." />
+
+<Hint>Type `git reset HEAD~1`, then press Enter.</Hint>
+</Card>
+
+<Card id="check-default" type="check">
+You type `git reset HEAD~1` with no mode. Where do the changes go?
+
+<Interactive name="Choice" options={[{ label: 'Back to the working folder', correct: true, why: '--mixed is the default. It empties the box and keeps your edits.' }, { label: 'Into the box', why: 'That is --soft. You have to ask for it.' }, { label: 'Nowhere, they are deleted', why: 'Only --hard deletes. Git never picks it for you.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now move your branch back, in three different ways.
+</Card>
+
+<Card id="deeper" type="deeper">
+`HEAD~2` goes back two commits. You can also reset to a hash from `git log --oneline`. Reset rewrites history. Only reset commits that are still just on your computer. Shared commits need revert (next lesson).
+
+<Interactive name="TermReplay" scenario="w02-l04" commands={['git reset --soft HEAD~1', 'git status -s', 'git log --oneline']} label="After git reset --soft HEAD~1, index.html waits in the box and the log shows three commits." />
+</Card>

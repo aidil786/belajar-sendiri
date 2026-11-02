@@ -1,0 +1,86 @@
+---
+id: docker-d0-l06
+world: 0
+title: Kursus kilat Linux
+summary: "Anda akan belajar: lima perkataan Linux yang terangkan kebanyakan ralat container: path, permissions, process, environment variable dan exit code."
+minutes: 5
+xp: 25
+interactives: [KitchenReplay, OrderList, KitchenSim, SortCards, SpotLines, Choice, SwipeJudge]
+needs: [docker-d0-l05]
+scenario: d0-linux
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Ubuntu: the Linux command line for beginners", url: "https://ubuntu.com/tutorials/command-line-for-beginners" }
+  - { label: "chmod manual", url: "https://man7.org/linux/man-pages/man1/chmod.1.html" }
+  - { label: "ps manual", url: "https://man7.org/linux/man-pages/man1/ps.1.html" }
+  - { label: "Environment variables (environ)", url: "https://man7.org/linux/man-pages/man7/environ.7.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d0-linux" commands={['./cook.sh']} fails={['./cook.sh']} label="Skrip enggan berjalan: bash: ./cook.sh: Permission denied." />
+
+Skrip ini berhenti dengan `Permission denied`. Container ialah komputer Linux kecil. Jadi kebanyakan ralat container ialah ralat Linux. Lima perkataan Linux akan selamatkan anda.
+</Card>
+
+<Card id="see-path" type="see">
+Linux simpan fail dalam folder di dalam folder, macam balang atas rak. Alamat penuh sesuatu fail ialah **<Term id="path">path</Term>** (laluan). Bina path ke menu, dari atas ke bawah.
+
+<Interactive name="OrderList" items={['/ (folder paling atas)', 'home', 'you', 'kitchen', 'menu.txt']} label="Folder paling atas dulu" success="/home/you/kitchen/menu.txt. Itulah path!" />
+</Card>
+
+<Card id="try-chmod" type="try">
+Setiap fail ada **<Term id="permissions">permissions</Term>** (kebenaran): `r` baca, `w` tulis, `x` jalankan. `ls -l` tunjukkannya. `chmod +x cook.sh` tambah kebenaran jalankan. Buat, kemudian jalankan `./cook.sh`.
+
+<Interactive name="KitchenSim" scenario="d0-linux" picture={false} keys={['ls', '-l', 'chmod', '+x', './', 'Tab', '↑']} goal={{ fileMode: { '/home/you/kitchen/cook.sh': 'x' }, lastTyped: '^\\./cook\\.sh', lastExit: 0 }} hints={['Taip ls -l dulu. cook.sh belum ada x.', 'Taip chmod +x cook.sh, kemudian ./cook.sh']} success="Nasi lemak is ready! cook.sh dah boleh berjalan." />
+
+<Hint>`chmod +x cook.sh`, kemudian `./cook.sh`.</Hint>
+</Card>
+
+<Card id="see-process" type="see">
+Fail cuma duduk atas rak. Program yang sedang berjalan ialah **<Term id="process">process</Term>** (proses). Setiap satu dapat nombor, iaitu PID. Fail atau process? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'file', label: 'Fail (duduk diam)' }, { id: 'process', label: 'Process (sedang berjalan)' }]} items={[{ label: 'menu.txt atas rak', bucket: 'file', why: 'Ia cuma duduk sampai seseorang membacanya.' }, { label: 'cook.sh, menunggu dalam cakera', bucket: 'file', why: 'Skrip ialah fail sehingga anda jalankannya.' }, { label: 'cook.sh semasa ia berjalan', bucket: 'process', why: 'Menjalankannya cipta process dengan PID sendiri.' }, { label: 'dockerd, enjin itu', bucket: 'process', why: 'Daemon berjalan sepanjang masa, jadi ia process.' }, { label: 'Container yang sedang hidup', bucket: 'process', why: 'Container yang berjalan ialah process dalam laptop.' }]} success="Fail duduk diam. Process berjalan." />
+</Card>
+
+<Card id="try-env" type="try">
+**<Term id="environment-variable">Environment variable</Term>** (pemboleh ubah persekitaran) ialah nota lekat di dinding dapur. Setiap program yang anda mulakan boleh membacanya. Lekat satu dengan `export`. Baca dengan `echo`.
+
+<Interactive name="KitchenSim" scenario="d0-linux" picture={false} keys={['export', 'echo', '$', '=', 'Tab', '↑']} goal={{ envVar: { CHEF: 'Kancil' }, lastTyped: '^echo\\s+.*\\$\\{?CHEF' }} hints={['Taip export CHEF=Kancil', 'Kemudian taip echo $CHEF']} success="Nota itu tulis Kancil. Program yang anda mulakan pun boleh membacanya." />
+
+<Hint>`export CHEF=Kancil`, kemudian `echo $CHEF`.</Hint>
+</Card>
+
+<Card id="see-exit" type="see">
+Setiap process tamat dengan satu nombor: **<Term id="exit-code">exit code</Term>** (kod keluar). 0 bermaksud semua okey. Nombor lain bermaksud ada masalah. `echo $?` tunjuk yang terakhir. Tekan setiap exit code.
+
+<Interactive name="SpotLines" lines={[{ text: '$ cat menu.txt' }, { text: 'nasi lemak' }, { text: 'laksa' }, { text: 'satay' }, { text: '$ echo $?' }, { text: '0', color: 'green', target: true }, { text: '$ cat nope.txt' }, { text: 'cat: nope.txt: No such file or directory', color: 'red' }, { text: '$ echo $?' }, { text: '1', color: 'yellow', target: true }]} prompt="Tekan dua exit code itu." success="0 selepas menu: okey. 1 selepas nope.txt: ada masalah." />
+</Card>
+
+<Card id="predict" type="predict">
+`docker ps -a` kata container anda `Exited (1)`. Apa maksud nombor 1 itu?
+
+<Interactive name="Choice" options={[{ label: 'Ada sesuatu yang tak kena di dalamnya', correct: true, why: 'Bukan 0, jadi process utamanya ada masalah. Log akan cerita lebih.' }, { label: 'Ia selesai dengan sempurna', why: 'Itu sepatutnya Exited (0).' }, { label: 'Ia berjalan selama 1 saat', why: 'Nombor itu exit code, bukan masa.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Betul atau tidak? Leret ke kanan kalau ia betul.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'chmod +x benarkan skrip berjalan', good: true, why: 'x ialah kebenaran jalankan.' }, { text: 'Exit code 0 bermaksud ralat', good: false, why: '0 bermaksud semua okey. Nombor lain bermaksud masalah.' }, { text: 'Setiap program yang berjalan ada PID', good: true, why: 'Setiap process dapat nombornya sendiri.' }, { text: 'Path yang mula dengan / bermula di folder paling atas', good: true, why: '/ ialah rak paling atas.' }, { text: 'Container yang berjalan bukan process', good: false, why: 'Ia process! ps aux di laptop senaraikannya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca lima perkataan Linux di sebalik kebanyakan ralat container.
+</Card>
+
+<Card id="deeper" type="deeper">
+<Interactive name="KitchenReplay" scenario="d0-linux" commands={['docker run -d --name stall nginx:1.30-alpine', 'ps aux']} label="Selepas docker run, ps aux di laptop senaraikan nginx: master process. Container itu satu process." />
+
+Tengok di bahagian bawah: nginx berjalan sebagai process di laptop. Dunia D6 tunjuk cara Docker memagarinya.
+
+Latihan sebenar (pilihan): di komputer anda, taip `ls -l`, kemudian `echo $HOME`, kemudian `ls nope` dan `echo $?`.
+
+Mahu lebih Linux? Cuba [Naik Tahap L1: Rumah Kedai](/ms/linux/#world-1).
+</Card>

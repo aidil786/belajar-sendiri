@@ -1,0 +1,75 @@
+---
+id: linux-l1-l06
+world: 1
+title: Cari fail dengan find
+summary: "Anda akan belajar: suruh server cari fail di setiap bilik, ikut nama atau jenis."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, CommandBuilder]
+needs: [linux-l1-l05]
+scenario: linux-l1-find
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "find (Debian 13 man page)", url: "https://manpages.debian.org/trixie/findutils/find.1.en.html" }
+  - { label: "GNU findutils manual", url: "https://www.gnu.org/software/findutils/manual/html_mono/find.html" }
+---
+
+<Card id="hook" type="hook">
+Resepi sambal rahsia Mak hilang dalam bilik stor. Ia ada dalam kotak, di dalam kotak lagi. Perlukah anda buka setiap bilik dengan `cd` dan `ls`?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Suruh server carikan untuk saya.', correct: true, why: 'Satu arahan boleh cari dalam setiap bilik. Itulah find.' }, { label: 'Ya, satu demi satu bilik', why: 'Okey untuk 3 bilik. Lambat dan penat untuk 50.' }, { label: 'Putus asa dan masak tanpanya', why: 'Jangan! Mak mesti sedih. Server boleh carikan.' }]} />
+</Card>
+
+<Card id="see-find" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-find" intro={['find kedai -name sambal.txt']} />
+
+**find** berjalan dalam `kedai` dan setiap bilik di dalamnya. `-name sambal.txt` simpan nama itu sahaja. Ia cetak path setiap padanan.
+</Card>
+
+<Card id="predict-case" type="predict">
+Mak namakan failnya `Sambal-Mak.txt`. Adakah `find kedai -name "sambal*"` jumpa fail itu?
+
+<Interactive name="Choice" options={[{ label: 'Tak. -name peka huruf besar dan kecil.', correct: true, why: 'S dan s ialah huruf berbeza bagi Linux. -iname abaikan bezanya.' }, { label: 'Ya. Nama sama walau huruf apa pun.', why: 'Di Linux, Sambal dan sambal ialah dua nama berbeza.' }, { label: 'Cuma kalau guna sudo', why: 'sudo tak ubah cara nama dipadankan.' }]} />
+</Card>
+
+<Card id="try-iname" type="try">
+Cari setiap resepi sambal, huruf besar atau kecil: `find kedai -iname "sambal*"`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-find" goal={{ lastTyped: '^find .*-iname ' }} hints={['Taip find kedai -iname "sambal*"']} solution={['find kedai -iname "sambal*"']} success="Dua resepi! Resepi Mak ada dalam store/box2/old." />
+
+<Hint>`*` maksudnya "apa saja selepas ini". Kekalkan tanda petik.</Hint>
+</Card>
+
+<Card id="sort-tests" type="check">
+`find` boleh uji lebih daripada nama. Ujian mana sesuai untuk setiap carian?
+
+<Interactive name="SortCards" buckets={[{ id: 'name', label: '-name "*.log"' }, { id: 'dir', label: '-type d' }, { id: 'empty', label: '-empty' }]} items={[{ label: 'Setiap fail log', bucket: 'name', why: 'Fail log berakhir dengan .log.' }, { label: 'Setiap bilik (folder)', bucket: 'dir', why: '-type d simpan folder sahaja. -type f simpan fail.' }, { label: 'Kotak yang kosong', bucket: 'empty', why: '-empty padankan fail dan folder kosong.' }, { label: 'Log penghantaran', bucket: 'name', why: 'Anda tahu namanya, jadi cari ikut nama.' }]} success="Nama, jenis, atau kosong. Anda boleh campurkan juga." />
+</Card>
+
+<Card id="try-logs" type="try">
+Cari setiap fail log dalam kedai: `find kedai -name "*.log"`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-find" goal={{ lastTyped: '^find .*-name ["\']?\\*\\.log' }} hints={['Taip find kedai -name "*.log"']} solution={['find kedai -name "*.log"']} success="Dua log: buku pesanan dan log penghantaran." />
+
+<Hint>Tanda petik pada `"*.log"` biar find nampak bintang itu.</Hint>
+</Card>
+
+<Card id="check-build" type="check">
+Bina carian untuk folder kosong, supaya anda boleh kemaskan nanti.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'find', means: 'cari' }, { text: 'kedai', means: 'mula di kedai' }, { text: '-type d', means: 'folder sahaja' }, { text: '-empty', means: 'yang kosong' }]} decoys={[{ text: '-name', means: 'padankan nama' }, { text: 'rm', means: 'padam' }]} success="find kedai -type d -empty. Ia jumpa store/box1." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari fail ikut nama, jenis atau kosong.
+</Card>
+
+<Card id="deeper" type="deeper">
+Cari dari `/` dan anda nampak baris seperti `find: ‘/root’: Permission denied`. Maksudnya: bilik yang anda tiada kunci. Dunia L2 terangkan kunci. `-delete` dan `-exec` bertindak atas setiap padanan: jalankan carian sahaja dulu.
+
+Latihan sebenar (pilihan): di Linux, `find /etc -name "*.conf"` senaraikan fail tetapan. Abaikan baris Permission denied.
+</Card>

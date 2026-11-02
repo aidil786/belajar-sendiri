@@ -1,0 +1,72 @@
+---
+id: git-w03-l11
+world: 3
+title: Kemaskan sejarah dengan rebase interaktif
+summary: "Anda akan belajar: fixup, reword, drop dan susun semula commit sendiri sebelum dikongsi."
+minutes: 5
+xp: 25
+interactives: [TermReplay, Transcript, AreasScene, RebaseDeck, Choice, SwipeJudge]
+needs: [git-w03-l10]
+scenario: w03-l11a
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rebase (interactive mode)", url: "https://git-scm.com/docs/git-rebase#_interactive_mode" }
+  - { label: "git commit --fixup", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l11b" commands={['git log --oneline']} label="git log --oneline di gallery: debug log, fix typo, Add photo captions, Add gallery page, kemudian commit main." />
+
+Branch gallery anda berfungsi. Tapi tengok sejarahnya! Boleh anda kemaskan sebelum orang lain nampak?
+</Card>
+
+<Card id="see-todo" type="see">
+<Interactive name="Transcript" title="git-rebase-todo" label="Senarai tugasan yang Git buka: tiga baris, paling lama di atas. pick 5ab6383 Add gallery page, pick 978a45a fix typo, pick e2df039 captions." lines={[{ out: 'pick 5ab6383 # Add gallery page\npick 978a45a # fix typo\npick e2df039 # captions' }]} />
+
+`git rebase -i main` buka senarai tugasan berisi commit anda, yang paling lama di atas. Tukar perkataan di depan, dan Git main semula senarai itu. Itulah **<Term id="interactive-rebase">rebase interaktif</Term>**.
+</Card>
+
+<Card id="see-actions" type="see">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'gallery' }} label="Tiga commit: Add gallery page, fix typo, captions. fix typo cair masuk ke Add gallery page. captions dapat nama baru: Add photo captions." frames={[{ repo: [{ name: 'Add gallery page', kind: 'commit' }, { name: 'fix typo', kind: 'commit', glow: true }, { name: 'captions', kind: 'commit' }] }, { repo: [{ name: 'Add gallery page', kind: 'commit' }, { name: 'Add photo captions', kind: 'commit' }] }]} />
+
+Perkataannya: pick simpan commit. reword beri mesej baru. <Term id="squash">squash</Term> gabungkan ke commit atas. <Term id="fixup">fixup</Term> gabungkan dan buang mesejnya. drop padam commit itu.
+</Card>
+
+<Card id="try-fixup" type="try">
+Gabungkan “fix typo” ke dalam kad di atasnya. Tukar nama “captions” jadi “Add photo captions”.
+
+<Interactive name="RebaseDeck" scenario="w03-l11a" upstream="main" goal={{ messages: ['^Add photo captions$', '^Add gallery page$', '^Add style$'], commits: 5 }} hints={['Tetapkan “fix typo” kepada fixup.', 'Tetapkan “captions” kepada reword, kemudian taip mesej baru.']} success="Dua commit yang kemas. Tiada siapa akan nampak salah eja itu!" />
+
+<Hint>fixup untuk salah eja. reword untuk captions.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda drop commit “debug log”. Commit itu tambah `debug.txt`. Apa jadi pada fail itu?
+
+<Interactive name="Choice" options={[{ label: 'Ia hilang dari branch itu', correct: true, why: 'Commit yang menambahnya tak dimain semula.' }, { label: 'Ia kekal, sebagai fail tak dijejak', why: 'Drop buang seluruh commit, termasuk failnya.' }, { label: 'Git tak benarkan drop', why: 'Drop commit sendiri yang belum dikongsi memang boleh.' }]} />
+</Card>
+
+<Card id="try-tidy" type="try">
+Sekarang branch yang lebih bersepah. Alihkan “fix typo” betul-betul di bawah “Add gallery page” dan fixup. Drop “debug log”.
+
+<Interactive name="RebaseDeck" scenario="w03-l11b" upstream="main" goal={{ messages: ['^Add photo captions$', '^Add gallery page$', '^Add style$'], commits: 5, filesMissing: ['debug.txt'] }} commitFiles={[{ message: '^Add gallery page$', file: 'gallery.html', contains: 'My Gallery' }]} hints={['Guna anak panah untuk alihkan “fix typo” ke atas, di bawah “Add gallery page”.', 'Kemudian tetapkan fixup, dan “debug log” kepada drop.']} success="Sejarah yang bersih! Setiap commit cerita satu langkah yang jelas." />
+
+<Hint>Alihkan dulu. fixup sentiasa gabung dengan kad betul-betul di atasnya.</Hint>
+</Card>
+
+<Card id="check-when" type="check">
+Masa yang sesuai untuk kemas dengan `git rebase -i`?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Branch anda sendiri, sebelum buka pull request', good: true, why: 'Belum ada orang lain ada commit ini. Kemaslah!' }, { text: 'Commit di main yang pasukan anda dah pull', good: false, why: 'Orang lain dah ada. Tulis semula akan buat kucar-kacir.' }, { text: 'Tiga commit “wip” yang hanya ada di laptop anda', good: true, why: 'Squash jadi satu commit yang jelas.' }, { text: 'Branch kongsi yang kawan anda pun guna', good: false, why: 'Kawan anda ada commit lama. Berbincang dulu, atau merge sahaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kemaskan commit sebelum anda kongsi.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam terminal sebenar, `git rebase -i main` buka senarai ini dalam editor anda. Ubah perkataannya, simpan dan tutup. Sesat? `git rebase --abort`. Tip: `git commit --fixup <commit>` tanda pembaikan awal-awal. Kemudian, `git rebase -i --autosquash main` letakkannya di tempat yang betul untuk anda.
+</Card>

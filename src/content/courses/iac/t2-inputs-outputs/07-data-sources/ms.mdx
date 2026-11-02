@@ -1,0 +1,70 @@
+---
+id: iac-t2-l07
+world: 2
+title: "Data source: baca apa yang ada"
+summary: "Anda akan belajar: baca sesuatu yang sudah wujud dengan data source, tanpa memilikinya."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, TofuSim, SpotLines]
+needs: [iac-t2-l06]
+scenario: t2-recipe
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: data sources", url: "https://opentofu.org/docs/language/data-sources/" }
+---
+
+<Card id="hook" type="hook">
+Tukang masak tulis resepi hari ini dalam `recipe.txt` dengan tangan. Pelan anda perlukan perkataannya untuk menu. Patutkah OpenTofu bina `recipe.txt`?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Baca sahaja. Tukang masak yang punya.', correct: true, why: 'Kalau OpenTofu punya, destroy akan padam resepi tukang masak.' }, { label: 'Ya. OpenTofu patut punya setiap fail.', why: 'Kemudian OpenTofu akan berebut dengan tukang masak setiap kali ada perubahan.' }, { label: 'Salin resepi ke dalam fail .tf dengan tangan', why: 'Kemudian menu salah sebaik tukang masak ubah resepi.' }]} />
+</Card>
+
+<Card id="see-data" type="see">
+**<Term id="data-source">Data source (sumber data)</Term>** baca sesuatu yang sudah wujud. Resource atau data?
+
+<Interactive name="SortCards" buckets={[{ id: 'resource', label: 'blok resource' }, { id: 'data', label: 'blok data' }]} items={[{ label: 'Buat sesuatu dan menjaganya', bucket: 'resource', why: 'Resource dibina dan dimiliki.' }, { label: 'Baca sesuatu yang orang lain buat', bucket: 'data', why: 'Blok data cuma melihat.' }, { label: 'tofu destroy memadamnya', bucket: 'resource', why: 'OpenTofu buang apa yang ia miliki.' }, { label: 'tofu destroy biarkannya', bucket: 'data', why: 'OpenTofu tak pernah memilikinya.' }]} success="Resource dibina. Data dibaca." />
+</Card>
+
+<Card id="try-read" type="try">
+Menu salin resepi itu. Taip `tofu apply`, kemudian `yes`. Kemudian `cat menu.txt`.
+
+<Interactive name="TofuSim" scenario="t2-recipe" goal={{ fileContains: { 'menu.txt': 'Nasi lemak' }, lastTyped: '^cat menu\\.txt' }} hints={['Taip tofu apply, kemudian yes.', 'Kemudian taip cat menu.txt']} success="Today: Nasi lemak with sambal. Dibaca dari fail tukang masak." />
+
+```hcl
+data "local_file" "recipe" {
+  filename = "recipe.txt"
+}
+```
+</Card>
+
+<Card id="predict" type="predict">
+Tukang masak tukar `recipe.txt` jadi Roti canai. Anda jalankan plan. Apa jadi pada `menu.txt`?
+
+<Interactive name="Choice" options={[{ label: 'Ia diganti dengan perkataan baru', correct: true, why: 'Data source baca semula pada setiap plan. Resepi baru, menu baru.' }, { label: 'Tiada apa. OpenTofu sudah baca sekali.', why: 'Data source baca semula pada setiap plan.' }, { label: 'OpenTofu tukar resepi itu kembali', why: 'Ia tak pernah ubah apa yang blok data baca.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Jadi tukang masak: `echo "Roti canai with dhal" > recipe.txt`. Kemudian `tofu apply`, dan `yes`.
+
+<Interactive name="TofuSim" scenario="t2-recipe-built" goal={{ fileContains: { 'menu.txt': 'Roti' } }} hints={['Taip echo "Roti canai with dhal" > recipe.txt', 'Kemudian tofu apply. Menu diganti. Taip yes.']} success="Menu ikut resepi. Resepi kekal milik tukang masak." />
+
+<Hint>Mula-mula baris `echo`, kemudian `tofu apply`, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+Tukang masak padam `recipe.txt`. Plan berhenti. Tekan baris yang beri sebabnya.
+
+<Interactive name="SpotLines" lines={[{ text: 'Error: Read local file data source error' }, { text: '' }, { text: '  with data.local_file.recipe,' }, { text: '  on main.tf line 1, in data "local_file" "recipe":' }, { text: '   1: data "local_file" "recipe" {' }, { text: '' }, { text: 'The file at given path cannot be read.' }, { text: '' }, { text: '+Original Error: open recipe.txt: no such file or directory', target: true }]} success="no such file or directory. Data source tak boleh baca apa yang tiada." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca benda yang sudah wujud dengan data source.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam cloud, data source cari benda seperti rangkaian yang sedia ada. Plan tunjuk ia sebagai `Reading...`. Resource yang perlu tunggu yang lain boleh tambah `depends_on`. Biasanya satu rujukan sudah cukup.
+</Card>

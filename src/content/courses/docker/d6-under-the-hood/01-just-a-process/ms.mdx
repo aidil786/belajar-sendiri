@@ -1,0 +1,70 @@
+---
+id: docker-d6-l01
+world: 6
+title: "Container cuma satu proses"
+summary: "Anda akan belajar: container yang berjalan ialah proses Linux biasa, dan cara melihatnya dari dua sisi."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SortCards, Mission]
+needs: [docker-d5-boss]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker container top", url: "https://docs.docker.com/reference/cli/docker/container/top/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker inspect", url: "https://docs.docker.com/reference/cli/docker/inspect/" }
+---
+
+<Card id="hook" type="hook">
+Anda jalankan `ps aux` pada laptop Linux anda. Satu baris tulis `nginx: master process`. Tapi anda tak pernah pasang nginx! Dari mana ia datang?
+
+<Interactive name="Choice" options={[{ label: 'Dari container web yang anda mulakan', correct: true, why: 'Container yang berjalan ialah program biasa dalam laptop anda.' }, { label: 'Ada virus menyelinap masuk', why: 'Itu bekas anda sendiri. Docker yang mulakannya.' }, { label: 'Docker pasang nginx dalam laptop', why: 'Tiada apa yang dipasang. nginx berjalan dari fail image.' }]} />
+</Card>
+
+<Card id="see-top" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker top web', 'ps aux']} label="docker top senaraikan proses nginx dalam web. Kemudian ps aux pada laptop senaraikan nombor PID yang sama, di bawah baris containerd-shim." />
+
+`docker top web` tanya Docker apa yang berjalan dalam bekas. `ps aux` tanya laptop. PID-nya sama! Bekas itu sebenarnya **process** (proses) biasa yang pakai penutup mata.
+</Card>
+
+<Card id="try-inside" type="try">
+Sekarang tengok dari dalam bekas. Taip `docker exec web ps`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ lastTyped: '^docker exec (-it )?web ps' }} hints={['Taip docker exec web ps dan tekan Enter.']} success="Di dalam, nginx ialah PID 1. Ia nampak proses sendiri sahaja." />
+
+<Hint>`docker exec web ps` jalankan program `ps` di dalam web.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Di dalam, nginx ialah PID 1. Pada laptop, PID-nya nombor besar. Berapa banyak nginx master yang berjalan?
+
+<Interactive name="Choice" options={[{ label: 'Satu. Cuma ada dua tanda nama.', correct: true, why: 'Laptop nomborkan setiap proses. Di dalam, kiraan bermula semula dari 1.' }, { label: 'Dua: satu di dalam, satu di luar', why: 'docker top dan ps aux tunjuk proses yang sama.' }, { label: 'Tiada. Itu cuma gambar nginx.', why: 'Ia betul-betul berjalan: ia jawab di port 8080.' }]} />
+</Card>
+
+<Card id="see-kernel" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['uname -r', 'docker exec web uname -r']} label="uname -r cetak versi kernel Linux yang sama pada laptop dan di dalam web." />
+
+Kedua-duanya cetak versi <Term id="linux-kernel">kernel</Term> yang sama. **Kernel** ialah satu-satunya dapur gas di dapur. Setiap bekas masak guna dapur gas laptop.
+</Card>
+
+<Card id="check-sort" type="check">
+Mana yang betul untuk container? Mana yang sesuai untuk mesin maya?
+
+<Interactive name="SortCards" buckets={[{ id: 'ctr', label: 'Container (satu proses)' }, { id: 'vm', label: 'Mesin maya (VM)' }]} items={[{ label: 'Muncul dalam senarai proses laptop', bucket: 'ctr', why: 'Ia satu proses, jadi ps nampak.' }, { label: 'Hidupkan kernel sendiri', bucket: 'vm', why: 'VM ada dapur gas sendiri. Container pinjam dapur laptop.' }, { label: 'Kongsi kernel laptop', bucket: 'ctr', why: 'uname -r beri jawapan sama di dalam dan di luar.' }, { label: 'Boleh jalankan Windows pada laptop Linux', bucket: 'vm', why: 'Kernel Linux tak boleh jalankan program Windows. VM bawa kernel sendiri.' }]} success="Siap! Container ialah proses. VM ialah komputer penuh." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tunjuk bahawa container ialah satu proses dalam laptop anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pada Mac atau PC Windows dengan Docker Desktop, `ps` tak akan tunjuk nginx. Ia berjalan dalam VM Linux yang kecil (pelajaran 7).
+
+Latihan sebenar (pilihan, Linux): lihat satu proses dari dua sisi.
+
+<Interactive name="Mission" id="d6-l01-both-sides" steps={[{ id: 'run', text: 'Mulakan nginx di latar belakang.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'top', text: 'Tanya Docker senarai prosesnya. Ingat PID pertama.', command: 'docker top web' }, { id: 'ps', text: 'Cari PID yang sama dalam senarai laptop.', command: 'ps -ef | grep nginx' }, { id: 'rm', text: 'Kemas semula.', command: 'docker rm -f web' }]} success="PID sama, dua pandangan. Bagus!" />
+</Card>

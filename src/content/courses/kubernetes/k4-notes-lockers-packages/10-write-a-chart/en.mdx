@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l10
+world: 4
+title: "Write a small chart"
+summary: "You will learn: what is inside a Helm chart, and how values fill its templates."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SortCards, SpotLines, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l09]
+scenario: k4-helm
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Helm: Charts", url: "https://helm.sh/docs/topics/charts/" }
+  - { label: "Helm: Chart template guide", url: "https://helm.sh/docs/chart_template_guide/getting_started/" }
+  - { label: "helm template", url: "https://helm.sh/docs/helm/helm_template/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-helm" commands={['helm template ./kedai']} picture={false} label="helm template ./kedai with no release name prints a Service and a Deployment named release-name-kedai." />
+
+Your team copies `shop.yaml` for every new stall. Only the name, the image and the tray count change. Write the YAML once, with holes.
+</Card>
+
+<Card id="see-files" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'chart', label: 'Chart.yaml' }, { id: 'values', label: 'values.yaml' }, { id: 'templates', label: 'templates/' }]} items={[{ label: 'name: kedai, version: 0.1.0', bucket: 'chart', why: 'Chart.yaml is the kit label.' }, { label: 'replicaCount: 2', bucket: 'values', why: 'A default the order can change.' }, { label: 'tag: 1.29-alpine', bucket: 'values', why: 'Another default value.' }, { label: 'A Deployment with holes to fill', bucket: 'templates', why: 'Templates are YAML with holes.' }]} success="Label, defaults, and YAML with holes." />
+
+A chart is a folder in three parts. `Chart.yaml` is the label. `values.yaml` holds the defaults. `templates/` holds YAML with holes.
+</Card>
+
+<Card id="see-holes" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: apps/v1' }, { text: 'kind: Deployment' }, { text: 'metadata:' }, { text: '  name: {{ .Release.Name }}-kedai', target: true }, { text: 'spec:' }, { text: '  replicas: {{ .Values.replicaCount }}', target: true }, { text: '  template:' }, { text: '    spec:' }, { text: '      containers:' }, { text: '        - name: kedai' }, { text: '          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"', target: true }]} prompt="A piece of templates/deployment.yaml. Tap every line with a hole." success="Three holes: the name, the tray count and the image." />
+
+Each `{{ }}` is a hole. Helm fills `.Values` holes from **<Term id="helm-values">values</Term>**: `values.yaml`, or your `--set`.
+</Card>
+
+<Card id="try-set" type="try">
+Fill the image hole with `1.30-alpine`. Look at the image line.
+
+<Interactive name="FoodCourtSim" scenario="k4-helm" goal={{ lastTyped: '^helm template .*image\\.tag=1\\.30-alpine' }} hints={['Type helm template shop ./kedai --set image.tag=1.30-alpine']} success="image: nginx:1.30-alpine. Only that hole changed." />
+
+<Hint>A dot walks into the values: `image.tag` is `tag` inside `image`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`values.yaml` says `replicaCount: 2`. You add `--set replicaCount=4`. What does the YAML say?
+
+<Interactive name="Choice" options={[{ label: 'replicas: 4', correct: true, why: 'Your order beats the default.' }, { label: 'replicas: 2', why: 'Almost! values.yaml is only the default. --set wins.' }, { label: 'replicas: 6', why: 'Values replace each other. They never add up.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good chart habit or not? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Put the image tag in values.yaml, not in the template.', good: true, why: 'Then each install can pick its own.' }, { text: 'Copy the whole chart for each new stall.', good: false, why: 'One chart, many installs. Change values instead.' }, { text: 'Run helm lint before you share the chart.', good: true, why: 'It catches mistakes early.' }, { text: 'Keep the real database password in values.yaml in Git.', good: false, why: 'Values are plain text. Use a Secret, sealed or external.' }]} />
+</Card>
+
+<Card id="check-name" type="check">
+You run `helm template pasar ./kedai`. What is the Deployment called?
+
+<Interactive name="Choice" options={[{ label: 'pasar-kedai', correct: true, why: 'The release name fills the name hole.' }, { label: 'kedai', why: 'Almost! The release name comes first: pasar-kedai.' }, { label: 'release-name-kedai', why: 'That only happens when you give no release name.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a small chart and fill it with values.
+</Card>
+
+<Card id="deeper" type="deeper">
+`helm create kedai` makes a starter chart like this one. `helm lint ./kedai` finds mistakes. `helm package ./kedai` makes a `.tgz` to share. Templates use Go templates, so `{{ .Values.name | quote }}` wraps a value in quotes. `Chart.yaml` starts with `apiVersion: v2`.
+
+Real rep (optional), on your own machine with Helm 4:
+
+<Interactive name="Mission" id="k8s-k4-l10-rep" steps={[{ id: 'create', text: 'Make a starter chart.', command: 'helm create kedai' }, { id: 'look', text: 'Open kedai/values.yaml and find replicaCount.' }, { id: 'lint', text: 'Check it.', command: 'helm lint ./kedai' }, { id: 'render', text: 'Fill it with your own order.', command: 'helm template shop ./kedai --set replicaCount=3' }, { id: 'tidy', text: 'Tidy up.', command: 'rm -r kedai' }]} success="You read and filled a real chart." />
+</Card>

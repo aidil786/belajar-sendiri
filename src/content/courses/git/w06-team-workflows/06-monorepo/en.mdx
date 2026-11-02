@@ -1,0 +1,58 @@
+---
+id: git-w06-l06
+world: 6
+title: One big repo or many?
+summary: "You will learn: when to keep projects together in one repo, and when to split them."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, AreasScene, SortCards, Choice, SwipeJudge]
+needs: [git-w06-l05]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git sparse-checkout", url: "https://git-scm.com/docs/git-sparse-checkout" }
+  - { label: "Partial clone", url: "https://git-scm.com/docs/partial-clone" }
+  - { label: "About code owners", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Repo 1', title: 'kopi-prices', text: 'Change the price helper. Open a PR. Review. Merge. Release.' }, { when: 'Repo 2', title: 'kopi-web', text: 'Update the website to use the new helper. PR, review, merge.' }, { when: 'Repo 3', title: 'kopi-app', text: 'Same again for the phone app. PR, review, merge.' }]} />
+
+One small change to prices. Three repos to update. Three PRs to open and review. Is there an easier way?
+</Card>
+
+<Card id="see-mono" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'Many repos', repo: 'One monorepo' }} label="Three separate repos, web, app and prices, slide into one big repo. Each one becomes a folder inside it." frames={[{ working: ['web', 'app', 'prices'] }, { repo: ['web', 'app', 'prices'] }]} />
+
+A **<Term id="monorepo">monorepo</Term>** keeps many projects in one repo. Each project gets its own folder. One PR can change them all at once.
+</Card>
+
+<Card id="try-sort" type="try">
+Both ways have wins. Sort each win to its side.
+
+<Interactive name="SortCards" buckets={[{ id: 'mono', label: 'One monorepo' }, { id: 'many', label: 'Many repos' }]} items={[{ label: 'One PR changes the web and the app together', bucket: 'mono', why: 'Everything is in one repo, so one PR is enough.' }, { label: 'Each repo has its own access list', bucket: 'many', why: 'On GitHub, you give people access repo by repo.' }, { label: 'Shared code lives in one place', bucket: 'mono', why: 'Every project uses the same copy.' }, { label: 'Each repo stays small and quick to clone', bucket: 'many', why: 'A small repo downloads fast.' }, { label: 'One set of tools and checks for everything', bucket: 'mono', why: 'Set them up once, for every project.' }, { label: 'Each project has its own short history', bucket: 'many', why: 'The log only shows that one project.' }]} success="Sorted! Each way wins at something different." />
+
+<Hint>Together and in sync? Monorepo. Separate and private? Many repos.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A team of three builds a website and its API. They change both together every week. What fits best?
+
+<Interactive name="Choice" options={[{ label: 'One monorepo', correct: true, why: 'They change together. One PR keeps them in step.' }, { label: 'Two separate repos', why: 'Then every change needs two PRs, kept in sync by hand.' }, { label: 'One repo per person', why: 'Repos follow projects, not people.' }]} />
+</Card>
+
+<Card id="check-split" type="check">
+Good reason to give a project its own repo? Swipe right if yes, left if not.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'An outside company may only see this one part', good: true, why: 'Access is per repo. A separate repo keeps the rest private.' }, { text: 'We want separate folders', good: false, why: 'Folders work fine inside one repo.' }, { text: 'Two projects always change together', good: false, why: 'Keep them together. One PR updates both.' }, { text: 'This project ships alone, with its own versions', good: true, why: 'Its own repo gets its own tags and releases.' }, { text: 'The repo has three small projects', good: false, why: 'Three small projects fit nicely in one repo.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose between one big repo and many.
+</Card>
+
+<Card id="deeper" type="deeper">
+Huge monorepos can get slow. Git has helpers. `git sparse-checkout` fills in only the folders you need. A partial clone skips old file versions until you need them. A CODEOWNERS file can name owners for each folder. World 10 goes deeper.
+</Card>

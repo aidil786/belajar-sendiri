@@ -1,0 +1,66 @@
+---
+id: k8s-k7-l01
+world: 7
+title: "GitOps: the order board is a repo"
+summary: "You will learn: the four GitOps rules, and why Git should drive your cluster."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, GitOpsMirror, SortCards, Choice, CommandBuilder]
+needs: [k8s-k6-boss]
+scenario: k7-drift
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenGitOps: the four principles", url: "https://opengitops.dev/" }
+  - { label: "Argo CD: core concepts", url: "https://argo-cd.readthedocs.io/en/stable/core_concepts/" }
+  - { label: "Flux: core concepts", url: "https://fluxcd.io/flux/concepts/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-drift" commands={['kubectl get deployment shop', 'kubectl rollout history deployment/shop']} label="The shop Deployment shows 1/1 ready. Its history has one revision with no note about who changed it." />
+
+The file says 3 trays. The cluster runs 1. Someone typed a command at 2 a.m. Who? Why? The cluster keeps no note.
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Declarative', text: 'Write what you want, like "3 trays". Not the steps to get there.' }, { when: '2', title: 'Versioned', text: 'Keep it in Git. Every change is a commit you can read and undo.' }, { when: '3', title: 'Pulled', text: 'A helper inside the cluster pulls from Git. Nobody pushes from a laptop.' }, { when: '4', title: 'Reconciled', text: 'The helper checks again and again. It fixes any gap with Git.' }]} />
+
+Tap each rule. Together they are **<Term id="gitops">GitOps</Term>**: the order board is a Git repo.
+</Card>
+
+<Card id="try-mirror" type="try">
+Lunch rush is coming. Change the order in Git, not in the cluster. Set replicas to 4 and commit.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'gitChange', field: 'replicas', to: 4 }} success="One commit, and the cluster followed. Git now remembers who asked for 4." />
+
+<Hint>Press + once, then Commit to Git.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Which of these follow the GitOps rules?
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'GitOps' }, { id: 'no', label: 'Not GitOps' }]} items={[{ label: 'shop.yaml in a Git repo says replicas: 3', bucket: 'yes', why: 'Written down, and versioned in Git.' }, { label: 'kubectl scale on a Friday night', bucket: 'no', why: 'No commit, so no record and no review.' }, { label: 'A helper in the cluster pulls from Git', bucket: 'yes', why: 'Pulled, not pushed. That is rule 3.' }, { label: 'A wiki page lists the settings', bucket: 'no', why: 'Nothing checks the cluster against a wiki.' }, { label: 'The helper fixes any gap, all day', bucket: 'yes', why: 'Continuously reconciled. That is rule 4.' }]} success="All sorted! GitOps means Git, pulled, and checked all day." />
+</Card>
+
+<Card id="predict" type="predict">
+Git says 3 trays. The cluster has 2. What does the GitOps helper do?
+
+<Interactive name="Choice" options={[{ label: 'Makes 1 more tray, so the cluster matches Git', correct: true, why: 'Git is the truth. The helper closes the gap.' }, { label: 'Changes Git to say 2', why: 'The helper only reads Git. People change Git.' }, { label: 'Nothing until someone types kubectl', why: 'The helper checks all day, by itself.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+You want 5 trays. Build the GitOps way to ask for them, after editing the file.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Talk to Git' }, { text: 'commit', means: 'save a change' }, { text: '-am', means: 'all edited files, with a message' }, { text: '"Scale shop to 5"', means: 'the note everyone can read' }]} decoys={[{ text: 'kubectl', means: 'talk to the cluster directly' }, { text: 'scale', means: 'change the count by hand' }]} success="That's it! Push it, and the helper does the rest." />
+</Card>
+
+<Card id="win" type="win">
+You can now explain GitOps with its four rules.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitOps also makes undo easy: `git revert` puts the old order back. The helper is a controller, like the Deployment controller, just watching Git. Real rep (optional): read the four principles on opengitops.dev. Then look at your Kedai Kancil repo. Which files already describe what you want?
+</Card>

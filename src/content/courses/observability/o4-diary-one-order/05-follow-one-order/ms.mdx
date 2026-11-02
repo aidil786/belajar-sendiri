@@ -1,0 +1,64 @@
+---
+id: obs-o4-l05
+world: 4
+title: "Jejak satu pesanan merentas servis"
+summary: "Anda akan belajar: cara satu trace ID bergerak antara servis, supaya anda boleh jejak satu pesanan dari mula hingga akhir."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, CommandBuilder, Transcript, OrderList]
+needs: [obs-o4-l04]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: context propagation", url: "https://opentelemetry.io/docs/concepts/context-propagation/" }
+  - { label: "W3C Trace Context", url: "https://www.w3.org/TR/trace-context/" }
+---
+
+<Card id="hook" type="hook">
+Pesanan A1041 gagal. Span kedai-api ada dalam satu trace. Span kedai-pay duduk dalam trace lain, dengan trace ID baharu. Apa yang tak kena?
+
+<Interactive name="Choice" options={[{ label: 'kedai-api tak hantar nombor pesanan ke depan', correct: true, why: 'Betul. kedai-pay tak pernah dengar trace ID itu, jadi ia mula yang baharu.' }, { label: 'kedai-pay terlalu lambat', why: 'Lambat buat span panjang, bukan trace baharu.' }, { label: 'Collector campur adukkannya', why: 'Collector cuma bawa apa yang aplikasi hantar.' }]} />
+</Card>
+
+<Card id="see-header" type="see">
+<Interactive name="SpotLines" prompt="kedai-api panggil kedai-pay. Ketik baris yang bawa nombor pesanan." lines={[{ text: 'POST /pay HTTP/1.1' }, { text: 'Host: kedai-pay:8080' }, { text: 'Content-Type: application/json' }, { text: 'traceparent: 00-3c9a51e0b7d24f6e9a18c2d4e6f80b15-d2e3f40516273849-01', target: true }]} success="Betul. Header traceparent bawa trace ID ke servis seterusnya." />
+
+Hantar trace ID ke depan, dalam header, ialah **<Term id="context-propagation">context propagation</Term>**.
+</Card>
+
+<Card id="try-build" type="try">
+Bina header `traceparent`. Ketik kepingan mengikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'traceparent:', means: 'nama header W3C' }, { text: '00-', means: 'versi 00' }, { text: '3c9a51e0b7d24f6e9a18c2d4e6f80b15-', means: 'trace ID: nombor pesanan' }, { text: 'd2e3f40516273849-', means: 'span pemanggil: siapa yang bertanya' }, { text: '01', means: 'flag: 01 bermaksud sampled, simpan trace ini' }]} decoys={[{ text: 'order_id=A1041-', means: 'medan log, bukan sebahagian header ini' }]} success="Itulah header traceparent W3C yang sebenar." />
+
+<Hint>Versi, trace ID, span induk, flag. Sengkang di antaranya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+kedai-pay baca header itu dan mulakan span `POST /pay`. Apa Parent ID-nya?
+
+<Interactive name="Choice" options={[{ label: 'd2e3f40516273849', correct: true, why: 'Betul. Ia span pemanggil dari header. Collector sebenar tunjuk tepat begini.' }, { label: 'c1d2e3f405162738', why: 'Itu POST /order, satu langkah lebih atas. Header sebut pemanggil terus.' }, { label: 'Tiada: ia mula baharu', why: 'Hanya tanpa header. Dengannya, pesanan kekal satu pokok.' }]} />
+</Card>
+
+<Card id="check-logs" type="check">
+<Interactive name="Transcript" title="bash" label="logcli cari trace ID dalam setiap diari kedai. Tiga baris kembali: order received dalam kedai-api, slow query 2800 ms dalam kedai-pay, kemudian payment timeout dalam kedai-api." lines={[{ cmd: 'logcli query --quiet \'{app=~"kedai-.*"} |= "3c9a51e0b7d24f6e9a18c2d4e6f80b15"\'' }, { out: '2026-11-01T17:45:22Z {app="kedai-api", detected_level="error", service_name="kedai-api"} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:21Z {app="kedai-pay", detected_level="warn", service_name="kedai-pay"}  {"level":"warn","msg":"slow query","table":"payments","duration_ms":2800,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:19Z {app="kedai-api", detected_level="info", service_name="kedai-api"}  {"level":"info","msg":"order received","order_id":"A1041","trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}' }]} />
+
+Nombor yang sama ada dalam kedua-dua diari. Satu carian jumpa pesanan itu di mana-mana.
+</Card>
+
+<Card id="check-story" type="check">
+<Interactive name="OrderList" items={['kedai-api: order received', 'kedai-pay: slow query pada payments, 2.8 s', 'kedai-api: payment timeout selepas 3 s']} label="Perkara pertama yang berlaku di atas" success="Pangkalan data bayaran lambat, jadi kedai-api berputus asa." />
+
+Susun cerita pesanan A1041 ikut masa. Guna masa dalam baris-baris itu.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jejak satu pesanan merentas servis dengan trace ID-nya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Anda jarang tulis `traceparent` sendiri. Instrumentasi OpenTelemetry untuk klien dan server HTTP tambah dan baca untuk anda. Tetap semak setiap hop. Satu servis yang buang header itu belah trace jadi dua.
+</Card>

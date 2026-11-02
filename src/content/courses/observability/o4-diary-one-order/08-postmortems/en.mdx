@@ -1,0 +1,58 @@
+---
+id: obs-o4-l08
+world: 4
+title: "Blameless postmortems"
+summary: "You will learn: to write down what happened so the system gets better, not so someone gets blamed."
+minutes: 3
+xp: 15
+interactives: [Choice, SwipeJudge, OrderList, SpotLines]
+needs: [obs-o4-l07]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Postmortem culture (Google SRE book)", url: "https://sre.google/sre-book/postmortem-culture/" }
+  - { label: "Postmortem culture (Google SRE workbook)", url: "https://sre.google/workbook/postmortem-culture/" }
+---
+
+<Card id="hook" type="hook">
+After the A1041 incident, the boss asks: "Who broke it?" Ben gets told off. What happens the next time someone makes a mistake?
+
+<Interactive name="Choice" options={[{ label: 'They hide it, and it gets worse', correct: true, why: 'Yes. Blame teaches silence. Silence hides the next problem.' }, { label: 'They are more careful', why: 'People were already careful. The system let the mistake through.' }, { label: 'Nothing changes', why: 'Something changes: people stop speaking up.' }]} />
+</Card>
+
+<Card id="see-swipe" type="see">
+Swipe right for a blameless sentence. Swipe left for a blaming one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The 17:30 change dropped an index, and no check caught it.', good: true, why: 'It names what the system allowed.' }, { text: 'Ben ran the change wrong.', good: false, why: 'Ask what made it easy to run it wrong.' }, { text: 'The runbook had no step for slow queries.', good: true, why: 'A gap in the system you can fix.' }, { text: 'Mei should have known.', good: false, why: 'Should-have-known fixes nothing next time.' }]} />
+
+A **<Term id="blameless-postmortem">blameless postmortem</Term>** asks what made the mistake easy. Never who to punish.
+</Card>
+
+<Card id="see-parts" type="see">
+<Interactive name="OrderList" items={['Summary: one paragraph', 'Impact: who felt it, for how long', 'Timeline: what happened when', 'Causes: what let it happen', 'Action items: owner and date']} label="Top of the postmortem first" success="Story first, lessons last." />
+
+Put the parts of the write-up in order.
+</Card>
+
+<Card id="predict" type="predict">
+Which action item will really get done?
+
+<Interactive name="Choice" options={[{ label: 'Add a CI check that blocks changes that drop an index. Owner: Ben. Due: 15 Nov.', correct: true, why: 'Yes. Specific, owned, with a date.' }, { label: 'Be more careful with the database.', why: 'Nobody can tick that off. Make it concrete.' }, { label: 'Fix the database.', why: 'Fix what, by when, and who?' }]} />
+</Card>
+
+<Card id="check-draft" type="check">
+<Interactive name="SpotLines" prompt="A draft postmortem. Tap every line that blames a person." lines={[{ text: 'Impact: 28 minutes, about 5% of orders failed.' }, { text: 'Cause: Ben was careless with the 17:30 change.', target: true }, { text: 'Cause: no test checks that indexes stay.' }, { text: 'Note: Mei should have spotted it sooner.', target: true }, { text: 'Went well: tracing found the slow query in 4 minutes.' }]} success="Rewrite those two as system gaps, and the team learns." />
+
+Find the blame, then imagine the system fix behind it.
+</Card>
+
+<Card id="win" type="win">
+You can now write a blameless postmortem with real action items.
+</Card>
+
+<Card id="deeper" type="deeper">
+Write one when customers felt it, data was lost, or on-call stepped in. Share it widely: other teams have the same gaps. Celebrate the people who spoke up first.
+</Card>

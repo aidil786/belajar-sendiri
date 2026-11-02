@@ -1,0 +1,73 @@
+---
+id: obs-o3-l02
+world: 3
+title: "Alertmanager: route, group, silence"
+summary: "You will learn: how Alertmanager groups bells, picks who to call and keeps quiet when told."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, Transcript, YamlPlayground, SortCards, Mission]
+needs: [obs-o3-l01]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alertmanager", url: "https://prometheus.io/docs/alerting/latest/alertmanager/" }
+  - { label: "Alertmanager configuration", url: "https://prometheus.io/docs/alerting/latest/configuration/" }
+  - { label: "Alerting overview", url: "https://prometheus.io/docs/alerting/latest/overview/" }
+---
+
+<Card id="hook" type="hook">
+Ten shop servers lost power at once. Ten alert rules fire. What should your phone get?
+
+<Interactive name="Choice" options={[{ label: 'One message that lists all ten', correct: true, why: 'Yes. One call, the whole picture. That is grouping.' }, { label: 'Ten messages in ten seconds', why: 'Ten buzzes for one problem. People stop reading.' }, { label: 'Nothing, it is too noisy', why: 'The power cut is real. Someone must know.' }]} />
+</Card>
+
+<Card id="see-journey" type="see">
+<Interactive name="OrderList" items={['Prometheus: the rule fires', 'Alertmanager: bells with the same labels join one group', 'Alertmanager: the route picks a receiver', 'The receiver gets one message']} label="First step at the top" success="That is the bell's whole journey." />
+
+Prometheus only rings bells. **<Term id="alertmanager">Alertmanager</Term>** is the dispatcher. It decides who hears them, and how.
+</Card>
+
+<Card id="see-route" type="see">
+<Interactive name="Transcript" title="bash" label="amtool draws the routing tree: default-route goes to team-chat; under it, severity page goes to on-call-phone. A test with severity=page answers on-call-phone." lines={[{ cmd: 'amtool config routes show --config.file=alertmanager.yml' }, { out: 'Routing tree:\n.\n└── default-route  receiver: team-chat\n    └── {severity="page"}  receiver: on-call-phone' }, { cmd: 'amtool config routes test --config.file=alertmanager.yml severity=page alertname=InstanceDown' }, { out: 'on-call-phone', color: 'green' }]} />
+
+Every alert starts at the top of the **<Term id="alert-route">route</Term>** tree. The first child that matches its labels wins.
+</Card>
+
+<Card id="predict" type="predict">
+An alert has `severity=ticket` and `alertname=QueueTooLong`. Who gets it?
+
+<Interactive name="Choice" options={[{ label: 'team-chat', correct: true, why: 'Yes. No child route matches, so it stays at the top: team-chat. amtool says the same.' }, { label: 'on-call-phone', why: 'That child only takes severity="page".' }, { label: 'Nobody', why: 'The top route catches everything that no child takes.' }]} />
+</Card>
+
+<Card id="try-group" type="try">
+Group the bells by `alertname` and `job`. Then ten shops make one call.
+
+<Interactive name="YamlPlayground" file="alertmanager.yml" initial={'route:\n  receiver: team-chat\n  group_by: [alertname]\n  routes:\n    - matchers: [severity="page"]\n      receiver: on-call-phone\nreceivers:\n  - name: team-chat\n  - name: on-call-phone\n'} expect={[{ path: 'route.group_by', type: 'list', includes: 'alertname', hint: 'Keep alertname in the list.' }, { path: 'route.group_by', type: 'list', includes: 'job', hint: 'Add job inside the brackets, after a comma.' }]} solution={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\n  routes:\n    - matchers: [severity="page"]\n      receiver: on-call-phone\nreceivers:\n  - name: team-chat\n  - name: on-call-phone\n'} hint="Change line 3 to: group_by: [alertname, job]" success="Same alert name, same job: one group, one message." />
+
+<Hint>Lists in brackets use commas: `[alertname, job]`.</Hint>
+</Card>
+
+<Card id="check-silence" type="check">
+<Interactive name="Transcript" title="bash" label="amtool adds a 2-hour silence for QueueTooLong at the nasi-lemak stall and prints its ID. silence query lists it with the end time, author aina and the comment." lines={[{ cmd: 'amtool --alertmanager.url=http://localhost:9093 silence add alertname=QueueTooLong stall=nasi-lemak --duration=2h --author=aina --comment="Fixing the queue, back by 3pm"' }, { out: '16587a75-aee0-4b83-b053-8781c8afcb22', color: 'green' }, { cmd: 'amtool --alertmanager.url=http://localhost:9093 silence query' }, { out: 'ID                                    Matchers                                     Ends At                  Created By  Comment\n16587a75-aee0-4b83-b053-8781c8afcb22  alertname="QueueTooLong" stall="nasi-lemak"  2026-11-01 14:56:48 UTC  aina        Fixing the queue, back by 3pm' }]} />
+
+Aina is fixing the queue. A **<Term id="silence">silence</Term>** says: don't call for this until 2 hours pass. It has an author and a reason.
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'group', label: 'grouping' }, { id: 'silence', label: 'silence' }, { id: 'inhibit', label: 'inhibition' }]} items={[{ label: 'Ten shops down: send one message', bucket: 'group', why: 'Same labels, one group, one message.' }, { label: 'Aina is fixing it: no calls for 2 hours', bucket: 'silence', why: 'A person mutes it on purpose, with an end time.' }, { label: 'The whole site is down: mute the "page slow" alerts', bucket: 'inhibit', why: 'A big alert mutes the small ones it causes.' }]} success="Three ways to keep the pager calm." />
+
+Which tool keeps the pager calm here?
+</Card>
+
+<Card id="win" type="win">
+You can now route, group and silence alerts with Alertmanager.
+</Card>
+
+<Card id="deeper" type="deeper">
+Timers on a route: `group_wait` (default 30s) waits for friends before the first message. `group_interval` (default 5m) waits before telling about new bells in a group. `repeat_interval` (default 4h) resends if nothing changed. An `inhibit_rules` entry mutes `target_matchers` while `source_matchers` fire.
+
+<Interactive name="Mission" id="obs-o3-l02-real" steps={[{ id: 'file', text: 'Save the alertmanager.yml from the try card, with your two groups.' }, { id: 'check', text: 'Check it with amtool from the official Alertmanager image.', command: 'docker run --rm --entrypoint amtool -v "$PWD:/w" -w /w quay.io/prometheus/alertmanager:v0.34.1 check-config alertmanager.yml' }, { id: 'test', text: 'Ask the route tree where a ticket goes.', command: 'docker run --rm --entrypoint amtool -v "$PWD:/w" -w /w quay.io/prometheus/alertmanager:v0.34.1 config routes test --config.file=alertmanager.yml severity=ticket' }]} success="Your dispatcher is checked!" />
+</Card>

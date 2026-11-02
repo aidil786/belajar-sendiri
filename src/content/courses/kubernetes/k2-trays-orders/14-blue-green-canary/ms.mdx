@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l14
+world: 2
+title: "Blue/green dan canary dengan Deployment"
+summary: "Anda akan belajar: blue/green dengan tukar selector Service, dan canary dengan bilangan replika."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, TrafficDial, SortCards]
+needs: [k8s-k2-l13]
+scenario: k2-bluegreen
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Canary deployments (Managing Workloads)", url: "https://kubernetes.io/docs/concepts/workloads/management/#canary-deployments" }
+  - { label: "Kubernetes: Service selectors", url: "https://kubernetes.io/docs/concepts/services-networking/service/" }
+---
+
+<Card id="hook" type="hook">
+Menu versi 2 sudah siap. Anda mahu ia hidup dalam satu saat. Kalau rosak, hilang dalam satu saat. Dengan objek Kubernetes biasa, bagaimana?
+
+<Interactive name="Choice" options={[{ label: 'Jalankan kedua-dua versi, kemudian tukar nombor pesanan', correct: true, why: 'Dua dapur, satu papan tanda. Tukar papan untuk mula; tukar balik untuk undur.' }, { label: 'Padam versi 1 dulu', why: 'Nanti tiada apa untuk kembali.' }, { label: 'Ubah setiap pod dengan tangan', why: 'Lambat dan berisiko. Pod diganti, bukan diubah.' }]} />
+</Card>
+
+<Card id="see-bluegreen" type="see">
+<Interactive name="KubeReplay" scenario="k2-bluegreen" commands={['kubectl get deployments', 'kubectl get service shop -o wide', 'kubectl exec client -- wget -qO- -T 5 http://shop']} label="Dua Deployment berjalan: shop-blue dan shop-green. Selector Service ialah app=shop,version=blue, jadi client dapat menu v1." />
+
+**<Term id="blue-green" course="cicd">Blue/green</Term>**: dua Deployment penuh berjalan sebelah-menyebelah. Selector Service tulis `version=blue`, jadi hanya dulang blue dapat pelanggan.
+</Card>
+
+<Card id="try-switch" type="try">
+Giliran anda. `service-green.yaml` ialah nombor pesanan yang sama, tapi tuju ke green. Apply fail itu. Kemudian tanya kedai sekali lagi dari `client`.
+
+<Interactive name="FoodCourtSim" scenario="k2-bluegreen" goal={{ reachable: { url: 'http://shop', from: 'client', contains: 'v2' } }} hints={['Taip kubectl apply -f service-green.yaml', 'Taip kubectl exec client -- wget -qO- -T 5 http://shop']} success="Setiap pelanggan kini dapat menu v2. Blue masih panas, untuk berjaga-jaga." />
+
+<Hint>`kubectl apply -f service-green.yaml`, kemudian `kubectl exec client -- wget -qO- -T 5 http://shop`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Green ada bug. Secepat mana anda boleh kembali ke blue?
+
+<Interactive name="Choice" options={[{ label: 'Satu arahan: apply service.yaml semula', correct: true, why: 'Dulang blue tak pernah pergi. Tukar papan balik.' }, { label: 'Bina semula blue dari awal', why: 'Tak perlu. Blue masih berjalan, menunggu.' }, { label: 'Tunggu rolling update', why: 'Tiada pod yang berubah. Hanya selector yang berubah.' }]} />
+</Card>
+
+<Card id="see-canary" type="see">
+<Interactive name="KubeReplay" scenario="k2-canary" commands={['kubectl apply -f canary.yaml', 'kubectl rollout status deployment/shop-canary --timeout=120s', 'kubectl get deployments', 'kubectl get endpointslices -l kubernetes.io/service-name=shop']} label="shop-stable ada 3 pod dan shop-canary ada 1. Service pilih keempat-empat pod, sebab semuanya ada app=shop." />
+
+**<Term id="canary" course="cicd">Canary</Term>**: Deployment kedua dengan label `app: shop` yang sama, tapi hanya 1 dulang. Service pilih keempat-empatnya, jadi lebih kurang 1 daripada 4 pelanggan rasa versi 2.
+</Card>
+
+<Card id="try-dial" type="try">
+Trafik sebenar, ralat sebenar. Alihkan pelanggan ke versi 2 langkah demi langkah. Rollback sebelum 150 orang kena bug.
+
+<Interactive name="TrafficDial" mode="canary" newErrorRate={0.08} task={{ type: 'rollback', maxHurt: 150 }} success="Tertangkap awal! Kebanyakan pelanggan tak rasa hidangan yang rosak." />
+
+<Hint>Garis versi 2 melonjak atas garis amaran? Tekan Roll back.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Blue/green atau canary? Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'bg', label: 'Blue/green' }, { id: 'canary', label: 'Canary' }]} items={[{ label: 'Dua Deployment, setiap satu saiz penuh', bucket: 'bg', why: 'Kedua-dua dapur boleh layan semua orang. Kosnya berganda buat seketika.' }, { label: 'Tukar dengan mengubah selector Service', bucket: 'bg', why: 'Satu perubahan alihkan setiap pelanggan.' }, { label: 'Bahagian datang dari bilangan dulang: 1 daripada 4', bucket: 'canary', why: 'Label sama, jadi Service sebarkan pelanggan ke semua dulang.' }, { label: 'Skala yang baharu naik, yang lama turun', bucket: 'canary', why: 'Langkah demi langkah, sambil perhati ralat.' }]} success="Siap! Tukar papan tanda, atau biar beberapa orang rasa dulu." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan keluaran blue/green dan canary dengan Deployment biasa.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: dulang sebenar ialah program yang berjalan. Gerai ialah sebuah komputer penuh. Canary ikut replika juga kasar: 1 daripada 4 ialah 25%, bukan 5%. Untuk bahagian tepat, guna berat Gateway API (Dunia K3) atau Argo Rollouts (Dunia K7).
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, tukar selector Service, kemudian tukar balik.
+</Card>

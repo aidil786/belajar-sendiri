@@ -1,0 +1,67 @@
+---
+id: obs-o4-l03
+world: 4
+title: "OpenTelemetry: SDK, collector, OTLP"
+summary: "You will learn: how one shared standard carries metrics, logs and traces from your app to any tool."
+minutes: 5
+xp: 25
+interactives: [Choice, OrderList, Transcript, YamlPlayground, SortCards, Mission]
+needs: [obs-o4-l02]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry concepts", url: "https://opentelemetry.io/docs/concepts/" }
+  - { label: "Collector configuration", url: "https://opentelemetry.io/docs/collector/configuration/" }
+  - { label: "OTLP specification", url: "https://opentelemetry.io/docs/specs/otlp/" }
+---
+
+<Card id="hook" type="hook">
+Three services, written in three languages. You want a new trace store. Without a shared standard, what has to change?
+
+<Interactive name="Choice" options={[{ label: 'The code of every service', correct: true, why: 'Yes. Unless they all speak one shared language. That is OpenTelemetry.' }, { label: 'Only the trace store', why: 'Each service talks to it in its own way, so each must change.' }, { label: 'Nothing', why: 'Every service would still send data the old way.' }]} />
+</Card>
+
+<Card id="see-flow" type="see">
+<Interactive name="OrderList" items={['Your code marks a step: "order started"', 'The SDK inside the app collects it', 'OTLP carries it out of the app', 'The Collector sorts it and sends it on', 'A store keeps it: Prometheus, Loki or a trace store']} label="From your code at the top, to the store" success="App, SDK, OTLP, Collector, store." />
+
+The **<Term id="otel-sdk">OpenTelemetry SDK</Term>** lives inside your app. It writes things down and sends them out.
+</Card>
+
+<Card id="see-collector" type="see">
+<Interactive name="Transcript" title="bash" label="otelcol-contrib validate on a config whose traces pipeline names the exporter otlp: Error, references exporter otlp which is not configured." lines={[{ cmd: 'otelcol-contrib validate --config=config.yaml' }, { out: 'Error: service::pipelines::traces: references exporter "otlp" which is not configured', color: 'red' }]} />
+
+The pipeline names an exporter that isn't set up above. The **<Term id="otel-collector">Collector</Term>** is the sorting office: receivers in, exporters out, pipelines join them.
+</Card>
+
+<Card id="try-fix" type="try">
+Fix the pipeline. It should send traces to the `debug` exporter that is set up above.
+
+<Interactive name="YamlPlayground" file="config.yaml" initial={'receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nexporters:\n  debug:\n    verbosity: detailed\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      exporters: [otlp]\n'} expect={[{ path: 'service.pipelines.traces.exporters', type: 'list', includes: 'debug', hint: 'The last line should name debug, the exporter on line 9.' }, { path: 'service.pipelines.traces.receivers', type: 'list', includes: 'otlp', hint: 'Keep otlp as the receiver: it is set up on line 2.' }, { path: 'exporters.debug', type: 'map', hint: 'Keep the debug exporter block.' }]} solution={'receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nexporters:\n  debug:\n    verbosity: detailed\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      exporters: [debug]\n'} hint="Receivers and exporters are different lists. Only the last line is wrong." success="That file passes the real Collector's validate." />
+
+<Hint>`otlp` is a receiver here. The exporter is called `debug`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your app sends <Term id="otlp">OTLP</Term> over HTTP to the Collector. Which port, by default?
+
+<Interactive name="Choice" compact options={[{ label: '4318', correct: true, why: 'Yes. OTLP over HTTP uses 4318 by default.' }, { label: '4317', why: 'That is OTLP over gRPC.' }, { label: '9090', why: "That is Prometheus's own port." }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'sdk', label: 'SDK (in the app)' }, { id: 'collector', label: 'Collector' }]} items={[{ label: 'Starts a span when an order begins', bucket: 'sdk', why: 'Only the app knows when its own steps start.' }, { label: 'Adds service.name to everything the app sends', bucket: 'sdk', why: 'The app knows its own name.' }, { label: 'Takes OTLP from many apps at once', bucket: 'collector', why: 'One sorting office for all.' }, { label: 'Sends traces on to the trace store', bucket: 'collector', why: 'Change the store here, not in every app.' }]} success="The app writes it down. The Collector delivers it." />
+
+Who does which job?
+</Card>
+
+<Card id="win" type="win">
+You can now explain the SDK, OTLP and the Collector, and fix a Collector pipeline.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTelemetry also agrees on names, called semantic conventions: `http.request.method`, `http.route`, `service.name`. Use them, so every tool understands your data. Real rep: validate your own config.
+
+<Interactive name="Mission" id="obs-o4-l03-real" steps={[{ id: 'file', text: 'Save the fixed config.yaml from the try card.' }, { id: 'check', text: 'Validate it with the official Collector image. No output means it is fine.', command: 'docker run --rm -v "$PWD:/w" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/w/config.yaml' }]} success="Your Collector config passes!" />
+</Card>

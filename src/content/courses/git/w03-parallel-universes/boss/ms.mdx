@@ -1,0 +1,78 @@
+---
+id: git-w03-boss
+world: 3
+title: "Penghancur Konflik"
+summary: "Anda akan belajar: tumpaskan tiga konflik dan tinggalkan satu sejarah yang kemas."
+minutes: 6
+xp: 50
+interactives: [GraphScene, TermReplay, ConflictResolver, Choice, Challenge, RebaseDeck]
+needs: [git-w03-l12]
+scenario: w03-boss-merge
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git rebase", url: "https://git-scm.com/docs/git-rebase" }
+  - { label: "git stash", url: "https://git-scm.com/docs/git-stash" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w03-boss-merge" commands={['git merge party']} label="main dan party sama-sama ubah diari. Merge berhenti dengan lencana merah Conflict dan tanda amaran." />
+
+Mod parti bertemu diari anda. Tiga konflik! Kemudian satu branch bersepah untuk dikemas. Sedia untuk tumpaskan semuanya?
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w03-boss-merge" commands={['git merge party', 'git status']} label="git merge party: CONFLICT dalam index.html dan dalam style.css. git status senaraikan kedua-dua fail sebagai both modified." />
+
+Dua fail, tiga pertembungan. Baca setiap satu. Pilih apa yang kekal. Silap tak apa, jadi cuba-cubalah!
+</Card>
+
+<Card id="try-crush" type="try">
+Tumpaskan ketiga-tiga konflik. Tajuk: kekalkan milik anda. Hari 5: kekalkan kedua-dua. Warna: kekalkan milik mereka.
+
+<Interactive name="ConflictResolver" scenario="w03-boss-merge" commands={['git merge party']} graph expect={{ 'index.html': ['My Git Diary', 'I fixed conflicts', 'Party time'], 'style.css': 'hotpink' }} avoid={{ 'index.html': 'Party Diary', 'style.css': 'teal' }} why="Semak nota: tajuk milik anda, hari 5 kedua-dua, warna milik mereka." success="Tiga konflik dah tumpas! Merge commit dah masuk." />
+
+<Hint>index.html ada dua konflik. style.css ada satu. Guna tab fail.</Hint>
+</Card>
+
+<Card id="check-abort" type="check">
+Separuh jalan, anda panik. Arahan mana yang kembalikan semuanya macam sebelum merge?
+
+<Interactive name="Choice" options={[{ label: '`git merge --abort`', correct: true, why: 'Ia batalkan merge. Branch anda sama macam sebelum.' }, { label: '`git reset --hard HEAD~1`', why: 'Itu akan buang commit sebenar anda yang terakhir juga!' }, { label: '`git stash`', why: 'Stash untuk perubahan belum siap, bukan merge yang berhenti.' }]} />
+</Card>
+
+<Card id="try-drills" type="try">
+Empat latihan pantas dalam terminal. Setiap satu bermula semula.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Tukar segera', text: 'Tema gelap baru separuh siap. Simpan dulu dan pergi ke main.', scenario: 'w03-boss-stash', goal: { stashCount: 1, currentBranch: 'main' }, hints: ['Folder anda mesti bersih dulu.', 'Taip git stash, kemudian git switch main.'] },
+  { title: 'Satu pembaikan sahaja', text: 'Salin commit "Fix README intro" sahaja dari experiments ke main.', scenario: 'w03-boss-pick', goal: { currentBranch: 'main', lastMessage: '^Fix README intro$', commits: 4 }, hints: ['git log --oneline experiments tunjuk commitnya.', 'Taip git cherry-pick experiments~1'] },
+  { title: 'Di atas main', text: 'Anda di about. Letak commitnya di atas main yang terkini. Tanpa merge commit.', scenario: 'w03-boss-rebase', goal: { currentBranch: 'about', linearHistory: true, messages: ['^Say what I like$', '^Add about page$', '^Make heading teal$'] }, hints: ['Main semula commit anda ke atas main.', 'Taip git rebase main'] },
+  { title: 'Kemas nota', text: 'about dah di-merge. old-idea tak diperlukan. Padam kedua-dua nota.', scenario: 'w03-boss-cleanup', goal: { branchesMissing: ['about', 'old-idea'], currentBranch: 'main' }, hints: ['Branch yang dah di-merge: git branch -d about', 'Belum di-merge? D besar: git branch -D old-idea'] }
+]} />
+
+<Hint>Tersekat? `git status` dan `git branch` beritahu di mana anda berada.</Hint>
+</Card>
+
+<Card id="try-tidy" type="try">
+Yang terakhir: branch recipes. Fixup “oops” ke dalam halaman itu. Tukar nama “add cake” jadi “Add cake recipe”. Drop “temp debug”.
+
+<Interactive name="RebaseDeck" scenario="w03-boss-tidy" upstream="main" goal={{ messages: ['^Add pancake recipe$', '^Add cake recipe$', '^Add recipes page$', '^Add style$'], commits: 6, filesMissing: ['debug.txt'] }} commitFiles={[{ message: '^Add recipes page$', file: 'recipes.html', contains: '<h1>Recipes</h1>' }]} hints={['“oops” betul-betul di bawah halaman itu: tetapkan fixup.', 'reword “add cake”, dan drop “temp debug”.']} success="Satu sejarah yang kemas. Bos dah tumpas!" />
+
+<Hint>fixup, reword, drop: satu perkataan untuk setiap kad.</Hint>
+</Card>
+
+<Card id="check-golden" type="check">
+Anda dah kongsi branch recipes. Mei bina di atasnya. Bolehkah anda masih kemaskannya dengan `git rebase -i`?
+
+<Interactive name="Choice" options={[{ label: 'Lebih baik jangan. Orang lain dah ada commit itu.', correct: true, why: 'Peraturan emas! Kemaskan sebelum anda kongsi.' }, { label: 'Ya, bila-bila masa', why: 'Mei ada commit lama. Tulis semula akan pecahkan sejarah anda berdua.' }, { label: 'Hanya kalau commitnya kecil', why: 'Saiz tak penting. Yang penting, siapa ada commit itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tumpaskan konflik dan jaga sejarah supaya kemas.
+</Card>

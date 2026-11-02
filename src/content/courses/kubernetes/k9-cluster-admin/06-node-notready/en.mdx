@@ -1,0 +1,86 @@
+---
+id: k8s-k9-l06
+world: 9
+title: "Node NotReady: the ladder"
+summary: "You will learn: a step-by-step ladder to find out why a node is NotReady, and fix it."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SpotLines, Choice, FoodCourtSim, OrderList, SwipeJudge, Mission]
+needs: [k8s-k9-l05]
+scenario: k9-notready
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Troubleshooting clusters", url: "https://kubernetes.io/docs/tasks/debug/debug-cluster/" }
+  - { label: "Nodes: node status and conditions", url: "https://kubernetes.io/docs/reference/node/node-status/" }
+  - { label: "kubelet", url: "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k9-notready" commands={['kubectl get nodes']} label="kubectl get nodes: dev-worker is NotReady. The other two stalls are Ready." />
+
+3 a.m. again: `dev-worker` is NotReady. Don’t guess. Climb one ladder, one rung at a time, from the top.
+</Card>
+
+<Card id="try-conditions" type="try">
+Rung 2 is `kubectl describe node dev-worker`. Read its **<Term id="node-conditions">node conditions</Term>**. Tap the Ready line.
+
+<Interactive name="SpotLines" prompt="Tap the line for the Ready condition." lines={[{ text: 'Taints:             node.kubernetes.io/unreachable:NoSchedule' }, { text: '                    node.kubernetes.io/unreachable:NoExecute' }, { text: 'Conditions:' }, { text: '  Type            Status   LastHeartbeatTime                LastTransitionTime               Reason             Message' }, { text: '  MemoryPressure  Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  DiskPressure    Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  PIDPressure     Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.' }, { text: '  Ready           Unknown  Sat, 31 Oct 2026 01:00:20 +0000  Sat, 31 Oct 2026 01:01:13 +0000  NodeStatusUnknown  Kubelet stopped posting node status.', target: true }]} success="Unknown: the office stopped hearing from this stall’s supervisor." />
+
+<Hint>Read the Type column. Find Ready.</Hint>
+</Card>
+
+<Card id="predict-next" type="predict">
+“Kubelet stopped posting node status.” Where is the next rung?
+
+<Interactive name="Choice" options={[{ label: 'Inside dev-worker: the kubelet service', correct: true, why: 'Yes. The supervisor went quiet. Go and ask its machine.' }, { label: 'Delete the pods on dev-worker', why: 'The trays are not the problem. Their supervisor is.' }, { label: 'Restart the API server', why: 'The office is fine. Only one stall went quiet.' }]} />
+</Card>
+
+<Card id="try-climb" type="try">
+Climb down. Type `ssh dev-worker`, then `systemctl status kubelet`. Then read the diary: `journalctl -u kubelet -n 10 --no-pager`.
+
+<Interactive name="FoodCourtSim" scenario="k9-notready" goal={{ typed: '^systemctl status kubelet(\\.service)?$', lastTyped: '^journalctl\\b.*(-u ?|--unit[= ])kubelet' }} hints={['Type ssh dev-worker', 'Then systemctl status kubelet', 'Then journalctl -u kubelet -n 10 --no-pager']} success="inactive (dead), and the diary ends with “Stopped kubelet.service”." />
+
+<Hint>Look at the Active line first. Then at the last diary lines.</Hint>
+</Card>
+
+<Card id="check-journal" type="check">
+These are the diary’s last lines. Tap the two lines where systemd stops the kubelet.
+
+<Interactive name="SpotLines" prompt="Tap the 2 lines from systemd about stopping." lines={[{ text: 'Oct 31 01:00:22 dev-worker systemd[1]: Stopping kubelet.service - kubelet: The Kubernetes Node Agent...', target: true }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.255184     342 eviction_manager.go:224] "Eviction manager: monitoring loop exiting" err="context canceled"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.258272     342 podcertificatemanager.go:351] "podcertificate.IssuingManager shut down"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.260284     342 volume_manager.go:341] "Shutting down Kubelet Volume Manager"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.263372     342 tlsconfig.go:258] "Shutting down DynamicServingCertificateController"' }, { text: 'Oct 31 01:00:22 dev-worker kubelet[342]: I1031 01:00:22.266284     342 dynamic_cafile_content.go:175] "Shutting down controller" name="client-ca-bundle::/etc/kubernetes/pki/ca.crt"' }, { text: 'Oct 31 01:00:22 dev-worker systemd[1]: kubelet.service: Deactivated successfully.' }, { text: 'Oct 31 01:00:22 dev-worker systemd[1]: Stopped kubelet.service - kubelet: The Kubernetes Node Agent.', target: true }]} success="A calm stop, asked for on purpose. Not a crash." />
+
+<Hint>Look for systemd[1] and the words Stopping and Stopped.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+Now fix it: `systemctl start kubelet`. Then `exit`, and watch the stall with `kubectl get nodes -w`.
+
+<Interactive name="FoodCourtSim" scenario="k9-notready" goal={{ nodeReady: { name: 'dev-worker' } }} hints={['Type ssh dev-worker', 'Then systemctl start kubelet', 'Then exit, and kubectl get nodes -w']} success="The supervisor is back on duty, so dev-worker is Ready again." />
+
+<Hint>Starting the kubelet is safe. It only brings the supervisor back.</Hint>
+</Card>
+
+<Card id="check-ladder" type="check">
+Put the whole ladder in order, top rung first.
+
+<Interactive name="OrderList" items={['Which stall? kubectl get nodes', 'Why? kubectl describe node dev-worker', 'Go inside: ssh dev-worker', 'Is the supervisor on duty? systemctl status kubelet', 'What did it write? journalctl -u kubelet', 'Fix: systemctl start kubelet', 'Watch it turn Ready: kubectl get nodes -w']} label="Top rung at the top" success="That’s the ladder. It works for many NotReady nights." />
+</Card>
+
+<Card id="check-moves" type="check">
+Good move on a NotReady node? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Read systemctl status before you change anything', good: true, why: 'Look first. The status often tells you the fix.' }, { text: 'Delete the node with kubectl delete node', good: false, why: 'You lose the stall’s record. The machine is still broken.' }, { text: 'Reboot the machine first, then look', good: false, why: 'You may lose clues. Look first, then decide.' }, { text: 'After the fix, check systemctl is-enabled kubelet', good: true, why: 'enabled means it comes back after the next reboot.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now climb the NotReady ladder and bring a node back.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other NotReady nights use the same ladder. Maybe the stove (containerd) is down. Maybe there is no Pod network yet, or the disk is full. `kubectl describe` shows where to look. The diary shows why. Practise breaking a stall on a throwaway cluster only.
+
+<Interactive name="Mission" id="k8s-k9-l06-real" steps={[{ id: 'where', text: 'Check you are on your throwaway kind cluster.', command: 'kubectl config current-context' }, { id: 'stop', text: 'Careful, throwaway only: stop one supervisor.', command: 'docker exec dev-worker systemctl stop kubelet' }, { id: 'wait', text: 'Wait about a minute. Then look.', command: 'kubectl get nodes' }, { id: 'why', text: 'Read the conditions.', command: 'kubectl describe node dev-worker' }, { id: 'fix', text: 'Start the supervisor again.', command: 'docker exec dev-worker systemctl start kubelet' }, { id: 'watch', text: 'Watch it turn Ready. Press Ctrl+C to stop watching.', command: 'kubectl get nodes -w' }]} success="You broke and fixed a real node, safely!" />
+</Card>

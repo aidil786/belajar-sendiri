@@ -1,0 +1,79 @@
+---
+id: docker-d0-boss
+world: 0
+title: Set up your kitchen
+summary: "You will learn: how to set up Docker for real, run hello-world, and solve five network puzzles."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, KitchenSim, Mission, Choice, SpotLines]
+needs: [docker-d0-l10]
+scenario: d0-net
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Get Docker", url: "https://docs.docker.com/get-started/introduction/get-docker-desktop/" }
+  - { label: "Install Docker Engine on Ubuntu", url: "https://docs.docker.com/engine/install/ubuntu/" }
+  - { label: "hello-world image", url: "https://hub.docker.com/_/hello-world" }
+  - { label: "MDN: HTTP status codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Job 1', title: 'Warm up', text: 'Run hello-world in the practice kitchen.' }, { when: 'Job 2', title: 'Go real', text: 'Install Docker on your own computer and run hello-world there.' }, { when: 'Job 3', title: 'Five puzzles', text: 'The shop is open on your laptop. Solve five network puzzles.' }]} />
+
+Your kitchen opens today! Kancil has three jobs for you. Tap each one, then start.
+</Card>
+
+<Card id="try-hello" type="try">
+Warm up in the practice kitchen. `docker run hello-world` fetches a tiny test image and runs it once.
+
+<Interactive name="KitchenSim" scenario="d0-hello" goal={{ imageExists: 'hello-world:latest', lastTyped: '^docker\\s+run\\b.*hello-world', lastExit: 0 }} hints={['Type docker run hello-world and press Enter.', 'Check the spelling: hello-world has a dash.']} success="Hello from Docker! Your practice kitchen works." />
+
+<Hint>`docker run hello-world`</Hint>
+</Card>
+
+<Card id="mission" type="try">
+Now the real kitchen. Do each step on your own computer, then tick it. On Linux, put `sudo` in front if you skipped the post-install steps.
+
+<Interactive name="Mission" id="docker-d0-kitchen" steps={[{ id: 'install', text: 'Install Docker on your computer. Lesson 4 has the steps for your system.' }, { id: 'version', text: 'Check that both halves answer: Client and Server.', command: 'docker version' }, { id: 'hello', text: 'Run your first real container. Look for “Hello from Docker!”.', command: 'docker run hello-world' }, { id: 'list', text: 'See the box it left behind. Exited (0) means all good.', command: 'docker ps -a' }]} success="Your real kitchen is open!" />
+</Card>
+
+<Card id="p1-port" type="try">
+Puzzle 1 of 5. The shop is open at hatch 8080 on this laptop. Taste it with curl.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '127.0.0.1', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*(localhost|127\\.0\\.0\\.1):8080', lastExit: 0 }} hints={['The shop is on this laptop. Its name is localhost.', 'Type curl localhost:8080']} success="Kedai Kancil answered. Puzzle 1 solved!" />
+</Card>
+
+<Card id="p2-refused" type="predict">
+Puzzle 2 of 5. `curl localhost:9090` says `Couldn't connect to server`. What does it mean?
+
+<Interactive name="Choice" options={[{ label: 'Nothing is listening on port 9090', correct: true, why: 'Right. The building is there, but that hatch is shut.' }, { label: 'The name localhost is unknown', why: 'A name problem says Could not resolve host instead.' }, { label: 'The page is missing', why: 'A missing page answers 404. Here nobody answered at all.' }]} />
+</Card>
+
+<Card id="p3-dns" type="try">
+Puzzle 3 of 5. A note says the shop is at `http://kedai-kancil:8080`. curl cannot find that name. Read the laptop’s phone book, then reach the shop by a name it knows.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['cat', 'curl', '/etc/hosts', 'localhost:8080', 'Tab', '↑']} goal={{ typed: '^cat\\s+/etc/hosts', lastTyped: '^curl\\b.*localhost:8080', lastExit: 0 }} hints={['Type cat /etc/hosts to read the phone book.', 'localhost is in the book. Type curl localhost:8080']} success="The phone book knows localhost, and the shop answered. Puzzle 3 solved!" />
+</Card>
+
+<Card id="p4-code" type="check">
+Puzzle 4 of 5. A customer asked for `/sambal.html`. Here is the reply. Tap the line that tells you what happened.
+
+<Interactive name="SpotLines" lines={[{ text: '$ curl -I localhost:8080/sambal.html' }, { text: 'HTTP/1.1 404 Not Found', target: true }, { text: 'Server: nginx/1.30.6' }, { text: 'Date: Sat, 31 Oct 2026 01:00:27 GMT' }, { text: 'Content-Type: text/html' }, { text: 'Content-Length: 153' }, { text: 'Connection: keep-alive' }]} prompt="Tap the status line." success="404 Not Found: sambal.html is not on the menu. Puzzle 4 solved!" />
+</Card>
+
+<Card id="p5-ip" type="try">
+Puzzle 5 of 5. localhost has a number: `127.0.0.1`. Reach the shop with the number only, no name.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '127.0.0.1', ':8080', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*127\\.0\\.0\\.1:8080', lastExit: 0 }} hints={['Swap the name localhost for its number.', 'Type curl 127.0.0.1:8080']} success="Same shop, reached by its number. All five puzzles solved!" />
+</Card>
+
+<Card id="win" type="win">
+You can now set up Docker and solve everyday network puzzles.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): on your own computer, run `docker run -d --name shop -p 8080:80 nginx:1.30-alpine`. Then try `curl localhost:8080` and `curl -I localhost:8080/sambal.html`. Clean up with `docker rm -f shop`.
+</Card>

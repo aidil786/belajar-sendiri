@@ -1,0 +1,74 @@
+---
+id: linux-l3-l08
+world: 3
+title: "Firewalls: ufw and nftables"
+summary: "You will learn: how a firewall guards the door, and how to open one port safely."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, Transcript, OrderList, SortCards, Choice, Mission]
+needs: [linux-l3-l07]
+scenario: linux-l3-guard
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Debian: ufw(8)", url: "https://manpages.debian.org/trixie/ufw/ufw.8.en.html" }
+  - { label: "Debian wiki: nftables", url: "https://wiki.debian.org/nftables" }
+  - { label: "Docker: packet filtering and firewalls", url: "https://docs.docker.com/engine/network/packet-filtering-firewalls/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-guard" intro={['curl -sS guarded.kedai.example; echo $?']} network />
+
+This call waited more than two minutes, then gave up. Nobody said no. Nobody said yes. Who stays silent like that?
+</Card>
+
+<Card id="see-guard" type="see">
+<Interactive name="Transcript" title="kedai" label="sudo ufw status verbose: Status active. Default deny incoming, allow outgoing. Allowed in: 22/tcp (OpenSSH) and 80/tcp from Anywhere."
+  lines={[{ cmd: 'sudo ufw status verbose' }, { out: 'Status: active\nLogging: on (low)\nDefault: deny (incoming), allow (outgoing), deny (routed)\nNew profiles: skip\n\nTo                         Action      From\n--                         ------      ----\n22/tcp (OpenSSH)           ALLOW IN    Anywhere\n80/tcp                     ALLOW IN    Anywhere' }]} />
+
+A **firewall** is the guard at the door. `ufw` is Debian's easy guard. It keeps everyone out, except the extensions on its list.
+</Card>
+
+<Card id="try-order" type="try">
+You are on the server over SSH. Turning the guard on first would lock you out! Put the steps in a safe order.
+
+<Interactive name="OrderList" items={['sudo ufw allow OpenSSH', 'sudo ufw allow 80/tcp', 'sudo ufw enable', 'sudo ufw status verbose']} label="First step at the top" success="Let yourself in first. Then switch the guard on." />
+</Card>
+
+<Card id="see-enable" type="see">
+<Interactive name="Transcript" title="kedai (over SSH)" label="ufw allow OpenSSH says Rules updated. ufw enable warns that it may disrupt ssh connections, asks y or n, then says Firewall is active and enabled on system startup."
+  lines={[{ cmd: 'sudo ufw allow OpenSSH' }, { out: 'Rules updated' }, { cmd: 'sudo ufw enable' }, { out: 'Command may disrupt existing ssh connections. Proceed with operation (y|n)? y\nFirewall is active and enabled on system startup', color: 'green' }]} />
+
+ufw asks before it starts. Answer `y` only when SSH is on the list.
+</Card>
+
+<Card id="try-compare" type="try">
+Compare two shops. First `closed.kedai.example`. Then `guarded.kedai.example` with `--connect-timeout 5`, so you wait only 5 seconds.
+
+<Interactive name="LinuxSim" scenario="linux-l3-guard" goal={{ typed: 'closed\\.kedai\\.example', lastTyped: '^curl .*--connect-timeout \\d+.*guarded\\.kedai\\.example' }} hints={['curl -sS closed.kedai.example', 'curl -sS --connect-timeout 5 guarded.kedai.example']} solution={['curl -sS closed.kedai.example', 'curl -sS --connect-timeout 5 guarded.kedai.example']} success="closed refused at once. guarded stayed silent: a guard drops the call." />
+</Card>
+
+<Card id="check-sort" type="check">
+Real curl errors. Which rung is each one?
+
+<Interactive name="SortCards" buckets={[{ id: 'name', label: 'Name not in the phone book' }, { id: 'nobody', label: 'Nobody at that extension' }, { id: 'guard', label: 'A guard drops it' }]} items={[{ label: '(6) Could not resolve host', bucket: 'name', why: 'DNS or /etc/hosts has no number for it.' }, { label: '(7) Failed to connect … after 0 ms', bucket: 'nobody', why: 'An instant no: nothing listens on that port.' }, { label: '(28) Connection timed out after 5004 milliseconds', bucket: 'guard', why: 'Silence. A firewall, or a road that is down.' }]} success="Fast no: nobody there. Long silence: look for a guard." />
+</Card>
+
+<Card id="check-rule" type="check">
+Only your office, 198.51.100.7, may use port 3000. Which rule?
+
+<Interactive name="Choice" options={[{ label: 'sudo ufw allow from 198.51.100.7 to any port 3000 proto tcp', correct: true, why: 'One caller, one extension. Everyone else stays out.' }, { label: 'sudo ufw allow 3000', why: 'That lets the whole internet call 3000.' }, { label: 'sudo ufw disable', why: 'That sends the guard home. Everything opens.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a firewall's list and open one port without locking yourself out.
+</Card>
+
+<Card id="deeper" type="deeper">
+Under ufw sits nftables, the kernel's rule list (`sudo nft list ruleset`). Cloud firewalls sit outside the server: both must allow a port. Careful: ports published by Docker skip ufw's rules. The ufw outputs here came from a real Debian 13 lab.
+
+<Interactive name="Mission" id="linux-l3-l08-rep" steps={[{ id: 'vm', text: 'Use a throwaway VM with a console, so a mistake cannot lock you out.' }, { id: 'install', text: 'Install the guard.', command: 'sudo apt install ufw' }, { id: 'ssh', text: 'Let SSH in first.', command: 'sudo ufw allow OpenSSH' }, { id: 'on', text: 'Switch it on and read the list.', command: 'sudo ufw enable && sudo ufw status verbose' }]} success="Your own guard, with SSH safely on the list." />
+</Card>

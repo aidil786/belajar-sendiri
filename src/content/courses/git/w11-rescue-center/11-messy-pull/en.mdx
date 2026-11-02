@@ -1,0 +1,61 @@
+---
+id: git-w11-l11
+world: 11
+title: "Messy pull: abort"
+summary: "You will learn: how to back out of a pull that stopped with conflicts."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, Sim, SortCards, Choice]
+needs: [git-w04-l08]
+scenario: w11-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "git rebase --abort", url: "https://git-scm.com/docs/git-rebase" }
+  - { label: "git merge --abort", url: "https://git-scm.com/docs/git-merge" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l11" commands={['git pull --rebase']} label="git pull --rebase fetches Aisyah's commit, then stops: CONFLICT (content): Merge conflict in index.html. Could not apply Say Git is fun." />
+
+You pull. CONFLICT! You and Aisyah changed the same line. Too messy right now? This happens to everyone. You can always back out.
+</Card>
+
+<Card id="spot-exit" type="try">
+A pull with `--rebase` stops in the middle of a rebase. `git status` tells you how to leave.
+
+<Interactive name="SpotLines" scenario="w11-l11" commands={['git pull --rebase', 'git status']} targets={'use "git rebase --abort"'} prompt="Tap the line in git status that shows the way back." success="Found the exit: git rebase --abort." />
+
+<Hint>Look near the end, for the word abort.</Hint>
+</Card>
+
+<Card id="try-abort" type="try">
+Back out of the messy pull. Your work goes back to just before it.
+
+<Interactive name="Sim" scenario="w11-l11" intro={['git pull --rebase']} panels={['graph']} goal={{ inRebase: false, clean: true, typed: 'rebase --abort' }} hints={['Type git rebase --abort']} success="Calm again. Your commit is back, untouched." />
+
+<Hint>Type `git rebase --abort`, then press Enter.</Hint>
+</Card>
+
+<Card id="sort-exit" type="check">
+Which exit fits? `git status` always tells you.
+
+<Interactive name="SortCards" buckets={[{ id: 'rebase', label: 'git rebase --abort' }, { id: 'merge', label: 'git merge --abort' }]} items={[{ label: 'You ran git pull --rebase', bucket: 'rebase', why: 'That pull stops inside a rebase.' }, { label: 'git status says: interactive rebase in progress', bucket: 'rebase', why: 'A rebase is waiting. Abort the rebase.' }, { label: 'You ran git pull --no-rebase', bucket: 'merge', why: 'That pull stops inside a merge.' }, { label: 'git status says: use "git merge --abort"', bucket: 'merge', why: 'Git tells you the exit. Use it.' }]} success="Sorted! Rebase stop: rebase --abort. Merge stop: merge --abort." />
+</Card>
+
+<Card id="predict" type="predict">
+You backed out. What about Aisyah's commit?
+
+<Interactive name="Choice" options={[{ label: 'Still safe on GitHub. Pull again when ready', correct: true, why: 'Abort only touches your side. Her work waits for you.' }, { label: 'Deleted', why: 'No! Abort never touches GitHub.' }, { label: 'Already in your branch', why: 'Abort undid the whole pull on your side.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now back out of a messy pull, calmly.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ready to try again? Pull once more and fix the clash. In a rebase: edit the file, `git add` it, then `git rebase --continue`. In a merge: edit, `git add`, then `git commit`. Unsure whose line wins? Ask your teammate first.
+</Card>

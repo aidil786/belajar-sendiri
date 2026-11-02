@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l10
+world: 4
+title: "Tulis chart kecil"
+summary: "Anda akan belajar: apa isi chart Helm, dan cara values mengisi templatnya."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, SortCards, SpotLines, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k4-l09]
+scenario: k4-helm
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Helm: Charts", url: "https://helm.sh/docs/topics/charts/" }
+  - { label: "Helm: Chart template guide", url: "https://helm.sh/docs/chart_template_guide/getting_started/" }
+  - { label: "helm template", url: "https://helm.sh/docs/helm/helm_template/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-helm" commands={['helm template ./kedai']} picture={false} label="helm template ./kedai tanpa nama release cetak Service dan Deployment bernama release-name-kedai." />
+
+Pasukan anda salin `shop.yaml` untuk setiap gerai baharu. Hanya nama, image dan bilangan dulang yang berubah. Tulis YAML sekali, dengan ruang kosong.
+</Card>
+
+<Card id="see-files" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'chart', label: 'Chart.yaml' }, { id: 'values', label: 'values.yaml' }, { id: 'templates', label: 'templates/' }]} items={[{ label: 'name: kedai, version: 0.1.0', bucket: 'chart', why: 'Chart.yaml ialah label set itu.' }, { label: 'replicaCount: 2', bucket: 'values', why: 'Nilai lalai yang pesanan boleh ubah.' }, { label: 'tag: 1.29-alpine', bucket: 'values', why: 'Satu lagi nilai lalai.' }, { label: 'Deployment dengan ruang kosong untuk diisi', bucket: 'templates', why: 'Templat ialah YAML dengan ruang kosong.' }]} success="Label, nilai lalai, dan YAML dengan ruang kosong." />
+
+Chart ialah folder dengan tiga bahagian. `Chart.yaml` ialah label. `values.yaml` simpan nilai lalai. `templates/` simpan YAML dengan ruang kosong.
+</Card>
+
+<Card id="see-holes" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: apps/v1' }, { text: 'kind: Deployment' }, { text: 'metadata:' }, { text: '  name: {{ .Release.Name }}-kedai', target: true }, { text: 'spec:' }, { text: '  replicas: {{ .Values.replicaCount }}', target: true }, { text: '  template:' }, { text: '    spec:' }, { text: '      containers:' }, { text: '        - name: kedai' }, { text: '          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"', target: true }]} prompt="Sebahagian templates/deployment.yaml. Tekan setiap baris yang ada ruang kosong." success="Tiga ruang: nama, bilangan dulang dan image." />
+
+Setiap `{{ }}` ialah ruang kosong. Helm isi ruang `.Values` daripada **<Term id="helm-values">values</Term>** (nilai): `values.yaml`, atau `--set` anda.
+</Card>
+
+<Card id="try-set" type="try">
+Isi ruang image dengan `1.30-alpine`. Lihat baris image.
+
+<Interactive name="FoodCourtSim" scenario="k4-helm" goal={{ lastTyped: '^helm template .*image\\.tag=1\\.30-alpine' }} hints={['Taip helm template shop ./kedai --set image.tag=1.30-alpine']} success="image: nginx:1.30-alpine. Hanya ruang itu berubah." />
+
+<Hint>Titik masuk ke dalam values: `image.tag` ialah `tag` di dalam `image`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`values.yaml` kata `replicaCount: 2`. Anda tambah `--set replicaCount=4`. Apa YAML itu kata?
+
+<Interactive name="Choice" options={[{ label: 'replicas: 4', correct: true, why: 'Pesanan anda menang atas nilai lalai.' }, { label: 'replicas: 2', why: 'Hampir! values.yaml cuma nilai lalai. --set menang.' }, { label: 'replicas: 6', why: 'Nilai saling menggantikan. Ia tak dicampur.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat chart yang baik atau tidak? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Letak tag image dalam values.yaml, bukan dalam templat.', good: true, why: 'Jadi setiap pemasangan boleh pilih sendiri.' }, { text: 'Salin seluruh chart untuk setiap gerai baharu.', good: false, why: 'Satu chart, banyak pemasangan. Ubah values sahaja.' }, { text: 'Jalankan helm lint sebelum kongsi chart.', good: true, why: 'Ia tangkap silap lebih awal.' }, { text: 'Simpan kata laluan pangkalan data sebenar dalam values.yaml di Git.', good: false, why: 'Values ialah teks biasa. Guna Secret, sealed atau external.' }]} />
+</Card>
+
+<Card id="check-name" type="check">
+Anda jalankan `helm template pasar ./kedai`. Apa nama Deployment itu?
+
+<Interactive name="Choice" options={[{ label: 'pasar-kedai', correct: true, why: 'Nama release isi ruang nama.' }, { label: 'kedai', why: 'Hampir! Nama release datang dahulu: pasar-kedai.' }, { label: 'release-name-kedai', why: 'Itu hanya berlaku bila anda tak beri nama release.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca chart kecil dan isinya dengan values.
+</Card>
+
+<Card id="deeper" type="deeper">
+`helm create kedai` buat chart permulaan seperti ini. `helm lint ./kedai` cari silap. `helm package ./kedai` buat fail `.tgz` untuk dikongsi. Templat guna Go template, jadi `{{ .Values.name | quote }}` letak nilai dalam petikan. `Chart.yaml` bermula dengan `apiVersion: v2`.
+
+Latihan sebenar (pilihan), di mesin anda dengan Helm 4:
+
+<Interactive name="Mission" id="k8s-k4-l10-rep" steps={[{ id: 'create', text: 'Buat chart permulaan.', command: 'helm create kedai' }, { id: 'look', text: 'Buka kedai/values.yaml dan cari replicaCount.' }, { id: 'lint', text: 'Semak ia.', command: 'helm lint ./kedai' }, { id: 'render', text: 'Isi dengan pesanan anda sendiri.', command: 'helm template shop ./kedai --set replicaCount=3' }, { id: 'tidy', text: 'Kemas.', command: 'rm -r kedai' }]} success="Anda baca dan isi chart sebenar." />
+</Card>

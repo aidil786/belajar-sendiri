@@ -1,0 +1,70 @@
+---
+id: git-w04-boss
+world: 4
+title: "Terbitkan laman diari"
+summary: "Anda akan belajar: cara letak laman diari anda di GitHub dan kekal selaras dengan rakan sepasukan."
+minutes: 6
+xp: 50
+interactives: [Courier, TermReplay, Challenge, Choice, Mission, MissionCheck]
+needs: [git-w04-l12]
+scenario: w04-boss-1
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git remote", url: "https://git-scm.com/docs/git-remote" }
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "git pull", url: "https://git-scm.com/docs/git-pull" }
+  - { label: "Adding locally hosted code to GitHub", url: "https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Courier" scenario="w04-boss-1" url="https://github.com/you/diary.git" />
+
+Laman diari anda dah siap dalam laptop. GitHub masih kosong. Aisyah nak tolong. Terbitkannya, dan kekal selaras!
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w04-boss-1" commands={['git log --oneline']} label="git log tunjuk empat commit laman diari: README, halaman utama, gaya ungu dan halaman about." />
+
+Lima peringkat. Setiap satu ialah terminal sebenar. Tersekat? Cuba `git status` atau `git remote -v`. Petunjuk muncul selepas 2 cubaan.
+</Card>
+
+<Card id="try-boss" type="try">
+Selesaikan setiap peringkat untuk buka yang seterusnya.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Sambung ke GitHub', text: 'Simpan https://github.com/you/diary.git sebagai origin.', scenario: 'w04-boss-1', panels: ['graph'], goal: { remotes: { origin: 'https://github.com/you/diary.git' } }, hints: ['Guna git remote add dengan nama dan alamat.', 'Taip git remote add origin https://github.com/you/diary.git'] },
+  { title: 'Push pertama', text: 'Hantar main ke GitHub, dan jadikan main ikut origin/main.', scenario: 'w04-boss-2', panels: ['graph'], goal: { pushed: ['main'], upstream: { main: 'origin/main' } }, hints: ['Push pertama perlukan -u.', 'Taip git push -u origin main'] },
+  { title: 'Push melantun balik', text: 'Anda tukar tajuk jadi teal. Push. (Psst: Aisyah pun dah push. Baca apa Git kata!)', scenario: 'w04-boss-3', panels: ['graph'], goal: { typed: '^git push' }, hints: ['Taip git push'] },
+  { title: 'Bawa masuk kerja Aisyah', text: 'Masa yang sama. Pull commit Aisyah ke dalam main anda.', scenario: 'w04-boss-3', panels: ['graph'], goal: { minCommits: 6, noConflicts: true, inRebase: false, inMerge: false }, hints: ['git pull biasa minta anda pilih cara.', 'Taip git pull --rebase'] },
+  { title: 'Push semula', text: 'Main anda kini ada kedua-dua commit. Hantar ke GitHub.', scenario: 'w04-boss-5', panels: ['graph'], goal: { pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }, hints: ['Upstream dah ditetapkan.', 'Taip git push'] }
+]} />
+
+<Hint>Baca nota setiap peringkat. Kemudian `git status` beritahu kedudukan anda.</Hint>
+</Card>
+
+<Card id="check-fix" type="check">
+Rakan sepasukan dah push, jadi push anda ditolak. Apa cara selamat membaikinya?
+
+<Interactive name="Choice" options={[{ label: 'Pull, kemudian push', correct: true, why: 'Kerja mereka dan kerja anda kedua-duanya selamat.' }, { label: '`git push --force`', why: 'Itu akan padam commit mereka dari GitHub.' }, { label: 'Padam repo dan mula semula', why: 'Terlalu teruk! Pull dah cukup.' }]} />
+</Card>
+
+<Card id="try-mission" type="try">
+Pilihan: terbitkan diari sebenar anda. Tanda setiap langkah bila siap.
+
+<Interactive name="Mission" id="w04-publish" title="Misi: diari anda di GitHub" steps={[{ id: 'repo', text: 'Di GitHub, buat repo awam kosong bernama diary (tanpa README, tanpa lesen).' }, { id: 'remote', text: 'Dalam folder diari, simpan sebagai origin. Guna username anda sendiri.', command: 'git remote add origin https://github.com/YOUR-USERNAME/diary.git' }, { id: 'push', text: 'Push main dan tetapkan upstream. Log masuk jika Git minta.', command: 'git push -u origin main' }, { id: 'look', text: 'Buka repo anda di GitHub. Commit anda ada di situ!' }]} success="Diari anda dah ada di GitHub!" />
+
+<Hint>Ditolak? Repo GitHub anda mungkin ada README. Pull dulu, atau buat semula yang kosong.</Hint>
+</Card>
+
+<Card id="check-mission" type="check">
+Jom semak dengan GitHub. Taip username anda.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'diary', label: 'Repo diary anda awam' }, { type: 'commits', repo: 'diary', min: 3, label: 'Ia ada 3 commit atau lebih' }]} success="GitHub nampak diari anda. Dah terbit!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terbitkan projek ke GitHub dan kekal selaras dengan pasukan.
+</Card>

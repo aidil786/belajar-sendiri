@@ -1,0 +1,69 @@
+---
+id: docker-d4-l05
+world: 4
+title: ".env dan pemboleh ubah"
+summary: "Anda akan belajar: isi tempat kosong dalam compose.yaml dari fail .env."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SwipeJudge, Mission]
+needs: [docker-d4-l04]
+scenario: d4-env
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Interpolation", url: "https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/" }
+  - { label: "Environment variables precedence", url: "https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/" }
+  - { label: "docker compose config", url: "https://docs.docker.com/reference/cli/docker/compose/config/" }
+---
+
+<Card id="hook" type="hook">
+`compose.yaml` anda tulis `POSTGRES_PASSWORD: example`. Anda push ke repo awam. Siapa boleh baca kata laluan itu sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Sesiapa sahaja di internet', correct: true, why: 'Repo awam terbuka kepada semua. Begitu juga setiap barisnya.' }, { label: 'Anda seorang', why: 'Awam bermaksud semua orang boleh buka fail itu.' }, { label: 'Rakan sepasukan sahaja', why: 'Rakan, orang asing dan bot semuanya boleh baca repo awam.' }]} />
+</Card>
+
+<Card id="see-blank" type="see">
+```yaml
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?add DB_PASSWORD to .env}
+```
+
+<Interactive name="KitchenReplay" scenario="d4-env" commands={['docker compose up -d']} fails={['docker compose up -d']} label="Compose berhenti sebelum apa-apa hidup: DB_PASSWORD tiada nilai." />
+
+Slip pesanan dengan tempat kosong. `${DB_PASSWORD}` ialah tempat kosong yang Compose isi. Itulah **<Term id="compose-interpolation">interpolation</Term>** (isi tempat kosong). `:?` maksudnya: berhenti kalau ia kekal kosong.
+</Card>
+
+<Card id="try-env" type="try">
+Isi tempat kosong itu. Letak kata laluan dalam <Term id="compose-dotenv">fail `.env`</Term> di sebelah `compose.yaml`. Kemudian hidupkan kedai.
+
+<Interactive name="KitchenSim" scenario="d4-env" keys="compose" goal={{ fileContains: { '/home/you/kedai-kancil/.env': 'DB_PASSWORD=' }, composeUp: 'kedai-kancil' }} hints={['Taip echo "DB_PASSWORD=devpass" > .env', 'Kemudian taip docker compose up -d']} success="Compose baca .env dan isi tempat kosong. Kedai dah dibuka." />
+
+<Hint>Satu baris buat fail itu: `echo "DB_PASSWORD=devpass" > .env`</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Tingkap web ialah tempat kosong dengan nilai lalai: `"${WEB_PORT:-8080}:80"`. Fail `.env` anda tiada baris WEB_PORT. Tingkap mana yang dibuka?
+
+<Interactive name="Choice" options={[{ label: '8080', correct: true, why: ':-8080 ialah nilai lalai. Ia diguna bila WEB_PORT kosong atau tiada.' }, { label: 'Tiada: Compose berhenti', why: 'Hanya :? yang berhenti. :- senyap-senyap guna nilai lalai.' }, { label: '80', why: '80 ialah port di dalam bekas. Nilai lalai isi bahagian laptop.' }]} />
+</Card>
+
+<Card id="check-git" type="check">
+Leret ke kanan kalau selamat untuk commit ke Git. Leret ke kiri kalau tidak.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'compose.yaml yang ada ${DB_PASSWORD}', good: true, why: 'Ia cuma ada tempat kosong, bukan rahsia.' }, { text: '.env dengan DB_PASSWORD=devpass', good: false, why: 'Masukkan .env dalam .gitignore. Ia ada nilai sebenar.' }, { text: '.env.example dengan DB_PASSWORD= yang kosong', good: true, why: 'Ia tunjuk rakan sepasukan tempat kosong mana yang perlu diisi.' }, { text: 'compose.yaml dengan POSTGRES_PASSWORD: hunter2', good: false, why: 'Rahsia dalam sejarah Git kekal di situ, walaupun anda padam.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh isi tempat kosong dalam compose.yaml dari fail .env.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pemboleh ubah shell menang atas `.env`: `WEB_PORT=9090 docker compose up -d` buka tingkap 9090. `--env-file prod.env` baca fail lain. `env_file:` pada service lain cerita: ia beri pemboleh ubah kepada bekas itu sendiri. `docker compose config` tunjuk setiap tempat kosong yang diisi. Rahsia sebenar: Dunia C3.
+
+<Interactive name="Mission" id="d4-l05-rep" steps={[{ id: 'env', text: 'Dalam projek anda, buat fail .env.', command: 'echo "DB_PASSWORD=devpass" > .env' }, { id: 'ignore', text: 'Jauhkan ia dari Git.', command: 'echo ".env" >> .gitignore' }, { id: 'config', text: 'Larian kering: tengok tempat kosong diisi.', command: 'docker compose config' }]} success="Tempat kosong diisi, rahsia kekal di rumah." />
+</Card>

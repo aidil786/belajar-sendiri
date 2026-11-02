@@ -1,0 +1,68 @@
+---
+id: docker-d2-l03
+world: 2
+title: "CMD lawan ENTRYPOINT"
+summary: "Anda akan belajar: bahagian arahan mula yang boleh ditukar, dan bahagian yang kekal."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, SortCards, Mission]
+needs: [docker-d2-l02]
+scenario: d2-l03
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dockerfile reference: CMD", url: "https://docs.docker.com/reference/dockerfile/#cmd" }
+  - { label: "Dockerfile reference: ENTRYPOINT", url: "https://docs.docker.com/reference/dockerfile/#entrypoint" }
+  - { label: "Build check: JSONArgsRecommended", url: "https://docs.docker.com/reference/build-checks/json-args-recommended/" }
+---
+
+<Card id="hook" type="hook">
+Image `say:1.0` ada `CMD ["echo", "Selamat datang!"]`. Anda taip `docker run --rm say:1.0 echo Hai`. Apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Hai', correct: true, why: 'Perkataan selepas nama image ganti CMD sepenuhnya.' }, { label: 'Selamat datang!', why: 'Itu cuma nilai asal. Anda beri arahan sendiri.' }, { label: 'Selamat datang! Hai', why: 'CMD tak bergabung dengan perkataan anda. Ia ditukar terus.' }]} />
+</Card>
+
+<Card id="see-cmd" type="see">
+<Interactive name="KitchenReplay" scenario="d2-l03" commands={['cat sayer/Dockerfile', 'docker run --rm say:1.0', 'docker run --rm say:1.0 echo Hai']} label="say:1.0 cetak Selamat datang! dengan sendirinya. Dengan echo Hai selepas nama image, ia cetak Hai sahaja." />
+
+`CMD` ialah pesanan biasa, macam "macam biasa". Sebut benda lain selepas nama image, dan pesanan anda menggantikannya.
+</Card>
+
+<Card id="try-entry" type="try">
+`greet:1.0` guna **<Term id="entrypoint">ENTRYPOINT</Term>**: bahagian depan yang tetap. Jalankan ia. Kemudian jalankan lagi dengan nama tempat di hujung.
+
+<Interactive name="KitchenSim" scenario="d2-l03" intro={['cat greeter/Dockerfile']} goal={{ typed: '^docker run\\b.*greet:1\\.0 +\\S' }} hints={['Taip docker run --rm greet:1.0', 'Sekarang tambah tempat: docker run --rm greet:1.0 Pasar Seni']} success="Bahagian tetap kekal. Perkataan anda ambil tempat CMD." />
+
+<Hint>Letak perkataan anda selepas `greet:1.0`, contohnya `Pasar Seni`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`greet:1.0` ada `ENTRYPOINT ["echo", "Selamat datang ke"]`. Anda taip `docker run --rm greet:1.0 Aina`. Apa yang keluar?
+
+<Interactive name="Choice" options={[{ label: 'Selamat datang ke Aina', correct: true, why: 'ENTRYPOINT kekal. Perkataan anda ganti bahagian CMD di hujung.' }, { label: 'Aina', why: 'Itu berlaku dengan CMD sahaja. ENTRYPOINT tak ditukar.' }, { label: 'Selamat datang ke Kedai Kancil', why: 'Kedai Kancil ialah nilai asal CMD. Perkataan Aina menggantikannya.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Arahan mana buat kerja yang mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'entry', label: 'ENTRYPOINT' }, { id: 'cmd', label: 'CMD' }]} items={[{ label: 'Bahagian yang sentiasa jalan', bucket: 'entry', why: 'ENTRYPOINT ialah bahagian tetap.' }, { label: 'Nilai asal yang boleh ditukar', bucket: 'cmd', why: 'Taip perkataan selepas nama image untuk menukarnya.' }, { label: 'Perkataan anda ditambah selepasnya', bucket: 'entry', why: 'Perkataan docker run masuk selepas ENTRYPOINT.' }, { label: 'Hanya ditukar dengan --entrypoint', bucket: 'entry', why: 'Perkataan biasa tak mengubahnya. Anda perlu pilihan itu.' }, { label: 'Kedai Kancil dalam greet:1.0', bucket: 'cmd', why: 'Itu nama tempat asal.' }]} success="Bahagian tetap: ENTRYPOINT. Nilai asal yang boleh ditukar: CMD." />
+</Card>
+
+<Card id="check-warning" type="check">
+<Interactive name="KitchenReplay" scenario="d2-l03" commands={['cat shouter/Dockerfile', 'docker build -t shout:1.0 shouter']} label="Resepi shout tulis CMD tanpa kurungan. Build berjaya tapi tunjuk amaran kuning: JSONArgsRecommended." />
+
+Amaran sebenar: `JSONArgsRecommended`. Maksudnya: tulis CMD sebagai senarai dalam kurungan. Tanpa kurungan, shell yang jalankan aplikasi. Isyarat berhenti mungkin tak sampai.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih antara CMD dan ENTRYPOINT.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker run --entrypoint whoami greet:1.0` tukar bahagian tetap untuk satu kali jalan. Bentuk berkurungan dipanggil exec form. Aplikasi anda jadi proses 1, jadi `docker stop` sampai dengan cepat.
+
+<Interactive name="Mission" id="d2-l03-rep" steps={[{ id: 'file', text: 'Tulis Dockerfile dengan ENTRYPOINT echo dan CMD asal, macam greet.' }, { id: 'build', text: 'Bina ia.', command: 'docker build -t greet:1.0 .' }, { id: 'run', text: 'Jalankan dengan dan tanpa perkataan anda.', command: 'docker run --rm greet:1.0 Pasar Seni' }]} success="Anda kawal bahagian tetap dan nilai asal!" />
+</Card>

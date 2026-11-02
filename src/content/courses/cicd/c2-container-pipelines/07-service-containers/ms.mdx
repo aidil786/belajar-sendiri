@@ -1,0 +1,66 @@
+---
+id: cicd-c2-l07
+world: 2
+title: "Service container: pangkalan data ujian"
+summary: "Anda akan belajar: beri ujian anda Postgres pakai buang di runner."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SpotLines, Choice, SortCards, Mission]
+needs: [cicd-c2-l06]
+scenario: c2-service-db
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers" }
+  - { label: "Creating PostgreSQL service containers", url: "https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-service-db" label="Satu pull request jalankan ujian. Ujian gagal: connect ECONNREFUSED 127.0.0.1:5432." />
+
+Tekan Run. Ujian pesanan gagal: `connect ECONNREFUSED 127.0.0.1:5432`. Maksudnya: tiada siapa jawab di pintu pangkalan data.
+</Card>
+
+<Card id="see-service" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'services:' }, { text: '  db:' }, { text: '    image: postgres:18' }, { text: '    env:' }, { text: '      POSTGRES_PASSWORD: test' }, { text: '    options: --health-cmd pg_isready' }, { text: '    ports:' }, { text: '      - 5432:5432', target: true }]} prompt="Ketik baris yang buka pintu peti sejuk kepada runner." success="Ya! Port 5432 di runner sampai ke Postgres." />
+
+**<Term id="service-container">Service container</Term>** ialah peti sejuk latihan yang ditolak ke sebelah stesen. GitHub hidupkannya sebelum langkah anda. Ia dibuang selepas job.
+</Card>
+
+<Card id="try-fix" type="try">
+Baiki baris kuning: beri job ini pangkalan data. Kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-service-db" task={{ type: 'green' }} fixes={[
+  { label: 'Service Postgres pada port 5432', text: '    runs-on: ubuntu-latest\n    services:\n      db:\n        image: postgres:18\n        env:\n          POSTGRES_PASSWORD: test\n        options: --health-cmd pg_isready --health-interval 5s --health-retries 10\n        ports:\n          - 5432:5432' },
+  { label: 'Service Redis pada port 6379', text: '    runs-on: ubuntu-latest\n    services:\n      cache:\n        image: redis:8\n        ports:\n          - 6379:6379', why: 'Redis ialah cache, bukan pangkalan data yang ujian panggil.' }]}
+  success="Hijau! Ujian dah jumpa pangkalan data mereka." />
+
+<Hint>Ujian panggil Postgres di localhost, port 5432.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kenapa tambah `options: --health-cmd pg_isready`?
+
+<Interactive name="Choice" options={[{ label: 'Runner tunggu sampai Postgres sedia', correct: true, why: 'Postgres perlu beberapa saat untuk bangun. Tanpa semakan, ujian mungkin ketuk terlalu awal.' }, { label: 'Ia buat Postgres lebih laju', why: 'Ia cuma semak sama ada Postgres sedia. Lajunya sama.' }, { label: 'Ia sorokkan kata laluan', why: 'Ia tiada kaitan dengan kata laluan.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Setiap baris ini pergi ke mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'svc', label: 'Dalam service' }, { id: 'step', label: 'Dalam langkah ujian' }]} items={[{ label: '`image: postgres:18`', bucket: 'svc', why: 'Service beritahu container mana nak dihidupkan.' }, { label: '`POSTGRES_PASSWORD: test`', bucket: 'svc', why: 'Postgres baca nilai ini bila ia bermula.' }, { label: '`DATABASE_URL: postgres://…@localhost:5432/…`', bucket: 'step', why: 'Ujian anda baca ini untuk cari pangkalan data.' }, { label: '`ports: - 5432:5432`', bucket: 'svc', why: 'Ia buka service itu kepada runner.' }]} success="Siap! Peti sejuk di satu sisi, alamatnya di sisi lain." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri ujian anda pangkalan data pakai buang.
+</Card>
+
+<Card id="deeper" type="deeper">
+`test` okey sebagai kata laluan di sini. Peti sejuk itu hidup untuk satu job sahaja. Secret sebenar tetap masuk kotak rempah berkunci. Job berjalan dalam `container:`? Panggil service dengan namanya, `db`.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="c2-l07-rep" steps={[{ id: 'svc', text: 'Dalam repo latihan awam, tambah service postgres:18 pada job ujian anda.' }, { id: 'env', text: 'Beri langkah ujian DATABASE_URL dengan localhost:5432.' }, { id: 'push', text: 'Push, dan buka log job. Cari "Starting db service container".' }]} success="Pangkalan data sebenar, untuk satu job sahaja!" />
+</Card>

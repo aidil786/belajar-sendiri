@@ -1,0 +1,80 @@
+---
+id: k8s-k6-boss
+world: 6
+title: "Lock the kitchen"
+summary: "You will learn: to pass the restricted Pod Security level and give a CI bot only the rights it needs."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, FoodCourtSim, SortCards, RbacSwitchboard, Choice]
+needs: [k8s-k6-l10]
+scenario: k6-boss-zone
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "RBAC good practices", url: "https://kubernetes.io/docs/concepts/security/rbac-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Room 1', title: 'Guard', text: 'Switch on restricted for the kedai zone.' }, { when: 'Room 2', title: 'Fix', text: "Get the shop's trays past the guard." }, { when: 'Room 3', title: 'Wire', text: 'Give the CI bot one small job card.' }, { when: 'Room 4', title: 'Prove', text: 'Do it in the terminal. Ask as the bot.' }]} />
+
+Kedai Kancil opens tomorrow. Its zone has no guard. The CI bot holds a master key. Lock the kitchen, room by room.
+</Card>
+
+<Card id="try-guard" type="try">
+Room 1: switch on restricted for kedai. Dry run first, to see what would break.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-zone" namespace="kedai" goal={{ podSecurity: { namespace: 'kedai', level: 'restricted' } }} hints={['Dry run: kubectl label --dry-run=server --overwrite ns kedai pod-security.kubernetes.io/enforce=restricted', 'Read the warnings. Then run it again without --dry-run=server.']} success="Room 1 cleared! The old trays still run. New ones must pass." />
+
+<Hint>Add `--dry-run=server` and the cluster changes nothing.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+The warnings named four broken rules. Which lines fix them?
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'Restricted needs it' }, { id: 'nice', label: 'A good lock, not required' }]} items={[{ label: '`runAsNonRoot: true`', bucket: 'need', why: 'No cooking as the boss.' }, { label: '`allowPrivilegeEscalation: false`', bucket: 'need', why: 'No climbing to more power.' }, { label: '`capabilities: drop: ["ALL"]`', bucket: 'need', why: "No slices of root's power." }, { label: '`seccompProfile: type: RuntimeDefault`', bucket: 'need', why: 'The kernel filter must be on.' }, { label: '`readOnlyRootFilesystem: true`', bucket: 'nice', why: 'Great to add. Restricted does not ask for it.' }]} success="Four locks needed. One bonus lock." />
+</Card>
+
+<Card id="try-fix" type="try">
+Room 2: Mei applied the shop after you locked the zone. Zero trays run. Two fixes wait in your folder. One still breaks a rule. Get two trays running.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-fix" namespace="kedai" goal={{ podsReady: { selector: 'app=shop', namespace: 'kedai', count: 2 } }} hints={['See why: kubectl describe replicaset -n kedai. Read the Events.', 'Read both fixes: cat shop-a.yaml, then cat shop-b.yaml.', 'Apply the one with all four locks: kubectl apply -f shop-b.yaml']} success="Room 2 cleared! Two locked trays, serving." />
+
+<Hint>A Deployment gets in with a warning. Its trays are refused later.</Hint>
+</Card>
+
+<Card id="try-wire" type="try">
+Room 3: the CI bot holds `cluster-admin` in kedai. Unplug that wire. Give it only the deployer card.
+
+<Interactive name="RbacSwitchboard" subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'kedai', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'cluster-admin', rules: [{ apiGroups: ['*'], resources: ['*'], verbs: ['*'] }] }]} bindings={[{ kind: 'RoleBinding', name: 'ci-bot-admin', namespace: 'kedai', roleRef: { kind: 'ClusterRole', name: 'cluster-admin' }, subjects: [{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'kedai', expect: true }, { as: 'ServiceAccount:ci:ci-bot', verb: 'get', resource: 'secrets', namespace: 'kedai', expect: false }, { as: 'ServiceAccount:ci:ci-bot', verb: 'delete', resource: 'deployments', namespace: 'kedai', expect: false }]} success="Room 3 cleared! One small key for one job." />
+
+<Hint>Unplug first. Then wire ci-bot to deployer, in kedai.</Hint>
+</Card>
+
+<Card id="try-prove" type="try">
+Room 4: now in the terminal. Remove the master key. Apply the job card and pin it. Then ask as the bot.
+
+<Interactive name="FoodCourtSim" scenario="k6-boss-bot" picture={false} goal={{ objectExists: ['kedai/role/deployer'], canI: [{ verb: 'patch', resource: 'deployments', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: true }, { verb: 'get', resource: 'secrets', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: false }, { verb: 'delete', resource: 'pods', namespace: 'kedai', as: 'system:serviceaccount:ci:ci-bot', allowed: false }] }} hints={['Remove the master key: kubectl delete rolebinding ci-bot-admin -n kedai', 'Make the job card: kubectl apply -f deployer.yaml', 'Pin it: kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=ci:ci-bot', 'Check: kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:ci:ci-bot']} success="Room 4 cleared! The bot may deploy. Nothing more." />
+
+<Hint>Three commands, then one question. The bot lives in the ci zone.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Last check. The bot's job now also reads pod logs to report errors. What do you add?
+
+<Interactive name="Choice" options={[{ label: 'A rule for pods/log with get, in kedai', correct: true, why: 'One small right, in one zone. Least privilege.' }, { label: 'cluster-admin, just for a minute', why: 'A minute is enough for a thief.' }, { label: 'The edit ClusterRole, everywhere', why: 'Far more than logs, in every zone.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now lock a zone and keep a bot's keys small.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): do all four rooms on a throwaway kind cluster. Make the kedai and ci zones first. Dry run every label. Read the pink "you are here" bar before each delete.
+
+<Interactive name="Mission" id="k6-boss-rep" steps={[{ id: 'zones', text: 'Make the two zones.', command: 'kubectl create namespace kedai && kubectl create namespace ci' }, { id: 'guard', text: 'Guard kedai at restricted.', command: 'kubectl label ns kedai pod-security.kubernetes.io/enforce=restricted' }, { id: 'bot', text: 'Give the bot a badge.', command: 'kubectl create serviceaccount ci-bot -n ci' }, { id: 'card', text: 'One job card, pinned in kedai.', command: 'kubectl create role deployer -n kedai --verb=get,list,patch --resource=deployments && kubectl create rolebinding ci-bot-deployer -n kedai --role=deployer --serviceaccount=ci:ci-bot' }, { id: 'ask', text: 'Ask as the bot. It should say no.', command: 'kubectl auth can-i get secrets -n kedai --as=system:serviceaccount:ci:ci-bot' }]} success="The real kitchen is locked!" />
+</Card>

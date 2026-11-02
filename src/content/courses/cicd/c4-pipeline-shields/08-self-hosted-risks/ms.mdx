@@ -1,0 +1,64 @@
+---
+id: cicd-c4-l08
+world: 4
+title: Risiko runner sendiri
+summary: "Anda akan belajar: kenapa runner sendiri tak boleh layan repo awam, dan cara pastikan ia bersih."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, TimelineTap, SwipeJudge, SpotTheHole]
+needs: [cicd-c4-l07]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Self-hosted runners", url: "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners" }
+  - { label: "Secure use: hardening self-hosted runners", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Binaan besar lambat pada runner hos. Jadi anda guna PC lebih di pejabat. Repo anda awam. Apa yang boleh jadi?
+
+<Interactive name="Choice" options={[{ label: 'PR orang asing boleh jalankan kod pada PC pejabat itu', correct: true, why: 'Sesiapa boleh buka PR pada repo awam. Job-nya mungkin sampai ke mesin anda.' }, { label: 'Tiada apa: itu PC anda sendiri', why: 'PC anda sendiri, jalankan kod daripada sesiapa. Itulah masalahnya.' }, { label: 'Binaan jadi lebih lambat', why: 'Kelajuan okey. Keselamatan yang membimbangkan.' }]} />
+</Card>
+
+<Card id="see-fresh" type="see">
+Runner hos ialah pekerja upahan dalam dapur sewa. Kedua-duanya dibersihkan selepas setiap syif. **<Term id="self-hosted-runner">Self-hosted runner</Term>** (runner sendiri) ialah pekerja anda, dalam bilik belakang anda. Susun fakta ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'hosted', label: 'Runner hos GitHub' }, { id: 'self', label: 'Self-hosted runner' }]} items={[{ label: 'Mesin baharu dan bersih untuk setiap job', bucket: 'hosted', why: 'GitHub buang mesin itu selepas job.' }, { label: 'Boleh simpan fail dari job lepas', bucket: 'self', why: 'Tiada yang padamnya, kecuali anda sediakan.' }, { label: 'Duduk dalam rangkaian pejabat anda', bucket: 'self', why: 'Kod padanya boleh capai mesin anda yang lain.' }, { label: 'Anda kena tampal dan kemas kininya', bucket: 'self', why: 'Mesin anda, tugas anda untuk jaga keselamatannya.' }]} success="Siap! Pekerja sendiri ingat semuanya." />
+</Card>
+
+<Card id="see-attack" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'PR sampai', text: 'Orang asing buka PR. Ia ubah workflow untuk jalankan skrip mereka.' }, { when: '2', title: 'Job mendarat', text: 'Job itu minta `runs-on: self-hosted`. PC pejabat anda ambil job itu.' }, { when: '3', title: 'Kod mereka berjalan', text: 'Skrip mereka jalan dalam rangkaian anda, pada mesin anda.' }, { when: '4', title: 'Ia kekal', text: 'Ia boleh tinggalkan program tersembunyi. Job seterusnya akan jumpa ia.' }]} />
+
+Tekan setiap langkah. Nasihat GitHub: self-hosted runner hampir tak patut sekali-kali layan repo awam.
+</Card>
+
+<Card id="predict" type="predict">
+Program tersembunyi itu masih ada. Kemudian, job deploy anda jalan pada PC yang sama, dengan token Cloudflare anda. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Program tersembunyi itu boleh rampas token', correct: true, why: 'Mesin sama, bilik belakang sama. Job lama boleh intip job baharu.' }, { label: 'Tiada apa: setiap job berasingan', why: 'Bukan pada mesin yang diguna semula. Sisa kekal.' }, { label: 'GitHub bersihkan PC itu dulu', why: 'GitHub tak padam mesin anda sendiri.' }]} />
+</Card>
+
+<Card id="try-judge" type="try">
+Susunan lebih selamat, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Runner baharu untuk setiap job, dibuang selepasnya', good: true, why: 'GitHub panggil ini runner just-in-time. Tiada yang terbawa.' }, { text: 'Self-hosted runner pada repo awam', good: false, why: 'PR mana-mana orang asing boleh sampai kepadanya.' }, { text: 'Repo peribadi, dengan kumpulan runner untuk repo itu sahaja', good: true, why: 'Lebih sedikit repo boleh hantar job kepadanya.' }, { text: 'Runner pada laptop anda, sebelah kunci SSH anda', good: false, why: 'Satu job boleh baca kunci anda sendiri.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Repo ini awam. Tekan baris yang berisiko.
+
+<Interactive name="SpotTheHole" file=".github/workflows/build.yml" workflow={['name: Build', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  build:',
+  { text: '    runs-on: self-hosted', hole: { kind: 'selfHosted', fixCode: '    runs-on: ubuntu-latest' } },
+  '    steps:', '      - uses: actions/checkout@v7', '      - run: npm ci && npm run build']} success="Jumpa! Pada repo awam, guna runner hos GitHub." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kenal bila runner sendiri jadi risiko.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tetap perlukan runner sendiri? Simpan untuk repo peribadi. Biar ia buat satu job, kemudian padam (runner just-in-time). Guna kumpulan runner untuk hadkan repo yang boleh capai. Kurangkan secret dan akses awan pada mesin itu. Walaupun begitu, job lain pada mesin sama mungkin nampak secret pada baris arahan.
+</Card>

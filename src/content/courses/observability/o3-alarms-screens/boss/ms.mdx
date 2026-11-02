@@ -1,0 +1,62 @@
+---
+id: obs-o3-boss
+world: 3
+title: "Tenangkan pager"
+summary: "Anda akan belajar: tukar semalaman amaran bising kepada beberapa yang penting."
+minutes: 6
+xp: 50
+interactives: [SortCards, AlertRuleBuilder, YamlPlayground, Choice, SwipeJudge]
+needs: [obs-o3-l08]
+scenario: o3-flappy
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alertmanager configuration", url: "https://prometheus.io/docs/alerting/latest/configuration/" }
+  - { label: "Alerting on SLOs (Google SRE workbook)", url: "https://sre.google/workbook/alerting-on-slos/" }
+---
+
+<Card id="hook" type="hook">
+Boss! Pager Kedai Kancil bergetar 20 kali semalam. Tukang masak on-call dah penat. Bilik 1: susun loceng-loceng ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'page', label: 'Panggil' }, { id: 'ticket', label: 'Tiket' }, { id: 'delete', label: 'Padam (atau skrin)' }]} items={[{ label: 'Pesanan gagal: burn 14.4 dalam 1h dan 5m', bucket: 'page', why: 'Pelanggan sakit, dan laju.' }, { label: 'Kedai mati 5 minit (up == 0)', bucket: 'page', why: 'Tiada siapa boleh pesan langsung.' }, { label: 'Checkout p95 melebihi 2s selama 10 minit', bucket: 'page', why: 'Checkout lambat hilangkan pelanggan.' }, { label: 'Cakera penuh dalam 4 jam', bucket: 'ticket', why: 'Baiki semasa berjaga.' }, { label: 'Sijil tamat dalam 10 hari', bucket: 'ticket', why: 'Masih berhari-hari. Tiket dah cukup.' }, { label: 'CPU melebihi 80%', bucket: 'delete', why: 'Sibuk bukan rosak.' }, { label: 'Memori melebihi 70%', bucket: 'delete', why: 'Biasa untuk pangkalan data. Letak di skrin.' }, { label: 'Satu pod restart', bucket: 'delete', why: 'Ia pulih sendiri.' }]} success="Bilik 1 lepas! Tiga loceng panggil, dua tiket, selebihnya di skrin." />
+</Card>
+
+<Card id="try-flap" type="try">
+Bilik 2: loceng barisan berkelip sepanjang malam. Anda cuma boleh tunggu 1 minit. Jadikan ia berbunyi dalam satu tempoh.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-flappy" alert="QueueLong" exprs={[{ label: 'Barisan sekarang', expr: 'kedai_queue_length > 25', why: 'Barisan mentah melantun atas dan bawah 25.' }, { label: 'Purata barisan 5 minit', expr: 'avg_over_time(kedai_queue_length[5m]) > 25' }]} fors={['0s', '1m']} labels={[{ labels: { severity: 'ticket' } }]} goal={{ noFlap: true, firingAt: ['13m'], quietAt: ['4m'] }} solution={{ expr: 1, for: 1 }} hints={['Tunggu seminit tak cukup di sini. Licinkan nilainya pula.']} success="Bilik 2 lepas! Purata kekal tenang walaupun melantun." />
+
+<Hint>`avg_over_time(…[5m])` licinkan lantunan cepat sebelum semakan.</Hint>
+</Card>
+
+<Card id="try-inhibit" type="try">
+Bilik 3: bila seluruh kedai mati, senyapkan loceng tiket yang berpunca daripadanya. Tambah baris `target_matchers`.
+
+<Interactive name="YamlPlayground" file="alertmanager.yml" initial={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\nreceivers:\n  - name: team-chat\ninhibit_rules:\n  - source_matchers: [alertname="ShopDown"]\n    equal: [job]\n'} expect={[{ path: 'inhibit_rules.0.target_matchers', type: 'list', includes: 'severity="ticket"', hint: 'Di bawah source_matchers: target_matchers: [severity="ticket"]' }, { path: 'inhibit_rules.0.source_matchers', type: 'list', includes: 'alertname="ShopDown"', hint: 'Kekalkan baris source_matchers.' }]} solution={'route:\n  receiver: team-chat\n  group_by: [alertname, job]\nreceivers:\n  - name: team-chat\ninhibit_rules:\n  - source_matchers: [alertname="ShopDown"]\n    target_matchers: [severity="ticket"]\n    equal: [job]\n'} hint="Inden sama dengan equal: empat ruang." success="Bilik 3 lepas! Semasa ShopDown berbunyi, loceng tiketnya senyap." />
+</Card>
+
+<Card id="try-burn" type="try">
+Bilik 4: satu loceng SLO ganti lima loceng ralat. Panggil untuk pembakaran laju sahaja.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-fast-burn" alert="FastBurn" exprs={[{ label: 'Sebarang ralat melebihi SLO (5m)', expr: 'job:shop_error_ratio:rate5m > 0.001', why: 'Lonjakan 4 minit pada minit 20 bunyikannya.' }, { label: 'Burn 14.4 dalam tetingkap 1h DAN 5m', expr: 'job:shop_error_ratio:rate1h > (14.4 * 0.001) and job:shop_error_ratio:rate5m > (14.4 * 0.001)', graph: 'job:shop_error_ratio:rate1h', threshold: 0.0144 }]} fors={['2m']} labels={[{ labels: { severity: 'ticket' }, why: 'Dua peratus bulan ini habis dalam sejam patut kejutkan seseorang.' }, { labels: { severity: 'page' } }]} goal={{ firingAt: ['80m'], quietAt: ['25m', '100m'], noFlap: true, labels: { severity: 'page' } }} solution={{ expr: 1, labels: 1 }} success="Bilik 4 lepas! Ia panggil untuk pembakaran sebenar sahaja." />
+</Card>
+
+<Card id="check-silence" type="check">
+Bilik 5: malam ini, 1 pagi hingga 2 pagi, pangkalan data dinaik taraf seperti dirancang. Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Tambah silence 1 jam dengan nama dan sebab anda', correct: true, why: 'Betul. Ia tamat sendiri, dan semua orang nampak sebabnya.' }, { label: 'Padam amaran pangkalan data untuk malam ini', why: 'Senang terlupa nak pasang semula.' }, { label: 'Tak buat apa-apa dan abaikan getaran', why: 'Nanti pasukan belajar abaikan getaran.' }]} />
+</Card>
+
+<Card id="check-final" type="check">
+Bilik terakhir: leret ke kanan untuk tabiat yang kekalkan pager tenang.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Setiap amaran yang memanggil ada pautan runbook.', good: true, why: 'Orang yang mengantuk tahu nak mula di mana.' }, { text: 'Semak amaran yang berbunyi tapi tak ubah apa-apa.', good: true, why: 'Tala atau padam.' }, { text: 'Tambah amaran untuk setiap metrik, manalah tahu.', good: false, why: 'Begitulah 20 getaran semalam berlaku.' }, { text: 'Panggil untuk simptom, tunjuk punca di skrin.', good: true, why: 'Pelanggan yang tentukan apa yang mendesak.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tukar pager yang bising kepada beberapa loceng yang penting.
+</Card>

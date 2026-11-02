@@ -1,0 +1,70 @@
+---
+id: aws-a4-boss
+world: 4
+title: "Pindah ke pusat beli-belah"
+summary: "Anda akan belajar: pilih servis AWS untuk Kedai Kancil, jaga mereka, teka apa yang dicaj semasa senyap, dan tulis senarai bersihkan."
+minutes: 6
+xp: 50
+interactives: [Choice, SortCards, IamJudge, SecurityGroupGate, IdleBill, OrderList]
+needs: [aws-a4-m10]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon ECS: AWS Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" }
+  - { label: "Amazon RDS: What is Amazon RDS?", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" }
+  - { label: "Amazon VPC: Delete your VPC", url: "https://docs.aws.amazon.com/vpc/latest/userguide/delete-vpc.html" }
+  - { label: "AWS Cost Explorer", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil pindah masuk betul-betul. Ada halaman web, API pesanan, pangkalan data dan laporan malam. Pilih bahagian, jaga mereka, tahu bilnya, dan rancang jalan keluar. Mula di mana?
+
+<Interactive name="Choice" options={[{ label: 'Pilih servis, kemudian jaga mereka', correct: true, why: 'Ya. Tahu apa yang anda jalankan sebelum pasang pintu.' }, { label: 'Hidupkan semua, susun kemudian', why: 'Begitulah bil mengejut berlaku. Rancang dahulu.' }]} />
+</Card>
+
+<Card id="try-pick" type="try">
+Bilik 1: servis AWS mana jalankan setiap bahagian?
+
+<Interactive name="SortCards" buckets={[{ id: 'fargate', label: 'ECS di Fargate' }, { id: 'rds', label: 'RDS' }, { id: 'ecr', label: 'ECR' }]} items={[{ label: 'Container API pesanan', bucket: 'fargate', why: 'Service kekalkan tasknya berjalan.' }, { label: 'Pangkalan data pesanan', bucket: 'rds', why: 'Backup dan salinan siap sedia, diurus untuk anda.' }, { label: 'Image kedai, dengan imbasan', bucket: 'ecr', why: 'Rak peribadi anda dalam pusat beli-belah.' }, { label: 'Kerja laporan malam', bucket: 'fargate', why: 'Task sekali jalan: mula, siap, caj berhenti.' }]} success="Bilik 1 selesai! Rak, pelari dan pangkalan data dah dipilih." />
+</Card>
+
+<Card id="try-key" type="try">
+Bilik 2: role deploy push ke rak yang salah. Ubah baris merah jambu supaya ia boleh push ke `kedai-kancil`. Kekalkan sempit.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-deploy/run-9', who: 'kedai-deploy', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil' }} policies={[{ name: 'push-one-shelf', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:PutImage', Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-test' }] } }]} task={{ type: 'edit', policy: 0, line: 7, want: 'Allow', forbid: ['"\\*"', 'repository/\\*'] }} solution={'"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil"'} success="Bilik 2 selesai! Satu kunci, satu rak." />
+
+<Hint>Tukar `kedai-test` kepada `kedai-kancil` di hujung ARN.</Hint>
+</Card>
+
+<Card id="try-door" type="try">
+Bilik 3: pintu pangkalan data. Hanya task API dalam `sg-api` boleh guna port 5432. Bukan kerja laporan, bukan laptop anda.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-api', 'sg-reports']} visitors={[{ id: 'api', label: 'Task API pesanan', ip: '10.0.1.30', groups: ['sg-api'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'reports', label: 'Kerja laporan', ip: '10.0.1.40', groups: ['sg-reports'], protocol: 'tcp', port: 5432, want: 'out' }, { id: 'laptop', label: 'Laptop anda', ip: '203.0.113.9', protocol: 'tcp', port: 5432, want: 'out' }]} success="Bilik 3 selesai! Hanya API sampai ke pesanan." />
+
+<Hint>Satu peraturan: TCP 5432 dari `sg-api`.</Hint>
+</Card>
+
+<Card id="check-bill" type="check">
+Bilik 4: bil. Dalam production anda tambah NAT gateway, load balancer dan satu rahsia. Apa yang dicaj semasa kedai tidur?
+
+<Interactive name="IdleBill" items={['loadBalancer', 'natGateway', 'rdsRunning', 'secret', 'ecrImages', 'ecsCluster', 'vpc', 'securityGroup']} ordered />
+</Card>
+
+<Card id="try-clean" type="try">
+Bilik 5: hari tutup kedai. Susun pembersihan ikut urutan selamat. Yang guna benda lain, padam dahulu.
+
+<Interactive name="OrderList" items={['Padam service ECS (task berhenti)', 'Padam load balancer', 'Padam NAT gateway', 'Lepaskan Elastic IPnya', 'Padam pangkalan data RDS (snapshot akhir dahulu)', 'Padam repository ECR dan rahsia itu', 'Padam VPC yang dah kosong']} label="Langkah pertama di atas" success="Bilik 5 selesai! Pengguna dahulu, jalan terakhir." />
+</Card>
+
+<Card id="predict" type="predict">
+Bilik terakhir: anda siap bersihkan malam ini. Macam mana nak tahu ia berjaya?
+
+<Interactive name="Choice" options={[{ label: 'Esok dan lusa, Cost Explorer kekal rata', correct: true, why: 'Bil lambat sehari. Garis rata maksudnya tiada yang tinggal.' }, { label: 'Konsol nampak kosong dalam satu Region', why: 'Hampir! Semak setiap Region yang anda guna, kemudian bil.' }, { label: 'Tiada e-mel dari penggera bajet malam ini', why: 'Penggera hanya berbunyi pada had anda. Tengok bil.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pindahkan kedai ke cloud, jaga, anggar kos, dan keluar dengan bersih.
+</Card>

@@ -1,0 +1,66 @@
+---
+id: k8s-k6-l09
+world: 6
+title: "Ulang kaji rantaian bekalan"
+summary: "Anda akan belajar: bagaimana image bermeterai bergerak dari pipeline ke kluster, dan cara pintu 3 semak meterainya."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, SortCards, SpotLines, SwipeJudge]
+needs: [k8s-k6-l08]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GitHub: enforce artifact attestations in Kubernetes", url: "https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/enforce-artifact-attestations" }
+  - { label: "Sigstore: verifying signatures", url: "https://docs.sigstore.dev/cosign/verifying/verify/" }
+  - { label: "Kubernetes: verify signed artifacts", url: "https://kubernetes.io/docs/tasks/administer-cluster/verify-signed-artifacts/" }
+  - { label: "SLSA", url: "https://slsa.dev/" }
+---
+
+<Card id="hook" type="hook">
+Satu pek dalam peti sejuk kedai ada nama dan tag anda. Tapi seseorang tukar isinya. Macam mana kluster tahu?
+
+<Interactive name="Choice" options={[{ label: 'Semak meterai yang pipeline anda letak', correct: true, why: 'Pek yang ditukar tak boleh bawa meterai pipeline anda.' }, { label: 'Baca tagnya', why: 'Tag boleh dipindah ke mana-mana pek.' }, { label: 'Lihat saiz image', why: 'Saiz tak buktikan apa-apa. Pek beracun boleh sama berat.' }]} />
+</Card>
+
+<Card id="see-chain" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Bina', text: 'CI bina image daripada resepi anda.' }, { when: '2', title: 'SBOM', text: 'Senarai bahan setiap pakej ikut bersama.' }, { when: '3', title: 'Tandatangan', text: 'Pipeline anda meteraikannya, dengan ID jangka pendek. Tiada kunci disimpan.' }, { when: '4', title: 'Tolak', text: 'Pek dan meterainya pergi ke registry.' }, { when: '5', title: 'Semak', text: 'Di pintu 3, polisi semak meterai sebelum mana-mana dulang berjalan.' }]} />
+
+Ulang kaji dari [Dunia D5: Hantar & Lindung](/ms/docker/#world-5) dan Bahagian 2. Meterai itu ialah **<Term id="image-signature">tandatangan image</Term>**. Tekan setiap langkah.
+</Card>
+
+<Card id="try-sort" type="try">
+<Term id="sbom" course="cicd">SBOM</Term> dan meterai buktikan benda berbeza. Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'sbom', label: 'SBOM: apa di dalam' }, { id: 'sig', label: 'Meterai: siapa buat, tidak diubah' }]} items={[{ label: 'Setiap pakej dan versinya', bucket: 'sbom', why: 'Senarai bahan.' }, { label: 'Pakej mana ada lubang diketahui (CVE)', bucket: 'sbom', why: 'Pengimbas baca senarai itu untuk cari lubang.' }, { label: 'Pipeline anda buat pek yang tepat ini', bucket: 'sig', why: 'Meterai namakan workflow yang menandatangan.' }, { label: 'Tiada siapa ubahnya selepas dibina', bucket: 'sig', why: 'Sebarang perubahan rosakkan meterai.' }]} success="Siap! Isi lawan asal-usul." />
+</Card>
+
+<Card id="predict" type="predict">
+Polisi mahu meterai pipeline anda. Seseorang tolak image baharu dengan tag sama, `shop:1.4.0`. Apa jadi di pintu 3?
+
+<Interactive name="Choice" options={[{ label: 'Ditolak: pek baharu tiada meterai', correct: true, why: 'Meterai milik digest, iaitu pek yang tepat. Pek yang ditukar tiada meterai.' }, { label: 'Dibenarkan: tag itu sudah ditandatangan', why: 'Meterai tandatangan digest, bukan nama tag.' }, { label: 'Pek lama berjalan sebagai ganti', why: 'Kubernetes tarik apa yang tag tunjuk sekarang. Semakan itu menghalangnya.' }]} />
+</Card>
+
+<Card id="see-gate" type="see">
+Panduan GitHub guna policy controller Sigstore di pintu 3. Satu label pada zon menghidupkannya. Tekan label itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'apiVersion: v1' }, { text: 'kind: Namespace' }, { text: 'metadata:' }, { text: '  name: kedai' }, { text: '  labels:' }, { text: '    pod-security.kubernetes.io/enforce: restricted' }, { text: '    policy.sigstore.dev/include: "true"', target: true }]} prompt="Tekan label yang hidupkan semakan meterai." success="Betul! Pod Security semak kunci. Label ini semak meterai." />
+</Card>
+
+<Card id="check" type="check">
+Bolehkah baris image ini tunjuk pek lain esok? Yang dipin itu bagus. Yang boleh bergerak perlu dibaiki.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'ghcr.io/kedai/shop@sha256:…', good: true, why: 'Digest ialah cap jari pek. Ia tak boleh bergerak.' }, { text: 'ghcr.io/kedai/shop:latest', good: false, why: 'latest bergerak setiap kali ada push.' }, { text: 'ghcr.io/kedai/shop:1.4.0', good: false, why: 'Tag boleh dipindah. Semakan meterai atau digest buat ia pasti.' }, { text: 'ghcr.io/kedai/shop:1.4.0@sha256:…', good: true, why: 'Bila ada kedua-duanya, digest menang. Tag untuk manusia sahaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara image bermeterai sampai ke kluster dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Lebih lanjut dalam pelajaran Dunia D5 "SBOM, provenance dan tandatangan". SLSA ada dalam Perisai Pipeline, Bahagian 2. Kyverno dan Gatekeeper pun boleh semak meterai. Kubernetes tandatangan image keluarannya sendiri dengan Sigstore. Anda boleh semaknya sebelum pasang.
+
+<Interactive name="Mission" id="k6-l09-rep" steps={[{ id: 'attest', text: 'Dalam repo latihan awam, buat attestation image anda dalam CI, macam pelajaran Bahagian 2 "SBOM dan provenance dalam CI".' }, { id: 'verify', text: 'Semak meterai dari laptop anda.', command: 'gh attestation verify oci://ghcr.io/YOUR-NAME/YOUR-REPO:main -R YOUR-NAME/YOUR-REPO' }, { id: 'swap', text: 'Tolak binaan tanpa tandatangan dengan tag baharu. Semak: tiada meterai ditemui.' }]} success="Anda boleh beza pek bermeterai daripada pek orang asing." />
+</Card>

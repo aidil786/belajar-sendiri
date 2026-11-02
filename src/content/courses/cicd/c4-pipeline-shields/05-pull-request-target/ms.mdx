@@ -1,0 +1,77 @@
+---
+id: cicd-c4-l05
+world: 4
+title: pull_request_target dan fork
+summary: "Anda akan belajar: kenapa PR dari fork tak dapat secret, dan perangkap dalam pull_request_target."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards, SpotTheHole, SwipeJudge]
+needs: [cicd-c4-l04]
+scenario: c4-pr-preview
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Events: pull_request and pull_request_target", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows" }
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Orang asing fork (buat salinan) repo kedai anda dan buka PR. Job pratonton anda perlukan token Cloudflare anda. Patutkah kod mereka dapat token itu?
+
+<Interactive name="Choice" options={[{ label: 'Tak: kod mereka boleh salin token itu', correct: true, why: 'Token di tangan orang asing boleh deploy apa sahaja.' }, { label: 'Patut: pratonton perlukannya', why: 'Pratonton memang bagus. Token anda lebih berharga.' }, { label: 'Hanya jika PR mereka nampak mesra', why: 'Kod yang nampak mesra pun boleh mencuri. Anda tak boleh baca setiap baris.' }]} />
+</Card>
+
+<Card id="try-fork" type="try">
+Jalankan kedua-dua event. Cari yang mana pratonton berhenti.
+
+<Interactive name="ConveyorBelt" scenario="c4-pr-preview" task={{ type: 'event', job: 'preview', result: 'failure' }} success="PR dari fork tak dapat secret. Hentian merah itu jaga token anda." />
+
+<Hint>Cuba pull request dari fork.</Hint>
+</Card>
+
+<Card id="see-prt" type="see">
+Sesetengah pasukan mahu pratonton untuk fork juga. Jadi mereka tukar ke **<Term id="pull-request-target">pull_request_target</Term>**. Ia jalan dengan secret anda dan kunci tulis, walaupun untuk fork. Susun dua pencetus ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'pr', label: 'pull_request' }, { id: 'prt', label: 'pull_request_target' }]} items={[{ label: 'Guna fail workflow dari kod PR itu sendiri', bucket: 'pr', why: 'PR boleh ubah workflow, tapi fork tak dapat secret.' }, { label: 'Guna fail workflow dari branch lalai anda', bucket: 'prt', why: 'Orang asing tak boleh ubahnya. Sebab itu ia dipercayai dengan kunci.' }, { label: 'PR fork: tiada secret, kunci baca sahaja', bucket: 'pr', why: 'Pilihan lalai yang selamat untuk kod orang asing.' }, { label: 'PR fork: secret anda dan kunci tulis', bucket: 'prt', why: 'Berkuasa, jadi ia tak boleh sekali-kali jalankan kod mereka.' }]} success="Siap! Satu selamat untuk kod asing. Satu pegang kunci anda." />
+</Card>
+
+<Card id="predict" type="predict">
+Pratonton ini tukar ke `pull_request_target`. Ia juga check out kod PR itu sendiri. PR fork orang asing sampai. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia jalan hijau, dan kod mereka pegang token anda', correct: true, why: 'Hijau tak bermaksud selamat. Tengok pada kad seterusnya.' }, { label: 'Ia berhenti: fork tak dapat secret', why: 'Itu pull_request. Pencetus ini serahkan secret anda.' }, { label: 'GitHub sekat checkout itu', why: 'Checkout ambil apa sahaja ref yang anda minta.' }]} />
+</Card>
+
+<Card id="see-green" type="see">
+<Interactive name="ConveyorBelt" scenario="c4-prt-preview" label="PR orang asing pada pull_request_target. Setiap stesen jadi hijau, dengan token anda dalam job." />
+
+Hijau! `npm ci` orang asing itu jalan dengan token anda dalam jangkauan. Satu skrip pemasangan yang licik boleh menyalinnya.
+</Card>
+
+<Card id="try-spot" type="try">
+Tekan dua baris yang jadikan workflow ini perangkap.
+
+<Interactive name="SpotTheHole" file=".github/workflows/welcome.yml" workflow={['name: Welcome', 'on:', '  pull_request_target:',
+  { text: 'permissions: write-all', hole: { kind: 'writeAll', fixCode: 'permissions:\n  contents: read' } },
+  'jobs:', '  build:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@v7', '        with:',
+  { text: '          ref: ${{ github.event.pull_request.head.sha }}', hole: { kind: 'prTargetCheckout', fixCode: 'on:\n  pull_request:' } },
+  '      - run: npm ci && npm run build']} success="Dua-dua jumpa! Semua kunci, ditambah kod orang asing." />
+
+<Hint>Kod mana yang checkout ambil? Dan berapa kunci job itu dapat?</Hint>
+</Card>
+
+<Card id="check" type="check">
+Okey pada `pull_request_target`, atau perangkap? Leret setiap job.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tambah label pada PR fork, tanpa check out kodnya', good: true, why: 'Hanya kod anda sendiri yang dipercayai berjalan.' }, { text: 'Check out kepala PR dan jalankan `npm test`', good: false, why: 'Kod mereka jalan dengan secret dan kunci tulis anda.' }, { text: 'Hantar komen tetap "Terima kasih!"', good: true, why: 'Teks tetap, kod anda. Tiada kod orang asing berjalan.' }, { text: 'Bina kod PR untuk pratonton, dengan token anda', good: false, why: 'Skrip binaan ialah kod. Kod mereka akan pegang token anda.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jauhkan PR orang asing daripada kunci anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Corak lebih selamat: uji kod fork dengan `pull_request`. Perlukan secret selepas itu? Guna workflow berasingan pada `workflow_run`, dan anggap artifaknya tak dipercayai. Penyumbang kali pertama mungkin perlu kelulusan penyelenggara untuk run mereka. Latihan sebenar: cari `pull_request_target` dalam repo anda dan semak setiap satu.
+</Card>

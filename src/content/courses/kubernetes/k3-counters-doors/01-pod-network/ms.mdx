@@ -1,0 +1,69 @@
+---
+id: k8s-k3-l01
+world: 3
+title: Setiap pod dapat IP
+summary: "Anda akan belajar: cara pod sampai ke pod lain, dan kenapa alamatnya berubah."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, Choice, SwipeJudge, Mission]
+needs: [k8s-k2-boss]
+scenario: k3-pods
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: model rangkaian", url: "https://kubernetes.io/docs/concepts/services-networking/" }
+  - { label: "Kubernetes: rangkaian kluster", url: "https://kubernetes.io/docs/concepts/cluster-administration/networking/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-pods" commands={['kubectl get pods -o wide']} label="Empat dulang di dua gerai. Lajur IP beri setiap dulang nombornya sendiri: tiga dulang kedai dan satu dulang client." />
+
+Dulang client lapar. Tiga dulang kedai boleh masak. Macam mana client nak sampai ke salah satu?
+</Card>
+
+<Card id="see-ip" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Dulang baharu', text: 'Kubernetes letak pod baharu di sebuah gerai.' }, { when: '2', title: 'Nombor sendiri', text: 'Plugin rangkaian beri IP baharu, contohnya 10.244.1.3.' }, { when: '3', title: 'Sesiapa boleh panggil', text: 'Setiap pod boleh sampai ke pod lain ikut IP, di gerai mana pun.' }, { when: '4', title: 'Tak perlu tingkap', text: 'Pod bercakap terus sesama sendiri. Tiada port mapping di tengah.' }]} />
+
+Setiap pod (dulang) dapat **<Term id="pod-ip">IP pod</Term>** sendiri. Macam nombor meja untuk setiap dulang. Ketik setiap langkah.
+</Card>
+
+<Card id="see-call" type="see">
+<Interactive name="KubeReplay" scenario="k3-pods" commands={['kubectl exec client -- wget -qO- -T 5 http://10.244.1.4']} label="Dari dalam pod client, wget minta halaman daripada 10.244.1.4. Dulang kedai di gerai lain menjawab: Kedai Kancil." />
+
+`kubectl exec client -- wget …` jalankan wget di dalam dulang client. Ia panggil satu dulang kedai terus ikut IP. Halaman pun sampai.
+</Card>
+
+<Card id="try-delete" type="try">
+Padam satu dulang kedai. Kemudian lihat lajur IP sekali lagi.
+
+<Interactive name="FoodCourtSim" scenario="k3-pods" goal={{ typed: '^kubectl delete pod', lastTyped: 'get pods.*-o wide' }} hints={['Taip kubectl get pods -o wide dan pilih satu nama pod kedai.', 'Taip kubectl delete pod dengan nama itu. Kemudian kubectl get pods -o wide sekali lagi.']} success="Dulang baharu, dengan nama baharu dan IP baharu." />
+
+<Hint>`kubectl delete pod <nama>` buang satu dulang. `kubectl get pods -o wide` tunjuk IP.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dulang baharu dapat IP baharu. Client masih simpan IP lama. Apa jadi pada pesanan seterusnya?
+
+<Interactive name="Choice" options={[{ label: 'Gagal: tiada sesiapa di nombor lama itu', correct: true, why: 'Pod datang dan pergi. IP pun ikut sekali.' }, { label: 'Dulang baharu jawab di nombor lama', why: 'Dulang baharu dapat nombor baharu. Nombor lama kosong.' }, { label: 'Kubernetes beritahu client nombor baharu', why: 'Tiada siapa beritahu client. Itu kerja Service, pelajaran seterusnya.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+IP pod berubah. Nilai setiap tabiat.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jangka IP baharu bila pod diganti.', good: true, why: 'Dulang pengganti ialah dulang baharu, dengan nombor baharu.' }, { text: 'Salin IP pod ke dalam tetapan aplikasi.', good: false, why: 'Ia rosak bila pod itu diganti nanti.' }, { text: 'Panggil aplikasi lain dengan nama tetap.', good: true, why: 'Ya! Service beri nama itu. Pelajaran seterusnya.' }, { text: 'Jangan padam pod, supaya IP kekal.', good: false, why: 'Pod tetap diganti: kemas kini, crash, gerai tutup.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan IP pod, dan kenapa ia berubah.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap gerai beri IP dari julatnya sendiri, contohnya `10.244.1.0/24` di dev-worker. Plugin rangkaian (CNI) buat kerja ini. Anda jumpa dalam pelajaran 11.
+
+Latihan sebenar (pilihan), di kluster kind untuk dibuang:
+
+<Interactive name="Mission" id="k3-l01-rep" steps={[{ id: 'here', text: 'Baca papan "anda di sini" dulu. Ia patut kata kind-dev.', command: 'kubectl config current-context' }, { id: 'make', text: 'Mulakan tiga dulang kedai.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'look', text: 'Catat setiap IP dan gerai.', command: 'kubectl get pods -o wide' }, { id: 'swap', text: 'Padam satu pod kedai. Lihat lagi: nama baharu, IP baharu.' }]} success="Dulang sebenar, nombor sebenar!" />
+</Card>

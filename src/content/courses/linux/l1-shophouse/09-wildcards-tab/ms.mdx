@@ -1,0 +1,72 @@
+---
+id: linux-l1-l09
+world: 1
+title: Wildcard dan tab completion
+summary: "Anda akan belajar: padankan banyak fail dengan satu corak, dan biar Tab habiskan nama untuk anda."
+minutes: 3
+xp: 15
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-l08]
+scenario: linux-l1-wild
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Filename Expansion", url: "https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html" }
+  - { label: "Bash manual: Pattern Matching", url: "https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html" }
+  - { label: "Bash manual: Commands for completion", url: "https://www.gnu.org/software/bash/manual/html_node/Commands-For-Completion.html" }
+---
+
+<Card id="hook" type="hook">
+Peti masuk ada 3 gambar makanan hari ini. Minggu depan ada 300. Semuanya patut masuk bilik `photos`. Mahu taip 300 nama?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Satu corak boleh padankan setiap .jpg', correct: true, why: 'Corak bintang padankan semua nama untuk anda.' }, { label: 'Ya, satu demi satu', why: 'Jari anda akan menangis. Biar shell buat.' }, { label: 'Alih seluruh peti masuk', why: 'Menu dan nota pun ikut teralih. Pilih gambar sahaja.' }]} />
+</Card>
+
+<Card id="see-star" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-wild" intro={['ls', 'echo *.jpg']} />
+
+`*` ialah <Term id="wildcard">wildcard</Term> (kad liar): ia padankan apa saja huruf. Shell tukar `*.jpg` kepada setiap nama yang padan sebelum arahan berjalan. `echo` tunjuk pertukaran itu.
+</Card>
+
+<Card id="predict-question" type="predict">
+`?` padankan tepat satu aksara. Apa yang `echo menu?.txt` cetak?
+
+<Interactive name="Choice" options={[{ label: 'menu1.txt menu2.txt', correct: true, why: 'menu10.txt ada dua aksara di situ, jadi ? langkau.' }, { label: 'menu1.txt menu10.txt menu2.txt', why: 'Itu menu*.txt. Satu ? maksudnya tepat satu aksara.' }, { label: 'menu?.txt', why: 'Cuma bila tiada yang padan. Di sini dua nama padan.' }]} />
+</Card>
+
+<Card id="try-move" type="try">
+Buat bilik `photos`. Kemudian alih setiap gambar ke dalamnya dengan satu corak: `mv *.jpg photos/`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-wild" goal={{ fileExists: ['~/kedai/inbox/photos/nasi.jpg', '~/kedai/inbox/photos/roti.jpg', '~/kedai/inbox/photos/teh.jpg'], fileMissing: ['~/kedai/inbox/nasi.jpg'] }} hints={['Mula-mula: mkdir photos', 'Kemudian: mv *.jpg photos/']} solution={['mkdir photos', 'mv *.jpg photos/']} success="Tiga gambar dialih dengan satu baris. Menu kekal di tempatnya." />
+
+<Hint>Semak dulu dengan `ls *.jpg`. Corak sama, tiada risiko.</Hint>
+</Card>
+
+<Card id="sort-match" type="check">
+Adakah `*.jpg` padan dengan nama ini? Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Padan *.jpg' }, { id: 'no', label: 'Tak padan' }]} items={[{ label: 'nasi.jpg', bucket: 'yes', why: 'Apa saja huruf, kemudian .jpg.' }, { label: 'menu1.txt', bucket: 'no', why: 'Ia berakhir dengan .txt.' }, { label: '.secret.jpg', bucket: 'no', why: 'Nama yang bermula dengan titik tersembunyi. * langkau.' }, { label: 'cake.JPG', bucket: 'no', why: 'JPG dan jpg ialah huruf berbeza di Linux.' }]} success="* padankan apa saja huruf, tapi bukan nama tersembunyi atau huruf lain." />
+</Card>
+
+<Card id="try-tab" type="try">
+**Tab completion** (lengkap automatik) jimat menaip. Taip `cat no`, kemudian tekan Tab. Shell habiskan nama itu. Tekan Enter.
+
+<Interactive name="LinuxSim" scenario="linux-l1-wild" goal={{ lastTyped: '^cat notes\\.md$' }} hints={['Taip cat no, kemudian ketik kekunci Tab.', 'Baris jadi cat notes.md. Tekan Enter.']} solution={['cat notes.md']} success="Tab taip selebihnya untuk anda. Tiada salah taip." />
+
+<Hint>Di telefon, Tab ada dalam baris kekunci di bawah terminal.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh padankan banyak fail sekali gus, dan biar Tab menaip.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tanda petik hentikan pertukaran: `echo "*.jpg"` cetak bintang itu sendiri. Tiada padanan? `ls *.png` kata `No such file or directory`.
+
+Latihan sebenar (pilihan): di Linux, taip `cat /etc/os-` dan tekan Tab.
+
+Di mana cerita ini tak tepat: rumah kedai sebenar ada dinding. Di sini bilik cuma nama dalam senarai. Alih bilik cuma tukar nama.
+</Card>

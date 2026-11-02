@@ -1,0 +1,142 @@
+---
+id: obs-o4-m9
+world: 4
+title: "Capstone mission 9: Watch Kedai Kancil"
+summary: "You will learn: to run your own control room for Kedai Kancil: Prometheus, Grafana, node-exporter, one alert and one dashboard."
+minutes: 5
+xp: 100
+interactives: [SortCards, Choice, PromQLPlayground, YamlPlayground, AlertRuleBuilder, Mission, MissionCheck]
+needs: [obs-o4-l08]
+scenario: o3-target-down
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/" }
+  - { label: "Prometheus configuration", url: "https://prometheus.io/docs/prometheus/latest/configuration/configuration/" }
+  - { label: "Node exporter guide", url: "https://prometheus.io/docs/guides/node-exporter/" }
+  - { label: "Grafana provisioning", url: "https://grafana.com/docs/grafana/latest/administration/provisioning/" }
+---
+
+<Card id="hook" type="hook">
+Mission 9: watch Kedai Kancil! You will build a small control room in a `monitoring/` folder. First, put each file in its place.
+
+<Interactive name="SortCards" buckets={[{ id: 'top', label: 'monitoring/' }, { id: 'prom', label: 'prometheus/' }, { id: 'graf', label: 'grafana/' }]} items={[{ label: 'compose.yaml', bucket: 'top', why: 'The set meal sits on top and starts all three.' }, { label: 'prometheus.yml', bucket: 'prom', why: 'What to scrape, and which rules to load.' }, { label: 'rules.yml', bucket: 'prom', why: 'The alert rule, next to the Prometheus config.' }, { label: 'datasource prometheus.yaml', bucket: 'graf', why: 'Tells Grafana where Prometheus lives.' }, { label: 'dashboard kedai.json', bucket: 'graf', why: 'The screen itself, saved as JSON.' }]} success="Three folders, five files, one control room." />
+</Card>
+
+<Card id="see-compose" type="see">
+node-exporter has no `ports` line. How does Prometheus reach it?
+
+<Interactive name="Choice" options={[{ label: 'On the Compose network, by its name: node-exporter:9100', correct: true, why: 'Yes. Services in one Compose file share a network and find each other by name.' }, { label: 'Through your laptop on port 9100', why: 'Only ports you publish reach your laptop. This one stays inside.' }, { label: 'It cannot', why: 'It can: Compose gives them a shared network.' }]} />
+
+```yaml
+services:
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.13.5
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+    ports: ["9090:9090"]
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+  grafana:
+    image: grafana/grafana:13.2.5
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+```
+</Card>
+
+<Card id="see-dashboard" type="see">
+Test the "Targets up" panel's query first. Make it one number.
+
+<Interactive name="PromQLPlayground" scenario="o3-target-down" initial="up" goal={{ resultCount: 1, labelNames: [], usesFunction: ['sum'] }} hints={['Wrap it: sum(up).']} solution="sum(up)" success="One number: how many targets answer. Now save the dashboard below." />
+
+```json
+{
+  "uid": "kedai",
+  "title": "Kedai Kancil",
+  "panels": [
+    { "type": "stat", "title": "Targets up",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+      "targets": [{ "refId": "A", "expr": "sum(up)" }] },
+    { "type": "timeseries", "title": "CPU busy (%)",
+      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 6 },
+      "targets": [{ "refId": "A", "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])))" }] }
+  ]
+}
+```
+</Card>
+
+<Card id="see-grafana" type="see">
+Grafana runs in its own container. Why does the data source say `http://prometheus:9090`, not `localhost`?
+
+<Interactive name="Choice" options={[{ label: "Inside Grafana's container, localhost is Grafana itself", correct: true, why: 'Yes. Use the service name: Compose turns it into the right address.' }, { label: 'localhost is not allowed in YAML', why: 'It is allowed. It just points at the wrong place here.' }, { label: 'Port 9090 only works with a name', why: 'The port is fine. The host is the problem.' }]} />
+
+```yaml
+# grafana/provisioning/datasources/prometheus.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+```
+
+```yaml
+# grafana/provisioning/dashboards/kedai.yaml
+apiVersion: 1
+providers:
+  - name: kedai
+    folder: Kedai Kancil
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+```
+</Card>
+
+<Card id="try-prom" type="try">
+This `prometheus.yml` scrapes `localhost:9100`. Inside the Prometheus container, nothing listens there. Point the node job at node-exporter.
+
+<Interactive name="YamlPlayground" file="prometheus.yml" initial={'global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\nrule_files:\n  - rules.yml\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["localhost:9100"]\n'} expect={[{ path: 'scrape_configs.1.static_configs.0.targets', type: 'list', includes: 'node-exporter:9100', hint: 'On the last line, swap localhost for node-exporter.' }, { path: 'scrape_configs.0.static_configs.0.targets', type: 'list', includes: 'localhost:9090', hint: 'Keep localhost:9090: Prometheus scrapes itself there.' }, { path: 'rule_files', type: 'list', includes: 'rules.yml', hint: 'Keep rules.yml under rule_files.' }]} solution={'global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\nrule_files:\n  - rules.yml\nscrape_configs:\n  - job_name: prometheus\n    static_configs:\n      - targets: ["localhost:9090"]\n  - job_name: node\n    static_configs:\n      - targets: ["node-exporter:9100"]\n'} hint="Only the last line changes." success="That is your prometheus.yml. Select it and copy it." />
+
+<Hint>For Prometheus itself, localhost is right. For node-exporter, use its service name.</Hint>
+</Card>
+
+<Card id="try-alert" type="try">
+Now the alert. Page when any target is down for a minute, and name the job and instance.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-target-down" alert="KedaiTargetDown" exprs={[{ expr: 'up == 0' }, { expr: 'up == 1', why: 'up == 1 is true when the target is fine.' }]} fors={['0s', '1m']} labels={[{ labels: {} }, { labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: 'Target down' } }, { annotations: { summary: '{{ $labels.job }} on {{ $labels.instance }} is down' } }]} goal={{ firingAt: ['20m'], labels: { severity: 'page' }, annotationUses: ['$labels.job', '$labels.instance'] }} solution={{ expr: 0, for: 1, labels: 1, annotations: 1 }} success="That YAML is your whole rules.yml. Select it and copy it." />
+
+<Hint>Wait 1 minute, so a quick restart does not page anyone.</Hint>
+</Card>
+
+<Card id="try-mission" type="try">
+Now build it for real, step by step. Your ticks are saved.
+
+<Interactive name="Mission" id="obs-o4-m9-build" steps={[{ id: 'folders', text: 'Make the folders, then work inside monitoring/.', command: 'mkdir -p monitoring && cd monitoring && mkdir -p prometheus grafana/dashboards grafana/provisioning/datasources grafana/provisioning/dashboards' }, { id: 'files', text: 'Save the six files from the cards above in their folders.' }, { id: 'dry', text: 'Dry run. No output means compose.yaml is fine.', command: 'docker compose config --quiet' }, { id: 'promtool', text: 'Check prometheus.yml and the rule file it loads.', command: 'docker run --rm --entrypoint promtool -v "$PWD/prometheus:/etc/prometheus:ro" quay.io/prometheus/prometheus:v3.13.5 check config /etc/prometheus/prometheus.yml' }, { id: 'up', text: 'Start the control room.', command: 'docker compose up -d' }, { id: 'targets', text: 'Open the targets page. Both targets should say UP.', command: 'http://localhost:9090/targets' }, { id: 'grafana', text: 'Open Grafana. Log in as admin, password admin, then pick a new one. Open the Kedai Kancil dashboard.', command: 'http://localhost:3000' }, { id: 'fire', text: 'Test the bell: stop node-exporter.', command: 'docker compose stop node-exporter' }, { id: 'alerts', text: 'Wait 2 minutes, then open the alerts page. KedaiTargetDown should be firing.', command: 'http://localhost:9090/alerts' }, { id: 'heal', text: 'Start it again and watch the alert clear.', command: 'docker compose start node-exporter' }, { id: 'push', text: 'Put monitoring/ in your public kedai-kancil repo, then commit and push.', command: 'git add monitoring && git commit -m "Watch the shop" && git push' }, { id: 'down', text: 'Close the control room when you are done.', command: 'docker compose down' }]} success="Mission steps done! Now let GitHub confirm the files." />
+</Card>
+
+<Card id="check-api" type="check">
+GitHub can see your files. Type your username and press Check now.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your kedai-kancil repo is public' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/compose.yaml', label: 'It has monitoring/compose.yaml' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/prometheus/prometheus.yml', label: 'It has the Prometheus config' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/prometheus/rules.yml', label: 'It has the alert rule' }, { type: 'file', repo: 'kedai-kancil', path: 'monitoring/grafana/dashboards/kedai.json', label: 'It has the dashboard' }]} success="GitHub sees your control room!" />
+</Card>
+
+<Card id="self-check" type="check">
+The rest only you can see. Tick what is true.
+
+<Interactive name="Mission" id="obs-o4-m9-self" title="Self-check" steps={[{ id: 'up', text: 'The targets page showed prometheus and node as UP.' }, { id: 'stat', text: 'The Targets up panel showed 2.' }, { id: 'fired', text: 'With node-exporter stopped, KedaiTargetDown went pending, then firing.' }, { id: 'cleared', text: 'After start, the alert went away by itself.' }, { id: 'secret', text: 'You changed the admin password, and no password is in the repo.' }]} success="Mission 9 complete: you watch Kedai Kancil!" />
+</Card>
+
+<Card id="win" type="win">
+You can now run a small control room: metrics, a dashboard and an alert.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks. A real control room watches from outside. Ours runs on the machine it watches. If that machine dies, the bell dies too. In a container, node-exporter sees the container's own disks and network. Its README shows the host mounts for real machines. Next: add Alertmanager, so the bell reaches a phone.
+</Card>

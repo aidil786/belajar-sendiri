@@ -1,0 +1,72 @@
+---
+id: linux-l4-l04
+world: 4
+title: "Ruang cakera: df dan du"
+summary: "Anda akan belajar: melihat berapa penuh cakera, cari apa yang memenuhinya, dan kosongkan ruang dengan cermat."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, Choice, SwipeJudge, Mission]
+needs: [linux-l4-l03]
+scenario: linux-l4-disk
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "GNU coreutils: df", url: "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html" }
+  - { label: "GNU coreutils: du", url: "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-disk" intro={['df -h /']} />
+
+Dapur cawangan tak boleh simpan pesanan baharu. Stor sudah 98% penuh! Apa yang memenuhinya?
+</Card>
+
+<Card id="see-df" type="see">
+`df -h` tunjuk setiap cakera: saiz, terpakai, kosong. `-h` bermaksud saiz yang manusia boleh baca. Tekan cakera utama, yang di `/`.
+
+<Interactive name="SpotLines" lines={[{ text: 'Filesystem      Size  Used Avail Use% Mounted on' }, { text: 'udev            963M     0  963M   0% /dev' }, { text: 'tmpfs           197M  528K  197M   1% /run' }, { text: '/dev/vda1        20G   19G  513M  98% /', target: true }, { text: '/dev/vda15      124M   12M  112M  10% /boot/efi' }]} prompt="Tekan cakera di /." success="Cakera 20G, 19G terpakai, 513M kosong. Masa untuk tengok ke dalam." />
+</Card>
+
+<Card id="try-du" type="try">
+`df` beritahu berapa penuh. <Term id="disk-usage">du</Term> beritahu rak mana yang gemuk. Tengok dalam `/var/log`, kemudian dalam folder yang paling besar.
+
+<Interactive name="LinuxSim" scenario="linux-l4-disk" goal={{ lastTyped: '^sudo du -sh /var/log/kedai' }} hints={['sudo du -sh /var/log/*', 'sudo du -sh /var/log/kedai/*']} solution={['sudo du -sh /var/log/*', 'sudo du -sh /var/log/kedai/*']} success="Jumpa: satu log debug 17G." />
+
+<Hint>`-s` beri satu jumlah untuk setiap folder. `-h` beri saiz yang mudah dibaca.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+du tunjuk ini. Fail mana yang selamat dipadam?
+
+```
+17G	/var/log/kedai/debug.log
+46M	/var/log/kedai/orders.log
+```
+
+<Interactive name="Choice" options={[{ label: 'debug.log: suis lama yang lupa dimatikan', correct: true, why: 'Sangat besar, dan hanya untuk debug. orders.log simpan pesanan sebenar.' }, { label: 'orders.log', why: 'Kecil, dan ia simpan pesanan sebenar. Simpan.' }, { label: 'Seluruh folder /var/log', why: 'Jangan sesekali. Program memerlukannya, dan log lain penting.' }]} />
+</Card>
+
+<Card id="try-free" type="try">
+Padam `debug.log` sahaja. Kemudian semak `df -h /` lagi. Tiada undo, jadi taip path penuh.
+
+<Interactive name="LinuxSim" scenario="linux-l4-disk" goal={{ fileMissing: ['/var/log/kedai/debug.log'], fileExists: ['/var/log/kedai/orders.log'] }} hints={['sudo rm /var/log/kedai/debug.log', 'df -h /']} solution={['sudo rm /var/log/kedai/debug.log', 'df -h /']} success="Kembali kepada 11% terpakai. orders.log selamat." />
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tengok dengan du sebelum padam apa-apa.', good: true, why: 'Cari rak yang gemuk dahulu.' }, { text: 'sudo rm -rf /var/log untuk dapatkan ruang.', good: false, why: 'Itu padam semua log dan rosakkan program.' }, { text: 'Tanya kenapa log itu jadi begitu besar.', good: true, why: 'Kalau tidak, ia penuh lagi minggu depan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari apa yang memenuhi cakera dan kosongkan ruang dengan selamat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Hal di dunia sebenar: program yang berjalan mungkin masih buka fail yang dipadam. Ruang hanya kembali selepas program itu dimulakan semula. `journalctl --vacuum-size=200M` kecilkan journal. `ncdu` ialah du yang mesra (`sudo apt install ncdu`). Cakera penuh di sini hanya dalam enjin.
+
+<Interactive name="Mission" id="linux-l4-l04-rep" steps={[{ id: 'df', text: 'Berapa penuh cakera anda?', command: 'df -h' }, { id: 'du', text: 'Folder mana dalam rumah anda yang paling gemuk?', command: 'du -sh ~/* | sort -h | tail -n 5' }]} success="Anda tahu ke mana ruang anda pergi." />
+</Card>

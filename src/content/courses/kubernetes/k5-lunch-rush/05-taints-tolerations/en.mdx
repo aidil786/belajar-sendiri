@@ -1,0 +1,87 @@
+---
+id: k8s-k5-l05
+world: 5
+title: Taints, tolerations and spread
+summary: "You will learn: how to lock a stall, give some trays the key, and spread trays out."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, SchedulerTetris, FoodCourtSim, SortCards]
+needs: [k8s-k5-l04]
+scenario: k5-taint
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: taints and tolerations", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" }
+  - { label: "Kubernetes: pod topology spread", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/" }
+  - { label: "kubectl taint", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_taint/" }
+---
+
+<Card id="hook" type="hook">
+Stall dev-worker2 has the big oven. It is for oven dishes only. But shop trays keep landing there. How do you keep them out?
+
+<Interactive name="Choice" options={[{ label: 'Put a lock on the stall', correct: true, why: 'A lock keeps every tray out, unless it has the key.' }, { label: 'Add a sign to every other tray', why: 'You would have to remember it on every tray, forever.' }, { label: 'Delete the stall', why: 'Then the oven dishes have nowhere to cook.' }]} />
+</Card>
+
+<Card id="see-taint" type="see">
+<Interactive name="KubeReplay" scenario="k5-taint" commands={['kubectl get node dev-worker2 -o jsonpath={.spec.taints}', 'kubectl get pods -l app=shop -o jsonpath={.items[*].spec.nodeName}']} label="dev-worker2 has the taint oven=big with effect NoSchedule. All three shop pods run on dev-worker." />
+
+A **<Term id="taint">taint</Term>** is a lock on a stall. This one came from `kubectl taint nodes dev-worker2 oven=big:NoSchedule`. All shop trays went to dev-worker.
+</Card>
+
+<Card id="try-key" type="try">
+A **<Term id="toleration">toleration</Term>** is the key, carried by the tray. Hand the oven key to oven-tray. Then place every tray.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'oven-stall', cpu: '2', memory: '4Gi', labels: { oven: 'big' }, taints: [{ key: 'oven', value: 'big', effect: 'NoSchedule' }] }]} pods={[{ name: 'tray-1', cpu: '1', memory: '1Gi' }, { name: 'tray-2', cpu: '1', memory: '1Gi' }, { name: 'oven-tray', cpu: '1', memory: '1Gi', nodeSelector: { oven: 'big' } }]} keys={[{ key: 'oven', operator: 'Equal', value: 'big', effect: 'NoSchedule' }]} success="The oven tray has the key and the sign. The lock keeps the others out." />
+
+<Hint>Tap the key, then tap oven-tray. Now it may enter oven-stall.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A tray has the oven key, but no sign (no nodeSelector). Where can it land?
+
+<Interactive name="Choice" options={[{ label: 'On any stall, oven stall included', correct: true, why: 'A key opens a lock. It does not pull you inside. Add a sign for that.' }, { label: 'Only on the oven stall', why: 'Almost! The key only allows it. A nodeSelector sends it there.' }, { label: 'Nowhere: it stays Pending', why: 'Unlocked stalls take it too.' }]} />
+</Card>
+
+<Card id="try-oven" type="try">
+`oven.yaml` has both: the key and the sign. Apply it. Then check which stall it chose.
+
+<Interactive name="FoodCourtSim" scenario="k5-taint" goal={{ podsReady: { selector: 'app=oven', count: 1 } }} hints={['Type kubectl apply -f oven.yaml', 'Then kubectl get pod oven -o wide shows its stall.']} success="The oven tray cooks on dev-worker2, behind the lock." />
+
+<Hint>Type `kubectl apply -f oven.yaml`, then `kubectl get pod oven -o wide`.</Hint>
+</Card>
+
+<Card id="see-spread" type="see">
+Don't put all trays in one stall. **<Term id="topology-spread">Topology spread</Term>** keeps stalls even. `maxSkew: 1` means stall counts differ by 1 at most. 4 trays, 2 stalls: which split is allowed?
+
+<Interactive name="Choice" compact options={[{ label: '2 and 2', correct: true, why: 'The gap is 0. Within maxSkew 1.' }, { label: '3 and 1', why: 'The gap is 2. maxSkew 1 says the gap may be at most 1.' }, { label: '4 and 0', why: 'One closed stall would stop lunch. That is what spread prevents.' }]} />
+
+In YAML, inside the pod template:
+
+```yaml
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels: { app: shop }
+```
+</Card>
+
+<Card id="check-facts" type="check">
+True or not? Sort each sentence.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'True' }, { id: 'no', label: 'Not true' }]} items={[{ label: 'NoSchedule keeps new trays out. Trays already there stay.', bucket: 'yes', why: 'It only guards the door for new trays.' }, { label: 'NoExecute also sends away trays without the key', bucket: 'yes', why: 'It evicts trays already on the stall too.' }, { label: 'A toleration pulls the tray to that stall', bucket: 'no', why: 'A key only allows. A sign (nodeSelector or affinity) sends.' }, { label: 'In kind, the control-plane stall has a taint', bucket: 'yes', why: 'That is why your trays never land there.' }]} success="All sorted!" />
+</Card>
+
+<Card id="win" type="win">
+You can now lock a stall, hand out keys, and spread trays out.
+</Card>
+
+<Card id="deeper" type="deeper">
+Effects: `NoSchedule`, `PreferNoSchedule` (try to avoid) and `NoExecute` (also evicts). A minus at the end removes a taint: `kubectl taint nodes dev-worker2 oven=big:NoSchedule-`. With `whenUnsatisfiable: DoNotSchedule`, spread becomes a hard rule. Then a locked stall can still count as a domain. Read the docs before you use it.
+
+Real rep (optional): taint a kind worker, then remove it again.
+</Card>

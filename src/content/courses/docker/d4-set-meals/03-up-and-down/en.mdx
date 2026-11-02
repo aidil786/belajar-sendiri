@@ -1,0 +1,74 @@
+---
+id: docker-d4-l03
+world: 4
+title: "Run the stack: up and down"
+summary: "You will learn: to start, check, step into and stop a whole stack."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, KitchenSim, CommandBuilder, Choice, Mission]
+needs: [docker-d4-l02]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+  - { label: "docker compose ps", url: "https://docs.docker.com/reference/cli/docker/compose/ps/" }
+  - { label: "docker compose logs", url: "https://docs.docker.com/reference/cli/docker/compose/logs/" }
+  - { label: "docker compose exec", url: "https://docs.docker.com/reference/cli/docker/compose/exec/" }
+  - { label: "docker compose down", url: "https://docs.docker.com/reference/cli/docker/compose/down/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d']} label="Three lunchboxes start in the background. The terminal is free again." />
+
+`-d` runs the set meal in the background. Your terminal is free again. But now you can't see inside. Is the API even awake?
+</Card>
+
+<Card id="try-ps" type="try">
+Ask Compose what is running. `docker compose ps` lists this <Term id="compose-project">project</Term>'s lunchboxes and their state.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d']} goal={{ lastTyped: '^docker compose ps' }} hints={['Type docker compose ps and press Enter.']} success="Three dishes, all Up. Only web has a hatch: 8080." />
+
+<Hint>Type `docker compose ps`.</Hint>
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose logs api']} label="The api log has one line: API listening on port 3000." />
+
+`docker compose logs api` shows what api printed. Each line starts with the dish name, like `api-1 |`. Add `-f` to keep watching.
+</Card>
+
+<Card id="try-exec" type="try">
+Build the command that opens a shell inside the web dish.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'compose', means: 'the set meal tool' }, { text: 'exec', means: 'run something inside a running dish' }, { text: 'web', means: 'the service name' }, { text: 'sh', means: 'a shell' }]} decoys={[{ text: 'run', means: 'start a brand-new box instead' }, { text: 'kedai-kancil-web-1', means: 'the box name; exec wants the service name' }]} success="That's it! Inside, type exit to come back." />
+
+<Hint>Compose commands use service names: web, api, db.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You run `docker compose down`. What happens to the orders in the `db-data` locker?
+
+<Interactive name="Choice" options={[{ label: 'They stay', correct: true, why: 'down removes the boxes and the phone line. Lockers stay.' }, { label: 'They are deleted', why: 'Only down -v deletes lockers. That one carries a danger badge.' }, { label: 'They move to your laptop', why: 'Lockers live in Docker storage. down leaves them there.' }]} />
+</Card>
+
+<Card id="try-down" type="try">
+Close the shop for the night. Keep the lockers.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" intro={['docker compose up -d']} goal={{ composeDown: 'kedai-kancil', volumeExists: ['kedai-kancil_db-data'] }} hints={['Type docker compose down, without -v.', 'Locker gone? Start again with docker compose up -d, then down.']} success="Shop closed. The db-data locker waits for tomorrow." />
+
+<Hint>No `-v` tonight.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now start, check and stop a whole stack.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose stop` pauses the shop but keeps the boxes; `start` wakes them. `docker compose restart api` restarts one dish. `docker compose down -v` also deletes the lockers and their data: use it only on purpose. `docker compose ls` lists every running project.
+
+<Interactive name="Mission" id="d4-l03-rep" steps={[{ id: 'up', text: 'In hello-set, start the set meal.', command: 'docker compose up -d' }, { id: 'ps', text: 'See what runs.', command: 'docker compose ps' }, { id: 'logs', text: 'Read web’s log.', command: 'docker compose logs web' }, { id: 'exec', text: 'Step inside, look, then type exit.', command: 'docker compose exec web sh' }, { id: 'down', text: 'Close for the night.', command: 'docker compose down' }]} success="You ran the whole day of a set meal!" />
+</Card>

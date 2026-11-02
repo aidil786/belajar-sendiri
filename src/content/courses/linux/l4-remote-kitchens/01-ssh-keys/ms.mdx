@@ -1,0 +1,83 @@
+---
+id: linux-l4-l01
+world: 4
+title: "Kunci SSH"
+summary: "Anda akan belajar: membuat pasangan kunci dan menggantung mangga anda di pintu server."
+minutes: 5
+xp: 25
+interactives: [Transcript, SortCards, LinuxSim, SpotLines, Choice, Mission]
+needs: [linux-l3-boss]
+scenario: linux-l4-keygen
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenSSH: ssh-keygen", url: "https://man.openbsd.org/ssh-keygen" }
+  - { label: "OpenSSH: ssh-copy-id", url: "https://manpages.debian.org/trixie/openssh-client/ssh-copy-id.1.en.html" }
+  - { label: "Debian wiki: SSH", url: "https://wiki.debian.org/SSH" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="laptop" label="ssh you@10.0.0.5 minta kata laluan."
+  lines={[{ cmd: 'ssh you@10.0.0.5' }, { out: "you@10.0.0.5's password:" }]} />
+
+<Term id="ssh">SSH</Term> ialah talian bermeterai ke dapur yang jauh. Tetapi setiap panggilan minta kata laluan. Robot meneka kata laluan sepanjang hari. Ada mangga yang lebih baik.
+</Card>
+
+<Card id="try-pair" type="try">
+**Key pair** (pasangan kunci) ialah mangga dan satu-satunya kuncinya. Mangga (`.pub`) selamat diberi. Kuncinya kekal dengan anda. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'share', label: 'Selamat dikongsi' }, { id: 'secret', label: 'Jangan sesekali kongsi' }]} items={[{ label: 'id_ed25519.pub', bucket: 'share', why: 'Mangganya. Gantung di mana-mana pintu.' }, { label: 'id_ed25519', bucket: 'secret', why: 'Kuncinya. Sesiapa yang ada boleh buka pintu anda.' }, { label: 'Tampal dalam server: authorized_keys', bucket: 'share', why: 'Server hanya pernah dapat mangganya.' }, { label: 'Hantar dalam mesej chat', bucket: 'secret', why: 'Kunci persendirian tak pernah dihantar. Buat pasangan baharu jika ia bocor.' }]} success="Mangga boleh dibawa. Kunci kekal di rumah." />
+</Card>
+
+<Card id="try-keygen" type="try">
+Buat pasangan anda. Di mesin sebenar, tekan Enter pada setiap soalan (atau pilih passphrase). Di sini, soalan itu menjawab sendiri.
+
+<Interactive name="LinuxSim" scenario="linux-l4-keygen" goal={{ fileExists: ['~/.ssh/id_ed25519', '~/.ssh/id_ed25519.pub'] }} hints={['Taip ssh-keygen -t ed25519 -C "you@laptop"', 'Kemudian ls -l ~/.ssh']} solution={['ssh-keygen -t ed25519 -C "you@laptop"']} success="Dua fail: kuncinya (id_ed25519) dan mangganya (id_ed25519.pub)." />
+</Card>
+
+<Card id="see-ls" type="see">
+`ls -l ~/.ssh` selepas membuat pasangan. Tekan baris yang hanya anda boleh baca.
+
+<Interactive name="SpotLines" lines={[{ text: 'total 8' }, { text: '-rw------- 1 you you 399 Nov  1 09:00 id_ed25519', target: true }, { text: '-rw-r--r-- 1 you you  92 Nov  1 09:00 id_ed25519.pub' }]} prompt="Tekan kunci persendirian." success="rw------- (600): anda sahaja. ssh tolak kunci yang orang lain boleh baca." />
+</Card>
+
+<Card id="see-copy" type="see">
+<Interactive name="Transcript" title="laptop (makmal)" label="ssh-copy-id pasang kunci awam di 10.0.0.5 selepas satu kata laluan terakhir. Kemudian ssh you@10.0.0.5 hostname cetak kedai tanpa kata laluan."
+  lines={[{ cmd: 'ssh-copy-id you@10.0.0.5' }, { out: '/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/you/.ssh/id_ed25519.pub"\n/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys\nyou@10.0.0.5\'s password:\n\nNumber of key(s) added: 1\n\nNow try logging into the machine, with: "ssh \'you@10.0.0.5\'"\nand check to make sure that only the key(s) you wanted were added.' }, { cmd: 'ssh you@10.0.0.5 hostname' }, { out: 'kedai' }]} />
+
+`ssh-copy-id` gantung mangga anda di pintu server, selepas satu kata laluan terakhir. Selepas itu tiada lagi kata laluan.
+</Card>
+
+<Card id="try-door" type="try">
+Sekarang jadi server. Gantung mangga Aina: tambah `aina.pub` ke dalam `~/.ssh/authorized_keys`, kemudian `chmod 600`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-authkeys" goal={{ fileContains: { '~/.ssh/authorized_keys': 'aina@laptop' }, fileMode: { '~/.ssh/authorized_keys': '600' } }} hints={['cat aina.pub >> ~/.ssh/authorized_keys', 'chmod 600 ~/.ssh/authorized_keys']} solution={['cat aina.pub >> ~/.ssh/authorized_keys', 'chmod 600 ~/.ssh/authorized_keys']} success="Mangga Aina ada di pintu. Dia boleh log masuk dengan kuncinya." />
+
+<Hint>Guna `>>` untuk menambah. Satu `>` sahaja akan padam mangga lain!</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Panggilan pertama anda ke server baharu tunjuk ini. Apa yang ssh sedang semak?
+
+```
+The authenticity of host '10.0.0.5 (10.0.0.5)' can't be established.
+ED25519 key fingerprint is SHA256:aYFyPi8Iw5RKqAeYPFwKCGKES8fXkU1HvaXk3yHsckY.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+<Interactive name="Choice" options={[{ label: 'Kad pengenalan server itu sendiri', correct: true, why: 'Bandingkan fingerprint dengan pemiliknya. Kemudian ssh simpan dalam known_hosts.' }, { label: 'Kata laluan anda', why: 'Ini datang sebelum sebarang kata laluan. Ia tentang server.' }, { label: 'Kunci persendirian anda', why: 'Kunci anda disemak selepas anda percaya server itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat pasangan kunci dan gantung mangga anda di server.
+</Card>
+
+<Card id="deeper" type="deeper">
+Passphrase mengunci fail kunci anda juga; `ssh-agent` ingat ia untuk satu sesi. Kad pengenalan server ialah <Term id="host-key">host key</Term>. Kunci latihan di sini rekaan; output makmal datang dari dua mesin Debian 13 sebenar.
+
+<Interactive name="Mission" id="linux-l4-l01-rep" steps={[{ id: 'keygen', text: 'Di laptop anda: buat pasangan kunci.', command: 'ssh-keygen -t ed25519 -C "you@laptop"' }, { id: 'copy', text: 'Gantung mangga di VM pakai buang.', command: 'ssh-copy-id you@YOUR-VM-IP' }, { id: 'login', text: 'Log masuk tanpa kata laluan.', command: 'ssh you@YOUR-VM-IP' }]} success="Log masuk pertama anda dengan kunci." />
+</Card>

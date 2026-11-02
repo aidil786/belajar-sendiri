@@ -1,0 +1,81 @@
+---
+id: git-w00-l02
+world: 0
+title: Asas terminal
+summary: "Anda akan belajar: empat arahan untuk bergerak di dalam terminal."
+minutes: 4
+xp: 20
+interactives: [TermReplay, Sim, Choice]
+needs: [git-w00-l01]
+scenario: w00-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "pwd", url: "https://www.gnu.org/software/coreutils/manual/html_node/pwd-invocation.html" }
+  - { label: "ls", url: "https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html" }
+  - { label: "cd", url: "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" }
+  - { label: "mkdir", url: "https://www.gnu.org/software/coreutils/manual/html_node/mkdir-invocation.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['cd Music', 'ls']} label="Seseorang taip cd Music, kemudian ls. Terminal jawab: playlist.txt." />
+
+Git tinggal dalam **<Term id="terminal">terminal</Term>** (tetingkap untuk taip arahan). Tiada tetikus, tiada ikon. Hanya perkataan. Macam mana nak bergerak di sini?
+</Card>
+
+<Card id="see-pwd" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['pwd']} label="pwd paparkan /home/you." />
+
+`pwd` tanya: saya di mana? Jawapannya ialah **path** (laluan), macam alamat untuk folder. Sekarang anda di rumah: `/home/you`.
+</Card>
+
+<Card id="see-ls" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['ls']} label="ls senaraikan Documents dan Music dalam warna biru, dan notes.txt dalam teks biasa." />
+
+`ls` tanya: ada apa di sini? Nama biru ialah **<Term id="folder">folder</Term>**. Yang lain ialah fail.
+</Card>
+
+<Card id="see-cd" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['cd Documents', 'pwd']} label="cd Documents bawa anda masuk ke Documents. Sekarang pwd paparkan /home/you/Documents." />
+
+`cd` maksudnya tukar **directory** (direktori). Direktori ialah nama lain untuk folder. `cd Documents` masuk ke Documents. `cd ..` keluar semula.
+</Card>
+
+<Card id="try-cd" type="try">
+Masuk ke Documents. Lepas tu senaraikan isinya.
+
+<Interactive name="Sim" scenario="w00-l02" panels={[]} goal={{ cwd: '/home/you/Documents', lastTyped: '^ls' }} hints={['Taip cd Documents dan tekan Enter. Lepas tu taip ls.']} success="Anda dah dalam Documents. Anda bergerak guna perkataan!" />
+
+<Hint>Mula-mula `cd Documents`. Lepas tu `ls`.</Hint>
+</Card>
+
+<Card id="see-mkdir" type="see">
+<Interactive name="TermReplay" scenario="w00-l02" commands={['mkdir projects', 'ls']} label="mkdir projects buat folder baru. Sekarang ls tunjuk Documents, Music, notes.txt dan projects." />
+
+`mkdir` maksudnya **make directory** (buat direktori). `mkdir projects` buat satu folder baru yang kosong, namanya projects.
+</Card>
+
+<Card id="try-mkdir" type="try">
+Buat folder bernama `projects`. Lepas tu masuk ke dalamnya.
+
+<Interactive name="Sim" scenario="w00-l02" panels={[]} goal={{ dirsExist: ['/home/you/projects'], cwd: '/home/you/projects' }} hints={['Taip mkdir projects dan tekan Enter.', 'Sekarang taip cd projects.']} success="Folder projects anda dah siap. Projek Git anda boleh tinggal di sini." />
+
+<Hint>Mula-mula `mkdir projects`. Lepas tu `cd projects`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda di `/home/you`. Anda taip `cd Music`. Apa yang `pwd` akan tunjuk?
+
+<Interactive name="Choice" compact options={[{ label: '`/home/you/Music`', correct: true, why: '`cd Music` masuk satu folder ke dalam.' }, { label: '`/home/you`', why: '`cd` dah gerakkan anda. Path bertambah satu folder.' }, { label: '`/Music`', why: 'Music ada di dalam folder rumah anda. Jadi path bermula dengan `/home/you`.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bergerak dalam terminal guna `pwd`, `ls`, `cd` dan `mkdir`.
+</Card>
+
+<Card id="deeper" type="deeper">
+`ls -a` tunjuk fail tersembunyi juga. Namanya bermula dengan titik. `cd ~` (atau `cd` sahaja) bawa anda balik ke rumah. `mkdir -p` buat folder dalam folder sekali gus.
+
+<Interactive name="TermReplay" scenario="w00-l02" commands={['mkdir -p projects/diary', 'cd projects/diary', 'pwd', 'cd ~', 'pwd']} label="mkdir -p buat projects dan diary di dalamnya. cd ~ bawa anda balik ke rumah." />
+</Card>

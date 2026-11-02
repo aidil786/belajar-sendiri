@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l04
+world: 2
+title: "Deployments: the standing order"
+summary: "You will learn: how a Deployment, its ReplicaSet and its pods fit together."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l03]
+scenario: k2-deploy
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Deployments", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+  - { label: "kubectl get", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/" }
+---
+
+<Card id="hook" type="hook">
+A ReplicaSet keeps 3 trays of nginx 1.29. The menu moves to 1.30, so you edit its template. What happens to the 3 trays already out?
+
+<Interactive name="Choice" options={[{ label: 'Nothing. They stay on 1.29.', correct: true, why: 'A ReplicaSet only keeps the count. It never swaps trays that are already out.' }, { label: 'All 3 swap at once', why: 'It does not touch running trays at all. Only new trays get the new template.' }, { label: 'They swap one by one', why: 'That would be nice! A ReplicaSet cannot do it. A Deployment can.' }]} />
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="KubeReplay" scenario="k2-deploy" commands={['kubectl apply -f shop.yaml', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl get deploy,rs,pods']} label="Applying shop.yaml makes the Deployment shop, one ReplicaSet and 3 pods. Their names share the start shop-." />
+
+A **<Term id="deployment">Deployment</Term>** is the manager's standing order: "always 3 trays of this dish". It makes a ReplicaSet, which makes the pods. Three layers, one file.
+</Card>
+
+<Card id="try-layers" type="try">
+Who makes whom? Put the one you write at the top.
+
+<Interactive name="OrderList" items={['Deployment shop: you write this', 'ReplicaSet shop-747bf9cf8: the Deployment makes it', 'Pods shop-747bf9cf8-…: the ReplicaSet makes them']} label="The one you write at the top" success="Right! You write the order. The layers below follow it." />
+
+<Hint>Look at the names. Each layer adds a piece to the name above it.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Your turn. Apply `shop.yaml`. When all 3 trays are up, change the order to 4.
+
+<Interactive name="FoodCourtSim" scenario="k2-deploy" board="shop" goal={{ replicas: { name: 'shop', count: 4 }, podsReady: { selector: 'app=shop', count: 4 } }} hints={['Type kubectl apply -f shop.yaml', 'Then kubectl scale deployment shop --replicas=4']} success="Want 4, see 4. The manager handled the layers." />
+
+<Hint>`kubectl apply -f shop.yaml`, then `kubectl scale deployment shop --replicas=4`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Someone deletes the ReplicaSet `shop-747bf9cf8`. Its 3 trays go with it. What does the Deployment do?
+
+<Interactive name="Choice" options={[{ label: 'Makes it again, with fresh trays', correct: true, why: 'The standing order still says 3 trays. The manager rebuilds the missing layer.' }, { label: 'Nothing. The shop stays closed.', why: 'The Deployment is still there, and it still wants 3.' }, { label: 'It deletes itself too', why: 'Deletes flow down, never up. The order above stays.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-deploy" commands={['kubectl apply -f shop.yaml', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl delete rs -l app=shop', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl get rs']} label="The ReplicaSet is deleted. The Deployment makes a ReplicaSet with the same name and 3 new pods." />
+
+The ReplicaSet came back with the same name. Its name comes from the template, so same template, same name. The trays inside are new.
+</Card>
+
+<Card id="win" type="win">
+You can now explain how a Deployment, its ReplicaSet and its pods fit together.
+</Card>
+
+<Card id="deeper" type="deeper">
+Read a pod name from the left. `shop` is the Deployment. `747bf9cf8` comes from the template (the `pod-template-hash` label). The last part is random. To close the shop for good, delete the Deployment, not its pods.
+
+Real rep (optional): on a throwaway cluster, run `kubectl get deploy,rs,pods --show-labels`.
+</Card>

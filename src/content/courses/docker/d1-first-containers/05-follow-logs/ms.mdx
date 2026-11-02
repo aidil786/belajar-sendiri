@@ -1,0 +1,69 @@
+---
+id: docker-d1-l05
+world: 1
+title: Ikut log
+summary: "Anda akan belajar: baca apa yang container paparkan, dan tengok baris baru secara langsung."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, KitchenSim, Choice, Mission]
+needs: [docker-d1-l04]
+scenario: d1-logs
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker logs", url: "https://docs.docker.com/reference/cli/docker/container/logs/" }
+  - { label: "View container logs", url: "https://docs.docker.com/engine/logging/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-logs" commands={['docker ps -a']} label="docker ps -a senaraikan dua bekas. web Up. timer tunjuk Exited (127)." />
+
+Bekas timer anda patut berdetik selama sejam. Ia terus berhenti: `Exited (127)`. Tiada ralat di skrin anda. Macam mana nak tahu sebabnya?
+</Card>
+
+<Card id="try-logs" type="try">
+Bekas simpan catatan semua yang ia paparkan: **<Term id="container-logs">log</Term>** dia. Baca catatan timer.
+
+<Interactive name="KitchenSim" scenario="d1-logs" goal={{ lastTyped: '^docker (container )?logs (.* )?timer$' }} hints={['Taip docker logs timer']} success="Itu dia: sh: sleeep: not found." />
+
+<Hint>Taip `docker logs timer`.</Hint>
+</Card>
+
+<Card id="check-read" type="check">
+Log itu berakhir dengan ralat sebenar `sh: sleeep: not found`. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Silap taip: sleeep, bukan sleep', correct: true, why: 'Maksudnya: shell tak jumpa program bernama sleeep. Kod 127 bermaksud arahan tak dijumpai.' }, { label: 'Ruang Docker sudah penuh', why: 'Log akan kata begitu. Ia sebut sleeep pula.' }, { label: 'Timer sudah habis sejam', why: 'Ia berhenti selepas satu baris, bukan selepas sejam.' }]} />
+</Card>
+
+<Card id="see-follow" type="see">
+<Interactive name="KitchenReplay" scenario="d1-logs" commands={['curl -s localhost:8080 | grep title', 'docker logs --tail 1 web']} label="curl lawat web. Kemudian docker logs --tail 1 web tunjuk satu baris baru: permintaan GET dengan status 200." />
+
+Setiap lawatan ke web tambah satu baris. `--tail 1` tunjuk yang terakhir sahaja. Tambah **-f** (follow) untuk tengok baris baru secara langsung. Ctrl+C berhenti menengok.
+</Card>
+
+<Card id="try-follow" type="try">
+Lawat web dengan `curl localhost:8080`. Kemudian baca log web dan cari lawatan anda.
+
+<Interactive name="KitchenSim" scenario="d1-logs" goal={{ logsContain: { web: 'HTTP/1.1" 200' }, lastTyped: '^docker (container )?logs (.* )?web$' }} hints={['Taip curl localhost:8080', 'Kemudian taip docker logs web']} success="Lawatan anda ialah baris terakhir: GET / dengan status 200." />
+</Card>
+
+<Card id="predict" type="predict">
+`docker logs -f web` sedang berjalan. Anda tekan Ctrl+C. Apa jadi pada web?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa. web terus berjalan.', correct: true, why: 'Ctrl+C hentikan arahan logs sahaja. Anda berhenti menengok, bukan berhenti memasak.' }, { label: 'web pun berhenti', why: 'Arahan logs cuma menengok. docker ps masih kata Up.' }, { label: 'web mula semula', why: 'Menengok log tak pernah sentuh bekas itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca log container untuk cari punca masalah.
+</Card>
+
+<Card id="deeper" type="deeper">
+Log ialah apa yang aplikasi paparkan ke skrin (stdout dan stderr). Image nginx hantar fail lognya ke situ juga. Pilihan berguna: `--tail 20`, `--since 10m`, dan `-t` untuk masa. Log hilang bila anda buang bekas.
+
+Latihan sebenar (pilihan):
+
+<Interactive name="Mission" id="docker-d1-l05-rep" steps={[{ id: 'web', text: 'Mulakan web dengan tingkap 8080.', command: 'docker run -d --name web -p 8080:80 nginx:1.30-alpine' }, { id: 'follow', text: 'Tengok lognya secara langsung.', command: 'docker logs -f web' }, { id: 'visit', text: 'Buka localhost:8080 dalam pelayar. Baris baru muncul!' }, { id: 'stop', text: 'Tekan Ctrl+C. Kemudian kemas.', command: 'docker rm -f web' }]} success="Anda tengok bekas sebenar sedang bekerja." />
+</Card>

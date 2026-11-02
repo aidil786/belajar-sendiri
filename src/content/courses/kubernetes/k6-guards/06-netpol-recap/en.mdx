@@ -1,0 +1,67 @@
+---
+id: k8s-k6-l06
+world: 6
+title: "NetworkPolicies recap"
+summary: "You will learn: to fence a database so only the pods that need it can reach it."
+minutes: 3
+xp: 15
+interactives: [Choice, RequestTracer, YamlDoctor, FoodCourtSim, SwipeJudge]
+needs: [k8s-k6-l05]
+scenario: k6-netpol
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Network Policies", url: "https://kubernetes.io/docs/concepts/services-networking/network-policies/" }
+  - { label: "Declare a network policy", url: "https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/" }
+---
+
+<Card id="hook" type="hook">
+The gates stop strangers at the door. But inside, any tray can talk to the database. A thief gets into the web pod. Then what?
+
+<Interactive name="Choice" options={[{ label: 'The thief can reach the database too', correct: true, why: 'By default, every pod can reach every pod. Fences fix that.' }, { label: 'The database is safe because it has a Service', why: 'A Service is an address, not a lock.' }, { label: 'Kubernetes blocks it by default', why: 'It does not. Pods are open to each other until you add a policy.' }]} />
+</Card>
+
+<Card id="see-fence" type="see">
+Recap from [World K3](/en/kubernetes/#world-3): a **NetworkPolicy** is a fence between stalls. This one lets the entrance in. Break it: forget the entrance. Then send.
+
+<Interactive name="RequestTracer" breaks={['policy']} task={{ type: 'outcome', want: 'timeout' }} route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'shop', rules: [{ path: '/api', service: 'api', port: 80 }] }, services: [{ name: 'api', port: 80, targetPort: 3000, selector: { app: 'api' } }], pods: [{ name: 'api-7d4f9-x2kq4', labels: { app: 'api' }, containerPort: 3000 }], policy: { name: 'lock-api', allowGateway: true }, request: { path: '/api/menu' } }} success="Timed out. A fence drops packets quietly. No error page." />
+</Card>
+
+<Card id="try-doctor" type="try">
+This fence will not apply. Fix the line the API server does not know.
+
+<Interactive name="YamlDoctor" file="db-from-api.yaml" manifest={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-from-api\nspec:\n  podSelector:\n    app: db\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n'} solution={'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: db-from-api\nspec:\n  podSelector:\n    matchLabels:\n      app: db\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n'} keep={['app: db', 'app: api']} keepHint="Keep both labels. The fence needs them." hint="A podSelector holds matchLabels. Copy the shape from the one lower down." success="Applied! The fence guards app=db, and opens for app=api." />
+</Card>
+
+<Card id="try-sim" type="try">
+Fence the database for real. Apply the deny-all fence. Then open a gate for api only.
+
+<Interactive name="FoodCourtSim" scenario="k6-netpol" goal={{ reachable: { url: 'http://db', from: 'api' }, unreachable: { url: 'http://db', from: 'stranger' } }} hints={['Type kubectl apply -f deny.yaml', 'Then kubectl apply -f allow-api.yaml', 'Test it: kubectl exec stranger -- wget -qO- -T 2 http://db']} success="api gets in. stranger times out. Fenced!" />
+
+<Hint>Two files, in order: `deny.yaml`, then `allow-api.yaml`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your cluster's network plugin ignores NetworkPolicies. You apply deny-all. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Nothing changes. The fence is only on paper.', correct: true, why: 'Kubernetes stores it. The network plugin must enforce it.' }, { label: 'Every pod stops talking', why: 'Only a plugin that enforces policies blocks traffic.' }, { label: 'kubectl refuses the file', why: 'The API server accepts it. It just has no effect.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good fence habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Start each zone with deny-all, then open small gates', good: true, why: 'Closed by default. Open only what you need.' }, { text: 'Let every namespace reach the database', good: false, why: 'Any stolen pod anywhere could reach it.' }, { text: 'After a deny-all egress fence, allow DNS on port 53', good: true, why: 'Without it, pods cannot even look up names.' }, { text: 'Trust a Service to hide your database', good: false, why: 'A Service is an address. Fences are the lock.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now fence a database with NetworkPolicies.
+</Card>
+
+<Card id="deeper" type="deeper">
+`policyTypes: [Egress]` fences what goes out. `namespaceSelector` lets a whole zone through. Plugins like Cilium and Calico enforce policies. Check your plugin's docs before you trust a fence.
+
+<Interactive name="Mission" id="k6-l06-rep" steps={[{ id: 'plugin', text: 'On a throwaway cluster, check that your network plugin enforces NetworkPolicies.' }, { id: 'deny', text: 'Apply a deny-all fence in a test zone, like deny.yaml in this lesson.', command: 'kubectl apply -n fence-test -f deny.yaml' }, { id: 'test', text: 'From a pod in that zone, try to reach another pod. It should time out.' }, { id: 'allow', text: 'Open one small gate with a podSelector. Test again.' }]} success="Your zone has fences!" />
+</Card>

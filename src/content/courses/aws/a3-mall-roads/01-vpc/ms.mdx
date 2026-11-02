@@ -1,0 +1,68 @@
+---
+id: aws-a3-l01
+world: 3
+title: "VPC: sudut anda sendiri"
+summary: "Anda akan belajar: apa itu VPC, dan cara blok alamatnya berfungsi."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SubnetPlanner, SpotLines, SwipeJudge]
+needs: [aws-a2-boss]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: What is Amazon VPC?", url: "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" }
+  - { label: "Amazon VPC: VPC CIDR blocks", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html" }
+  - { label: "Amazon VPC: Default VPCs", url: "https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html" }
+  - { label: "AWS CLI: aws ec2 create-vpc", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil mahu server di cloud. Beribu kedai lain menyewa di pusat beli-belah yang sama. Macam mana nak asingkan unit anda?
+
+<Interactive name="Choice" options={[{ label: 'Pagar satu lot tanah anda sendiri', correct: true, why: 'Ya. Server anda tinggal dalam lot berpagar anda sendiri.' }, { label: 'Percaya penyewa lain', why: 'Jangan. Orang asing pun menyewa di sini. Pagar lot anda.' }, { label: 'Sewa seluruh pusat beli-belah', why: 'Terlalu besar dan mahal. Lot kecil pun cukup.' }]} />
+</Card>
+
+<Card id="see-vpc" type="see">
+**<Term id="vpc">VPC</Term>** (lot berpagar) ialah lot anda dalam pusat beli-belah. Server dan pangkalan data anda tinggal di dalamnya. Ada servis yang tinggal di luar. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'in', label: 'Dalam VPC anda' }, { id: 'out', label: 'Di luar mana-mana VPC' }]} items={[{ label: 'Server web anda (EC2)', bucket: 'in', why: 'Server sentiasa tinggal dalam VPC.' }, { label: 'Pangkalan data anda (RDS)', bucket: 'in', why: 'Ia duduk dalam VPC anda, di bilik belakang.' }, { label: 'Satu bucket S3', bucket: 'out', why: 'S3 ialah stor untuk seluruh Region. Bucket tak pernah duduk dalam VPC.' }, { label: 'Pengguna dan role IAM', bucket: 'out', why: 'IAM untuk seluruh akaun. Ia pegang kunci, bukan unit.' }]} success="Tersusun! Unit tinggal dalam lot anda. Pejabat kunci dan stor tidak." />
+</Card>
+
+<Card id="see-cidr" type="see">
+Lot anda dapat satu blok alamat, ditulis sebagai **<Term id="cidr">CIDR</Term>**. `10.0.0.0/16` ada 65,536 alamat. Nombor lebih kecil selepas garis miring bermaksud blok lebih besar. Mana paling besar?
+
+<Interactive name="Choice" compact options={[{ label: '/16', correct: true, why: '/16 ialah blok paling besar yang boleh VPC ada.' }, { label: '/24', why: '/24 ada 256 alamat. Itu lebih kecil.' }, { label: '/28', why: '/28 ada 16 sahaja. Paling kecil untuk VPC.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Lot ini terlalu besar. Jadikan VPC itu /16. Kemudian beri setiap sayap satu baris awam.
+
+<Interactive name="SubnetPlanner" vpc="10.0.0.0/8" editVpc tiers={['public']} azs={['ap-southeast-5a', 'ap-southeast-5b']} success="Saiz lot anda sesuai, dan setiap sayap ada barisnya." />
+
+<Hint>Taip `10.0.0.0/16` dalam kotak VPC. Kemudian pilih saiz untuk setiap baris.</Hint>
+</Card>
+
+<Card id="check-cli" type="check">
+AWS CLI pun boleh buat VPC. Ini jawapan contoh rasmi, dipendekkan. Ketik baris yang ada id VPC baru.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang ada id VPC baru." success="Id itu menamakan lot anda dalam setiap arahan seterusnya." lines={[{ text: '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16' }, { text: '"Vpc": {' }, { text: '    "CidrBlock": "10.0.0.0/16",' }, { text: '    "State": "pending",' }, { text: '    "VpcId": "vpc-0a60eb65b4EXAMPLE",', target: true }, { text: '    "OwnerId": "123456789012",' }, { text: '    "IsDefault": false,' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat lot yang baik, atau berisiko? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Guna julat peribadi seperti 10.0.0.0/16', good: true, why: 'Julat peribadi tak pernah bertembung dengan laman web awam.' }, { text: 'Salin tepat julat rangkaian pejabat anda', good: false, why: 'Jika anda sambungkan nanti, alamat yang sama akan bertembung.' }, { text: 'Berlatih dalam VPC lalai, kemudian padam apa yang anda buat', good: true, why: 'Setiap Region beri anda satu. VPC sahaja tiada caj.' }, { text: 'Satu lot /8 gergasi untuk semua', good: false, why: 'AWS tolak. VPC mesti /16 hingga /28.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pagar lot anda sendiri: VPC dengan blok alamatnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap Region beri anda satu VPC lalai, dengan baris awam di setiap sayap. Ia senang untuk berlatih. VPC tiada caj, tetapi ada bahagian di dalamnya yang ada caj. Anda jumpa bahagian itu nanti.
+
+Latihan sebenar (pilihan): dalam akaun ujian, buka halaman VPC. Cari VPC lalai dan CIDRnya. Jangan cipta apa-apa lagi.
+</Card>

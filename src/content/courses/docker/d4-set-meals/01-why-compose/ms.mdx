@@ -1,0 +1,64 @@
+---
+id: docker-d4-l01
+world: 4
+title: Kenapa set hidangan?
+summary: "Anda akan belajar: kenapa satu fail boleh hidupkan seluruh aplikasi anda."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, ComposeCanvas, KitchenSim, SortCards, Mission]
+needs: [docker-d3-boss]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Compose overview", url: "https://docs.docker.com/compose/" }
+  - { label: "How Compose works", url: "https://docs.docker.com/compose/intro/compose-application-model/" }
+  - { label: "docker compose up", url: "https://docs.docker.com/reference/cli/docker/compose/up/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d4-many-runs" commands={['docker network create kedai-net', 'docker run -d --name db --network kedai-net -e POSTGRES_PASSWORD=example -v db-data:/var/lib/postgresql postgres:18-alpine', 'docker run -d --name api --network kedai-net -e DB_HOST=db kedai-api', 'docker run -d --name web --network kedai-net -p 8080:80 kedai-web']} label="Empat arahan panjang buka kedai secara manual: satu talian telefon, kemudian pangkalan data, API dan laman web, ikut urutan itu." />
+
+Buka Kedai Kancil secara manual perlukan empat arahan panjang. Setiap pagi. Ikut urutan ini. Tertinggal satu pilihan, kedai tak dibuka.
+</Card>
+
+<Card id="see-set" type="see">
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Tunjuk laman kedai.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Terima pesanan.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', means: 'Simpan pesanan.' }]} start={['web', 'api', { id: 'db', volume: 'db-data' }]} volumes={['db-data']} prompt="Baca fail yang ia tulis. Kemudian tekan Pesan set makanan." />
+
+Set hidangan dipesan sekali gus. **<Term id="compose">Compose</Term>** (set hidangan) buat begitu untuk container. Satu fail senaraikan setiap hidangan. Satu pesanan hidupkan semuanya.
+</Card>
+
+<Card id="see-up" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose ps']} label="Satu arahan buat talian telefon dan loker, kemudian hidupkan tiga bekas: web, api dan db." />
+
+Inilah yang sebenar. `docker compose up -d` baca `compose.yaml` dan hidupkan setiap hidangan di latar belakang.
+</Card>
+
+<Card id="try-up" type="try">
+Giliran anda. Hidupkan seluruh kedai dengan satu arahan. Kemudian ketuk tingkap 8080 dengan `curl localhost:8080`.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" goal={{ composeUp: 'kedai-kancil', reachable: 'localhost:8080', lastTyped: '^curl' }} hints={['Taip docker compose up -d dan tekan Enter.', 'Sekarang taip curl localhost:8080']} success="Satu arahan, tiga bekas, dan laman kedai menjawab!" />
+
+<Hint>Mula dengan `docker compose up -d`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Alat mana sesuai untuk setiap kerja?
+
+<Interactive name="SortCards" buckets={[{ id: 'compose', label: 'Compose' }, { id: 'run', label: 'Satu docker run' }, { id: 'k8s', label: 'Kubernetes (Bahagian 3)' }]} items={[{ label: 'Web, API dan pangkalan data di laptop anda', bucket: 'compose', why: 'Banyak hidangan, satu meja: set hidangan.' }, { label: 'Rakan sepasukan hidupkan kedai sekali gus', bucket: 'compose', why: 'Mereka clone repo dan jalankan docker compose up.' }, { label: 'Cuba satu image sekali, kemudian buang', bucket: 'run', why: 'Satu bekas tak perlu set hidangan.' }, { label: 'Pastikan 3 salinan hidup di banyak server', bucket: 'k8s', why: 'Compose jalan di satu mesin. Banyak mesin perlukan pengurus medan selera.' }]} success="Semua dah disusun! Compose hebat di satu mesin dengan banyak bahagian." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hidupkan seluruh stack dengan satu arahan.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker compose` ialah plugin untuk arahan `docker`. Ia cari `compose.yaml` dalam folder anda. Nama folder jadi nama projek. Sebab itu bekasnya bernama `kedai-kancil-web-1`.
+
+Latihan sebenar (pilihan), di mesin anda sendiri:
+
+<Interactive name="Mission" id="d4-l01-rep" steps={[{ id: 'folder', text: 'Buat folder latihan dan masuk ke dalamnya.', command: 'mkdir hello-set && cd hello-set' }, { id: 'file', text: 'Tulis compose.yaml kecil dengan satu service.', command: "printf 'services:\\n  web:\\n    image: nginx:1.30-alpine\\n    ports:\\n      - \"8080:80\"\\n' > compose.yaml" }, { id: 'up', text: 'Hidupkan di latar belakang.', command: 'docker compose up -d' }, { id: 'look', text: 'Buka http://localhost:8080 dalam pelayar anda.' }, { id: 'down', text: 'Kemas meja.', command: 'docker compose down' }]} success="Set hidangan sebenar pertama anda!" />
+</Card>

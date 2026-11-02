@@ -1,0 +1,84 @@
+---
+id: k8s-k1-l07
+world: 1
+title: Your first cluster with kind
+summary: "You will learn: how to open a practice cluster on your own laptop with kind."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, CommandBuilder, FoodCourtSim, SwipeJudge, Mission]
+needs: [k8s-k1-l06]
+scenario: k1-first-cluster
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kind quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "Install kubectl", url: "https://kubernetes.io/docs/tasks/tools/" }
+  - { label: "minikube start", url: "https://minikube.sigs.k8s.io/docs/start/" }
+  - { label: "k3d", url: "https://k3d.io/" }
+---
+
+<Card id="hook" type="hook">
+Kubernetes runs huge data centres. Can you run a cluster on your own laptop?
+
+<Interactive name="Choice" options={[{ label: 'Yes: kind builds one out of Docker containers', correct: true, why: 'Yes! Each stall is just a container. Free, and safe to break.' }, { label: 'No, you must rent cloud servers', why: 'The cloud is one way. For practice, your laptop works too.' }, { label: 'Only with 3 laptops', why: 'One laptop can pretend to be 3 stalls.' }]} />
+</Card>
+
+<Card id="see-kind" type="see">
+<Interactive name="Transcript" title="bash" label="kind create cluster --name dev prints its steps with ticks, sets the kubectl context to kind-dev, and says Have a nice day." lines={[{ cmd: 'kind create cluster --name dev --config kind-dev.yaml' }, { out: 'Creating cluster "dev" ...\n ✓ Ensuring node image (kindest/node:v1.37.0) 🖼\n ✓ Preparing nodes 📦 📦 📦\n ✓ Writing configuration 📜\n ✓ Starting control-plane 🕹️\n ✓ Installing CNI 🔌\n ✓ Installing StorageClass 💾\n ✓ Joining worker nodes 🚜' }, { out: 'Set kubectl context to "kind-dev"', color: 'green' }, { out: 'You can now use your cluster with:\n\nkubectl cluster-info --context kind-dev\n\nHave a nice day! 👋' }]} />
+
+**<Term id="kind">kind</Term>** means Kubernetes IN Docker. Each stall is a Docker container on your laptop. One command opens a practice food court.
+</Card>
+
+<Card id="try-build" type="try">
+Build the command that opens a cluster called dev.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'the tool: Kubernetes IN Docker' }, { text: 'create cluster', means: 'open a new food court' }, { text: '--name dev', means: 'call it dev' }]} decoys={[{ text: 'kubectl', means: 'talks to a cluster that already exists' }, { text: 'docker run', means: 'starts one container, not a cluster' }]} success="That’s it! kind calls the context kind-dev." />
+</Card>
+
+<Card id="predict-config" type="predict">
+This file is `kind-dev.yaml`. How many stalls will your cluster get?
+
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+```
+
+<Interactive name="Choice" options={[{ label: '3: one office stall and two workers', correct: true, why: 'Yes. Each role line is one node.' }, { label: '1', why: 'Count the role lines under nodes.' }, { label: '2', why: 'The control plane is a node too.' }]} />
+</Card>
+
+<Card id="try-hello" type="try">
+Your cluster is up. Say hello: type `kubectl cluster-info`. Then type `kubectl get nodes`.
+
+<Interactive name="FoodCourtSim" scenario="k1-first-cluster" goal={{ typed: 'cluster-info', lastTyped: '^(kubectl|k) get (nodes?|no)\\b' }} hints={['Type kubectl cluster-info and press Enter.', 'Then type kubectl get nodes.']} success="Hello, kind-dev! Three stalls, all Ready." />
+
+<Hint>Look at the pink bar: kubectl already points at kind-dev.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Install kind and kubectl from their official docs', good: true, why: 'Official installs only.' }, { text: 'Paste a stranger’s install script straight into bash', good: false, why: 'You can’t see what it does. Use the official steps.' }, { text: 'Practise on your company’s cluster', good: false, why: 'Use a throwaway kind cluster. Break it freely.' }, { text: 'Delete the practice cluster when you are done', good: true, why: 'kind delete cluster --name dev gives your memory back.' }]} />
+</Card>
+
+<Card id="try-real" type="try">
+Real rep (optional): open your own food court. Docker must be running first.
+
+<Interactive name="Mission" id="k8s-k1-l07-real" steps={[{ id: 'docker', text: 'Check that Docker runs: Docker Desktop, or Docker Engine on Linux.', command: 'docker version' }, { id: 'install', text: 'Install kind and kubectl from their official docs (links in Go deeper).' }, { id: 'config', text: 'Save the 3-stall file from this lesson as kind-dev.yaml.' }, { id: 'create', text: 'Open the food court.', command: 'kind create cluster --name dev --config kind-dev.yaml' }, { id: 'nodes', text: 'Check the stalls.', command: 'kubectl get nodes' }, { id: 'delete', text: 'Done for today? Close it.', command: 'kind delete cluster --name dev' }]} success="Your own food court opened, and closed again!" />
+</Card>
+
+<Card id="win" type="win">
+You can now open a practice cluster with kind.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other practice clusters work too. minikube runs a cluster in a container or a virtual machine. k3d runs k3s, a light Kubernetes, inside Docker. The kubectl commands stay the same.
+
+A cluster needs memory. About 8 GB of RAM works for a small one. Your kind version may print a newer node image.
+</Card>

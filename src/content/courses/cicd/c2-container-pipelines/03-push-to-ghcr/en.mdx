@@ -1,0 +1,76 @@
+---
+id: cicd-c2-l03
+world: 2
+title: Push to GHCR
+summary: "You will learn: to push images to GitHub's registry with the job's own token."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [cicd-c2-l02]
+scenario: c2-fix-permissions
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Working with the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+  - { label: "Publishing Docker images", url: "https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images" }
+  - { label: "GITHUB_TOKEN permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="ConveyorBelt" scenario="c2-fix-permissions" label="A push to main builds the image, then the push to ghcr.io is denied. The build station turns red." />
+
+Press Run. The pack is built, then stopped at the freezer door: `denied: permission_denied: write_package`. Plain words: this job's key can't put packs in.
+</Card>
+
+<Card id="see-ghcr" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/login-action@v4' }, { text: '  with:' }, { text: '    registry: ghcr.io' }, { text: '    username: ${{ github.actor }}' }, { text: '    password: ${{ secrets.GITHUB_TOKEN }}', target: true }]} prompt="Tap the line that hands over the job's pass." success="Yes! GITHUB_TOKEN: no secret to make or rotate." />
+
+**<Term id="ghcr">GHCR</Term>** (ghcr.io) is GitHub's own shop freezer. The job logs in with `GITHUB_TOKEN`. It's a pass that ends when the job ends.
+</Card>
+
+<Card id="try-sort" type="try">
+What does this job's pass need? Give it the least.
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'This job needs it' }, { id: 'off', label: 'Leave it off' }]} items={[{ label: '`contents: read`', bucket: 'need', why: 'The job reads your code.' }, { label: '`packages: write`', bucket: 'need', why: 'This is the freezer key: push to GHCR.' }, { label: '`contents: write`', bucket: 'off', why: 'Pushing an image never changes your code.' }, { label: '`issues: write`', bucket: 'off', why: 'The belt never touches issues.' }]} success="Least privilege: read the code, write the package." />
+</Card>
+
+<Card id="try-fix" type="try">
+Now fix the yellow lines. Pick the permissions, then press Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-fix-permissions" task={{ type: 'green' }} fixes={[
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Writing code is not writing packages.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'Every step would get every key.', correct: false },
+  { label: 'contents: read and packages: write', text: 'permissions:\n  contents: read\n  packages: write' }]}
+  success="Green! The pack is in the freezer on ghcr.io." />
+
+<Hint>The freezer key is called packages. Keep contents at read.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Mei opens a PR from her fork. The workflow pushes on PRs too. What happens?
+
+<Interactive name="Choice" options={[{ label: 'The push is denied: fork PRs get a read-only pass', correct: true, why: 'GitHub gives forks a read-only GITHUB_TOKEN. Strangers cannot fill your freezer.' }, { label: "Mei's image lands in your freezer", why: 'That would let anyone ship packs. Forks get a read-only token.' }, { label: 'The workflow does not run at all', why: 'It runs. Only the write is blocked.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Build the command that pulls version 1.2.0 from GHCR.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'pull', means: 'download an image' }, { text: 'ghcr.io/you/kedai-kancil:1.2.0', means: 'freezer / owner / repo : tag' }]} decoys={[{ text: 'ghcr.io/You/Kedai-Kancil:1.2.0', means: 'capital letters' }, { text: 'docker.io/you/kedai-kancil:1.2.0', means: 'Docker Hub, a different freezer' }]} success="That's the full address of your pack." />
+
+<Hint>Image names on GHCR are all lowercase.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now push images to GHCR with only the keys needed.
+</Card>
+
+<Card id="deeper" type="deeper">
+A package pushed with `GITHUB_TOKEN` takes its repo's visibility and access rules. Owner names with capitals break `ghcr.io/${{ github.repository }}`. metadata-action makes image names lowercase for you.
+
+Real rep (optional), in a public practice repo:
+
+<Interactive name="Mission" id="c2-l03-rep" steps={[{ id: 'perm', text: 'Give the image job contents: read and packages: write.' }, { id: 'login', text: 'Add docker/login-action for ghcr.io with GITHUB_TOKEN.' }, { id: 'push', text: 'Set push: true and use the tags from metadata-action.' }, { id: 'see', text: 'Push to main. Find the image under your repo’s Packages.' }]} success="Your image is in a real freezer!" />
+</Card>

@@ -1,0 +1,72 @@
+---
+id: linux-l2-l09
+world: 2
+title: Log dengan journalctl
+summary: "Anda akan belajar: baca diari sesuatu servis dan cari satu baris yang kata apa yang rosak."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SpotLines, SortCards]
+needs: [linux-l2-l08]
+scenario: linux-l2-journal
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "journalctl (Debian 13 man page)", url: "https://manpages.debian.org/trixie/systemd/journalctl.1.en.html" }
+  - { label: "nginx: core module (root, listen …)", url: "https://nginx.org/en/docs/http/ngx_http_core_module.html" }
+  - { label: "Debian Reference: system logs", url: "https://www.debian.org/doc/manuals/debian-reference/ch03.en.html" }
+---
+
+<Card id="hook" type="hook">
+`systemctl is-active nginx` kata `failed`. Web server cuba bermula pagi tadi dan berputus asa. Di mana ia beritahu sebabnya?
+
+<Interactive name="Choice" options={[{ label: 'Dalam journal: diari systemd', correct: true, why: 'systemd catat apa yang setiap servis kata. Anda cuma perlu baca.' }, { label: 'Tiada di mana-mana. Ia gagal begitu saja.', why: 'Servis hampir selalu tinggalkan sebab. Tengok dulu sebelum meneka.' }, { label: 'Dalam emel kepada root', why: 'Bukan di server ini. Diari itulah tempatnya.' }]} />
+</Card>
+
+<Card id="see-journal" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-journal" intro={['sudo journalctl -u nginx -n 5 --no-pager']} />
+
+<Term id="journal">Journal</Term> (jurnal) ialah diari pengurus syif. `-u nginx` simpan baris nginx sahaja. `-n 5` tunjuk lima terakhir. Cari baris **[emerg]**.
+</Card>
+
+<Card id="predict-sudo" type="predict">
+Tanpa sudo, `journalctl -u nginx` tunjuk satu Hint dan tiada baris nginx. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Diari itu peribadi untuk root dan pasukan adm serta systemd-journal', correct: true, why: 'Hint itu pun namakan kumpulan tersebut. Anda bukan ahlinya, jadi guna sudo.' }, { label: 'nginx tak tulis apa-apa', why: 'Ia tulis banyak. Anda cuma belum boleh baca.' }, { label: 'journalctl rosak', why: 'Ia berfungsi. Ia melindungi diari itu.' }]} />
+</Card>
+
+<Card id="spot-emerg" type="check">
+<Interactive name="SpotLines" lines={[{ text: 'Nov 01 08:55:04 kedai nginx[1244]: 2026/11/01 08:55:04 [emerg] 1244#1244: invalid number of arguments in "root" directive in /etc/nginx/sites-enabled/default:44', target: true }, { text: 'Nov 01 08:55:04 kedai nginx[1244]: nginx: configuration file /etc/nginx/nginx.conf test failed' }, { text: "Nov 01 08:55:04 kedai systemd[1]: nginx.service: Failed with result 'exit-code'." }, { text: 'Nov 01 08:55:04 kedai systemd[1]: Failed to start nginx.service - A high performance web server and a reverse proxy server.' }]} prompt="Ketik baris yang kata apa sebenarnya yang rosak." success="Baris [emerg] namakan fail, baris dan masalahnya." />
+</Card>
+
+<Card id="try-search" type="try">
+Diari panjang menyorok baris yang anda perlu. Carilah: `sudo journalctl -u nginx -g emerg`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-journal" goal={{ lastTyped: '^sudo journalctl (.* )?-g ' }} hints={['Taip sudo journalctl -u nginx -g emerg']} solution={['sudo journalctl -u nginx -g emerg']} success="Satu baris, terus ke masalah. -g berfungsi macam grep." />
+
+<Hint>`-g` maksudnya "grep": simpan baris yang padan sahaja.</Hint>
+</Card>
+
+<Card id="sort-flags" type="check">
+Suis mana yang anda perlukan?
+
+<Interactive name="SortCards" buckets={[{ id: 'u', label: '-u nginx' }, { id: 'n', label: '-n 20' }, { id: 'f', label: '-f' }]} items={[{ label: 'Baris web server sahaja', bucket: 'u', why: '-u pilih satu servis (unit).' }, { label: '20 baris terbaru sahaja', bucket: 'n', why: '-n kira baris dari hujung.' }, { label: 'Perhati baris baru masuk secara langsung', bucket: 'f', why: '-f ikut, macam tail -f. Ctrl+C hentikannya.' }, { label: 'Tiada apa-apa dari cron atau ssh', bucket: 'u', why: 'Namakan unit itu dan yang lain duduk di luar.' }]} success="-u siapa, -n berapa banyak, -f terus perhati." />
+</Card>
+
+<Card id="check-fix" type="check">
+Diari salahkan baris 44, tapi baris 41 tertulis `root /var/www/html` tanpa `;`. Apa yang membaikinya?
+
+<Interactive name="Choice" options={[{ label: 'Tambah ; yang hilang di hujung baris 41', correct: true, why: 'Tanpa ;, nginx terus baca ke baris 44. Silap sebenar satu baris di atas.' }, { label: 'Padam baris 44', why: 'Baris 44 okey. nginx cuma perasan masalah di situ.' }, { label: 'Pasang semula nginx', why: 'Program itu okey. Satu baris tetapan perlukan koma bertitik.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca diari servis dan cari baris yang penting.
+</Card>
+
+<Card id="deeper" type="deeper">
+Mesej ralat systemd sendiri cadangkan `journalctl -xeu nginx.service`: `-x` tambah teks bantuan dan `-e` lompat ke hujung. Ralat selalu tunjuk satu baris terlewat, macam di sini. Boss nanti baiki nginx yang rosak dengan semua ini.
+
+Latihan sebenar (pilihan): di VM Debian atau Ubuntu, `sudo journalctl -u ssh -n 10` tunjuk log masuk terkini.
+</Card>

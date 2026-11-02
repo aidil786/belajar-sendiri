@@ -1,0 +1,68 @@
+---
+id: docker-d6-l03
+world: 6
+title: "cgroups: apa yang ia boleh guna"
+summary: "Anda akan belajar: cara cgroups hadkan memori, CPU dan bilangan proses container, dan apa jadi bila sampai had."
+minutes: 4
+xp: 20
+interactives: [Choice, NamespaceXray, KitchenSim, Transcript, SortCards, Mission]
+needs: [docker-d6-l02]
+scenario: d6-limits
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Resource constraints", url: "https://docs.docker.com/engine/containers/resource_constraints/" }
+  - { label: "cgroups(7)", url: "https://man7.org/linux/man-pages/man7/cgroups.7.html" }
+  - { label: "docker container stats", url: "https://docs.docker.com/reference/cli/docker/container/stats/" }
+---
+
+<Card id="hook" type="hook">
+Satu bekas ada kebocoran memori. Ia makan dan terus makan. Laptop anda ada 16 GB. Apa jadi pada bekas yang lain?
+
+<Interactive name="Choice" options={[{ label: 'Jadi perlahan, atau Linux bunuh sebahagiannya', correct: true, why: 'Semua kongsi memori laptop. Satu bekas tamak menyusahkan semua.' }, { label: 'Tiada apa. Namespace asingkan mereka.', why: 'Namespace sorok benda. Ia tak hadkan berapa banyak bekas makan.' }, { label: 'Docker hentikan yang bocor pada 1 GB', why: 'Tiada had kecuali anda minta.' }]} />
+</Card>
+
+<Card id="see-limits" type="see">
+<Interactive name="NamespaceXray" switches={['memory', 'cpu', 'pids']} task={{ type: 'turnOn', switches: ['memory', 'cpu', 'pids'] }} prompt="Hidupkan ketiga-tiga had. Tengok panel Had." success="Setiap had ialah satu baris dalam fail cgroup." />
+
+Linux ada had catuan yang dipanggil <Term id="cgroup">cgroups</Term>. Satu **cgroup** (kumpulan kawalan) hadkan memori, CPU atau bilangan proses.
+</Card>
+
+<Card id="try-limit" type="try">
+Beri nginx baharu, `web`, catuan 256 MB. Kemudian semak dengan `docker stats --no-stream`.
+
+<Interactive name="KitchenSim" scenario="d6-limits" goal={{ running: ['web'], typed: '(--memory|-m)[ =]?[0-9]', lastTyped: '^docker stats' }} hints={['Taip docker run -d --name web --memory 256m nginx:1.30-alpine', 'Sekarang taip docker stats --no-stream']} success="Lajur LIMIT tulis 256MiB. Itu catuan web." />
+
+<Hint>`--memory 256m` tetapkan had. `docker stats --no-stream` tunjuknya sekali.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Aplikasi itu terus makan memori, jauh melepasi hadnya. Apa Linux buat?
+
+<Interactive name="Choice" options={[{ label: 'Hentikannya. Kod keluar 137.', correct: true, why: 'Kernel bunuh proses itu. Docker tandakan OOMKilled: kehabisan memori.' }, { label: 'Beri lebih banyak memori', why: 'Had itu dinding keras.' }, { label: 'Tiada apa. Had cuma amaran.', why: 'Had memori dikuatkuasakan oleh kernel sendiri.' }]} />
+</Card>
+
+<Card id="check-oom" type="check">
+<Interactive name="Transcript" title="bash" label="Output sebenar pada Docker 29: container dengan had 32 MB makan memori, keluar dengan kod 137, dan inspect kata OOMKilled true." lines={[{ cmd: 'docker run --name hog --memory 32m --memory-swap 32m alpine:3.22 tail /dev/zero' }, { cmd: 'echo $?' }, { out: '137', color: 'red' }, { cmd: "docker inspect -f '{{.State.OOMKilled}}' hog" }, { out: 'true', color: 'red' }, { cmd: 'docker rm hog' }, { out: 'hog' }]} />
+
+Output sebenar. `tail /dev/zero` makan memori tanpa henti. Kod keluar 137 maksudnya "dibunuh". **OOMKilled** maksudnya kehabisan memori: ia sampai hadnya.
+</Card>
+
+<Card id="check-sort" type="check">
+Namespace atau cgroup? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'ns', label: 'Namespace: apa ia nampak' }, { id: 'cg', label: 'cgroup: apa ia guna' }]} items={[{ label: 'Hostname sendiri', bucket: 'ns', why: 'Namespace UTS: pandangan berbeza.' }, { label: 'Paling banyak 1.5 CPU', bucket: 'cg', why: 'Catuan masa CPU.' }, { label: 'Senarai proses sendiri', bucket: 'ns', why: 'Namespace PID: ia nampak prosesnya sahaja.' }, { label: 'Paling banyak 100 proses', bucket: 'cg', why: 'Had pids hentikan proses yang membiak tanpa kawalan.' }, { label: 'Paling banyak 512 MB memori', bucket: 'cg', why: 'Had memori.' }]} success="Siap! Namespace = penutup mata. cgroup = catuan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hadkan apa yang container boleh guna.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker sentiasa letak container dalam cgroup sendiri, tapi tiada had kecuali diminta. Dengan cgroup v2, had disimpan dalam fail: `memory.max`, `cpu.max`, `pids.max`. Had CPU cuma lambatkan bekas. Ia tak pernah bunuhnya. Guna `tail /dev/zero` hanya dengan had memori!
+
+<Interactive name="Mission" id="d6-l03-limits" steps={[{ id: 'run', text: 'Mulakan nginx dengan tiga had.', command: 'docker run -d --name web --memory 256m --cpus 0.5 --pids-limit 100 nginx:1.30-alpine' }, { id: 'stats', text: 'Lihat had memori dan PID-nya.', command: 'docker stats --no-stream web' }, { id: 'rm', text: 'Kemas semula.', command: 'docker rm -f web' }]} success="Tiga catuan, satu bekas." />
+</Card>

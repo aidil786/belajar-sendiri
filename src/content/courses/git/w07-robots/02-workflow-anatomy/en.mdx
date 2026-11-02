@@ -1,0 +1,81 @@
+---
+id: git-w07-l02
+world: 7
+title: Inside a workflow file
+summary: "You will learn: the parts of a workflow file, and how to write one."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, Choice, SortCards, YamlBuilder, Sim, MissionCheck]
+needs: [git-w07-l01]
+scenario: w07-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w07-l02" commands={['cat .github/workflows/ci.yml']} label="cat shows ci.yml: name CI, on push, then one job called test. It runs on ubuntu-latest and has four steps." />
+
+This file is a **<Term id="workflow">workflow</Term>**: a to-do list for a robot. It is written in <Term id="yaml">YAML</Term>. Looks scary? Read it as three parts: when, where, what.
+</Card>
+
+<Card id="see-on" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'name: CI' }, { text: 'on: push', target: true }, { text: 'jobs:' }, { text: '  test:' }, { text: '    runs-on: ubuntu-latest' }, { text: '    steps:' }, { text: '      - uses: actions/checkout@v7' }, { text: '      - run: npm test' }]} prompt="Tap the line that says when the robot wakes up." success="Yes! on: push means every push wakes it." />
+
+When: `on:` names the **<Term id="trigger">trigger</Term>**. It says when the workflow runs. Here, on every push.
+</Card>
+
+<Card id="see-job" type="see">
+Where: under `jobs:` sits a **<Term id="job">job</Term>**, a group of steps on one computer. What does `runs-on: ubuntu-latest` ask for?
+
+<Interactive name="Choice" options={[{ label: 'A fresh Linux computer from GitHub', correct: true, why: 'GitHub lends a clean computer for each job. It is called a runner.' }, { label: 'Your own laptop', why: 'Your laptop can stay off. The job runs on a GitHub computer.' }, { label: 'The newest version of your code', why: 'Your code comes from the checkout step. This line picks a computer.' }]} />
+</Card>
+
+<Card id="see-steps" type="see">
+What: a job has **<Term id="step">steps</Term>**. They run in order, top to bottom. `uses:` borrows a ready-made action. `run:` types a command.
+
+<Interactive name="SortCards" buckets={[{ id: 'uses', label: 'uses: a ready-made action' }, { id: 'run', label: 'run: a command' }]} items={[{ label: '`actions/checkout@v7`', bucket: 'uses', why: 'owner/name@version is an action. This one copies your code onto the runner.' }, { label: '`npm test`', bucket: 'run', why: 'A command you could type in your own terminal.' }, { label: '`actions/setup-node@v7`', bucket: 'uses', why: 'An action that installs Node.' }, { label: '`npm ci`', bucket: 'run', why: 'A command that installs your packages.' }]} success="Sorted! uses borrows. run types." />
+</Card>
+
+<Card id="try-build" type="try">
+Your turn. Build a workflow that tests every push.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'job', 'checkout', 'node', 'install', 'test'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push', yaml: 'push:', means: 'Run on every push.' },
+  { id: 'job', kind: 'job', label: 'Job: test', yaml: 'test:\n  runs-on: ubuntu-latest', means: 'Get a fresh Linux runner.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto the runner.' },
+  { id: 'node', kind: 'step', label: 'Set up Node', yaml: '- uses: actions/setup-node@v7\n  with:\n    node-version: 24', means: 'Install Node 24.' },
+  { id: 'install', kind: 'step', label: 'Install packages', yaml: '- run: npm ci', means: 'Install the exact packages from the lock file.' },
+  { id: 'test', kind: 'step', label: 'Run tests', yaml: '- run: npm test', means: 'Run the tests.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy', yaml: '- run: npm run deploy', means: 'Publish the site.', why: 'This workflow only tests. Deploying comes later in this world.' }]}
+  success="Your robot is ready: when, where, what." />
+
+<Hint>When, then where, then what: trigger, job, steps.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You move `run: npm test` above the checkout step. What happens?
+
+<Interactive name="Choice" options={[{ label: "The step fails: the code isn't on the runner yet", correct: true, why: 'The job folder starts empty. Checkout copies your code in first.' }, { label: 'It works: GitHub copies the code anyway', why: 'Only the checkout step copies your code onto the runner.' }, { label: 'GitHub puts the steps back in order', why: 'Steps run exactly in the order you write them.' }]} />
+</Card>
+
+<Card id="try-commit" type="try">
+A workflow is just a file in your repo. Save it with Git, like any other file.
+
+<Interactive name="Sim" scenario="w07-l02" panels={['areas']} goal={{ lastCommitHas: ['.github/workflows/ci.yml'], clean: true }} hints={['Put it in the box: git add .github', 'Now save it: git commit -m "Add CI workflow"']} success="Committed! Push it, and GitHub runs it." />
+
+<Hint>Type `git add .github`, then `git commit -m "Add CI workflow"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now read and write a workflow file.
+</Card>
+
+<Card id="deeper" type="deeper">
+Make it real (optional). Open your diary repo on GitHub. In its Actions tab, pick a simple starter workflow and commit it. Wait a minute, then check here.
+
+<Interactive name="MissionCheck" checks={[{ type: 'workflowRuns', repo: 'diary', min: 1, label: 'A workflow ran in your diary repo' }]} success="Your first robot ran on GitHub!" />
+</Card>

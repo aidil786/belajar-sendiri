@@ -1,0 +1,74 @@
+---
+id: linux-l3-l05
+world: 3
+title: "DNS: dig dan /etc/hosts"
+summary: "Anda akan belajar: bagaimana nama menjadi nombor, dan cara menyemaknya."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, TimelineTap, SpotLines, Choice, Mission]
+needs: [linux-l3-l04]
+scenario: linux-l3-dns
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "BIND 9: dig", url: "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility" }
+  - { label: "hosts(5)", url: "https://man7.org/linux/man-pages/man5/hosts.5.html" }
+  - { label: "getent(1)", url: "https://man7.org/linux/man-pages/man1/getent.1.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-dns" intro={['curl -s kedai.example']} network />
+
+Anda taip nama, bukan nombor. Tetapi panggilan itu sampai ke 203.0.113.10. Siapa tukar nama itu kepada nombor?
+</Card>
+
+<Card id="see-path" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: '/etc/hosts', text: 'Senarai pendek milik kedai sendiri. Disemak dahulu.' }, { when: '2', title: 'Resolver', text: '/etc/resolv.conf namakannya: 10.0.0.2. Ia tanya DNS untuk anda.' }, { when: '3', title: 'DNS menjawab', text: 'kedai.example ialah 203.0.113.10. Ingat selama 300 saat.' }, { when: '4', title: 'Panggilan', text: 'curl dail 203.0.113.10.' }]} />
+
+**DNS** ialah buku telefon internet. Tekan setiap langkah untuk ikut satu nama.
+</Card>
+
+<Card id="try-dig" type="try">
+Tanya buku telefon sendiri. `dig +short` cetak jawapannya sahaja.
+
+<Interactive name="LinuxSim" scenario="linux-l3-dns" goal={{ lastTyped: '^dig (\\+short )?menu\\.kedai\\.example' }} hints={['Taip dig +short menu.kedai.example', 'Cuba juga tanpa +short.']} solution={['dig +short menu.kedai.example']} success="menu.kedai.example ialah 203.0.113.20." />
+</Card>
+
+<Card id="see-dig" type="see">
+Tanpa `+short`, dig tunjuk seluruh jawapan. Tekan baris yang ada jawapannya.
+
+<Interactive name="SpotLines" lines={[{ text: ';; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 55600' }, { text: ';; QUESTION SECTION:' }, { text: ';kedai.example.                 IN	A' }, { text: ';; ANSWER SECTION:' }, { text: 'kedai.example.          300	IN	A	203.0.113.10', target: true }, { text: ';; SERVER: 10.0.0.2#53(10.0.0.2) (UDP)' }]} prompt="Tekan baris jawapan." success="Rekod A: kedai.example ialah 203.0.113.10, selama 300 saat." />
+</Card>
+
+<Card id="predict" type="predict">
+`/etc/hosts` kata kedai.example ialah 10.0.0.99. DNS kata 203.0.113.10. Nombor mana yang curl dail?
+
+<Interactive name="Choice" options={[{ label: '10.0.0.99', correct: true, why: 'Kedai semak senarainya sendiri dahulu.' }, { label: '203.0.113.10', why: 'Hanya bila /etc/hosts tiada baris untuknya.' }, { label: 'Kedua-duanya, bergilir', why: 'Jawapan pertama yang menang.' }]} />
+</Card>
+
+<Card id="try-hosts" type="try">
+Ajar kedai satu nama baharu: `stock.kedai` ialah 10.0.0.21. Tambah satu baris dalam <Term id="hosts-file">/etc/hosts</Term>.
+
+<Interactive name="LinuxSim" scenario="linux-l3-hosts" goal={{ resolves: { 'stock.kedai': '10.0.0.21' } }} hints={["Taip echo '10.0.0.21 stock.kedai' | sudo tee -a /etc/hosts", 'Semak dengan getent hosts stock.kedai']} solution={["echo '10.0.0.21 stock.kedai' | sudo tee -a /etc/hosts"]} success="getent hosts stock.kedai kini jumpa 10.0.0.21." />
+
+<Hint>`tee -a` tambah satu baris. Tanpa `-a`, tee ganti seluruh fail!</Hint>
+</Card>
+
+<Card id="check" type="check">
+Anda tambah satu nama dalam /etc/hosts. Kemudian `dig +short` untuk nama itu tak cetak apa-apa. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'dig tanya DNS sahaja, bukan /etc/hosts', correct: true, why: 'Guna getent hosts untuk semak apa yang program benar-benar nampak.' }, { label: 'Baris itu tak disimpan', why: 'getent akan tunjuk. dig cuma tak pernah baca fail itu.' }, { label: 'DNS rosak', why: 'Kalau begitu dig akan cetak ralat, bukan kosong.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh ikut nama hingga ke nombornya dengan dig dan getent.
+</Card>
+
+<Card id="deeper" type="deeper">
+`300` itu ialah TTL: berapa lama orang lain boleh ingat jawapan itu. Sebab itu perubahan DNS ambil masa untuk sampai kepada semua. `www.kedai.example` ialah CNAME: nama samaran untuk kedai.example.
+
+<Interactive name="Mission" id="linux-l3-l05-rep" steps={[{ id: 'dig', text: 'Tanya DNS untuk nama sebenar. Tiada dig? sudo apt install bind9-dnsutils', command: 'dig +short example.com' }, { id: 'getent', text: 'Tanya cara program bertanya.', command: 'getent hosts example.com' }, { id: 'hosts', text: 'Baca senarai telefon anda sendiri.', command: 'cat /etc/hosts' }]} success="Anda baca buku telefon sebenar." />
+</Card>

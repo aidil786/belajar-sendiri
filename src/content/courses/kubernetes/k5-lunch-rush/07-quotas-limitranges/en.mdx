@@ -1,0 +1,74 @@
+---
+id: k8s-k5-l07
+world: 5
+title: ResourceQuotas and LimitRanges
+summary: "You will learn: how to give each zone a budget and a default plate size."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SpotLines, FoodCourtSim, SortCards]
+needs: [k8s-k5-l06]
+scenario: k5-quota
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: resource quotas", url: "https://kubernetes.io/docs/concepts/policy/resource-quotas/" }
+  - { label: "Kubernetes: limit ranges", url: "https://kubernetes.io/docs/concepts/policy/limit-range/" }
+  - { label: "kubectl create quota", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_quota/" }
+---
+
+<Card id="hook" type="hook">
+Three teams share one food court. One team orders 50 trays and fills every stall. The others get nothing. How do you stop that?
+
+<Interactive name="Choice" options={[{ label: 'Give each zone a budget', correct: true, why: 'Each team works in its own namespace, with its own limit.' }, { label: 'Trust everyone to be careful', why: 'One typo in replicas can still fill the food court.' }, { label: 'Give each team its own cluster', why: 'Possible, but costly. A budget per zone is lighter.' }]} />
+</Card>
+
+<Card id="see-quota" type="see">
+<Interactive name="KubeReplay" scenario="k5-quota" commands={['kubectl apply -f quota.yaml', 'kubectl get resourcequota -n food']} label="The food-quota budget is created in the food namespace. Nothing is used yet: 0 of 10 pods, 0 of 1 CPU, 0 of 1Gi memory." />
+
+A **<Term id="resource-quota">ResourceQuota</Term>** is a zone's budget. In total, the food zone may ask for 1 CPU, 1Gi and 10 trays.
+</Card>
+
+<Card id="try-limits" type="try">
+A **<Term id="limit-range">LimitRange</Term>** sets a default plate size. Containers with no requests get these numbers. Tap the line that sets the default CPU request.
+
+<Interactive name="SpotLines" lines={[{ text: 'kind: LimitRange' }, { text: 'spec:' }, { text: '  limits:' }, { text: '    - type: Container' }, { text: '      defaultRequest:' }, { text: '        cpu: 250m', target: true }, { text: '        memory: 128Mi' }, { text: '      default:' }, { text: '        cpu: 500m' }, { text: '        memory: 256Mi' }]} prompt="Tap the default CPU request." success="Yes: defaultRequest is the request. default is the limit." />
+</Card>
+
+<Card id="predict" type="predict">
+Each shop tray now asks for 250m CPU. The zone's budget is 1 CPU. You order 5 trays. How many start?
+
+<Interactive name="Choice" compact options={[{ label: '4', correct: true, why: '4 × 250m = 1 CPU. The 5th would go over budget.' }, { label: '5', why: 'Almost! 5 × 250m is 1.25 CPU. The budget is 1.' }, { label: '0', why: 'The budget refuses only the tray that goes over.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k5-quota-full" commands={['kubectl get deployment shop -n food', 'kubectl get events -n food --field-selector reason=FailedCreate -o jsonpath={.items[0].message}']} label="shop shows 4 of 5 ready. The FailedCreate event says: exceeded quota food-quota, requested cpu 250m, used 1, limited 1." />
+
+`exceeded quota` in plain words: the 5th tray would go over the zone's budget. So it was never made.
+</Card>
+
+<Card id="try-fit" type="try">
+Make the shop fit the budget: ask for 4 trays. The pink bar shows you are in the food zone.
+
+<Interactive name="FoodCourtSim" scenario="k5-quota-full" intro={['kubectl config set-context --current --namespace=food']} goal={{ replicas: { name: 'shop', count: 4 } }} hints={['Type kubectl scale deployment shop --replicas=4']} success="Want 4, see 4. The budget is happy." />
+
+<Hint>Type `kubectl scale deployment shop --replicas=4`.</Hint>
+</Card>
+
+<Card id="check-facts" type="check">
+True or not? Sort each sentence.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'True' }, { id: 'no', label: 'Not true' }]} items={[{ label: 'A quota counts requests, not real use', bucket: 'yes', why: 'It adds up what trays ask for.' }, { label: 'A new LimitRange changes trays already running', bucket: 'no', why: 'It fills in numbers only when a tray is made.' }, { label: 'With a CPU quota, a tray with no CPU request can be refused', bucket: 'yes', why: 'The budget needs a number. A LimitRange can fill one in.' }, { label: 'The food quota also limits the default zone', bucket: 'no', why: 'A quota lives in one namespace only.' }]} success="All sorted!" />
+</Card>
+
+<Card id="win" type="win">
+You can now give a zone a budget and a default plate size.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe namespace food` shows the budget and what is used. Quotas can also count objects, such as Services or Secrets. A LimitRange can set a min and max too. Then a tray that asks for too much is refused.
+
+Real rep (optional): make a namespace on kind and add both files. Then order too many trays.
+</Card>

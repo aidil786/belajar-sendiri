@@ -1,0 +1,76 @@
+---
+id: iac-t1-l02
+world: 1
+title: HCL blocks
+summary: "You will learn: how to read a block, and how one block uses another."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, CommandBuilder, TofuSim, SortCards]
+needs: [iac-t1-l01]
+scenario: t1-blocks
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: configuration syntax", url: "https://opentofu.org/docs/language/syntax/configuration/" }
+  - { label: "OpenTofu: resources", url: "https://opentofu.org/docs/language/resources/" }
+  - { label: "OpenTofu: references to named values", url: "https://opentofu.org/docs/language/expressions/references/" }
+---
+
+<Card id="hook" type="hook">
+Here is a tiny blueprint. What does it ask OpenTofu to make?
+
+```hcl
+resource "random_pet" "stall" {
+  length = 2
+}
+```
+
+<Interactive name="Choice" options={[{ label: 'A random stall name, two words long', correct: true, why: 'random_pet makes funny names like lucky-civet. length = 2 means two words.' }, { label: 'A pet animal called stall', why: 'stall is only our label. random_pet makes a random name.' }, { label: 'Two stalls', why: 'length is the number of words in one name.' }]} />
+</Card>
+
+<Card id="see-blocks" type="see">
+Tap the two lines where a new block starts.
+
+<Interactive name="SpotLines" lines={[{ text: 'resource "random_pet" "stall" {', target: true }, { text: '  length = 2' }, { text: '}' }, { text: '' }, { text: 'resource "local_file" "sign" {', target: true }, { text: '  filename = "sign.txt"' }, { text: '  content  = "Welcome to ${random_pet.stall.id}\\n"' }, { text: '}' }]} success="Two blocks. Each starts with a type and two labels, then {." />
+
+A blueprint is made of **<Term id="block">blocks</Term>**. This language is called HCL.
+</Card>
+
+<Card id="try-build" type="try">
+Build the first line of a block. It makes a file, and you call it `menu`.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'resource', means: 'the block type: build a thing' }, { text: '"local_file"', means: 'which kind of thing: a file' }, { text: '"menu"', means: 'your own name for it' }, { text: '{', means: 'the settings start here' }]} decoys={[{ text: 'output', means: 'a block that shares a value' }, { text: 'menu.txt', means: 'a file name, without quotes' }]} success="resource, kind, your name, then {. That is every resource block." />
+</Card>
+
+<Card id="predict" type="predict">
+The sign uses `${random_pet.stall.id}`. That is a **<Term id="reference">reference</Term>**: type, name, then the value. What is `stall` here?
+
+<Interactive name="Choice" options={[{ label: 'Our own name for the random_pet block', correct: true, why: 'Type random_pet, name stall, value id. The address finds the block.' }, { label: 'The name OpenTofu picked', why: 'The picked name is the value id. stall is our label.' }, { label: 'A file called stall', why: 'No file here. It points at the random_pet block.' }]} />
+</Card>
+
+<Card id="try-edit" type="try">
+Open `main.tf`. Change `Welcome to` into `Selamat datang ke`. Then type `tofu apply` and `yes`.
+
+<Interactive name="TofuSim" scenario="t1-blocks" goal={{ fileContains: { 'sign.txt': 'Selamat datang' } }} hints={['Tap the main.tf tab. Change the words Welcome to.', 'Keep the ${random_pet.stall.id} part as it is.', 'Then type tofu apply, and yes.']} success="The sign greets in Malay, with the stall's random name." />
+
+<Hint>Edit only the words inside the quotes, before `${`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Sort the parts of a block.
+
+<Interactive name="SortCards" buckets={[{ id: 'type', label: 'Block type' }, { id: 'label', label: 'Label' }, { id: 'arg', label: 'Argument (a setting)' }]} items={[{ label: '`resource`', bucket: 'type', why: 'The first word says what kind of block it is.' }, { label: '`"local_file"`', bucket: 'label', why: 'The first label: which kind of resource.' }, { label: '`"sign"`', bucket: 'label', why: 'The second label: your own name.' }, { label: '`filename = "sign.txt"`', bucket: 'arg', why: 'name = value, inside the braces.' }, { label: '`length = 2`', bucket: 'arg', why: 'A setting inside the braces.' }]} success="Type, labels, arguments. You can read HCL now." />
+</Card>
+
+<Card id="win" type="win">
+You can now read a block and follow a reference.
+</Card>
+
+<Card id="deeper" type="deeper">
+Lines starting with `#` are comments. OpenTofu reads every `.tf` file in the folder as one blueprint. File names are only for people. In strings, `\n` is a new line and `${ }` puts a value inside the text.
+
+The settings inside a block are called **<Term id="argument">arguments</Term>**. Each provider's docs list the arguments its resources take.
+</Card>

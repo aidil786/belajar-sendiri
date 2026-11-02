@@ -1,0 +1,67 @@
+---
+id: git-w01-l02
+world: 1
+title: Three places your work lives
+summary: "You will learn: the three places Git keeps your work."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice]
+needs: [git-w01-l01]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitglossary (working tree, index)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git commit", url: "https://git-scm.com/docs/git-commit" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="index.html wobbles in the working folder with a changed tag." frames={[{ working: [{ name: 'index.html', tag: 'changed' }] }]} />
+
+You pressed save in your editor. So Git saved it too, right? Not yet! Your work can sit in three places.
+</Card>
+
+<Card id="see-working" type="see">
+<Interactive name="AreasScene" label="The blue working folder glows. It holds index.html and style.css. The box and the repository are empty." frames={[{ working: [{ name: 'index.html', glow: true }, { name: 'style.css', glow: true }], staging: [], repo: [] }]} />
+
+Place 1 is the **working folder**. These are your normal files. You edit them here.
+</Card>
+
+<Card id="see-staging" type="see">
+<Interactive name="AreasScene" command="git add index.html" label="The command git add index.html types itself. index.html slides from the working folder into the amber box." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css'] }, { working: ['style.css'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+Place 2 is the **staging area**, a box. `git add` puts ready changes in the box.
+</Card>
+
+<Card id="see-repo" type="see">
+<Interactive name="AreasScene" command='git commit -m "Add home page"' effect="flash" label="Camera flash. The box empties, and a new commit called Add home page lands in the green repository." frames={[{ working: ['style.css'], staging: ['index.html'], repo: [{ name: 'Add README', kind: 'commit' }] }, { working: ['style.css'], staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }] }]} />
+
+Place 3 is the **repository**. `git commit` takes a photo of the box and keeps it here, safe.
+</Card>
+
+<Card id="predict-new" type="predict">
+You make a new file, `notes.txt`. Where is it now?
+
+<Interactive name="Choice" compact options={[{ label: 'Working folder', correct: true, why: 'New files start in your folder. Git can see them, but saves nothing yet.' }, { label: 'Staging area', why: 'Only git add puts a file in the box.' }, { label: 'Repository', why: 'Only git commit saves into the repository.' }]} reveal={{ label: 'notes.txt appears in the blue working folder with a new tag.', frames: [{ working: ['index.html'] }, { working: ['index.html', { name: 'notes.txt', tag: 'new', glow: true }] }] }} />
+</Card>
+
+<Card id="predict-add" type="predict">
+You type `git add notes.txt`. Where is it now?
+
+<Interactive name="Choice" compact options={[{ label: 'Working folder', why: 'git add moves it on, into the box.' }, { label: 'Staging area', correct: true, why: 'git add puts it in the box, ready to save.' }, { label: 'Repository', why: 'Not yet. That needs git commit.' }]} reveal={{ label: 'notes.txt slides from the working folder into the amber box.', frames: [{ working: ['index.html', { name: 'notes.txt', tick: true }] }, { working: ['index.html'], staging: [{ name: 'notes.txt', tick: true }] }] }} />
+</Card>
+
+<Card id="predict-commit" type="predict">
+You type `git commit -m "Add notes"`. Where does the saved copy go?
+
+<Interactive name="Choice" compact options={[{ label: 'Working folder', why: 'Your folder keeps your files, but commits live in the repository.' }, { label: 'Staging area', why: 'The box empties when you commit.' }, { label: 'Repository', correct: true, why: 'A commit is a photo of the box, kept in the repository.' }]} reveal={{ effect: 'flash', label: 'Flash. The box empties and a commit called Add notes lands in the repository.', frames: [{ staging: ['notes.txt'], repo: [{ name: 'Add home page', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add notes', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="win" type="win">
+You can now name the three places your work lives.
+</Card>
+
+<Card id="deeper" type="deeper">
+You will meet other names for these places. The working folder is also called the working tree. The staging area is also called the index. The repository lives inside the hidden `.git` folder.
+</Card>

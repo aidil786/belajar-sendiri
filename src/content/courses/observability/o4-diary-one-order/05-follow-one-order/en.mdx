@@ -1,0 +1,64 @@
+---
+id: obs-o4-l05
+world: 4
+title: "Follow one order across services"
+summary: "You will learn: how one trace ID travels between services, so you can follow one order end to end."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, CommandBuilder, Transcript, OrderList]
+needs: [obs-o4-l04]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTelemetry: context propagation", url: "https://opentelemetry.io/docs/concepts/context-propagation/" }
+  - { label: "W3C Trace Context", url: "https://www.w3.org/TR/trace-context/" }
+---
+
+<Card id="hook" type="hook">
+Order A1041 failed. Its kedai-api spans are in one trace. Its kedai-pay spans sit in another trace, with a new trace ID. What went wrong?
+
+<Interactive name="Choice" options={[{ label: 'kedai-api did not pass the order number on', correct: true, why: 'Yes. kedai-pay never heard the trace ID, so it started a new one.' }, { label: 'kedai-pay is too slow', why: 'Slow makes long spans, not a new trace.' }, { label: 'The Collector mixed them up', why: 'The Collector only carries what the apps send.' }]} />
+</Card>
+
+<Card id="see-header" type="see">
+<Interactive name="SpotLines" prompt="kedai-api calls kedai-pay. Tap the line that carries the order number." lines={[{ text: 'POST /pay HTTP/1.1' }, { text: 'Host: kedai-pay:8080' }, { text: 'Content-Type: application/json' }, { text: 'traceparent: 00-3c9a51e0b7d24f6e9a18c2d4e6f80b15-d2e3f40516273849-01', target: true }]} success="Yes. The traceparent header carries the trace ID to the next service." />
+
+Passing the trace ID along, in a header, is **<Term id="context-propagation">context propagation</Term>**.
+</Card>
+
+<Card id="try-build" type="try">
+Build the `traceparent` header. Tap the pieces in order.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'traceparent:', means: 'the W3C header name' }, { text: '00-', means: 'version 00' }, { text: '3c9a51e0b7d24f6e9a18c2d4e6f80b15-', means: 'the trace ID: the order number' }, { text: 'd2e3f40516273849-', means: "the caller's span: who is asking" }, { text: '01', means: 'flags: 01 means sampled, keep this trace' }]} decoys={[{ text: 'order_id=A1041-', means: 'a log field, not part of this header' }]} success="That is a real W3C traceparent header." />
+
+<Hint>Version, trace ID, parent span, flags. Dashes between them.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+kedai-pay reads that header and starts its span `POST /pay`. What is its Parent ID?
+
+<Interactive name="Choice" options={[{ label: 'd2e3f40516273849', correct: true, why: "Yes. It is the caller's span from the header. The real Collector showed exactly this." }, { label: 'c1d2e3f405162738', why: 'That is POST /order, one step further up. The header names the direct caller.' }, { label: 'None: it starts fresh', why: 'Only without the header. With it, the order keeps one tree.' }]} />
+</Card>
+
+<Card id="check-logs" type="check">
+<Interactive name="Transcript" title="bash" label="logcli searches every kedai diary for the trace ID. Three lines come back: order received in kedai-api, a slow query of 2800 ms in kedai-pay, then payment timeout in kedai-api." lines={[{ cmd: 'logcli query --quiet \'{app=~"kedai-.*"} |= "3c9a51e0b7d24f6e9a18c2d4e6f80b15"\'' }, { out: '2026-11-01T17:45:22Z {app="kedai-api", detected_level="error", service_name="kedai-api"} {"level":"error","msg":"payment timeout","order_id":"A1041","duration_ms":3000,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:21Z {app="kedai-pay", detected_level="warn", service_name="kedai-pay"}  {"level":"warn","msg":"slow query","table":"payments","duration_ms":2800,"trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}\n2026-11-01T17:45:19Z {app="kedai-api", detected_level="info", service_name="kedai-api"}  {"level":"info","msg":"order received","order_id":"A1041","trace_id":"3c9a51e0b7d24f6e9a18c2d4e6f80b15"}' }]} />
+
+The same number sits in both diaries. One search finds the order everywhere.
+</Card>
+
+<Card id="check-story" type="check">
+<Interactive name="OrderList" items={['kedai-api: order received', 'kedai-pay: slow query on payments, 2.8 s', 'kedai-api: payment timeout after 3 s']} label="First thing that happened at the top" success="The pay database was slow, so kedai-api gave up." />
+
+Put order A1041's story in time order. Use the times in the lines.
+</Card>
+
+<Card id="win" type="win">
+You can now follow one order across services by its trace ID.
+</Card>
+
+<Card id="deeper" type="deeper">
+You rarely write `traceparent` by hand. OpenTelemetry's instrumentation for HTTP clients and servers adds and reads it for you. Still check every hop. One service that drops the header splits the trace in two.
+</Card>

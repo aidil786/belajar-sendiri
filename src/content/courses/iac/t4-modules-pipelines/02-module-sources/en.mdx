@@ -1,0 +1,65 @@
+---
+id: iac-t4-l02
+world: 4
+title: Module sources and version pins
+summary: "You will learn: where modules can come from, and how to pin the version you trust."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, SortCards, SwipeJudge, Mission]
+needs: [iac-t4-l01]
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: module sources", url: "https://opentofu.org/docs/language/modules/sources/" }
+  - { label: "OpenTofu: version constraints", url: "https://opentofu.org/docs/language/expressions/version-constraints/" }
+  - { label: "OpenTofu: dependency lock file", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+---
+
+<Card id="hook" type="hook">
+Your blueprint uses a stall module from the internet, with no version. Tonight its author changes it. Tomorrow CI runs `tofu init` and `tofu plan`. What can happen?
+
+<Interactive name="Choice" options={[{ label: 'It pulls in the new code. Surprise changes.', correct: true, why: 'With nothing pinned, a fresh init fetches the newest design.' }, { label: 'Nothing: modules never change', why: 'Authors update modules all the time.' }, { label: 'The lock file keeps the old module', why: 'The lock file tracks providers only. Modules need their own pin.' }]} />
+</Card>
+
+<Card id="see-pins" type="see">
+<Interactive name="SpotLines" prompt="Tap the two lines that pin a version." lines={[{ text: 'module "kiosk" {' }, { text: '  source = "./modules/kiosk"' }, { text: '}' }, { text: '' }, { text: 'module "stall" {' }, { text: '  source  = "kedai-kancil/stall/local"' }, { text: '  version = "~> 1.2"', target: true }, { text: '}' }, { text: '' }, { text: 'module "oven" {' }, { text: '  source = "git::https://example.com/oven.git?ref=v2.0.1"', target: true }, { text: '}' }]} success="Registry modules pin with version. Git pins with ?ref= (a tag or a commit)." />
+
+A **<Term id="version-pin">version pin</Term>** says which versions you trust. A local folder needs none: it changes only when you change it.
+</Card>
+
+<Card id="try-sort" type="try">
+Where does each module come from?
+
+<Interactive name="SortCards" buckets={[{ id: 'local', label: 'A local folder' }, { id: 'registry', label: 'A registry' }, { id: 'git', label: 'A Git repo' }]} items={[{ label: './modules/kiosk', bucket: 'local', why: 'Starts with ./ or ../: a folder next to you.' }, { label: 'kedai-kancil/stall/local', bucket: 'registry', why: 'Namespace, name, provider: a registry address.' }, { label: 'git::https://…/oven.git?ref=v2.0.1', bucket: 'git', why: 'git:: and a URL. ?ref= picks the tag.' }, { label: '../shared/menu', bucket: 'local', why: 'One folder up: still on your disk.' }, { label: 'hashicorp/consul/aws', bucket: 'registry', why: 'Three parts, no URL: a registry module.' }]} success="Folders, registries and Git: three kinds of source." />
+</Card>
+
+<Card id="predict" type="predict">
+The pin says `version = "~> 1.2.0"`. Which update can arrive by itself?
+
+<Interactive name="Choice" options={[{ label: '1.2.7', correct: true, why: '~> lets only the last number you wrote grow: 1.2.x.' }, { label: '1.3.0', why: '~> 1.2.0 keeps 1.2. Write ~> 1.2 to allow 1.3.' }, { label: '2.0.0', why: 'A new major version can break things. ~> never lets it in.' }]} />
+</Card>
+
+<Card id="try-range" type="try">
+Now the pin is `~> 1.2`. Sort each version.
+
+<Interactive name="SortCards" buckets={[{ id: 'in', label: 'Allowed' }, { id: 'out', label: 'Blocked' }]} items={[{ label: '1.2.5', bucket: 'in', why: '1.2 and up, inside 1.x.' }, { label: '1.9.0', bucket: 'in', why: 'The minor number may grow.' }, { label: '2.0.0', bucket: 'out', why: 'The major number is fixed at 1.' }, { label: '1.1.9', bucket: 'out', why: 'Below the 1.2 you wrote.' }]} success="~> 1.2 means: at least 1.2, below 2.0." />
+</Card>
+
+<Card id="check" type="check">
+Review a teammate's modules. Swipe: good, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A registry module with version = "~> 1.2"', good: true, why: 'Small fixes arrive. Breaking changes wait for you.' }, { text: 'A Git module with no ?ref=', good: false, why: 'It follows the default branch. It can change any time.' }, { text: 'A Git module pinned to a full commit SHA', good: true, why: 'Nobody can move a commit. The safest pin.' }, { text: 'A shared module that demands provider version = 3.9.1 exactly', good: false, why: 'Shared modules should set only a minimum. Let the caller choose.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pick a module source and pin the version you trust.
+</Card>
+
+<Card id="deeper" type="deeper">
+OpenTofu can also fetch modules from OCI registries (`oci://`) and from S3, GCS or HTTP. To move to a newer module version, change the pin, then run `tofu init -upgrade`. The lock file (next lesson) records providers only, not modules.
+
+<Interactive name="Mission" id="iac-t4-l02-rep" steps={[{ id: 'find', text: 'Browse the OpenTofu Registry for a small module. Note its address and newest version.' }, { id: 'pin', text: 'Write a module block with source and a ~> version pin. Do not apply it.' }, { id: 'init', text: 'Fetch it, and read which version init picked.', command: 'tofu init' }]} success="You pinned a real module from a registry." />
+</Card>

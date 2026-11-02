@@ -1,0 +1,56 @@
+---
+// EN / BM switch. Keeps the same page (and the same card on lesson pages:
+// the lesson player keeps the link's #c=<card> up to date). Remembers the choice.
+import { t, type Lang } from '~/i18n';
+interface Props {
+  lang: Lang;
+  altPath: string;
+}
+const { lang, altPath } = Astro.props;
+const other = lang === 'en' ? 'ms' : 'en';
+---
+
+<a
+  class="lang-toggle"
+  href={altPath}
+  hreflang={other}
+  lang={other}
+  data-lang-toggle
+  data-target-lang={other}
+>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
+    ><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"
+    ></path></svg
+  >
+  <span class="lang-other">{t(lang, 'nav.switchShort')}</span>
+  <span class="visually-hidden">: {t(lang, 'nav.switchLanguage')}</span>
+</a>
+
+<script>
+  import { setSettings } from '~/stores/progress';
+  for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-lang-toggle]')) {
+    a.addEventListener('click', () => {
+      const lang = a.dataset.targetLang;
+      if (lang === 'en' || lang === 'ms') setSettings({ lang });
+    });
+  }
+</script>
+
+<style>
+  .lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: var(--tap);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--color-border-strong);
+    text-decoration: none;
+    font-weight: var(--weight-bold);
+    font-size: var(--text-s);
+    white-space: nowrap;
+  }
+  .lang-toggle:hover {
+    background: var(--color-surface-2);
+  }
+</style>

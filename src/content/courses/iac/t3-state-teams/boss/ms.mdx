@@ -1,0 +1,72 @@
+---
+id: iac-t3-boss
+world: 3
+title: Ada orang klik
+summary: "Anda akan belajar: cari drift, import yang tersasar dan tukar nama tanpa bina semula, sendiri."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, TofuSim, Choice, SpotLines, SortCards]
+needs: [iac-t3-l08]
+scenario: t3-boss-drift
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "tofu plan (-refresh-only)", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "OpenTofu: blok import", url: "https://opentofu.org/docs/language/import/" }
+  - { label: "OpenTofu: blok moved", url: "https://opentofu.org/docs/language/modules/develop/refactoring/" }
+---
+
+<Card id="hook" type="hook">
+Boss: ada orang klik! Hujung minggu yang sibuk di Kedai Kancil. Tekan setiap detik. Kemudian baiki ketiga-tiga kejutan, tanpa bina semula apa yang sudah elok.
+
+<Interactive name="TimelineTap" events={[{ when: 'Jumaat', title: 'Menu diubah', text: 'Ben tukar Roti canai kepada Mee goreng dalam menu.txt, dengan tangan.' }, { when: 'Sabtu', title: 'Papan tanda dipadam', text: 'Seseorang padam sign.txt semasa mengemas.' }, { when: 'Ahad', title: 'Kod pintu', text: 'Pengurus tetapkan kod pintu KANCIL, dengan tangan.' }, { when: 'Isnin', title: 'Tukar nama', text: 'Ben tukar nama stall kepada chef dalam main.tf.' }]} />
+</Card>
+
+<Card id="try-drift" type="try">
+Kejutan 1: menu dan papan tanda. Pelan itu betul. Jadikan bangunan sepadan dengannya semula.
+
+<Interactive name="TofuSim" scenario="t3-boss-drift" goal={{ fileContains: { 'menu.txt': 'Roti canai' }, fileNotContains: { 'menu.txt': 'Mee goreng' }, filesExist: ['sign.txt'] }} hints={['Tengok dulu: tofu plan', 'Kemudian tofu apply, dan yes.']} success="Menu dan papan tanda kembali, terus dari pelan." />
+
+<Hint>Plan dahulu. Ia patut mahu tambah dua benda.</Hint>
+</Card>
+
+<Card id="check-drift" type="check">
+Lain kali, anda cuma mahu lihat apa yang berubah di luar OpenTofu, tanpa ubah apa-apa. Arahan mana?
+
+<Interactive name="Choice" options={[{ label: 'tofu plan -refresh-only', correct: true, why: 'Ia lapor drift dan tak sentuh apa-apa.' }, { label: 'tofu apply -auto-approve', why: 'Itu terus baiki drift, tanpa tengok dahulu.' }, { label: 'tofu state rm local_file.menu', why: 'Itu buat OpenTofu lupa menu. Bukan sekadar tengok.' }]} />
+</Card>
+
+<Card id="try-door" type="try">
+Kejutan 2: kod pintu. Pelan ada pintu itu, tapi OpenTofu akan buat kod baharu. Ambil alih `KANCIL` sebaliknya.
+
+<Interactive name="TofuSim" scenario="t3-boss-door" goal={{ outputEquals: { door: 'KANCIL' } }} hints={['Tambah blok import: to = random_string.door, id = "KANCIL".', 'tofu plan patut kata 1 to import, 0 to add.', 'Kemudian tofu apply. Terbina kod baharu? Tekan Mula semula.']} success="KANCIL diambil alih. Kunci pengurus masih boleh guna." />
+
+<Hint>Blok import ada dua baris: `to` dan `id`.</Hint>
+</Card>
+
+<Card id="check-import" type="check">
+Seorang rakan tampal plan ini dalam chat. Selamatkah?
+
+<Interactive name="SpotLines" prompt="Tekan baris yang buktikan tiada apa dimusnahkan." lines={[{ text: 'random_string.door: Preparing import... [id=KANCIL]' }, { text: 'random_pet.stall: Refreshing state... [id=lucky-civet]' }, { text: '' }, { text: '  # random_string.door will be imported' }, { text: '  # (imported from "KANCIL")' }, { text: '    resource "random_string" "door" {' }, { text: '        id          = "KANCIL"' }, { text: '        … (baris lain)' }, { text: '    }' }, { text: '' }, { text: 'Plan: 1 to import, 0 to add, 0 to change, 0 to destroy.', target: true }]} success="0 to destroy. Selamat untuk apply." />
+</Card>
+
+<Card id="try-rename" type="try">
+Kejutan 3: nama baharu Ben. Plan mahu musnahkan gerai dan buat yang baharu. Kekalkan nama `lucky-civet`.
+
+<Interactive name="TofuSim" scenario="t3-boss-rename" goal={{ resourceInState: ['random_pet.chef'], outputEquals: { name: 'lucky-civet' } }} hints={['Baca tofu plan dahulu: 1 to destroy.', 'Tambah blok moved: from = random_pet.stall, to = random_pet.chef.', 'Plan patut kata 0 to destroy. Kemudian tofu apply. Dapat nama baharu? Tekan Mula semula.']} success="Nama ditukar, tiada apa dibina semula. Gerai masih lucky-civet." />
+
+<Hint>Nama baharu perlukan blok moved.</Hint>
+</Card>
+
+<Card id="check-tools" type="check">
+Nota syif malam anda. Alat mana baiki kejutan mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'apply', label: 'plan, kemudian apply' }, { id: 'import', label: 'blok import' }, { id: 'moved', label: 'blok moved' }]} items={[{ label: 'Fail diubah dengan tangan', bucket: 'apply', why: 'Pelan betul. Apply pulihkannya.' }, { label: 'Sesuatu dibina dengan tangan dan patut kekal', bucket: 'import', why: 'Ambil alih, kemudian urus.' }, { label: 'Resource dapat nama baharu dalam kod', bucket: 'moved', why: 'Benda sama, alamat baharu.' }, { label: 'Fail terpadam', bucket: 'apply', why: 'Apply bina semula dari pelan.' }]} success="Pemburu Drift! Anda baiki hujung minggu yang kucar-kacir tanpa rosakkan apa-apa." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buru drift, ambil alih yang tersasar dan refactor, semuanya tanpa bina semula.
+</Card>

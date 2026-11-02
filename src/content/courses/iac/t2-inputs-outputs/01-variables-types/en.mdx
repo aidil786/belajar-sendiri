@@ -1,0 +1,69 @@
+---
+id: iac-t2-l01
+world: 2
+title: Variables and types
+summary: "You will learn: to leave blanks in a blueprint with variables, and to give each one a type."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SortCards, SwipeJudge, Mission]
+needs: [iac-t1-boss]
+scenario: t2-vars
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: input variables", url: "https://opentofu.org/docs/language/values/variables/" }
+  - { label: "OpenTofu: types and values", url: "https://opentofu.org/docs/language/expressions/types/" }
+---
+
+<Card id="hook" type="hook">
+Your blueprint says "Kedai Kancil" in five places. Now the boss opens a second shop, Warung Ali. What is the clean fix?
+
+<Interactive name="Choice" options={[{ label: 'Leave a blank for the name. Fill it in at build time.', correct: true, why: 'One blueprint, many shops. That blank is a variable.' }, { label: 'Copy the folder and change all five', why: 'Five edits, five chances to miss one. And two copies to keep in step.' }, { label: 'Rename the first shop', why: 'Then Kedai Kancil is gone. You need both.' }]} />
+</Card>
+
+<Card id="try-ask" type="try">
+`var.shop` is a blank in this blueprint. Type `tofu apply`. OpenTofu asks you to fill it in.
+
+<Interactive name="TofuSim" scenario="t2-vars" goal={{ resourceInState: ['local_file.sign'] }} open="variables.tf" hints={['Type tofu apply.', 'It asks for var.shop. Type a shop name, like Warung Ali.', 'Then read the plan and type yes.']} success="Built with your shop name. Same blueprint, your values." />
+
+A **<Term id="input-variable">variable</Term>** is a blank. Use it as `var.shop`.
+</Card>
+
+<Card id="see-types" type="see">
+Each variable has a **<Term id="type-constraint">type</Term>**: the kind of value that fits. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'string', label: 'string (text)' }, { id: 'number', label: 'number' }, { id: 'bool', label: 'bool (true or false)' }, { id: 'list', label: 'list' }]} items={[{ label: '`"Kedai Kancil"`', bucket: 'string', why: 'Text goes in quotes.' }, { label: '`4`', bucket: 'number', why: 'A number, no quotes.' }, { label: '`true`', bucket: 'bool', why: 'true or false, no quotes.' }, { label: '`["nasi", "mee"]`', bucket: 'list', why: 'Square brackets hold a list.' }, { label: '`"4"`', bucket: 'string', why: 'The quotes make it text, not a number.' }]} success="Quotes, numbers, true or false, brackets." />
+</Card>
+
+<Card id="predict" type="predict">
+`tables` has `type = number`. Someone types `-var tables=lots`. What happens?
+
+<Interactive name="Choice" options={[{ label: 'OpenTofu stops: a number is required', correct: true, why: 'The type is a guard at the door. Nothing gets built.' }, { label: 'It builds a sign with lots of tables', why: 'lots is text. The type only lets numbers in.' }, { label: 'It uses the default instead', why: 'A bad value is never swapped quietly. It stops and says why.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+This blueprint allows 1 to 10 tables. Ask for 20: `tofu plan -var tables=20`. Then plan again with 6.
+
+<Interactive name="TofuSim" scenario="t2-inputs" intro={['tofu init']} open="variables.tf" goal={{ typed: 'tables=20', planSummary: { add: 1 } }} hints={['Type tofu plan -var tables=20 and read the error.', 'Now type tofu plan -var tables=6.']} success="20 was refused by the rule. 6 passed, and the plan worked." />
+
+`Error: Invalid value for variable`. Plain words: the blueprint's own rule says 1 to 10.
+</Card>
+
+<Card id="check-swipe" type="check">
+Good variable habit or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Give every variable a type', good: true, why: 'Bad values stop at the door.' }, { text: 'Add a description, so teammates know what to type', good: true, why: 'OpenTofu shows it when it asks.' }, { text: 'Put the shop\'s bank password as a default', good: false, why: 'Secrets never go in .tf files. Git keeps them forever.' }, { text: 'Add a validation rule for limits, like 1 to 10 tables', good: true, why: 'The blueprint checks itself before building.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now leave blanks with variables and guard them with types.
+</Card>
+
+<Card id="deeper" type="deeper">
+More types: `map(number)` holds name-to-value pairs. `set(string)` is a list without repeats. `object({ … })` groups named fields. A `default` makes a variable optional. `sensitive = true` hides a value on screen, but it is still in the state (World T3).
+
+<Interactive name="Mission" id="iac-t2-l01-rep" steps={[{ id: 'block', text: 'In a practice folder, add a variable "shop" with type = string to a .tf file.' }, { id: 'use', text: 'Use it in a local_file: content = "${var.shop}".' }, { id: 'ask', text: 'Run apply and answer the question.', command: 'tofu apply' }, { id: 'var', text: 'Now give the value on the command line.', command: 'tofu apply -var shop=Warung' }, { id: 'tidy', text: 'Tidy up. Type yes.', command: 'tofu destroy' }]} success="Your own blueprint with a blank in it." />
+</Card>

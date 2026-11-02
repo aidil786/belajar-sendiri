@@ -1,0 +1,65 @@
+---
+id: git-w04-l09
+world: 4
+title: Push ditolak? Baiki
+summary: "Anda akan belajar: kenapa GitHub kadang-kadang tolak push anda, dan cara tenang membaikinya."
+minutes: 4
+xp: 20
+interactives: [Courier, SpotLines, Choice, OrderList, Sim]
+needs: [git-w04-l08]
+scenario: w04-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "Dealing with non-fast-forward errors", url: "https://docs.github.com/en/get-started/using-git/dealing-with-non-fast-forward-errors" }
+---
+
+<Card id="hook" type="hook">
+Tajuk teal anda dah siap. Tekan Push. Tengok apa yang kembali.
+
+<Interactive name="Courier" scenario="w04-l09" actions={['push']} />
+</Card>
+
+<Card id="see-why" type="see">
+GitHub ada commit baru Aisyah. Commit anda tak dibina di atasnya. Jadi GitHub tolak, untuk jaga kerja Aisyah. Tekan baris penolakan, dan baris cara membaikinya.
+
+<Interactive name="SpotLines" lines={[{ text: 'To https://github.com/you/diary.git' }, { text: ' ! [rejected]        main -> main (fetch first)', target: true }, { text: "error: failed to push some refs to 'https://github.com/you/diary.git'" }, { text: 'hint: Updates were rejected because the remote contains work that you do not' }, { text: 'hint: have locally. This is usually caused by another repository pushing to' }, { text: 'hint: the same ref. If you want to integrate the remote changes, use' }, { text: "hint: 'git pull' before pushing again.", target: true }]} prompt="Tekan penolakan dan cara membaikinya." success="Ditolak, dan caranya ialah git pull. Git sendiri beritahu!" />
+</Card>
+
+<Card id="try-fix" type="try">
+Baiki dengan kurier. Bawa turun commit Aisyah, kemudian push semula.
+
+<Interactive name="Courier" scenario="w04-l09" actions={['push', 'fetch', { cmd: 'git pull --rebase', label: 'Pull (rebase)' }, { cmd: 'git pull --no-rebase', label: 'Pull (merge)' }]} goal={{ pushed: ['main'], serverHas: [{ url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'Aisyah' }, { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' }] }} hints={['Pilih satu pull dulu. Mana-mana pun boleh.', 'Kemudian tekan Push semula.']} success="Kedua-dua commit ada di GitHub. Tiada siapa kehilangan apa-apa." />
+
+<Hint>Pull dulu. Push kemudian.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kawan kata, "Tambah je `--force`!" Apa jadi pada commit Aisyah di GitHub?
+
+<Interactive name="Choice" options={[{ label: 'Ia hilang dari GitHub', correct: true, why: 'Force buat GitHub sama tepat dengan laptop anda. Commitnya lesap. Pelajaran seterusnya tunjuk cara lebih selamat.' }, { label: 'Git simpan kedua-dua commit', why: 'Hanya pull yang simpan kedua-duanya. Force menggantikan.' }, { label: 'GitHub tanya Aisyah dulu', why: 'GitHub tak tanya sesiapa. Itulah bahayanya.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Push ditolak? Susun cara tenang membaikinya.
+
+<Interactive name="OrderList" items={['Push, dan ia ditolak', 'Pull untuk bawa masuk commit baru', 'Baiki konflik, kalau Git minta', 'Push semula']} label="Langkah pertama di atas" success="Pull, baiki, push. Setiap kali." />
+</Card>
+
+<Card id="try-type" type="try">
+Sekarang dalam terminal. Push, baca kata-kata Git, baiki, push semula.
+
+<Interactive name="Sim" scenario="w04-l09" panels={['graph']} goal={{ typed: '^git push', pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }} hints={['Pull dengan pilihan: git pull --rebase', 'Kemudian git push']} success="Dibaiki dengan tenang. Itu kemahiran pasukan sebenar." />
+
+<Hint>`git pull` sahaja minta anda pilih: tambah `--rebase` atau `--no-rebase`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baiki push yang ditolak tanpa sesiapa kehilangan kerja.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dah fetch, tapi belum pull? Git akan kata "non-fast-forward", bukan "fetch first". Caranya sama: pull, kemudian push. Push juga boleh ditolak oleh peraturan branch di GitHub. Itu Dunia 5.
+</Card>

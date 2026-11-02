@@ -1,0 +1,67 @@
+---
+id: git-w11-l13
+world: 11
+title: Huru-hara hujung baris Windows
+summary: "Anda akan belajar: cara satu fail .gitattributes tenangkan huru-hara hujung baris untuk semua."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Sim, Transcript, CommandBuilder]
+needs: [git-w04-l07]
+scenario: w11-l13
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "gitattributes (end-of-line conversion)", url: "https://git-scm.com/docs/gitattributes" }
+  - { label: "git add --renormalize", url: "https://git-scm.com/docs/git-add" }
+  - { label: "Configuring Git to handle line endings", url: "https://docs.github.com/en/get-started/git-basics/configuring-git-to-handle-line-endings" }
+---
+
+<Card id="hook" type="hook">
+Mei baiki satu salah taip di Windows. Tapi `git diff` kata setiap baris berubah! Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Baris-baris berakhir dengan tanda halimunan yang berbeza', correct: true, why: 'Windows tamatkan baris satu cara, Mac dan Linux cara lain. Git nampak setiap baris sebagai baru.' }, { label: 'Mei tulis semula seluruh fail', why: 'Dia cuma baiki satu salah taip. Ada sesuatu yang halimunan berubah.' }, { label: 'Git rosak', why: 'Git okey. Ia nampak beza yang sebenar, tapi halimunan.' }]} />
+
+Ini berlaku pada semua orang. Ini cara tenang untuk keluar.
+</Card>
+
+<Card id="see-endings" type="see">
+Setiap baris berakhir dengan **hujung baris** (line ending) yang halimunan. Windows guna dua tanda: CRLF. Mac dan Linux guna satu: LF. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'crlf', label: 'CRLF (dua tanda)' }, { id: 'lf', label: 'LF (satu tanda)' }]} items={[{ label: 'Windows', bucket: 'crlf', why: 'Alat Windows selalunya tamatkan baris dengan CRLF.' }, { label: 'macOS', bucket: 'lf', why: 'Mac guna LF.' }, { label: 'Linux', bucket: 'lf', why: 'Linux guna LF.' }, { label: 'Dalam repo, dengan text=auto', bucket: 'lf', why: 'Git simpan fail teks dengan LF di dalam repo.' }]} success="Tersusun! Dua gaya. Git boleh selaraskan mereka." />
+</Card>
+
+<Card id="try-attributes" type="try">
+Satu fail baiki untuk seluruh pasukan. Buat `.gitattributes` dengan `* text=auto`. Kemudian commit (titik simpan).
+
+<Interactive name="Sim" scenario="w11-l13" panels={['areas']} goal={{ fileContains: { '.gitattributes': 'text=auto' }, lastCommitHas: ['.gitattributes'], clean: true }} hints={['Taip echo "* text=auto" > .gitattributes', 'Kemudian taip git add .gitattributes', 'Kemudian taip git commit -m "Normalize line endings"']} success="Siap! Git kini uruskan hujung baris untuk semua." />
+
+<Hint>Taip `echo "* text=auto" > .gitattributes`, kemudian `git add .gitattributes`. Lepas tu commit.</Hint>
+</Card>
+
+<Card id="see-renormalize" type="see">
+<Interactive name="Transcript" title="bash" label="Dua arahan: git add --renormalize titik, kemudian git commit -m Normalize all the line endings." lines={[{ cmd: 'git add --renormalize .' }, { cmd: 'git commit -m "Normalize all the line endings"' }]} />
+
+Fail lama mungkin masih guna hujung baris lama. `git add --renormalize .` tambah semula setiap fail yang dijejak dengan peraturan baru. Kemudian commit sekali.
+</Card>
+
+<Card id="build" type="try">
+Setiap orang boleh tetapkan pembantu juga. Bina tetapan untuk Windows.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'config', means: 'tukar tetapan' }, { text: '--global', means: 'untuk semua projek anda' }, { text: 'core.autocrlf', means: 'pembantu hujung baris' }, { text: 'true', means: 'Windows: CRLF atas meja, LF dalam Git' }]} decoys={[{ text: 'input', means: 'pilihan untuk Mac dan Linux' }, { text: '--local', means: 'projek ini sahaja' }]} success="Betul! Di Mac atau Linux, guna input, bukan true." />
+</Card>
+
+<Card id="predict" type="predict">
+Kenapa commit `.gitattributes`, bukan sekadar beritahu semua orang tetapannya?
+
+<Interactive name="Choice" options={[{ label: 'Ia ikut repo, jadi semua orang dapat', correct: true, why: 'Ahli baru dapat peraturan itu bila clone. Tiada siapa perlu ingat.' }, { label: 'Ia jadikan fail lebih kecil', why: 'Tidak, ia cuma uruskan hujung baris.' }, { label: 'Tetapan tak dibenarkan', why: 'Tetapan okey. Fail itu cuma berfungsi untuk semua sekali gus.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tenangkan huru-hara hujung baris untuk seluruh pasukan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Skrip yang mesti kekal LF? Tambah `*.sh text eol=lf`. Fail khas Windows? `*.bat text eol=crlf`. Tandakan gambar sebagai `binary` supaya Git tak usik. Jalankan `git add --renormalize .` dari folder kerja yang bersih. GitHub Docs ada panduan penuh.
+</Card>

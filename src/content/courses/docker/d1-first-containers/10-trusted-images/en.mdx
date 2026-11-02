@@ -1,0 +1,76 @@
+---
+id: docker-d1-l10
+world: 1
+title: Docker Hub and trusted images
+summary: "You will learn: to read a full image name, and to pick packs you can trust."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, OrderList, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l09]
+scenario: d1-hub
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Trusted content on Docker Hub", url: "https://docs.docker.com/docker-hub/image-library/trusted-content/" }
+  - { label: "What is a registry?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-registry/" }
+  - { label: "docker image pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+---
+
+<Card id="hook" type="hook">
+You search Docker Hub for a web server. Hundreds of packs appear. Anyone can upload one. Which do you heat for your shop?
+
+<Interactive name="Choice" options={[{ label: 'nginx, with the Docker Official Image badge', correct: true, why: 'Docker picks these with care and keeps them updated.' }, { label: 'nginx-free-fast, by a stranger, 12 pulls', why: 'A stranger’s pack could hold anything. Trust the badge first.' }, { label: 'The one with the coolest name', why: 'Names are free. Badges are earned.' }]} />
+</Card>
+
+<Card id="see-hub" type="see">
+<Interactive name="KitchenReplay" scenario="d1-hub" commands={['docker pull nginx']} label="docker pull nginx downloads the latest nginx. The last line shows its full name: docker.io/library/nginx:latest." />
+
+**<Term id="docker-hub">Docker Hub</Term>** is the biggest public shop freezer. Read the last line: `docker.io/library/nginx:latest`. `library` is the shelf for official packs.
+</Card>
+
+<Card id="try-order" type="try">
+Every short name has a full name. Put the parts of `docker.io/library/nginx:1.30-alpine` in order, left to right.
+
+<Interactive name="OrderList" items={['docker.io: the freezer (Docker Hub)', 'library: the shelf (official packs)', 'nginx: the dish', '1.30-alpine: the label (tag)']} label="Leftmost part at the top" success="Freezer, shelf, dish, label." />
+</Card>
+
+<Card id="try-sort" type="try">
+Docker Hub marks trusted packs with badges. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'trusted', label: 'Trusted badge' }, { id: 'check', label: 'Check before you use it' }]} items={[{ label: 'Docker Official Image: nginx, postgres, alpine', bucket: 'trusted', why: 'Docker curates them and keeps them updated.' }, { label: 'Verified Publisher: a company Docker has checked', bucket: 'trusted', why: 'Docker checked who publishes them.' }, { label: 'Sponsored open source: a project Docker supports', bucket: 'trusted', why: 'An active open-source project with a badge.' }, { label: 'No badge, unknown user, 12 pulls', bucket: 'check', why: 'Could be fine, could be anything. Look closer first.' }, { label: 'A famous name under a stranger’s account', bucket: 'check', why: 'Copycats use famous names. Check the shelf name.' }]} success="Badges first, strangers later." />
+</Card>
+
+<Card id="predict" type="predict">
+`aina/nginx:1.30` and `nginx:1.30`. Same pack?
+
+<Interactive name="Choice" options={[{ label: 'No. aina/ is Aina’s own shelf.', correct: true, why: 'No name before the slash means the official library shelf.' }, { label: 'Yes. Both say nginx.', why: 'The part before the slash is the owner. Different owner, different pack.' }, { label: 'Yes. Docker merges them.', why: 'Docker never mixes packs from different owners.' }]} />
+</Card>
+
+<Card id="try-pull" type="try">
+Pull the official redis pack, version 8 on Alpine. Watch it land in your freezer.
+
+<Interactive name="KitchenSim" scenario="d1-hub" goal={{ imageExists: 'redis:8-alpine' }} hints={['Type docker pull redis:8-alpine']} success="Official redis is in your freezer: docker.io/library/redis:8-alpine." />
+
+<Hint>`docker pull redis:8-alpine`</Hint>
+</Card>
+
+<Card id="check-denied" type="check">
+<Interactive name="KitchenReplay" scenario="d1-hub" commands={['docker pull kancil-practice/no-such-pack:1.0']} fails={['docker pull kancil-practice/no-such-pack:1.0']} label="docker pull kancil-practice/no-such-pack:1.0 fails: pull access denied, repository does not exist or may require docker login." />
+
+The real error starts with `pull access denied`. Plain words: there is no such pack, or it is private. Check the spelling and the shelf name.
+</Card>
+
+<Card id="win" type="win">
+You can now read image names and pick packs you can trust.
+</Card>
+
+<Card id="deeper" type="deeper">
+Look for the <Term id="official-image">Docker Official Image</Term> and <Term id="verified-publisher">Verified Publisher</Term> badges. Docker also offers Docker Hardened Images, extra-small safe bases (World D2). Docker Hub limits pulls when you are not logged in. World D5 explains.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l10-rep" steps={[{ id: 'hub', text: 'Open hub.docker.com and search for nginx.' }, { id: 'badge', text: 'Find the Docker Official Image badge on the real one.' }, { id: 'pull', text: 'Pull it with a pinned tag.', command: 'docker pull nginx:1.30-alpine' }]} success="You can spot a trusted pack." />
+</Card>

@@ -1,0 +1,67 @@
+---
+id: aws-a3-l06
+world: 3
+title: "Load balancers"
+summary: "You will learn: how a load balancer shares shoppers between healthy servers, and how to guard the servers behind it."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, SortCards, SpotLines, Choice, SecurityGroupGate, SwipeJudge]
+needs: [aws-a3-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Elastic Load Balancing: What is it?", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" }
+  - { label: "Application Load Balancers: Target groups", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html" }
+  - { label: "Application Load Balancers: Health checks", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html" }
+  - { label: "AWS CLI: aws elbv2 describe-target-health", url: "https://docs.aws.amazon.com/cli/latest/reference/elbv2/describe-target-health.html" }
+  - { label: "Elastic Load Balancing pricing", url: "https://aws.amazon.com/elasticloadbalancing/pricing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '12:00', title: 'Lunch rush', text: 'Hundreds of orders hit Kedai Kancil’s only server.' }, { when: '12:05', title: 'Too much', text: 'The server slows down, then crashes.' }, { when: '12:06', title: 'Closed', text: 'Every shopper sees an error page.' }]} />
+
+One counter, one crash, zero sales. Tap the story. What if two counters shared the queue?
+</Card>
+
+<Card id="see-lb" type="see">
+A **<Term id="load-balancer">load balancer</Term>** is the mall's reception desk. It sends each shopper to a free, healthy counter. AWS has two common kinds. Sort the jobs.
+
+<Interactive name="SortCards" buckets={[{ id: 'alb', label: 'Application Load Balancer (web pages)' }, { id: 'nlb', label: 'Network Load Balancer (any TCP/UDP)' }]} items={[{ label: 'Send /api to one group, the rest to another', bucket: 'alb', why: 'It reads the web address, so it can route by path.' }, { label: 'A website over HTTPS', bucket: 'alb', why: 'It speaks HTTP and HTTPS.' }, { label: 'A game server on UDP', bucket: 'nlb', why: 'It passes raw TCP and UDP, very fast.' }, { label: 'A database port for a partner', bucket: 'nlb', why: 'Plain TCP, no web pages: the network kind.' }]} success="Web pages: application. Anything else on TCP or UDP: network." />
+</Card>
+
+<Card id="see-health" type="see">
+The counters sit in a **<Term id="target-group">target group</Term>**. The desk checks each one's health. Here is the official example's answer, cut short. Tap every healthy target.
+
+<Interactive name="SpotLines" prompt="Tap every healthy target." success="Both counters pass the health check, so both get shoppers." lines={[{ text: '$ aws elbv2 describe-target-health --target-group-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067' }, { text: '"HealthCheckPort": "80",' }, { text: '"Id": "i-ceddcd4d",' }, { text: '"State": "healthy"', target: true }, { text: '"HealthCheckPort": "80",' }, { text: '"Id": "i-0f76fade",' }, { text: '"State": "healthy"', target: true }]} />
+</Card>
+
+<Card id="predict" type="predict">
+One of two servers stops answering its health check. What does the load balancer do?
+
+<Interactive name="Choice" options={[{ label: 'Stops sending shoppers to it', correct: true, why: 'Unhealthy counters get no shoppers until they pass again.' }, { label: 'Sends half the shoppers there anyway', why: 'That is what health checks prevent.' }, { label: 'Fixes the server', why: 'It only routes. Fixing is your job, or auto scaling’s.' }]} />
+</Card>
+
+<Card id="try-chain" type="try">
+The app servers sit in back. Only the load balancer may reach them on port 80. Use its group, `sg-lb`, as the source.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-lb']} visitors={[{ id: 'lb', label: 'Load balancer', ip: '10.0.0.10', groups: ['sg-lb'], client: 'elb', protocol: 'tcp', port: 80, want: 'in' }, { id: 'stranger', label: 'Stranger', ip: '192.0.2.77', protocol: 'tcp', port: 80, want: 'out' }, { id: 'neighbour', label: 'Another server in your VPC', ip: '10.0.1.20', protocol: 'tcp', port: 80, want: 'out' }]} success="Only the desk can reach the counters. Everyone else goes through it." />
+
+<Hint>Add a rule: TCP, port 80, from `sg-lb`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Good load balancer habits, or risky? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The load balancer in public rows of two wings', good: true, why: 'An Application Load Balancer needs at least two wings anyway.' }, { text: 'Give each app server a public IP too', good: false, why: 'Then strangers can skip the desk. Keep servers in back.' }, { text: 'A health check on a small /health page', good: true, why: 'Quick to answer, and it shows the app really works.' }, { text: 'Leave the test load balancer running all month', good: false, why: 'It is billed every hour it runs. Delete it after the test.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now put a reception desk in front of your servers, and guard them.
+</Card>
+
+<Card id="deeper" type="deeper">
+Auto Scaling groups can add counters at lunch and remove them at night. The load balancer finds the new ones itself. Remember the bill: a load balancer costs every hour, even with no shoppers.
+</Card>

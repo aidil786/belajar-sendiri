@@ -1,0 +1,72 @@
+---
+// KCNA mock: the runner (KcnaMock, client:only) with the bank in this page's language and a
+// review link to the lesson behind each question. Practice, not the real exam.
+import Base from '~/layouts/Base.astro';
+import KcnaMock, { type KcnaView } from '~/components/ship-it/KcnaMock';
+import { LANGS, t, type Lang } from '~/i18n';
+import { flatten, getCourses, itemUrl } from '~/lib/course';
+import { KCNA_DOMAINS, KCNA_MINUTES, KCNA_MOCK_SIZE, KCNA_URL, kcnaQuestions } from '~/content/exams/kcna';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const lessons = new Map((await getCourses()).flatMap((c) => flatten(c).map((item) => [item.id, { href: itemUrl(lang, c.id, item), title: item.title[lang] }] as const)));
+const questions: KcnaView[] = kcnaQuestions.map((q) => {
+  const lesson = lessons.get(q.lesson);
+  if (!lesson) throw new Error(`KCNA ${q.id}: lesson ${q.lesson} not found`);
+  return { id: q.id, domain: q.domain, question: q[lang].question, options: [...q[lang].options], why: q[lang].why, answer: q.answer, lesson };
+});
+const domains = KCNA_DOMAINS.map((d) => ({ id: d.id, weight: d.weight, name: d.name[lang] }));
+const hubHref = `/${lang}/ship-it/exam/`;
+---
+
+<Base lang={lang} title={`${t(lang, 'mock.kcnaTitle')} · ${t(lang, 'mock.hubTitle')}`} description={t(lang, 'mock.kcnaText')} altPath={`/${other}/ship-it/exam/kcna/`}>
+  <div class="container exam-page" data-exam-page="kcna">
+    <p class="crumb">
+      <a href={`/${lang}/ship-it/`}>{t(lang, 'shipit.title')}</a><span aria-hidden="true">{' › '}</span><a href={hubHref}>{t(lang, 'mock.hubTitle')}</a>
+    </p>
+    <header>
+      <h1>{t(lang, 'mock.kcnaTitle')}</h1>
+      <p class="exam-summary">{t(lang, 'mock.kcnaText')}</p>
+      <p class="exam-not-real" data-not-real>
+        {t(lang, 'mock.notReal')}
+        <a href={KCNA_URL} rel="noopener">{t(lang, 'certs.official', { code: 'KCNA' })} →</a>
+      </p>
+    </header>
+    <KcnaMock client:only="react" lang={lang} questions={questions} domains={domains} size={KCNA_MOCK_SIZE} fullCount={KCNA_MOCK_SIZE} fullMinutes={KCNA_MINUTES} hubHref={hubHref}>
+      <p slot="fallback" class="exam-loading">{t(lang, 'mock.loading')}</p>
+    </KcnaMock>
+  </div>
+</Base>
+
+<style>
+  .exam-page {
+    padding-block: var(--space-5);
+    max-width: calc(var(--card-max) + 2 * var(--gutter));
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .exam-summary {
+    font-size: var(--text-l);
+  }
+  .exam-not-real {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    border-left: 4px solid var(--deco-remote);
+    padding-left: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .exam-not-real a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    font-weight: var(--weight-bold);
+  }
+  .exam-loading {
+    color: var(--color-text-muted);
+  }
+</style>

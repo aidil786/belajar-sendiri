@@ -1,0 +1,109 @@
+---
+// Glossary page for one course: /en/glossary/ (Git) and /en/<course>/glossary/ (other courses).
+import Base from '~/layouts/Base.astro';
+import { t, type Lang } from '~/i18n';
+import { getCourse } from '~/lib/course';
+import { getGlossary } from '~/lib/content';
+import { ROOT_COURSE, toolHref } from '~/lib/catalog';
+interface Props {
+  lang: Lang;
+  courseId: string;
+}
+const { lang, courseId } = Astro.props;
+const other = lang === 'en' ? 'ms' : 'en';
+const course = await getCourse(courseId);
+const isRoot = courseId === ROOT_COURSE;
+const title = isRoot ? t(lang, 'glossary.title') : t(lang, 'glossary.titleCourse', { course: course.title[lang] });
+const intro = isRoot ? t(lang, 'glossary.intro') : t(lang, 'glossary.introCourse', { course: course.title[lang] });
+const { terms } = await getGlossary(courseId);
+const sorted = [...terms].sort((a, b) => a[lang].term.localeCompare(b[lang].term, lang));
+---
+
+<Base lang={lang} title={title} altPath={toolHref(other, course, 'glossary')}>
+  <div class="container ref">
+    <h1>{title}</h1>
+    <p>{intro}</p>
+    {sorted.length === 0 && <p class="g-empty" role="status">{t(lang, 'glossary.empty')}</p>}
+    <label class="filter" hidden={sorted.length === 0}>
+      <span>{t(lang, 'glossary.filter')}</span>
+      <input type="search" data-filter autocomplete="off" />
+    </label>
+    <dl class="glossary">
+      {
+        sorted.map((term) => (
+          <div class="g-item" id={term.id} data-g-item data-text={`${term.en.term} ${term.ms.term} ${term[lang].meaning}`.toLowerCase()}>
+            <dt>
+              {term[lang].term}
+              {lang === 'ms' && term.ms.term !== term.en.term && <span class="g-en" lang="en"> · {term.en.term}</span>}
+            </dt>
+            <dd>{term[lang].meaning}</dd>
+            {lang === 'en' && (
+              <dd class="g-other" lang="ms">
+                <span>{t(lang, 'glossary.inBm')}:</span> {term.ms.term}: {term.ms.meaning}
+              </dd>
+            )}
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</Base>
+
+<script>
+  const input = document.querySelector<HTMLInputElement>('[data-filter]');
+  input?.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    for (const el of document.querySelectorAll<HTMLElement>('[data-g-item]')) el.hidden = Boolean(q) && !el.dataset.text!.includes(q);
+  });
+</script>
+
+<style>
+  .ref {
+    padding-block: var(--space-5);
+    max-width: 48rem;
+  }
+  .g-empty {
+    color: var(--color-text-muted);
+  }
+  .filter:not([hidden]) {
+    display: grid;
+    gap: var(--space-1);
+    margin-bottom: var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .filter input {
+    min-height: var(--tap);
+    border-radius: var(--radius-s);
+    border: 2px solid var(--color-border-strong);
+    background: var(--color-surface);
+    padding: 0 var(--space-3);
+  }
+  .glossary {
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .g-item {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+  }
+  dt {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-l);
+  }
+  dd {
+    margin: 0;
+  }
+  .g-en {
+    font-weight: var(--weight-normal);
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .g-other {
+    margin-top: var(--space-1);
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+</style>

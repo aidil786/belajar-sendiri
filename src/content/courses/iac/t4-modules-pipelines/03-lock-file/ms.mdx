@@ -1,0 +1,71 @@
+---
+id: iac-t4-l03
+world: 4
+title: Pin provider dan fail lock
+summary: "Anda akan belajar: cara fail lock buat setiap laptop dan pipeline guna versi provider yang sama."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t4-l02]
+scenario: t4-lock
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: fail lock kebergantungan", url: "https://opentofu.org/docs/language/files/dependency-lock/" }
+  - { label: "tofu init (-upgrade)", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "tofu providers lock", url: "https://opentofu.org/docs/cli/commands/providers/lock/" }
+  - { label: "Terraform: fail lock kebergantungan", url: "https://developer.hashicorp.com/terraform/language/files/dependency-lock" }
+---
+
+<Card id="hook" type="hook">
+Semalam ia berjalan. Hari ini, di laptop baharu, `tofu init` pilih provider lebih baharu, dan plan nampak lain. Apa yang patut kekalkan semuanya sama?
+
+<Interactive name="Choice" options={[{ label: 'Fail lock, yang di-commit ke Git', correct: true, why: 'Ia rekod versi tepat yang setiap laptop mesti guna.' }, { label: 'Internet yang lebih laju', why: 'Kelajuan bukan masalahnya. Versi itulah masalahnya.' }, { label: 'Jalankan tofu init dua kali', why: 'Tanpa fail lock, init pilih padanan terbaharu setiap kali.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Folder ini sudah jalankan `tofu init`. Baca apa yang ia catat: `cat .terraform.lock.hcl`.
+
+<Interactive name="TofuSim" scenario="t4-lock" open="providers.tf" goal={{ lastTyped: '^cat \\.terraform\\.lock\\.hcl$' }} hints={['Taip cat .terraform.lock.hcl dan tekan Enter.']} success="Dua provider, setiap satu dengan satu versi tepat dan senarai checksum." />
+
+<Hint>Nama fail bermula dengan titik: `.terraform.lock.hcl`.</Hint>
+</Card>
+
+<Card id="see-lock" type="see">
+<Interactive name="SpotLines" prompt="Tekan baris dengan versi tepat yang init pilih." lines={[{ text: '# This file is maintained automatically by "tofu init".' }, { text: '# Manual edits may be lost in future updates.' }, { text: '' }, { text: 'provider "registry.opentofu.org/hashicorp/random" {' }, { text: '  version     = "3.9.1"', target: true }, { text: '  constraints = "~> 3.7"' }, { text: '  hashes = [' }, { text: '    "h1:38E2VQmQDhws/3AL3D/EzBGuCseepyZRIswAOx8CqoQ=",' }, { text: '    … (29 checksum lagi)' }, { text: '  ]' }, { text: '}' }]} success="Pin benarkan ~> 3.7. Fail lock kata: tepat 3.9.1." />
+
+**<Term id="lock-file">Fail lock kebergantungan</Term>** rekod versi provider yang tepat, berserta checksum. Jadi setiap laptop pasang fail yang betul-betul sama.
+</Card>
+
+<Card id="predict" type="predict">
+Fail lock ada dalam Git. Bulan depan, random 3.10 keluar. Seorang rakan jalankan `tofu init`. Versi mana dia dapat?
+
+<Interactive name="Choice" options={[{ label: '3.9.1: fail lock menang', correct: true, why: 'init guna semula versi yang dikunci. Hanya tofu init -upgrade mengubahnya.' }, { label: '3.10: padanan terbaharu', why: 'Itu hanya berlaku dengan tofu init -upgrade.' }, { label: 'Satu ralat', why: '3.9.1 masih muat dalam ~> 3.7, jadi init gembira.' }]} />
+</Card>
+
+<Card id="try-new" type="try">
+Ben tambah loceng yang perlukan provider baharu, `null`. Jalankan `tofu plan`, baca ralatnya, kemudian baiki.
+
+<Interactive name="TofuSim" scenario="t4-lock-new" goal={{ fileContains: { '.terraform.lock.hcl': 'hashicorp/null' } }} hints={['Taip tofu plan dan baca ralatnya.', 'Fail lock perlukan provider baharu: taip tofu init.']} success="init tambah null 3.3.2 ke fail lock. Commit perubahan itu bersama kerja Ben." />
+
+<Hint>Provider baharu maksudnya: jalankan `tofu init`, kemudian commit fail lock.</Hint>
+</Card>
+
+<Card id="check" type="check">
+`.gitignore` anda sudah sedia. Susun setiap fail.
+
+<Interactive name="SortCards" buckets={[{ id: 'commit', label: 'Commit' }, { id: 'ignore', label: 'Jauhkan dari Git' }]} items={[{ label: '.terraform.lock.hcl', bucket: 'commit', why: 'Supaya setiap laptop dan pipeline dapat provider yang sama.' }, { label: '.terraform/', bucket: 'ignore', why: 'Provider dan modul yang dimuat turun. init ambil semula.' }, { label: 'providers.tf', bucket: 'commit', why: 'Sebahagian daripada pelan.' }, { label: 'terraform.tfstate', bucket: 'ignore', why: 'Daftar duduk dalam backend, bukan dalam Git.' }, { label: 'tfplan (plan yang disimpan)', bucket: 'ignore', why: 'Plan yang disimpan boleh ada rahsia. Buat yang baharu dalam CI.' }]} success="Fail lock masuk, muat turun dan daftar keluar." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca fail lock dan kekalkan versi provider sama di mana-mana.
+</Card>
+
+<Card id="deeper" type="deeper">
+Untuk naik taraf, ubah pin jika perlu dan jalankan `tofu init -upgrade`. Kemudian semak perubahan fail lock dalam pull request. OpenTofu 1.13 tulis checksum untuk setiap platform semasa init. `tofu providers lock` masih boleh tambahnya secara manual. Fail lock Terraform ada nama sama, tapi entrinya tunjuk ke `registry.terraform.io`.
+
+<Interactive name="Mission" id="iac-t4-l03-rep" steps={[{ id: 'init', text: 'Dalam folder latihan dengan provider yang di-pin, jalankan init.', command: 'tofu init' }, { id: 'read', text: 'Baca fail lock.', command: 'cat .terraform.lock.hcl' }, { id: 'again', text: 'Jalankan init semula: ia guna semula versi yang dikunci.', command: 'tofu init' }, { id: 'commit', text: 'Commit fail lock bersama pelan.', command: 'git add .terraform.lock.hcl *.tf && git commit -m "Pin providers"' }]} success="Provider anda dikunci untuk setiap laptop." />
+</Card>

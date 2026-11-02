@@ -1,0 +1,88 @@
+---
+id: cicd-c3-l06
+world: 3
+title: "Deploy ke Cloudflare dari Actions"
+summary: "Anda akan belajar: cara laman ini hantar dirinya ke Cloudflare, dan bila anda perlukan Cloudflare Containers."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, TimelineTap, Transcript, YamlBuilder, ConveyorBelt]
+needs: [cicd-c3-l05]
+scenario: c3-this-site
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Cloudflare Workers: GitHub Actions", url: "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/" }
+  - { label: "Cloudflare Workers: static assets", url: "https://developers.cloudflare.com/workers/static-assets/" }
+  - { label: "Cloudflare Containers", url: "https://developers.cloudflare.com/containers/" }
+  - { label: "Containers: rollouts", url: "https://developers.cloudflare.com/containers/configuration/rollouts/" }
+---
+
+<Card id="hook" type="hook">
+Kursus ini ada lebih 150 pelajaran, dalam dua bahasa. Selepas setiap merge, siapa letak semuanya dalam talian?
+
+<Interactive name="Choice" options={[{ label: 'Robot: job deploy dalam GitHub Actions', correct: true, why: 'Setiap push ke main jalankan semakan, kemudian deploy. Tiada siapa muat naik dengan tangan.' }, { label: 'Seseorang, dengan tangan, setiap malam', why: 'Orang terlupa, dan malam untuk tidur.' }, { label: 'Cloudflare teka bila nak kemas kini', why: 'Cloudflare hanya hidang apa yang deploy hantar.' }]} />
+</Card>
+
+<Card id="see-assets" type="see">
+Laman ini guna **<Term id="workers-static-assets">Workers static assets</Term>**: fail siap yang Cloudflare hidang sedunia. Makanan siap bungkus di rak, tiada apa nak dimasak. Mana sesuai di mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'assets', label: 'Static assets' }, { id: 'container', label: 'Sebuah container' }]} items={[{ label: 'Laman diari: HTML, CSS, gambar', bucket: 'assets', why: 'Fail biasa. Tak perlu kod server.' }, { label: 'Bahagian depan web Kedai Kancil, selepas build', bucket: 'assets', why: 'Build tukarkannya jadi fail biasa.' }, { label: 'API Kedai Kancil, dibungkus sebagai image Docker', bucket: 'container', why: 'Ia server yang berjalan, jadi perlukan container.' }, { label: 'Alat yang perlukan Linux penuh', bucket: 'container', why: 'Container bawa Linux sendiri.' }]} success="Siap! Fail masuk rak. Server perlukan dapur." />
+</Card>
+
+<Card id="see-containers" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Build', text: 'Wrangler bina image Docker anda. Docker mesti berjalan pada runner; ubuntu-latest ada Docker.' }, { when: '2', title: 'Push', text: 'Image dihantar ke registry Cloudflare sendiri.' }, { when: '3', title: 'Worker dulu', text: 'Worker baharu jadi live dulu.' }, { when: '4', title: 'Rollout', text: 'Container yang berjalan ditukar melalui rollout, bukan semua serentak.' }]} />
+
+Perlukan server sebenar? **<Term id="cloudflare-containers">Cloudflare Containers</Term>** jalankan image anda di belakang sebuah Worker. Ia tersedia umum sejak April 2026, pada pelan Workers Paid. Tekan cara `wrangler deploy` menghantarnya.
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="Transcript" title="bash" label="Larian cuba baca dua fail, tunjuk saiz muat naik, tiada binding, dan berhenti tanpa muat naik." lines={[{ cmd: 'npx wrangler deploy --dry-run' }, { out: '⛅️ wrangler 4.156.0\n────────────────────', color: 'dim' }, { out: '✨ Read 2 files from the assets directory /home/you/kedai-kancil/dist\nTotal Upload: 0.39 KiB / gzip: 0.27 KiB\nNo bindings found.' }, { out: '--dry-run: exiting now.', color: 'green' }]} />
+
+Selamat sebagai lalai: buat larian cuba dulu. Ia semak tetapan dan fail anda, tanpa muat naik apa-apa.
+</Card>
+
+<Card id="try-yaml" type="try">
+Sekarang bina pipeline laman ini, versi ringkas. Semak semua. Deploy dari main sahaja.
+
+<Interactive name="YamlBuilder" workflow="CI" goal={{ order: ['push', 'pr', 'perms', 'check', 'ready1', 'test', 'deploy', 'ready2', 'ship'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'Pada setiap push', yaml: 'push:', means: 'Jalan untuk push ke mana-mana branch.' },
+  { id: 'pr', kind: 'trigger', label: 'Pada setiap pull request', yaml: 'pull_request:', means: 'Jalan untuk pull request juga.' },
+  { id: 'perms', kind: 'permissions', label: 'Token baca sahaja', yaml: 'contents: read', means: 'Token hanya boleh baca kod.' },
+  { id: 'check', kind: 'job', label: 'Job: check', yaml: 'check:\n  runs-on: ubuntu-latest', means: 'Runner yang uji semuanya.' },
+  { id: 'ready1', kind: 'step', label: 'Bersedia (job check)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Salin kod. Pasang pakej.' },
+  { id: 'test', kind: 'step', label: 'Jalankan ujian', yaml: '- run: npm test', means: 'Setiap ujian mesti lulus.' },
+  { id: 'always', kind: 'job', label: 'Job: deploy (setiap acara)', yaml: 'deploy:\n  needs: check\n  runs-on: ubuntu-latest', means: 'Deploy selepas semakan.', why: 'Nanti setiap pull request jadi live. Deploy dari main sahaja.' },
+  { id: 'deploy', kind: 'job', label: 'Job: deploy (main sahaja, jangan dipotong)', yaml: "deploy:\n  needs: check\n  if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n  runs-on: ubuntu-latest\n  concurrency:\n    group: deploy-production\n    cancel-in-progress: false", means: 'Tunggu check. Push ke main sahaja. Jangan hentikan deploy separuh jalan.' },
+  { id: 'ready2', kind: 'step', label: 'Bersedia (job deploy)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Runner baharu perlukan kod sekali lagi.' },
+  { id: 'ship', kind: 'step', label: 'Build dan deploy', yaml: '- run: npm run deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Build, kemudian wrangler deploy, dengan kunci dari secrets.' }]}
+  success="Itulah bentuk pipeline sebenar laman ini." />
+
+<Hint>Kedua-dua trigger, permissions, job check dan langkahnya. Kemudian job deploy main sahaja dan langkahnya.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Satu pull request jalankan workflow ini. Apa job deploy buat?
+
+<Interactive name="Choice" options={[{ label: 'Ia dilangkau', correct: true, why: 'if kata: push ke main sahaja. Pull request bukan kedua-duanya.' }, { label: 'Ia deploy pull request itu', why: 'Nanti setiap idea jadi live sebelum disemak.' }, { label: 'Ia gagal', why: 'if yang palsu tak menggagalkan. Job itu dilangkau.' }]} />
+</Card>
+
+<Card id="check-event" type="check">
+Semak pada tali sawat. Cari acara yang buat deploy dilangkau.
+
+<Interactive name="ConveyorBelt" scenario="c3-this-site" task={{ type: 'event', job: 'deploy', result: 'skipped' }} success="Dilangkau! Hanya push ke main sampai ke Cloudflare." />
+
+<Hint>Cuba pull request, atau push ke branch lain.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar laman ke Cloudflare dari GitHub Actions.
+</Card>
+
+<Card id="deeper" type="deeper">
+Fail sebenar laman ini ialah `.github/workflows/ci.yml`. Job deploy-nya tunggu dua job: check dan workflows. Containers tarik image dari registry Cloudflare, Docker Hub, Amazon ECR atau Google. Image GHCR? Push ke registry Cloudflare dulu.
+
+Latihan sebenar (pilihan): jalankan `npx wrangler deploy --dry-run` dalam projek Worker kecil.
+</Card>

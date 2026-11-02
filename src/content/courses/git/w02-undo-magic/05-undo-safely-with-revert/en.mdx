@@ -1,0 +1,67 @@
+---
+id: git-w02-l05
+world: 2
+title: Undo safely with revert
+summary: "You will learn: how to undo a shared commit without rewriting history."
+minutes: 4
+xp: 20
+interactives: [AreasScene, GraphScene, GraphPick, Choice, Sim, TermReplay]
+needs: [git-w02-l04]
+scenario: w02-l05
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git revert", url: "https://git-scm.com/docs/git-revert" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Three commits: Add style, Make heading blink and Add day 2 entry. Make heading blink wobbles." frames={[{ repo: [{ name: 'Add style', kind: 'commit' }, { name: 'Make heading blink', kind: 'commit', glow: true }, { name: 'Add day 2 entry', kind: 'commit' }] }]} />
+
+Two commits ago, you made the heading blink. Everyone hates it. Your team already has that commit.
+</Card>
+
+<Card id="see-revert" type="see">
+<Interactive name="GraphScene" scenario="w02-l05" commands={['git revert HEAD~1']} label="A new commit, Revert Make heading blink, appears at the end. All the older commits stay where they were." />
+
+**<Term id="revert">Revert</Term>** adds a new commit that does the opposite. The bad commit stays in history. Nothing is erased.
+</Card>
+
+<Card id="try-pick" type="try">
+Tap the commit that made the heading blink.
+
+<Interactive name="GraphPick" scenario="w02-l05" answer="blink" prompt="Tap the bad commit." why="It added the blink line to style.css. Watch the undo commit appear." then="git revert {hash}" />
+
+<Hint>Read the messages. One of them says "blink".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You revert "Make heading blink". Is your day 2 entry still there?
+
+<Interactive name="Choice" options={[{ label: 'Yes, it stays', correct: true, why: 'Revert only undoes the one commit you pick.' }, { label: 'No, it is undone too', why: 'That is what a reset would do. Revert keeps later work.' }]} />
+</Card>
+
+<Card id="try-type" type="try">
+Now revert the blink commit in the terminal.
+
+<Interactive name="Sim" scenario="w02-l05" panels={['graph']} goal={{ lastIsRevert: true, fileNotContains: { 'style.css': 'blink' }, commits: 6 }} hints={['Type git log --oneline to see the hashes.', 'Type git revert, then the hash of Make heading blink. Or type git revert HEAD~1']} success="Reverted! The heading is calm, and history is complete." />
+
+<Hint>`HEAD~1` is the commit just before the newest one.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Your bad commit is already on GitHub. Which undo do you pick?
+
+<Interactive name="Choice" options={[{ label: '`git revert`', correct: true, why: 'It adds an undo commit. Everyone keeps the same history.' }, { label: '`git reset --hard`', why: 'Reset rewrites history. Your team would end up with a different history.' }, { label: '`git commit --amend`', why: 'Amend only fixes the last commit. It rewrites history too.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now undo a shared commit without breaking anyone's history.
+</Card>
+
+<Card id="deeper" type="deeper">
+In real Git, `git revert` opens your editor with a ready message. Save and close it. `--no-edit` skips the editor. Did later commits change the same lines? Then you get a conflict. Conflicts come in World 3.
+
+<Interactive name="TermReplay" scenario="w02-l05" commands={['git revert --no-edit HEAD~1', 'git log --oneline']} label="git revert --no-edit HEAD~1 makes the undo commit without opening an editor." />
+</Card>

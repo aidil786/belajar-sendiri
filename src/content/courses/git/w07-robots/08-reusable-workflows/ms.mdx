@@ -1,0 +1,60 @@
+---
+id: git-w07-l08
+world: 7
+title: Workflow boleh guna semula
+summary: "Anda akan belajar: cara tulis workflow sekali dan panggil dari banyak repo."
+minutes: 4
+xp: 20
+interactives: [Transcript, Choice, SpotLines, SortCards, SwipeJudge, OrderList]
+needs: [git-w07-l07]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Reuse workflows", url: "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows" }
+  - { label: "Workflow syntax: on.workflow_call", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="Tiga folder projek, blog, diary dan shop. Setiap satu ada salinan test.yml sendiri." lines={[{ cmd: 'ls */.github/workflows' }, { out: 'blog/.github/workflows:\ntest.yml\n\ndiary/.github/workflows:\ntest.yml\n\nshop/.github/workflows:\ntest.yml' }]} />
+
+Anda ada tiga laman. Setiap satu ada workflow ujian yang sama, 40 baris. Jumpa pepijat di dalamnya? Baiki tiga kali. Penatnya.
+</Card>
+
+<Card id="see-call" type="see">
+Tulis resipi sekali, dalam satu repo kongsi. Workflow lain panggil resipi itu. Itulah **<Term id="reusable-workflow">reusable workflow</Term>** (workflow boleh guna semula). Trigger mana yang buat ia boleh dipanggil?
+
+<Interactive name="Choice" compact options={[{ label: '`workflow_call`', correct: true, why: 'Panggil saya! Ia jadikan fail itu resipi yang orang lain boleh guna.' }, { label: '`workflow_dispatch`', why: 'Itu tambah butang Run untuk manusia. Workflow perlukan workflow_call.' }, { label: '`push`', why: 'push berjalan pada commit baru. Tiada siapa boleh panggil.' }]} />
+</Card>
+
+<Card id="see-use" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'on: push' }, { text: 'jobs:' }, { text: '  test:' }, { text: '    uses: aina-codes/shared/.github/workflows/test.yml@v1', target: true }, { text: '    with:' }, { text: '      node-version: 24' }]} prompt="Ketik baris yang panggil workflow kongsi itu." success="Ya! Job itu tunjuk ke resipi, kemudian biar resipi itu memasak." />
+
+Untuk memanggil, job tulis `uses:` dengan laluan fail itu. Ia duduk dalam **job**, bukan step. Job pemanggil tiada `runs-on` dan tiada steps.
+</Card>
+
+<Card id="see-inputs" type="see">
+Hantar tetapan biasa dengan `with:`. Hantar kunci dengan `secrets:`. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'with', label: 'with:' }, { id: 'secrets', label: 'secrets:' }]} items={[{ label: 'Versi Node: 24', bucket: 'with', why: 'Tetapan biasa. Tiada apa nak disorok.' }, { label: 'Token API Cloudflare', bucket: 'secrets', why: 'Itu kunci. Hantar sebagai secret.' }, { label: 'Nama laman: diary', bucket: 'with', why: 'Sesiapa boleh nampak. Input biasa.' }, { label: 'Kata laluan pangkalan data', bucket: 'secrets', why: 'Kunci dan kata laluan sentiasa bawah secrets.' }]} success="Siap! Tetapan masuk with. Kunci masuk secrets." />
+</Card>
+
+<Card id="check-ideas" type="check">
+Idea baik, atau perlu dibaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Satu workflow ujian kongsi untuk ketiga-tiga laman', good: true, why: 'Baiki pepijat sekali, dan setiap laman dapat pembaikan itu.' }, { text: 'Salin 40 baris itu ke setiap repo', good: false, why: 'Tiga salinan bermaksud tiga kali baiki untuk setiap pepijat.' }, { text: 'Sematkan workflow kongsi pada tag atau SHA', good: true, why: 'Macam action, pin elak perubahan mengejut.' }, { text: 'Panggil sebagai step, dalam `steps:`', good: false, why: 'Reusable workflow dipanggil oleh job, bukan step.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Anda push ke repo diary. Susun apa yang berlaku.
+
+<Interactive name="OrderList" items={['Workflow repo diary bermula', 'Job test panggil shared/test.yml', 'Job kongsi berjalan dengan input anda', '✓ atau ✗ muncul pada commit anda']} label="Langkah pertama di atas" success="Itulah seluruh perjalanannya!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi satu workflow dengan banyak repo.
+</Card>
+
+<Card id="deeper" type="deeper">
+Composite action ialah sepupu yang lebih kecil. Ia himpunkan steps, dan anda guna sebagai satu step. Reusable workflow pula himpunkan job penuh. Failnya mesti duduk terus dalam `.github/workflows/`, bukan dalam subfolder. Dalam repo yang sama, panggil sebagai `./.github/workflows/test.yml`.
+</Card>

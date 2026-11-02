@@ -1,0 +1,80 @@
+---
+id: docker-d4-l02
+world: 4
+title: Isi compose.yaml
+summary: "Anda akan belajar: baca setiap blok dalam compose.yaml."
+minutes: 5
+xp: 25
+interactives: [SpotLines, ComposeCanvas, SortCards, Choice, KitchenReplay, KitchenSim]
+needs: [docker-d4-l01]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Compose file reference: services", url: "https://docs.docker.com/reference/compose-file/services/" }
+  - { label: "Compose file reference: volumes", url: "https://docs.docker.com/reference/compose-file/volumes/" }
+  - { label: "Networking in Compose", url: "https://docs.docker.com/compose/how-tos/networking/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" lines={[{ text: 'services:' }, { text: '  web:', target: true }, { text: '    build: ./web' }, { text: '    ports:' }, { text: '      - "8080:80"' }, { text: '  api:', target: true }, { text: '    build: ./api' }, { text: '    environment:' }, { text: '      DB_HOST: db' }, { text: '  db:', target: true }, { text: '    image: postgres:18-alpine' }, { text: '    environment:' }, { text: '      POSTGRES_PASSWORD: example' }, { text: '    volumes:' }, { text: '      - db-data:/var/lib/postgresql' }]} prompt="Ketik tiga hidangan dalam fail ini." success="web, api dan db: masuk dua ruang, betul-betul bawah services." />
+
+Aisyah tulis `compose.yaml` untuk kedai. Nampak macam dinding perkataan. Cari tiga hidangan dulu.
+</Card>
+
+<Card id="try-build" type="try">
+Bina fail yang sama sendiri. Tambah tiga hidangan. Beri db lokernya. Lihat `compose.yaml` membesar, blok demi blok.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Dimasak ikut resepi dalam web/.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Dimasak ikut resepi dalam api/.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', means: 'Pek siap dari peti sejuk.' }]} goal={{ services: ['web', 'api', 'db'], volumes: { db: 'db-data' } }} prompt="Tambah web, api dan db. Kemudian beri db loker db-data." success="Itulah fail kedai. Setiap hidangan ialah satu service." />
+
+<Hint>Ketik setiap hidangan dalam menu. Kemudian pilih db-data dalam senarai loker db.</Hint>
+</Card>
+
+<Card id="check-keys" type="check">
+Setiap hidangan ada beberapa kunci. Susun ikut apa yang ia buat.
+
+<Interactive name="SortCards" buckets={[{ id: 'from', label: 'Dari mana hidangan datang' }, { id: 'connect', label: 'Cara ia berhubung' }, { id: 'keep', label: 'Apa yang ia tahu atau simpan' }]} items={[{ label: 'build: ./web', bucket: 'from', why: 'Masak ikut resepi dalam folder web.' }, { label: 'image: postgres:18-alpine', bucket: 'from', why: 'Ambil pek siap dari peti sejuk.' }, { label: 'ports: "8080:80"', bucket: 'connect', why: 'Tingkap pesanan 8080 di laptop menuju ke port 80.' }, { label: 'networks: [back]', bucket: 'connect', why: 'Talian telefon mana hidangan itu sertai.' }, { label: 'environment: DB_HOST: db', bucket: 'keep', why: 'Satu tetapan, macam -e dalam docker run.' }, { label: 'volumes: db-data:/var/lib/postgresql', bucket: 'keep', why: 'Satu loker, supaya data kekal.' }]} success="Semua kunci dah disusun. Anda boleh baca mana-mana service sekarang." />
+</Card>
+
+<Card id="predict" type="predict">
+Loker disebut dua kali: pada hidangan, dan di bawah sekali. Apa jadi kalau anda padam blok bawah?
+
+```yaml
+  db:
+    image: postgres:18-alpine
+    volumes:
+      - db-data:/var/lib/postgresql
+
+volumes:
+  db-data:
+```
+
+<Interactive name="Choice" options={[{ label: 'Compose berhenti dengan ralat', correct: true, why: 'Kata sebenar: service "db" refers to undefined volume db-data. Maksudnya: anda guna loker yang tak pernah disenaraikan.' }, { label: 'Compose tetap buat loker itu', why: 'Ia tak pernah meneka. Setiap loker bernama disenaraikan di bawah.' }, { label: 'db hidup tanpa loker', why: 'Compose semak seluruh fail dulu. Tiada apa yang hidup.' }]} />
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose exec web wget -qO- http://api:3000']} label="Dalam web, wget minta http://api:3000. Bekas api jawab dengan JSON kedai." />
+
+Fail ini tiada blok `networks:`. Compose tetap buat satu talian telefon, `kedai-kancil_default`. Setiap hidangan panggil yang lain ikut nama **<Term id="compose-service">service</Term>** (hidangan dalam set), contohnya `api`.
+</Card>
+
+<Card id="try-config" type="try">
+Larian kering dulu. Minta Compose paparkan fail akhir, tanpa hidupkan apa-apa.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" goal={{ lastTyped: '^docker compose config' }} hints={['Taip docker compose config dan tekan Enter.']} success="Itulah fail yang Compose akan guna. Tiada apa yang hidup." />
+
+<Hint>Arahannya `docker compose config`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca setiap blok dalam compose.yaml.
+</Card>
+
+<Card id="deeper" type="deeper">
+Mahu dua talian telefon? Senaraikan di bawah blok `networks:` paling atas, contohnya `front` dan `back`. Kemudian db boleh duduk di `back` sahaja. Baris atas `name: kedai` tetapkan nama projek. `compose.yaml` ialah nama fail pilihan; `docker-compose.yml` masih boleh.
+
+Latihan sebenar (pilihan): dalam folder `hello-set`, jalankan `docker compose config`. Bandingkan dengan fail anda.
+</Card>

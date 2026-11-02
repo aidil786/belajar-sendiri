@@ -1,0 +1,70 @@
+---
+id: k8s-k7-l04
+world: 7
+title: Self-heal and drift
+summary: "You will learn: what drift is, and how self-heal or Sync puts Git's version back."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, GitOpsMirror, Choice, FoodCourtSim, SwipeJudge]
+needs: [k8s-k7-l03]
+scenario: k7-drift
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Argo CD: automated sync and self-heal", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/" }
+  - { label: "Argo CD: diffing (ignore differences)", url: "https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k7-drift" commands={['kubectl get deployment shop']} label="kubectl get deployment shop shows 1/1 ready, but shop.yaml in Git asks for 3." />
+
+Git asks for 3 trays. The cluster runs 1. The floor no longer matches the order board. This gap is called **<Term id="drift">drift</Term>**.
+</Card>
+
+<Card id="try-heal" type="try">
+Self-heal is on. Make a manual change with the kubectl button. Then watch.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} task={{ type: 'drift' }} success="Self-heal waited 5 seconds, then put Git's 3 trays back." />
+
+<Hint>Press the kubectl scale button under "Manual change".</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Now **<Term id="self-heal">self-heal</Term>** is off. Someone scales to 1 by hand. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It stays at 1 and shows OutOfSync until someone presses Sync', correct: true, why: 'Without self-heal, Argo CD reports drift but does not undo it.' }, { label: 'Argo CD puts 3 back at once anyway', why: 'Only with self-heal on. Off means "tell me, don’t touch".' }, { label: 'Argo CD changes Git to say 1', why: 'Argo CD never writes your Git. Git stays the truth.' }]} />
+</Card>
+
+<Card id="try-off" type="try">
+Self-heal is off. Make the manual change, then undo it yourself.
+
+<Interactive name="GitOpsMirror" app={{ name: 'shop', namespace: 'shop', replicas: 3, image: 'ghcr.io/kedai-kancil/shop:1.4.0' }} selfHeal={false} task={{ type: 'drift' }} success="You caught the drift and synced Git's version back." />
+
+<Hint>After the manual change, press Sync now.</Hint>
+</Card>
+
+<Card id="try-catch" type="try">
+This cluster has no GitOps helper. Be the helper. Find the drift, then put the file's version back.
+
+<Interactive name="FoodCourtSim" scenario="k7-drift" board="shop" goal={{ replicas: { name: 'shop', count: 3 }, podsReady: { selector: 'app=shop', count: 3 }, typed: '^kubectl get' }} hints={['Type kubectl get deployment shop to see the drift.', 'Then type kubectl apply -f shop.yaml']} success="Want 3, see 3. You did by hand what Argo CD does all day." />
+
+<Hint>`kubectl get deployment shop` shows it. `kubectl apply -f shop.yaml` fixes it.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Swipe: good habit or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Fix production by hand at 2 a.m., and never commit it.', good: false, why: 'Self-heal undoes it, or the next sync does. Commit the fix to Git.' }, { text: 'In a hurry, revert the bad commit in Git.', good: true, why: 'A revert is fast, recorded, and Argo CD syncs it.' }, { text: 'Turn self-heal off for good, so hand fixes stay.', good: false, why: 'Then drift piles up and Git stops being the truth.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now spot drift and get Git's version back.
+</Card>
+
+<Card id="deeper" type="deeper">
+Self-heal waits 5 seconds by default before it syncs again. Some drift is on purpose: an autoscaler changes replicas. Tell Argo CD to ignore that field with `ignoreDifferences`. Real rep (optional): on a kind cluster, `kubectl scale` a Deployment, then `kubectl apply -f` its file. See the count snap back.
+</Card>

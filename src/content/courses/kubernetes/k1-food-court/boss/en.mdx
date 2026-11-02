@@ -1,0 +1,78 @@
+---
+id: k8s-k1-boss
+world: 1
+title: Grand opening
+summary: "You will learn: to start a kind cluster, put out a pod, and read its status 3 ways."
+minutes: 6
+xp: 50
+interactives: [Choice, CommandBuilder, Transcript, FoodCourtSim, SortCards, Mission]
+needs: [k8s-k1-l13]
+scenario: k1-first-pod
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "kind quick start", url: "https://kind.sigs.k8s.io/docs/user/quick-start/" }
+  - { label: "Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+---
+
+<Card id="hook" type="hook">
+Boss: grand opening day! Your first stall opens today. Where do you rehearse first?
+
+<Interactive name="Choice" options={[{ label: 'A throwaway kind cluster on my laptop', correct: true, why: 'Yes. Mistakes there are free.' }, { label: 'The company’s live cluster', why: 'Never practise where the customers are.' }, { label: 'Nowhere: just open', why: 'A rehearsal catches the silly mistakes first.' }]} />
+</Card>
+
+<Card id="try-start" type="try">
+Room 1: open the food court. Build the command for a cluster called dev, with the 3-stall file.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kind', means: 'Kubernetes IN Docker' }, { text: 'create cluster', means: 'open a new food court' }, { text: '--name dev', means: 'call it dev' }, { text: '--config kind-dev.yaml', means: 'one office stall and two workers' }]} decoys={[{ text: 'kubectl apply -f', means: 'sends an order to a cluster that already exists' }, { text: 'docker compose up', means: 'starts a set meal, not a cluster' }]} success="Room 1 cleared! The food court is opening." />
+
+<Hint>The tool comes first, then what to do, then the name and the file.</Hint>
+</Card>
+
+<Card id="see-ready" type="see">
+<Interactive name="Transcript" title="bash" label="kind creates the cluster dev, ticks every step, and sets the kubectl context to kind-dev." lines={[{ cmd: 'kind create cluster --name dev --config kind-dev.yaml' }, { out: 'Creating cluster "dev" ...\n ✓ Ensuring node image (kindest/node:v1.37.0) 🖼\n ✓ Preparing nodes 📦 📦 📦\n ✓ Writing configuration 📜\n ✓ Starting control-plane 🕹️\n ✓ Installing CNI 🔌\n ✓ Installing StorageClass 💾\n ✓ Joining worker nodes 🚜' }, { out: 'Set kubectl context to "kind-dev"', color: 'green' }, { out: 'You can now use your cluster with:\n\nkubectl cluster-info --context kind-dev\n\nHave a nice day! 👋' }]} />
+
+kind printed this. Find the green line: kubectl now points at kind-dev. Your pink bar will say the same.
+</Card>
+
+<Card id="try-deploy" type="try">
+Room 2: put out your first tray. Apply `tray.yaml`, then wait until it says Running.
+
+<Interactive name="FoodCourtSim" scenario="k1-first-pod" goal={{ objectExists: ['pod/tray'], podStatus: { selector: 'app=tray', status: 'Running' } }} hints={['Type kubectl apply -f tray.yaml and press Enter.', 'Wait a moment, or press +1s, then type kubectl get pods.']} success="Room 2 cleared! Your first tray is Running." />
+
+<Hint>`ls` shows the files in your folder.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your tray shows `0/1 ContainerCreating`. Is something broken?
+
+<Interactive name="Choice" options={[{ label: 'No: the stall is still setting it up. Wait a moment.', correct: true, why: 'Right. The kubelet is pulling the image and starting the container.' }, { label: 'Yes: delete it right now', why: 'Patience first. Look again in a few seconds.' }, { label: 'Yes: the cluster is down', why: 'The cluster answered you. It is just busy.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Room 3: read the tray’s status 3 ways. First `kubectl get pod tray`. Then `kubectl describe pod tray`. Last, `kubectl get pod tray -o yaml`.
+
+<Interactive name="FoodCourtSim" scenario="k1-tray" goal={{ typed: '^(kubectl|k) describe (pods?|po)( |/)tray\\b', lastTyped: '^(kubectl|k) get (pods?|po)( |/)tray\\b.*-o ?yaml' }} hints={['Way 1: kubectl get pod tray', 'Way 2: kubectl describe pod tray', 'Way 3: kubectl get pod tray -o yaml']} success="Room 3 cleared! One word, one story, every field." />
+
+<Hint>Finish with the `-o yaml` one.</Hint>
+</Card>
+
+<Card id="check-ways" type="check">
+Which way shows it best? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'get', label: '`get`' }, { id: 'describe', label: '`describe`' }, { id: 'yaml', label: '`-o yaml`' }]} items={[{ label: 'One STATUS word, like Running', bucket: 'get', why: 'get gives one line per tray.' }, { label: 'A quick table of many trays', bucket: 'get', why: 'get lists them all at once.' }, { label: 'Events: scheduled, pulled, started', bucket: 'describe', why: 'describe ends with the Events.' }, { label: 'A story to read when a tray is stuck', bucket: 'describe', why: 'Start there when something is wrong.' }, { label: 'Every field, exactly as stored', bucket: 'yaml', why: '-o yaml shows the whole object.' }, { label: 'The full status block, with conditions', bucket: 'yaml', why: 'status sits at the end of the YAML.' }]} success="Three ways, three jobs. Boss nearly beaten!" />
+</Card>
+
+<Card id="try-real" type="try">
+Final room, for real: open your own food court on your laptop.
+
+<Interactive name="Mission" id="k8s-k1-boss-real" steps={[{ id: 'create', text: 'Open the food court (the 3-stall file is in lesson 7).', command: 'kind create cluster --name dev --config kind-dev.yaml' }, { id: 'here', text: 'Check where you are.', command: 'kubectl config current-context' }, { id: 'tray', text: 'Put out one tray.', command: 'kubectl run tray --image=nginx:1.29-alpine' }, { id: 'wait', text: 'Wait until it is ready.', command: 'kubectl wait --for=condition=Ready pod/tray --timeout=60s' }, { id: 'get', text: 'Way 1.', command: 'kubectl get pod tray' }, { id: 'describe', text: 'Way 2.', command: 'kubectl describe pod tray' }, { id: 'yaml', text: 'Way 3.', command: 'kubectl get pod tray -o yaml' }, { id: 'close', text: 'Close up for the night.', command: 'kind delete cluster --name dev' }]} success="Grand opening, for real! The food court is yours." />
+</Card>
+
+<Card id="win" type="win">
+You can now open a cluster, run a pod and check it 3 ways.
+</Card>

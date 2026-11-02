@@ -1,0 +1,64 @@
+---
+id: git-w01-l11
+world: 1
+title: "HEAD: anda di sini"
+summary: "Anda akan belajar: apa itu HEAD, dan macam mana ia bergerak bila anda commit."
+minutes: 3
+xp: 15
+interactives: [AreasScene, TermReplay, GraphPick, Choice, GraphScene]
+needs: [git-w01-l10]
+scenario: w01-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitglossary (HEAD)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git log", url: "https://git-scm.com/docs/git-log" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} effect="wobble" label="Empat commit bergoyang pada garis masa: Add README, Add home page, Add purple style dan Add about page." frames={[{ repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add home page', kind: 'commit' }, { name: 'Add purple style', kind: 'commit' }, { name: 'Add about page', kind: 'commit' }] }]} />
+
+Anda ada empat titik simpan. Anda sedang berdiri di titik yang mana sekarang? Dalam game, peta ada titik "anda di sini". Git pun ada.
+</Card>
+
+<Card id="see-head" type="see">
+<Interactive name="TermReplay" scenario="w01-l11" commands={['git log --oneline']} label="git log --oneline. Baris paling atas, Add about page, ada HEAD -> main di sebelah hashnya." />
+
+Nampak `HEAD` pada baris atas? **HEAD** ialah penanda "anda di sini" dalam Git. Sekarang ia berada pada commit (titik simpan) terbaru anda.
+</Card>
+
+<Card id="try-pick" type="try">
+Pada graf, HEAD ialah penanda merah jambu. Cari penanda itu.
+
+<Interactive name="GraphPick" scenario="w01-l11" answer="^Add about page$" prompt="Tekan commit yang HEAD tunjuk." why="Penanda HEAD merah jambu ada pada Add about page, commit terbaru anda." />
+
+<Hint>Cari label merah jambu yang tertulis HEAD.</Hint>
+</Card>
+
+<Card id="see-branch" type="see">
+<Interactive name="TermReplay" scenario="w01-l11" commands={['git branch']} label="git branch papar satu baris: bintang, kemudian main." />
+
+HEAD tunjuk ke satu **branch** (barisan commit yang ada nama). Branch anda bernama main. `git branch` senaraikan branch. Tanda `*` ialah yang HEAD tunjuk.
+</Card>
+
+<Card id="predict" type="predict">
+Anda buat satu lagi commit. Di mana HEAD akan berada?
+
+<Interactive name="Choice" options={[{ label: 'Pada commit baru', correct: true, why: 'main bergerak ke commit baru, dan HEAD ikut sekali.' }, { label: 'Masih pada Add about page', why: 'HEAD ikut main, dan main bergerak ke setiap commit baru.' }, { label: 'Balik ke commit pertama', why: 'HEAD tak pernah lompat ke belakang sendiri.' }]} />
+</Card>
+
+<Card id="see-move" type="see">
+<Interactive name="GraphScene" scenario="w01-l11" commands={['echo "<p>Day 2: I met HEAD.</p>" >> index.html', 'git add index.html', 'git commit -m "Add day 2 entry"']} label="Titik commit baru muncul selepas Add about page. Label main dan penanda HEAD merah jambu sama-sama meluncur ke atasnya." />
+
+Commit baru masuk. main bergerak ke atasnya, dan HEAD **ikut sekali** dengan main. Sebab itu anda sentiasa berada di depan.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari HEAD dan teka ke mana ia pergi seterusnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Git simpan HEAD dalam satu fail kecil, `.git/HEAD`. Selalunya ia tertulis `ref: refs/heads/main`, maksudnya "HEAD tunjuk ke main". Dalam Dunia 2, anda akan gerakkan HEAD ke commit lama. Itu dipanggil detached HEAD (HEAD terlerai).
+</Card>

@@ -1,0 +1,75 @@
+---
+id: k8s-k2-l12
+world: 2
+title: "StatefulSets: names that stay"
+summary: "You will learn: how a StatefulSet gives pods names that stay, started in order."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim, SortCards]
+needs: [k8s-k2-l11]
+scenario: k2-statefulset
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: StatefulSets", url: "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/" }
+  - { label: "Kubernetes: StatefulSet basics (tutorial)", url: "https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/" }
+---
+
+<Card id="hook" type="hook">
+Your database runs 3 copies. Copy 0 is the boss; the others follow it. After a crash, the boss must come back as the boss. Random names make that hard. What do you need?
+
+<Interactive name="Choice" options={[{ label: 'Names that stay: web-0, web-1, web-2', correct: true, why: 'A fixed number tells everyone who is who, even after a restart.' }, { label: 'More copies', why: 'More copies do not tell you which one is the boss.' }, { label: 'A new random name every time', why: 'That is what a Deployment does. Fine for a shop, not for a database.' }]} />
+</Card>
+
+<Card id="see-sts" type="see">
+<Interactive name="KubeReplay" scenario="k2-statefulset" commands={['kubectl apply -f web.yaml', 'kubectl rollout status statefulset/web --timeout=180s', 'kubectl get pods']} label="The StatefulSet web makes pods web-0, web-1 and web-2, one after another." />
+
+A **<Term id="statefulset">StatefulSet</Term>** gives each tray a number that stays. The trays start in order: web-0 first, then web-1, then web-2.
+</Card>
+
+<Card id="try-order" type="try">
+How does `web` start? Put the steps in order.
+
+<Interactive name="OrderList" items={['web-0 starts', 'web-0 is Ready', 'web-1 starts', 'web-1 is Ready', 'web-2 starts']} label="First step at the top" success="Yes! Each tray waits for the one before it to be Ready." />
+
+<Hint>Lower numbers first. Each one waits for Ready before the next starts.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You delete `web-1`. What comes back?
+
+<Interactive name="Choice" options={[{ label: 'A new pod, still named web-1', correct: true, why: 'The tray is new, but its number stays. Everyone still knows who it is.' }, { label: 'A pod named web-3', why: 'The StatefulSet fills the gap with the same number.' }, { label: 'Nothing comes back', why: 'The StatefulSet still wants 3, so it makes one.' }]} />
+</Card>
+
+<Card id="check-delete" type="check">
+<Interactive name="KubeReplay" scenario="k2-statefulset-up" commands={['kubectl delete pod web-1', 'kubectl wait --for=condition=Ready pod/web-1 --timeout=90s', 'kubectl get pods']} label="web-1 is deleted. A new web-1 starts; its AGE is younger than web-0 and web-2." />
+
+Look at AGE. `web-1` is brand new, but it kept its name. Same seat, new tray.
+</Card>
+
+<Card id="try-scale" type="try">
+Your turn. Add a fourth copy. Guess its name before you look.
+
+<Interactive name="FoodCourtSim" scenario="k2-statefulset-up" goal={{ replicas: { name: 'web', count: 4, kind: 'StatefulSet' }, podsReady: { selector: 'app=web', count: 4 } }} hints={['Type kubectl scale statefulset web --replicas=4', 'Then kubectl get pods']} success="web-3 joined, right after web-2." />
+
+<Hint>`kubectl scale statefulset web --replicas=4`, then `kubectl get pods`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Deployment or StatefulSet? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'sts', label: 'StatefulSet' }]} items={[{ label: 'A web shop that keeps no data', bucket: 'deploy', why: 'Any tray can serve. Random names are fine.' }, { label: 'A database with one leader', bucket: 'sts', why: 'The leader needs a name that stays.' }, { label: 'Pods named web-0 and web-1', bucket: 'sts', why: 'Numbered names come from a StatefulSet.' }, { label: 'Pods named shop-747bf9cf8-9wfbg', bucket: 'deploy', why: 'A random tail means a Deployment made it.' }]} success="Sorted! Names that stay: StatefulSet." />
+</Card>
+
+<Card id="win" type="win">
+You can now run pods with names that stay, in order.
+</Card>
+
+<Card id="deeper" type="deeper">
+A StatefulSet needs a headless Service for steady addresses like `web-0.web` (World K3). It can give each tray its own storage with `volumeClaimTemplates` (World K4). Running a database yourself is real work. Many teams use a managed one.
+
+Real rep (optional): on a throwaway cluster, scale `web` down to 1. Watch which pods leave first.
+</Card>

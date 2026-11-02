@@ -1,0 +1,73 @@
+---
+id: linux-l4-l08
+world: 4
+title: "Safer scripts: set -euo pipefail"
+summary: "You will learn: to make a script stop at the first problem, before it does damage."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, SwipeJudge, Mission]
+needs: [linux-l4-l07]
+scenario: linux-l4-strict
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: the set builtin", url: "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html" }
+  - { label: "Bash manual: pipelines", url: "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html" }
+---
+
+<Card id="hook" type="hook">
+Tonight, `tidy.sh` runs. But the folder `kedai/tmp` does not exist. What happens?
+
+```bash
+#!/bin/bash
+# set -euo pipefail
+cd "$HOME/kedai/tmp"
+rm -f *.txt
+echo "tidy done"
+```
+
+<Interactive name="Choice" options={[{ label: 'cd fails, and rm runs in your home folder', correct: true, why: 'Bash carries on after a failure. rm -f *.txt deletes the .txt files at home.' }, { label: 'It stops at cd', why: 'Only with set -e. Here that line is a comment.' }, { label: 'Nothing happens', why: 'rm still runs: in the wrong room.' }]} />
+</Card>
+
+<Card id="see-disaster" type="see">
+<Interactive name="LinuxSim" scenario="linux-l4-strict" intro={['ls', './tidy.sh', 'ls']} />
+
+The real error says `cd: … No such file or directory`. Plain words: the script kept going in the wrong room. It deleted `menu.txt` and `prices.txt`, then said `tidy done`.
+</Card>
+
+<Card id="see-strict" type="see">
+**Strict mode** is a strict supervisor. `set -euo pipefail` is three rules. Sort what each one stops.
+
+<Interactive name="SortCards" buckets={[{ id: 'e', label: '-e' }, { id: 'u', label: '-u' }, { id: 'p', label: '-o pipefail' }]} items={[{ label: 'A command fails: stop now', bucket: 'e', why: '-e: exit at the first error.' }, { label: 'cd to a missing folder', bucket: 'e', why: 'cd fails, so -e stops the script.' }, { label: 'A jar with a typo in its name', bucket: 'u', why: '-u: a jar that was never filled is an error.' }, { label: 'grep fails inside grep … | sort', bucket: 'p', why: 'pipefail: a pipe fails if any part fails.' }]} success="-e: errors. -u: unknown jars. pipefail: broken pipes." />
+</Card>
+
+<Card id="try-strict" type="try">
+Wake the supervisor: remove the `# ` in front of line 2 with `sed`. Then run `tidy.sh`. Your files must survive.
+
+<Interactive name="LinuxSim" scenario="linux-l4-strict" goal={{ fileContains: { '~/tidy.sh': '^set -euo pipefail' }, scriptExitCode: { '~/tidy.sh': 1 }, fileExists: ['~/menu.txt', '~/prices.txt'] }} hints={["sed -i 's/^# set/set/' tidy.sh", 'head -n 2 tidy.sh, then ./tidy.sh', 'ls: menu.txt and prices.txt are still there.']} solution={["sed -i 's/^# set/set/' tidy.sh", './tidy.sh']} success="It stopped at cd with exit code 1. Nothing was deleted." />
+</Card>
+
+<Card id="predict" type="predict">
+A script runs `rm -rf "$BAKUP_DIR"/*`. The jar name has a typo, so it is empty. Without `-u`, what does rm get?
+
+<Interactive name="Choice" options={[{ label: '/*: every folder at the top of the disk', correct: true, why: 'The empty jar leaves just /*. With -u, bash stops: BAKUP_DIR: unbound variable.' }, { label: 'Nothing: rm skips empty jars', why: 'The jar disappears, and /* is left.' }, { label: 'An error, always', why: 'Only with set -u. Without it, the empty jar is fine to bash.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good line or needs work?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'set -euo pipefail', good: true, why: 'Right at the top, line 2.' }, { text: 'cd "$dir" || exit 1', good: true, why: 'Stop if the folder is missing.' }, { text: 'rm -rf $DIR/*', good: false, why: 'No quotes, no check. If DIR is empty: rm -rf /*.' }, { text: 'cp "$src" "$dest"', good: true, why: 'Quoted jars.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now make a script stop at the first problem.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-e` has blind spots: it ignores a failure inside an `if` test, or before `&&` and `||`. To allow one failure on purpose, write `cmd || true`. `trap` can tidy up when a script stops. Test scripts on a throwaway machine first.
+
+<Interactive name="Mission" id="linux-l4-l08-rep" steps={[{ id: 'top', text: 'Add set -euo pipefail as line 2 of your own script.' }, { id: 'u', text: 'See -u catch an unknown jar.', command: "bash -c 'set -u; echo \"$NOPE\"'" }, { id: 'lint', text: 'Let shellcheck read your script.', command: 'shellcheck myscript.sh' }]} success="Your script has a supervisor now." />
+</Card>

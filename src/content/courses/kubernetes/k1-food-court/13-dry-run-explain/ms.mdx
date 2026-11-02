@@ -1,0 +1,76 @@
+---
+id: k8s-k1-l13
+world: 1
+title: Dry run dan kubectl explain
+summary: "Anda akan belajar: buat raptai arahan dengan selamat, dan cari maksud mana-mana medan YAML."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder, SortCards]
+needs: [k8s-k1-l12]
+scenario: k1-dry-run
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl create", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/" }
+  - { label: "kubectl explain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_explain/" }
+  - { label: "kubectl apply", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/" }
+---
+
+<Card id="hook" type="hook">
+Anda perlukan fail Deployment. Dua puluh baris YAML, dari ingatan? Apa langkah yang bijak?
+
+<Interactive name="Choice" options={[{ label: 'Minta kubectl tulis draf, kemudian ubah', correct: true, why: 'Ya. Dry run cetak YAML untuk anda.' }, { label: 'Salin dari blog sebarangan', why: 'Mungkin lama atau salah. kubectl tulis untuk versi anda.' }, { label: 'Taip semuanya dari ingatan', why: 'Boleh, tapi lambat. Satu salah taip, ia ditolak.' }]} />
+</Card>
+
+<Card id="see-dry" type="see">
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3 --dry-run=client -o yaml', 'kubectl get deployments']} label="Dry run cetak Deployment penuh dalam YAML. Kemudian get deployments kata: No resources found." />
+
+**<Term id="dry-run">Dry run (raptai)</Term>** ialah latihan. `--dry-run=client -o yaml` cetak pesanan tanpa cipta apa-apa. `get deployments` buktikannya: tiada apa-apa.
+</Card>
+
+<Card id="try-dry" type="try">
+Giliran anda. Tambah flag yang cetak YAML pod ini tanpa membuatnya.
+
+<Interactive name="FoodCourtSim" scenario="k1-dry-run" prefill="kubectl run tray --image=nginx:1.29-alpine " goal={{ typed: 'run tray\\b.*(--dry-run=client.*-o ?yaml|-o ?yaml.*--dry-run=client)', objectMissing: ['pod/tray'] }} hints={['Tambah --dry-run=client -o yaml di hujung, kemudian tekan Enter.']} success="YAML di skrin, dan tiada dulang di medan selera." />
+
+<Hint>Tambah `--dry-run=client -o yaml` di hujung.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`--dry-run=client` kekal dalam laptop anda. `--dry-run=server` minta kluster menyemak, kemudian membuangnya. Yang mana tangkap lebih banyak kesilapan?
+
+<Interactive name="Choice" options={[{ label: 'server: kluster betul-betul menyemak', correct: true, why: 'Ya. API server buat semakan penuh, kemudian tak simpan apa-apa.' }, { label: 'client: ia lebih laju', why: 'Lebih laju, tapi laptop anda tak boleh semak semua yang kluster tahu.' }, { label: 'Kedua-duanya sama', why: 'Hanya server hantar pesanan ke API server.' }]} />
+</Card>
+
+<Card id="see-explain" type="see">
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl explain deployment.spec.replicas']} label="kubectl explain deployment.spec.replicas: integer, bilangan pod yang diingini, lalai 1." />
+
+Lupa maksud satu medan? **kubectl explain** baca dokumen kluster sendiri. Sambung laluan medan dengan titik: deployment, kemudian spec, kemudian replicas.
+</Card>
+
+<Card id="try-explain" type="try">
+Bina arahan yang terangkan restartPolicy sebuah Pod.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'bercakap dengan kluster' }, { text: 'explain', means: 'baca dokumen terbina' }, { text: 'pod.spec.restartPolicy', means: 'medannya: pod, kemudian spec, kemudian restartPolicy' }]} decoys={[{ text: '--dry-run=client', means: 'raptai satu perubahan' }, { text: 'get', means: 'senaraikan objek' }]} success="Ia cetak Always, Never dan OnFailure, dengan maksud setiap satu." />
+</Card>
+
+<Card id="check-sort" type="check">
+Dry run atau explain? Yang mana membantu di sini?
+
+<Interactive name="SortCards" buckets={[{ id: 'dry', label: 'Dry run' }, { id: 'explain', label: 'kubectl explain' }]} items={[{ label: 'Dapatkan draf YAML untuk Deployment', bucket: 'dry', why: 'create … --dry-run=client -o yaml tuliskannya.' }, { label: 'Semak fail tanpa ubah kluster', bucket: 'dry', why: 'apply --dry-run=server menyemak dan tak simpan apa-apa.' }, { label: 'Raptai apply yang berisiko', bucket: 'dry', why: 'Raptai dahulu, setiap kali.' }, { label: 'Cari maksud replicas', bucket: 'explain', why: 'explain baca dokumen medan itu.' }, { label: 'Lihat nilai yang dibenarkan untuk restartPolicy', bucket: 'explain', why: 'explain senaraikannya.' }]} success="Raptai dengan dry run. Cari maksud dengan explain." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buat raptai dengan dry run dan cari maksud mana-mana medan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: pengurus sebenar boleh buat keputusan spontan. Kubernetes tak boleh. Ia cuma kejar apa yang tertulis pada papan pesanan. Dulang di gerai yang tutup pun tak berjalan pergi. Dulang baharu dimasak di tempat lain, dengan nama baharu.
+
+Latihan sebenar (pilihan): cuba dua arahan ini di kluster kind anda.
+
+<Interactive name="KubeReplay" scenario="k1-dry-run" picture={false} commands={['kubectl apply -f shop.yaml --dry-run=server', 'kubectl explain pod.spec.restartPolicy']} label="Dry run server kata deployment.apps/shop created (server dry run). explain senaraikan Always, Never dan OnFailure." />
+</Card>

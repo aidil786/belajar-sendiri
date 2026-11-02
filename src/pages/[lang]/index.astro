@@ -1,0 +1,591 @@
+---
+import { safeJson } from '~/lib/safe-json';
+// Home: the biggest button is "Continue" (it resumes the exact card, in any course).
+// Below it: today, badges, the course catalog (Git & GitHub; Ship It with its three parts; Level Up
+// with its four) and a preview of the worlds of the course the learner is working on.
+import Base from '~/layouts/Base.astro';
+import Mascot from '~/components/ui/Mascot.astro';
+import WorldIsland from '~/components/ui/WorldIsland.astro';
+import Icon from '~/components/ui/Icon.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { badgeNames, flatten, getCourses, itemUrl, partLabel, placementItem, requiresHints, type Course } from '~/lib/course';
+import { getReviewIndex } from '~/lib/content';
+import { FAMILIES, familyKeys, LEVEL_UP, mapOrder, ROOT_COURSE } from '~/lib/catalog';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const courses = await getCourses();
+const root = courses.find((c) => c.id === ROOT_COURSE)!;
+const ready = (c: Course) => flatten(c).filter((x) => x.status === 'ready');
+const first = ready(root)[0]!;
+const placement = placementItem(root);
+// One catalog card per family (Ship It, Level Up), each listing its parts.
+const families = FAMILIES.map((id) => ({ id, keys: familyKeys(id), parts: courses.filter((c) => c.family === id) })).filter((f) => f.parts.length > 0);
+const titles = Object.fromEntries(courses.flatMap((c) => ready(c).map((x) => [x.id, x.title[lang]])));
+const strings = {
+  hello: t(lang, 'home.hello'),
+  continueWhere: t(lang, 'home.continueWhere'),
+  minutes: t(lang, 'home.minutesToday'),
+  lessons: t(lang, 'home.lessonsDone'),
+  xp: t(lang, 'home.xp'),
+  days: t(lang, 'streak.days'),
+  oneDay: t(lang, 'streak.oneDay'),
+  none: t(lang, 'streak.none'),
+  rest: t(lang, 'streak.rest'),
+  reviewOne: t(lang, 'review.homeOne'),
+  reviewMany: t(lang, 'review.homeMany'),
+  courseProgress: t(lang, 'catalog.progress'),
+  courseContinue: t(lang, 'catalog.continue'),
+};
+// lesson id → [course id, world id], so the world preview shows the learner's course and world.
+const worldOf = Object.fromEntries(courses.flatMap((c) => flatten(c).map((x) => [x.id, [c.id, x.world.id]])));
+// Per course: its ready lessons (for "3 of 40 lessons done").
+const courseLessons = Object.fromEntries(courses.map((c) => [c.id, ready(c).map((x) => x.id)]));
+const PREVIEW = 5;
+const previewCourses = courses.filter((c) => ready(c).length > 0);
+const data = {
+  titles,
+  badgeNames: badgeNames(lang, courses),
+  strings,
+  otherLang: other,
+  review: await getReviewIndex(),
+  worldOf,
+  courseLessons,
+  preview: PREVIEW,
+};
+const startOf = (c: Course) => ready(c)[0];
+---
+
+<Base lang={lang} title={t(lang, 'site.name')} altPath={`/${other}/`}>
+  <div class="container home">
+    <section class="hero">
+      <div class="hero-text">
+        <p class="hero-hello" data-hello>{t(lang, 'home.helloAnon')}</p>
+        <h1 class="accent">{t(lang, 'catalog.tagline')}</h1>
+        <p class="hero-why">{t(lang, 'home.why')}</p>
+        <p class="welcome-back" data-welcome hidden role="status">{t(lang, 'streak.welcomeBack')}</p>
+      </div>
+      <div class="hero-mascot" aria-hidden="true"><Mascot lang={lang} mood="happy" size={120} /></div>
+    </section>
+
+    <div class="cta">
+      <a class="btn btn-big cta-main" href={itemUrl(lang, ROOT_COURSE, first)} data-continue>
+        <span data-cta-label>{t(lang, 'home.start')}</span>
+        <span class="cta-sub" data-cta-sub>{t(lang, 'home.startWhere', { lesson: first.title[lang] })}</span>
+      </a>
+      {
+        placement && (
+          <a class="cta-placement" href={itemUrl(lang, ROOT_COURSE, placement)} data-placement>
+            {t(lang, 'home.placement')}
+          </a>
+        )
+      }
+      <a class="cta-review" href={`/${lang}/review/`} data-review-link hidden>
+        <Icon name="review" size={20} />
+        <span data-review-label></span>
+      </a>
+      <template data-continue-label>{t(lang, 'home.continue')}</template>
+    </div>
+
+    <form class="name-ask" data-name-form hidden>
+      <label for="learner-name">{t(lang, 'home.nameAsk')}</label>
+      <div class="name-row">
+        <input id="learner-name" name="name" autocomplete="given-name" maxlength="40" />
+        <button type="submit" class="btn">{t(lang, 'home.nameSave')}</button>
+        <button type="button" class="btn btn-quiet" data-name-skip>{t(lang, 'home.nameSkip')}</button>
+      </div>
+    </form>
+
+    <section class="today" aria-labelledby="today-h">
+      <h2 id="today-h">{t(lang, 'home.today')}</h2>
+      <ul class="stats pop-in">
+        <li data-stat-minutes>{t(lang, 'home.minutesToday', { n: 0 })}</li>
+        <li data-stat-lessons>{t(lang, 'home.lessonsDone', { n: 0 })}</li>
+        <li class="calm-hide" data-stat-xp>{t(lang, 'home.xp', { n: 0 })}</li>
+        <li data-stat-streak>{t(lang, 'streak.none')}</li>
+      </ul>
+      <p class="rest" data-stat-rest></p>
+      <h3 class="badges-h">{t(lang, 'badges.title')}</h3>
+      <ul class="badges" data-badges><li class="badges-none">{t(lang, 'badges.none')}</li></ul>
+    </section>
+
+    <section class="catalog" aria-labelledby="catalog-h">
+      <h2 id="catalog-h">{t(lang, 'catalog.title')}</h2>
+      <div class="catalog-grid pop-in">
+        <article class="course-card" data-course-card={root.id}>
+          <h3 class="course-title">{root.title[lang]}</h3>
+          <p>{root.summary[lang]}</p>
+          <p class="course-progress" data-course-progress={root.id}>
+            {t(lang, 'catalog.progress', { done: 0, total: courseLessons[root.id]!.length })}
+          </p>
+          <div class="course-actions">
+            <a class="btn" href={itemUrl(lang, root.id, first)} data-course-go={root.id}>{t(lang, 'catalog.start')}</a>
+            <a class="course-map" href={`/${lang}/${root.id}/`}>{t(lang, 'catalog.seeMap')}</a>
+          </div>
+        </article>
+
+        {
+          families.map((fam) => (
+            <article class="course-card family-card" data-course-card={fam.id}>
+              <p class="course-sub">{t(lang, fam.keys.subtitle)}</p>
+              <h3 class="course-title">{t(lang, fam.keys.title)}</h3>
+              <p>{t(lang, fam.keys.summary)}</p>
+              <ul class="hints">
+                {fam.id === LEVEL_UP && <li>{t(lang, 'levelup.startHere')}</li>}
+                {fam.parts.flatMap((c) => requiresHints(lang, c, courses).map((h) => <li>{partLabel(lang, c)}: {h}</li>))}
+              </ul>
+              <ol class="parts">
+                {fam.parts.map((c) => {
+                  const start = startOf(c);
+                  const test = placementItem(c);
+                  return (
+                    <li class="part-row" data-course-card={c.id} style={`--part: var(--course-${c.id}, var(--brand-a))`}>
+                      {c.hat && (
+                        <span class="part-mascot" aria-hidden="true">
+                          <Mascot lang={lang} hat={c.hat} size={48} />
+                        </span>
+                      )}
+                      <div class="part-body">
+                        <p class="part-label">{partLabel(lang, c)}</p>
+                        <h4 class="part-title">
+                          <a href={`/${lang}/${c.id}/`}>{c.title[lang]}</a>
+                        </h4>
+                        {start ? (
+                          <>
+                            <p class="course-progress" data-course-progress={c.id}>
+                              {t(lang, 'catalog.progress', { done: 0, total: courseLessons[c.id]!.length })}
+                            </p>
+                            <div class="course-actions">
+                              <a class="btn btn-ghost" href={itemUrl(lang, c.id, start)} data-course-go={c.id}>
+                                {t(lang, 'catalog.start')}
+                              </a>
+                              {test && (
+                                <a class="course-map" href={itemUrl(lang, c.id, test)}>
+                                  {t(lang, 'catalog.placement', { topic: c.title[lang] })}
+                                </a>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <p class="part-soon">{t(lang, 'map.soon')}</p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+              <a class="course-map" href={`/${lang}/${fam.id}/`}>
+                {t(lang, 'catalog.seeMap')}
+                <span class="visually-hidden">: {t(lang, fam.keys.title)}</span> →
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="worlds" aria-labelledby="worlds-h">
+      <div class="worlds-head">
+        <h2 id="worlds-h">{t(lang, 'home.worlds')}</h2>
+        {
+          previewCourses.map((c, i) => (
+            <a href={`/${lang}/${c.id}/`} data-preview-link={c.id} hidden={i > 0}>
+              {t(lang, 'home.seeMap')} →
+            </a>
+          ))
+        }
+      </div>
+      {
+        previewCourses.map((c, i) => (
+          <div class="worlds-grid" data-preview={c.id} hidden={i > 0}>
+            {mapOrder(c.worlds).map((w, j) => (
+              <WorldIsland lang={lang} courseId={c.id} world={w} compact hidden={j >= PREVIEW} idPrefix={c.id === ROOT_COURSE ? '' : `${c.id}-`} />
+            ))}
+          </div>
+        ))
+      }
+    </section>
+  </div>
+  <script type="application/json" data-home-data set:html={safeJson(data)} />
+</Base>
+
+<script>
+  import { format } from '~/i18n';
+  import { applyMapMarks } from '~/lib/mapMarks';
+  import { decodeSlots, dueToday } from '~/lib/review';
+  import { $progress, dayKey, learnedLessons, setName, streakInfo, update } from '~/stores/progress';
+
+  const data = JSON.parse(document.querySelector('[data-home-data]')?.textContent ?? '{}');
+  const s = data.strings as Record<string, string>;
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel);
+  const reviewSlots = decodeSlots(data.review);
+  const where = (lessonId: string | undefined) => (lessonId ? (data.worldOf[lessonId] as [string, number] | undefined) : undefined);
+
+  // World preview: the learner's course, 5 islands, starting at their current world.
+  const showWorlds = (lessonId: string | undefined) => {
+    const [course, worldId] = where(lessonId) ?? [];
+    const grids = [...document.querySelectorAll<HTMLElement>('[data-preview]')];
+    const grid = grids.find((g) => g.dataset.preview === course) ?? grids[0];
+    if (!grid) return;
+    for (const g of grids) g.hidden = g !== grid;
+    for (const a of document.querySelectorAll<HTMLElement>('[data-preview-link]')) a.hidden = a.dataset.previewLink !== grid.dataset.preview;
+    const islands = [...grid.querySelectorAll<HTMLElement>('[data-island]')];
+    const at = Math.max(0, islands.findIndex((el) => el.id.endsWith(`world-${worldId}`)));
+    const start = Math.max(0, Math.min(at, islands.length - data.preview));
+    islands.forEach((el, i) => (el.hidden = i < start || i >= start + data.preview));
+  };
+
+  const render = () => {
+    const p = $progress.get();
+    if (p.name) $('[data-hello]')!.textContent = format(s.hello!, { name: p.name });
+    // Continue: the exact card where the learner stopped, in any course.
+    if (p.resume && data.titles[p.resume.lessonId]) {
+      const a = $<HTMLAnchorElement>('[data-continue]')!;
+      a.href = `${p.resume.path}#c=${p.resume.cardId}`;
+      $('[data-cta-label]')!.textContent = $<HTMLTemplateElement>('[data-continue-label]')!.innerHTML;
+      $('[data-cta-sub]')!.textContent = format(s.continueWhere!, { lesson: data.titles[p.resume.lessonId], card: p.resume.cardIndex + 1 });
+    }
+    const today = dayKey();
+    $('[data-stat-minutes]')!.textContent = format(s.minutes!, { n: Math.round(p.minutes[today] ?? 0) });
+    $('[data-stat-lessons]')!.textContent = format(s.lessons!, { n: p.completed.length });
+    $('[data-stat-xp]')!.textContent = format(s.xp!, { n: p.xp });
+    const st = streakInfo(p.days);
+    $('[data-stat-streak]')!.textContent = st.learningDays === 0 ? s.none! : st.learningDays === 1 ? s.oneDay! : format(s.days!, { n: st.learningDays });
+    $('[data-stat-rest]')!.textContent = p.days.length ? format(s.rest!, { n: st.restLeft }) : '';
+    $('[data-welcome]')!.hidden = !st.welcomeBack;
+    const badges = $('[data-badges]')!;
+    if (p.badges.length) {
+      badges.replaceChildren(
+        ...p.badges.map((b) => {
+          const li = document.createElement('li');
+          li.className = 'badge';
+          li.textContent = `★ ${data.badgeNames[b] ?? b}`;
+          return li;
+        }),
+      );
+    }
+    // Each course card: progress, and "Continue" where the learner stopped in that course.
+    const done = new Set(p.completed);
+    const resumeCourse = where(p.resume?.lessonId)?.[0];
+    for (const [course, ids] of Object.entries(data.courseLessons as Record<string, string[]>)) {
+      const prog = document.querySelector<HTMLElement>(`[data-course-progress="${course}"]`);
+      if (prog) prog.textContent = format(s.courseProgress!, { done: ids.filter((id) => done.has(id)).length, total: ids.length });
+      const go = document.querySelector<HTMLAnchorElement>(`[data-course-go="${course}"]`);
+      if (go && p.resume && resumeCourse === course && data.titles[p.resume.lessonId]) {
+        go.href = `${p.resume.path}#c=${p.resume.cardId}`;
+        go.textContent = s.courseContinue!;
+      }
+    }
+    $('[data-name-form]')!.hidden = p.nameAsked;
+    // A small, calm link, only when cards are waiting. Never a popup.
+    const due = dueToday(reviewSlots, p.review.cards, learnedLessons(p), today).length;
+    $('[data-review-link]')!.hidden = due === 0;
+    $('[data-review-label]')!.textContent = due === 1 ? s.reviewOne! : format(s.reviewMany!, { n: due });
+    showWorlds(p.resume?.lessonId);
+  };
+
+  const form = $<HTMLFormElement>('[data-name-form]')!;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = new FormData(form).get('name');
+    setName(String(name ?? ''));
+  });
+  $('[data-name-skip]')!.addEventListener('click', () =>
+    update((p) => {
+      p.nameAsked = true;
+      return p;
+    }),
+  );
+  render();
+  $progress.listen(render);
+  applyMapMarks('{done}/{total}');
+</script>
+
+<style>
+  .home {
+    padding-block: var(--space-5) var(--space-6);
+  }
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    justify-content: space-between;
+  }
+  .hero-hello {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-l);
+    margin-bottom: var(--space-1);
+  }
+  .hero-why {
+    color: var(--color-text-muted);
+  }
+  .welcome-back {
+    background: var(--c-repo-soft);
+    color: var(--c-repo-ink);
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .hero-mascot {
+    flex: none;
+  }
+  /* Phones: Kancil stands next to "Hi there!", the title gets the full width. */
+  @media (max-width: 520px) {
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 0 var(--space-3);
+    }
+    .hero-text {
+      display: contents;
+    }
+    .hero-hello {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .hero-mascot {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .hero-mascot :global(svg) {
+      width: 76px;
+      height: auto;
+    }
+    .hero :global(h1),
+    .hero-why,
+    .welcome-back {
+      grid-column: 1 / -1;
+    }
+  }
+  .cta {
+    margin: var(--space-4) 0 var(--space-5);
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+  }
+  .cta-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 80px;
+    min-width: min(100%, 24rem);
+    font-size: var(--text-xl);
+    border-radius: var(--radius-l);
+  }
+  .cta-sub {
+    font-size: var(--text-s);
+    font-weight: var(--weight-normal);
+    opacity: 0.9;
+  }
+  .cta-placement {
+    font-size: var(--text-s);
+  }
+  .cta-review {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap);
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+  }
+  .name-ask {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+  .name-ask label {
+    font-weight: var(--weight-bold);
+  }
+  .name-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+  .name-row input {
+    flex: 1 1 12rem;
+    min-height: var(--tap);
+    border-radius: var(--radius-s);
+    border: 2px solid var(--color-border-strong);
+    background: var(--color-bg);
+    padding: 0 var(--space-3);
+  }
+  .today,
+  .catalog,
+  .worlds {
+    margin-top: var(--space-6);
+  }
+  .stats {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--space-2);
+  }
+  /* Each stat has its own colour: a strip on the left and a soft tint. */
+  .stats li {
+    --stat: var(--brand-a);
+    background: color-mix(in oklab, var(--stat) 9%, var(--color-surface));
+    border: 1px solid var(--color-border);
+    border-left: 6px solid var(--stat);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .stats li[data-stat-lessons] {
+    --stat: var(--brand-c);
+  }
+  .stats li[data-stat-xp] {
+    --stat: var(--gold);
+  }
+  .stats li[data-stat-streak] {
+    --stat: var(--warm);
+  }
+  .rest {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    margin-top: var(--space-2);
+  }
+  .badges-h {
+    margin-top: var(--space-4);
+    font-size: var(--text-m);
+  }
+  .badges {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .badges :global(.badge) {
+    background: var(--c-staging-soft);
+    color: var(--c-staging-ink);
+    border-radius: var(--radius-pill);
+    padding: var(--space-1) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .badges-none {
+    color: var(--color-text-muted);
+    font-size: var(--text-s);
+  }
+  .catalog-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    align-items: start;
+  }
+  .course-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 6px solid var(--deco-repo);
+    border-radius: var(--radius-l);
+    padding: var(--space-4);
+    box-shadow: var(--color-shadow);
+  }
+  .family-card[data-course-card='ship-it'] {
+    border-top-color: var(--deco-remote);
+  }
+  .family-card[data-course-card='level-up'] {
+    border-top-color: var(--deco-staging);
+  }
+  .course-title {
+    font-size: var(--text-xl);
+    margin: 0 0 var(--space-1);
+  }
+  .course-sub {
+    margin: 0;
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .course-progress {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+  .course-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .course-map {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+  }
+  .hints {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+    display: grid;
+    gap: var(--space-1);
+  }
+  .parts {
+    list-style: none;
+    margin: 0 0 var(--space-2);
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .part-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-left: 5px solid var(--part, var(--color-border));
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-3);
+  }
+  .part-mascot {
+    flex: none;
+  }
+  .part-body {
+    min-width: 0;
+  }
+  .part-label {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .part-title {
+    margin: 0;
+    font-size: var(--text-l);
+  }
+  .part-title a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+  .part-soon {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .worlds-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .worlds-grid {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  }
+</style>

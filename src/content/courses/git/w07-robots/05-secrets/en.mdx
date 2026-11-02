@@ -1,0 +1,71 @@
+---
+id: git-w07-l05
+world: 7
+title: Secrets, variables, environments
+summary: "You will learn: where to keep keys and settings, so workflows can use them safely."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SortCards, OrderList, YamlBuilder]
+needs: [git-w07-l04]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "Using secrets in GitHub Actions", url: "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets" }
+  - { label: "Variables reference", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/variables" }
+  - { label: "Managing environments", url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments" }
+---
+
+<Card id="hook" type="hook">
+Your deploy needs a Cloudflare token. Paste it into `ci.yml`? Anyone who can read your repo would see it. Where should it go?
+
+<Interactive name="Choice" options={[{ label: 'Right in the workflow file', why: 'Everyone who reads the file gets your token.' }, { label: 'In a repo secret on GitHub', correct: true, why: "GitHub locks it away. Workflows can use it. People can't read it." }, { label: 'In the commit message', why: 'Commit messages are public history. Never there.' }]} />
+</Card>
+
+<Card id="see-secret" type="see">
+<Interactive name="Transcript" title="Run log" label="A step prints the token by mistake. The log shows three stars instead of the token." lines={[{ cmd: 'echo "Token: $CLOUDFLARE_API_TOKEN"' }, { out: 'Token: ***', color: 'yellow' }]} />
+
+A **<Term id="secret">secret</Term>** waits, locked, in your repo settings. A workflow reads it by name, like `${{ secrets.MY_TOKEN }}`. Printed by mistake? The log shows `***`. Still, never print it.
+</Card>
+
+<Card id="see-variable" type="see">
+Not every setting is secret. A site address is fine to show. Store it as a **<Term id="variable">variable</Term>**, and read it as `${{ vars.SITE_URL }}`. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'secret', label: 'Secret' }, { id: 'var', label: 'Variable' }]} items={[{ label: 'Cloudflare API token', bucket: 'secret', why: 'It can change your site. Lock it away.' }, { label: 'Database password', bucket: 'secret', why: 'It opens all your data.' }, { label: "The site's public address", bucket: 'var', why: 'Everyone can see it anyway.' }, { label: 'Which Node version to use', bucket: 'var', why: 'Nothing to hide. A variable is fine.' }]} success="Sorted! Secrets for keys. Variables for plain settings." />
+</Card>
+
+<Card id="see-env" type="see">
+An **<Term id="environment">environment</Term>** is a named place you deploy to, like `production`. It can hold its own secrets. It can wait for a person to approve. Put a guarded deploy in order.
+
+<Interactive name="OrderList" items={['The deploy job starts, then waits', 'A reviewer checks it and approves', 'The job gets the production secrets', 'The new site goes live']} label="First step at the top" success="Yes! No approval, no secrets, no deploy." />
+</Card>
+
+<Card id="try-build" type="try">
+Build the deploy workflow. Keys must come from secrets.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'job', 'checkout', 'build', 'deploy'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run when main gets new commits.' },
+  { id: 'pr', kind: 'trigger', label: 'On pull request', yaml: 'pull_request:', means: 'Run on every pull request.', why: "A PR isn't merged yet. Deploy only from main." },
+  { id: 'job', kind: 'job', label: 'Job: deploy to production', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'A fresh runner, deploying to the production environment.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7', means: 'Copy your code onto the runner.' },
+  { id: 'build', kind: 'step', label: 'Install and build', yaml: '- run: npm ci && npm run build', means: 'Install packages, then build the site.' },
+  { id: 'deploy', kind: 'step', label: 'Deploy (keys from secrets)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', means: 'Upload the site. The keys come from locked secrets.' },
+  { id: 'typed', kind: 'step', label: 'Deploy (key typed in)', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: abc123-paste-here', means: 'Upload the site, with the key typed into the file.', why: 'Never type a key into the file. Everyone who reads it gets the key.' }]}
+  success="Safe deploy! The keys never touch the file." />
+
+<Hint>Trigger, then job, then steps. Build before you deploy.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A stranger opens a PR from their fork. Your workflow runs on it. Does it get your secrets?
+
+<Interactive name="Choice" options={[{ label: 'No. Fork PRs get none of your secrets.', correct: true, why: "GitHub holds them back, so strangers can't grab your keys." }, { label: 'Yes, all of them', why: 'That would let anyone steal your keys. GitHub holds them back.' }, { label: 'Only the production secrets', why: 'Fork PRs get none of your secrets.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep keys safe in your workflows.
+</Card>
+
+<Card id="deeper" type="deeper">
+Secrets live at three levels: organization, repository and environment. Environment secrets only reach jobs that use that environment. Environment rules can also limit deploys to `main`. On GitHub's free plan, environments only work in public repos.
+</Card>

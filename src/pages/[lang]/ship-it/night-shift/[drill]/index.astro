@@ -1,0 +1,159 @@
+---
+// One night shift drill: what broke, your job, the simulator, and the Rescue Center as the help path.
+// Exam mode (Settings) adds a timer and a docs-only rule card; see NightShiftDrill.
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/ui/Icon.astro';
+import NightShiftDrill, { type DrillView, type RootCauseView } from '~/components/ship-it/NightShiftDrill';
+import { LANGS, t, type Lang } from '~/i18n';
+import { getCourse, partLabel } from '~/lib/course';
+import { getRescue } from '~/lib/content';
+import { drills, EXAM_DOCS, type Drill } from '~/content/courses/nightshift';
+import { findScenario } from '~/content/courses/scenarios';
+import { DRILL_SECONDS } from '~/lib/nightShift';
+
+export function getStaticPaths() {
+  return LANGS.flatMap((lang) => drills.map((drill) => ({ params: { lang, drill: drill.id }, props: { drill } })));
+}
+const { lang } = Astro.params as { lang: Lang };
+const { drill } = Astro.props as { drill: Drill };
+const other = lang === 'en' ? 'ms' : 'en';
+const course = await getCourse(drill.part);
+const flow = (await getRescue(drill.part)).flows.find((f) => f.id === drill.rescue);
+const rescue = { href: `/${lang}/ship-it/rescue/${flow ? `#${flow.id}` : ''}`, title: flow ? flow.title[lang] : null };
+const listHref = `/${lang}/ship-it/night-shift/`;
+
+const view: DrillView =
+  drill.kind === 'kitchen'
+    ? { kind: 'kitchen', scenario: findScenario(drill.part, drill.scenario), goal: drill.goal, hints: drill.hints.map((h) => h[lang]) }
+    : drill.kind === 'kube'
+      ? { kind: 'kube', scenario: findScenario(drill.part, drill.scenario), goal: drill.goal, hints: drill.hints.map((h) => h[lang]) }
+      : {
+          kind: 'conveyor',
+          scenario: findScenario(drill.part, drill.scenario),
+          ...(drill.event ? { event: drill.event } : {}),
+          fixes: drill.fixes.map((f) => ({ label: f.label, text: f.text, ...(f.why ? { why: f.why[lang] } : {}), ...(f.correct === false ? { correct: false } : {}) })),
+          ...(drill.forbid ? { forbid: drill.forbid } : {}),
+        };
+const rootCause: RootCauseView | undefined = drill.rootCause
+  ? { question: drill.rootCause.question[lang], options: drill.rootCause.options.map((o) => o[lang]), answer: drill.rootCause.answer, why: drill.rootCause.why[lang] }
+  : undefined;
+const problems = drill.kind !== 'conveyor' ? (drill.problems ?? []).map((p) => p.what[lang]) : [];
+const stars = '★'.repeat(drill.level);
+---
+
+<Base lang={lang} title={`${drill.title[lang]} · ${t(lang, 'nightshift.title')}`} description={drill.story[lang]} altPath={`/${other}/ship-it/night-shift/${drill.id}/`}>
+  <div class="container drill-page" data-drill-page={drill.id}>
+    <p class="crumb">
+      <a href={`/${lang}/ship-it/`}>{t(lang, 'shipit.title')}</a><span aria-hidden="true">{' › '}</span><a href={listHref}>{t(lang, 'nightshift.title')}</a>
+    </p>
+    <header class="drill-head">
+      <p class="drill-part">
+        <span class="drill-level" data-level-badge={drill.level}><span aria-hidden="true">{stars}</span><span class="visually-hidden">{t(lang, 'nightshift.level.label', { n: drill.level })}</span></span>
+        {partLabel(lang, course)} · {t(lang, 'nightshift.minutes', { n: DRILL_SECONDS / 60 })}
+      </p>
+      <h1>{drill.title[lang]}</h1>
+    </header>
+    <section class="drill-brief" aria-label={t(lang, 'nightshift.whatBroke')}>
+      {
+        drill.alert && (
+          <p class="drill-alert" data-drill-alert>
+            <span class="drill-alert-label">{t(lang, 'nightshift.level.alert')}</span>
+            <code>{drill.alert}</code>
+          </p>
+        )
+      }
+      <h2><span class="broke-icon"><Icon name="danger" size={20} /></span> {t(lang, 'nightshift.whatBroke')}</h2>
+      <p>{drill.story[lang]}</p>
+      {problems.length > 0 && <p class="drill-faults">{t(lang, 'nightshift.level.problems', { n: problems.length })}</p>}
+      <h2>{t(lang, 'nightshift.yourJob')}</h2>
+      <p>{drill.task[lang]}</p>
+    </section>
+
+    <NightShiftDrill client:only="react" lang={lang} id={drill.id} drill={view} level={drill.level} rootCause={rootCause} problems={problems} success={drill.success[lang]} rescue={rescue} docs={drill.docs} examDocs={EXAM_DOCS} listHref={listHref}>
+      <p slot="fallback" class="drill-loading">{t(lang, 'nightshift.loading')}</p>
+    </NightShiftDrill>
+
+    <p class="drill-back"><a href={listHref}>← {t(lang, 'nightshift.back')}</a></p>
+  </div>
+</Base>
+
+<style>
+  .drill-page {
+    padding-block: var(--space-5);
+    max-width: calc(var(--card-max) + 2 * var(--gutter));
+  }
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .drill-part {
+    margin: 0;
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-muted);
+  }
+  .drill-brief {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 6px solid var(--deco-danger);
+    border-radius: var(--radius-m);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .drill-brief h2 {
+    font-size: var(--text-m);
+    margin: 0 0 var(--space-1);
+  }
+  .drill-level {
+    color: var(--c-staging-ink);
+    margin-right: var(--space-2);
+    letter-spacing: 0.1em;
+  }
+  .drill-alert {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0 0 var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--term-bg);
+    color: var(--term-fg);
+    border-radius: var(--radius-s);
+  }
+  .drill-alert-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--term-yellow);
+  }
+  .drill-alert code {
+    background: none;
+    color: inherit;
+    font-family: var(--font-mono);
+    font-size: var(--text-s);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .drill-faults {
+    font-weight: var(--weight-bold);
+  }
+  .broke-icon {
+    color: var(--c-danger-ink);
+    display: inline-flex;
+    vertical-align: -3px;
+  }
+  .drill-brief p {
+    margin: 0 0 var(--space-3);
+  }
+  .drill-brief p:last-child {
+    margin-bottom: 0;
+  }
+  .drill-loading {
+    color: var(--color-text-muted);
+  }
+  .drill-back {
+    margin-top: var(--space-5);
+  }
+  .drill-back a {
+    font-weight: var(--weight-bold);
+  }
+</style>

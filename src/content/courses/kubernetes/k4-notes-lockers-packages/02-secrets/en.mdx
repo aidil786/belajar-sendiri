@@ -1,0 +1,76 @@
+---
+id: k8s-k4-l02
+world: 4
+title: "Secrets: base64 is not a lock"
+summary: "You will learn: to hand a password to a pod with a Secret, and what really keeps it safe."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, Transcript, Choice, FoodCourtSim, YamlDoctor, SortCards, SwipeJudge, Mission]
+needs: [k8s-k4-l01]
+scenario: k4-secret
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Secrets", url: "https://kubernetes.io/docs/concepts/configuration/secret/" }
+  - { label: "Good practices for Kubernetes Secrets", url: "https://kubernetes.io/docs/concepts/security/secrets-good-practices/" }
+  - { label: "Encrypting confidential data at rest", url: "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-secret" commands={['kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia', 'kubectl get secret till -o yaml']} picture={false} label="kubectl creates a Secret called till. Its YAML shows PASSWORD: c3VwM3ItcmFoc2lh." />
+
+You put the till password in a **<Term id="secret">Secret</Term>**. Its YAML says `c3VwM3ItcmFoc2lh`. It looks scrambled. But is it safe?
+</Card>
+
+<Card id="see-base64" type="see">
+<Interactive name="Transcript" title="bash" label="echo the scrambled text into base64 -d. It prints sup3r-rahsia." lines={[{ cmd: 'echo c3VwM3ItcmFoc2lh | base64 -d' }, { out: 'sup3r-rahsia', color: 'red' }]} />
+
+One command turns it back. That was **base64**: any bytes written as plain letters. It is a sticker that looks like a lock.
+</Card>
+
+<Card id="predict" type="predict">
+Who can read the till password right now?
+
+<Interactive name="Choice" options={[{ label: 'Anyone allowed to read Secrets in this namespace', correct: true, why: 'Reading the Secret is enough. base64 stops nobody.' }, { label: 'Only the till pod', why: 'Almost! The pod reads it, but so can any person or bot allowed to get Secrets.' }, { label: 'Nobody. It is encrypted.', why: 'base64 is not encryption. One command undoes it.' }]} />
+</Card>
+
+<Card id="try-till" type="try">
+Make the Secret and open the till. Then check its password.
+
+<Interactive name="FoodCourtSim" scenario="k4-secret" goal={{ podsReady: { selector: 'app=till', count: 1 }, lastTyped: 'printenv PASSWORD' }} hints={['Type kubectl create secret generic till --from-literal=PASSWORD=sup3r-rahsia', 'Then: kubectl apply -f till.yaml', 'Last: kubectl exec deploy/till -- printenv PASSWORD']} success="The till has its password, without it in the image." />
+
+<Hint>`till.yaml` asks for the key `PASSWORD` from the Secret `till`.</Hint>
+</Card>
+
+<Card id="try-fix" type="try">
+A teammate wrote this Secret by hand. Apply fails. Fix it.
+
+<Interactive name="YamlDoctor" file="secret.yaml" manifest={'apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice-box\ntype: Opaque\ndata:\n  password: kancil123\n'} solution={'apiVersion: v1\nkind: Secret\nmetadata:\n  name: spice-box\ntype: Opaque\nstringData:\n  password: kancil123\n'} keep={['kancil123']} keepHint="Keep the password. Change how it is written." hint="data: wants base64. stringData: takes plain text." success="Applied! stringData stores it as base64 for you." />
+</Card>
+
+<Card id="see-locks" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'lock', label: 'A real lock' }, { id: 'sticker', label: 'Just a sticker' }]} items={[{ label: 'base64 in the Secret', bucket: 'sticker', why: 'Anyone can decode it.' }, { label: 'Encryption at rest in etcd', bucket: 'lock', why: 'A stolen disk shows only scrambled bytes.' }, { label: 'RBAC: only the till may read Secrets', bucket: 'lock', why: 'Nobody else gets past the API server.' }, { label: 'A Secret YAML file in Git', bucket: 'sticker', why: 'Everyone with the repo can decode it.' }]} success="Two real locks: encryption at rest and RBAC." />
+
+Real locks exist. With **encryption at rest**, the API server locks Secrets before saving them. RBAC decides who may read them.
+</Card>
+
+<Card id="check" type="check">
+Good habit or not? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Commit secret.yaml with the real password to Git.', good: false, why: 'base64 in Git is plain text to everyone.' }, { text: 'Let only the till read Secrets in its namespace.', good: true, why: 'Fewer readers, fewer leaks.' }, { text: 'Turn on encryption at rest for Secrets.', good: true, why: 'Backups and disks stay scrambled.' }, { text: 'Print the password in the logs to debug.', good: false, why: 'Logs are read by many people and tools.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now hand a pod a password with a Secret, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl describe secret till` shows sizes, never values. Mount a Secret as files, not env vars. Env vars can leak into crash reports. Managed clusters often encrypt Secrets with a cloud key (KMS). Next lesson: keeping Secrets out of Git.
+
+Real rep (optional), on a practice cluster only. Use a fake password:
+
+<Interactive name="Mission" id="k8s-k4-l02-rep" steps={[{ id: 'where', text: 'Check you are on the practice cluster.', command: 'kubectl config current-context' }, { id: 'make', text: 'Make a Secret with a fake password.', command: 'kubectl create secret generic till --from-literal=PASSWORD=practice-only' }, { id: 'peek', text: 'See the base64 text.', command: 'kubectl get secret till -o jsonpath={.data.PASSWORD}' }, { id: 'decode', text: 'Paste that text after echo, then decode it.', command: 'echo cHJhY3RpY2Utb25seQ== | base64 -d' }, { id: 'tidy', text: 'Tidy up.', command: 'kubectl delete secret till' }]} success="You saw it yourself: base64 is not a lock." />
+</Card>

@@ -1,0 +1,65 @@
+---
+id: git-w06-l03
+world: 6
+title: Berasaskan trunk dan feature flag
+summary: "Anda akan belajar: cara pasukan merge perubahan kecil setiap hari dan sorok kerja belum siap."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, AreasScene, SpotLines, SortCards, Choice, SwipeJudge]
+needs: [git-w06-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "Trunk-based development", url: "https://trunkbaseddevelopment.com/" }
+  - { label: "Feature flags", url: "https://trunkbaseddevelopment.com/feature-flags/" }
+  - { label: "Managing a merge queue", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Minggu 1', title: 'Mula besar', text: 'Anda buka satu branch untuk seluruh checkout baru.' }, { when: 'Minggu 2–5', title: 'Main terus bergerak', text: 'Pasukan anda merge 200 perubahan ke main.' }, { when: 'Minggu 6', title: 'Hari merge', text: 'Akhirnya anda merge. Konflik di mana-mana!' }]} />
+
+Branch (cabang) anda hidup selama enam minggu. Main tak tunggu anda. Ketik untuk tengok apa jadi pada hari merge.
+</Card>
+
+<Card id="see-trunk" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'Branch kecil', repo: 'main (trunk)' }} label="Commit kecil keluar dari branch kecil satu demi satu dan masuk ke main: mula-mula Add cart button, kemudian Show cart total." frames={[{ working: [{ name: 'Add cart button', kind: 'commit' }], repo: [{ name: 'Add menu', kind: 'commit' }] }, { working: [{ name: 'Show cart total', kind: 'commit' }], repo: [{ name: 'Add menu', kind: 'commit' }, { name: 'Add cart button', kind: 'commit' }] }, { working: [], repo: [{ name: 'Add menu', kind: 'commit' }, { name: 'Add cart button', kind: 'commit' }, { name: 'Show cart total', kind: 'commit' }] }]} />
+
+Dalam **<Term id="trunk-based">pembangunan berasaskan trunk</Term>**, semua orang merge perubahan kecil ke main. Selalu. Sekurang-kurangnya sekali sehari. Main dipanggil trunk.
+</Card>
+
+<Card id="try-flag" type="try">
+Kerja separuh siap pun boleh merge, dalam keadaan tutup. **<Term id="feature-flag">Feature flag</Term>** ialah suis hidup/mati dalam kod anda. Ketik baris yang semak suis itu.
+
+<Interactive name="SpotLines" lines={[{ text: 'if (flags.newCheckout) {', target: true }, { text: '  showNewCheckout();' }, { text: '} else {' }, { text: '  showOldCheckout();' }, { text: '}' }]} prompt="Ketik baris yang semak suis itu." success="Itulah flag! Bila ia tutup, pelanggan dapat checkout lama." />
+</Card>
+
+<Card id="try-sort" type="try">
+Hantar dalam keadaan hidup, atau sorok di sebalik flag?
+
+<Interactive name="SortCards" buckets={[{ id: 'on', label: 'Hantar, hidupkan' }, { id: 'flag', label: 'Sorok di sebalik flag' }]} items={[{ label: 'Checkout baru yang separuh siap', bucket: 'flag', why: 'Belum siap. Biar ia tutup dulu.' }, { label: 'Baiki salah ejaan pada menu', bucket: 'on', why: 'Kecil dan dah siap. Hantar saja.' }, { label: 'Mod gelap, belum diuji', bucket: 'flag', why: 'Uji dulu. Kemudian baru hidupkan.' }, { label: 'Pembaikan untuk masalah crash', bucket: 'on', why: 'Pelanggan perlukannya sekarang.' }, { label: 'Reka bentuk baru yang besar, dibina sikit-sikit', bucket: 'flag', why: 'Setiap bahagian merge setiap hari, tersorok sampai semuanya siap.' }]} success="Tersusun! Flag sorok apa yang belum sedia." />
+
+<Hint>Dah siap dan selamat? Hidupkan. Belum sedia? Sorok.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Checkout baru dah ada dalam main. Flag-nya tutup. Seorang pelanggan bayar. Apa yang dia nampak?
+
+<Interactive name="Choice" options={[{ label: 'Checkout lama', correct: true, why: 'Flag tutup, jadi kod lama yang berjalan.' }, { label: 'Checkout separuh siap', why: 'Hanya flag yang hidup tunjuk kod baru.' }, { label: 'Halaman ralat', why: 'Kod baru ada, cuma ditutup. Tiada apa yang rosak.' }]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat berasaskan trunk yang bagus? Leret ke kanan kalau ya, ke kiri kalau tidak.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Merge ke main sekurang-kurangnya sekali sehari', good: true, why: 'Merge kecil dan kerap bermaksud konflik kecil.' }, { text: 'Simpan satu branch selama dua bulan', good: false, why: 'Branch panjang bawa kepada merge yang menyakitkan.' }, { text: 'Sorok kerja belum siap di sebalik flag', good: true, why: 'Ia merge awal tapi kekal tutup.' }, { text: 'Langkau ujian supaya cepat merge', good: false, why: 'Main mesti sentiasa berfungsi. Ujian automatik menjaganya.' }, { text: 'Padam flag lama bila ciri dah siap', good: true, why: 'Flag lama bertimbun dan mengelirukan semua orang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan pembangunan berasaskan trunk dan feature flag.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pasukan yang sangat kecil mungkin commit terus ke main. Pasukan lebih besar guna branch kecil dan PR yang cepat. Merge queue bantu repo yang sibuk. Ia uji setiap PR dengan main terkini, kemudian merge. Flag juga boleh hidupkan ciri untuk segelintir pengguna dulu.
+</Card>

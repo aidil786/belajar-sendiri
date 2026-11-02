@@ -1,0 +1,71 @@
+---
+id: git-w01-l06
+world: 1
+title: Good commit messages
+summary: "You will learn: how to write commit messages that still make sense next month."
+minutes: 4
+xp: 20
+interactives: [TermReplay, AreasScene, SwipeJudge, Choice, Sim]
+needs: [git-w01-l05]
+scenario: w01-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git commit (discussion of messages)", url: "https://git-scm.com/docs/git-commit#_discussion" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w01-l06-messy" commands={['git log --oneline']} label="A git log with the messages fix, asdf, update, stuff and Add README." />
+
+A month later, you read your log. Which commit added the about page? Nobody knows. Not even you.
+</Card>
+
+<Card id="see-clear" type="see">
+<Interactive name="AreasScene" zones={['repo']} label="Four vague commits, stuff, update, asdf and fix, turn into four clear ones: Add home page, Add purple style, Add about page, Link about page from home." frames={[{ repo: [{ name: 'stuff', kind: 'commit' }, { name: 'update', kind: 'commit' }, { name: 'asdf', kind: 'commit' }, { name: 'fix', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add purple style', kind: 'commit' }, { name: 'Add about page', kind: 'commit' }, { name: 'Link about page from home', kind: 'commit' }] }]} />
+
+A good **commit message** says what changed. Keep it short: aim for 50 characters or less.
+</Card>
+
+<Card id="see-action" type="see">
+<Interactive name="AreasScene" zones={['repo']} label="Added header. becomes Add header. Fixing typos becomes Fix typos." frames={[{ repo: [{ name: 'Added header.', kind: 'commit' }, { name: 'Fixing typos', kind: 'commit' }] }, { repo: [{ name: 'Add header', kind: 'commit' }, { name: 'Fix typos', kind: 'commit' }] }]} />
+
+Start with an **action word**, like an order: Add, Fix, Remove. It should finish the sentence "This commit will…". Skip the full stop.
+</Card>
+
+<Card id="try-swipe" type="try">
+Judge each message. Swipe right if it is good, left if it needs work.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'Add contact form', good: true, why: 'Starts with an action word and says what changed.' }, { text: 'stuff', good: false, why: 'What stuff? Say what changed.' }, { text: 'fix: correct typo on about page', good: true, why: 'Clear label, clear change.' }, { text: 'update', good: false, why: 'Update what? Name the change.' }, { text: 'asdfgh', good: false, why: 'Random keys help nobody.' }, { text: 'Added a new header.', good: false, why: 'Say Add, not Added. And skip the full stop.' }, { text: 'docs: add setup steps to README', good: true, why: 'docs: tells you it is about writing, not code.' }, { text: 'I changed the colours and the footer and fixed two typos too', good: false, why: 'Too long, and too many changes. Split it into small commits.' }]} />
+</Card>
+
+<Card id="see-conventional" type="see">
+<Interactive name="AreasScene" zones={['repo']} label="Three commits get a label in front: feat: add contact form, fix: correct typo on about page, docs: add setup steps to README." frames={[{ repo: [{ name: 'Add contact form', kind: 'commit' }, { name: 'Correct typo on about page', kind: 'commit' }, { name: 'Add setup steps to README', kind: 'commit' }] }, { repo: [{ name: 'feat: add contact form', kind: 'commit' }, { name: 'fix: correct typo on about page', kind: 'commit' }, { name: 'docs: add setup steps to README', kind: 'commit' }] }]} />
+
+Many teams add a label in front. `feat:` is a new feature. `fix:` repairs a bug. `docs:` is for writing. This style is called **Conventional Commits**.
+</Card>
+
+<Card id="check" type="check">
+You fixed a typo on the about page. Pick the best message.
+
+<Interactive name="Choice" options={[{ label: '`fix: correct typo on about page`', correct: true, why: 'Short, starts with an action word, says what changed.' }, { label: '`fixed stuff`', why: 'What stuff? Say what you fixed.' }, { label: '`Fix.`', why: 'Fix what? Name the change.' }, { label: '`I found a typo on the about page so I fixed it today`', why: 'Too long. Aim for 50 characters or less.' }]} />
+</Card>
+
+<Card id="try-commit" type="try">
+Save `about.html` with a clean message.
+
+<Interactive name="Sim" scenario="w01-l06" panels={['areas', 'graph']} goal={{ commits: 4, cleanMessages: 4, lastCommitHas: ['about.html'] }} hints={['First put it in the box: git add about.html', 'Then commit with a clear message, like: git commit -m "Add about page"']} success="Clean! Your log stays easy to read." />
+
+<Hint>Used a vague message like "update"? Press "Start again" (↺) and try once more.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now write commit messages that make sense later.
+</Card>
+
+<Card id="deeper" type="deeper">
+More labels you will see: `style:`, `refactor:`, `test:` and `chore:`. Need more detail? Add a second `-m` for a longer body. Teams pick one language for messages. English is common, but Malay is fine too.
+
+<Interactive name="TermReplay" scenario="w01-l06" commands={['git add about.html', 'git commit -m "feat: add about page" -m "It lists my favourite food."', 'git log -n 1']} label="A commit with a title and a body. git log -n 1 shows both." />
+</Card>

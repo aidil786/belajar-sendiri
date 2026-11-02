@@ -1,0 +1,72 @@
+---
+id: k8s-k5-l11
+world: 5
+title: Cluster upgrades and version skew
+summary: "You will learn: how far apart a cluster's parts may be, and the safe order to upgrade them."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, SortCards, OrderList, FoodCourtSim, SwipeJudge]
+needs: [k8s-k5-l10]
+scenario: k5-cordon
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: version skew policy", url: "https://kubernetes.io/releases/version-skew-policy/" }
+  - { label: "Kubernetes: releases", url: "https://kubernetes.io/releases/" }
+  - { label: "Kubernetes: safely drain a node", url: "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/" }
+---
+
+<Card id="hook" type="hook">
+The Kubernetes project patches only the three newest minor versions: 1.37, 1.36 and 1.35. Your old cluster runs 1.34. What is the risk?
+
+<Interactive name="Choice" options={[{ label: 'It gets no more security fixes', correct: true, why: 'New holes are found all the time. Old versions stay open.' }, { label: 'It stops working tomorrow', why: 'It keeps running. It just stops getting fixes.' }, { label: 'No risk at all', why: 'Unpatched clusters are a favourite way in for attackers.' }]} />
+</Card>
+
+<Card id="see-versions" type="see">
+<Interactive name="KubeReplay" scenario="k1-empty" commands={['kubectl version', 'kubectl get nodes']} label="kubectl version shows Client v1.37.2 and Server v1.37.0. All three nodes run v1.37.0." />
+
+Your kubectl, the API server and each stall's kubelet all have versions. **<Term id="version-skew">Version skew</Term>** is how far apart they may be and still work together.
+</Card>
+
+<Card id="try-skew" type="try">
+The API server runs 1.37. Which parts are close enough?
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: 'Allowed' }, { id: 'no', label: 'Too far apart' }]} items={[{ label: 'kubelet 1.34', bucket: 'ok', why: 'A kubelet may be up to 3 minors older.' }, { label: 'kubelet 1.38', bucket: 'no', why: 'A kubelet must never be newer than the API server.' }, { label: 'kubectl 1.38', bucket: 'ok', why: 'kubectl may be one minor older or newer.' }, { label: 'kubectl 1.35', bucket: 'no', why: 'Two minors older is too far for kubectl.' }, { label: 'kube-scheduler 1.36', bucket: 'ok', why: 'It may be one minor older, never newer.' }]} success="Sorted! The API server leads. Others may trail a little." />
+</Card>
+
+<Card id="see-order" type="see">
+So the API server goes first, and stalls follow. Put a minor upgrade in order.
+
+<Interactive name="OrderList" items={['Read the release notes for removed APIs', 'Upgrade the control plane, API server first', 'Drain one stall', 'Upgrade that stall’s kubelet', 'Uncordon it, then do the next stall']} label="First step at the top" success="That is the safe order. One stall at a time, so lunch keeps going." />
+</Card>
+
+<Card id="predict" type="predict">
+Your control plane runs 1.35. Can you upgrade it straight to 1.37?
+
+<Interactive name="Choice" options={[{ label: 'No. One minor at a time: 1.36, then 1.37.', correct: true, why: 'The API server must not skip minor versions.' }, { label: 'Yes, newer is always fine', why: 'API changes are planned one minor at a time. Skipping breaks that plan.' }, { label: 'Only on weekends', why: 'Time of week is not the rule. One minor at a time is.' }]} />
+</Card>
+
+<Card id="try-node" type="try">
+Practise the stall routine. Drain dev-worker. Pretend you upgrade its kubelet. Then uncordon it.
+
+<Interactive name="FoodCourtSim" scenario="k5-cordon" goal={{ typed: '^(kubectl|k) drain dev-worker\\b', lastTyped: '^(kubectl|k) uncordon dev-worker\\b', nodeCordoned: { name: 'dev-worker', cordoned: false } }} hints={['Type kubectl drain dev-worker --ignore-daemonsets', 'Upgrade done! Now kubectl uncordon dev-worker']} success="Stall emptied, upgraded, and open again." />
+
+<Hint>First `kubectl drain dev-worker --ignore-daemonsets`, then `kubectl uncordon dev-worker`.</Hint>
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Check for removed APIs before the upgrade', good: true, why: 'Old YAML can stop applying after an API is removed.' }, { text: 'Upgrade the kubelets first, then the control plane', good: false, why: 'A kubelet must never be newer than the API server.' }, { text: 'On kind, make a fresh cluster with a newer node image', good: true, why: 'Practice clusters are cheap to throw away.' }, { text: 'Upgrade every stall at the same time', good: false, why: 'Then every tray moves at once. Go one stall at a time.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now upgrade a cluster in a safe order, inside the skew rules.
+</Card>
+
+<Card id="deeper" type="deeper">
+Each minor gets about a year of patches. Managed clouds can upgrade the control plane for you. You still check your YAML first. Self-built clusters use tools like `kubeadm upgrade`. In-place minor kubelet upgrades are not supported: drain the stall first.
+</Card>

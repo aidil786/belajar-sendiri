@@ -1,0 +1,70 @@
+---
+id: obs-o1-l01
+world: 1
+title: Kenapa perlu pantau?
+summary: "Anda akan belajar: kenapa kedai perlukan bilik kawalan, dan maksud monitoring dan observability."
+minutes: 3
+xp: 15
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, SwipeJudge, Mission]
+needs: []
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: overview", url: "https://prometheus.io/docs/introduction/overview/" }
+  - { label: "Google SRE book: monitoring distributed systems", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+  - { label: "OpenTelemetry: observability primer", url: "https://opentelemetry.io/docs/concepts/observability-primer/" }
+---
+
+<Card id="hook" type="hook">
+Waktu makan tengah hari di Kedai Kancil. Kaunter bayar rosak 20 minit lalu. Siapa beritahu anda dulu?
+
+<Interactive name="Choice" options={[{ label: 'Pelanggan yang marah', correct: true, why: 'Sayangnya, selalunya ya. Bila tiada siapa pantau, pelanggan jadi penggera anda.' }, { label: 'Server itu sendiri', why: 'Server hanya bersuara kalau anda sediakannya.' }, { label: 'Tiada siapa akan tahu', why: 'Mesti ada yang perasan. Lebih baik anda yang tahu dulu.' }]} />
+</Card>
+
+<Card id="see-rush" type="see">
+<Interactive name="TimelineTap" events={[{ when: '12:00', title: 'Waktu sibuk bermula', text: 'Pesanan naik. Semua nampak okey.' }, { when: '12:10', title: 'Barisan makin panjang', text: 'Pesanan tunggu lebih lama. Tiada siapa tengok.' }, { when: '12:19', title: 'Bayaran gagal', text: '1 dalam 100 gagal. Tak lama lagi 6 dalam 100.' }, { when: '12:20', title: 'Dengan bilik kawalan', text: 'Penggera berbunyi. Anda mula baiki.' }, { when: '12:41', title: 'Tanpa bilik kawalan', text: 'Pelanggan merungut. Anda lewat 22 minit.' }]} />
+
+Pantau nombor kedai sepanjang masa ialah **<Term id="monitoring">monitoring</Term>** (pemantauan). Tekan setiap saat waktu sibuk itu.
+</Card>
+
+<Card id="try-screen" type="try">
+Buka skrin pertama bilik kawalan anda. Masa 0 ialah 12:00.
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" metrics={['kedai_checkout_errors_ratio', 'kedai_queue_orders']} prompt="Tekan cip kedai_checkout_errors_ratio, kemudian tekan Run. Tengok graf." goal={{ typed: 'kedai_checkout_errors_ratio', resultCount: 1 }} hints={['Tekan cip kedai_checkout_errors_ratio. Ia masuk ke dalam kotak.', 'Kemudian tekan Run.']} solution="kedai_checkout_errors_ratio" success="Itulah peratus bayaran yang gagal." />
+
+<Hint>Cip masukkan nama nombor ke dalam kotak untuk anda.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Garisan ralat melonjak pada 19m. Pelanggan merungut pada 41m. Berapa awal skrin ini boleh beri amaran?
+
+<Interactive name="Choice" options={[{ label: '22 minit', correct: true, why: 'Ya. Penggera pada skrin ini 22 minit lebih awal daripada mesej marah itu.' }, { label: 'Tiada', why: 'Skrin dah tunjuk ralat pada 19m. Itu amaran awal.' }, { label: '1 minit', why: 'Kira dari 19m hingga 41m.' }]} />
+</Card>
+
+<Card id="see-observability" type="see">
+**<Term id="observability">Observability</Term>** bermaksud anda boleh tanya soalan baru dari luar. Monitoring pantau soalan yang dah dirancang. Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'mon', label: 'Monitoring' }, { id: 'obs', label: 'Observability' }]} items={[{ label: 'Skrin tunjuk pesanan seminit', bucket: 'mon', why: 'Nombor yang memang dirancang untuk dipantau.' }, { label: 'Penggera berbunyi bila ralat lebih 2%', bucket: 'mon', why: 'Masalah yang dikenal, dengan penggera sedia.' }, { label: 'Laporan mingguan waktu paling sibuk', bucket: 'mon', why: 'Dirancang awal.' }, { label: 'Kenapa hanya pesanan Bangsar gagal? Anda siasat.', bucket: 'obs', why: 'Soalan baru yang tiada siapa rancang.' }, { label: 'Jejak satu pesanan lambat melalui setiap langkah', bucket: 'obs', why: 'Anda teroka sistem guna datanya sendiri.' }]} success="Pantau ikut rancangan, dan tanya dengan bebas. Anda perlukan kedua-duanya." />
+</Card>
+
+<Card id="check" type="check">
+Sebab yang baik untuk pantau? Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Jumpa masalah sebelum pelanggan jumpa', good: true, why: 'Inilah sebab utama.' }, { text: 'Tahu sama ada versi baru buat keadaan lebih baik', good: true, why: 'Nombor sebelum dan selepas akan beritahu.' }, { text: 'Salahkan orang yang merosakkannya', good: false, why: 'Pantau untuk baiki, bukan untuk salahkan.' }, { text: 'Tenung graf sepanjang hari, secara manual', good: false, why: 'Mesin yang pantau. Orang dipanggil hanya bila perlu.' }, { text: 'Rancang untuk hari sibuk bulan depan', good: true, why: 'Nombor lama bantu anda bersedia.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa kedai perlukan bilik kawalan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Monitoring beritahu *bahawa* ada yang tak kena. Observability bantu anda cari *kenapa*. Kedua-duanya guna data yang sama: metrik, log dan trace. Itu pelajaran seterusnya.
+
+Latihan sebenar, tanpa alat:
+
+<Interactive name="Mission" id="obs-o1-l01-real" steps={[{ id: 'app', text: 'Pilih satu aplikasi yang anda jaga, atau yang anda guna setiap hari.' }, { id: 'three', text: 'Tulis tiga nombor yang tunjuk ia sihat.' }, { id: 'who', text: 'Untuk setiap nombor, tulis siapa patut tahu bila ia jadi teruk.' }]} success="Itulah permulaan bilik kawalan anda sendiri." />
+</Card>

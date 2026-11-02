@@ -1,0 +1,72 @@
+---
+id: git-w04-l11
+world: 4
+title: Tags, SemVer and Releases
+summary: "You will learn: how to name a version with a tag, number it with SemVer and share it as a release."
+minutes: 4
+xp: 20
+interactives: [Choice, GraphScene, SortCards, Sim, Courier, SwipeJudge]
+needs: [git-w04-l10]
+scenario: w04-l11
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git tag", url: "https://git-scm.com/docs/git-tag" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+---
+
+<Card id="hook" type="hook">
+Your diary site works today. Next month, something breaks. How do you find today's version fast?
+
+<Interactive name="Choice" options={[{ label: 'Stick a name on today’s commit', correct: true, why: 'That name is a tag. Meet it next.' }, { label: 'Remember the hash', why: 'a1b2c3d? Easy to forget, hard to say.' }, { label: 'Copy the folder to diary-final', why: 'That is how final_v3_REAL happens!' }]} />
+</Card>
+
+<Card id="see-tag" type="see">
+<Interactive name="GraphScene" scenario="w04-l11" commands={['git tag -a v1.0.0 -m "First release"']} label="A dashed v1.0.0 label appears on the newest commit, next to main. The tag stays there even when main moves on." />
+
+A **<Term id="tag">tag</Term>** is a sticker that never moves. `git tag -a v1.0.0 -m "First release"` sticks version 1.0.0 on this commit, with a note.
+</Card>
+
+<Card id="try-semver" type="try">
+**<Term id="semantic-versioning">SemVer</Term>** numbers have three parts: MAJOR.MINOR.PATCH. Which part goes up?
+
+<Interactive name="SortCards" buckets={[{ id: 'major', label: 'MAJOR (2.0.0)' }, { id: 'minor', label: 'MINOR (1.1.0)' }, { id: 'patch', label: 'PATCH (1.0.1)' }]} items={[{ label: 'Fix a typo on the home page', bucket: 'patch', why: 'A small fix. Nothing new, nothing broken.' }, { label: 'Add a contact page', bucket: 'minor', why: 'Something new, and old things still work.' }, { label: 'Remove the old page that people link to', bucket: 'major', why: 'Old links break. That is a big change.' }, { label: 'Fix a broken link', bucket: 'patch', why: 'Another small fix.' }, { label: 'Add an optional dark mode', bucket: 'minor', why: 'New, and nothing breaks.' }]} success="Breaks things: MAJOR. New things: MINOR. Fixes: PATCH." />
+
+<Hint>Does it break old things? Add new things? Or just fix?</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Tag your diary as version 1.0.0, with a note.
+
+<Interactive name="Sim" scenario="w04-l11" panels={['graph']} goal={{ tags: ['v1.0.0'] }} hints={['Type git tag -a v1.0.0 -m "First release"']} success="Tagged! v1.0.0 sits on your newest commit." />
+
+<Hint>`-a` makes a tag with a note. `-m` holds the note.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your tag is on your laptop. Tap Push. Does the tag reach GitHub?
+
+<Interactive name="Courier" scenario="w04-l11-tagged" actions={['push', { cmd: 'git push --tags' }]} goal={{ serverTags: ['v1.0.0'] }} hints={['Plain push skips tags. Try git push --tags.']} success="Tags travel only when you ask. Now GitHub has v1.0.0." />
+</Card>
+
+<Card id="see-release" type="see">
+On GitHub, a **<Term id="release">release</Term>** turns a tag into a page. GitHub can even draft its notes for you. What does a release add on top of a tag?
+
+<Interactive name="Choice" options={[{ label: 'Notes and files to download', correct: true, why: 'Visitors see what changed, and can grab the files.' }, { label: 'A new branch', why: 'A release sits on a tag, not on a branch.' }, { label: 'A second copy of the repo', why: 'No copy. It points at the tagged commit.' }]} />
+</Card>
+
+<Card id="check-names" type="check">
+Tag names: clear, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'v1.0.0', good: true, why: 'Clear, and it follows SemVer.' }, { text: 'final', good: false, why: 'Final until the next one!' }, { text: 'v1.0.1', good: true, why: 'A small fix after 1.0.0.' }, { text: 'new-version', good: false, why: 'Newer than what? Use numbers.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tag a version, number it and share it.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git tag v1.0.0` without `-a` makes a lightweight tag: just a name, no note. `git push origin v1.0.0` sends one tag. `git push --follow-tags` sends your annotated tags with the commits. Versions like 0.3.0 mean "still early: things may change".
+</Card>

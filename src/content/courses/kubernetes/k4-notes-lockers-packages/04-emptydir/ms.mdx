@@ -1,0 +1,69 @@
+---
+id: k8s-k4-l04
+world: 4
+title: "Ruang sementara: emptyDir"
+summary: "Anda akan belajar: biar dua container dalam satu pod berkongsi fail, dan bila fail itu hilang."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, SpotLines, FoodCourtSim, Choice, SortCards, Mission]
+needs: [k8s-k4-l03]
+scenario: k4-scratch
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Volumes (emptyDir)", url: "https://kubernetes.io/docs/concepts/storage/volumes/#emptydir" }
+  - { label: "Communicate between containers in the same Pod", url: "https://kubernetes.io/docs/tasks/access-application-cluster/communicate-containers-same-pod-shared-volume/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-scratch" commands={['kubectl get pods']} label="kubectl get pods tunjuk satu pod prep dengan 2/2 container Running." />
+
+Satu dulang, dua tukang masak. Tukang masak potong bawang. Pembantu menggorengnya. Setiap seorang kerja dalam bekas berasingan. Di mana mereka hulur bawang?
+</Card>
+
+<Card id="see-table" type="see">
+<Interactive name="SpotLines" lines={[{ text: 'containers:' }, { text: '  - name: cook' }, { text: '    volumeMounts:' }, { text: '      - name: table' }, { text: '        mountPath: /table' }, { text: '  - name: helper' }, { text: '    volumeMounts:' }, { text: '      - name: table' }, { text: '        mountPath: /table' }, { text: 'volumes:' }, { text: '  - name: table' }, { text: '    emptyDir: {}', target: true }]} prompt="Tekan baris yang buat meja kongsi." success="emptyDir: meja baharu yang kosong untuk dulang ini." />
+
+**<Term id="emptydir">emptyDir</Term>** ialah meja sementara atas dulang. Ia mula kosong. Kedua-dua tukang masak mount di `/table`, jadi mereka nampak fail yang sama.
+</Card>
+
+<Card id="try-share" type="try">
+Tukang masak letak bawang atas meja. Kemudian pembantu tengok.
+
+<Interactive name="FoodCourtSim" scenario="k4-scratch" goal={{ typed: '-c cook -- touch /table/', lastTyped: '-c helper -- ls /table' }} hints={['Taip kubectl exec deploy/prep -c cook -- touch /table/onions.txt', 'Kemudian: kubectl exec deploy/prep -c helper -- ls /table']} success="Pembantu nampak bawang tukang masak. Satu meja, dua bekas." />
+
+<Hint>`-c cook` pilih bekas mana dalam dulang yang jalankan arahan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dulang itu dipadam. Deployment buat yang baharu. Apa yang ada atas meja baharu?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa-apa. Ia meja baharu yang kosong.', correct: true, why: 'emptyDir lahir dan dikosongkan bersama pod-nya.' }, { label: 'Bawang, masih di situ', why: 'Hampir! Pod baharu dapat emptyDir baharu.' }, { label: 'Pod tak akan mula', why: 'Ia mula seperti biasa, dengan meja kosong.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k4-scratch" commands={['kubectl exec deploy/prep -c cook -- touch /table/onions.txt', 'kubectl delete pod {pod:app=prep}', 'kubectl rollout status deployment/prep --timeout=120s', 'kubectl exec deploy/prep -c helper -- ls /table']} label="Tukang masak tambah onions.txt. Pod dipadam dan diganti. ls /table dalam pod baharu tak cetak apa-apa." />
+
+`ls` tak cetak apa-apa. Dulang baharu dapat meja baharu. Untuk kerja sementara sahaja, bukan untuk simpan pesanan.
+</Card>
+
+<Card id="check-sort" type="check">
+Bawang kekal atau hilang?
+
+<Interactive name="SortCards" buckets={[{ id: 'stay', label: 'Bawang kekal' }, { id: 'gone', label: 'Bawang hilang' }]} items={[{ label: 'Container cook crash dan mula semula', bucket: 'stay', why: 'Pod masih hidup, jadi mejanya pun kekal.' }, { label: 'Pod dipadam', bucket: 'gone', why: 'Meja pergi bersama pod.' }, { label: 'Pod pindah ke gerai lain', bucket: 'gone', why: 'Pindah bermakna pod baharu, dengan meja baharu.' }, { label: 'Pembantu baca fail itu', bucket: 'stay', why: 'Berkongsi memang tujuan meja ini.' }]} success="Ia hidup selagi pod hidup." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kongsi fail sementara antara container dengan emptyDir.
+</Card>
+
+<Card id="deeper" type="deeper">
+`emptyDir: { medium: Memory }` letak meja dalam RAM. Laju, tetapi failnya dikira dalam had memori container. `sizeLimit` hadkan saiz meja. Kegunaan yang baik: cache, atau fail yang sidecar hantar ke servis log.
+
+Latihan sebenar (pilihan), pada kluster latihan:
+
+<Interactive name="Mission" id="k8s-k4-l04-rep" steps={[{ id: 'copy', text: 'Dalam terminal latihan di atas, taip cat prep.yaml. Simpan sebagai prep.yaml di mesin anda.' }, { id: 'apply', text: 'Mulakan dulang.', command: 'kubectl apply -f prep.yaml' }, { id: 'put', text: 'Tukang masak letak bawang.', command: 'kubectl exec deploy/prep -c cook -- touch /table/onions.txt' }, { id: 'look', text: 'Pembantu tengok.', command: 'kubectl exec deploy/prep -c helper -- ls /table' }, { id: 'tidy', text: 'Kemas.', command: 'kubectl delete -f prep.yaml' }]} success="Dua bekas sebenar, satu meja sebenar." />
+</Card>

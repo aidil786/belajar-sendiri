@@ -1,0 +1,62 @@
+---
+id: git-w05-l10
+world: 5
+title: Merge, squash atau rebase?
+summary: "Anda akan belajar: tiga cara merge pull request, dan bila pilih setiap satu."
+minutes: 4
+xp: 20
+interactives: [AreasScene, Choice, PracticeRepo, SortCards]
+needs: [git-w05-l09]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About merge methods on GitHub", url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github" }
+  - { label: "About pull request merges", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} label="main ada dua commit yang kemas. Selepas merge biasa, ia dapat juga wip, oops, fix typo, fix again, dan satu lagi: Merge pull request #18." frames={[{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'wip', kind: 'commit' }, { name: 'oops', kind: 'commit' }, { name: 'fix typo', kind: 'commit' }, { name: 'fix again', kind: 'commit' }, { name: 'Merge pull request #18', kind: 'commit' }] }]} />
+
+PR Mei ada 4 commit (titik simpan) yang bersepah. Merge (cantum) biasa salin semuanya ke main. Kemudian ia tambah satu **merge commit** di atas. Itu ke yang anda mahu?
+</Card>
+
+<Card id="predict-squash" type="predict">
+Kali ini anda pilih **<Term id="squash-merge">squash dan merge</Term>**. Apa yang masuk ke main?
+
+<Interactive name="Choice" options={[{ label: 'Satu commit baru dengan semua perubahan', correct: true, why: 'Squash himpit setiap commit dalam PR jadi satu commit yang kemas.' }, { label: 'Kesemua 4 commit, tambah satu merge commit', why: 'Itu merge biasa. Squash himpit semuanya jadi satu.' }, { label: 'Tiada apa, sampai Mei kemaskan', why: 'Squash kemaskan untuk anda, semasa merge.' }]} reveal={{ zones: ['repo'], zoneLabels: { repo: 'main' }, label: 'main dapat satu commit baru sahaja: Tambah galeri gambar (#18). Empat commit bersepah itu dihimpit ke dalamnya.', frames: [{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'Tambah galeri gambar (#18)', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'main' }} label="PR Ravi ada tiga commit yang kemas. Ia masuk ke main satu demi satu: Add gallery page, Add photos, Add captions. Tiada merge commit." frames={[{ repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }] }, { repo: [{ name: 'Add home page', kind: 'commit' }, { name: 'Add menu', kind: 'commit' }, { name: 'Add gallery page', kind: 'commit', glow: true }, { name: 'Add photos', kind: 'commit', glow: true }, { name: 'Add captions', kind: 'commit', glow: true }] }]} />
+
+Commit Ravi dah kemas. **<Term id="rebase-merge">Rebase dan merge</Term>** salin setiap satu ke atas main. Tiada merge commit. Sejarah kekal satu garis lurus.
+</Card>
+
+<Card id="try-squash" type="try">
+Kembali ke PR Mei yang bersepah. Squash dan merge PR itu.
+
+<Interactive name="PracticeRepo" screen="pull" at={18} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Laman Kelab\n\nLaman web untuk kelab kod sekolah kami.\n' }} pulls={[{ number: 18, title: 'Tambah galeri gambar', body: 'Tambah halaman galeri.\n\n4 commit: wip, oops, fix typo, fix again', author: 'mei', from: 'gallery', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'gallery.html', diff: ['@@ -0,0 +1,2 @@', '+<h1>Gallery</h1>', '+<img src="day1.jpg" alt="Our first meeting">'] }], reviews: [{ author: 'aina', state: 'approved', body: 'Cantik! Tolong squash commit-commit itu.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Perlu satu review yang meluluskan', on: true }] }} task={{ type: 'merge', pr: 18, method: 'squash' }} success="Dah squash! main dapat satu commit yang kemas: Tambah galeri gambar (#18)." />
+
+<Hint>Di bawah "Cara merge", pilih "Squash dan merge". Kemudian tekan "Merge pull request".</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Cara merge mana yang sesuai? Susun setiap satu.
+
+<Interactive name="SortCards" buckets={[{ id: 'merge', label: 'Merge commit' }, { id: 'squash', label: 'Squash' }, { id: 'rebase', label: 'Rebase' }]} items={[{ label: 'Simpan setiap commit, tambah satu lagi', bucket: 'merge', why: 'Merge commit ikat branch itu masuk.' }, { label: 'Jadikan PR satu commit yang kemas', bucket: 'squash', why: 'Squash himpit semuanya jadi satu.' }, { label: 'Salin setiap commit, tiada commit tambahan', bucket: 'rebase', why: 'Rebase main semula setiap commit di atas main.' }, { label: 'Paling sesuai bila commit bersepah', bucket: 'squash', why: 'wip dan oops hilang dalam satu commit yang bersih.' }, { label: 'Tunjuk dengan tepat bila branch bergabung', bucket: 'merge', why: 'Merge commit tandakan saat itu.' }, { label: 'Satu garis lurus, setiap commit disimpan', bucket: 'rebase', why: 'Tiada merge commit, tiada himpitan.' }]} success="Anda boleh pilih cara merge yang betul untuk mana-mana PR!" />
+</Card>
+
+<Card id="predict-linear" type="predict">
+Satu peraturan branch kata: simpan sejarah dalam satu garis lurus. Cara mana yang disekat?
+
+<Interactive name="Choice" compact options={[{ label: 'Merge commit', correct: true, why: 'Merge commit sambungkan dua garis. Squash dan rebase kekalkan satu garis.' }, { label: 'Squash', why: 'Squash tambah satu commit dalam garis lurus. Ia dibenarkan.' }, { label: 'Rebase', why: 'Rebase pun kekalkan garis lurus. Ia dibenarkan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih merge, squash atau rebase untuk setiap pull request.
+</Card>
+
+<Card id="deeper" type="deeper">
+Rebase dan merge buat commit baru, dengan hash baru. Squash hilangkan mesej dan masa asal setiap commit kecil. Repo boleh matikan cara merge yang ia tak mahu. Dengan merge queue, barisan itu yang pilih cara merge untuk anda.
+</Card>

@@ -1,0 +1,62 @@
+---
+id: cicd-c2-l09
+world: 2
+title: Lint dengan hadolint dan actionlint
+summary: "Anda akan belajar: biar robot semak resipi dan workflow anda."
+minutes: 3
+xp: 15
+interactives: [Transcript, ConveyorBelt, SortCards, Choice, Mission]
+needs: [cicd-c2-l08]
+scenario: c2-lint
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "hadolint", url: "https://github.com/hadolint/hadolint" }
+  - { label: "actionlint", url: "https://github.com/rhysd/actionlint" }
+  - { label: "Docker docs: Dockerfile best practices", url: "https://docs.docker.com/build/building/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="bash" label="hadolint semak Dockerfile dan beri amaran DL3007: guna latest." lines={[{ cmd: 'hadolint Dockerfile' }, { out: 'Dockerfile:1 DL3007 warning: Using latest is prone to errors if the image will ever update. Pin the version explicitly to a release tag', color: 'yellow' }]} />
+
+Bulan lepas `node:latest` lompat satu versi, dan kedai rosak semalaman. **<Term id="linter">Linter</Term>** (robot penyemak) dah boleh beri amaran. Maksudnya: tetapkan versi, contohnya `node:24-alpine`.
+</Card>
+
+<Card id="predict" type="predict">
+Dockerfile anda masih tulis `FROM node:latest`. Ketik stesen yang akan hentikan talian, kemudian tekan Run.
+
+<Interactive name="ConveyorBelt" scenario="c2-lint" task={{ type: 'predict' }} success="Betul! hadolint hentikan talian sebelum build." />
+</Card>
+
+<Card id="see-actionlint" type="see">
+<Interactive name="Transcript" title="bash" label="actionlint baca image.yml dan dapati job scan perlukan job bernama imgae, yang tiada." lines={[{ cmd: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 .github/workflows/image.yml' }, { out: '.github/workflows/image.yml:14:3: job "scan" needs job "imgae" which does not exist in this workflow [job-needs]\n   |\n14 |   scan:\n   |   ^~~~~', color: 'red' }]} />
+
+actionlint semak fail workflow. Ia tangkap salah taip sebelum GitHub: `imgae`. Image rasminya jalan tanpa perlu pasang apa-apa.
+</Card>
+
+<Card id="try-sort" type="try">
+Robot mana tangkap kesilapan mana?
+
+<Interactive name="SortCards" buckets={[{ id: 'hado', label: 'hadolint (Dockerfile)' }, { id: 'al', label: 'actionlint (workflow)' }]} items={[{ label: '`FROM node:latest`', bucket: 'hado', why: 'Base image tanpa versi: peraturan DL3007.' }, { label: '`needs: imgae`', bucket: 'al', why: 'Job yang perlukan job yang tak wujud.' }, { label: '`RUN cd /app`', bucket: 'hado', why: 'hadolint kata: guna WORKDIR untuk tukar folder.' }, { label: '`runs_on: ubuntu-latest`', bucket: 'al', why: 'Kuncinya runs-on, dengan sengkang.' }]} success="Dua penyemak, dua jenis fail." />
+</Card>
+
+<Card id="check" type="check">
+Di mana job lint patut duduk di tali sawat?
+
+<Interactive name="Choice" options={[{ label: 'Pada setiap PR, sebelum build yang lambat', correct: true, why: 'Lint murah dan laju. Ia tangkap kesilapan sebelum stesen yang lama.' }, { label: 'Di main sahaja, selepas deploy', why: 'Terlambat: kesilapan itu dah dihantar.' }, { label: 'Di laptop anda sahaja', why: 'Laptop boleh lupa. Tali sawat tak pernah lupa.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh biar hadolint dan actionlint semak setiap PR.
+</Card>
+
+<Card id="deeper" type="deeper">
+hadolint juga semak shell dalam baris `RUN`, dengan ShellCheck. Untuk langkau satu peraturan, letak `# hadolint ignore=DL3007` di atas baris itu. Buat hanya bila ada sebab kukuh. actionlint juga semak skrip `run:`, bila ShellCheck dipasang.
+
+Latihan sebenar (pilihan), di mesin anda dengan Docker:
+
+<Interactive name="Mission" id="c2-l09-rep" steps={[{ id: 'hado', text: 'Semak sebuah Dockerfile.', command: 'docker run --rm -i hadolint/hadolint:v2.14.0 < Dockerfile' }, { id: 'al', text: 'Semak workflow dalam sebuah repo.', command: 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12' }, { id: 'fix', text: 'Baiki satu penemuan, kemudian jalankan sekali lagi.' }]} success="Fail anda lulus dua penyemak!" />
+</Card>

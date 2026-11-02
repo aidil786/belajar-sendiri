@@ -1,0 +1,68 @@
+---
+id: aws-a2-l02
+world: 2
+title: Polisi dalam JSON
+summary: "Anda akan belajar: baca polisi baris demi baris, dan ubah satu baris dengan selamat."
+minutes: 5
+xp: 25
+interactives: [Choice, SpotLines, SortCards, IamJudge]
+needs: [aws-a2-l01]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Policies and permissions in IAM", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html" }
+  - { label: "IAM JSON policy elements", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html" }
+  - { label: "Action element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_action.html" }
+  - { label: "Resource element", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html" }
+---
+
+<Card id="hook" type="hook">
+Kad kunci Aina berbunyi: "Allow: baca fail di rak menu." Dia cuba ubah menu hari ini. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ditolak: kad itu kata baca, bukan ubah', correct: true, why: 'Kad kunci buka tepat apa yang ditulis. Tiada lebih.' }, { label: 'Dibenarkan: baca dan ubah hampir sama', why: 'Bagi AWS, itu dua tindakan berbeza.' }, { label: 'Dibenarkan, dengan amaran', why: 'IAM jawab ya atau tidak. Tiada amaran.' }]} />
+</Card>
+
+<Card id="see-parts" type="see">
+Kad kunci itu ialah **<Term id="iam-policy">polisi (policy)</Term>**, ditulis dalam JSON. Ketik baris yang kata **apa** Aina boleh buat.
+
+<Interactive name="SpotLines" lines={[{ text: '{' }, { text: '  "Version": "2012-10-17",' }, { text: '  "Statement": [' }, { text: '    {' }, { text: '      "Effect": "Allow",' }, { text: '      "Action": "s3:GetObject",', target: true }, { text: '      "Resource": "arn:aws:s3:::kedai-menu/*"' }, { text: '    }' }, { text: '  ]' }, { text: '}' }]} prompt="Ketik baris dengan tindakan." success="Action: s3:GetObject. Baca satu fail dari S3." />
+</Card>
+
+<Card id="see-sort" type="see">
+Setiap statement jawab tiga soalan. Allow atau Deny? Tindakan mana? Pada benda mana? Susun nilai-nilai ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'effect', label: 'Effect' }, { id: 'action', label: 'Action' }, { id: 'resource', label: 'Resource' }]} items={[{ label: 'Allow', bucket: 'effect', why: 'Effect hanya Allow atau Deny.' }, { label: 'Deny', bucket: 'effect', why: 'Tidak yang bertulis.' }, { label: 's3:PutObject', bucket: 'action', why: 'servis:kata kerja. Di sini: letak fail ke S3.' }, { label: 'ecr:PutImage', bucket: 'action', why: 'Push image ke ECR, rak image.' }, { label: 'arn:aws:s3:::kedai-menu/*', bucket: 'resource', why: 'Satu ARN: setiap fail dalam bucket kedai-menu.' }]} success="Effect, Action, Resource: tiga bahagian setiap statement." />
+</Card>
+
+<Card id="try-edit" type="try">
+Aina juga mesti simpan menu hari ini. Ubah baris merah jambu supaya AWS kata Allow. Jangan buka semua tindakan S3.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} task={{ type: 'edit', policy: 0, line: 6, want: 'Allow', forbid: ['"\\*"', 's3:\\*'] }} solution={'"Action": ["s3:GetObject", "s3:PutObject"],'} success="Dua tindakan dalam senarai. Baca dan simpan, itu sahaja." />
+
+<Hint>Senarai dalam kurungan siku: `["s3:GetObject", "s3:PutObject"]`.</Hint>
+</Card>
+
+<Card id="check-wild" type="check">
+Bintang ialah wildcard. Tindakan mana yang `s3:Get*` benarkan?
+
+<Interactive name="Choice" options={[{ label: 'Setiap tindakan S3 yang bermula dengan Get', correct: true, why: 'GetObject, dan setiap tindakan Get yang lain. Selalunya lebih daripada yang anda mahu.' }, { label: 'Hanya s3:GetObject', why: 'Bintang padan apa-apa hujung, jadi ia meliputi banyak tindakan.' }, { label: 'Setiap tindakan dalam AWS', why: 'S3 sahaja, dan nama yang bermula dengan Get sahaja.' }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang Aina buka fail dalam bucket lain, `kedai-orders`. Polisinya hanya sebut `kedai-menu`. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-orders/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Ditolak. Tindakan betul, rak salah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca Effect, Action dan Resource sesuatu polisi, dan ubah satu baris.
+</Card>
+
+<Card id="deeper" type="deeper">
+`"Version": "2012-10-17"` ialah versi bahasa polisi, bukan tarikh hari ini. Sentiasa guna yang ini.
+
+Nama tindakan tak kisah huruf besar atau kecil. ARN resource kisah: `kedai-menu/Today.json` dan `kedai-menu/today.json` ialah dua fail berbeza.
+</Card>

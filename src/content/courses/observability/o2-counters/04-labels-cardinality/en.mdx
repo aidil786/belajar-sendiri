@@ -1,0 +1,68 @@
+---
+id: obs-o2-l04
+world: 2
+title: Labels and cardinality
+summary: "You will learn: how labels split one metric into many series, how to filter them, and which labels to avoid."
+minutes: 4
+xp: 20
+interactives: [Choice, SpotLines, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o2-l03]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: data model", url: "https://prometheus.io/docs/concepts/data_model/" }
+  - { label: "Prometheus: metric and label naming", url: "https://prometheus.io/docs/practices/naming/" }
+  - { label: "Prometheus: querying basics (matchers)", url: "https://prometheus.io/docs/prometheus/latest/querying/basics/" }
+---
+
+<Card id="hook" type="hook">
+You add the order number as a label: `order_id`. 10,000 orders today. How many series does Prometheus keep?
+
+<Interactive name="Choice" options={[{ label: 'About 10,000: one per order', correct: true, why: 'Yes. Every new label value makes a new series.' }, { label: 'One', why: 'One name, but 10,000 different notes. That is 10,000 series.' }, { label: 'Zero: labels are free', why: 'Each series costs memory and disk.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="SpotLines" prompt="Tap every nasi lemak series." lines={[{ text: 'kedai_orders_total{outlet="ss15", stall="nasi-lemak"} 300', target: true }, { text: 'kedai_orders_total{outlet="bangsar", stall="nasi-lemak"} 150', target: true }, { text: 'kedai_orders_total{outlet="ss15", stall="roti-canai"} 450' }, { text: 'kedai_orders_total{outlet="bangsar", stall="roti-canai"} 150' }, { text: 'kedai_orders_total{outlet="ss15", stall="cendol"} 150' }]} success="Two series: one per outlet." />
+
+A **<Term id="label">label</Term>** is a sticky note on a series. One name, five sets of notes: five <Term id="time-series">series</Term>.
+</Card>
+
+<Card id="try-filter" type="try">
+Show only the SS15 outlet. Put a label filter in curly brackets.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="kedai_orders_total" prompt={'Add {outlet="ss15"} right after the name, then Run.'} goal={{ resultEquals: [{ labels: { stall: 'nasi-lemak', outlet: 'ss15' } }, { labels: { stall: 'roti-canai', outlet: 'ss15' } }, { labels: { stall: 'cendol', outlet: 'ss15' } }] }} hints={['Right after the name, type {outlet="ss15"}', 'The value needs double quotes.']} solution={'kedai_orders_total{outlet="ss15"}'} success="Three stalls at SS15." />
+
+<Hint>`!=` means “not equal”. `=~` matches a pattern.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+3 stalls, 2 outlets, and a new label for 4 ways to pay. At most, how many series?
+
+<Interactive name="Choice" options={[{ label: '24', correct: true, why: 'Yes. 3 × 2 × 4 = 24. Labels multiply.' }, { label: '9', why: 'Labels multiply, they do not add: 3 × 2 × 4.' }, { label: '1', why: 'Each combination is its own series.' }]} />
+</Card>
+
+<Card id="try-swipe" type="try">
+Is it a safe label? Swipe right for safe.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'stall="cendol"', good: true, why: 'A few stalls. Small and steady.' }, { text: 'code="500"', good: true, why: 'Only a handful of status codes.' }, { text: 'outlet="bangsar"', good: true, why: 'A few outlets.' }, { text: 'user_email="aina@example.com"', good: false, why: 'One series per customer. Far too many.' }, { text: 'order_id="A1043"', good: false, why: 'One series per order. Put it in a log instead.' }, { text: 'path="/order/A1043"', good: false, why: 'Each order makes a new path. Use a route, like /order/:id.' }]} />
+</Card>
+
+<Card id="check" type="check">
+How many series does `kedai_orders_total` make? Count them with `count()`.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} prompt="Wrap the name in count( ), then Run." goal={{ usesFunction: ['count'], resultEquals: [{ labels: {}, value: 5 }] }} hints={['Type count(kedai_orders_total)']} solution="count(kedai_orders_total)" success="5 series. Small and healthy." />
+</Card>
+
+<Card id="win" type="win">
+You can now filter by label and keep the series count small.
+</Card>
+
+<Card id="deeper" type="deeper">
+The number of series is called **<Term id="cardinality">cardinality</Term>**. Too many series fill memory and slow every query. Keep ids, emails and full URLs in logs or traces. Four matchers: `=`, `!=`, `=~` and `!~`.
+
+<Interactive name="Mission" id="obs-o2-l04-real" steps={[{ id: 'up', text: 'In your kedai-watch folder, start the stack.', command: 'docker compose up -d' }, { id: 'count', text: 'At http://localhost:9090, count every series: `count({__name__=~".+"})`. It is likely more than a thousand.' }, { id: 'by', text: 'See which job makes the most: `count by (job) ({__name__=~".+"})`' }, { id: 'stop', text: 'Stop the stack.', command: 'docker compose down' }]} success="You measured real cardinality." />
+</Card>

@@ -1,0 +1,61 @@
+---
+id: git-w11-l06
+world: 11
+title: Panik merge
+summary: "Anda akan belajar: cara undur diri dari merge yang menakutkan, dengan tenang."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l06]
+scenario: w11-l06
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git merge --abort", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git revert -m", url: "https://git-scm.com/docs/git-revert" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l06" commands={['git merge title']} label="git merge title: Auto-merging index.html. CONFLICT (content): Merge conflict in index.html. Automatic merge failed." />
+
+CONFLICT! Perkataan menakutkan penuh di skrin. Jantung anda berdebar. Tarik nafas: tiada yang hilang. Ini berlaku pada semua orang. Ini cara selamat untuk keluar.
+</Card>
+
+<Card id="spot-exit" type="try">
+`git status` sentiasa beritahu di mana anda berada. Cari jalan keluar.
+
+<Interactive name="SpotLines" scenario="w11-l06" commands={['git merge title', 'git status']} targets="merge --abort" prompt="Ketik baris yang tunjuk jalan balik." success="Itulah jalan keluar anda. Ia batalkan merge (cantum)." />
+
+<Hint>Cari perkataan abort.</Hint>
+</Card>
+
+<Card id="try-abort" type="try">
+Batalkan merge (cantum). Kembali seperti sebelum ini.
+
+<Interactive name="Sim" scenario="w11-l06" intro={['git merge title']} panels={['graph']} goal={{ inMerge: false, clean: true, typed: 'merge --abort' }} hints={['Taip git merge --abort']} success="Fuh. Kembali tenang. Tiada yang hilang." />
+
+<Hint>Taip `git merge --abort`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Selepas `git merge --abort`, di mana kerja anda?
+
+<Interactive name="Choice" options={[{ label: 'Sama seperti sebelum merge', correct: true, why: 'Abort putar balik merge. Kedua-dua branch tak terusik.' }, { label: 'Hilang selamanya', why: 'Tidak! Commit anda di kedua-dua branch selamat.' }, { label: 'Separuh tercantum', why: 'Abort batalkan semuanya. Mula yang bersih.' }]} />
+</Card>
+
+<Card id="sort-when" type="check">
+Baiki sekarang, atau undur diri? Susun setiap keadaan.
+
+<Interactive name="SortCards" buckets={[{ id: 'abort', label: 'Undur diri: git merge --abort' }, { id: 'fix', label: 'Baiki sekarang' }]} items={[{ label: 'Satu baris kecil bertembung, dan anda tahu jawapannya', bucket: 'fix', why: 'Senang. Baiki baris itu, git add, kemudian commit.' }, { label: 'Anda tak tahu perubahan siapa yang betul', bucket: 'abort', why: 'Undur diri. Tanya kawan sepasukan, kemudian merge semula.' }, { label: 'Sepuluh fail bertembung dan anda rasa sesat', bucket: 'abort', why: 'Undur diri, tarik nafas, rancang dulu.' }, { label: 'Dah lewat malam dan anda penat', bucket: 'abort', why: 'Merge boleh tunggu esok.' }]} success="Tersusun! Undur diri sentiasa dibenarkan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh undur diri dari merge yang menakutkan, dengan tenang.
+</Card>
+
+<Card id="deeper" type="deeper">
+Merge berjaya, tapi anda menyesal? Belum push: `git reset --hard ORIG_HEAD` lompat balik ke sebelum merge. Hati-hati, ia padam perubahan yang belum di-commit. Dah push: `git revert -m 1 HEAD` buat commit undur dan kekalkan bahagian main. Cara baiki konflik langkah demi langkah ada dalam Dunia 3.
+</Card>

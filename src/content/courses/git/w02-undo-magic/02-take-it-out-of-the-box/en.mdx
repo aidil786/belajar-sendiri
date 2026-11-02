@@ -1,0 +1,68 @@
+---
+id: git-w02-l02
+world: 2
+title: Take it out of the box
+summary: "You will learn: how to take a file out of the box without losing your work."
+minutes: 3
+xp: 15
+interactives: [AreasScene, DragToArea, Sim, Choice, TermReplay]
+needs: [git-w02-l01]
+scenario: w02-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working', 'staging']} effect="wobble" label="Two files wobble in the box: index.html with a green tick, and style.css marked not ready." frames={[{ working: [], staging: [{ name: 'index.html', tick: true }, { name: 'style.css', tag: 'notReady' }] }]} />
+
+You typed `git add .` too fast. A half-done file jumped into the box. How do you get it out?
+</Card>
+
+<Card id="see-unstage" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git restore --staged style.css" label="The command git restore --staged style.css types itself. style.css slides out of the box, back to the working folder. index.html stays in the box." frames={[{ working: [], staging: [{ name: 'index.html', tick: true }, { name: 'style.css', tag: 'notReady', glow: true }] }, { working: [{ name: 'style.css', tag: 'notReady' }], staging: [{ name: 'index.html', tick: true }] }]} />
+
+`git restore --staged style.css` takes the file out of the box. This is called **unstaging**.
+</Card>
+
+<Card id="try-drag" type="try">
+Drag the half-done file back out of the box.
+
+<Interactive name="DragToArea" zones={['working', 'staging']} start="staging" items={[{ name: 'index.html', tick: true, target: 'staging', wrong: 'This one is ready. Keep it in the box!' }, { name: 'style.css', tag: 'notReady', target: 'working', wrong: 'Not ready yet!' }]} success="Yes! Only the ready file is still in the box." />
+
+<Hint>Look for the "not ready" tag.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+Now type the command yourself.
+
+<Interactive name="Sim" scenario="w02-l02" panels={['areas']} goal={{ staged: ['index.html'], notStaged: ['style.css'], modified: ['style.css'] }} hints={['Type git restore --staged style.css and press Enter.', 'Keep --staged in the command. It means "the box".']} success="The box has index.html. style.css is back in your folder." />
+
+<Hint>Type `git restore --staged style.css`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You just unstaged style.css. Where are your edits now?
+
+<Interactive name="Choice" options={[{ label: 'Still in the working folder', correct: true, why: 'Unstaging only empties the box. Your edits are safe.' }, { label: 'Deleted', why: 'Unstaging never deletes edits. Only the box changes.' }, { label: 'Saved in a commit', why: 'Nothing gets committed. The box just got smaller.' }]} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w02-l02" commands={['git status']} pulse label="git status lists index.html and style.css in the box. A hint line says: use git restore --staged to unstage." />
+
+Forgot the command? `git status` tells you. Look for the hint that says "to unstage".
+</Card>
+
+<Card id="win" type="win">
+You can now take a file out of the box, safely.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git reset style.css` does the same thing. It is the older way. `git restore --staged .` empties the whole box.
+
+<Interactive name="TermReplay" scenario="w02-l02" commands={['git reset style.css', 'git status -s']} label="git reset style.css also takes style.css out of the box. Its edits stay in the folder." />
+</Card>

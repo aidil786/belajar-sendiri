@@ -1,0 +1,78 @@
+---
+id: k8s-k9-l07
+world: 9
+title: Cordon, drain, uncordon
+summary: "Anda akan belajar: cara admin kosongkan gerai untuk dibaiki, dan apa yang drain tak mahu pindah."
+minutes: 3
+xp: 15
+interactives: [Choice, KubeReplay, SpotLines, SortCards, FoodCourtSim, OrderList, Mission]
+needs: [k8s-k9-l06]
+scenario: k9-drain
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: safely drain a node", url: "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/" }
+  - { label: "kubectl drain", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/" }
+  - { label: "kubectl cordon", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cordon/" }
+---
+
+<Card id="hook" type="hook">
+Malam ini juruelektrik pasang wayar baharu di gerai dev-worker. Dua dulang shop ada di situ. Apa anda buat sebelum elektrik dipadam?
+
+<Interactive name="Choice" options={[{ label: 'Halang dulang baharu datang, kemudian pindah yang lama', correct: true, why: 'Betul. Kedai terus melayan dari gerai lain.' }, { label: 'Tutup suis gerai dan harap semuanya okey', why: 'Dulangnya hilang serta-merta. Kubernetes tunggu 5 minit sebelum menggantinya.' }, { label: 'Padam Deployment shop', why: 'Kemudian semua dulang hilang, di semua gerai.' }]} />
+</Card>
+
+<Card id="see-cordon" type="see">
+<Interactive name="KubeReplay" scenario="k9-drain" commands={['kubectl cordon dev-worker', 'kubectl get nodes']} label="kubectl cordon cetak node/dev-worker cordoned. kubectl get nodes tunjuk dev-worker sebagai Ready,SchedulingDisabled." />
+
+**<Term id="cordon">Cordon</Term>** ialah papan “tiada pesanan baharu” pada gerai. Dulang baharu pergi ke tempat lain. Dulang yang sudah ada terus melayan.
+</Card>
+
+<Card id="try-error" type="try">
+**<Term id="drain">Drain</Term>** pasang papan itu, kemudian pindah semua dulang. Tanpa flag, ia berhenti. Ketik baris yang sebut caranya.
+
+<Interactive name="SpotLines" prompt="Ketik baris yang sebut caranya." lines={[{ text: 'node/dev-worker cordoned' }, { text: 'error: unable to drain node "dev-worker" due to error: cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/kindnet-nbg2q, kube-system/kube-proxy-tlh9j, continuing command...', target: true }, { text: 'There are pending nodes to be drained:' }, { text: ' dev-worker' }]} success="Ya: --ignore-daemonsets. Dulang itu milik setiap gerai." />
+
+Maksudnya: kube-proxy dan kindnet ada di setiap gerai. Ia tak boleh pindah.
+
+<Hint>Cari perkataan dalam kurungan: “use … to ignore”.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Drain layan dulang dengan cara berbeza. Susun ikut kumpulan.
+
+<Interactive name="SortCards" buckets={[{ id: 'move', label: 'Pindah ke gerai lain' }, { id: 'stay', label: 'Kekal: setiap gerai ada satu' }, { id: 'force', label: 'Perlu --force: tiada siapa buat semula' }]} items={[{ label: 'Dulang shop (Deployment)', bucket: 'move', why: 'ReplicaSet-nya buat dulang baharu di gerai lain.' }, { label: 'Dulang CoreDNS (Deployment)', bucket: 'move', why: 'Juga milik Deployment, jadi ia dibuat semula di tempat lain.' }, { label: 'kube-proxy (DaemonSet)', bucket: 'stay', why: 'DaemonSet jalankan satu bagi setiap gerai. --ignore-daemonsets biarkannya.' }, { label: 'kindnet (DaemonSet)', bucket: 'stay', why: 'Wayar gerai itu sendiri. Ia kekal bersama gerai.' }, { label: 'Dulang dari kubectl run', bucket: 'force', why: 'Tiada pemilik. --force padamnya, dan ia tak kembali.' }]} success="Siap! Pemilik yang tentukan nasib dulang." />
+</Card>
+
+<Card id="try-drain" type="try">
+Kosongkan gerai dev-worker untuk juruelektrik. Drain pindahkan dulang, jadi lencana bahaya muncul.
+
+<Interactive name="FoodCourtSim" scenario="k9-drain" goal={{ typed: '^(kubectl|k) drain dev-worker .*--ignore-daemonsets', nodeCordoned: { name: 'dev-worker', cordoned: true }, podsReady: { selector: 'app=shop', count: 3 } }} hints={['Taip kubectl drain dev-worker --ignore-daemonsets', 'Biar jam berjalan sehingga 3 dulang shop sedia semula.', 'kubectl get pods -o wide tunjuk ke mana ia pergi.']} success="Gerai kosong. Kedai masih melayan dengan 3 dulang." />
+
+<Hint>`kubectl drain dev-worker --ignore-daemonsets`. Kemudian biar jam berjalan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kerja baiki siap. Anda taip `kubectl uncordon dev-worker`. Ke mana dua dulang yang dipindah itu pergi?
+
+<Interactive name="Choice" options={[{ label: 'Ia kekal di tempat sekarang', correct: true, why: 'Uncordon cuma turunkan papan itu. Dulang baharu boleh datang nanti.' }, { label: 'Balik ke dev-worker serta-merta', why: 'Kubernetes tak pindahkan dulang yang sedang berjalan balik dengan sendiri.' }, { label: 'Ia dimulakan semula', why: 'Tiada yang dimulakan semula. Papan itu cuma diturunkan.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun malam membaiki gerai ikut urutan.
+
+<Interactive name="OrderList" items={['kubectl get pdb -A (ada bajet?)', 'kubectl drain dev-worker --ignore-daemonsets', 'Baiki gerai itu', 'kubectl uncordon dev-worker', 'kubectl get nodes (Ready, tiada SchedulingDisabled)']} label="Langkah pertama di atas" success="Itulah rutin admin. Satu gerai pada satu masa." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kosongkan gerai untuk dibaiki dan buka semula.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dulang dengan `emptyDir` perlu `--delete-emptydir-data`: data sementara itu hilang. PodDisruptionBudget buat drain tunggu giliran ([K5](/ms/kubernetes/#world-5)). Drain buat cordon dulu, walaupun ia kemudian berhenti.
+
+<Interactive name="Mission" id="k8s-k9-l07-real" steps={[{ id: 'order', text: 'Pada kluster kind latihan dengan worker, pesan 3 dulang.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'drain', text: 'Drain satu worker. Baca setiap baris yang dicetak.', command: 'kubectl drain <worker-name> --ignore-daemonsets' }, { id: 'look', text: 'Lihat ke mana dulang itu pergi.', command: 'kubectl get pods -o wide' }, { id: 'open', text: 'Buka gerai itu semula.', command: 'kubectl uncordon <worker-name>' }]} success="Anda kosongkan dan buka semula gerai sebenar!" />
+</Card>

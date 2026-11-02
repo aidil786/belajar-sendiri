@@ -1,0 +1,69 @@
+---
+id: cicd-c1-l02
+world: 1
+title: CI, delivery or deployment?
+summary: "You will learn: the difference between CI, continuous delivery and continuous deployment."
+minutes: 4
+xp: 20
+interactives: [Choice, ConveyorBelt, SortCards]
+needs: [cicd-c1-l01]
+scenario: c1-delivery
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+---
+
+<Card id="hook" type="hook">
+Aina's team says, “We do CD.” Ben's team says it too. Aina presses a button to ship. Ben's team never does. Who is right?
+
+<Interactive name="Choice" options={[{ label: 'Both of them', correct: true, why: 'CD has two meanings. This lesson shows both.' }, { label: 'Only Aina', why: 'Ben is right too. CD can mean two things.' }, { label: 'Only Ben', why: 'Aina is right too. CD can mean two things.' }]} />
+</Card>
+
+<Card id="try-delivery" type="try">
+Run it. The tests pass, then the van waits. Approve it to ship.
+
+<Interactive name="ConveyorBelt" scenario="c1-delivery" task={{ type: 'approve' }} success="Shipped! A person said go." />
+
+Every passing change is packed and ready. A person says when it ships. That is **<Term id="continuous-delivery">continuous delivery</Term>**.
+</Card>
+
+<Card id="predict" type="predict">
+Now remove the reviewer from production. The tests pass. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'It ships by itself', correct: true, why: 'Nobody needs to press go. Green means live.' }, { label: 'It waits forever', why: 'Only a reviewer makes it wait. There is none now.' }, { label: 'The tests run again', why: 'The tests already passed. Next comes the deploy.' }]} />
+</Card>
+
+<Card id="see-deployment" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-deployment" />
+
+No button, no waiting. Every change that passes goes live. That is **<Term id="continuous-deployment">continuous deployment</Term>**. Press Run to see it.
+</Card>
+
+<Card id="try-sort" type="try">
+CI, delivery or deployment? Sort each sentence.
+
+<Interactive name="SortCards" buckets={[{ id: 'ci', label: 'CI' }, { id: 'delivery', label: 'Continuous delivery' }, { id: 'deployment', label: 'Continuous deployment' }]} items={[{ label: 'Every push is tested by a robot', bucket: 'ci', why: 'Taste-testing every change is CI.' }, { label: 'Lint and tests run on each pull request', bucket: 'ci', why: 'Checking, not shipping. That is CI.' }, { label: 'A release is always ready. The boss picks the day.', bucket: 'delivery', why: 'Ready to ship, but a person says go.' }, { label: 'Production waits for a person to approve', bucket: 'delivery', why: 'A human press means delivery.' }, { label: 'Each merge to main is live in minutes', bucket: 'deployment', why: 'No button at all. That is deployment.' }, { label: 'Green means live. Nobody presses go.', bucket: 'deployment', why: 'The van drives off by itself.' }]} success="Sorted! CI checks. Delivery waits. Deployment goes." />
+
+<Hint>Is a person pressing go? That is delivery.</Hint>
+</Card>
+
+<Card id="check" type="check">
+A clinic's booking app must have a manager sign off each release. Which one fits?
+
+<Interactive name="Choice" options={[{ label: 'Continuous delivery', correct: true, why: 'Always ready, and the manager says go.' }, { label: 'Continuous deployment', why: 'That ships with no sign-off. The clinic needs one.' }, { label: 'No CI at all', why: 'The clinic still wants every change tested.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell CI, continuous delivery and continuous deployment apart.
+</Card>
+
+<Card id="deeper" type="deeper">
+All three need CI first. Continuous deployment needs the most trust in tests. In GitHub, a required reviewer is the “person says go” step. Free plans allow it in public repos.
+
+Real rep (optional): in a public repo, open Settings, then Environments. Add `production` with you as reviewer. Then add `environment: production` to a deploy job.
+</Card>

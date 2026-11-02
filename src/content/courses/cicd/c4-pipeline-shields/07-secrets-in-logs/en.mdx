@@ -1,0 +1,63 @@
+---
+id: cicd-c4-l07
+world: 4
+title: Secrets in logs
+summary: "You will learn: how GitHub hides secrets in logs, where that stops, and what to do after a leak."
+minutes: 3
+xp: 15
+interactives: [Choice, ConveyorBelt, SwipeJudge, SpotLines, OrderList]
+needs: [cicd-c4-l06]
+scenario: c4-mask
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Workflow commands: masking a value", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands" }
+  - { label: "Secure use: using secrets", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Your deploy fails. To debug it, you print the token in a step. Your repo is public. Who can read that log?
+
+<Interactive name="Choice" options={[{ label: 'Anyone who can see the repo', correct: true, why: 'Public repo, public logs. GitHub hides the token. Mostly.' }, { label: 'Only you', why: 'The logs of a public repo are public too.' }, { label: 'Nobody: logs vanish at once', why: 'Logs are kept for a long time.' }]} />
+</Card>
+
+<Card id="see-mask" type="see">
+<Interactive name="ConveyorBelt" scenario="c4-mask" label="A deploy line. One step prints the token. Its log shows Using token ***." />
+
+Run it, then tap the echo station to read its log. GitHub swapped the token for `***`. This is **<Term id="masking">masking</Term>**: a black marker in the logbook.
+</Card>
+
+<Card id="see-break" type="see">
+The mask only finds the exact secret text. Change the text, and it slips past. Hidden, or leaked?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A step prints `$TOKEN` as it is', good: true, why: 'The exact text matches, so the log shows ***.' }, { text: 'A step prints `$TOKEN` encoded with base64', good: false, why: 'Changed text no longer matches. It leaks.' }, { text: 'One field of a secret that holds JSON', good: false, why: 'Only the whole secret is matched. Keep one value per secret.' }, { text: 'A new token made from a secret', good: false, why: 'New text, not the secret. Mask it yourself.' }]} />
+</Card>
+
+<Card id="try-mask" type="try">
+Made a new secret value in a step? Mask it yourself, before anything prints it.
+
+<Interactive name="SpotLines" lines={[{ text: '- run: |' }, { text: '    B64=$(echo -n "$KEY" | base64 -w0)' }, { text: '    echo "::add-mask::$B64"', target: true }, { text: '    export B64' }, { text: '    npm run upload' }, { text: '  env:' }, { text: '    KEY: ${{ secrets.API_KEY }}' }]} prompt="Tap the line that tells GitHub to hide the new value." success="Yes! add-mask adds a new text to the black-marker list." />
+</Card>
+
+<Card id="predict" type="predict">
+A real token shows up in a public log, not masked. What do you do first?
+
+<Interactive name="Choice" options={[{ label: 'Revoke it and make a new one', correct: true, why: 'Assume someone copied it. A new key makes the old copy useless.' }, { label: 'Delete the log', why: 'Do it, but later. Someone may have copied it already.' }, { label: 'Make the repo private', why: 'Copies already made stay out there. Rotate first.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Clean up after the leak. Put the steps in order.
+
+<Interactive name="OrderList" items={['Revoke the leaked secret and make a new one', 'Save the new value as the repo secret', 'Delete the logs of that run', 'Remove the line that printed it']} label="First step at the top" success="Rotate first, then clean up. That's the order." />
+</Card>
+
+<Card id="win" type="win">
+You can now keep secrets out of logs, and clean up leaks.
+</Card>
+
+<Card id="deeper" type="deeper">
+The tj-actions attack printed secrets encoded twice, so masks missed them. Also: never pass a secret on the command line. Other programs on the runner can see it. Pass it in `env:`. Stuck later? The Rescue Center has a "secret printed in logs" flow.
+</Card>

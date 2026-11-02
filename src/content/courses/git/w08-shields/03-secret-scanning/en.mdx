@@ -1,0 +1,65 @@
+---
+id: git-w08-l03
+world: 8
+title: Secret scanning and push protection
+summary: "You will learn: how GitHub catches leaked keys, before and after a push."
+minutes: 4
+xp: 20
+interactives: [TermReplay, SpotLines, OrderList, Choice, SortCards]
+needs: [git-w08-l02]
+scenario: w08-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About secret scanning", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning" }
+  - { label: "About push protection", url: "https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l03" commands={['git diff']} label="git diff on app.js: the line that read the key from .env is gone. A new line has the key typed right in: fake_demo_key_123." />
+
+In a rush, you pasted the key straight into `app.js`. You're about to push. Will anyone notice in time?
+</Card>
+
+<Card id="see-scanning" type="see">
+GitHub has a guard called **<Term id="secret-scanning">secret scanning</Term>**. It reads your repo, old commits too, looking for keys. Found one? It raises an alert, so you can act. Public repos get it for free.
+</Card>
+
+<Card id="try-scan" type="try">
+Be the scanner! Tap every line that holds a secret.
+
+<Interactive name="SpotLines" lines={[{ text: '# My Diary' }, { text: 'API_KEY=fake_demo_key_123', target: true }, { text: '<h1>Day 2</h1>' }, { text: 'db_password: fake-pass-456', target: true }, { text: 'city: Ipoh' }]} prompt="Tap every line that holds a secret." success="Sharp eyes! Secret scanning does this for every commit." />
+</Card>
+
+<Card id="see-push-protection" type="see">
+**<Term id="push-protection">Push protection</Term>** checks your push before it lands. Spots a key? GitHub blocks the push and shows where the key is. The secret never reaches the repo.
+</Card>
+
+<Card id="try-order" type="try">
+Put a blocked push in order. First step at the top.
+
+<Interactive name="OrderList" items={['You push your commits', 'GitHub spots the key', 'The push is blocked', 'You take the key out of your commits', 'You push again, safely']} label="First step at the top" success="That's the flow! The key never reached GitHub." />
+
+<Hint>Nothing lands on GitHub until the key is gone.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Push protection blocked you. The key is real. What is the best move?
+
+<Interactive name="Choice" options={[{ label: 'Take the key out of the commit, then push again', correct: true, why: 'The key never left your computer. Fix it, push, done.' }, { label: 'Bypass the block and fix it later', why: 'Then the real key lands on GitHub. That is the leak you wanted to stop.' }, { label: 'Push from another computer', why: 'GitHub checks every push, from anywhere.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Which guard does it? Sort each card.
+
+<Interactive name="SortCards" buckets={[{ id: 'scan', label: 'Secret scanning' }, { id: 'push', label: 'Push protection' }]} items={[{ label: 'Stops a key before it lands', bucket: 'push', why: 'It checks the push itself.' }, { label: 'Finds keys in old commits', bucket: 'scan', why: 'It reads the whole history.' }, { label: 'Raises an alert for a key already on GitHub', bucket: 'scan', why: 'The key is there. Now you must act.' }, { label: 'Makes your git push fail', bucket: 'push', why: 'Your push stops until you fix it.' }]} success="Sorted! One guard blocks. The other one finds." />
+</Card>
+
+<Card id="win" type="win">
+You can now let GitHub's guards catch leaked keys for you.
+</Card>
+
+<Card id="deeper" type="deeper">
+Some services team up with GitHub. If their key leaks in a public repo, GitHub tells them. They can cancel the key fast. Your own pushes to public repos get push protection by default. Tools like gitleaks can even check before you commit.
+</Card>

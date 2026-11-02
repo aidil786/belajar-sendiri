@@ -1,0 +1,67 @@
+---
+id: git-w03-l10
+world: 3
+title: Rebase basics
+summary: "You will learn: to move your branch on top of the newest main."
+minutes: 4
+xp: 20
+interactives: [TermReplay, GraphScene, Sim, Choice]
+needs: [git-w03-l09]
+scenario: w03-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git rebase", url: "https://git-scm.com/docs/git-rebase" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w03-l10" commands={['git log --oneline --graph --all']} label="The log forks. main has Make heading teal. about, where HEAD is, has Add about page and Say what I like." />
+
+main moved on while you built about. You want your work on top of the newest main. Without a merge commit.
+</Card>
+
+<Card id="see-rebase" type="see">
+<Interactive name="GraphScene" scenario="w03-l10" commands={['git rebase main']} label="The two about commits lift off and land after Make heading teal. The history becomes one straight line." />
+
+`git rebase main` replays your commits on top of main, one by one. Like moving your work to the end of the line. That's a **<Term id="rebase">rebase</Term>**.
+</Card>
+
+<Card id="try-rebase" type="try">
+You are on about. Rebase it onto main.
+
+<Interactive name="Sim" scenario="w03-l10" panels={['graph']} goal={{ currentBranch: 'about', linearHistory: true, messages: ['^Say what I like$', '^Add about page$', '^Make heading teal$'] }} hints={['Type git rebase main and press Enter.', 'Check you are on about: git branch.']} success="One straight line! Your work now sits on the newest main." />
+
+<Hint>Type `git rebase main`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-ids" type="see">
+<Interactive name="TermReplay" scenario="w03-l10" commands={['git log --oneline -n 2', 'git rebase main', 'git log --oneline -n 2']} label="Before the rebase, the two about commits have one pair of short hashes. After it, the same messages have new hashes." />
+
+Look at the ids. Same messages, new hashes! A rebase makes new copies of your commits.
+</Card>
+
+<Card id="predict" type="predict">
+about now sits right on top of main. You merge about into main. What happens?
+
+<Interactive name="Choice" options={[{ label: 'A fast-forward', correct: true, why: 'main is right behind about now. Its note just slides.' }, { label: 'A new merge commit', why: 'Not needed: the history is one straight line.' }, { label: 'A conflict', why: 'Nothing clashes. The two branches changed different files.' }]} />
+</Card>
+
+<Card id="try-ff" type="try">
+Bring about into main. Watch for a fast-forward!
+
+<Interactive name="Sim" scenario="w03-l10-rebased" panels={['graph']} goal={{ currentBranch: 'main', branchAt: { main: '^Say what I like$' }, linearHistory: true }} hints={['Switch first: git switch main.', 'Then: git merge about.']} success="A straight line, and no merge commit needed." />
+
+<Hint>Switch to main. Then merge about.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now rebase a branch onto the newest main.
+</Card>
+
+<Card id="deeper" type="deeper">
+A rebase can stop on a conflict too. Fix the file and `git add` it. Then run `git rebase --continue`. Changed your mind? `git rebase --abort` puts everything back. The bottom marker names the commit being replayed.
+
+<Interactive name="TermReplay" scenario="w03-l10-conflict" commands={['git rebase main', 'git status']} label="git rebase main stops: CONFLICT in index.html, could not apply Add cake day. git status says a rebase is in progress and lists the steps." />
+</Card>

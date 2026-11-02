@@ -1,0 +1,90 @@
+---
+id: obs-o2-l09
+world: 2
+title: Recording rule
+summary: "Anda akan belajar: cara simpan query yang berat sebagai siri baru, namakannya dengan baik dan semak fail rule."
+minutes: 3
+xp: 15
+interactives: [Choice, YamlPlayground, PromQLPlayground, SwipeJudge, SpotLines, Mission]
+needs: [obs-o2-l08]
+scenario: o2-rules
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: recording rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/" }
+  - { label: "Prometheus: rule naming", url: "https://prometheus.io/docs/practices/rules/" }
+  - { label: "promtool", url: "https://prometheus.io/docs/prometheus/latest/command-line/promtool/" }
+---
+
+<Card id="hook" type="hook">
+50 orang buka dashboard yang sama. Setiap 15 s, setiap seorang jalankan query berat yang sama. Macam mana nak bantu Prometheus?
+
+<Interactive name="Choice" options={[{ label: 'Kira sekali, ikut jadual, dan simpan jawapannya', correct: true, why: 'Ya. Kemudian 50 skrin baca satu siri yang disimpan.' }, { label: 'Minta orang kurangkan tengok', why: 'Dashboard memang untuk ditengok.' }, { label: 'Beli server lebih besar', why: 'Itu kos duit, dan pembaziran tetap ada.' }]} />
+</Card>
+
+<Card id="try-rule" type="try">
+**<Term id="recording-rule">Recording rule</Term>** simpan jawapan query sebagai siri baru. Beri rule ini query-nya.
+
+<Interactive name="YamlPlayground" file="rules.yml" initial={'groups:\n  - name: kedai\n    rules:\n      - record: stall:kedai_orders:rate5m\n'} prompt="Tambah baris expr bawah record, dengan query pesanan ikut gerai." expect={[{ path: 'groups.0.rules.0.expr', type: 'text', equals: 'sum by (stall) (rate(kedai_orders_total[5m]))', hint: 'Bawah record, tambah 8 ruang, kemudian expr: sum by (stall) (rate(kedai_orders_total[5m]))' }]} solution={'groups:\n  - name: kedai\n    rules:\n      - record: stall:kedai_orders:rate5m\n        expr: sum by (stall) (rate(kedai_orders_total[5m]))\n'} hint="expr sebaris dengan record: 8 ruang ke dalam." success="Disimpan. Prometheus akan jalankannya setiap kali menilai." />
+</Card>
+
+<Card id="try-query" type="try">
+Rule itu dah berjalan. Minta siri yang disimpan, sama macam metrik lain.
+
+<Interactive name="PromQLPlayground" scenario="o2-rules" prompt="Tunjuk rate yang disimpan untuk cendol sahaja. Tekan cip, kemudian tambah penapis." goal={{ typed: 'stall:kedai_orders:rate5m', resultEquals: [{ labels: { stall: 'cendol' }, value: 0.25 }] }} hints={['Selepas cip, taip {stall="cendol"}']} solution={'stall:kedai_orders:rate5m{stall="cendol"}'} success="Jawapan sama macam tadi, tapi murah: tiada rate() masa query." />
+</Card>
+
+<Card id="see-name" type="see">
+Nama rule ikut `level:metric:operations`. Nama yang baik? Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'stall:kedai_orders:rate5m', good: true, why: 'Ikut gerai, kedai_orders, rate 5m.' }, { text: 'job:http_requests:rate5m', good: true, why: 'Ikut job, http_requests, rate 5m.' }, { text: 'my_query_1', good: false, why: 'Tiada siapa tahu apa isinya.' }, { text: 'fast_orders', good: false, why: 'Sebut level, metrik dan apa yang anda buat.' }]} />
+</Card>
+
+<Card id="check-real" type="check">
+Semak fail rule sebelum memuatkannya. Ralat sebenar dulu: tekan baris yang kata apa yang salah.
+
+<Interactive name="SpotLines" prompt="Tekan baris yang namakan masalahnya." lines={[{ text: '$ promtool check rules rules-bad.yml' }, { text: 'Checking rules-bad.yml' }, { text: '  FAILED:' }, { text: 'rules-bad.yml: 5:15: group "node", rule 1, "instance:node_cpu_busy:ratio_rate1m": could not parse expression: 1:29: parse error: expected type range vector in call to function "rate", got instant vector', color: 'red', target: true }]} success="Dalam bahasa mudah: baris 5 panggil rate() tanpa tetingkap. Tambah [1m]." />
+
+<Hint>Ia namakan baris, rule, kemudian parse error.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+promtool kata `SUCCESS: 1 rules found`. Bila siri baru itu muncul?
+
+<Interactive name="Choice" options={[{ label: 'Selepas Prometheus muatkan fail dan jalankan rule', correct: true, why: 'Ya. Senaraikan bawah rule_files, mula semula atau muat semula, kemudian tunggu satu penilaian.' }, { label: 'Serta-merta, sampai ke tahun lepas', why: 'Rule hanya merekod dari sekarang. Data lama kekal begitu.' }, { label: 'Tak pernah: promtool cuma menyemak', why: 'promtool menyemak. Prometheus jalankan rule bila ia muatkan fail itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh simpan query berat sebagai recording rule dan menyemaknya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: kerani tulis nombor kaunter sekali sahaja. Prometheus salin setiap nombor setiap 15 s, berubah atau tidak. Ia simpan 15 hari secara lalai, kemudian buang. Kaunter sebenar tak pernah reset; kaunter aplikasi boleh.
+
+Latihan sebenar: simpan `rules.yml`, kemudian tambah baris di bawah ke dua fail lain anda.
+
+```yaml
+# rules.yml
+groups:
+  - name: kedai
+    rules:
+      - record: instance:node_cpu_busy:ratio_rate1m
+        expr: 1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
+```
+
+```yaml
+# prometheus.yml: tambah di paras atas, selepas global
+rule_files:
+  - rules.yml
+```
+
+```yaml
+# compose.yaml: tambah bawah volumes prometheus
+      - ./rules.yml:/etc/prometheus/rules.yml:ro
+```
+
+<Interactive name="Mission" id="obs-o2-l09-real" steps={[{ id: 'files', text: 'Simpan rules.yml, dan tambah baris baru ke prometheus.yml dan compose.yaml.' }, { id: 'up', text: 'Mulakan stack.', command: 'docker compose up -d' }, { id: 'check', text: 'Semak rule. Cari SUCCESS: 1 rules found.', command: 'docker compose exec prometheus promtool check rules /etc/prometheus/rules.yml' }, { id: 'query', text: 'Selepas seminit, jalankan instance:node_cpu_busy:ratio_rate1m di http://localhost:9090.' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="Recording rule pertama anda berjalan pada Prometheus sebenar." />
+</Card>

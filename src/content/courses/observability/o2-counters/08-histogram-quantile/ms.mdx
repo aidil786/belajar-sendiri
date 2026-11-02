@@ -1,0 +1,69 @@
+---
+id: obs-o2-l08
+world: 2
+title: Histogram dan histogram_quantile
+summary: "Anda akan belajar: cara cari p95 daripada baldi histogram, dan kenapa purata boleh sorok pelanggan yang lambat."
+minutes: 5
+xp: 25
+interactives: [Choice, CommandBuilder, PromQLPlayground, Mission]
+needs: [obs-o2-l07]
+scenario: o2-checkout
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL functions: histogram_quantile()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile" }
+  - { label: "Prometheus: histograms and summaries", url: "https://prometheus.io/docs/practices/histograms/" }
+---
+
+<Card id="hook" type="hook">
+Purata bayaran ambil 0.39 s. Tapi pelanggan kata bayaran lambat. Macam mana kedua-duanya boleh benar?
+
+<Interactive name="Choice" options={[{ label: 'Purata sorok satu kumpulan yang lambat', correct: true, why: 'Ya. Banyak bayaran laju tarik purata turun. Yang lambat tetap lambat.' }, { label: 'Pelanggan silap', why: 'Pelanggan rasa yang lambat. Percaya mereka, kemudian ukur dengan lebih baik.' }, { label: 'Purata itu rosak', why: 'Kiraannya betul. Ia cuma jawab soalan lain.' }]} />
+</Card>
+
+<Card id="see-recipe" type="see">
+**<Term id="quantile">p95</Term>** bermaksud: 95% bayaran selaju ini atau lebih laju. Bina resepinya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'histogram_quantile(0.95,', means: 'masa yang 95% bayaran dapat kalahkan' }, { text: 'sum by (le)', means: 'jumlahkan semua kedai, simpan baldi' }, { text: '(rate(kedai_checkout_duration_seconds_bucket[5m])))', means: 'kiraan baldi sesaat' }]} decoys={[{ text: 'sum by (instance)', means: 'buang le, jadi baldi hilang' }, { text: 'avg(', means: 'purata baldi tak bermakna apa-apa' }]} success="Itulah resipi p95. Simpan le!" />
+
+<Hint>Dari luar ke dalam: kuantil, kemudian sum, kemudian rate.</Hint>
+</Card>
+
+<Card id="try-p95" type="try">
+Sekarang jalankannya. Kemudian luncur dari 8m ke 20m.
+
+<Interactive name="PromQLPlayground" scenario="o2-checkout" initial="rate(kedai_checkout_duration_seconds_bucket[5m])" prompt="Balut ia: histogram_quantile(0.95, sum by (le) (…)). Kemudian Run." goal={{ usesFunction: ['histogram_quantile'], labelNames: [], resultEquals: [{ labels: {}, value: 1.857, tolerance: 0.001 }] }} hints={['Tambah sum by (le) ( sebelum rate dan ) selepasnya.', 'Kemudian balut dengan histogram_quantile(0.95, … )']} solution="histogram_quantile(0.95, sum by (le) (rate(kedai_checkout_duration_seconds_bucket[5m])))" success="p95 naik dari 0.47 s ke 1.86 s. Bayaran jadi lambat." />
+</Card>
+
+<Card id="predict" type="predict">
+Pada 20m, p95 ialah 1.86 s. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: '95% bayaran ambil 1.86 s atau kurang', correct: true, why: 'Ya. 5% yang paling lambat ambil masa lebih.' }, { label: 'Setiap bayaran ambil 1.86 s', why: 'p95 ialah satu garisan, bukan masa semua orang.' }, { label: 'Bayaran paling lambat ambil 1.86 s', why: 'Itu nilai maksimum. 5% lagi lebih lambat.' }]} />
+</Card>
+
+<Card id="try-fix" type="try">
+Rakan sepasukan tulis ini. Jalankan: tiada jawapan. Baiki supaya setiap kedai dapat p95 sendiri.
+
+<Interactive name="PromQLPlayground" scenario="o2-checkout" initial="histogram_quantile(0.95, sum by (instance) (rate(kedai_checkout_duration_seconds_bucket[5m])))" prompt="Simpan le di sebelah instance dalam senarai by, kemudian Run." goal={{ usesFunction: ['histogram_quantile'], labelNames: ['instance'], resultCount: 2 }} hints={['Tukar by (instance) jadi by (le, instance).']} solution="histogram_quantile(0.95, sum by (le, instance) (rate(kedai_checkout_duration_seconds_bucket[5m])))" success="Dua kedai, dua p95." />
+
+<Hint>Tiada `le`, tiada baldi, tiada jawapan.</Hint>
+</Card>
+
+<Card id="check" type="check">
+p95 shop-1 ialah 2.29 s. p95 shop-2 ialah 0.42 s. Di mana anda tengok dulu?
+
+<Interactive name="Choice" options={[{ label: 'shop-1', correct: true, why: 'Ya. Pelanggan paling lambatnya tunggu lebih 2 saat.' }, { label: 'shop-2', why: '0.42 s itu laju. shop-1 yang lambat.' }, { label: 'Tiada: purata nampak okey', why: 'Purata sorok pelanggan yang lambat. p95 jumpa mereka.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cari p95 dengan `histogram_quantile` dan simpan `le` dalam sum.
+</Card>
+
+<Card id="deeper" type="deeper">
+`histogram_quantile` meneka dalam baldi, dalam garis lurus. Jadi pilih had baldi dekat SLO anda, seperti 0.5 s. Purata ialah `rate(…_sum[5m])` dibahagi `rate(…_count[5m])`. Latihan sebenar: p90 untuk laman web Prometheus sendiri.
+
+<Interactive name="Mission" id="obs-o2-l08-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack. Tunggu dua minit.', command: 'docker compose up -d' }, { id: 'p90', text: 'Di http://localhost:9090, jalankan: histogram_quantile(0.9, sum by (le, handler) (rate(prometheus_http_request_duration_seconds_bucket[1m])))' }, { id: 'look', text: 'Handler mana paling lambat? Buka beberapa laman dan jalankan lagi.' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="p90 daripada histogram sebenar." />
+</Card>

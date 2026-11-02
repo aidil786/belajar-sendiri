@@ -1,0 +1,77 @@
+---
+id: aws-a1-l07
+world: 1
+title: AWS CLI dan profil
+summary: "Anda akan belajar: cara arahan aws log masuk, dan cara profil asingkan akaun."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, SpotLines, CommandBuilder, SortCards, Mission]
+needs: [aws-a1-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Install the AWS CLI", url: "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" }
+  - { label: "IAM Identity Center with the AWS CLI", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html" }
+  - { label: "aws login (console credentials)", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html" }
+  - { label: "aws sts get-caller-identity", url: "https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html" }
+  - { label: "Environment variables (AWS_PROFILE)", url: "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html" }
+---
+
+<Card id="hook" type="hook">
+Kancil ada dua akaun: satu untuk latihan dan satu untuk kedai sebenar. Dia taip arahan padam. Macam mana `aws` tahu akaun mana yang dimaksudkan?
+
+<Interactive name="Choice" options={[{ label: 'Dari profil yang dia pilih', correct: true, why: 'Profil namakan akaun, role dan Region.' }, { label: 'Ia teka akaun paling baru', why: 'CLI tak pernah meneka. Ia guna profil, atau profil default.' }, { label: 'Ia tanya AWS mana yang lebih selamat', why: 'AWS hanya nampak kunci yang anda hantar. Pilih dengan sengaja.' }]} />
+</Card>
+
+<Card id="see-whoami" type="see">
+<Interactive name="Transcript" title="bash" label="aws sts get-caller-identity paparkan id pengguna, nombor akaun dan ARN pengguna IAM DevAdmin." lines={[{ cmd: 'aws sts get-caller-identity' }, { out: '{\n    "UserId": "AIDASAMPLEUSERID",\n    "Account": "123456789012",\n    "Arn": "arn:aws:iam::123456789012:user/DevAdmin"\n}', color: 'green' }]} />
+
+Tabiat pertama: tanya "saya siapa?" Baca baris Arn. Ini pengguna DevAdmin, dalam akaun 123456789012.
+</Card>
+
+<Card id="see-config" type="see">
+**<Term id="cli-profile">Profil</Term>** ialah set tetapan bernama dalam `~/.aws/config`. Ketik baris yang pilih akaun.
+
+<Interactive name="SpotLines" lines={[{ text: '[profile my-dev-profile]' }, { text: 'sso_session = my-sso' }, { text: 'sso_account_id = 123456789011', target: true }, { text: 'sso_role_name = readOnly' }, { text: 'region = us-west-2' }, { text: 'output = json' }, { text: '[sso-session my-sso]' }, { text: 'sso_region = us-east-1' }, { text: 'sso_start_url = https://my-sso-portal.awsapps.com/start' }]} prompt="Ketik baris akaun." success="Nombor itu ialah akaun. Baris role kata pas mana yang dipakai." />
+</Card>
+
+<Card id="try-login" type="try">
+Bina arahan yang log masuk dengan profil itu.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws', means: 'bercakap dengan AWS' }, { text: 'sso login', means: 'log masuk di kaunter depan' }, { text: '--profile my-dev-profile', means: 'dengan tetapan ini' }]} decoys={[{ text: 'configure set aws_secret_access_key', means: 'simpan kunci jangka panjang: yang kita elakkan' }]} success="Satu log masuk, kemudian pas jangka pendek." />
+
+<Hint>Alat, kemudian sso login, kemudian profil.</Hint>
+</Card>
+
+<Card id="see-login" type="see">
+<Interactive name="Transcript" title="bash" label="aws sso login buka pelayar, kemudian kata ia sudah log masuk ke start URL." lines={[{ cmd: 'aws sso login --profile my-dev-profile' }, { out: 'SSO authorization page has automatically been opened in your default browser.\nFollow the instructions in the browser to complete this authorization request.' }, { out: 'Successfully logged into Start URL: https://my-sso-portal.awsapps.com/start', color: 'green' }]} />
+
+Pelayar minta anda luluskan, dengan MFA. CLI kemudian simpan pas jangka pendek dalam cache. Tiada kunci disimpan dalam fail.
+</Card>
+
+<Card id="predict" type="predict">
+Terminal ini ada `AWS_PROFILE=shop`. Kancil jalankan arahan dengan `--profile practice`. Akaun mana yang digunakan?
+
+<Interactive name="Choice" options={[{ label: 'practice: baris arahan menang', correct: true, why: 'Pilihan yang anda taip mengatasi environment variable.' }, { label: 'shop: variable itu menang', why: 'Variable itu hanya default. --profile mengatasinya.' }, { label: 'Kedua-dua akaun serentak', why: 'Satu arahan, satu profil.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Ada fail yang berisi tetapan. Ada yang berisi rahsia. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'setting', label: 'Tetapan (boleh ditunjuk)' }, { id: 'secret', label: 'Rahsia (jangan kongsi)' }]} items={[{ label: 'region = ap-southeast-5', bucket: 'setting', why: 'Cuma pusat mana yang diguna.' }, { label: 'output = json', bucket: 'setting', why: 'Cuma rupa jawapan.' }, { label: 'aws_secret_access_key = …', bucket: 'secret', why: 'Sesiapa yang ada boleh bertindak sebagai anda.' }, { label: 'Token log masuk dalam ~/.aws/sso/cache', bucket: 'secret', why: 'Pas yang masih hidup. Layan macam kunci.' }]} success="Tetapan boleh dibawa. Rahsia tinggal di rumah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh log masuk dengan profil dan semak siapa anda.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tak guna Identity Center? Sejak AWS CLI 2.32.0, `aws login` guna log masuk konsol anda. Ia perbaharui pas jangka pendek sehingga 12 jam. Tak perlu access key.
+
+Latihan sebenar (tiada sumber, tiada kos; penggera bajet sudah dipasang):
+
+<Interactive name="Mission" id="aws-a1-l07-rep" steps={[{ id: 'install', text: 'Pasang AWS CLI versi 2 ikut panduan rasmi.' }, { id: 'version', text: 'Semak ia berfungsi.', command: 'aws --version' }, { id: 'setup', text: 'Identity Center: sediakan profil.', command: 'aws configure sso' }, { id: 'login', text: 'Atau, dengan pengguna IAM: log masuk guna log masuk konsol anda.', command: 'aws login' }, { id: 'who', text: 'Tanya siapa anda.', command: 'aws sts get-caller-identity' }, { id: 'list', text: 'Senaraikan profil anda.', command: 'aws configure list-profiles' }]} success="Terminal anda bercakap dengan AWS, tanpa kunci disimpan." />
+</Card>

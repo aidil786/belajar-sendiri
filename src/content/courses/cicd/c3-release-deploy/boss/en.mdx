@@ -1,0 +1,78 @@
+---
+id: cicd-c3-boss
+world: 3
+title: "Bad Friday"
+summary: "You will learn: to ship a canary, spot the error spike, and roll back before most users notice."
+minutes: 6
+xp: 50
+interactives: [Choice, ConveyorBelt, TrafficDial, OrderList, Transcript]
+needs: [cicd-c3-l11]
+scenario: c3-boss-canary
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Cloudflare: gradual deployments", url: "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/" }
+  - { label: "Cloudflare: rollbacks", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+---
+
+<Card id="hook" type="hook">
+Friday, 4:55 pm. Version 2.3.0 of the shop is tagged. Your lead is on a plane, and you are on call. Boss mission: ship it safely, or undo it fast. How do you ship it?
+
+<Interactive name="Choice" options={[{ label: 'A canary: 5% of users first', correct: true, why: 'If it is bad, only a few users meet it.' }, { label: 'Everyone at once. It is Friday!', why: 'One bug would hit every customer before the weekend.' }, { label: 'Close the shop, then swap', why: 'That is recreate. Downtime is not needed here.' }]} />
+</Card>
+
+<Card id="try-ship" type="try">
+Room 1: the tag starts the canary workflow. It sends 5% of users to version 2.3.0, then tastes `/health`. Run it.
+
+<Interactive name="ConveyorBelt" scenario="c3-boss-canary" label="The tag v2.3.0 deploys the canary to 5% of users, then a smoke test checks /health." />
+
+<Hint>Pick the tag, then press Run.</Hint>
+</Card>
+
+<Card id="try-dial" type="try">
+Room 2: the canary is live at 5%. Watch the graph. Move up only while the version 2 line stays calm. Roll back before 150 users hit a bug.
+
+<Interactive name="TrafficDial" scenario="c3-boss-canary" task={{ type: 'rollback', maxHurt: 150 }} success="Rolled back! Most users never saw the bug." />
+
+<Hint>The red line jumps over the alarm line? Press Roll back at once.</Hint>
+</Card>
+
+<Card id="check-why" type="check">
+The smoke test passed, yet users hit errors. Why?
+
+<Interactive name="Choice" options={[{ label: 'It only tasted /health. The bug is in checkout.', correct: true, why: 'One spoon cannot taste every dish. The canary caught the rest.' }, { label: 'The smoke test was broken', why: 'It did its job: /health really was fine.' }, { label: 'Canaries always miss bugs', why: 'Your canary caught it, with only 5% of users.' }]} />
+</Card>
+
+<Card id="try-rollback" type="try">
+Room 3: make the undo stick. The rollback workflow, run by hand, is red. Read the real error. Fix the yellow line.
+
+<Interactive name="ConveyorBelt" scenario="c3-boss-rollback" task={{ type: 'green' }} fixes={[
+  { label: 'Add environment: production', text: '    runs-on: ubuntu-latest\n    environment: production' },
+  { label: 'Paste the token into the file', text: '    runs-on: ubuntu-latest\n    env:\n      CLOUDFLARE_API_TOKEN: paste-token-here', why: 'Never put a key in a file. And the step still reads the empty secret.' },
+  { label: 'Add permissions: write-all', text: '    runs-on: ubuntu-latest\n    permissions: write-all', why: 'Token permissions are not secrets. The spice box stays locked.' }]}
+  success="Green! Version 2.2 serves everyone again, and /health is happy." />
+
+<Hint>Remember lesson 7: secrets reach only jobs that name their environment.</Hint>
+</Card>
+
+<Card id="check-next" type="check">
+Write the plan for next time. Put what the pipeline does in order.
+
+<Interactive name="OrderList" items={['A tag sends the canary to 5% of users', 'A smoke test tastes /health and checkout', 'Watch the error rate for 15 minutes', 'Errors jump: the rollback job runs', 'One alert opens, with a link to the run']} label="First step at the top" success="That is a Friday you can sleep through." />
+</Card>
+
+<Card id="win" type="win">
+You can now ship on a Friday and undo it in minutes.
+</Card>
+
+<Card id="deeper" type="deeper">
+On Cloudflare, a canary is a gradual deployment. These commands do it by hand. Wrangler prints each version id when you upload.
+
+<Interactive name="Transcript" title="bash" label="Upload a version, send it 5% of traffic, then roll back to the previous version." lines={[{ cmd: 'npx wrangler versions upload' }, { cmd: 'npx wrangler versions deploy NEW_ID@5% OLD_ID@95%' }, { cmd: 'npx wrangler rollback --message "Bad Friday"' }]} />
+
+Real rep (optional): practise on a free test Worker, never on your team's.
+</Card>

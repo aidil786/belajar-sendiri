@@ -1,0 +1,66 @@
+---
+id: linux-l3-l06
+world: 3
+title: "HTTP dengan curl -v"
+summary: "Anda akan belajar: membaca pesanan HTTP dan jawapannya: kaedah, kod status dan header."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, SpotLines, SortCards, Choice, CommandBuilder, Mission]
+needs: [linux-l3-l05]
+scenario: linux-l3-http
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl manual", url: "https://curl.se/docs/manpage.html" }
+  - { label: "curl: HTTP scripting", url: "https://curl.se/docs/httpscripting.html" }
+  - { label: "nginx: beginner's guide", url: "https://nginx.org/en/docs/beginners_guide.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-http" intro={['curl -s localhost/promo.html']} network />
+
+Halaman promo tunjuk `404 Not Found`. Adakah kedai rosak? Atau halaman itu sekadar tiada? Nombor itu beritahu anda.
+</Card>
+
+<Card id="see-order" type="see">
+<Term id="http">HTTP</Term> ialah cara pesanan disebut di kaunter web. `curl -v` tunjuk seluruh perbualan. Baris dengan `>` ialah kata-kata curl. Tekan baris itu.
+
+<Interactive name="SpotLines" lines={[{ text: '*   Trying 127.0.0.1:80...' }, { text: '> GET /menu.html HTTP/1.1', target: true }, { text: '> Host: localhost', target: true }, { text: '> User-Agent: curl/8.14.1', target: true }, { text: '< HTTP/1.1 200 OK' }, { text: '< Content-Type: text/html' }, { text: '< Content-Length: 36' }, { text: '<h1>Menu</h1>' }]} prompt="Tekan setiap baris yang curl sebut." success="GET ialah kaedahnya: tolong beri /menu.html. Baris dengan < ialah jawapan." />
+</Card>
+
+<Card id="try-codes" type="try">
+Jawapan bermula dengan **status code** (kod status). Digit pertama bercerita. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'ok', label: '2xx: nah, ambil' }, { id: 'you', label: '4xx: ada hal dengan pesanan anda' }, { id: 'kitchen', label: '5xx: dapur bermasalah' }]} items={[{ label: '200 OK', bucket: 'ok', why: 'Semua okey. Makanannya pun sampai.' }, { label: '404 Not Found', bucket: 'you', why: 'Halaman itu tiada. Semak laluannya.' }, { label: '403 Forbidden', bucket: 'you', why: 'Ia wujud, tetapi anda tak boleh dapat.' }, { label: '503 Service Unavailable', bucket: 'kitchen', why: 'Bahagian server tak sihat atau terlalu sibuk.' }]} success="2 okey, 4 pesanan anda, 5 dapur." />
+</Card>
+
+<Card id="try-v" type="try">
+Pesan menu dan tengok seluruh perbualan. Cari baris status.
+
+<Interactive name="LinuxSim" scenario="linux-l3-http" goal={{ lastTyped: '^curl .*-v.*localhost/menu\\.html|^curl .*localhost/menu\\.html.*-v' }} hints={['Taip curl -v localhost/menu.html', 'Baris status bermula dengan < HTTP/1.1']} solution={['curl -v localhost/menu.html']} success="< HTTP/1.1 200 OK, kemudian header, kemudian menu." />
+</Card>
+
+<Card id="predict" type="predict">
+`curl -sI localhost/staff.html` kata `403 Forbidden`. Apa puncanya yang paling mungkin?
+
+<Interactive name="Choice" options={[{ label: 'Fail itu wujud, tetapi nginx tak boleh membacanya', correct: true, why: 'Semak kebenarannya dengan ls -l. Dunia L2 pegang kuncinya.' }, { label: 'Halaman itu tiada', why: 'Kalau tiada, ia jadi 404.' }, { label: 'nginx berhenti', why: 'Kalau begitu, langsung tiada yang menjawab.' }]} />
+</Card>
+
+<Card id="check-build" type="check">
+Bina arahan yang minta bahagian atas jawapan sahaja: status dan header.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'curl', means: 'bercakap dengan kaunter web' }, { text: '-s', means: 'senyap: tiada meter kemajuan' }, { text: '-I', means: 'bahagian atas sahaja: status dan header' }, { text: 'localhost/menu.html', means: 'alamat, kemudian laluan' }]} decoys={[{ text: '-o', means: 'simpan makanan ke dalam fail' }]} success="curl -sI: semakan kesihatan pantas untuk mana-mana halaman." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca jawapan HTTP: kod status, header dan isinya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kaedah lain: `POST` hantar sesuatu, `PUT` ganti, `DELETE` buang. Header bawa fakta seperti `Content-Type`. Dalam skrip, `curl -f` gagal pada 4xx dan 5xx: kod keluar 22. `curl -L` ikut lencongan (3xx).
+
+<Interactive name="Mission" id="linux-l3-l06-rep" steps={[{ id: 'head', text: 'Minta bahagian atas daripada laman sebenar.', command: 'curl -sI https://example.com' }, { id: 'talk', text: 'Tengok seluruh perbualan, tanpa halamannya.', command: 'curl -sv -o /dev/null https://example.com' }]} success="Anda bercakap HTTP dengan kaunter sebenar." />
+</Card>

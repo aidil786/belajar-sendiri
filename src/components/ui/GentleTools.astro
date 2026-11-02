@@ -1,0 +1,137 @@
+---
+// Focus sprint (optional 10-minute timer) and the gentle break banner.
+// Both stay inline and small. Nothing pops up over the page.
+import { t, type Lang } from '~/i18n';
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+---
+
+<div class="gentle" data-gentle>
+  <div class="gentle-nudge" data-nudge hidden role="status">
+    <span aria-hidden="true">🌿</span>
+    <p>{t(lang, 'nudge.text')}</p>
+    <div class="gentle-actions">
+      <button type="button" class="btn btn-ghost" data-nudge-ok>{t(lang, 'nudge.ok')}</button>
+    </div>
+  </div>
+  <div class="gentle-sprint" data-sprint hidden>
+    <button type="button" class="btn btn-ghost sprint-btn" data-sprint-toggle>
+      <span aria-hidden="true">⏱</span>
+      <span data-sprint-label>{t(lang, 'sprint.start')}</span>
+    </button>
+    <p class="sprint-done" data-sprint-done hidden role="status">
+      {t(lang, 'sprint.done')}
+      <button type="button" class="btn btn-quiet" data-sprint-dismiss>{t(lang, 'sprint.dismiss')}</button>
+    </p>
+  </div>
+  <template data-sprint-strings data-start={t(lang, 'sprint.start')} data-stop={t(lang, 'sprint.stop')} data-left={t(lang, 'sprint.left')}></template>
+</div>
+
+<script>
+  import { $progress, shouldNudge, snoozeNudge } from '~/stores/progress';
+  const KEY = 'fahamlah:sprint';
+  const root = document.querySelector<HTMLElement>('[data-gentle]');
+  if (root) {
+    const nudge = root.querySelector<HTMLElement>('[data-nudge]')!;
+    const sprint = root.querySelector<HTMLElement>('[data-sprint]')!;
+    const toggle = root.querySelector<HTMLButtonElement>('[data-sprint-toggle]')!;
+    const label = root.querySelector<HTMLElement>('[data-sprint-label]')!;
+    const done = root.querySelector<HTMLElement>('[data-sprint-done]')!;
+    const strings = root.querySelector<HTMLElement>('[data-sprint-strings]')!.dataset;
+
+    const readEnd = (): number => {
+      try {
+        return Number(localStorage.getItem(KEY) || 0);
+      } catch {
+        return 0;
+      }
+    };
+    const writeEnd = (v: number) => {
+      try {
+        if (v) localStorage.setItem(KEY, String(v));
+        else localStorage.removeItem(KEY);
+      } catch {
+        /* storage blocked: timer lasts for this page only */
+      }
+    };
+    let endAt = readEnd();
+
+    const render = () => {
+      const p = $progress.get();
+      sprint.hidden = !p.settings.sprint;
+      const now = Date.now();
+      if (endAt && now >= endAt) {
+        endAt = 0;
+        writeEnd(0);
+        done.hidden = false;
+      }
+      if (endAt) {
+        const left = Math.max(0, Math.round((endAt - now) / 1000));
+        const time = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+        label.textContent = `${(strings.left ?? '{time}').replace('{time}', time)} · ${strings.stop}`;
+        toggle.setAttribute('aria-pressed', 'true');
+      } else {
+        label.textContent = strings.start ?? '';
+        toggle.setAttribute('aria-pressed', 'false');
+      }
+      nudge.hidden = !shouldNudge(p);
+    };
+
+    toggle.addEventListener('click', () => {
+      endAt = endAt ? 0 : Date.now() + 10 * 60_000;
+      writeEnd(endAt);
+      done.hidden = true;
+      render();
+    });
+    root.querySelector('[data-sprint-dismiss]')!.addEventListener('click', () => {
+      done.hidden = true;
+    });
+    root.querySelector('[data-nudge-ok]')!.addEventListener('click', () => {
+      snoozeNudge();
+      render();
+    });
+    $progress.listen(render);
+    render();
+    window.setInterval(render, 1000);
+  }
+</script>
+
+<style>
+  .gentle {
+    max-width: var(--card-max);
+    margin: var(--space-3) auto 0;
+    padding-inline: var(--gutter);
+    display: grid;
+    gap: var(--space-2);
+  }
+  .gentle-nudge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    background: var(--c-repo-soft);
+    color: var(--c-repo-ink);
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-4);
+  }
+  .gentle-nudge p {
+    margin: 0;
+    flex: 1 1 14rem;
+  }
+  .gentle-sprint {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .sprint-btn {
+    min-height: 40px;
+    font-size: var(--text-s);
+    font-weight: var(--weight-normal);
+    padding: var(--space-1) var(--space-4);
+  }
+  .sprint-done {
+    margin: 0;
+    font-size: var(--text-s);
+  }
+</style>

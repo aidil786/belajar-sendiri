@@ -1,0 +1,69 @@
+---
+id: docker-d3-l08
+world: 3
+title: Settings in env files
+summary: "You will learn: to hand a container many settings at once with --env-file."
+minutes: 3
+xp: 15
+interactives: [KitchenReplay, SpotLines, KitchenSim, Choice, SwipeJudge, Mission]
+needs: [docker-d3-l07]
+scenario: d3-envfile
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: docker run --env-file", url: "https://docs.docker.com/reference/cli/docker/container/run/#env" }
+  - { label: "Docker docs: Environment variables in Compose", url: "https://docs.docker.com/compose/how-tos/environment-variables/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d3-envfile" commands={['docker run --rm -e SHOP_NAME=Kedai -e TZ=Asia/Kuala_Lumpur -e CURRENCY=MYR -e OPEN_HOUR=8 alpine:3.22 env']} label="A long docker run line with four -e flags. env prints the four settings inside the box." />
+
+Four settings, four `-e` flags. One typo and the shop breaks. Your shell history keeps every value, too.
+</Card>
+
+<Card id="see-envfile" type="see">
+<Interactive name="SpotLines" prompt="Tap the line Docker skips." success="Yes! Lines that start with # are notes for people." lines={[{ text: '# Kedai Kancil settings', target: true }, { text: 'SHOP_NAME=Kedai Kancil' }, { text: 'TZ=Asia/Kuala_Lumpur' }, { text: 'CURRENCY=MYR' }, { text: 'OPEN_HOUR=8' }]} />
+
+An **<Term id="env-file">env file</Term>** is a settings card: one `NAME=value` per line. `--env-file shop.env` hands the whole card to the box.
+</Card>
+
+<Card id="try-envfile" type="try">
+Start app with the whole settings card, shop.env.
+
+<Interactive name="KitchenSim" scenario="d3-envfile" goal={{ running: ['app'], containerEnv: { app: ['SHOP_NAME', 'TZ', 'CURRENCY', 'OPEN_HOUR'] } }} hints={['Type docker run -d --name app --env-file shop.env alpine:3.22 sleep 3600', 'Check it: docker exec app printenv SHOP_NAME']} success="app got all four settings from one card." />
+
+<Hint>Try `cat shop.env` first to read the card.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+quoted.env says `SHOP_NAME="Kedai Kancil"`. What does the app get?
+
+<Interactive name="Choice" options={[{ label: '"Kedai Kancil", quotes and all', correct: true, why: 'docker run keeps every character after =. Leave quotes out.' }, { label: 'Kedai Kancil, without quotes', why: 'A shell would drop them. An env file is not a shell.' }, { label: 'An error', why: 'Quotes are allowed. They just stay in the value.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KitchenReplay" scenario="d3-envfile" commands={['cat spaces.env', 'docker run --rm --env-file spaces.env alpine:3.22 env']} fails={['docker run --rm --env-file spaces.env alpine:3.22 env']} label="spaces.env has SHOP_NAME = Kedai Kancil. docker run refuses it: variable 'SHOP_NAME ' contains whitespaces." />
+
+Real error: `variable 'SHOP_NAME ' contains whitespaces`. Plain words: no spaces around the = sign.
+</Card>
+
+<Card id="check" type="check">
+Is this a good line for an env file?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'TZ=Asia/Kuala_Lumpur', good: true, why: 'NAME=value, no spaces. Perfect.' }, { text: 'SHOP_NAME = Kedai', good: false, why: 'Spaces around = stop docker run.' }, { text: '# opening hours', good: true, why: 'A note for people. Docker skips it.' }, { text: 'export CURRENCY=MYR', good: false, why: 'export is shell talk. docker run refuses it.' }, { text: 'OPEN_HOUR=8', good: true, why: 'Clean and simple.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now hand a container its settings in one file.
+</Card>
+
+<Card id="deeper" type="deeper">
+A line with only `NAME` copies that value from your laptop, if it is set. Compose reads `.env` files with its own rules: World D4. Does your env file hold a password? Keep it out of Git: put it in `.gitignore`.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="d3-l08-rep" steps={[{ id: 'card', text: 'Write a settings card.', command: 'printf "SHOP_NAME=Kedai Kancil\\nTZ=Asia/Kuala_Lumpur\\n" > shop.env' }, { id: 'use', text: 'Hand it to a box.', command: 'docker run --rm --env-file shop.env alpine:3.22 env' }, { id: 'ignore', text: 'Keep env files out of Git.', command: 'echo "*.env" >> .gitignore' }]} success="One card, many settings, nothing in Git." />
+</Card>

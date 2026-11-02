@@ -1,0 +1,62 @@
+---
+id: git-w10-l11
+world: 10
+title: Submodule lawan subtree
+summary: "Anda akan belajar: dua cara simpan repo lain di dalam repo anda, dan bila nak pilih setiap satu."
+minutes: 4
+xp: 20
+interactives: [Choice, Transcript, CommandBuilder, SortCards]
+needs: [git-w10-l10]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git submodule", url: "https://git-scm.com/docs/git-submodule" }
+  - { label: "gitsubmodules", url: "https://git-scm.com/docs/gitsubmodules" }
+  - { label: "git clone (--recurse-submodules)", url: "https://git-scm.com/docs/git-clone" }
+---
+
+<Card id="hook" type="hook">
+Dua aplikasi kedai guna kod `kuih-menu` yang sama, daripada repo sendiri. Anda baiki satu pepijat di situ. Macam mana kedua-dua aplikasi dapat pembaikan itu?
+
+<Interactive name="Choice" options={[{ label: 'Pautkan repo menu di dalam setiap aplikasi', correct: true, why: 'Git ada dua cara untuk buat begitu. Jom kenal.' }, { label: 'Salin dan tampal fail dengan tangan', why: 'Setiap pembaikan bermakna salin lagi. Mudah terlupa satu.' }, { label: 'E-mel fail yang dibaiki kepada diri sendiri', why: 'Boleh untuk sekali. Lepas tu salinan mula berbeza.' }]} />
+</Card>
+
+<Card id="see-submodule" type="see">
+<Interactive name="Transcript" title="bash" label="git submodule add letak repo kuih-menu dalam folder bernama menu. Kemudian .gitmodules tunjuk path menu dan url." lines={[{ cmd: 'git submodule add https://github.com/you/kuih-menu.git menu' }, { cmd: 'cat .gitmodules' }, { out: '[submodule "menu"]\n\tpath = menu\n\turl = https://github.com/you/kuih-menu.git' }]} />
+
+**<Term id="submodule">Submodule</Term>** ialah repo di dalam repo anda. Repo anda simpan pautan: URL dan satu commit yang tepat.
+</Card>
+
+<Card id="try-clone" type="try">
+Bina arahan yang clone aplikasi itu bersama submodulenya, sekali gus.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Cakap dengan Git' }, { text: 'clone', means: 'salin repo ke komputer anda' }, { text: '--recurse-submodules', means: 'dan isi setiap submodule juga' }, { text: 'https://github.com/you/shop.git', means: 'repo aplikasi itu' }]} decoys={[{ text: '--depth 1', means: 'commit terbaru sahaja' }, { text: '--bare', means: 'tanpa folder kerja' }]} success="Betul! Folder menu sampai dengan penuh." />
+</Card>
+
+<Card id="predict" type="predict">
+Mei clone aplikasi itu tanpa `--recurse-submodules`. Apa yang ada dalam folder `menu`?
+
+<Interactive name="Choice" options={[{ label: 'Belum ada apa-apa. Ia kosong', correct: true, why: 'Dia boleh isi kemudian dengan git submodule update --init.' }, { label: 'Kod menu terbaru', why: 'Clone biasa tak ambil submodule.' }, { label: 'Mesej ralat', why: 'Tiada ralat. Folder itu cuma kosong, menunggu.' }]} />
+</Card>
+
+<Card id="see-subtree" type="see">
+<Interactive name="Transcript" title="bash" label="git subtree add salin branch main kuih-menu ke dalam folder menu, dipadatkan jadi satu commit." lines={[{ cmd: 'git subtree add --prefix=menu https://github.com/you/kuih-menu.git main --squash' }]} />
+
+**<Term id="subtree">Subtree</Term>** salin fail repo lain ke dalam satu folder. Fail itu jadi fail biasa dalam repo anda. Rakan sepasukan tak perlu buat apa-apa tambahan.
+</Card>
+
+<Card id="check-sort" type="check">
+Submodule atau subtree? Susun setiap fakta.
+
+<Interactive name="SortCards" buckets={[{ id: 'submodule', label: 'submodule' }, { id: 'subtree', label: 'subtree' }]} items={[{ label: 'Simpan pautan ke satu commit repo lain', bucket: 'submodule', why: 'Repo anda simpan URL dan id commit itu.' }, { label: 'Salin fail ke dalam repo anda', bucket: 'subtree', why: 'Fail itu tinggal dalam sejarah anda, macam fail sendiri.' }, { label: 'Rakan perlu satu langkah tambahan selepas clone', bucket: 'submodule', why: 'Mereka perlukan --recurse-submodules atau git submodule update --init.' }, { label: 'Clone biasa terus berfungsi', bucket: 'subtree', why: 'Fail dah ada di dalam repo.' }]} success="Tersusun! Submodule: pautan. Subtree: salinan." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih submodule atau subtree, dan terangkan sebabnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git submodule update --remote` gerakkan submodule ke commit terbaru branchnya. Kemudian commit perubahan itu. `git subtree pull --prefix=menu <url> main --squash` bawa masuk kerja menu yang baru. `git subtree` datang daripada bahagian contrib Git, jadi semak `git subtree -h` dulu. Kadang-kadang pengurus pakej lebih mudah daripada kedua-duanya.
+</Card>

@@ -1,0 +1,79 @@
+---
+id: iac-t1-boss
+world: 1
+title: Bina medan selera kecil
+summary: "Anda akan belajar: jalankan seluruh kitaran sendiri: init, plan, apply, ubah, destroy."
+minutes: 6
+xp: 50
+interactives: [Choice, TofuSim, PlanReader, OrderList, Mission]
+needs: [iac-t1-l08]
+scenario: t1-boss
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "tofu init", url: "https://opentofu.org/docs/cli/commands/init/" }
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+  - { label: "tofu apply", url: "https://opentofu.org/docs/cli/commands/apply/" }
+  - { label: "tofu destroy", url: "https://opentofu.org/docs/cli/commands/destroy/" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil buka medan selera kecil di pesta hari Sabtu. Anda dapat pelan terus dari Git. Apa anda taip dulu?
+
+<Interactive name="Choice" options={[{ label: '`tofu init`', correct: true, why: 'Folder baru belum ada provider. init dapatkannya.' }, { label: '`tofu apply`', why: 'Tanpa init, OpenTofu berhenti dan minta init.' }, { label: '`tofu destroy`', why: 'Belum ada apa yang dibina. Lagipun destroy untuk penghujung.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Bina medan selera: nama gerai, meja, papan, loceng, lampu. Guna init, plan, kemudian apply.
+
+<Interactive name="TofuSim" scenario="t1-boss" goal={{ stateCount: 5, filesExist: ['board.txt'] }} hints={['Mula dengan tofu init.', 'Kemudian tofu plan. Kira baris +: 5 to add.', 'Kemudian tofu apply, dan yes.']} success="Lima benda siap dibina. board.txt tunjuk nombor meja." />
+
+<Hint>`tofu init`, `tofu plan`, `tofu apply`, `yes`.</Hint>
+</Card>
+
+<Card id="try-read" type="try">
+Malam Jumaat, bos ubah pelan. Baca plan sebelum sesiapa membina.
+
+<Interactive name="PlanReader" scenario="t1-boss-next" />
+</Card>
+
+<Card id="predict" type="predict">
+Plan tunjuk `-` di sebelah `null_resource.lamp`. Kenapa lampu itu hilang?
+
+<Interactive name="Choice" options={[{ label: 'Pelan baru tiada blok lamp', correct: true, why: 'Tiada dalam pelan, jadi tiada dalam bangunan. OpenTofu buangnya.' }, { label: 'Nombor mejanya berubah', why: 'random_integer.table kekal nombornya. Blok lamp itu cuma sudah tiada.' }, { label: 'Setiap apply musnahkan lampu', why: 'Hanya benda yang tiada dalam pelan, atau terpaksa berubah, akan hilang.' }]} />
+</Card>
+
+<Card id="try-change" type="try">
+Plan nampak betul. Apply pelan baru itu.
+
+<Interactive name="TofuSim" scenario="t1-boss-next" goal={{ resourceInState: ['local_file.menu'], resourceMissing: ['null_resource.lamp'] }} hints={['Taip tofu apply.', 'Baca plan sekali lagi, kemudian taip yes.']} success="Menu baru, tiada lampu, nama gerai baru. Daftar sama dengan pelan." />
+
+<Hint>`tofu apply`, kemudian `yes`.</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Senarai semak pesta anda. Susun ikut urutan.
+
+<Interactive name="OrderList" items={['tofu init dalam folder baru', 'tofu plan dan baca setiap simbol', 'tofu apply, kemudian yes', 'Ubah pelan, plan lagi, apply lagi', 'tofu destroy bila pesta tamat']} label="Langkah pertama di atas" success="Seluruh kitaran, dari mula hingga kemas." />
+</Card>
+
+<Card id="try-destroy" type="try">
+Malam Ahad. Pesta sudah tamat. Robohkan medan selera itu.
+
+<Interactive name="TofuSim" scenario="t1-boss-done" goal={{ stateCount: 0, filesMissing: ['board.txt', 'menu.txt'] }} hints={['Taip tofu destroy.', 'Baca senarai apa yang hilang, kemudian taip yes.']} success="Semua hilang. Tiada apa yang tinggal berjalan, tiada apa perlu dibayar." />
+
+<Hint>`tofu destroy`, kemudian `yes`. Hati-hati: baca senarainya dulu.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina, ubah dan robohkan pelan sendiri.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): bina medan selera ini di mesin anda sendiri. Ia cuma guna provider random, local dan null, jadi tiada kos.
+
+<Interactive name="Mission" id="iac-t1-boss-rep" steps={[{ id: 'folder', text: 'Buat folder untuk pesta dan masuk ke dalamnya.', command: 'mkdir fair && cd fair' }, { id: 'file', text: 'Salin main.tf dari kad bina yang pertama ke dalamnya.' }, { id: 'init', text: 'Dapatkan provider.', command: 'tofu init' }, { id: 'plan', text: 'Baca plan: 5 to add.', command: 'tofu plan' }, { id: 'apply', text: 'Bina. Taip yes.', command: 'tofu apply' }, { id: 'look', text: 'Baca papan itu.', command: 'cat board.txt' }, { id: 'destroy', text: 'Robohkan. Taip yes.', command: 'tofu destroy' }]} success="Medan selera sebenar, dibina dan dikemas oleh anda." />
+</Card>

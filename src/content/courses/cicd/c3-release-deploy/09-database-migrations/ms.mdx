@@ -1,0 +1,65 @@
+---
+id: cicd-c3-l09
+world: 3
+title: "Ubah pangkalan data tanpa henti"
+summary: "Anda akan belajar: cara ubah pangkalan data langkah demi langkah semasa kod lama dan baharu berjalan bersama."
+minutes: 4
+xp: 20
+interactives: [Transcript, Choice, OrderList, SortCards]
+needs: [cicd-c3-l08]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PostgreSQL 18: ALTER TABLE", url: "https://www.postgresql.org/docs/18/sql-altertable.html" }
+  - { label: "Parallel change (expand and contract)", url: "https://martinfowler.com/bliki/ParallelChange.html" }
+  - { label: "Cloudflare: rollbacks leave data as it is", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="Transcript" title="psql" label="Kod lama minta lajur phone. PostgreSQL kata lajur itu tak wujud." lines={[{ cmd: 'psql -c "SELECT phone FROM customers;"' }, { out: 'ERROR:  column "phone" does not exist\nLINE 1: SELECT phone FROM customers;\n               ^', color: 'red' }]} />
+
+Anda tukar nama lajur `phone` kepada `mobile`. Versi 2 okey. Tapi salinan versi 1 masih berjalan semasa rollout. Maksudnya: kod lama minta lajur yang dah tiada.
+</Card>
+
+<Card id="see-both" type="see">
+Semasa deploy rolling atau canary, siapa yang baca dan tulis pangkalan data?
+
+<Interactive name="Choice" options={[{ label: 'Kod lama dan baharu, serentak', correct: true, why: 'Jadi setiap perubahan pangkalan data mesti berfungsi untuk kedua-dua versi.' }, { label: 'Kod baharu sahaja', why: 'Salinan lama terus melayan sampai rollout tamat.' }, { label: 'Tiada siapa, sampai deploy tamat', why: 'Kedai tetap buka. Pesanan terus masuk.' }]} />
+</Card>
+
+<Card id="see-expand" type="see">
+Penyelesaiannya ialah **<Term id="expand-contract">expand dan contract</Term>**. Ubah stor langkah demi langkah. Tambah rak baharu, pindah stok, kemudian buang rak lama. Susun langkahnya.
+
+<Interactive name="OrderList" items={['Expand: tambah lajur baharu, mobile', 'Deploy kod yang tulis ke kedua-dua lajur', 'Migrate: salin nombor lama ke mobile', 'Deploy kod yang guna mobile sahaja', 'Contract: buang lajur phone yang lama']} label="Langkah pertama di atas" success="Ya! Pada setiap langkah, kod yang berjalan masih berfungsi." />
+</Card>
+
+<Card id="try-sort" type="try">
+Perubahan mana yang selamat dalam satu deploy? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'safe', label: 'Selamat dalam satu langkah' }, { id: 'steps', label: 'Perlu expand dan contract' }]} items={[{ label: 'Tambah jadual baharu', bucket: 'safe', why: 'Kod lama tak pernah tengok jadual itu.' }, { label: 'Tambah lajur yang boleh kosong', bucket: 'safe', why: 'Kod lama abaikan sahaja.' }, { label: 'Tukar nama lajur', bucket: 'steps', why: 'Kod lama masih minta nama lama.' }, { label: 'Buang lajur yang kod lama baca', bucket: 'steps', why: 'Kod lama akan crash, macam pada kad pertama tadi.' }, { label: 'Jadikan lajur yang boleh kosong sebagai wajib', bucket: 'steps', why: 'Kod lama mungkin masih simpan baris tanpanya.' }]} success="Siap! Menambah itu mudah. Tukar nama dan membuang perlu langkah." />
+</Card>
+
+<Card id="predict" type="predict">
+Anda di langkah 2: kedua-dua lajur wujud. Versi 2 ada bug. Boleh anda rollback ke versi 1?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: phone masih ada', correct: true, why: 'Belum ada yang lama dibuang, jadi versi 1 masih berfungsi.' }, { label: 'Tak boleh: data hilang', why: 'Expand hanya menambah. Setiap nombor telefon masih ada.' }, { label: 'Hanya selepas langkah 5', why: 'Selepas langkah contract, berpatah balik jadi lebih susah.' }]} />
+</Card>
+
+<Card id="check-expand" type="check">
+<Interactive name="Transcript" title="psql" label="Tambah lajur mobile. Jadual kini ada id, phone dan mobile yang kosong." lines={[{ cmd: 'psql -c "ALTER TABLE customers ADD COLUMN mobile text;"' }, { out: 'ALTER TABLE', color: 'green' }, { cmd: 'psql -c "SELECT id, phone, mobile FROM customers;"' }, { out: ' id |    phone    | mobile \n----+-------------+--------\n  1 | 012-3456789 | \n(1 row)' }]} />
+
+Langkah 1 betul-betul, pada PostgreSQL 18. `ADD COLUMN` tambah rak kosong. Kod lama masih baca `phone`. Kod baharu boleh mula tulis `mobile`.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh ubah pangkalan data tanpa tutup kedai.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jalankan setiap migration sebagai langkah sendiri, sebelum kod yang memerlukannya. Sesetengah perubahan mengunci jadual besar semasa berjalan. Baca dokumentasi pangkalan data anda dulu. Ingat: rollback tukar kod, bukan data. Rollback Cloudflare biarkan pangkalan data dan binding lain seperti asal.
+
+Latihan sebenar (pilihan): cuba langkah ini pada pangkalan data pakai buang: `docker run --rm -e POSTGRES_PASSWORD=test postgres:18-alpine`.
+</Card>

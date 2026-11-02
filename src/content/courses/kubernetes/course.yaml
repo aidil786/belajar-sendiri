@@ -1,0 +1,315 @@
+# Ship It, Part 3 "Medan Selera": Kubernetes. 7 worlds (K1–K7), 81 lessons + capstone missions 4–6,
+# plus Career Quest (world 8, 8 lessons). Plan: docs/SHIP-IT-PLAN.md §7–8.
+# Level Up adds the CKA pack: world 9 (K9 Cluster Admin, 12 lessons), an optional extra pack
+# (`extra: true`, docs/LEVEL-UP-PLAN.md §2). Career Quest stays the finale on every map.
+# Folders: <world dir>/NN-<slug>/ (en.mdx + ms.mdx), bosses in <world dir>/boss/.
+# status: ready = lesson exists; soon = shown on the map as "Coming soon".
+# Content helpers: only flip status: soon → ready for lessons you wrote. Do not reorder or retitle.
+id: kubernetes
+family: ship-it
+part: 3
+partName: { en: "Medan Selera", ms: "Medan Selera" }
+story:
+  en: "The food court. A manager keeps many stalls serving, all day."
+  ms: "Medan selera. Seorang pengurus pastikan banyak gerai terus menjual, sepanjang hari."
+hat: captain
+tool: kubernetes
+toolVersion: "1.37"
+placement: k8s-k1-l01
+requires: []
+title: { en: "Kubernetes", ms: "Kubernetes" }
+summary:
+  en: "Run an app that heals itself, scales at lunch rush and updates itself from Git."
+  ms: "Jalankan aplikasi yang pulih sendiri, berskala waktu puncak dan dikemas kini sendiri dari Git."
+intro:
+  en: "Every world is open. K1 to K3 build on each other. K1 starts with a quick check of what you know."
+  ms: "Semua dunia terbuka. K1 hingga K3 bersambung. K1 bermula dengan semakan pantas apa yang anda tahu."
+
+badges:
+  - { id: self-healer, icon: tray, name: { en: "Self-Healer", ms: "Pemulih Diri" }, when: { lessons: [k8s-k1-l04] } }
+  - { id: zero-downtime, icon: tray, name: { en: "Zero Downtime", ms: "Tanpa Henti" }, when: { lessons: [k8s-k2-boss] } }
+  - { id: gatekeeper, icon: lock, name: { en: "Gatekeeper", ms: "Penjaga Pintu Pagar" }, when: { lessons: [k8s-k6-boss] } }
+  - { id: hands-off, icon: sync, name: { en: "Hands Off", ms: "Lepas Tangan" }, when: { lessons: [k8s-k7-boss] } }
+  - { id: k8s-world-1, icon: stall, name: { en: "Grand Opener", ms: "Perasmi Medan Selera" }, when: { world: 1 } }
+  - { id: k8s-world-2, icon: tray, name: { en: "Tray Master", ms: "Pakar Dulang" }, when: { world: 2 } }
+  - { id: k8s-world-3, icon: door, name: { en: "Door Keeper", ms: "Penjaga Pintu" }, when: { world: 3 } }
+  - { id: k8s-world-4, icon: package, name: { en: "Package Pro", ms: "Pakar Pakej" }, when: { world: 4 } }
+  - { id: k8s-world-5, icon: gauge, name: { en: "Rush Hour Hero", ms: "Wira Waktu Puncak" }, when: { world: 5 } }
+  - { id: k8s-world-6, icon: lock, name: { en: "Cluster Guard", ms: "Pengawal Kluster" }, when: { world: 6 } }
+  - { id: k8s-world-7, icon: sync, name: { en: "Autopilot", ms: "Autopilot" }, when: { world: 7 } }
+  - { id: k8s-world-8, icon: briefcase, name: { en: "Ship It Graduate", ms: "Graduan Ship It" }, when: { world: 8 } }
+  - { id: cluster-medic, icon: server, name: { en: "Cluster Medic", ms: "Doktor Kluster" }, when: { lessons: [k8s-k9-boss] } }
+  - { id: k8s-world-9, icon: server, name: { en: "Cluster Admin", ms: "Pentadbir Kluster" }, when: { world: 9 } }
+
+worlds:
+  - id: 1
+    code: K1
+    slug: food-court
+    dir: k1-food-court
+    icon: stall
+    color: working
+    title: { en: "The Food Court", ms: "Medan Selera" }
+    summary:
+      en: "See how Kubernetes works. Drive it with kubectl."
+      ms: "Faham cara Kubernetes berfungsi. Pandu dengan kubectl."
+    lessons:
+      - { id: k8s-k1-l01, slug: what-you-know, title: { en: "What you already know", ms: "Apa yang anda dah tahu" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k1-l02, slug: why-orchestration, title: { en: "One container is easy, 200 are not", ms: "Satu container senang, 200 susah" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k1-l03, slug: when-not-kubernetes, title: { en: "When not to use Kubernetes", ms: "Bila tak perlu Kubernetes" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k1-l04, slug: want-3-see-2, title: { en: "Want 3, See 2", ms: "Mahu 3, Nampak 2" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k1-l05, slug: cluster-nodes-pods, title: { en: "Food court, stalls, trays", ms: "Medan selera, gerai, dulang" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k1-l06, slug: control-plane-nodes, title: { en: "The control plane and node parts", ms: "Control plane dan bahagian node" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k1-l07, slug: first-cluster, title: { en: "Your first cluster with kind", ms: "Kluster pertama anda dengan kind" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k1-l08, slug: kubectl-basics, title: { en: "Drive it with kubectl", ms: "Pandu dengan kubectl" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k1-l09, slug: kubeconfig-contexts, title: { en: "You are here: contexts", ms: "Anda di sini: context" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k1-l10, slug: namespaces, title: { en: "Zones: namespaces", ms: "Zon: namespace" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k1-l11, slug: manifest-anatomy, title: { en: "Anatomy of a manifest", ms: "Anatomi manifest" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k1-l12, slug: labels-selectors, title: { en: "Labels and selectors", ms: "Label dan selector" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k1-l13, slug: dry-run-explain, title: { en: "Dry run and kubectl explain", ms: "Dry run dan kubectl explain" }, minutes: 4, xp: 20, status: ready }
+    boss:
+      id: k8s-k1-boss
+      title: { en: "Grand opening", ms: "Pembukaan rasmi" }
+      summary: { en: "Start a kind cluster, deploy a pod, read its status 3 ways.", ms: "Mulakan kluster kind, deploy pod, baca statusnya 3 cara." }
+      xp: 50
+      status: ready
+
+  - id: 2
+    code: K2
+    slug: trays-orders
+    dir: k2-trays-orders
+    icon: tray
+    color: repo
+    title: { en: "Trays & Orders", ms: "Dulang & Pesanan" }
+    summary:
+      en: "Run apps that heal and update without downtime."
+      ms: "Jalankan aplikasi yang pulih dan dikemas kini tanpa henti."
+    lessons:
+      - { id: k8s-k2-l01, slug: pods, title: { en: "Pods: a tray of dishes", ms: "Pod: sedulang hidangan" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l02, slug: sidecars-init, title: { en: "Sidecars and init containers", ms: "Sidecar dan init container" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l03, slug: replicasets, title: { en: "ReplicaSets keep the count", ms: "ReplicaSet jaga bilangan" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k2-l04, slug: deployments, title: { en: "Deployments: the standing order", ms: "Deployment: arahan tetap" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l05, slug: rolling-updates, title: { en: "Rolling updates and rollout undo", ms: "Rolling update dan rollout undo" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k2-l06, slug: restart-or-replace, title: { en: "Restart or replace?", ms: "Hidup semula atau ganti?" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k2-l07, slug: pod-states, title: { en: "Pod states and their errors", ms: "Keadaan pod dan ralatnya" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k2-l08, slug: probes, title: { en: "Liveness, readiness and startup probes", ms: "Probe liveness, readiness dan startup" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k2-l09, slug: requests-limits, title: { en: "Requests and limits", ms: "Requests dan limits" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l10, slug: qos-classes, title: { en: "QoS classes", ms: "Kelas QoS" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k2-l11, slug: daemonsets, title: { en: "DaemonSets: one per stall", ms: "DaemonSet: satu setiap gerai" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k2-l12, slug: statefulsets, title: { en: "StatefulSets: names that stay", ms: "StatefulSet: nama yang kekal" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l13, slug: jobs-cronjobs, title: { en: "Jobs and CronJobs", ms: "Job dan CronJob" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k2-l14, slug: blue-green-canary, title: { en: "Blue/green and canary with Deployments", ms: "Blue/green dan canary dengan Deployment" }, minutes: 4, xp: 20, status: ready }
+    boss:
+      id: k8s-k2-boss
+      title: { en: "Lunch-rush upgrade", ms: "Naik taraf waktu puncak" }
+      summary: { en: "Update 3 replicas with zero downtime, then roll back a bad image.", ms: "Kemas kini 3 replika tanpa henti, kemudian rollback image rosak." }
+      xp: 50
+      status: ready
+
+  - id: 3
+    code: K3
+    slug: counters-doors
+    dir: k3-counters-doors
+    icon: door
+    color: remote
+    title: { en: "Counters & Doors", ms: "Kaunter & Pintu" }
+    summary:
+      en: "Let traffic in, safely."
+      ms: "Biar trafik masuk, dengan selamat."
+    lessons:
+      - { id: k8s-k3-l01, slug: pod-network, title: { en: "Every pod gets an IP", ms: "Setiap pod dapat IP" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k3-l02, slug: services-clusterip, title: { en: "Services: one order number", ms: "Service: satu nombor pesanan" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k3-l03, slug: service-types, title: { en: "NodePort, LoadBalancer and headless", ms: "NodePort, LoadBalancer dan headless" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k3-l04, slug: endpointslices, title: { en: "EndpointSlices: who answers?", ms: "EndpointSlice: siapa jawab?" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k3-l05, slug: cluster-dns, title: { en: "Cluster DNS", ms: "DNS kluster" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k3-l06, slug: port-forward, title: { en: "Debug with port-forward", ms: "Nyahpepijat dengan port-forward" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k3-l07, slug: gateway-api, title: { en: "Gateway API: the main entrance", ms: "Gateway API: pintu masuk utama" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k3-l08, slug: httproute, title: { en: "HTTPRoute: signboards to stalls", ms: "HTTPRoute: papan tanda ke gerai" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k3-l09, slug: ingress-retired, title: { en: "Ingress, and why ingress-nginx retired", ms: "Ingress, dan kenapa ingress-nginx bersara" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k3-l10, slug: tls-cert-manager, title: { en: "TLS with cert-manager", ms: "TLS dengan cert-manager" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k3-l11, slug: network-policies, title: { en: "NetworkPolicies and CNI plugins", ms: "NetworkPolicy dan plugin CNI" }, minutes: 5, xp: 25, status: ready }
+    boss:
+      id: k8s-k3-boss
+      title: { en: "Open the doors", ms: "Buka pintu" }
+      summary: { en: "Route / and /api through a Gateway with TLS. Lock the database.", ms: "Hala / dan /api melalui Gateway dengan TLS. Kunci pangkalan data." }
+      xp: 50
+      status: ready
+
+  - id: 4
+    code: K4
+    slug: notes-lockers-packages
+    dir: k4-notes-lockers-packages
+    icon: package
+    color: staging
+    title: { en: "Notes, Lockers & Packages", ms: "Nota, Loker & Pakej" }
+    summary:
+      en: "Configure, store and package apps."
+      ms: "Tetapkan, simpan dan pakejkan aplikasi."
+    lessons:
+      - { id: k8s-k4-l01, slug: configmaps, title: { en: "ConfigMaps: notes on the wall", ms: "ConfigMap: nota di dinding" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k4-l02, slug: secrets, title: { en: "Secrets: base64 is not a lock", ms: "Secret: base64 bukan kunci" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k4-l03, slug: external-sealed-secrets, title: { en: "External Secrets and Sealed Secrets", ms: "External Secrets dan Sealed Secrets" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k4-l04, slug: emptydir, title: { en: "Scratch space: emptyDir", ms: "Ruang sementara: emptyDir" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k4-l05, slug: pv-pvc, title: { en: "Lockers: PV and PVC", ms: "Loker: PV dan PVC" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k4-l06, slug: storageclass-access-modes, title: { en: "StorageClass and access modes", ms: "StorageClass dan mod akses" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k4-l07, slug: statefulset-storage, title: { en: "Storage for StatefulSets", ms: "Storan untuk StatefulSet" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k4-l08, slug: kustomize, title: { en: "Kustomize bases and overlays", ms: "Base dan overlay Kustomize" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k4-l09, slug: helm-basics, title: { en: "Helm 4: install, upgrade, rollback", ms: "Helm 4: install, upgrade, rollback" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k4-l10, slug: write-a-chart, title: { en: "Write a small chart", ms: "Tulis chart kecil" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k4-l11, slug: helm-or-kustomize, title: { en: "Helm or Kustomize?", ms: "Helm atau Kustomize?" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k4-l12, slug: deprecations-kyaml, title: { en: "API deprecations and kyaml", ms: "API lapuk dan kyaml" }, minutes: 3, xp: 15, status: ready }
+    boss:
+      id: k8s-k4-boss
+      title: { en: "Same app, three kitchens", ms: "Satu aplikasi, tiga dapur" }
+      summary: { en: "Dev, staging and prod overlays with different settings and replicas.", ms: "Overlay dev, staging dan prod dengan tetapan dan replika berbeza." }
+      xp: 50
+      status: ready
+
+  - id: 5
+    code: K5
+    slug: lunch-rush
+    dir: k5-lunch-rush
+    icon: gauge
+    color: head
+    title: { en: "Lunch Rush", ms: "Waktu Puncak" }
+    summary:
+      en: "Scale, schedule and see inside the cluster."
+      ms: "Skala, jadualkan dan lihat ke dalam kluster."
+    lessons:
+      - { id: k8s-k5-l01, slug: kubectl-top, title: { en: "metrics-server and kubectl top", ms: "metrics-server dan kubectl top" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k5-l02, slug: hpa, title: { en: "Scale out at lunch rush: HPA", ms: "Skala keluar waktu puncak: HPA" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k5-l03, slug: vpa-node-autoscaling, title: { en: "VPA and node autoscaling", ms: "VPA dan autoskala node" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k5-l04, slug: node-affinity, title: { en: "Pick a stall: nodeSelector and affinity", ms: "Pilih gerai: nodeSelector dan affinity" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-l05, slug: taints-tolerations, title: { en: "Taints, tolerations and spread", ms: "Taint, toleration dan sebaran" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k5-l06, slug: disruption-budgets, title: { en: "PodDisruptionBudgets", ms: "PodDisruptionBudget" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k5-l07, slug: quotas-limitranges, title: { en: "ResourceQuotas and LimitRanges", ms: "ResourceQuota dan LimitRange" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-l08, slug: logs-events, title: { en: "Logs and events", ms: "Log dan event" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-l09, slug: prometheus-otel, title: { en: "Prometheus, Grafana and OpenTelemetry", ms: "Prometheus, Grafana dan OpenTelemetry" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-l10, slug: debug-ladder, title: { en: "The debug ladder", ms: "Tangga nyahpepijat" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k5-l11, slug: upgrades-skew, title: { en: "Cluster upgrades and version skew", ms: "Naik taraf kluster dan beza versi" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-l12, slug: managed-cost, title: { en: "Managed Kubernetes and cost", ms: "Kubernetes terurus dan kos" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k5-m4, slug: mission-4-run-it, mission: 4, title: { en: "Capstone mission 4: Run it", ms: "Misi capstone 4: Jalankan" }, minutes: 5, xp: 100, status: ready }
+    boss:
+      id: k8s-k5-boss
+      title: { en: "Lunch rush", ms: "Waktu puncak" }
+      summary: { en: "Survive a traffic spike with HPA, then find the slow pod.", ms: "Bertahan lonjakan trafik dengan HPA, kemudian cari pod yang lambat." }
+      xp: 50
+      status: ready
+
+  - id: 6
+    code: K6
+    slug: guards
+    dir: k6-guards
+    icon: lock
+    color: danger
+    title: { en: "Guards", ms: "Pengawal" }
+    summary:
+      en: "Lock the cluster down."
+      ms: "Kunci kluster dengan ketat."
+    lessons:
+      - { id: k8s-k6-l01, slug: three-gates, title: { en: "Three gates: authn, authz, admission", ms: "Tiga pintu: authn, authz, admission" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k6-l02, slug: rbac, title: { en: "RBAC: roles and bindings", ms: "RBAC: role dan binding" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k6-l03, slug: auth-can-i, title: { en: "Ask first: kubectl auth can-i", ms: "Tanya dulu: kubectl auth can-i" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k6-l04, slug: pod-security, title: { en: "Pod Security Standards", ms: "Pod Security Standards" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k6-l05, slug: security-context, title: { en: "securityContext: lock the lunchbox", ms: "securityContext: kunci bekas" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k6-l06, slug: netpol-recap, title: { en: "NetworkPolicies recap", ms: "Ulang kaji NetworkPolicy" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k6-l07, slug: admission-policies, title: { en: "Policies: CEL, Kyverno, Gatekeeper", ms: "Polisi: CEL, Kyverno, Gatekeeper" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k6-l08, slug: audit-logs, title: { en: "Audit logs", ms: "Log audit" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k6-l09, slug: supply-chain, title: { en: "Supply-chain recap", ms: "Ulang kaji rantaian bekalan" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k6-l10, slug: user-namespaces, title: { en: "User namespaces", ms: "User namespace" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k6-m5, slug: mission-5-guard-it, mission: 5, title: { en: "Capstone mission 5: Guard it", ms: "Misi capstone 5: Kawal" }, minutes: 5, xp: 100, status: ready }
+    boss:
+      id: k8s-k6-boss
+      title: { en: "Lock the kitchen", ms: "Kunci dapur" }
+      summary: { en: "Pass the restricted Pod Security level. Give a CI bot only what it needs.", ms: "Lulus tahap Pod Security restricted. Beri bot CI hanya apa yang ia perlu." }
+      xp: 50
+      status: ready
+
+  - id: 7
+    code: K7
+    slug: self-driving
+    dir: k7-self-driving
+    icon: sync
+    color: remote
+    title: { en: "Self-Driving", ms: "Pandu Sendiri" }
+    summary:
+      en: "Let Git drive the cluster."
+      ms: "Biar Git pandu kluster."
+    lessons:
+      - { id: k8s-k7-l01, slug: gitops-principles, title: { en: "GitOps: the order board is a repo", ms: "GitOps: papan pesanan ialah repo" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l02, slug: argo-or-flux, title: { en: "Argo CD or Flux?", ms: "Argo CD atau Flux?" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k7-l03, slug: sync, title: { en: "Sync: from Git to cluster", ms: "Sync: dari Git ke kluster" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l04, slug: self-heal-drift, title: { en: "Self-heal and drift", ms: "Self-heal dan drift" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l05, slug: image-updates, title: { en: "Automatic image updates", ms: "Kemas kini image automatik" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l06, slug: promote-with-prs, title: { en: "Promote with pull requests", ms: "Naikkan dengan pull request" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l07, slug: progressive-delivery, title: { en: "Progressive delivery", ms: "Penghantaran berperingkat" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l08, slug: crds-operators, title: { en: "CRDs and operators", ms: "CRD dan operator" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k7-l09, slug: platform-engineering, title: { en: "Platform engineering and Backstage", ms: "Kejuruteraan platform dan Backstage" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k7-m6, slug: mission-6-hands-off, mission: 6, title: { en: "Capstone mission 6: Hands off", ms: "Misi capstone 6: Lepas tangan" }, minutes: 5, xp: 100, status: ready }
+    boss:
+      id: k8s-k7-boss
+      title: { en: "Hands off", ms: "Lepas tangan" }
+      summary: { en: "Change one line in Git. Watch the cluster follow. Undo a manual edit.", ms: "Tukar satu baris dalam Git. Lihat kluster ikut. Undur suntingan manual." }
+      xp: 50
+      status: ready
+
+  - id: 8
+    code: K8
+    slug: career-quest
+    dir: k8-career-quest
+    icon: briefcase
+    color: staging
+    finale: true
+    title: { en: "Career Quest", ms: "Misi Kerjaya" }
+    summary:
+      en: "Turn your skills and your capstone into a job."
+      ms: "Jadikan kemahiran dan capstone anda satu pekerjaan."
+    lessons:
+      - { id: k8s-k8-l01, slug: who-does-what, title: { en: "DevOps, SRE, platform, cloud: who does what?", ms: "DevOps, SRE, platform, cloud: siapa buat apa?" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k8-l02, slug: portfolio-piece, title: { en: "Turn Kedai Kancil into a portfolio", ms: "Jadikan Kedai Kancil portfolio" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k8-l03, slug: read-job-posts, title: { en: "Read job posts", ms: "Baca iklan kerja" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k8-l04, slug: interview-questions, title: { en: "Interview questions", ms: "Soalan temu duga" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k8-l05, slug: certifications, title: { en: "The certification path", ms: "Laluan pensijilan" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k8-l06, slug: first-contributions, title: { en: "First cloud-native contributions", ms: "Sumbangan cloud-native pertama" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k8-l07, slug: keep-up, title: { en: "Keep up without burning out", ms: "Kekal terkini tanpa letih" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k8-l08, slug: budget-homelab, title: { en: "A budget homelab", ms: "Homelab bajet" }, minutes: 4, xp: 20, status: ready }
+    boss:
+      id: k8s-k8-boss
+      title: { en: "Publish the capstone", ms: "Terbitkan capstone" }
+      summary: { en: "Share Kedai Kancil with its demo video and diagram.", ms: "Kongsi Kedai Kancil dengan video demo dan rajahnya." }
+      xp: 50
+      status: ready
+
+  # --- Level Up: the CKA pack (an optional extra pack, never locked). Outputs come from a real kind node. ---
+  - id: 9
+    code: K9
+    slug: cluster-admin
+    dir: k9-cluster-admin
+    icon: server
+    color: repo
+    extra: true
+    title: { en: "Cluster Admin", ms: "Pentadbir Kluster" }
+    summary:
+      en: "Run the cluster itself: kubeadm, nodes, upgrades, etcd and certificates."
+      ms: "Urus kluster itu sendiri: kubeadm, node, naik taraf, etcd dan sijil."
+    topics:
+      en: "kubeadm, static pods, kubelet, crictl, drain, upgrades, etcd, certificates"
+      ms: "kubeadm, static pod, kubelet, crictl, drain, naik taraf, etcd, sijil"
+    lessons:
+      - { id: k8s-k9-l01, slug: cka-vs-ckad, title: { en: "What CKA adds to CKAD", ms: "Apa CKA tambah pada CKAD" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k9-l02, slug: kubeadm-init-join, title: { en: "kubeadm: how a cluster is born", ms: "kubeadm: bagaimana kluster lahir" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k9-l03, slug: static-pods, title: { en: "Static pods and the manifests folder", ms: "Static pod dan folder manifest" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k9-l04, slug: kubelet, title: { en: "The kubelet: systemctl and journalctl", ms: "Kubelet: systemctl dan journalctl" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k9-l05, slug: crictl, title: { en: "crictl: containers under the kubelet", ms: "crictl: container di bawah kubelet" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k9-l06, slug: node-notready, title: { en: "Node NotReady: the ladder", ms: "Node NotReady: tangganya" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k9-l07, slug: cordon-drain, title: { en: "Cordon, drain, uncordon", ms: "Cordon, drain, uncordon" }, minutes: 3, xp: 15, status: ready }
+      - { id: k8s-k9-l08, slug: kubeadm-upgrade, title: { en: "Upgrade with kubeadm, one minor at a time", ms: "Naik taraf dengan kubeadm, satu minor setiap kali" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k9-l09, slug: etcd-backup, title: { en: "etcd backup and restore", ms: "Sandaran dan pemulihan etcd" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k9-l10, slug: cert-expiry, title: { en: "Certificates and when they expire", ms: "Sijil dan bila ia luput" }, minutes: 4, xp: 20, status: ready }
+      - { id: k8s-k9-l11, slug: users-csr, title: { en: "Users: CSR, certificates and kubeconfig", ms: "Pengguna: CSR, sijil dan kubeconfig" }, minutes: 5, xp: 25, status: ready }
+      - { id: k8s-k9-l12, slug: coredns-kube-proxy, title: { en: "Fix CoreDNS and kube-proxy", ms: "Baiki CoreDNS dan kube-proxy" }, minutes: 4, xp: 20, status: ready }
+    boss:
+      id: k8s-k9-boss
+      title: { en: "Night of the broken node", ms: "Malam node rosak" }
+      summary: { en: "Fix a NotReady node. Bring back a lost Deployment from an etcd snapshot.", ms: "Baiki node NotReady. Pulihkan Deployment yang hilang dari snapshot etcd." }
+      xp: 50
+      status: ready

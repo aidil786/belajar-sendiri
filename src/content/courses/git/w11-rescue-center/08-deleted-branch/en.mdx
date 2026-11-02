@@ -1,0 +1,58 @@
+---
+id: git-w11-l08
+world: 11
+title: I deleted a branch
+summary: "You will learn: how to bring back a branch you deleted by mistake."
+minutes: 3
+xp: 15
+interactives: [TermReplay, SpotLines, Sim, Choice, SortCards]
+needs: [git-w03-l08]
+scenario: w11-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w11-l08-before" commands={['git branch -D about']} label="git branch -D about prints: Deleted branch about, was, and a short hash." />
+
+You cleaned up branches with `-D`. Then you remember: `about` was never merged! Is your work gone? Breathe. This happens to everyone.
+</Card>
+
+<Card id="spot-reflog" type="try">
+Deleting a branch only peels off its label. The commits stay for a while. The **<Term id="reflog">reflog</Term>** remembers them.
+
+<Interactive name="SpotLines" scenario="w11-l08" commands={['git reflog']} targets="commit: Add about page" prompt="Tap the line with your about page commit." success="Found it! Its name is HEAD@{1}." />
+</Card>
+
+<Card id="try-restore" type="try">
+Stick a new `about` label on that commit.
+
+<Interactive name="Sim" scenario="w11-l08" panels={['graph']} showLost goal={{ branchAt: { about: '^Add about page$' } }} hints={['Type git branch about HEAD@{1}']} success="It's back! The about branch holds your page again." />
+
+<Hint>Type `git branch about HEAD@{1}`, then press Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+What does `git branch -D` really delete?
+
+<Interactive name="Choice" options={[{ label: 'Only the label. The commits wait for a while', correct: true, why: 'Unlabelled commits get cleaned up later. Rescue them soon!' }, { label: 'Every commit on that branch, at once', why: 'No. The commits wait. The reflog can find them.' }, { label: 'The whole repo', why: 'Phew, no! Just one label.' }]} />
+</Card>
+
+<Card id="check-flags" type="check">
+Prevent it next time. Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'small', label: '-d (small d)' }, { id: 'big', label: '-D (big D)' }]} items={[{ label: 'Stops if the work is not merged', bucket: 'small', why: 'It protects unmerged work.' }, { label: 'Deletes even unmerged work', bucket: 'big', why: 'Big D means force.' }, { label: 'The safe everyday choice', bucket: 'small', why: 'Let Git warn you first.' }, { label: 'Use only when you are sure', bucket: 'big', why: 'Check the branch is merged, or truly unwanted.' }]} success="Sorted! Small d asks first. Big D doesn't." />
+</Card>
+
+<Card id="win" type="win">
+You can now bring back a branch you deleted by mistake.
+</Card>
+
+<Card id="deeper" type="deeper">
+Look back at the hook. Git printed the old hash after the word `was`. `git branch about` plus that hash works too. Deleted the branch on GitHub as well? Its pull request page can often restore it.
+</Card>

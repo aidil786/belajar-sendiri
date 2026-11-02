@@ -1,0 +1,65 @@
+---
+id: git-w05-l07
+world: 5
+title: Pull requests and drafts
+summary: "You will learn: how to offer your change with a pull request, and when to use a draft."
+minutes: 4
+xp: 20
+interactives: [Choice, PracticeRepo, SortCards, OrderList]
+needs: [git-w05-l06]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "About pull requests", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests" }
+  - { label: "Creating a pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request" }
+  - { label: "Changing the stage of a pull request", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request" }
+---
+
+<Card id="hook" type="hook">
+Your fix is ready on your own branch. But main belongs to the whole club. How do you get your change in, politely?
+
+<Interactive name="Choice" options={[{ label: 'Open a pull request', correct: true, why: 'It asks the team to look first, then merge.' }, { label: "Borrow Aina's password and push to main", why: 'Never share passwords. And nobody gets to check your work.' }, { label: 'Email the files to Aina', why: 'Emails get lost. Nobody can comment line by line.' }]} />
+</Card>
+
+<Card id="try-pr" type="try">
+A **<Term id="pull-request">pull request</Term>** (PR) says: please pull my branch into main. The team reads it, talks, then merges. Answer Mei's question.
+
+<Interactive name="PracticeRepo" screen="pull" at={21} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 21, title: 'Fix the sign-up button', body: 'The button pointed to a missing page. Now it opens **signup.html**.', author: 'you', from: 'fix-signup', to: 'main', state: 'open', checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -3 +3 @@', '-<a href="join.html">Sign up</a>', '+<a href="signup.html">Sign up</a>'] }], comments: [{ author: 'mei', body: 'Nice! Did you test it on a phone?' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'comment', pr: 21 }} success="Replied! PRs are a conversation, not a one-way drop." />
+
+<Hint>Type a short answer, like "Yes, it works on my phone!", then press Comment.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+A PR has two main tabs. Where do you find each thing?
+
+<Interactive name="SortCards" buckets={[{ id: 'conv', label: 'Conversation' }, { id: 'files', label: 'Files changed' }]} items={[{ label: 'The PR description', bucket: 'conv', why: 'The description starts the conversation.' }, { label: 'Red and green lines', bucket: 'files', why: 'Files changed shows every removed and added line.' }, { label: 'Comments and reviews', bucket: 'conv', why: 'Talk happens on the Conversation tab.' }, { label: 'A comment on one line', bucket: 'files', why: 'Line comments sit right next to the code.' }, { label: 'The merge button', bucket: 'conv', why: 'The merge box sits at the bottom of the conversation.' }, { label: 'Every changed file', bucket: 'files', why: 'That is what the tab is named after.' }]} success="You know your way around a PR!" />
+</Card>
+
+<Card id="predict" type="predict">
+Your work is half done. You open it as a **<Term id="draft-pull-request">draft pull request</Term>**. Can anyone merge it now?
+
+<Interactive name="Choice" options={[{ label: 'No. It must be marked ready for review first', correct: true, why: 'A draft says: work in progress, do not merge yet.' }, { label: 'Yes, anyone with access can', why: 'Drafts cannot be merged. That keeps half-done work out of main.' }, { label: 'Only the repo owner can', why: 'Nobody can merge a draft. Not even the owner.' }]} />
+</Card>
+
+<Card id="try-draft" type="try">
+Your draft is finished now. Aina already approved it. Mark it ready for review, then merge it.
+
+<Interactive name="PracticeRepo" screen="pull" at={22} repo={{ owner: 'kelab-kod', name: 'club-site', readme: '# Club Site\n\nThe website for our school code club.\n' }} pulls={[{ number: 22, title: 'Add a footer', body: 'Adds a footer with our meeting time.', author: 'you', from: 'footer', to: 'main', state: 'open', draft: true, checks: [{ name: 'test', status: 'pass' }], files: [{ path: 'index.html', diff: ['@@ -2,0 +3 @@', '+<footer>Fridays, 3 pm, Lab 2</footer>'] }], reviews: [{ author: 'aina', state: 'approved', body: 'Looks good! Ship it when it is done.' }] }]} settings={{ rules: [{ id: 'requireReview', label: 'Require one approving review', on: true }] }} task={{ type: 'merge', pr: 22 }} success="Merged! Your footer is on main." />
+
+<Hint>First press "Ready for review". Then press "Merge pull request".</Hint>
+</Card>
+
+<Card id="check-order" type="check">
+Put a pull request's life in order. First at the top.
+
+<Interactive name="OrderList" items={['Commit on your own branch', 'Push the branch to GitHub', 'Open a pull request', 'Teammates review it', 'Merge it into main']} label="First step at the top" success="That is the whole journey of a PR!" />
+</Card>
+
+<Card id="win" type="win">
+You can now open a pull request, and use a draft for unfinished work.
+</Card>
+
+<Card id="deeper" type="deeper">
+You can turn a PR back into a draft at any time. Drafts do not ask code owners to review. Marking one ready does. You can open PRs on the website, from your editor, or with `gh pr create` (World 9). A pull request template fills in the description for you.
+</Card>

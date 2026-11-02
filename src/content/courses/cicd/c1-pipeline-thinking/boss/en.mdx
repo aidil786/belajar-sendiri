@@ -1,0 +1,80 @@
+---
+id: cicd-c1-boss
+world: 1
+title: Draw the line
+summary: "You will learn: how to design a pipeline that fits each team."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, SortCards, ConveyorBelt, OrderList, Choice, SwipeJudge]
+needs: [cicd-c1-l09]
+scenario: c1-boss-kuih
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Continuous deployment", url: "https://docs.github.com/en/actions/get-started/continuous-deployment" }
+  - { label: "Deployments and environments", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments" }
+  - { label: "DORA: software delivery performance metrics", url: "https://dora.dev/guides/dora-metrics/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Team 1', title: 'Mak Siti’s kuih shop', text: 'A small website. Two people. No containers. Fixes should go live fast.' }, { when: 'Team 2', title: 'Kedai Kancil API', text: 'Ships a container image to GHCR. Thousands of users. Bad packs must never reach the freezer.' }, { when: 'Team 3', title: 'Klinik Ceria bookings', text: 'A booking app for a clinic. A manager must approve every release.' }]} />
+
+Three teams ask you for a pipeline. One size won't fit all. Tap each team to meet them.
+</Card>
+
+<Card id="t1-pick" type="try">
+Team 1, Mak Siti's kuih site. Which stations does it need?
+
+<Interactive name="SortCards" buckets={[{ id: 'need', label: 'Needs it' }, { id: 'skip', label: 'Not needed' }]} items={[{ label: 'Lint', bucket: 'need', why: 'Seconds to run. Catches typos first.' }, { label: 'Tests', bucket: 'need', why: 'Every team taste-tests.' }, { label: 'Build the site', bucket: 'need', why: 'The site must be cooked and packed.' }, { label: 'Deploy on every merge to main', bucket: 'need', why: 'Fast fixes matter here. Green means live.' }, { label: 'Scan a container image', bucket: 'skip', why: 'There is no container here to scan.' }, { label: 'Publish an image to a registry', bucket: 'skip', why: 'No image, so nothing goes in the freezer.' }, { label: 'A manager approves each release', bucket: 'skip', why: 'Two people, small fixes. Waiting would slow them down.' }]} success="A small line for a small team. Nothing extra." />
+
+<Hint>No containers, no manager. Keep only what this team really needs.</Hint>
+</Card>
+
+<Card id="t1-run" type="try">
+Here is Mak Siti's line. Try the events. Find the one where the van stays parked.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-kuih" task={{ type: 'event', job: 'deploy', result: 'skipped' }} success="Pull requests get checked. Only main ships." />
+
+<Hint>Try the pull request. Look at the deploy station.</Hint>
+</Card>
+
+<Card id="t2-order" type="try">
+Team 2, the Kedai Kancil API. Put their stations in order.
+
+<Interactive name="OrderList" items={['Lint the code', 'Run the tests', 'Build the image', 'Scan the image', 'Publish to GHCR', 'Deploy']} label="First station at the top" success="All six stations. The scan guards the freezer." />
+
+<Hint>Check the code, cook the image, check the image, then ship.</Hint>
+</Card>
+
+<Card id="t2-run" type="predict">
+Someone broke the API's Dockerfile.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-api" task={{ type: 'predict' }} success="Build stopped it. Nothing was scanned, published or deployed." />
+
+<Hint>The Dockerfile is the recipe for the image. Which station cooks the image?</Hint>
+</Card>
+
+<Card id="t3-choose" type="predict">
+Team 3, Klinik Ceria. They want staging, then production after a manager says go. Which design fits?
+
+<Interactive name="Choice" options={[{ label: 'Build once, then staging, then approve, then production', correct: true, why: 'Production gets what staging checked, and the manager says go.' }, { label: 'Build for staging, then build again for production', why: 'A second build may differ. Production must get what staging tested.' }, { label: 'Deploy straight to production on every merge', why: 'The manager must approve first. That is continuous delivery.' }]} />
+</Card>
+
+<Card id="t3-run" type="try">
+Run Klinik Ceria's line. When production waits, approve it for the manager, Dr Lim.
+
+<Interactive name="ConveyorBelt" scenario="c1-boss-clinic" task={{ type: 'approve' }} success="Shipped, with a manager's go. Same pack as staging." />
+</Card>
+
+<Card id="check" type="check">
+Good design, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Give every team the same six stations, always', good: false, why: 'Fit the line to the team. A small site needs fewer stations.' }, { text: 'Put the quick checks first on every line', good: true, why: 'Fast feedback helps every team.' }, { text: 'Make the kuih site wait for a manager on every typo fix', good: false, why: 'That slows small fixes. Continuous deployment fits them.' }, { text: 'Build once and promote, for the clinic', good: true, why: 'Production gets exactly what staging checked.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now design a pipeline that fits the team.
+</Card>

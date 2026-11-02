@@ -1,0 +1,83 @@
+---
+id: docker-d5-boss
+world: 5
+title: "Publish safely"
+summary: "You will learn: to publish a non-root image with an SBOM to GHCR, with zero critical holes."
+minutes: 6
+xp: 50
+interactives: [KitchenReplay, KitchenSim, SortCards, Transcript, CommandBuilder, Mission, MissionCheck]
+needs: [docker-d5-l09]
+scenario: d5-boss-root
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "GitHub: the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+  - { label: "Build attestations", url: "https://docs.docker.com/build/metadata/attestations/" }
+  - { label: "Trivy", url: "https://trivy.dev/" }
+  - { label: "Dockerfile USER", url: "https://docs.docker.com/reference/dockerfile/#user" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-boss-root" commands={["docker run --rm kedai-api:1.0 whoami"]} label="docker run --rm kedai-api:1.0 whoami prints root." />
+
+Boss: publish Kedai's API to GHCR. Three rules: not root, an SBOM inside, zero CRITICAL holes. Room 1 first: the pack still runs as root.
+</Card>
+
+<Card id="try-root" type="try">
+Room 1: add `USER node` to the end of the recipe. Then build `kedai-api:1.0` again.
+
+<Interactive name="KitchenSim" scenario="d5-boss-root" goal={{ imageUser: { 'kedai-api:1.0': 'nonroot' } }} hints={['Add a line to the end of the Dockerfile with echo and >>.', 'Type echo "USER node" >> Dockerfile, then docker build -t kedai-api:1.0 .']} success="Room 1 cleared! The pack runs as node now." />
+
+<Hint>`echo "USER node" >> Dockerfile`, then `docker build -t kedai-api:1.0 .`</Hint>
+</Card>
+
+<Card id="check-scan" type="check">
+Room 2: your rule is zero CRITICAL. Sort each finding from last night's scan.
+
+<Interactive name="SortCards" buckets={[{ id: 'stop', label: 'Stops the release' }, { id: 'plan', label: 'Ship, and plan a fix' }]} items={[{ label: 'CRITICAL, fix available', bucket: 'stop', why: 'Upgrade the package or the base, then scan again.' }, { label: 'CRITICAL, no fix yet', bucket: 'stop', why: 'Zero means zero. Swap the base, or drop that package.' }, { label: 'HIGH, fix available', bucket: 'plan', why: 'Not a release blocker by your rule. Fix it soon.' }, { label: 'LOW, no fix yet', bucket: 'plan', why: 'Note it. Scan again next week.' }]} success="Room 2 cleared! Clear rule, clear call." />
+</Card>
+
+<Card id="see-clean" type="see">
+<Interactive name="Transcript" title="bash" label="Trivy checks kedai-api:1.0 for CRITICAL holes and exits with 0: none found." lines={[{ cmd: 'trivy image --severity CRITICAL --exit-code 1 kedai-api:1.0' }, { out: '…', color: 'dim' }, { cmd: 'echo $?' }, { out: '0', color: 'green' }]} />
+
+Your API pack, scanned for real. Exit code 0: zero CRITICAL holes. Rule 3 holds.
+</Card>
+
+<Card id="try-push" type="try">
+Room 3: ship it to GHCR. Your GitHub token is in `$CR_PAT`. Log in with it, then tag and push.
+
+<Interactive name="KitchenSim" scenario="d5-boss-push" goal={{ pushed: ['ghcr.io/you/kedai-api:1.0'], typed: 'password-stdin' }} hints={['Log in: echo $CR_PAT | docker login ghcr.io -u you --password-stdin', 'Then docker tag kedai-api:1.0 ghcr.io/you/kedai-api:1.0, then docker push ghcr.io/you/kedai-api:1.0']} success="Room 3 cleared! Your pack is in GitHub's freezer." />
+
+<Hint>Token login first (`--password-stdin`), then `docker tag` and `docker push`.</Hint>
+</Card>
+
+<Card id="check-sbom" type="check">
+Room 4: the pack must carry its ingredients list. Build the one command that builds, labels and pushes.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker buildx build', means: 'build with BuildKit' }, { text: '--sbom=true', means: 'add the ingredients list' }, { text: '-t ghcr.io/you/kedai-api:1.0', means: 'freezer, owner, pack, label' }, { text: '--push', means: 'send it to GHCR' }, { text: '.', means: 'this folder' }]} decoys={[{ text: '-t kedai-api:latest', means: 'a moving label, and no freezer' }]} success="Boss rooms cleared! Now do it for real." />
+</Card>
+
+<Card id="mission" type="try">
+Final room, for real, with your Kedai Kancil API (Mission 1).
+
+<Interactive name="Mission" id="d5-boss-real" steps={[{ id: 'pat', text: 'Make a GitHub personal access token (classic) with write:packages. Paste it here.', command: 'read -s CR_PAT && export CR_PAT' }, { id: 'login', text: 'Log in to GHCR with it.', command: 'echo $CR_PAT | docker login ghcr.io -u YOUR-NAME --password-stdin' }, { id: 'user', text: 'Check the API Dockerfile has USER node (or another non-root user).' }, { id: 'push', text: 'Build with an SBOM and push.', command: 'docker buildx build --sbom=true --provenance=mode=max -t ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0 --push .' }, { id: 'scan', text: 'Scan it. Then echo $? must print 0.', command: 'trivy image --severity CRITICAL --exit-code 1 ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0' }, { id: 'tag', text: 'Tag the same version in Git and push the tag.', command: 'git tag v1.0.0 && git push origin v1.0.0' }]} success="Published! Now let GitHub confirm what it can see." />
+</Card>
+
+<Card id="mission-check" type="check">
+GitHub's public API can see your repo and its tags. It cannot see packages without a login.
+
+<Interactive name="MissionCheck" checks={[{ type: 'repo', repo: 'kedai-kancil', label: 'Your kedai-kancil repo is public' }, { type: 'tags', repo: 'kedai-kancil', min: 1, label: 'It has a version tag, like v1.0.0' }]} success="GitHub sees your release tag!" />
+</Card>
+
+<Card id="self-check" type="check">
+Check the rest yourself.
+
+<Interactive name="Mission" id="d5-boss-self" title="Self-check" steps={[{ id: 'pkg', text: 'Your GitHub profile lists the kedai-kancil-api package.' }, { id: 'nonroot', text: 'This prints node, not an empty line.', command: "docker inspect -f '{{.Config.User}}' ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0" }, { id: 'sbom', text: 'This shows an attestation-manifest line.', command: 'docker buildx imagetools inspect ghcr.io/YOUR-NAME/kedai-kancil-api:1.0.0' }, { id: 'zero', text: 'The Trivy scan ended with exit code 0.' }]} success="Boss beaten: a safe, labelled pack on GHCR!" />
+</Card>
+
+<Card id="win" type="win">
+You can now publish a safe, labelled image to a registry.
+</Card>

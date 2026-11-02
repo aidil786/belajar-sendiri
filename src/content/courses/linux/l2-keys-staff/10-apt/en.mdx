@@ -1,0 +1,74 @@
+---
+id: linux-l2-l10
+world: 2
+title: Packages with apt
+summary: "You will learn: to find, install and remove programs safely from Debian's own store."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, OrderList, SortCards, SwipeJudge]
+needs: [linux-l2-l09]
+scenario: linux-l2-apt
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "apt (Debian 13 man page)", url: "https://manpages.debian.org/trixie/apt/apt.8.en.html" }
+  - { label: "Debian Reference: package management", url: "https://www.debian.org/doc/manuals/debian-reference/ch02.en.html" }
+  - { label: "Debian packages: tree", url: "https://packages.debian.org/trixie/tree" }
+---
+
+<Card id="hook" type="hook">
+You want a nicer way to see folders: a program called `tree`. You type `tree`. The server says `-bash: tree: command not found`. What now?
+
+<Interactive name="Choice" options={[{ label: "Install it from Debian's store with apt", correct: true, why: 'Debian keeps thousands of checked, signed programs. apt fetches them.' }, { label: 'Download a file from any website and run it', why: 'Unknown files can hide anything. Use the store first.' }, { label: 'Write tree yourself', why: 'Fun, but someone already did. It is one command away.' }]} />
+</Card>
+
+<Card id="see-show" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-apt" intro={['apt show tree']} />
+
+A <Term id="package">package</Term> is a program in a box from Debian's store. `apt show tree` reads the label: version, size, what it does. **apt** is the store clerk.
+</Card>
+
+<Card id="predict-root" type="predict">
+You type `apt install tree` without sudo. It ends with `are you root?`. What does that mean?
+
+<Interactive name="Choice" options={[{ label: 'Installing changes system folders, so it needs sudo', correct: true, why: 'Programs land in /usr for everyone. Only root may put them there.' }, { label: 'tree is only for root', why: 'Everyone may run tree. Only installing needs root.' }, { label: 'The store is closed', why: 'The store is open. apt just could not take the lock.' }]} />
+</Card>
+
+<Card id="order-install" type="check">
+Put the install routine in order.
+
+<Interactive name="OrderList" items={['sudo apt update: fetch the latest shelf list', 'apt show tree: read the label', 'sudo apt install tree: bring it in', 'tree: use it']} label="First step at the top" success="Refresh, read, install, use." />
+</Card>
+
+<Card id="try-install" type="try">
+Refresh the list, install `tree`, then run it: `sudo apt update`, then `sudo apt install tree`, then `tree`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-apt" goal={{ packageInstalled: ['tree'], lastTyped: '^tree' }} hints={['First: sudo apt update', 'Then: sudo apt install tree', 'Now draw your home: tree']} solution={['sudo apt update', 'sudo apt install tree', 'tree']} success="Your shop, drawn as a tree. That was a real install routine." />
+
+<Hint>Read the Summary lines before apt starts: what comes in, how big.</Hint>
+</Card>
+
+<Card id="sort-apt" type="check">
+update, upgrade or remove? Pick the right one.
+
+<Interactive name="SortCards" buckets={[{ id: 'update', label: 'apt update' }, { id: 'upgrade', label: 'apt upgrade' }, { id: 'remove', label: 'apt remove' }]} items={[{ label: 'Get the latest shelf list', bucket: 'update', why: 'update only refreshes the list. Nothing gets installed.' }, { label: 'Bring every program up to date', bucket: 'upgrade', why: 'upgrade installs the newer versions it found.' }, { label: 'Take tree off the server', bucket: 'remove', why: 'remove takes the program out.' }, { label: 'Before installing anything new', bucket: 'update', why: 'A fresh list means the newest version.' }]} success="update reads, upgrade refreshes, remove takes out." />
+</Card>
+
+<Card id="judge-safe" type="check">
+Safe on a server, or risky?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'sudo apt install htop', good: true, why: "From Debian's checked store." }, { text: 'curl https://example.com/install.sh | sudo bash', good: false, why: 'A stranger’s script runs as root, unread. Never.' }, { text: 'sudo apt update', good: true, why: 'It only refreshes the list.' }, { text: 'sudo apt remove openssh-server (over SSH)', good: false, why: 'You would cut the line you are standing on. Locked out!' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find, install and remove programs safely with apt.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): on a Debian or Ubuntu VM, try `apt search monitor`. Install security updates often: `sudo apt update && sudo apt upgrade`.
+
+Where the story breaks: real staff can say no. A process does exactly what its program says, and root can do anything. That is why keys matter so much.
+</Card>

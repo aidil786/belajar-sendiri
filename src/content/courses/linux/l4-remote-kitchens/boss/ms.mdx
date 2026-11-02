@@ -1,0 +1,78 @@
+---
+id: linux-l4-boss
+world: 4
+title: "Baiki sandaran malam"
+summary: "Anda akan belajar: menukar sandaran yang gagal senyap-senyap kepada yang jelas, betul dan ada dalam jadual."
+minutes: 6
+xp: 50
+interactives: [LinuxSim, Choice, SpotLines, SwipeJudge, Mission]
+needs: [linux-l4-m7]
+scenario: linux-l4-boss
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Bash manual: the set builtin", url: "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html" }
+  - { label: "Debian: crontab(5)", url: "https://manpages.debian.org/trixie/cron/crontab.5.en.html" }
+  - { label: "systemd.timer", url: "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={['./backup.sh; echo $?', 'ls backups']} />
+
+Boss! Sandaran itu kata `backup done` setiap malam. Hari ini menu rosak, dan anda perlukan salinan semalam. Folder backups kosong!
+</Card>
+
+<Card id="check-why" type="check">
+Ia cetak ralat, kemudian `backup done`, dan kod keluar 0. Kenapa ia nampak okey?
+
+<Interactive name="Choice" options={[{ label: 'Tiada mod ketat: cp gagal, skrip terus berjalan, dan echo tamat dengan 0', correct: true, why: 'Skrip tamat dengan kod arahan terakhirnya. echo sentiasa berjaya.' }, { label: 'cp berjaya, cuma perlahan', why: 'cp kata No such file or directory. Tiada apa disalin.' }, { label: 'Folder backups tersorok', why: 'ls backups tak tunjuk apa-apa sebab tiada apa yang sampai.' }]} />
+</Card>
+
+<Card id="try-loud" type="try">
+Peringkat 1: jadikan ia jelas. Hidupkan mod ketat (baris 3), kemudian jalankan. Ia patut gagal, dengan jelas.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" goal={{ fileContains: { '~/backup.sh': '^set -euo pipefail' }, scriptExitCode: { '~/backup.sh': 1 } }} hints={["sed -i 's/^# set/set/' backup.sh", './backup.sh; echo $?']} solution={["sed -i 's/^# set/set/' backup.sh", './backup.sh']} success="Kod keluar 1, dan ralat yang boleh dibaca. Tiada lagi tipu senyap." />
+</Card>
+
+<Card id="see-error" type="see">
+Ralat sebenar kata `cp: cannot create directory '/home/you/backup/menu-2026-11-01': No such file or directory`. Tekan baris dengan folder yang salah.
+
+<Interactive name="SpotLines" lines={[{ text: '#!/bin/bash' }, { text: '# backup.sh: copy the menu to the backups folder, every night.' }, { text: 'set -euo pipefail' }, { text: 'src="$HOME/kedai/menu"' }, { text: 'dest="$HOME/backup"', target: true }, { text: 'cp -r "$src" "$dest/menu-$(date +%F)"' }, { text: 'echo "backup done"' }]} prompt="Tekan baris dengan folder yang salah." success="Nama folder itu backups, ada s." />
+</Card>
+
+<Card id="try-fix" type="try">
+Peringkat 2: baiki nama folder, kemudian jalankan. Satu salinan bertarikh patut mendarat dalam `backups`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={["sed -i 's/^# set/set/' backup.sh"]} goal={{ scriptExitCode: { '~/backup.sh': 0 }, dirExists: ['~/backups/menu-2026-11-01'] }} hints={["sed -i 's#/backup\"#/backups\"#' backup.sh", 'grep dest= backup.sh, kemudian ./backup.sh', 'ls backups']} solution={["sed -i 's#/backup\"#/backups\"#' backup.sh", './backup.sh']} success="backups/menu-2026-11-01 ada di sana. Kod keluar 0, dan kali ini benar." />
+</Card>
+
+<Card id="predict" type="predict">
+Peringkat 3 perlukan baris jadual untuk pukul 2 pagi, setiap malam. Yang mana?
+
+<Interactive name="Choice" options={[{ label: '0 2 * * * /home/you/backup.sh', correct: true, why: 'Minit 0, jam 2, setiap hari.' }, { label: '2 0 * * * /home/you/backup.sh', why: 'Itu 00:02: minit 2, jam 0.' }, { label: '* 2 * * * /home/you/backup.sh', why: 'Itu berjalan setiap minit dari 2:00 hingga 2:59!' }]} />
+</Card>
+
+<Card id="try-roster" type="try">
+Peringkat 3: masukkan dalam jadual untuk pukul 2 pagi. Bonus: simpan kata-katanya dalam log dengan `>> /home/you/backup.log 2>&1`.
+
+<Interactive name="LinuxSim" scenario="linux-l4-boss" intro={["sed -i 's/^# set/set/' backup.sh", "sed -i 's#/backup\"#/backups\"#' backup.sh"]} goal={{ crontabHas: { you: '^0 2 \\* \\* \\* /home/you/backup\\.sh' } }} hints={["echo '0 2 * * * /home/you/backup.sh' | crontab -", 'crontab -l']} solution={["echo '0 2 * * * /home/you/backup.sh >> /home/you/backup.log 2>&1' | crontab -"]} success="Dalam jadual: setiap malam pukul 2:00, jelas bila ia gagal." />
+</Card>
+
+<Card id="check" type="check">
+Pengajaran malam ini. Peraturan yang baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Gagal yang jelas lebih baik daripada gagal senyap.', good: true, why: 'Anda baiki apa yang anda nampak.' }, { text: 'Kod keluar 0 sentiasa bermaksud kerja itu benar-benar berjaya.', good: false, why: 'Hanya jika skrip berhenti pada ralat. Mod ketat jadikan 0 jujur.' }, { text: 'Sekali-sekala, uji pemulihan, bukan sandaran sahaja.', good: true, why: 'Sandaran yang tak pernah dipulihkan cuma harapan.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jadikan skrip sandaran jelas, betul dan berjadual.
+</Card>
+
+<Card id="deeper" type="deeper">
+Timer systemd ialah cara lain untuk menjadualkannya (pelajaran 5). Kegagalannya muncul dalam `systemctl status` dan `journalctl`. Banyak pasukan juga hantar amaran bila sandaran gagal. Kursus Pemantauan & Observability tunjuk caranya.
+
+<Interactive name="Mission" id="linux-l4-boss-rep" steps={[{ id: 'break', text: 'Di VM: tulis skrip sandaran dengan folder yang salah dan tanpa mod ketat. Jalankan.' }, { id: 'code', text: 'Lihat tipu yang senyap.', command: './backup.sh; echo $?' }, { id: 'strict', text: 'Tambah set -euo pipefail sebagai baris 2. Jalankan lagi dan lihat ia gagal dengan jelas.' }, { id: 'restore', text: 'Baikinya, buat sandaran, kemudian pulihkan satu fail dari sandaran.' }]} success="Sandaran yang anda sudah uji, dari awal hingga akhir." />
+</Card>

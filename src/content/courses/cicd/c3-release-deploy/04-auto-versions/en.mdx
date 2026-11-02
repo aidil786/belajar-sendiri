@@ -1,0 +1,75 @@
+---
+id: cicd-c3-l04
+world: 3
+title: "Automatic versions and changelogs"
+summary: "You will learn: how a robot picks the next version and writes the changelog from your commits."
+minutes: 4
+xp: 20
+interactives: [SwipeJudge, SortCards, TimelineTap, YamlBuilder, Choice, SpotLines]
+needs: [cicd-c3-l03]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "release-please-action", url: "https://github.com/googleapis/release-please-action" }
+  - { label: "semantic-release on GitHub Actions", url: "https://semantic-release.gitbook.io/semantic-release/recipes/ci-configurations/github-actions" }
+  - { label: "Conventional Commits", url: "https://www.conventionalcommits.org/en/v1.0.0/" }
+  - { label: "GITHUB_TOKEN", url: "https://docs.github.com/en/actions/concepts/security/github_token" }
+---
+
+<Card id="hook" type="hook">
+Your boss asks: "What changed in version 1.5?" You scroll through 60 commits. A robot could answer, if commits are clear. Can a robot read these?
+
+<Interactive name="SwipeJudge" cards={[{ text: 'feat: add a search box', good: true, why: 'feat: means a new feature.' }, { text: 'fix: show the right price after a coupon', good: true, why: 'fix: means a bug fix.' }, { text: 'stuff', good: false, why: 'Stuff tells nobody anything, robot or human.' }, { text: 'feat!: remove the old cart API', good: true, why: 'The ! marks a breaking change.' }]} />
+</Card>
+
+<Card id="see-bump" type="see">
+Clear messages pick the next number. The rule is **<Term id="semantic-versioning" course="git">SemVer</Term>**: MAJOR.MINOR.PATCH. You are on 1.4.2. Sort each commit by the version it makes.
+
+<Interactive name="SortCards" buckets={[{ id: 'patch', label: '1.4.3 (patch)' }, { id: 'minor', label: '1.5.0 (minor)' }, { id: 'major', label: '2.0.0 (major)' }]} items={[{ label: '`fix: typo on the menu`', bucket: 'patch', why: 'A fix bumps the last number.' }, { label: '`feat: add a search box`', bucket: 'minor', why: 'A new feature bumps the middle number.' }, { label: '`feat!: remove the old cart API`', bucket: 'major', why: 'A breaking change bumps the first number.' }, { label: '`fix: crash on an empty cart`', bucket: 'patch', why: 'Another fix. Still a patch.' }]} success="Sorted! The message decides the number." />
+</Card>
+
+<Card id="see-release-pr" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Merge', text: 'You merge feat: add a search box into main.' }, { when: '2', title: 'Release PR', text: 'The robot opens a pull request: version 1.5.0 and a changelog.' }, { when: '3', title: 'More merges', text: 'Each new merge updates that same pull request.' }, { when: '4', title: 'Release', text: 'You merge it. The robot adds the tag v1.5.0 and a GitHub release.' }]} />
+
+The robot release-please keeps one **<Term id="release-pr">release PR</Term>** open. You decide when to release: merge it.
+</Card>
+
+<Card id="try-yaml" type="try">
+Build the robot's workflow. It runs on every push to main.
+
+<Interactive name="YamlBuilder" workflow="Release Please" goal={{ order: ['push', 'job', 'perms', 'robot'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Every merge into main wakes the robot.' },
+  { id: 'job', kind: 'job', label: 'Job: release-please', yaml: 'release-please:\n  runs-on: ubuntu-latest', means: 'A fresh Linux runner.' },
+  { id: 'perms', kind: 'permissions', label: 'Write tags, PRs and issues', yaml: 'contents: write\npull-requests: write\nissues: write', means: 'Make tags and releases. Open the PR. Add labels.' },
+  { id: 'pkgs', kind: 'permissions', label: 'Write packages', yaml: 'packages: write', means: 'Push images to GHCR.', why: 'This job publishes no image. Give only what it needs.' },
+  { id: 'robot', kind: 'step', label: 'Run release-please', yaml: '- uses: googleapis/release-please-action@v4\n  with:\n    release-type: node', means: 'Read the commits. Update the release PR.' },
+  { id: 'hand', kind: 'step', label: 'Write the changelog by hand', yaml: '- run: echo "1.5.0" >> CHANGELOG.md', means: 'Add a line to the changelog.', why: 'The robot writes the changelog for you.' }]}
+  success="Your release robot is ready." />
+
+<Hint>Trigger, the job, its permissions, then the release-please step.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You are on 1.4.2. Since then: one `fix:` and one `feat:`. What version does the release PR show?
+
+<Interactive name="Choice" options={[{ label: '1.5.0', correct: true, why: 'A feat bumps MINOR and sets PATCH back to 0.' }, { label: '1.4.3', why: 'A fix alone gives 1.4.3. But there is a feat too.' }, { label: '2.0.0', why: 'Only a breaking change (!) bumps MAJOR.' }]} />
+</Card>
+
+<Card id="check-changelog" type="check">
+Here is part of the changelog it wrote. Tap the line the `fix:` commit made.
+
+<Interactive name="SpotLines" prompt="Tap the line the fix: commit made." success="Yes! Fixes go under Bug Fixes." lines={[{ text: '## 1.5.0 (2026-10-31)' }, { text: '### Features' }, { text: '* add a search box' }, { text: '### Bug Fixes' }, { text: '* show the right price after a coupon', target: true }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now let a robot pick versions and write changelogs.
+</Card>
+
+<Card id="deeper" type="deeper">
+semantic-release does the same job with no release PR. It releases on every push to main. One trap: a tag made with `GITHUB_TOKEN` starts no other workflow. So deploy in the same workflow, after release-please reports a release.
+
+Real rep (optional): add this workflow to a test repo. Merge a `feat:` commit and watch the release PR appear.
+</Card>

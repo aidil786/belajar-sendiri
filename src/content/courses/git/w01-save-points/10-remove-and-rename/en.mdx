@@ -1,0 +1,71 @@
+---
+id: git-w01-l10
+world: 1
+title: Remove and rename
+summary: "You will learn: how to delete, untrack and rename files the Git way."
+minutes: 4
+xp: 20
+interactives: [AreasScene, TermReplay, Sim, Choice]
+needs: [git-w01-l09]
+scenario: w01-l10
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git rm", url: "https://git-scm.com/docs/git-rm" }
+  - { label: "git mv", url: "https://git-scm.com/docs/git-mv" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Four files wobble. Three of them glow: old-notes.txt, aboutme.html and debug.log." frames={[{ working: ['index.html', { name: 'old-notes.txt', glow: true }, { name: 'aboutme.html', glow: true }, { name: 'debug.log', glow: true }] }]} />
+
+Your diary needs a clean-up. An old notes file. A page with a clumsy name. A log you saved by mistake. How do you tell Git?
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git rm old-notes.txt', 'git status -s']} pulse label="git rm old-notes.txt prints rm old-notes.txt. git status -s then shows a green D in front of old-notes.txt." />
+
+`git rm` deletes a file and puts the **deletion** in the box. Your next commit saves it as gone.
+</Card>
+
+<Card id="try-rm" type="try">
+Delete `old-notes.txt` the Git way.
+
+<Interactive name="Sim" scenario="w01-l10" panels={['areas']} goal={{ staged: ['old-notes.txt'], filesMissing: ['old-notes.txt'] }} hints={['Type git rm old-notes.txt']} success="Gone from your folder, and the deletion is in the box." />
+
+<Hint>Type `git rm old-notes.txt`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You run `git rm --cached debug.log`. Is `debug.log` still in your folder?
+
+<Interactive name="Choice" options={[{ label: 'Yes. Git just stops tracking it.', correct: true, why: '--cached only takes it out of Git. The file stays.' }, { label: 'No, it is deleted', why: 'That is plain git rm. --cached keeps the file.' }, { label: 'It moves into the box', why: 'Only its deletion goes in the box. The file stays in your folder.' }]} />
+</Card>
+
+<Card id="see-cached" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git rm --cached debug.log', 'git status -s', 'ls']} pulse label="git rm --cached debug.log. Status shows a green D for debug.log, but ls still lists debug.log in the folder." />
+
+`git rm --cached` means: **stop tracking**, but keep the file. Perfect for things you saved by mistake. Your `.gitignore` keeps it hidden after.
+</Card>
+
+<Card id="see-mv" type="see">
+<Interactive name="TermReplay" scenario="w01-l10" commands={['git mv aboutme.html about.html', 'git status -s']} pulse label="git mv aboutme.html about.html. Status shows R aboutme.html -> about.html in green." />
+
+`git mv` renames a file and tells Git in one step. The `R` in status means **renamed**.
+</Card>
+
+<Card id="try-mv" type="try">
+Rename `aboutme.html` to `about.html`. Then commit it.
+
+<Interactive name="Sim" scenario="w01-l10" panels={['areas', 'graph']} goal={{ filesExist: ['about.html'], filesMissing: ['aboutme.html'], lastCommitHas: ['about.html'], lastCommitLacks: ['aboutme.html'] }} hints={['Type git mv aboutme.html about.html', 'Now save it: git commit -m "Rename about page"']} success="Renamed and saved. Git knows it is the same page." />
+
+<Hint>`git mv aboutme.html about.html`, then `git commit -m "Rename about page"`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now delete, untrack and rename files without confusing Git.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deleted or renamed a file without Git? No problem. Run `git add -A`. Git puts the deletion in the box. It usually spots a rename too. For a whole folder, use `git rm -r` and the folder name.
+</Card>

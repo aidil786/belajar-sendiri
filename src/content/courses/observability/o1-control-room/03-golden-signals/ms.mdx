@@ -1,0 +1,69 @@
+---
+id: obs-o1-l03
+world: 1
+title: Empat isyarat emas
+summary: "Anda akan belajar: empat skrin yang setiap bilik kawalan pasang dulu, dan mana satu beri amaran paling awal."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l02]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Google SRE book: the four golden signals", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+  - { label: "Grafana: dashboard best practices", url: "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil ada 500 nombor. Dinding bilik kawalan muat empat skrin sahaja. Empat yang mana?
+
+<Interactive name="Choice" options={[{ label: 'Berapa lambat, berapa sibuk, berapa rosak, berapa penuh', correct: true, why: 'Ya. Empat itu tunjuk apa yang pelanggan rasa.' }, { label: 'CPU setiap server', why: 'Berguna nanti. Pelanggan tak rasa CPU secara terus.' }, { label: 'Staf dalam talian, baki kopi, muzik, lampu', why: 'Seronok, tapi tiada satu pun kata sama ada bayaran berjalan.' }]} />
+</Card>
+
+<Card id="see-four" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Latency', title: 'Berapa lambat?', text: 'Berapa lama satu bayaran ambil.' }, { when: 'Traffic', title: 'Berapa sibuk?', text: 'Pesanan seminit.' }, { when: 'Errors', title: 'Berapa rosak?', text: 'Peratus bayaran yang gagal.' }, { when: 'Saturation', title: 'Berapa penuh?', text: 'Pesanan yang menunggu dalam barisan.' }]} />
+
+Buku SRE Google panggil ini empat **<Term id="golden-signals">isyarat emas</Term>**. Tekan setiap satu.
+</Card>
+
+<Card id="try-full" type="try">
+Cari skrin <Term id="saturation">saturation</Term>: berapa penuh kedai ini?
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" prompt="Tekan cip yang tunjuk berapa penuh kedai, kemudian tekan Run." goal={{ typed: 'kedai_queue_orders', resultCount: 1 }} hints={['Saturation bermaksud berapa penuh. Nombor mana yang makin penuh?', 'Tekan kedai_queue_orders, kemudian tekan Run.']} solution="kedai_queue_orders" success="38 pesanan menunggu pada 25m. Kedai dah penuh." />
+
+<Hint>Penuh bermaksud ada benda yang menunggu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Jalankan setiap cip dan tengok grafnya. Isyarat mana yang jadi teruk dulu?
+
+<Interactive name="Choice" options={[{ label: 'Saturation: barisan panjang dari 10m', correct: true, why: 'Ya. Barisan yang makin penuh selalunya beri amaran dulu.' }, { label: 'Errors, pada 19m', why: 'Ralat datang lewat. Barisan naik 9 minit lebih awal.' }, { label: 'Latency, pada 18m', why: 'Bayaran jadi lambat pada 18m. Barisan naik pada 10m.' }]} />
+
+<Hint>Tengok di mana setiap garisan tinggalkan paras tenangnya.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Isyarat mana? Susun setiap nombor.
+
+<Interactive name="SortCards" buckets={[{ id: 'lat', label: 'Latency' }, { id: 'tra', label: 'Traffic' }, { id: 'err', label: 'Errors' }, { id: 'sat', label: 'Saturation' }]} items={[{ label: 'Bayaran ambil 2.8 s', bucket: 'lat', why: 'Berapa lambat.' }, { label: 'Masa muat laman untuk kebanyakan pengguna', bucket: 'lat', why: 'Berapa lambat.' }, { label: '40 pesanan seminit', bucket: 'tra', why: 'Berapa sibuk.' }, { label: 'Permintaan sesaat', bucket: 'tra', why: 'Berapa sibuk.' }, { label: '6% bayaran gagal', bucket: 'err', why: 'Berapa rosak.' }, { label: 'Laman yang jawab 500', bucket: 'err', why: 'Berapa rosak.' }, { label: '38 pesanan menunggu', bucket: 'sat', why: 'Berapa penuh.' }, { label: 'Cakera 95% penuh', bucket: 'sat', why: 'Berapa penuh.' }]} success="Empat skrin, semua tersusun." />
+</Card>
+
+<Card id="check" type="check">
+Ralat 0%. Tapi <Term id="latency">latency</Term> setiap bayaran ialah 9 saat. Adakah kedai sihat?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Terlalu lambat rasa macam rosak bagi pelanggan.', correct: true, why: 'Ya. Latency penting walaupun ralat sifar.' }, { label: 'Ya. Tiada yang gagal.', why: 'Pelanggan dah putus asa sebelum 9 saat.' }, { label: 'Hanya kalau traffic rendah', why: 'Lambat tetap teruk pada apa-apa paras traffic.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan empat isyarat emas dan kenal setiap satu.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tip dari buku SRE: ukur masa permintaan gagal berasingan daripada yang berjaya. Ralat yang laju bukan jawapan yang baik. Ralat yang lambat lagi teruk.
+
+<Interactive name="Mission" id="obs-o1-l03-real" steps={[{ id: 'pick', text: 'Pilih satu aplikasi yang anda kenal.' }, { id: 'four', text: 'Tulis satu nombor untuk setiap isyarat emas: latency, traffic, errors, saturation.' }, { id: 'early', text: 'Bulatkan yang anda rasa beri amaran paling awal.' }]} success="Empat skrin anda dah dirancang." />
+</Card>

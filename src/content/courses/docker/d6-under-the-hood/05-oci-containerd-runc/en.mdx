@@ -1,0 +1,67 @@
+---
+id: docker-d6-l05
+world: 6
+title: "OCI, containerd and runc"
+summary: "You will learn: who really starts a container, the shared OCI rules, and why Kubernetes runs your images without Docker."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, OrderList, SortCards, TimelineTap, Mission]
+needs: [docker-d6-l04]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Open Container Initiative: overview", url: "https://opencontainers.org/about/overview/" }
+  - { label: "containerd docs", url: "https://containerd.io/docs/" }
+  - { label: "Kubernetes: container runtimes", url: "https://kubernetes.io/docs/setup/production-environment/container-runtimes/" }
+  - { label: "Kubernetes: dockershim removal FAQ", url: "https://kubernetes.io/blog/2022/02/17/dockershim-faq/" }
+---
+
+<Card id="hook" type="hook">
+Your teammate panics: "Kubernetes dropped Docker! All our images are useless!" Is that right?
+
+<Interactive name="Choice" options={[{ label: 'No. The images follow shared rules. Kubernetes still runs them.', correct: true, why: 'docker build makes standard images. Any standard runtime can run them.' }, { label: 'Yes. Rebuild every image without Docker.', why: 'No rebuild needed. The image format is a shared standard.' }, { label: 'Yes, unless you pay for Docker', why: 'Money has nothing to do with it.' }]} />
+</Card>
+
+<Card id="see-info" type="see">
+<Interactive name="KitchenReplay" scenario="d6-web" commands={['docker info']} label="docker info lists the runtimes (runc), the default runtime runc, and the containerd version, between the Cgroup Version and Security Options lines." />
+
+Docker is a team. `docker info` names two helpers: containerd and runc. **<Term id="runc">runc</Term>** builds the booth (namespaces, cgroups), starts your app, then leaves.
+</Card>
+
+<Card id="try-relay" type="try">
+**<Term id="containerd">containerd</Term>** is the kitchen manager. It keeps the packs and watches the boxes. Put the relay in order, first at the top.
+
+<Interactive name="OrderList" items={['You type docker run', 'dockerd, the front counter, takes the order', 'containerd, the kitchen manager, gets the pack ready', 'containerd-shim stays to watch this one box', 'runc switches on namespaces and cgroups, then leaves', 'Your app runs as PID 1']} label="First step at the top" success="That is the whole relay, from your command to PID 1." />
+</Card>
+
+<Card id="try-oci" type="try">
+**<Term id="oci">OCI</Term>** writes the shared rules. Think standard tray sizes: every oven fits them. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'rule', label: 'Shared rules (OCI)' }, { id: 'tool', label: 'Programs that follow them' }]} items={[{ label: 'Image spec: how a meal pack is laid out', bucket: 'rule', why: 'It says what an image is made of.' }, { label: 'Runtime spec: how to start a container', bucket: 'rule', why: 'It says what a runtime must do.' }, { label: 'runc', bucket: 'tool', why: 'The runtime that follows the runtime spec.' }, { label: 'containerd', bucket: 'tool', why: 'It pulls, stores and starts standard images.' }, { label: 'Distribution spec: how registries share packs', bucket: 'rule', why: 'It is why any registry works with any tool.' }, { label: 'Podman', bucket: 'tool', why: 'Another tool that runs the same standard images.' }]} success="Sorted! Shared rules, many programs." />
+</Card>
+
+<Card id="predict" type="predict">
+Kubernetes 1.24 removed **dockershim**, its translator for Docker. What starts containers on each machine now?
+
+<Interactive name="Choice" options={[{ label: 'containerd or CRI-O, through a plug called CRI', correct: true, why: 'Kubernetes skips the front counter. It talks to the kitchen manager.' }, { label: 'Nothing. Kubernetes runs apps by itself.', why: 'Kubernetes always needs a runtime to start containers.' }, { label: 'Docker, the same as before', why: 'Docker Engine now needs an extra adapter, cri-dockerd.' }]} />
+</Card>
+
+<Card id="check-time" type="check">
+Tap each year to see how we got here.
+
+<Interactive name="TimelineTap" events={[{ when: '2015', title: 'OCI is founded', text: 'Docker gives its runtime, runc, to the new shared rules.' }, { when: '2017', title: 'containerd joins the CNCF', text: 'The kitchen manager becomes a shared open project.' }, { when: '2020', title: 'Kubernetes 1.20 gives a warning', text: 'dockershim will be removed.' }, { when: '2022', title: 'Kubernetes 1.24 removes dockershim', text: 'Machines use containerd or CRI-O. Images built with Docker still run.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain who really runs a container, and why Kubernetes doesn't need Docker.
+</Card>
+
+<Card id="deeper" type="deeper">
+Other runtimes follow the same runtime spec, like crun, gVisor and Kata Containers. A shim lets containerd restart without stopping your boxes. Kubernetes can still use Docker Engine through the cri-dockerd adapter.
+
+<Interactive name="Mission" id="d6-l05-relay" steps={[{ id: 'info', text: 'Find the runtimes in docker info.', command: 'docker info' }, { id: 'run', text: 'Start a box.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'shim', text: 'On Linux: find the shim that watches it.', command: 'ps -ef | grep containerd-shim' }, { id: 'rm', text: 'Clean up.', command: 'docker rm -f web' }]} success="You met the whole relay team." />
+</Card>

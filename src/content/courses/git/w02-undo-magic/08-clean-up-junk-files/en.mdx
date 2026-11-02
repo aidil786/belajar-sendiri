@@ -1,0 +1,71 @@
+---
+id: git-w02-l08
+world: 2
+title: Clean up junk files
+summary: "You will learn: how to preview and delete untracked junk files."
+minutes: 3
+xp: 15
+interactives: [AreasScene, Choice, TermReplay, Sim]
+needs: [git-w02-l07]
+scenario: w02-l08
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git clean", url: "https://git-scm.com/docs/git-clean" }
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Your working folder is crowded: index.html, plus new junk files test.html, index-copy.html and a tmp folder. The junk wobbles." frames={[{ working: ['index.html', { name: 'test.html', tag: 'new' }, { name: 'index-copy.html', tag: 'new' }, { name: 'tmp/', tag: 'new' }] }]} />
+
+Your diary folder is full of junk test files. Deleting them one by one is slow and boring.
+</Card>
+
+<Card id="see-clean" type="see">
+<Interactive name="AreasScene" zones={['working']} command="git clean -f" label="The command git clean -f types itself. The new files test.html and index-copy.html vanish. index.html stays." frames={[{ working: ['index.html', { name: 'test.html', tag: 'new', glow: true }, { name: 'index-copy.html', tag: 'new', glow: true }] }, { working: ['index.html'] }]} />
+
+`git clean -f` deletes <Term id="untracked">untracked</Term> files: new files Git never saved. This is called **<Term id="clean">clean</Term>**. Tracked files stay safe.
+</Card>
+
+<Card id="see-danger" type="see">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="test.html and index-copy.html are marked deleted. There is no bin to get them back from." frames={[{ working: [{ name: 'test.html', tag: 'deleted' }, { name: 'index-copy.html', tag: 'deleted' }] }]} />
+
+⚠️ **Danger**: clean deletes for good. There is no bin and no undo. So always preview first with `git clean -n`.
+</Card>
+
+<Card id="predict" type="predict">
+You run `git clean -n` in this folder. Which files does it list?
+
+```
+index.html         tracked
+debug.log          ignored (*.log)
+test.html          untracked
+index-copy.html    untracked
+tmp/scribble.txt   untracked, in a folder
+```
+
+<Interactive name="Choice" options={[{ label: 'test.html and index-copy.html', correct: true, why: 'Only untracked files. Folders need -d. Ignored files stay.' }, { label: 'test.html, index-copy.html and tmp/', why: 'Close! Folders only show up when you add -d.' }, { label: 'Everything except index.html', why: 'debug.log is ignored. git clean keeps ignored files.' }]} />
+</Card>
+
+<Card id="check-preview" type="check">
+<Interactive name="TermReplay" scenario="w02-l08" commands={['git clean -n', 'git clean -n -d']} label="git clean -n lists test.html and index-copy.html. git clean -n -d also lists tmp/." />
+
+`-n` only shows, it deletes nothing. Add `-d` to include folders. debug.log never shows up, because it is ignored.
+</Card>
+
+<Card id="try-clean" type="try">
+Preview first. Then delete the junk files and the tmp folder.
+
+<Interactive name="Sim" scenario="w02-l08" panels={['areas']} goal={{ filesMissing: ['test.html', 'index-copy.html', 'tmp/scribble.txt'], filesExist: ['debug.log', 'index.html'] }} hints={['Type git clean -n -d to preview.', 'Then type git clean -f -d to delete.']} success="Clean! debug.log is still there, because it is ignored." />
+
+<Hint>Preview with `git clean -n -d`. Then delete with `git clean -f -d`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now clean up junk files. Preview first, always!
+</Card>
+
+<Card id="deeper" type="deeper">
+Plain `git clean` refuses to delete anything without `-f`. That is Git being careful. `-x` deletes ignored files too, like `.env` or log files. Be very careful with it. This practice terminal blocks `-x`. `git clean -i` asks about each file.
+</Card>

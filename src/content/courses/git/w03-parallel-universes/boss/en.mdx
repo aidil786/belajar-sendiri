@@ -1,0 +1,78 @@
+---
+id: git-w03-boss
+world: 3
+title: "Conflict Crusher"
+summary: "You will learn: to crush three conflicts and leave one clean history."
+minutes: 6
+xp: 50
+interactives: [GraphScene, TermReplay, ConflictResolver, Choice, Challenge, RebaseDeck]
+needs: [git-w03-l12]
+scenario: w03-boss-merge
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "git merge", url: "https://git-scm.com/docs/git-merge" }
+  - { label: "git rebase", url: "https://git-scm.com/docs/git-rebase" }
+  - { label: "git stash", url: "https://git-scm.com/docs/git-stash" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "git branch", url: "https://git-scm.com/docs/git-branch" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w03-boss-merge" commands={['git merge party']} label="main and party both changed the diary. The merge stops with a red Conflict badge and a warning sign." />
+
+Party mode meets your diary. Three conflicts! Then a messy branch to tidy. Ready to crush them all?
+</Card>
+
+<Card id="see-rules" type="see">
+<Interactive name="TermReplay" scenario="w03-boss-merge" commands={['git merge party', 'git status']} label="git merge party: CONFLICT in index.html and in style.css. git status lists both files as both modified." />
+
+Two files, three clashes. Read each one. Choose what stays. Mistakes are free, so experiment!
+</Card>
+
+<Card id="try-crush" type="try">
+Crush all three conflicts. Title: keep yours. Day 5: keep both. Colour: keep theirs.
+
+<Interactive name="ConflictResolver" scenario="w03-boss-merge" commands={['git merge party']} graph expect={{ 'index.html': ['My Git Diary', 'I fixed conflicts', 'Party time'], 'style.css': 'hotpink' }} avoid={{ 'index.html': 'Party Diary', 'style.css': 'teal' }} why="Check the note: title yours, day 5 both, colour theirs." success="Three conflicts crushed! The merge commit is in." />
+
+<Hint>index.html has two conflicts. style.css has one. Use the file tabs.</Hint>
+</Card>
+
+<Card id="check-abort" type="check">
+Halfway through, you panic. Which command puts everything back to before the merge?
+
+<Interactive name="Choice" options={[{ label: '`git merge --abort`', correct: true, why: 'It cancels the merge. Your branch is just like before.' }, { label: '`git reset --hard HEAD~1`', why: 'That would throw away your last real commit too!' }, { label: '`git stash`', why: 'Stash is for unfinished changes, not a stopped merge.' }]} />
+</Card>
+
+<Card id="try-drills" type="try">
+Four quick drills in the terminal. Each one starts fresh.
+
+<Interactive name="Challenge" stages={[
+  { title: 'Urgent switch', text: 'Dark mode is half done. Put it aside and go to main.', scenario: 'w03-boss-stash', goal: { stashCount: 1, currentBranch: 'main' }, hints: ['Your folder must be clean first.', 'Type git stash, then git switch main.'] },
+  { title: 'Just one fix', text: 'Copy only the commit "Fix README intro" from experiments onto main.', scenario: 'w03-boss-pick', goal: { currentBranch: 'main', lastMessage: '^Fix README intro$', commits: 4 }, hints: ['git log --oneline experiments shows its commits.', 'Type git cherry-pick experiments~1'] },
+  { title: 'On top of main', text: 'You are on about. Put its commits on top of the newest main. No merge commit.', scenario: 'w03-boss-rebase', goal: { currentBranch: 'about', linearHistory: true, messages: ['^Say what I like$', '^Add about page$', '^Make heading teal$'] }, hints: ['Replay your commits onto main.', 'Type git rebase main'] },
+  { title: 'Tidy notes', text: 'about is merged. old-idea is not needed. Delete both notes.', scenario: 'w03-boss-cleanup', goal: { branchesMissing: ['about', 'old-idea'], currentBranch: 'main' }, hints: ['A merged branch: git branch -d about', 'Not merged? Capital D: git branch -D old-idea'] }
+]} />
+
+<Hint>Stuck? `git status` and `git branch` tell you where you are.</Hint>
+</Card>
+
+<Card id="try-tidy" type="try">
+Last one: the recipes branch. Fix up “oops” into the page. Rename “add cake” to “Add cake recipe”. Drop “temp debug”.
+
+<Interactive name="RebaseDeck" scenario="w03-boss-tidy" upstream="main" goal={{ messages: ['^Add pancake recipe$', '^Add cake recipe$', '^Add recipes page$', '^Add style$'], commits: 6, filesMissing: ['debug.txt'] }} commitFiles={[{ message: '^Add recipes page$', file: 'recipes.html', contains: '<h1>Recipes</h1>' }]} hints={['“oops” sits right under the page: set it to fixup.', 'reword “add cake”, and drop “temp debug”.']} success="One clean history. Boss crushed!" />
+
+<Hint>fixup, reword, drop: one word per card.</Hint>
+</Card>
+
+<Card id="check-golden" type="check">
+You already shared the recipes branch. Mei built on it. Can you still tidy it with `git rebase -i`?
+
+<Interactive name="Choice" options={[{ label: 'Better not. Others have those commits.', correct: true, why: 'Golden rule! Tidy before you share.' }, { label: 'Yes, any time', why: 'Mei has the old commits. Rewriting splits your histories.' }, { label: 'Only if the commits are small', why: 'Size does not matter. Who has the commits does.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now crush conflicts and keep your history clean.
+</Card>

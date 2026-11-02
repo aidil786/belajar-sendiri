@@ -1,0 +1,74 @@
+---
+id: iac-t3-l04
+world: 3
+title: import blocks
+summary: "You will learn: how to adopt something that was built by hand, without building it again."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SwipeJudge, CommandBuilder, Mission]
+needs: [iac-t3-l03]
+scenario: t3-import-door
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: import blocks", url: "https://opentofu.org/docs/language/import/" }
+  - { label: "tofu import", url: "https://opentofu.org/docs/cli/commands/import/" }
+  - { label: "Terraform: import blocks", url: "https://developer.hashicorp.com/terraform/language/import" }
+---
+
+<Card id="hook" type="hook">
+Long ago, someone set the shop's door code to `KANCIL` by hand. Now you add the door to the blueprint and apply. What happens?
+
+<Interactive name="Choice" options={[{ label: 'OpenTofu makes a new random code. The old key stops working.', correct: true, why: 'The register has no record of KANCIL, so it builds a fresh one.' }, { label: 'OpenTofu finds KANCIL by itself', why: 'It only knows what its register says. KANCIL is not in it.' }, { label: 'OpenTofu refuses to run', why: 'It runs happily, and builds a second door code.' }]} />
+</Card>
+
+<Card id="try-plan" type="try">
+Check it. Type `tofu plan` and look for `will be created`.
+
+<Interactive name="TofuSim" scenario="t3-import-door" goal={{ planSummary: { add: 1 }, lastTyped: '^tofu plan' }} hints={['Type tofu plan and press Enter.']} success="See? A brand-new door code. Nobody would have the key." />
+</Card>
+
+<Card id="see-block" type="see">
+<Interactive name="SpotLines" prompt="Tap the line that names the real thing to adopt." lines={[{ text: 'import {' }, { text: '  to = random_string.door' }, { text: '  id = "KANCIL"', target: true }, { text: '}' }]} success="id is the real thing. to is its name in your blueprint." />
+
+An **<Term id="import-block">import block</Term>** says: "This already exists. Adopt it, don't build it." `to` is the address in your blueprint. `id` points at the real thing.
+</Card>
+
+<Card id="try-import" type="try">
+Add the import block under the door resource in `main.tf`. Run `tofu plan`: look for `1 to import`. Then `tofu apply`.
+
+<Interactive name="TofuSim" scenario="t3-import-door" goal={{ outputEquals: { door: 'KANCIL' } }} hints={['Under the resource block, add: import { to = random_string.door, id = "KANCIL" }, one setting per line.', 'tofu plan should say: Plan: 1 to import, 0 to add.', 'Then tofu apply and yes. Built a new code by mistake? Press Start again.']} success="Adopted! The door output says KANCIL, and nothing was rebuilt." />
+
+<Hint>Copy the four lines from the last card.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The import is done. The block is still in `main.tf`. What now?
+
+<Interactive name="Choice" options={[{ label: 'Keep it or delete it. It does nothing now.', correct: true, why: 'After a successful import the block is done. Some teams keep it as history.' }, { label: 'Delete it fast, or it imports twice', why: 'The door is in the register now. Nothing happens twice.' }, { label: 'Also run tofu import, to be sure', why: 'The block already did the job, with a plan you could read.' }]} />
+</Card>
+
+<Card id="check" type="check">
+⚠️ Careful: a mistyped id can replace the real thing. So can a blueprint that doesn't match it. Swipe: safe import, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Read the plan first: "1 to import, 0 to destroy"', good: true, why: 'Exactly what you want: adopt, change nothing.' }, { text: 'The plan says "Warning: this will destroy the imported resource". Apply anyway.', good: false, why: 'Stop. Make the blueprint match the real thing first.' }, { text: "Copy the id from the real thing's settings", good: true, why: 'Each provider documents its import id. Copy, never guess.' }, { text: 'Guess the id and run apply -auto-approve', good: false, why: 'A mistyped id can adopt, or later delete, something else.' }]} />
+</Card>
+
+<Card id="see-cli" type="see">
+There is also an older command. It writes the register at once, with no plan to read first. Build it.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'tofu', means: 'talk to OpenTofu' }, { text: 'import', means: 'adopt one thing right now' }, { text: 'random_string.door', means: 'its address in the blueprint' }, { text: 'KANCIL', means: "the real thing's id" }]} decoys={[{ text: '-auto-approve', means: 'skip the question' }, { text: 'destroy', means: 'delete things: not this' }]} success="tofu import random_string.door KANCIL. The block is safer: you see a plan first." />
+</Card>
+
+<Card id="win" type="win">
+You can now adopt something built by hand, with a plan you can review.
+</Card>
+
+<Card id="deeper" type="deeper">
+An import block can use `for_each` to adopt many things at once. `tofu plan -generate-config-out=generated.tf` can draft the resource blocks for you; the docs still call it experimental. Each provider's docs list its import id, in an "Import" section.
+
+<Interactive name="Mission" id="iac-t3-l04-rep" steps={[{ id: 'write', text: 'In a practice folder: a random_string "door" with length = 6, plus the import block for id "KANCIL".' }, { id: 'plan', text: 'Look for 1 to import.', command: 'tofu init && tofu plan' }, { id: 'apply', text: 'Adopt it.', command: 'tofu apply' }, { id: 'look', text: 'Read the register.', command: 'tofu state show random_string.door' }]} success="You adopted a real thing without building it again." />
+</Card>

@@ -1,0 +1,76 @@
+---
+id: k8s-k3-l07
+world: 3
+title: "Gateway API: the main entrance"
+summary: "You will learn: how GatewayClass, Gateway and HTTPRoute let customers in."
+minutes: 5
+xp: 25
+interactives: [KubeReplay, TimelineTap, FoodCourtSim, RequestTracer, Choice, SortCards, Mission]
+needs: [k8s-k3-l06]
+scenario: k3-entrance
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Gateway API", url: "https://kubernetes.io/docs/concepts/services-networking/gateway/" }
+  - { label: "Gateway API docs", url: "https://gateway-api.sigs.k8s.io/" }
+  - { label: "Gateway API: implementations", url: "https://gateway-api.sigs.k8s.io/implementations/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k3-entrance" commands={['kubectl get services', 'kubectl get gateway']} label="The shop Service is a ClusterIP. kubectl get gateway finds nothing: there is no entrance." />
+
+Customers wait on the street. The shop's order number only works inside. And there is no front door yet.
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'GatewayClass', title: 'The door maker', text: 'Which controller builds the doors. Here: eg, run by Envoy Gateway. The platform team installs it.' }, { when: 'Gateway', title: 'The main entrance', text: 'One door with a listener, like HTTP on port 80. It gets an outside address.' }, { when: 'HTTPRoute', title: 'The signboards', text: 'Which path goes to which Service. App teams write these.' }]} />
+
+**Gateway API** is the main way in. It has three parts, owned by three teams. Tap each one.
+</Card>
+
+<Card id="see-apply" type="see">
+<Interactive name="KubeReplay" scenario="k3-entrance" commands={['cat gateway.yaml', 'kubectl apply -f gateway.yaml', 'kubectl get gateway entrance']} label="gateway.yaml: a Gateway called entrance, class eg, one HTTP listener on port 80. After apply it has an address and PROGRAMMED True." />
+
+A **<Term id="gateway">Gateway</Term>** is the main entrance. `PROGRAMMED True` means the door is built. ADDRESS is where customers knock.
+</Card>
+
+<Card id="try-entrance" type="try">
+Build the entrance and one signboard. Then knock from your laptop.
+
+<Interactive name="FoodCourtSim" scenario="k3-entrance" goal={{ reachable: { url: 'http://172.18.0.200/', contains: 'Kedai Kancil' }, lastTyped: '^curl' }} hints={['Type kubectl apply -f gateway.yaml', 'Type kubectl apply -f route.yaml', 'Find the ADDRESS with kubectl get gateway, then curl http://172.18.0.200/']} success="A customer walked in from the street and got the shop page!" />
+
+<Hint>Two files: `gateway.yaml` (the door) and `route.yaml` (the sign). Then `curl` the ADDRESS.</Hint>
+</Card>
+
+<Card id="see-trace" type="see">
+Follow one order from the street to a tray. Press Send, or Step for one hop at a time.
+
+<Interactive name="RequestTracer" route={{ host: 'kedai.example', gateway: { name: 'entrance', port: 80 }, route: { name: 'kedai', rules: [{ path: '/', service: 'shop', port: 80 }] }, services: [{ name: 'shop', port: 80, targetPort: 80, selector: { app: 'shop' } }], pods: [{ name: 'shop-94c9756fd-8tghh', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-hjttw', labels: { app: 'shop' }, containerPort: 80 }, { name: 'shop-94c9756fd-pklq2', labels: { app: 'shop' }, containerPort: 80 }], request: { path: '/' } }} task={{ type: 'trace' }} />
+</Card>
+
+<Card id="predict" type="predict">
+You delete the HTTPRoute. The Gateway still runs. What does a customer get?
+
+<Interactive name="Choice" options={[{ label: '404 Not Found: the door is open, but there is no sign', correct: true, why: 'The entrance listens, but no route matches.' }, { label: 'A connection error: the door is gone', why: 'The Gateway still listens. It just has no route.' }, { label: 'The shop page, as before', why: 'Without a sign, the door sends nobody anywhere.' }]} />
+</Card>
+
+<Card id="check-owners" type="check">
+Three parts, three teams. Who writes what?
+
+<Interactive name="SortCards" buckets={[{ id: 'platform', label: 'Platform team' }, { id: 'ops', label: 'Cluster operator' }, { id: 'app', label: 'App team' }]} items={[{ label: 'Install Envoy Gateway', bucket: 'platform', why: 'The door maker is set up once, for everyone.' }, { label: 'GatewayClass eg', bucket: 'platform', why: 'It names the controller that builds doors.' }, { label: 'Gateway entrance, port 80', bucket: 'ops', why: 'Operators decide which doors open.' }, { label: 'Pick the ports the door opens', bucket: 'ops', why: 'A door is shared, so operators own it.' }, { label: 'HTTPRoute: /api to api', bucket: 'app', why: 'App teams put up their own signs.' }, { label: 'Point /menu at the menu Service', bucket: 'app', why: 'Signs belong to the stall that needs them.' }]} success="Sorted! Each team owns its own part." />
+</Card>
+
+<Card id="win" type="win">
+You can now open a main entrance with Gateway API.
+</Card>
+
+<Card id="deeper" type="deeper">
+Gateway API is not built in. A cluster needs its CRDs plus one controller. Envoy Gateway, Istio, Cilium and NGINX Gateway Fabric are some. Every route here uses `gateway.networking.k8s.io/v1`. On kind, the Gateway address may need cloud-provider-kind.
+
+Real rep (optional), on a throwaway kind cluster:
+
+<Interactive name="Mission" id="k3-l07-rep" steps={[{ id: 'install', text: 'Install the Gateway API CRDs and one controller, using that controller’s official quickstart.' }, { id: 'class', text: 'Find the door maker.', command: 'kubectl get gatewayclass' }, { id: 'door', text: 'Apply a Gateway and an HTTPRoute for your shop.' }, { id: 'wait', text: 'Wait for PROGRAMMED True, then curl the ADDRESS.', command: 'kubectl get gateway' }]} success="A real entrance on your own cluster!" />
+</Card>

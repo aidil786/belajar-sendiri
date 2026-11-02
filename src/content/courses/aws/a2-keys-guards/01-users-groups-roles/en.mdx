@@ -1,0 +1,66 @@
+---
+id: aws-a2-l01
+world: 2
+title: Users, groups and roles
+summary: "You will learn: the three kinds of keyholders in IAM, and which one fits which job."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, Transcript, IamJudge, SwipeJudge]
+needs: [aws-a1-boss]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM identities", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id.html" }
+  - { label: "IAM user groups", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html" }
+  - { label: "IAM roles", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" }
+  - { label: "aws iam create-role", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/create-role.html" }
+---
+
+<Card id="hook" type="hook">
+Five cashiers at Kedai Kancil need the same keys. A sixth joins next week. How do you hand out keys without a mess?
+
+<Interactive name="Choice" options={[{ label: 'Make a Cashiers group; give the keys to the group', correct: true, why: 'Add a person, they get the keys. Remove them, the keys go too.' }, { label: 'Copy the keys onto each person, one by one', why: 'Six copies to keep in step. One gets forgotten.' }, { label: 'Let all cashiers share one sign-in', why: 'Then nobody knows who did what.' }]} />
+</Card>
+
+<Card id="see-three" type="see">
+**IAM** is the mall’s key office. It knows three kinds of keyholder: users, groups and roles. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: 'User' }, { id: 'group', label: 'Group' }, { id: 'role', label: 'Role' }]} items={[{ label: 'Aina, with her own sign-in', bucket: 'user', why: 'One person or app, with long-lasting secrets.' }, { label: 'Cashiers: everyone on the till', bucket: 'group', why: 'A list of users that share the same keys.' }, { label: 'A badge trusted people or services borrow', bucket: 'role', why: 'Borrowed for a while, then it expires.' }, { label: 'Cannot sign in by itself', bucket: 'group', why: 'A group only holds users and their keys.' }, { label: 'Hands out temporary keys', bucket: 'role', why: 'No password, no stored keys.' }]} success="User, group, role. Three keyholders, three jobs." />
+</Card>
+
+<Card id="see-role" type="see">
+<Interactive name="Transcript" title="bash" label="aws iam create-role makes Test-Role from a trust policy file. AWS answers with the role's name and ARN." lines={[{ cmd: 'aws iam create-role --role-name Test-Role --assume-role-policy-document file://Test-Role-Trust-Policy.json' }, { out: '{\n    "Role": {\n        "AssumeRolePolicyDocument": "<URL-encoded-JSON>",\n        "RoleId": "AKIAIOSFODNN7EXAMPLE",\n        "CreateDate": "2013-06-07T20:43:32.821Z",\n        "RoleName": "Test-Role",\n        "Path": "/",\n        "Arn": "arn:aws:iam::123456789012:role/Test-Role"\n    }\n}', color: 'green' }]} />
+
+A **<Term id="iam-role">role</Term>** starts with a trust file: who may borrow this badge. The answer’s last line is its <Term id="arn">ARN</Term>, the role’s full address.
+</Card>
+
+<Card id="try-judge" type="try">
+Aina is in the Cashiers group. She opens today’s menu file. Will AWS say yes?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'cashiers (group)', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Allowed. The group’s keys are Aina’s keys." />
+</Card>
+
+<Card id="predict" type="predict">
+Aina moves to the kitchen. You remove her from Cashiers. Can she still open the menu file?
+
+<Interactive name="Choice" options={[{ label: 'No: her menu key came from the group', correct: true, why: 'Leave the group, lose its keys. Nothing to clean up by hand.' }, { label: 'Yes: users keep keys forever', why: 'Group keys belong to the group, not the person.' }, { label: 'Only on weekends', why: 'IAM has no weekend rule here. It is yes or no.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+True about keyholders, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'A user can be in many groups.', good: true, why: 'Aina can be a cashier and a cook.' }, { text: 'Put the Cashiers group inside a Staff group.', good: false, why: 'Groups cannot hold other groups. Only users.' }, { text: 'A bucket rule can name a group as the visitor.', good: false, why: 'A group is not a principal. Name a user or role.' }, { text: 'Servers and robots should borrow a role.', good: true, why: 'Short-lived keys, nothing stored on the machine.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell users, groups and roles apart, and pick the right one.
+</Card>
+
+<Card id="deeper" type="deeper">
+There is no built-in "everyone" group. If you want one, you make it and add every user yourself.
+
+Real rep: IAM itself is free. Make a group, add your admin user to it, then list it with `aws iam get-group --group-name Cashiers`. Delete the group when done.
+</Card>

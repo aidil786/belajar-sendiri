@@ -1,0 +1,79 @@
+---
+id: k8s-k6-l01
+world: 6
+title: "Three gates: authn, authz, admission"
+summary: "You will learn: the three checks every kubectl request passes, and how to tell their errors apart."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KubeReplay, SortCards, FoodCourtSim, SpotLines]
+needs: [k8s-k5-m4]
+scenario: k6-rbac
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Controlling access to the Kubernetes API", url: "https://kubernetes.io/docs/concepts/security/controlling-access/" }
+  - { label: "Authenticating", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/" }
+  - { label: "Authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/authorization/" }
+  - { label: "Admission control", url: "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" }
+---
+
+<Card id="hook" type="hook">
+At 3 a.m., someone ran `kubectl delete` on your shop. The cluster said yes. Which question should it have asked first?
+
+<Interactive name="Choice" options={[{ label: 'Who are you?', correct: true, why: 'First the guard checks your ID. Everything else comes after.' }, { label: 'Is the shop busy right now?', why: 'The cluster does not care how busy it is. It cares who asks.' }, { label: 'Do you have a backup?', why: 'A good habit. But a guard stops strangers first.' }]} />
+</Card>
+
+<Card id="see-gates" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Gate 1', title: 'Authentication', text: 'Who are you? Your certificate or token is your ID card. Fail: 401 Unauthorized.' }, { when: 'Gate 2', title: 'Authorization', text: 'May you do this? RBAC reads your job card. Fail: 403 Forbidden.' }, { when: 'Gate 3', title: 'Admission', text: 'Is this tray safe? Rules check the object itself. Pass: it is saved.' }]} />
+
+Every kubectl command knocks on the API server's door. **Three gates** stand there, one after another. Tap each gate.
+</Card>
+
+<Card id="see-whoami" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac" commands={['kubectl auth whoami']} picture={false} label="kubectl auth whoami shows Username kubernetes-admin and two groups: kubeadm:cluster-admins and system:authenticated." />
+
+Gate 1 is **<Term id="authentication">authentication</Term>**. It reads your ID card and learns your name and groups. `kubectl auth whoami` shows what gate 1 sees.
+</Card>
+
+<Card id="try-sort" type="try">
+Which gate stops each one? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'authn', label: 'Gate 1: who are you?' }, { id: 'authz', label: 'Gate 2: may you?' }, { id: 'admit', label: 'Gate 3: is it safe?' }]} items={[{ label: 'A token that ran out yesterday', bucket: 'authn', why: 'An old ID card. The guard does not know you.' }, { label: 'The CI bot tries to read secrets', bucket: 'authz', why: 'The bot is known. Its job card does not allow secrets.' }, { label: 'A pod asks to run privileged in a guarded zone', bucket: 'admit', why: 'The request is allowed. The tray itself breaks a safety rule.' }, { label: 'Mei may read pods, but tries to delete one', bucket: 'authz', why: 'Mei is known. Delete is not on her job card.' }, { label: 'A broken certificate', bucket: 'authn', why: 'A bad ID card fails at the very first gate.' }]} success="Sorted! People, then rights, then trays." />
+
+<Hint>Gate 1 knows people. Gate 2 knows rights. Gate 3 knows trays.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Pretend to be the CI bot. Ask the cluster for its secrets.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac" prefill="kubectl get secrets --as=" goal={{ typed: 'get secrets .*--as=system:serviceaccount:default:ci-bot' }} hints={['Type kubectl get secrets --as=system:serviceaccount:default:ci-bot and press Enter.']} success="Refused! Now read who said no." />
+
+<Hint>The bot's full name is `system:serviceaccount:default:ci-bot`.</Hint>
+</Card>
+
+<Card id="check-errors" type="check">
+Three real errors. Each one comes from a different gate.
+
+<Interactive name="SpotLines" lines={[{ text: 'error: You must be logged in to the server (Unauthorized)' }, { text: 'Error from server (Forbidden): secrets is forbidden: User "system:serviceaccount:default:ci-bot" cannot list resource "secrets" in API group "" in the namespace "default"', target: true }, { text: 'Error from server (Forbidden): error when creating "plain.yaml": pods "plain" is forbidden: violates PodSecurity "restricted:latest": …' }]} prompt="Tap the error from gate 2." success="Yes! cannot list: the job card says no." />
+
+Plain words: **Unauthorized** is gate 1. Forbidden with "cannot" is gate 2. Forbidden with "violates" is gate 3.
+</Card>
+
+<Card id="predict" type="predict">
+Gate 2 says yes: you may create pods. Can gate 3 still say no?
+
+<Interactive name="Choice" options={[{ label: 'Yes: gate 3 checks the pod itself', correct: true, why: 'Allowed to cook does not mean any dish goes. A root pod can still be refused.' }, { label: 'No: a yes from gate 2 is final', why: 'Gate 3 runs after gate 2. It can still refuse.' }, { label: 'Only on weekends', why: 'The gates never take a day off.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now name the three gates every request passes.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kubernetes has no user objects. People come from certificates or a login provider (OIDC). Robots use ServiceAccounts, which are objects. Gate 3 has two halves. Mutating admission may change your object. Then validating admission checks it. Reads like `get` skip gate 3.
+
+<Interactive name="Mission" id="k6-l01-rep" steps={[{ id: 'cluster', text: 'Use a throwaway cluster only: kind on your machine, or a Killercoda lab.' }, { id: 'whoami', text: 'Ask gate 1 who you are.', command: 'kubectl auth whoami' }, { id: 'bot', text: 'Ask as the default ServiceAccount. Gate 2 should say no.', command: 'kubectl get secrets --as=system:serviceaccount:default:default' }]} success="You met two real gates!" />
+</Card>

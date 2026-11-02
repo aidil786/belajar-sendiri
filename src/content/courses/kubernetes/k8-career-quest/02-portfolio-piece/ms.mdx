@@ -1,0 +1,73 @@
+---
+id: k8s-k8-l02
+world: 8
+title: Jadikan Kedai Kancil portfolio
+summary: "Anda akan belajar: cara README, rajah dan video 2 minit menonjolkan capstone anda."
+minutes: 5
+xp: 25
+interactives: [Choice, PracticeRepo, OrderList, MarkdownPlayground, TimelineTap, SwipeJudge]
+needs: [k8s-k8-l01]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "About READMEs", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" }
+  - { label: "Creating diagrams (Mermaid)", url: "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams" }
+  - { label: "Pinning items to your profile", url: "https://docs.github.com/en/account-and-profile/how-tos/profile-customization/pinning-items-to-your-profile" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil dah berfungsi. Keenam-enam misi dah siap. Tapi halaman repo anda cuma tunjuk senarai fail. Adakah penyemak yang sibuk akan faham?
+
+<Interactive name="Choice" options={[{ label: 'Mungkin tidak. Tunjuk ceritanya dulu', correct: true, why: 'Penyemak cuma imbas. README yang jelas bercerita dalam satu minit.' }, { label: 'Ya. Kod yang bagus terangkan dirinya sendiri', why: 'Kod tunjuk caranya. README tunjuk apa dan kenapa, dengan cepat.' }, { label: 'Hanya jika mereka clone dan jalankannya', why: 'Kebanyakan penyemak tak akan buat begitu. Mudahkan mereka melihat tanpa menjalankannya.' }]} />
+</Card>
+
+<Card id="try-repo" type="try">
+Ini repo **<Term id="portfolio">portfolio</Term>** yang mantap. Penyemak ada satu minit sahaja. Cari bukti keenam-enam misi.
+
+<Interactive name="PracticeRepo" screen="code" repo={{ owner: 'aina-codes', name: 'kedai-kancil', description: 'Aplikasi kedai kecil: dalam container, diuji dalam CI, jalan di Kubernetes melalui GitOps.', files: [{ path: 'README.md', content: '# Kedai Kancil\n\nAplikasi kedai kecil. Dalam container, diuji dalam CI, jalan di Kubernetes melalui GitOps.\n\nTonton demo 2 minit: [video](https://example.com/kedai-kancil-demo)\n\n## Cara semuanya bersambung\n\n```mermaid\nflowchart LR\n  browser --> gateway --> web\n  gateway --> api --> db\n```\n\n## Jalankan\n\n```sh\ndocker compose up\n```\n\n## Bukti\n\nSetiap misi, dengan pautan: [docs/missions.md](docs/missions.md)\n\n## Apa yang saya belajar\n\nImage kecil, pipeline hijau dan pod yang pulih sendiri.\n' }, { path: 'docs/missions.md', content: '# Bukti misi\n\n- [x] M1 Bungkus: satu arahan hidupkan seluruh kedai\n- [x] M2 Hantar: larian pipeline hijau di main\n- [x] M3 Lancarkan: keluaran rosak, diundur oleh pipeline\n- [x] M4 Jalankan: tahan pod dibunuh dan trafik melonjak\n- [x] M5 Kawal: polisi tolak image root\n- [x] M6 Lepas tangan: satu perubahan Git, tanpa kubectl\n' }, { path: 'compose.yaml', content: 'services:\n  web:\n    build: ./web\n  api:\n    build: ./api\n  db:\n    image: postgres:18-alpine\n' }, { path: 'k8s/base/kustomization.yaml', content: 'resources:\n  - web.yaml\n  - api.yaml\n  - db.yaml\n' }] }} task={{ type: 'openFile', path: 'docs/missions.md' }} success="Jumpa! Setiap misi, bertanda, dengan bukti." />
+
+<Hint>README ada bahagian Bukti dengan satu pautan.</Hint>
+</Card>
+
+<Card id="try-trip" type="try">
+**<Term id="architecture-diagram">Rajah seni bina</Term>** ialah peta bahagian aplikasi anda. Anak panah tunjuk siapa bercakap dengan siapa. Susun perjalanan satu pesanan.
+
+<Interactive name="OrderList" items={['Pelayar: pelanggan buka menu', 'Gateway: pintu masuk utama baca /api', 'Service: nombor pesanan untuk API', 'Pod api: API kecil sediakan jawapan', 'Postgres: pangkalan data simpan menu']} label="Permulaan perjalanan di atas" success="Itulah laluan anak panah utama dalam rajah anda." />
+
+<Hint>Mula dari luar. Data tinggal di hujung sekali.</Hint>
+</Card>
+
+<Card id="try-mermaid" type="try">
+GitHub lukis teks <Term id="mermaid" course="git">Mermaid</Term> sebagai rajah. Setiap `-->` ialah anak panah. Tambah anak panah terakhir: dari api ke db.
+
+<Interactive name="MarkdownPlayground" initial={'## Cara semuanya bersambung\n\n```mermaid\nflowchart LR\n  browser --> gateway\n  gateway --> web\n  gateway --> api\n```\n'} prompt="Tambah anak panah api --> db dalam blok mermaid." goal={{ mustMatch: ['^\\s*api\\s*-->\\s*db\\b'], hint: ['Tambah satu baris baharu dalam blok: api --> db'] }} success="Bagus! Kini rajah tunjuk di mana data disimpan." />
+</Card>
+
+<Card id="see-video" type="see">
+<Interactive name="TimelineTap" events={[{ when: '0:00', title: 'Masalahnya', text: 'Satu ayat: kedai kecil yang tak patut tutup langsung.' }, { when: '0:15', title: 'Petanya', text: 'Tunjuk rajah seni bina. Sebut nama setiap bahagian.' }, { when: '0:35', title: 'Perubahan langsung', text: 'Ubah satu baris dalam Git. Pipeline jadi hijau. Argo CD selaraskannya.' }, { when: '1:20', title: 'Rosakkan', text: 'Padam satu pod. Lihat Kubernetes gantikannya.' }, { when: '1:45', title: 'Apa yang anda belajar', text: 'Satu pengajaran jujur, dan apa yang anda nak tambah seterusnya.' }]} />
+
+**<Term id="demo-video">Video demo</Term>** 2 minit tunjuk ia berfungsi. Anda tak perlu tunjuk muka. Skrin dan suara anda dah cukup.
+</Card>
+
+<Card id="check-lines" type="check">
+Nilai setiap baris README.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '"Kedai Kancil: aplikasi kedai kecil di Kubernetes, dihantar melalui GitOps."', good: true, why: 'Satu ayat jelas. Pembaca tahu apa ia.' }, { text: '"Ini projek saya."', good: false, why: 'Projek apa? Sebut apa yang ia buat.' }, { text: '"Jalankan dengan satu arahan: docker compose up"', good: true, why: 'Satu arahan untuk mencubanya. Penyemak suka itu.' }, { text: '"TODO: tulis README nanti."', good: false, why: 'Nanti jarang tiba. Tulis tiga baris hari ini.' }, { text: '"Bukti misi 2: pautan ke larian hijau di main."', good: true, why: 'Pautan ialah bukti. Dakwaan sahaja tidak.' }]} />
+</Card>
+
+<Card id="check-secret" type="check">
+Anda rakam terminal untuk demo. Apa yang mesti anda semak dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tiada token, kata laluan atau kunci di skrin', correct: true, why: 'Sesiapa pun boleh jeda video. Sembunyikan setiap rahsia dulu.' }, { label: 'Fon terminal anda nampak hebat', why: 'Bagus, tapi rahsia jauh lebih penting.' }, { label: 'Tiada apa. Ia cuma video', why: 'Sesiapa pun boleh jeda video dan salin token.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jadikan Kedai Kancil satu karya portfolio.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub lukis rajah Mermaid dalam fail Markdown. Rajah anda duduk bersama kod. Muat naik video di mana-mana tempat yang ada pautan kongsi. Jujur dalam README. Sebut ia jalan dalam kluster kind, bukan cloud berbayar. Kejujuran bina kepercayaan.
+</Card>

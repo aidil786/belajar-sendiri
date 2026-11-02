@@ -1,0 +1,72 @@
+---
+id: obs-o2-l06
+world: 2
+title: rate() dan increase()
+summary: "Anda akan belajar: cara tukar counter jadi 'berapa laju' dan 'berapa banyak', walaupun aplikasi mula semula."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o2-l05]
+scenario: o2-kedai
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "PromQL functions: rate()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#rate" }
+  - { label: "PromQL functions: increase()", url: "https://prometheus.io/docs/prometheus/latest/querying/functions/#increase" }
+  - { label: "Prometheus: metric types (counter)", url: "https://prometheus.io/docs/concepts/metric_types/#counter" }
+---
+
+<Card id="hook" type="hook">
+Counter nasi lemak di SS15 tunjuk 300. Adakah gerai itu sibuk sekarang?
+
+<Interactive name="Choice" options={[{ label: 'Tak boleh tahu: anda perlu tahu berapa laju ia naik', correct: true, why: 'Ya. 300 sejak buka kedai tak cerita apa-apa tentang minit ini.' }, { label: 'Ya, 300 tu banyak', why: '300 dalam 10 minit, atau dalam 10 jam? Jumlah sahaja tak boleh beritahu.' }, { label: 'Tidak, 300 tu sikit', why: 'Sikit atau banyak bergantung pada masa yang diambil.' }]} />
+</Card>
+
+<Card id="try-rate" type="try">
+**<Term id="rate">rate()</Term>** beritahu berapa laju counter naik, sesaat, dalam satu tetingkap.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial="kedai_orders_total" prompt="Balut ia: rate(kedai_orders_total[5m]). Kemudian Run." goal={{ usesFunction: ['rate'], resultCount: 5, resultIncludes: [{ labels: { stall: 'nasi-lemak', outlet: 'ss15' }, value: 0.5 }] }} hints={['Taip rate( sebelum nama dan [5m]) selepasnya.']} solution="rate(kedai_orders_total[5m])" success="Pesanan sesaat, untuk setiap gerai dan cawangan." />
+</Card>
+
+<Card id="predict" type="predict">
+Nasi lemak di SS15 naik 0, 30, 60, 90… satu langkah setiap minit. Apa kata `rate()`?
+
+<Interactive name="Choice" options={[{ label: '0.5 sesaat', correct: true, why: 'Ya. 30 pesanan seminit ialah 30 ÷ 60 = 0.5 sesaat.' }, { label: '30', why: 'Itu seminit. rate() sentiasa jawab sesaat.' }, { label: '300', why: '300 ialah counter itu sendiri, bukan kelajuannya.' }]} />
+</Card>
+
+<Card id="see-reset" type="see">
+Mula semula akan **reset** counter ke 0. `rate()` perasan penurunan itu dan terus mengira naik.
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['kedai_orders_total']} initial={'kedai_orders_total{outlet="bangsar"}'} at="16m" prompt="Jalankan pada 16m: mesin kaunter Bangsar mula semula. Kemudian balut dengan rate(…[5m]) dan Run lagi." goal={{ at: '18m', usesFunction: ['rate'], resultCount: 2 }} hints={['Letak rate( di depan nama, dan [5m]) di hujung.']} solution={'rate(kedai_orders_total{outlet="bangsar"}[5m])'} success="Tiada jatuh ke sifar, tiada pesanan negatif. rate() uruskan mula semula itu." />
+</Card>
+
+<Card id="try-swipe" type="try">
+Guna `rate()` dengan betul? Leret ke kanan untuk yang baik.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'rate(kedai_orders_total[5m])', good: true, why: 'Counter, dengan tetingkap. Sempurna.' }, { text: 'rate(kedai_customers_waiting[5m])', good: false, why: 'Itu gauge. Ia turun juga, jadi rate() sangka ia mula semula.' }, { text: 'rate(kedai_orders_total[30s])', good: false, why: 'Dengan scrape 1m, 30s ada kurang daripada 2 sampel. Guna beberapa kali scrape.' }, { text: 'sum(rate(kedai_orders_total[5m]))', good: true, why: 'rate dulu, kemudian sum. Susunan yang betul.' }, { text: 'rate(kedai_orders_total)', good: false, why: 'rate() perlukan tetingkap, seperti [5m].' }]} />
+</Card>
+
+<Card id="try-increase" type="try">
+**increase()** kata berapa banyak counter naik dalam tetingkap. Berapa ralat 500 dalam 10 minit lepas?
+
+<Interactive name="PromQLPlayground" scenario="o2-kedai" metrics={['http_requests_total']} prompt={'Tapis code="500", tambah [10m], kemudian balut semuanya dengan increase( ). Jalankan.'} goal={{ usesFunction: ['increase'], resultCount: 2, resultIncludes: [{ labels: { job: 'shop', instance: 'shop-1', code: '500' }, value: 150 }] }} hints={['Tapis code="500" dalam kurungan kerinting, kemudian tambah [10m].']} solution={'increase(http_requests_total{code="500"}[10m])'} success="150 ralat pada setiap instance kedai dalam 10 minit." />
+</Card>
+
+<Card id="check" type="check">
+`rate()` kata 0.25 sesaat. Apa kata `increase()` untuk `[10m]`?
+
+<Interactive name="Choice" options={[{ label: '150', correct: true, why: 'Ya. 0.25 × 600 saat = 150. increase() ialah rate() darab tetingkap.' }, { label: '2.5', why: 'Itu 0.25 × 10. Tetingkapnya 600 saat, bukan 10.' }, { label: '0.25', why: 'Itu rate. increase() darab dengan tetingkap.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tukar counter jadi kelajuan dengan `rate()` dan jumlah dengan `increase()`.
+</Card>
+
+<Card id="deeper" type="deeper">
+`irate()` guna dua sampel terakhir sahaja: cepat berubah, sesuai untuk graf pantas. Kedua-duanya meneka hujung tetingkap. Jadi `increase()` boleh tunjuk 133.33, bukan nombor bulat. Dalam Grafana, `$__rate_interval` pilih tetingkap yang selamat untuk anda.
+
+<Interactive name="Mission" id="obs-o2-l06-real" steps={[{ id: 'up', text: 'Dalam folder kedai-watch, mulakan stack.', command: 'docker compose up -d' }, { id: 'rate', text: 'Di http://localhost:9090, jalankan rate(prometheus_http_requests_total[1m]). Handler mana paling sibuk?' }, { id: 'inc', text: 'Sekarang jalankan increase(prometheus_http_requests_total[5m]). Cari nombor yang tak bulat.' }, { id: 'stop', text: 'Hentikan stack.', command: 'docker compose down' }]} success="rate() dan increase() pada counter sebenar." />
+</Card>

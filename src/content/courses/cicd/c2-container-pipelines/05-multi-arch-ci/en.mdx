@@ -1,0 +1,68 @@
+---
+id: cicd-c2-l05
+world: 2
+title: Multi-arch builds in CI
+summary: "You will learn: to build one image for both Intel and Arm computers."
+minutes: 3
+xp: 15
+interactives: [Choice, SpotLines, ConveyorBelt, SortCards, Mission]
+needs: [cicd-c2-l04]
+scenario: c2-multi-arch
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: multi-platform image with GitHub Actions", url: "https://docs.docker.com/build/ci/github-actions/multi-platform/" }
+  - { label: "docker/setup-qemu-action", url: "https://github.com/docker/setup-qemu-action" }
+  - { label: "Docker docs: multi-platform builds", url: "https://docs.docker.com/build/building/multi-platform/" }
+---
+
+<Card id="hook" type="hook">
+Your image runs on the shop's Intel server. On a new Arm server it stops at once: `exec format error`. Why?
+
+<Interactive name="Choice" options={[{ label: 'The image only has code for the other CPU type', correct: true, why: 'Plain words: wrong CPU. A pack for a gas stove will not cook on an induction stove.' }, { label: 'The Arm server is too slow', why: 'Speed is not the issue. The CPU cannot read the code at all.' }, { label: 'Docker is broken on that server', why: 'Docker is fine. The image was built for amd64 only.' }]} />
+</Card>
+
+<Card id="see-platforms" type="see">
+<Interactive name="SpotLines" lines={[{ text: '- uses: docker/build-push-action@v7' }, { text: '  with:' }, { text: '    tags: kedai-kancil:ci' }, { text: '    platforms: linux/amd64,linux/arm64', target: true }]} prompt="Tap the line that asks for two CPU types." success="Yes! One name, two packs inside." />
+
+A **<Term id="multi-arch">multi-arch image</Term>** is one name with a pack for each CPU. Each computer pulls the pack that fits it.
+</Card>
+
+<Card id="try-fix" type="try">
+Press Run. The arm64 pack fails on this Intel runner. Pick a fix for the yellow line.
+
+<Interactive name="ConveyorBelt" scenario="c2-multi-arch" task={{ type: 'green' }} fixes={[
+  { label: 'Add QEMU before Buildx', text: '      - uses: docker/setup-qemu-action@v4\n      - uses: docker/setup-buildx-action@v4' },
+  { label: 'Add Node before Buildx', text: '      - uses: actions/setup-node@v7\n      - uses: docker/setup-buildx-action@v4', why: 'Node runs tests on the runner. It cannot run arm64 code in the build.' },
+  { label: 'Add checkout before Buildx', text: '      - uses: actions/checkout@v7\n      - uses: docker/setup-buildx-action@v4', why: 'Checkout copies your code. The CPU problem stays.' }]}
+  success="Both packs built: amd64 and arm64." />
+
+<Hint>The runner needs an adapter that can pretend to be Arm.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+**<Term id="qemu">QEMU</Term>** is that adapter: the Intel worker cooks for the Arm stove. What is the catch?
+
+<Interactive name="Choice" options={[{ label: 'The arm64 build runs slower', correct: true, why: 'Pretending takes work. Big builds can take many minutes longer.' }, { label: 'The arm64 pack is broken', why: 'It is a real arm64 pack. Only the build is slower.' }, { label: 'Only one pack gets pushed', why: 'Both go under one name. Each computer pulls its own.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Which pack does each computer pull?
+
+<Interactive name="SortCards" buckets={[{ id: 'amd', label: 'linux/amd64' }, { id: 'arm', label: 'linux/arm64' }]} items={[{ label: "GitHub's ubuntu-latest runner", bucket: 'amd', why: 'It runs on an Intel-style x64 CPU.' }, { label: 'A Raspberry Pi 5 running Linux', bucket: 'arm', why: 'The Pi has an Arm chip.' }, { label: 'A Windows laptop with an Intel chip', bucket: 'amd', why: 'Intel and AMD chips are amd64.' }, { label: 'A cloud server with an Arm chip', bucket: 'arm', why: 'Arm servers pull the arm64 pack.' }]} success="Sorted! One name serves them all." />
+</Card>
+
+<Card id="win" type="win">
+You can now build one image for Intel and Arm computers.
+</Card>
+
+<Card id="deeper" type="deeper">
+GitHub also has Arm runners, like `ubuntu-24.04-arm`. They build arm64 natively, with no QEMU, so they are faster. `docker buildx imagetools inspect <image>` lists the packs inside one name.
+
+Real rep (optional), in a public practice repo:
+
+<Interactive name="Mission" id="c2-l05-rep" steps={[{ id: 'qemu', text: 'Add docker/setup-qemu-action before setup-buildx-action.' }, { id: 'plat', text: 'Add platforms: linux/amd64,linux/arm64 to the build step.' }, { id: 'look', text: 'Push the image, then list its packs.', command: 'docker buildx imagetools inspect ghcr.io/YOUR-NAME/YOUR-REPO:main' }]} success="Your image now fits two kinds of computers!" />
+</Card>

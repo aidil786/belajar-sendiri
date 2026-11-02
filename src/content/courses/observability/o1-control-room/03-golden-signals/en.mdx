@@ -1,0 +1,69 @@
+---
+id: obs-o1-l03
+world: 1
+title: The four golden signals
+summary: "You will learn: the four screens every control room hangs first, and which one warns earliest."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, PromQLPlayground, SortCards, Mission]
+needs: [obs-o1-l02]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Google SRE book: the four golden signals", url: "https://sre.google/sre-book/monitoring-distributed-systems/" }
+  - { label: "Grafana: dashboard best practices", url: "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil has 500 numbers. The control room wall fits four screens. Which four?
+
+<Interactive name="Choice" options={[{ label: 'How slow, how busy, how broken, how full', correct: true, why: 'Yes. Those four show what customers feel.' }, { label: 'The CPU of each server', why: 'Useful later. Customers do not feel CPU directly.' }, { label: 'Staff online, coffee left, music, lights', why: 'Fun, but none of them says if checkout works.' }]} />
+</Card>
+
+<Card id="see-four" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Latency', title: 'How slow?', text: 'How long a checkout takes.' }, { when: 'Traffic', title: 'How busy?', text: 'Orders per minute.' }, { when: 'Errors', title: 'How broken?', text: 'The share of checkouts that fail.' }, { when: 'Saturation', title: 'How full?', text: 'Orders waiting in the queue.' }]} />
+
+Google’s SRE book calls them the four **<Term id="golden-signals">golden signals</Term>**. Tap each one.
+</Card>
+
+<Card id="try-full" type="try">
+Find the <Term id="saturation">saturation</Term> screen: how full is the shop?
+
+<Interactive name="PromQLPlayground" scenario="o1-lunch-rush" prompt="Tap the chip that shows how full the shop is, then press Run." goal={{ typed: 'kedai_queue_orders', resultCount: 1 }} hints={['Saturation means how full. Which number fills up?', 'Tap kedai_queue_orders, then press Run.']} solution="kedai_queue_orders" success="38 orders waiting at 25m. The shop is full." />
+
+<Hint>Full means things are waiting.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Run each chip and look at the graphs. Which signal went bad first?
+
+<Interactive name="Choice" options={[{ label: 'Saturation: the queue grew from 10m', correct: true, why: 'Yes. A filling queue often warns first.' }, { label: 'Errors, at 19m', why: 'Errors came late. The queue grew 9 minutes earlier.' }, { label: 'Latency, at 18m', why: 'Checkout slowed at 18m. The queue grew at 10m.' }]} />
+
+<Hint>Look where each line leaves its calm level.</Hint>
+</Card>
+
+<Card id="try-sort" type="try">
+Which signal is it? Sort each number.
+
+<Interactive name="SortCards" buckets={[{ id: 'lat', label: 'Latency' }, { id: 'tra', label: 'Traffic' }, { id: 'err', label: 'Errors' }, { id: 'sat', label: 'Saturation' }]} items={[{ label: 'Checkout takes 2.8 s', bucket: 'lat', why: 'How slow.' }, { label: 'Page load time for most users', bucket: 'lat', why: 'How slow.' }, { label: '40 orders per minute', bucket: 'tra', why: 'How busy.' }, { label: 'Requests per second', bucket: 'tra', why: 'How busy.' }, { label: '6% of checkouts fail', bucket: 'err', why: 'How broken.' }, { label: 'Pages that answer 500', bucket: 'err', why: 'How broken.' }, { label: '38 orders waiting', bucket: 'sat', why: 'How full.' }, { label: 'Disk 95% full', bucket: 'sat', why: 'How full.' }]} success="Four screens, all sorted." />
+</Card>
+
+<Card id="check" type="check">
+Errors are 0%. But <Term id="latency">latency</Term> is 9 seconds for every checkout. Is the shop healthy?
+
+<Interactive name="Choice" options={[{ label: 'No. Very slow feels broken to customers.', correct: true, why: 'Yes. Latency matters even with zero errors.' }, { label: 'Yes. Nothing failed.', why: 'Customers give up long before 9 seconds.' }, { label: 'Only if traffic is low', why: 'Slow is bad at any traffic level.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now name the four golden signals and spot each one.
+</Card>
+
+<Card id="deeper" type="deeper">
+A tip from the SRE book: time failed requests apart from good ones. A fast error is not a good answer. A slow error is even worse.
+
+<Interactive name="Mission" id="obs-o1-l03-real" steps={[{ id: 'pick', text: 'Pick one app you know.' }, { id: 'four', text: 'Write one number for each golden signal: latency, traffic, errors, saturation.' }, { id: 'early', text: 'Circle the one you think warns first.' }]} success="Your four screens are planned." />
+</Card>

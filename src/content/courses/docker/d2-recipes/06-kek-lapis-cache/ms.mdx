@@ -1,0 +1,74 @@
+---
+id: docker-d2-l06
+world: 2
+title: "Kek lapis: layer dan cache"
+summary: "Anda akan belajar: kenapa susunan baris resepi buat build jadi laju atau lambat."
+minutes: 5
+xp: 25
+interactives: [Choice, KitchenReplay, KekLapisBuilder, KitchenSim, SwipeJudge, Mission]
+needs: [docker-d2-l05]
+scenario: d2-l06
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Understanding image layers", url: "https://docs.docker.com/get-started/docker-concepts/building-images/understanding-image-layers/" }
+  - { label: "Docker docs: Build cache", url: "https://docs.docker.com/build/cache/" }
+  - { label: "Docker docs: Optimize cache usage", url: "https://docs.docker.com/build/cache/optimize/" }
+  - { label: "docker history", url: "https://docs.docker.com/reference/cli/docker/image/history/" }
+---
+
+<Card id="hook" type="hook">
+Anda tukar satu perkataan dalam `server.js`. Build jalankan `npm ci` semula, dan anda tunggu dua minit. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'Resepi salin semua kod sebelum npm ci', correct: true, why: 'Kod yang berubah pecahkan layer itu. Setiap layer di atasnya dibakar semula, npm ci pun.' }, { label: 'Docker lupa semua selepas setiap build', why: 'Ia ingat! Masalahnya susunan baris.' }, { label: 'Laptop anda terlalu perlahan', why: 'Laptop laju pun kena tunggu jika npm ci jalan setiap kali.' }]} />
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="KitchenReplay" scenario="d2-diary-dockerfile" commands={['docker build -t diary:1.0 .', 'echo "body { color: hotpink; }" > style.css', 'docker build -t diary:1.1 .']} label="Build kedua tukar style.css. WORKDIR dan COPY index.html tulis CACHED. COPY style.css dibakar semula." />
+
+Setiap baris resepi bakar satu **<Term id="layer">layer (lapisan)</Term>**, macam kek lapis. Docker simpan layer lama. Tukar `style.css`: hanya layernya dan layer di atasnya dibakar semula. Yang lain tulis CACHED.
+</Card>
+
+<Card id="try-cake" type="try">
+Resepi ini bakar `npm ci` semula selepas setiap perubahan kod. Alihkan baris supaya ia kekal CACHED bila `server.js` berubah.
+
+<Interactive name="KekLapisBuilder" edit="server.js" goal={{ cached: ['install'] }} lines={[
+  { id: 'from', text: 'FROM node:24-alpine', size: '181MB' }, { id: 'workdir', text: 'WORKDIR /app', size: '8.19kB' },
+  { id: 'copy-all', text: 'COPY . .', size: '36.9kB' }, { id: 'copy-pkg', text: 'COPY package.json package-lock.json ./', size: '53.2kB' },
+  { id: 'install', text: 'RUN npm ci --omit=dev', size: '12.8MB' }, { id: 'cmd', text: 'CMD ["node", "server.js"]' }]} />
+
+<Hint>Salin fail pakej dan pasang dulu. Salin kod paling akhir.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang susunannya bagus. Anda tambah satu pakej, jadi `package.json` berubah. Apa yang dibakar semula?
+
+<Interactive name="Choice" options={[{ label: 'COPY fail pakej, npm ci, dan setiap layer di atasnya', correct: true, why: 'Layer itu berubah, jadi setiap layer di atasnya dibakar semula.' }, { label: 'COPY . . sahaja', why: 'Fail pakej berubah di bahagian bawah kek. Setiap layer di atasnya dibakar semula.' }, { label: 'Tiada. Cache ada semuanya', why: 'Cache hanya padan dengan layer yang inputnya tak berubah.' }]} />
+</Card>
+
+<Card id="try-cache" type="try">
+Resepi ini sudah tersusun. Layernya ada dalam <Term id="build-cache">cache binaan</Term>. Tukar kod, bina `api:1.1`, dan kira baris CACHED.
+
+<Interactive name="KitchenSim" scenario="d2-l06" goal={{ fileContains: { 'api/server.js': 'v2' }, imageExists: 'api:1.1', cacheHits: 3, maxRebuilt: 1 }} hints={['Tukar kod: echo "// v2" >> server.js', 'Kemudian bina: docker build -t api:1.1 .']} success="Tiga layer CACHED. Hanya COPY . . dibakar semula. Pakar Kek Lapis!" />
+
+<Hint>`>>` tambah satu baris di hujung fail.</Hint>
+</Card>
+
+<Card id="check-swipe" type="check">
+Tabiat cache yang bagus? Leret ke kanan untuk ya, ke kiri untuk "perlu dibaiki".
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Salin fail pakej dan pasang dulu, sebelum salin kod', good: true, why: 'Kod kerap berubah. Letak ia dekat bahagian atas kek.' }, { text: 'Letak COPY . . terus selepas FROM', good: false, why: 'Setiap perubahan kod akan bakar semula setiap layer.' }, { text: 'Guna .dockerignore supaya fail sampah tak pecahkan cache', good: true, why: 'Fail log yang berubah tak patut bakar layer baharu.' }, { text: 'Sentiasa build dengan --no-cache', good: false, why: 'Anda hilang semua kelajuan. Guna hanya untuk paksa bakar baru.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh susun resepi supaya build semula kekal laju.
+</Card>
+
+<Card id="deeper" type="deeper">
+`docker history api:1.1` senaraikan layer, yang terbaru di atas, dengan saiznya. Baris seperti `ENV` dan `CMD` tunjuk `0B`: nota, bukan layer. Padam fail dalam layer kemudian cuma sembunyikannya. Image tak jadi kecil.
+
+<Interactive name="Mission" id="d2-l06-rep" steps={[{ id: 'twice', text: 'Bina satu projek dua kali. Kali kedua, setiap langkah tulis CACHED.' }, { id: 'change', text: 'Tukar satu fail kod dan bina semula. Langkah mana dibakar?' }, { id: 'history', text: 'Tengok layer-layernya.', command: 'docker history api:1.1' }]} success="Anda sudah boleh baca kek lapis!" />
+</Card>

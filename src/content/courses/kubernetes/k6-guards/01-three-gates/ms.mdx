@@ -1,0 +1,79 @@
+---
+id: k8s-k6-l01
+world: 6
+title: "Tiga pintu: authn, authz, admission"
+summary: "Anda akan belajar: tiga semakan yang setiap permintaan kubectl lalui, dan cara bezakan ralatnya."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, KubeReplay, SortCards, FoodCourtSim, SpotLines]
+needs: [k8s-k5-m4]
+scenario: k6-rbac
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Controlling access to the Kubernetes API", url: "https://kubernetes.io/docs/concepts/security/controlling-access/" }
+  - { label: "Authenticating", url: "https://kubernetes.io/docs/reference/access-authn-authz/authentication/" }
+  - { label: "Authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/authorization/" }
+  - { label: "Admission control", url: "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 3 pagi, seseorang jalankan `kubectl delete` pada kedai anda. Kluster kata boleh. Soalan apa patut ia tanya dulu?
+
+<Interactive name="Choice" options={[{ label: 'Siapa anda?', correct: true, why: 'Pengawal semak ID anda dulu. Yang lain datang kemudian.' }, { label: 'Kedai sibuk tak sekarang?', why: 'Kluster tak kisah sibuk atau tidak. Ia kisah siapa yang minta.' }, { label: 'Ada backup tak?', why: 'Tabiat yang bagus. Tapi pengawal halang orang asing dulu.' }]} />
+</Card>
+
+<Card id="see-gates" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Pintu 1', title: 'Authentication', text: 'Siapa anda? Sijil atau token anda ialah kad ID. Gagal: 401 Unauthorized.' }, { when: 'Pintu 2', title: 'Authorization', text: 'Bolehkah anda buat ini? RBAC baca kad tugas anda. Gagal: 403 Forbidden.' }, { when: 'Pintu 3', title: 'Admission', text: 'Selamatkah dulang ini? Peraturan semak objek itu sendiri. Lulus: ia disimpan.' }]} />
+
+Setiap arahan kubectl ketuk pintu API server. **Tiga pintu** berdiri di situ, satu demi satu. Tekan setiap pintu.
+</Card>
+
+<Card id="see-whoami" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac" commands={['kubectl auth whoami']} picture={false} label="kubectl auth whoami tunjuk Username kubernetes-admin dan dua kumpulan: kubeadm:cluster-admins dan system:authenticated." />
+
+Pintu 1 ialah **<Term id="authentication">authentication</Term>** (semakan identiti). Ia baca kad ID anda, lalu tahu nama dan kumpulan anda. `kubectl auth whoami` tunjuk apa yang pintu 1 nampak.
+</Card>
+
+<Card id="try-sort" type="try">
+Pintu mana yang halang setiap satu? Asingkan.
+
+<Interactive name="SortCards" buckets={[{ id: 'authn', label: 'Pintu 1: siapa anda?' }, { id: 'authz', label: 'Pintu 2: bolehkah?' }, { id: 'admit', label: 'Pintu 3: selamatkah?' }]} items={[{ label: 'Token yang tamat semalam', bucket: 'authn', why: 'Kad ID lama. Pengawal tak kenal anda.' }, { label: 'Bot CI cuba baca secret', bucket: 'authz', why: 'Bot itu dikenali. Kad tugasnya tak benarkan secret.' }, { label: 'Pod minta jalan secara privileged dalam zon berkawal', bucket: 'admit', why: 'Permintaan dibenarkan. Tapi dulang itu langgar peraturan keselamatan.' }, { label: 'Mei boleh baca pod, tapi cuba padam satu', bucket: 'authz', why: 'Mei dikenali. Padam tiada dalam kad tugasnya.' }, { label: 'Sijil yang rosak', bucket: 'authn', why: 'Kad ID rosak gagal di pintu pertama lagi.' }]} success="Siap! Orang, kemudian hak, kemudian dulang." />
+
+<Hint>Pintu 1 kenal orang. Pintu 2 kenal hak. Pintu 3 kenal dulang.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Berlakon jadi bot CI. Minta secret daripada kluster.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac" prefill="kubectl get secrets --as=" goal={{ typed: 'get secrets .*--as=system:serviceaccount:default:ci-bot' }} hints={['Taip kubectl get secrets --as=system:serviceaccount:default:ci-bot dan tekan Enter.']} success="Ditolak! Sekarang baca siapa yang kata tidak." />
+
+<Hint>Nama penuh bot itu ialah `system:serviceaccount:default:ci-bot`.</Hint>
+</Card>
+
+<Card id="check-errors" type="check">
+Tiga ralat sebenar. Setiap satu datang dari pintu berbeza.
+
+<Interactive name="SpotLines" lines={[{ text: 'error: You must be logged in to the server (Unauthorized)' }, { text: 'Error from server (Forbidden): secrets is forbidden: User "system:serviceaccount:default:ci-bot" cannot list resource "secrets" in API group "" in the namespace "default"', target: true }, { text: 'Error from server (Forbidden): error when creating "plain.yaml": pods "plain" is forbidden: violates PodSecurity "restricted:latest": …' }]} prompt="Tekan ralat dari pintu 2." success="Betul! cannot list: kad tugas kata tidak." />
+
+Maksud mudah: **Unauthorized** ialah pintu 1. Forbidden dengan "cannot" ialah pintu 2. Forbidden dengan "violates" ialah pintu 3.
+</Card>
+
+<Card id="predict" type="predict">
+Pintu 2 kata boleh: anda boleh cipta pod. Bolehkah pintu 3 masih kata tidak?
+
+<Interactive name="Choice" options={[{ label: 'Boleh: pintu 3 semak pod itu sendiri', correct: true, why: 'Boleh masak tak bermakna semua hidangan lulus. Pod root masih boleh ditolak.' }, { label: 'Tidak: ya dari pintu 2 adalah muktamad', why: 'Pintu 3 berjalan selepas pintu 2. Ia masih boleh menolak.' }, { label: 'Hanya pada hujung minggu', why: 'Pintu-pintu ini tak pernah cuti.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh namakan tiga pintu yang setiap permintaan lalui.
+</Card>
+
+<Card id="deeper" type="deeper">
+Kubernetes tiada objek pengguna. Orang datang melalui sijil atau penyedia log masuk (OIDC). Robot guna ServiceAccount, iaitu objek. Pintu 3 ada dua bahagian. Mutating admission boleh ubah objek anda. Kemudian validating admission semaknya. Bacaan seperti `get` tak lalu pintu 3.
+
+<Interactive name="Mission" id="k6-l01-rep" steps={[{ id: 'cluster', text: 'Guna kluster buang sahaja: kind di komputer anda, atau makmal Killercoda.' }, { id: 'whoami', text: 'Tanya pintu 1 siapa anda.', command: 'kubectl auth whoami' }, { id: 'bot', text: 'Tanya sebagai ServiceAccount default. Pintu 2 patut kata tidak.', command: 'kubectl get secrets --as=system:serviceaccount:default:default' }]} success="Anda dah jumpa dua pintu sebenar!" />
+</Card>

@@ -1,0 +1,80 @@
+---
+id: docker-d4-l02
+world: 4
+title: Inside compose.yaml
+summary: "You will learn: to read every block of a compose.yaml."
+minutes: 5
+xp: 25
+interactives: [SpotLines, ComposeCanvas, SortCards, Choice, KitchenReplay, KitchenSim]
+needs: [docker-d4-l01]
+scenario: d4-shop
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Compose file reference: services", url: "https://docs.docker.com/reference/compose-file/services/" }
+  - { label: "Compose file reference: volumes", url: "https://docs.docker.com/reference/compose-file/volumes/" }
+  - { label: "Networking in Compose", url: "https://docs.docker.com/compose/how-tos/networking/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="SpotLines" lines={[{ text: 'services:' }, { text: '  web:', target: true }, { text: '    build: ./web' }, { text: '    ports:' }, { text: '      - "8080:80"' }, { text: '  api:', target: true }, { text: '    build: ./api' }, { text: '    environment:' }, { text: '      DB_HOST: db' }, { text: '  db:', target: true }, { text: '    image: postgres:18-alpine' }, { text: '    environment:' }, { text: '      POSTGRES_PASSWORD: example' }, { text: '    volumes:' }, { text: '      - db-data:/var/lib/postgresql' }]} prompt="Tap the three dishes in this file." success="web, api and db: two spaces in, right under services." />
+
+Aisyah wrote the shop's `compose.yaml`. It looks like a wall of words. Find the three dishes first.
+</Card>
+
+<Card id="try-build" type="try">
+Build the same file yourself. Add the three dishes. Give db its locker. Watch `compose.yaml` grow, block by block.
+
+<Interactive name="ComposeCanvas" palette={[{ id: 'web', build: './web', ports: ['8080:80'], means: 'Cooked from the recipe in web/.' }, { id: 'api', build: './api', environment: { DB_HOST: 'db' }, means: 'Cooked from the recipe in api/.' }, { id: 'db', image: 'postgres:18-alpine', environment: { POSTGRES_PASSWORD: 'example' }, volumeTarget: '/var/lib/postgresql', means: 'A ready pack from the freezer.' }]} goal={{ services: ['web', 'api', 'db'], volumes: { db: 'db-data' } }} prompt="Add web, api and db. Then give db the locker db-data." success="That is the shop's file. Each dish is a service." />
+
+<Hint>Tap each dish on the menu. Then pick db-data in db's locker list.</Hint>
+</Card>
+
+<Card id="check-keys" type="check">
+Each dish has a few keys. Sort them by what they do.
+
+<Interactive name="SortCards" buckets={[{ id: 'from', label: 'Where the dish comes from' }, { id: 'connect', label: 'How it connects' }, { id: 'keep', label: 'What it knows or keeps' }]} items={[{ label: 'build: ./web', bucket: 'from', why: 'Cook it from the recipe in the web folder.' }, { label: 'image: postgres:18-alpine', bucket: 'from', why: 'Take a ready pack from the freezer.' }, { label: 'ports: "8080:80"', bucket: 'connect', why: 'Order hatch 8080 on your laptop leads to port 80.' }, { label: 'networks: [back]', bucket: 'connect', why: 'Which phone lines the dish is on.' }, { label: 'environment: DB_HOST: db', bucket: 'keep', why: 'A setting, like -e in docker run.' }, { label: 'volumes: db-data:/var/lib/postgresql', bucket: 'keep', why: 'A locker, so the data stays.' }]} success="Every key sorted. You can read any service now." />
+</Card>
+
+<Card id="predict" type="predict">
+The locker is named twice: on the dish, and at the bottom. What if you delete the bottom block?
+
+```yaml
+  db:
+    image: postgres:18-alpine
+    volumes:
+      - db-data:/var/lib/postgresql
+
+volumes:
+  db-data:
+```
+
+<Interactive name="Choice" options={[{ label: 'Compose stops with an error', correct: true, why: 'Real words: service "db" refers to undefined volume db-data. Plain words: you used a locker you never listed.' }, { label: 'Compose makes the locker anyway', why: 'It never guesses. Every named locker is listed at the bottom.' }, { label: 'db starts without a locker', why: 'Compose checks the whole file first. Nothing starts.' }]} />
+</Card>
+
+<Card id="see-lines" type="see">
+<Interactive name="KitchenReplay" scenario="d4-shop" commands={['docker compose up -d', 'docker compose exec web wget -qO- http://api:3000']} label="Inside web, wget asks for http://api:3000. The api lunchbox answers with the shop's JSON." />
+
+This file has no `networks:` block. Compose still made one phone line, `kedai-kancil_default`. Every dish calls another by its **<Term id="compose-service">service</Term>** name, like `api`.
+</Card>
+
+<Card id="try-config" type="try">
+Dry run first. Ask Compose to print the final file, without starting anything.
+
+<Interactive name="KitchenSim" scenario="d4-shop" keys="compose" goal={{ lastTyped: '^docker compose config' }} hints={['Type docker compose config and press Enter.']} success="That is the file Compose will use. Nothing started." />
+
+<Hint>The command is `docker compose config`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now read every block of a compose.yaml.
+</Card>
+
+<Card id="deeper" type="deeper">
+Want two phone lines? List them under a top `networks:` block, like `front` and `back`. Then db can sit on `back` only. A top line `name: kedai` sets the project name. `compose.yaml` is the preferred file name; `docker-compose.yml` still works.
+
+Real rep (optional): in your `hello-set` folder, run `docker compose config`. Compare it with your file.
+</Card>

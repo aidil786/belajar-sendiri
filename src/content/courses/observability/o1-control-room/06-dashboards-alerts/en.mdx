@@ -1,0 +1,62 @@
+---
+id: obs-o1-l06
+world: 1
+title: Dashboards or alerts?
+summary: "You will learn: what belongs on a screen, what deserves to wake someone up, and how to tell them apart."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, AlertRuleBuilder, SwipeJudge, Mission]
+needs: [obs-o1-l05]
+scenario: o1-lunch-rush
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Prometheus: alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+  - { label: "Prometheus: alerting practices", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Grafana: dashboards", url: "https://grafana.com/docs/grafana/latest/dashboards/" }
+---
+
+<Card id="hook" type="hook">
+3 a.m. The disk is 71% full and fills slowly. Wake someone up?
+
+<Interactive name="Choice" options={[{ label: 'No. Put it on a screen, or a ticket for the morning.', correct: true, why: 'Yes. Nothing breaks tonight. Let people sleep.' }, { label: 'Yes. Better safe than sorry.', why: 'Pages that need no action teach people to ignore pages.' }, { label: 'Wake the whole team', why: 'Even a real problem needs one person, not everyone.' }]} />
+</Card>
+
+<Card id="see-split" type="see">
+A **<Term id="dashboard">dashboard</Term>** waits until you look. An alert calls a person, now. Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'dash', label: 'Dashboard' }, { id: 'alert', label: 'Alert' }]} items={[{ label: 'Orders per minute today', bucket: 'dash', why: 'Nice to see. Nobody must act.' }, { label: 'CPU of each server', bucket: 'dash', why: 'A cause to look at, not a page.' }, { label: 'Disk 71% full, filling slowly', bucket: 'dash', why: 'Handle it in work hours.' }, { label: '6% of checkouts failing for 5 minutes', bucket: 'alert', why: 'Customers hurt now. Someone must act.' }, { label: 'The shop page answers nobody', bucket: 'alert', why: 'Fully down. Act now.' }]} success="Screens for looking. Alerts for acting." />
+</Card>
+
+<Card id="try-alert" type="try">
+Build one **<Term id="alert">alert</Term>** that calls a person only when customers hurt. Pick the blocks, then test.
+
+<Interactive name="AlertRuleBuilder" scenario="o1-lunch-rush" alert="CheckoutFailing" exprs={[{ expr: 'kedai_orders_per_minute > 30', label: 'Lots of orders', why: 'Busy is good news. Many orders is not a problem.' }, { expr: 'kedai_checkout_errors_ratio > 0.02', label: 'Over 2% of checkouts fail' }]} fors={['0s', '5m']} goal={{ firingAt: ['25m'], quietAt: ['18m'] }} solution={{ expr: 1, for: 1 }} hints={['Which block hurts customers: many orders, or failed checkouts?']} success="It stays quiet during the busy rush, and calls when checkouts fail." />
+
+<Hint>An alert should mean: a customer is hurting, act now.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Your alert waits 5 minutes before it calls (`for: 5m`). Why wait?
+
+<Interactive name="Choice" options={[{ label: 'So a short blip does not wake anyone', correct: true, why: 'Yes. If it is still bad after 5 minutes, it is real.' }, { label: 'To give the problem time to grow', why: 'The goal is fewer false alarms, not bigger problems.' }, { label: 'Prometheus is slow', why: 'Prometheus checks every minute. The wait is your choice.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Is this a good alert? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Checkout errors above 2% for 5 minutes', good: true, why: 'Customers hurt, and it is not a blip.' }, { text: 'CPU above 70%', good: false, why: 'Busy CPU can be fine. Alert on what users feel.' }, { text: 'Disk full in 4 hours at this speed', good: true, why: 'Act now, before it breaks.' }, { text: 'A deploy finished', good: false, why: 'Good to know, but nobody must act. Send a chat message instead.' }, { text: 'Lots of orders right now', good: false, why: 'That is good news!' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose between a dashboard and an alert.
+</Card>
+
+<Card id="deeper" type="deeper">
+A good alert is urgent, needs a human, and needs it now. Everything else goes on a dashboard, a ticket or a chat message. World O3 builds real alert rules and routes them with Alertmanager.
+
+<Interactive name="Mission" id="obs-o1-l06-real" steps={[{ id: 'list', text: 'List the alerts that reached you last month, or imagine five for your app.' }, { id: 'act', text: 'For each one, ask: did someone have to act right away?' }, { id: 'move', text: 'Move every “no” to a dashboard or a ticket.' }]} success="Fewer, better alerts. Your future self says thanks." />
+</Card>

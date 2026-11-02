@@ -1,0 +1,75 @@
+---
+id: docker-d1-l03
+world: 1
+title: "Handy run flags: -d, --name, --rm"
+summary: "You will learn: to run a container in the background, give it a name, and let it tidy up."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, CommandBuilder, KitchenSim, SortCards, Choice, Mission]
+needs: [docker-d1-l02]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "docker run", url: "https://docs.docker.com/reference/cli/docker/container/run/" }
+  - { label: "Overriding container defaults", url: "https://docs.docker.com/get-started/docker-concepts/running-containers/overriding-container-defaults/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run nginx:1.30-alpine']} label="docker run nginx:1.30-alpine. nginx starts in front of you. Its messages fill the terminal and the prompt does not come back. The new box got a random name." />
+
+You ran nginx. Now your terminal is stuck, full of messages. And the box got a random name. Let's fix both.
+</Card>
+
+<Card id="try-build" type="try">
+Build a better command. **<Term id="detached">-d</Term>** means detached. The box runs in the background, like a rice cooker. `--name` picks its name.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'docker', means: 'Talk to Docker' }, { text: 'run', means: 'fill and start a box' }, { text: '-d', means: 'in the background' }, { text: '--name web', means: 'call it web' }, { text: 'nginx:1.30-alpine', means: 'from this meal pack' }]} decoys={[{ text: 'ps', means: 'list the boxes' }]} success="That's it: in the background, with a name you chose." />
+</Card>
+
+<Card id="try-sim" type="try">
+Now type it. Your terminal stays free, and the box is called web.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ running: ['web'] }} hints={['Type docker run -d --name web nginx:1.30-alpine']} success="web runs in the background. Your prompt came straight back." />
+
+<Hint>`docker run -d --name web nginx:1.30-alpine`</Hint>
+</Card>
+
+<Card id="see-rm" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run --rm alpine:3.22 echo hi', 'docker ps -a']} label="docker run --rm alpine:3.22 echo hi prints hi. Then docker ps -a shows an empty list: the box threw itself away." />
+
+**--rm** throws the box away when its job ends. `docker ps -a` shows nothing left. Perfect for one-off jobs.
+</Card>
+
+<Card id="try-sort" type="try">
+Which flag fits each job?
+
+<Interactive name="SortCards" buckets={[{ id: 'd', label: '-d' }, { id: 'name', label: '--name' }, { id: 'rm', label: '--rm' }]} items={[{ label: 'A web server that runs all day', bucket: 'd', why: 'In the background, so your terminal stays free.' }, { label: 'Print the date once, then tidy up', bucket: 'rm', why: 'A one-off job. --rm clears the box away after.' }, { label: 'Find the box again later by a nice name', bucket: 'name', why: 'A name you chose beats vibrant_ritchie.' }, { label: "A quick test you won't need again", bucket: 'rm', why: 'No old box left behind.' }, { label: 'Keep typing while it runs', bucket: 'd', why: 'Detached boxes give your prompt back.' }]} success="You know your flags!" />
+</Card>
+
+<Card id="predict" type="predict">
+web already exists. You run `docker run -d --name web nginx:1.30-alpine` again. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Docker refuses: the name is taken', correct: true, why: 'Names are unique. Two boxes cannot share one.' }, { label: 'A second box called web appears', why: 'Docker never allows two boxes with one name.' }, { label: 'The old web is replaced', why: 'Docker never deletes a box for you.' }]} />
+</Card>
+
+<Card id="check-conflict" type="check">
+<Interactive name="KitchenReplay" scenario="d1-web" commands={['docker run -d --name web nginx:1.30-alpine']} fails={['docker run -d --name web nginx:1.30-alpine']} label="A box called web already runs. docker run --name web answers with a Conflict error: the name is already in use." />
+
+The real error says the name `"/web" is already in use`. Plain words: one name, one box. Remove the old box, or pick a new name.
+</Card>
+
+<Card id="win" type="win">
+You can now run, name and tidy up boxes with three flags.
+</Card>
+
+<Card id="deeper" type="deeper">
+`-d` and `--rm` work together: a background box that cleans up when it stops. `docker rename web shop` changes a name. `-it` gives you a keyboard inside a box; that comes in lesson 6.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l03-rep" steps={[{ id: 'bg', text: 'Run nginx in the background, named web.', command: 'docker run -d --name web nginx:1.30-alpine' }, { id: 'once', text: 'Run a one-off box that tidies up.', command: 'docker run --rm alpine:3.22 echo hi' }, { id: 'list', text: 'Only web is left.', command: 'docker ps -a' }, { id: 'tidy', text: 'Stop and remove web.', command: 'docker rm -f web' }]} success="Background, names and tidy boxes: done for real." />
+</Card>

@@ -1,0 +1,58 @@
+---
+id: obs-o4-l08
+world: 4
+title: "Postmortem tanpa menuding jari"
+summary: "Anda akan belajar: catat apa yang berlaku supaya sistem jadi lebih baik, bukan supaya seseorang dipersalahkan."
+minutes: 3
+xp: 15
+interactives: [Choice, SwipeJudge, OrderList, SpotLines]
+needs: [obs-o4-l07]
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Postmortem culture (Google SRE book)", url: "https://sre.google/sre-book/postmortem-culture/" }
+  - { label: "Postmortem culture (Google SRE workbook)", url: "https://sre.google/workbook/postmortem-culture/" }
+---
+
+<Card id="hook" type="hook">
+Selepas insiden A1041, bos tanya: "Siapa yang rosakkan?" Ben dimarahi. Apa jadi bila seseorang buat silap lain kali?
+
+<Interactive name="Choice" options={[{ label: 'Mereka sembunyikannya, dan ia jadi lebih teruk', correct: true, why: 'Betul. Menyalahkan ajar orang diam. Diam sembunyikan masalah seterusnya.' }, { label: 'Mereka lebih berhati-hati', why: 'Orang memang dah berhati-hati. Sistem yang biarkan silap itu lepas.' }, { label: 'Tiada apa berubah', why: 'Ada yang berubah: orang berhenti bersuara.' }]} />
+</Card>
+
+<Card id="see-swipe" type="see">
+Leret ke kanan untuk ayat tanpa menuding jari. Leret ke kiri untuk ayat yang menyalahkan.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Perubahan 17:30 buang satu indeks, dan tiada semakan yang tangkap.', good: true, why: 'Ia sebut apa yang sistem benarkan.' }, { text: 'Ben jalankan perubahan itu dengan salah.', good: false, why: 'Tanya apa yang buat ia mudah dijalankan dengan salah.' }, { text: 'Runbook tiada langkah untuk query yang lambat.', good: true, why: 'Lompang dalam sistem yang boleh dibaiki.' }, { text: 'Mei sepatutnya tahu.', good: false, why: '"Sepatutnya tahu" tak baiki apa-apa untuk lain kali.' }]} />
+
+**<Term id="blameless-postmortem">Postmortem tanpa menuding jari</Term>** tanya apa yang buat silap itu mudah berlaku. Bukan siapa nak dihukum.
+</Card>
+
+<Card id="see-parts" type="see">
+<Interactive name="OrderList" items={['Ringkasan: satu perenggan', 'Kesan: siapa rasa, berapa lama', 'Garis masa: apa berlaku bila', 'Punca: apa yang biarkan ia berlaku', 'Tindakan: pemilik dan tarikh']} label="Bahagian atas postmortem dulu" success="Cerita dulu, pengajaran kemudian." />
+
+Susun bahagian catatan itu mengikut urutan.
+</Card>
+
+<Card id="predict" type="predict">
+Tindakan mana yang betul-betul akan dibuat?
+
+<Interactive name="Choice" options={[{ label: 'Tambah semakan CI yang halang perubahan yang buang indeks. Pemilik: Ben. Tarikh: 15 Nov.', correct: true, why: 'Betul. Spesifik, ada pemilik, ada tarikh.' }, { label: 'Lebih berhati-hati dengan pangkalan data.', why: 'Tiada siapa boleh tandakan itu selesai. Jadikan ia konkrit.' }, { label: 'Baiki pangkalan data.', why: 'Baiki apa, bila, dan siapa?' }]} />
+</Card>
+
+<Card id="check-draft" type="check">
+<Interactive name="SpotLines" prompt="Draf postmortem. Ketik setiap baris yang menyalahkan seseorang." lines={[{ text: 'Kesan: 28 minit, lebih kurang 5% pesanan gagal.' }, { text: 'Punca: Ben cuai dengan perubahan 17:30.', target: true }, { text: 'Punca: tiada ujian yang semak indeks kekal.' }, { text: 'Nota: Mei sepatutnya perasan lebih awal.', target: true }, { text: 'Yang baik: tracing jumpa query lambat dalam 4 minit.' }]} success="Tulis semula dua baris itu sebagai lompang sistem, dan pasukan belajar." />
+
+Cari ayat yang menyalahkan, kemudian bayangkan baikan sistem di sebaliknya.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tulis postmortem tanpa menuding jari dengan tindakan yang sebenar.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tulis satu bila pelanggan rasa kesannya, bila data hilang, atau bila on-call terpaksa campur tangan. Kongsikan seluas-luasnya: pasukan lain ada lompang yang sama. Raikan orang yang bersuara dulu.
+</Card>

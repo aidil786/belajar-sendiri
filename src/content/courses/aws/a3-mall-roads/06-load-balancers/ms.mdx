@@ -1,0 +1,67 @@
+---
+id: aws-a3-l06
+world: 3
+title: "Load balancer"
+summary: "Anda akan belajar: cara load balancer kongsi pembeli antara server yang sihat, dan cara jaga server di belakangnya."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, SortCards, SpotLines, Choice, SecurityGroupGate, SwipeJudge]
+needs: [aws-a3-l05]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Elastic Load Balancing: What is it?", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" }
+  - { label: "Application Load Balancers: Target groups", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html" }
+  - { label: "Application Load Balancers: Health checks", url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html" }
+  - { label: "AWS CLI: aws elbv2 describe-target-health", url: "https://docs.aws.amazon.com/cli/latest/reference/elbv2/describe-target-health.html" }
+  - { label: "Elastic Load Balancing pricing", url: "https://aws.amazon.com/elasticloadbalancing/pricing/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '12:00', title: 'Waktu makan tengah hari', text: 'Ratusan pesanan serbu satu-satunya server Kedai Kancil.' }, { when: '12:05', title: 'Terlalu banyak', text: 'Server jadi perlahan, kemudian rosak.' }, { when: '12:06', title: 'Tutup', text: 'Setiap pembeli nampak halaman ralat.' }]} />
+
+Satu kaunter, satu kerosakan, sifar jualan. Ketik cerita itu. Bagaimana jika dua kaunter kongsi barisan?
+</Card>
+
+<Card id="see-lb" type="see">
+**<Term id="load-balancer">Load balancer</Term>** (penyambut tetamu) ialah kaunter penyambut pusat beli-belah. Ia hantar setiap pembeli ke kaunter yang lapang dan sihat. AWS ada dua jenis biasa. Susun kerjanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'alb', label: 'Application Load Balancer (laman web)' }, { id: 'nlb', label: 'Network Load Balancer (apa-apa TCP/UDP)' }]} items={[{ label: 'Hantar /api ke satu kumpulan, yang lain ke kumpulan lain', bucket: 'alb', why: 'Ia baca alamat web, jadi ia boleh hala ikut laluan.' }, { label: 'Laman web melalui HTTPS', bucket: 'alb', why: 'Ia faham HTTP dan HTTPS.' }, { label: 'Server permainan guna UDP', bucket: 'nlb', why: 'Ia salurkan TCP dan UDP mentah, sangat laju.' }, { label: 'Port pangkalan data untuk rakan niaga', bucket: 'nlb', why: 'TCP biasa, tiada laman web: jenis rangkaian.' }]} success="Laman web: application. Lain-lain atas TCP atau UDP: network." />
+</Card>
+
+<Card id="see-health" type="see">
+Kaunter-kaunter duduk dalam **<Term id="target-group">target group</Term>**. Penyambut periksa kesihatan setiap satu. Ini jawapan contoh rasmi, dipendekkan. Ketik setiap sasaran yang sihat.
+
+<Interactive name="SpotLines" prompt="Ketik setiap sasaran yang sihat." success="Kedua-dua kaunter lulus pemeriksaan kesihatan, jadi kedua-duanya dapat pembeli." lines={[{ text: '$ aws elbv2 describe-target-health --target-group-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067' }, { text: '"HealthCheckPort": "80",' }, { text: '"Id": "i-ceddcd4d",' }, { text: '"State": "healthy"', target: true }, { text: '"HealthCheckPort": "80",' }, { text: '"Id": "i-0f76fade",' }, { text: '"State": "healthy"', target: true }]} />
+</Card>
+
+<Card id="predict" type="predict">
+Satu daripada dua server berhenti jawab pemeriksaan kesihatan. Apa load balancer buat?
+
+<Interactive name="Choice" options={[{ label: 'Berhenti hantar pembeli kepadanya', correct: true, why: 'Kaunter tak sihat tak dapat pembeli sehingga ia lulus semula.' }, { label: 'Tetap hantar separuh pembeli ke situ', why: 'Itulah yang pemeriksaan kesihatan halang.' }, { label: 'Baiki server itu', why: 'Ia hanya halakan trafik. Membaiki ialah kerja anda, atau auto scaling.' }]} />
+</Card>
+
+<Card id="try-chain" type="try">
+Server aplikasi duduk di belakang. Hanya load balancer boleh capai mereka di port 80. Guna kumpulannya, `sg-lb`, sebagai sumber.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-lb']} visitors={[{ id: 'lb', label: 'Load balancer', ip: '10.0.0.10', groups: ['sg-lb'], client: 'elb', protocol: 'tcp', port: 80, want: 'in' }, { id: 'stranger', label: 'Orang asing', ip: '192.0.2.77', protocol: 'tcp', port: 80, want: 'out' }, { id: 'neighbour', label: 'Server lain dalam VPC anda', ip: '10.0.1.20', protocol: 'tcp', port: 80, want: 'out' }]} success="Hanya penyambut boleh capai kaunter. Orang lain mesti lalu ia." />
+
+<Hint>Tambah peraturan: TCP, port 80, dari `sg-lb`.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Tabiat load balancer yang baik, atau berisiko? Leret ke kanan untuk baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Load balancer di baris awam dua sayap', good: true, why: 'Application Load Balancer memang perlukan sekurang-kurangnya dua sayap.' }, { text: 'Beri setiap server aplikasi IP awam juga', good: false, why: 'Nanti orang asing boleh langkau penyambut. Simpan server di belakang.' }, { text: 'Pemeriksaan kesihatan pada halaman /health yang kecil', good: true, why: 'Cepat dijawab, dan ia tunjuk aplikasi betul-betul berfungsi.' }, { text: 'Biar load balancer ujian berjalan sebulan', good: false, why: 'Ia dicaj setiap jam ia berjalan. Padam selepas ujian.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh letak penyambut di depan server anda, dan jaga kaunter di belakangnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Auto Scaling group boleh tambah kaunter waktu makan dan buang pada waktu malam. Load balancer jumpa kaunter baru sendiri. Ingat bil: load balancer ada caj setiap jam, walaupun tiada pembeli.
+</Card>

@@ -1,0 +1,104 @@
+---
+id: k8s-k5-l04
+world: 5
+title: "Pilih gerai: nodeSelector dan affinity"
+summary: "Anda akan belajar: cara hantar pod hanya ke node yang ada label betul."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, Choice, SchedulerTetris, FoodCourtSim, SortCards]
+needs: [k8s-k5-l03]
+scenario: k5-pick
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: assigning pods to nodes", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" }
+  - { label: "Kubernetes: well-known labels", url: "https://kubernetes.io/docs/reference/labels-annotations-taints/" }
+  - { label: "kubectl label", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k5-pick" commands={['kubectl apply -f fast.yaml', 'sleep 5', 'kubectl get pod fast']} label="Pod fast dicipta, tapi selepas 5 saat ia masih Pending, 0 daripada 1 sedia." />
+
+Pod (dulang) fast kata Pending. Ia tak pernah bermula. Apa yang ia tunggu?
+</Card>
+
+<Card id="see-sign" type="see">
+`fast.yaml` bawa papan tanda. **<Term id="node-selector">nodeSelector</Term>** kata: "hanya node (gerai) dengan label ini."
+
+```yaml
+spec:
+  nodeSelector:
+    disk: ssd
+```
+
+Gerai mana boleh terima pod fast?
+
+<Interactive name="Choice" options={[{ label: 'Gerai berlabel disk=ssd', correct: true, why: 'Papan tanda mesti sama tepat dengan label gerai.' }, { label: 'Mana-mana gerai yang ada ruang', why: 'Ruang sahaja tak cukup. Label pun mesti sama.' }, { label: 'Gerai control-plane', why: 'Ia berkunci (taint), dan tiada label disk=ssd.' }]} />
+</Card>
+
+<Card id="try-tetris" type="try">
+Letak setiap pod di atas gerai. Baca papan tanda dulu.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi', labels: { disk: 'ssd' } }, { name: 'stall-b', cpu: '2', memory: '4Gi', labels: { disk: 'hdd' } }]} pods={[{ name: 'fast', cpu: '500m', memory: '512Mi', nodeSelector: { disk: 'ssd' } }, { name: 'tray-1', cpu: '1', memory: '1Gi' }, { name: 'slow-ok', cpu: '500m', memory: '512Mi', nodeSelector: { disk: 'hdd' } }]} success="Setiap pod duduk di bawah papan tanda yang sepadan." />
+
+<Hint>fast perlu disk=ssd. slow-ok perlu disk=hdd. tray-1 tiada papan tanda: mana-mana gerai boleh.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k5-pick" commands={['kubectl apply -f fast.yaml', 'sleep 5', 'kubectl get events --field-selector reason=FailedScheduling -o jsonpath={.items[0].message}']} label="Event FailedScheduling: 0 daripada 3 node tersedia. 1 ada taint yang tak dibenarkan, 2 tak sepadan dengan node affinity atau selector pod." />
+
+Itu kata-kata sebenar scheduler. Dalam bahasa mudah: satu gerai berkunci. Dua ada label salah. Tiada gerai bertanda disk=ssd.
+</Card>
+
+<Card id="try-label" type="try">
+Beri gerai dev-worker2 papan tanda itu. Pod yang menunggu patut masuk.
+
+```bash
+kubectl label nodes dev-worker2 disk=ssd
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-pick-try" goal={{ podsReady: { selector: 'app=fast', count: 1 } }} hints={['Taip kubectl label nodes dev-worker2 disk=ssd', 'Tunggu beberapa saat, kemudian kubectl get pod fast -o wide']} success="Pod fast jumpa gerainya dan sedang Running." />
+
+<Hint>Salin arahan di atas. Kemudian lihat pod yang menunggu.</Hint>
+</Card>
+
+<Card id="see-affinity" type="see">
+**<Term id="node-affinity">Node affinity</Term>** ialah senarai hajat: syarat wajib (required) dan syarat pilihan (preferred). Pod fast perlu ssd. Ia suka zon front. Asingkan kedua-duanya.
+
+<Interactive name="SortCards" buckets={[{ id: 'must', label: 'Wajib (required)' }, { id: 'nice', label: 'Pilihan (preferred)' }]} items={[{ label: 'disk In [ssd]', bucket: 'must', why: 'Tiada ssd, tiada gerai. Itu wajib.' }, { label: 'zone In [front]', bucket: 'nice', why: 'Front lebih baik, tapi tak wajib. Ia dapat weight.' }]} success="Betul: required menapis, preferred cuma beri markah." />
+
+Dalam YAML, dua senarai itu nampak begini:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: disk, operator: In, values: [ssd] }
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 50
+        preference:
+          matchExpressions:
+            - { key: zone, operator: In, values: [front] }
+```
+</Card>
+
+<Card id="predict" type="predict">
+Pod fast berjalan di dev-worker2. Sekarang anda buang label itu: `kubectl label nodes dev-worker2 disk-`. Apa jadi pada pod itu?
+
+<Interactive name="Choice" options={[{ label: 'Ia terus berjalan di situ', correct: true, why: 'IgnoredDuringExecution: papan tanda dibaca hanya semasa pod diletakkan.' }, { label: 'Ia dipindah ke gerai lain', why: 'Label hanya disemak semasa meletakkan pod.' }, { label: 'Ia dipadam', why: 'Tiada yang padamnya. Ia cuma tak akan diletak di situ lagi.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hantar pod ke gerai yang betul dengan label.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get nodes --show-labels` senaraikan label setiap gerai. Label terbina termasuk `kubernetes.io/hostname` dan, dalam cloud, `topology.kubernetes.io/zone`. Pod affinity letak pod dekat pod lain. Anti-affinity jauhkan mereka.
+
+Latihan sebenar (pilihan): guna kluster kind untuk dibuang. Labelkan satu pekerja, kemudian apply pod dengan nodeSelector.
+</Card>

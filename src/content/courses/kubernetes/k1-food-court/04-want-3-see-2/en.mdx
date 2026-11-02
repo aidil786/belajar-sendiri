@@ -1,0 +1,86 @@
+---
+id: k8s-k1-l04
+world: 1
+title: Want 3, See 2
+summary: "You will learn: how Kubernetes heals itself."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, ManagersBoard, Choice, FoodCourtSim, SpotLines, Mission]
+needs: [k8s-k1-l03]
+scenario: k1-want3
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: controllers", url: "https://kubernetes.io/docs/concepts/architecture/controller/" }
+  - { label: "Deployments", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+  - { label: "kubectl scale", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k1-night" commands={['kubectl get nodes']} label="The food court at night. The stall dev-worker goes dark: its status is NotReady. Two trays sat on it." />
+
+Your app’s server died at 3 a.m. Everyone was asleep. Who fixes it?
+</Card>
+
+<Card id="see-want" type="see">
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={[]} label="The manager's board says Want 3: the order for shop asks for 3 trays." />
+
+You tell Kubernetes what you want: 3 copies, always. This is the **<Term id="desired-state">desired state</Term>**.
+</Card>
+
+<Card id="see-loop" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl get deployment shop']} label="kubectl get deployment shop says READY 3/3. Three green trays sit on the stalls." />
+
+A **<Term id="controller">controller</Term>** checks again and again. Want 3. See 3. All good.
+</Card>
+
+<Card id="predict" type="predict">
+A whole stall closes, and one tray is lost. What happens next?
+
+<Interactive name="Choice" options={[{ label: 'Nothing', why: 'The controller is still checking. It sees only 2 trays.' }, { label: 'A new tray appears', correct: true, why: 'Yes! Want 3, see 2: the controller orders one more tray.' }, { label: 'Everything restarts', why: 'The other trays keep serving. Only the missing one is made again.' }]} />
+</Card>
+
+<Card id="see-gap" type="see">
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl delete pod {pod:app=shop}', 'kubectl get pods']} label="One shop pod is deleted. Right away a new pod with a new name appears, so there are 3 again." />
+
+Want 3. See 2. Make 1 more. That is the whole trick.
+</Card>
+
+<Card id="try-delete" type="try">
+Tap “delete” on any pod. Watch what Kubernetes does.
+
+<Interactive name="ManagersBoard" scenario="k1-want3" target="shop" actions={['deletePod']} goal={{ healed: 2 }} success="Every gap got filled. The order still says 3." label="The board shows Want 3, See 3. Delete a pod: See 2, then Make 1 more. The Gaps fixed counter goes up." />
+
+<Hint>Press “Delete a pod” twice. Watch the Do box and the Gaps fixed counter.</Hint>
+</Card>
+
+<Card id="try-scale" type="try">
+Now change the order. Type `kubectl scale deployment shop --replicas=5`.
+
+<Interactive name="FoodCourtSim" scenario="k1-want3" board="shop" goal={{ replicas: { name: 'shop', count: 5 }, podsReady: { selector: 'app=shop', count: 5 } }} hints={['Type kubectl scale deployment shop --replicas=5 and press Enter.', 'Then wait a moment, or press +1s, until 5 trays are green.']} success="Want 5, see 5. You changed the order, and the trays followed." />
+
+<Hint>scale changes the number on the order board. The controller does the rest.</Hint>
+</Card>
+
+<Card id="check-name" type="check">
+<Interactive name="SpotLines" prompt="Tap the new pod." lines={[{ text: 'NAME                   READY   STATUS    RESTARTS   AGE' }, { text: 'shop-747bf9cf8-gnjxm   1/1     Running   0          29s' }, { text: 'shop-747bf9cf8-wrfvr   1/1     Running   0          7s', target: true }, { text: 'shop-747bf9cf8-zbn9j   1/1     Running   0          29s' }]} success="Yes: a new name, and an AGE of only 7 seconds." />
+
+The new pod has a new name. Kubernetes replaces pods; it does not repair them.
+
+<Hint>Look at the AGE column. Which tray is the youngest?</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now explain how Kubernetes heals itself.
+</Card>
+
+<Card id="deeper" type="deeper">
+This loop is called <Term id="reconciliation">reconciliation</Term>. If only a container crashes, the kubelet restarts it in the same pod. Watch the RESTARTS column. When a node dies, Kubernetes waits about 5 minutes. Then it replaces the pods.
+
+<Interactive name="KubeReplay" scenario="k1-want3" commands={['kubectl delete pod {pod:app=shop} --wait=false', 'kubectl get pods -w']} label="A pod is deleted. kubectl get pods -w watches: the old pod shows Terminating, a new pod goes Pending, then Running, then ready 1/1." />
+
+<Interactive name="Mission" id="k8s-k1-l04-real" steps={[{ id: 'order', text: 'On your own kind cluster, order 3 trays.', command: 'kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3' }, { id: 'look', text: 'Look at the trays and their names.', command: 'kubectl get pods' }, { id: 'delete', text: 'Delete one. Copy a real name from the list first.', command: 'kubectl delete pod <a shop pod name>' }, { id: 'again', text: 'Look again: 3 trays, one with a new name.', command: 'kubectl get pods' }]} success="You watched a real cluster heal itself!" />
+</Card>

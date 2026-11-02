@@ -1,0 +1,80 @@
+---
+id: docker-d6-boss
+world: 6
+title: "X-ray"
+summary: "Anda akan belajar: tukar proses biasa jadi container, satu namespace dan satu had pada satu masa."
+minutes: 6
+xp: 50
+interactives: [Choice, NamespaceXray, KitchenSim, OrderList, Mission]
+needs: [docker-d6-l07]
+scenario: d6-web
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "namespaces(7)", url: "https://man7.org/linux/man-pages/man7/namespaces.7.html" }
+  - { label: "cgroups(7)", url: "https://man7.org/linux/man-pages/man7/cgroups.7.html" }
+  - { label: "docker container top", url: "https://docs.docker.com/reference/cli/docker/container/top/" }
+---
+
+<Card id="hook" type="hook">
+Misi bos: X-ray. `node server.js` ialah proses biasa dalam laptop Aina. Anda akan jadikannya container, satu suis pada satu masa. Mula-mula: apa sebenarnya container?
+
+<Interactive name="Choice" options={[{ label: 'Proses biasa dengan namespace dan cgroups dihidupkan', correct: true, why: 'Penutup mata untuk apa ia nampak, catuan untuk apa ia guna.' }, { label: 'Komputer kecil di dalam laptop', why: 'Itu mesin maya. Container kongsi kernel laptop.' }, { label: 'Sejenis fail khas', why: 'Image ialah fail. Container yang berjalan ialah proses.' }]} />
+</Card>
+
+<Card id="try-pid" type="try">
+Bilik 1: sorok proses lain dalam laptop daripadanya.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt']} task={{ type: 'turnOn', switches: ['pid'] }} prompt="Hidupkan suis yang sorok proses lain." success="Di dalam, ia kini PID 1. Tapi baca nota itu!" />
+
+<Hint>Suis PID ada di sebelah senarai proses.</Hint>
+</Card>
+
+<Card id="predict-proc" type="predict">
+PID dah hidup. Tapi `ps` di dalam masih senaraikan proses laptop. Kenapa?
+
+<Interactive name="Choice" options={[{ label: 'ps baca /proc. Ia perlukan /proc baharu, dari suis Mount.', correct: true, why: 'Docker pasang /proc baharu di dalam, jadi ps tunjuk bekas itu sahaja.' }, { label: 'Suis PID rosak', why: 'Ia berfungsi. ps cuma baca fail /proc lama milik laptop.' }, { label: 'Container sentiasa nampak semua', why: 'Dengan /proc baharu, ps tunjuk prosesnya sendiri sahaja.' }]} />
+</Card>
+
+<Card id="try-docker" type="try">
+Bilik 2: hidupkan set penutup mata Docker sendiri, sampai sepanduk tulis container.
+
+<Interactive name="NamespaceXray" switches={['pid', 'mnt', 'net', 'uts', 'ipc', 'user']} start={['pid']} task={{ type: 'docker' }} />
+
+<Hint>Docker hidupkan lima: PID, Mount, Network, UTS dan IPC. User kekal mati.</Hint>
+</Card>
+
+<Card id="try-real" type="try">
+Bilik 3: sekarang yang sebenar. `web` jalankan nginx. Lihat dari dalam dengan `docker exec web ps`, kemudian dari laptop dengan `docker top web`.
+
+<Interactive name="KitchenSim" scenario="d6-web" goal={{ typed: '^docker exec (-it )?web ps', lastTyped: '^docker top web' }} hints={['Mula-mula taip docker exec web ps', 'Kemudian taip docker top web']} success="PID 1 di dalam, PID besar di luar. Satu proses, dua pandangan!" />
+
+<Hint>Dalam dulu: `docker exec web ps`. Kemudian pandangan laptop: `docker top web`.</Hint>
+</Card>
+
+<Card id="try-all" type="try">
+Bilik 4: tambah had catuan, dan penutup mata terakhir. Hidupkan semua suis.
+
+<Interactive name="NamespaceXray" start={['pid', 'mnt', 'net', 'uts', 'ipc']} task={{ type: 'all' }} success="Semua suis hidup. Proses biasa anda kini container kecil yang ketat!" />
+
+<Hint>Masih mati: User, Had memori, Had CPU dan Had proses.</Hint>
+</Card>
+
+<Card id="check-relay" type="check">
+Bilik terakhir: apa jadi bila anda taip `docker run`? Susun, yang pertama di atas.
+
+<Interactive name="OrderList" items={['Anda taip docker run', 'dockerd hantar pesanan kepada containerd', 'containerd susun lapisan image dengan plastik atas yang baharu', 'runc hidupkan namespace dan cgroups', 'Aplikasi anda bermula sebagai PID 1, dan runc pergi']} label="Langkah pertama di atas" success="X-ray selesai. Anda boleh nampak tembus sebuah container!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina container dalam kepala, suis demi suis.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan, Linux): hidupkan suis sebenar dengan `unshare`. Namespace rangkaian baharu cuma ada `lo`, dan ia mula dalam keadaan mati. Laptop anda tak berubah.
+
+<Interactive name="Mission" id="d6-boss-unshare" steps={[{ id: 'in', text: 'Buka shell dengan PID, mount, UTS dan rangkaian sendiri.', command: 'sudo unshare --pid --fork --mount-proc --uts --net sh' }, { id: 'ps', text: 'Hanya shell ini dan ps ada di sini.', command: 'ps' }, { id: 'net', text: 'Hanya kad loopback ada di sini.', command: 'ip link' }, { id: 'out', text: 'Keluar. Suis-suis itu hilang.', command: 'exit' }]} success="Anda hidupkan suis Linux sebenar dengan tangan sendiri." />
+</Card>

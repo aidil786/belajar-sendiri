@@ -1,0 +1,81 @@
+---
+id: git-w12-l03
+world: 12
+title: PR sumber terbuka pertama anda
+summary: "Anda akan belajar: langkah untuk cadangkan pembetulan kepada projek orang lain."
+minutes: 5
+xp: 25
+interactives: [SpotLines, SortCards, PracticeRepo, OrderList, CommandBuilder, Choice, TimelineTap]
+needs: [git-w12-l02]
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Contributing to a project", url: "https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project" }
+  - { label: "Finding ways to contribute", url: "https://docs.github.com/en/get-started/exploring-projects-on-github/finding-ways-to-contribute-to-open-source-on-github" }
+  - { label: "Contributor guidelines (CONTRIBUTING)", url: "https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors" }
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+---
+
+<Card id="hook" type="hook">
+Anda suka satu aplikasi nota percuma. README-nya ada salah taip. Anda bukan ahli pasukan mereka. Bolehkah anda tetap membaikinya?
+
+<Interactive name="SpotLines" lines={[{ text: '# QuickNotes' }, { text: 'A tiny app for fast notes.' }, { text: 'Instal it with one command.', target: true }, { text: 'Made with love by volunteers.' }]} prompt="Tekan baris yang ada salah taip." success="Jumpa! Itu boleh jadi sumbangan pertama anda." />
+</Card>
+
+<Card id="try-roles" type="try">
+Kod **sumber terbuka** (open source) boleh dilihat semua orang. Sesiapa pun boleh cadangkan perubahan. Penjaga projek, iaitu maintainer, tentukan apa yang masuk. Siapa buat apa?
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'Anda (penyumbang)' }, { id: 'keeper', label: 'Maintainer' }]} items={[{ label: 'Fork projek dan ubah', bucket: 'you', why: 'Fork ialah salinan anda sendiri untuk bekerja.' }, { label: 'Buka pull request', bucket: 'you', why: 'Itulah cara anda minta mereka terima perubahan anda.' }, { label: 'Balas komen semakan', bucket: 'you', why: 'Anda jawab soalan tentang perubahan anda.' }, { label: 'Semak pull request', bucket: 'keeper', why: 'Maintainer semak setiap perubahan.' }, { label: 'Merge ke dalam projek', bucket: 'keeper', why: 'Hanya maintainer boleh merge ke dalam projek mereka.' }, { label: 'Label issue mudah untuk orang baru', bucket: 'keeper', why: 'Maintainer label issue supaya penyumbang boleh jumpa.' }]} success="Betul! Anda cadangkan. Mereka yang putuskan." />
+</Card>
+
+<Card id="see-issue" type="see">
+<Interactive name="SpotLines" lines={[{ text: '[bug] App crashes on save' }, { text: '[good first issue] Fix typo', target: true }, { text: '[enhancement] New sync engine' }, { text: '[good first issue] Add image', target: true }, { text: '[question] Plugins?' }]} prompt="Tekan setiap issue yang khas untuk orang baru." success="Ya! Dua itu kecil, jelas dan sedang menunggu anda." />
+
+Maintainer tanda tugasan mudah dengan label **<Term id="good-first-issue">good first issue</Term>** (untuk orang baru). Mula di situ. Tulis semula kod besar boleh tunggu.
+</Card>
+
+<Card id="try-ask" type="try">
+Projek simpan peraturan rumahnya dalam **<Term id="contributing-guide">CONTRIBUTING.md</Term>**. Baca yang ini. Kemudian ikut peraturan 1 dalam issue #42.
+
+<Interactive name="PracticeRepo" screen="markdown-file" at="CONTRIBUTING.md" repo={{ owner: 'notes-crew', name: 'quicknotes', description: 'Aplikasi kecil untuk nota pantas.', files: [{ path: 'README.md', content: '# QuickNotes\n\nA tiny app for fast notes.\n\nInstal it with one command.\n' }, { path: 'CONTRIBUTING.md', content: '# Cara menyumbang kepada QuickNotes\n\nTerima kasih kerana membantu!\n\n1. Tanya dalam issue sebelum mula.\n2. Satu perubahan kecil bagi setiap pull request.\n3. Tulis mesej commit yang jelas, contohnya `docs: fix typo`.\n4. Berbudi bahasa. Kami semua sukarelawan.\n' }] }} issues={[{ number: 41, title: 'App crashes on save', body: 'Ia ranap bila saya simpan nota yang panjang.', state: 'open', author: 'sam', labels: ['bug'] }, { number: 42, title: 'Fix typo in README', body: 'README tulis "Instal". Sepatutnya "Install".', state: 'open', author: 'mei', labels: ['good first issue'] }, { number: 43, title: 'New sync engine', body: 'Jom rancang sync yang lebih laju.', state: 'open', author: 'mei', labels: ['enhancement'] }]} task={{ type: 'comment', issue: 42, mustInclude: '\\?|take|work on|boleh|ambil' }} success="Dah tanya! Kini maintainer tahu anda sedang buat." />
+
+<Hint>Buka Issues, kemudian #42. Tulis komen berbentuk soalan, contohnya: Boleh saya ambil yang ini?</Hint>
+</Card>
+
+<Card id="try-order" type="try">
+Susun seluruh perjalanan ini. Anda dah kenal fork (salinan projek orang lain) dalam World 4. Pull request (minta perubahan diterima) pula dalam World 5.
+
+<Interactive name="OrderList" items={['Fork projek ke akaun anda', 'Clone fork anda', 'Buat branch baru', 'Buat satu perubahan kecil dan commit', 'Push branch ke fork anda', 'Buka pull request', 'Balas semakan dengan baik']} label="Langkah pertama di atas" success="Itulah laluan setiap penyumbang sumber terbuka!" />
+
+<Hint>Anda tak boleh clone fork yang belum wujud. Dan PR datang selepas push.</Hint>
+</Card>
+
+<Card id="try-push" type="try">
+Pembetulan anda dah di-commit (titik simpan) dalam branch (cabang) `fix-readme-typo`. Bina arahan untuk hantar ke fork anda.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'push', means: 'hantar commit ke atas' }, { text: '-u', means: 'ingat pautan ini untuk lain kali' }, { text: 'origin', means: 'fork anda di GitHub' }, { text: 'fix-readme-typo', means: 'branch anda' }]} decoys={[{ text: '--force', means: 'tulis ganti (tak perlu langsung di sini)' }, { text: 'main', means: 'branch utama, bukan pembetulan anda' }]} success="Dah dihantar! Fork anda kini ada branch anda." />
+
+<Hint>Selepas clone fork anda, `origin` ialah fork anda.</Hint>
+</Card>
+
+<Card id="check-review" type="check">
+Maintainer balas: "Terima kasih! Boleh baiki salah taip yang sama dalam docs/setup.md juga?" Apa anda buat?
+
+<Interactive name="Choice" options={[{ label: 'Baiki, commit, dan push ke branch yang sama', correct: true, why: 'Commit baru dalam branch itu terus masuk ke PR yang sama.' }, { label: 'Tutup PR dan buka yang baru', why: 'Tak perlu. PR ikut branch anda.' }, { label: 'Kata itu bukan sebahagian daripada issue', why: 'Permintaan kecil itu biasa. Kekal baik dan membantu.' }]} />
+</Card>
+
+<Card id="see-path" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Hari ini', title: 'Satu pembetulan kecil', text: 'Salah taip atau pautan rosak. Kecil pun sempurna.' }, { when: 'Seterusnya', title: 'Satu halaman dokumentasi', text: 'Terangkan langkah yang mengelirukan anda. Orang lain pun tersekat di situ.' }, { when: 'Oktober', title: 'Hacktoberfest', text: 'Sebulan setiap tahun untuk raikan sumber terbuka. Peraturannya berubah setiap tahun, jadi baca hacktoberfest.com.' }, { when: 'Kemudian', title: 'Baiki pepijat sebenar', text: 'Anda dah tahu jalannya. Issue besar pun kurang menakutkan.' }]} />
+
+Satu PR ialah permulaan yang hebat. Tekan untuk lihat laluan anda dari sini.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh cadangkan pembetulan kepada mana-mana projek sumber terbuka.
+</Card>
+
+<Card id="deeper" type="deeper">
+Banyak repo ada halaman contribute yang senaraikan good first issue mereka. Cuba `github.com/OWNER/REPO/contribute`. PR anda mungkin menunggu beberapa hari. Maintainer selalunya sukarelawan, jadi bersabar. Sesetengah projek minta anda tandatangan perjanjian penyumbang dulu. CONTRIBUTING.md akan beritahu.
+</Card>

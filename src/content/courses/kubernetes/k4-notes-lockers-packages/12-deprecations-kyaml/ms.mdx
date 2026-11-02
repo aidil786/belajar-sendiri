@@ -1,0 +1,74 @@
+---
+id: k8s-k4-l12
+world: 4
+title: "API lapuk dan kyaml"
+summary: "Anda akan belajar: baiki YAML yang guna API yang sudah bersara, dan baca KYAML."
+minutes: 3
+xp: 15
+interactives: [KubeReplay, TimelineTap, YamlDoctor, Choice, Transcript, SwipeJudge, Mission]
+needs: [k8s-k4-l11]
+scenario: k4-old
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Deprecated API Migration Guide", url: "https://kubernetes.io/docs/reference/using-api/deprecation-guide/" }
+  - { label: "Kubernetes Deprecation Policy", url: "https://kubernetes.io/docs/reference/using-api/deprecation-policy/" }
+  - { label: "KYAML", url: "https://kubernetes.io/docs/reference/encodings/kyaml/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k4-old" commands={['kubectl apply -f old-shop.yaml']} fails={['kubectl apply -f old-shop.yaml']} picture={false} label="kubectl apply gagal: resource mapping not found, no matches for kind Deployment in version extensions/v1beta1." />
+
+Anda salin Deployment dari blog lama. kubectl kata `no matches for kind "Deployment" in version "extensions/v1beta1"`. Maksudnya: borang itu sudah tak diterima lagi.
+</Card>
+
+<Card id="see-timeline" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Kubernetes 1.16', title: 'Deployment: borang lama dibuang', text: 'extensions/v1beta1 berhenti. Guna apps/v1.' }, { when: 'Kubernetes 1.22', title: 'Ingress: v1beta1 dibuang', text: 'Guna networking.k8s.io/v1.' }, { when: 'Kubernetes 1.25', title: 'CronJob: v1beta1 dibuang', text: 'batch/v1beta1 berhenti. Guna batch/v1. PodSecurityPolicy juga dibuang.' }, { when: 'Kubernetes 1.26', title: 'HPA: v2beta2 dibuang', text: 'autoscaling/v2beta2 berhenti. Guna autoscaling/v2.' }]} />
+
+**<Term id="api-deprecation">API deprecation</Term>** (API lapuk) ialah borang lama yang pejabat akan berhenti terima. Mula-mula ada amaran. Beberapa release kemudian, borang itu hilang.
+</Card>
+
+<Card id="try-fix" type="try">
+Kemas kini Deployment lama ini.
+
+<Interactive name="YamlDoctor" file="shop.yaml" manifest={'apiVersion: extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} solution={'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: shop\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: shop\n  template:\n    metadata:\n      labels:\n        app: shop\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.29-alpine\n'} keep={['kind: Deployment', 'replicas: 3']} keepHint="Kekalkan Deployment dan 3 dulangnya. Hanya versi borang berubah." hint="Deployment kini tinggal dalam apps/v1." success="Berjaya! Pesanan sama, atas borang terkini." />
+</Card>
+
+<Card id="predict" type="predict">
+Satu fail guna API yang lapuk, tetapi masih dilayan. Apa jadi semasa `kubectl apply`?
+
+<Interactive name="Choice" options={[{ label: 'Ia berjaya, dan kubectl cetak baris Warning', correct: true, why: 'API server beri amaran awal. Baca, kemudian tukar.' }, { label: 'Ia terus gagal', why: 'Hampir! Ia gagal hanya selepas release yang membuangnya.' }, { label: 'kubectl baiki fail itu untuk anda', why: 'kubectl tak pernah tulis semula fail anda.' }]} />
+</Card>
+
+<Card id="see-kyaml" type="see">
+<Interactive name="Transcript" title="bash" label="kubectl create configmap dengan dry run dan -o kyaml cetak ConfigMap dengan kurungan kerinting, dan setiap teks dalam petikan berganda." lines={[{ cmd: 'kubectl create configmap settings --from-literal=GREETING=Selamat --from-literal=SPICY=3 --dry-run=client -o kyaml' }, { out: '---\n{\n  kind: "ConfigMap",\n  apiVersion: "v1",\n  metadata: {\n    name: "settings",\n  },\n  data: {\n    GREETING: "Selamat",\n    SPICY: "3",\n  },\n}', color: 'green' }]} />
+
+kubectl 1.37 boleh cetak **<Term id="kyaml">KYAML</Term>**: YAML yang ditulis dengan ketat. Setiap teks dalam petikan berganda. Kurungan kerinting membalut setiap map, jadi jarak tak ubah maksud.
+</Card>
+
+<Card id="predict-yes" type="predict">
+YAML biasa. Satu ConfigMap tulis `SPICY: yes`. Apa yang API server terima?
+
+<Interactive name="Choice" options={[{ label: 'true, nilai ya/tidak, jadi apply gagal', correct: true, why: 'YAML biasa tukar yes jadi true. Data ConfigMap mesti teks. KYAML tulis "yes".' }, { label: 'Teks yes', why: 'Hampir! Hanya dengan petikan: SPICY: "yes".' }, { label: 'Nombor 1', why: 'YAML baca yes sebagai true, bukan nombor.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Betul atau tidak? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tutorial lama tulis extensions/v1beta1. Tukar Deployment kepada apps/v1.', good: true, why: 'apps/v1 ialah versi yang dilayan.' }, { text: 'Baris Warning: daripada kubectl apply boleh diabaikan.', good: false, why: 'Ia beritahu apa yang rosak dalam release akan datang.' }, { text: 'Mana-mana pembaca YAML masih boleh baca fail KYAML.', good: true, why: 'KYAML ialah subset YAML yang lebih ketat.' }, { text: 'YAML biasa sentiasa simpan yes sebagai teks.', good: false, why: 'Tanpa petikan, yes jadi true.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh kemas kini API yang bersara dan baca KYAML.
+</Card>
+
+<Card id="deeper" type="deeper">
+Plugin `kubectl convert` tulis semula fail lama, tetapi semak nilai lalainya. Di mana cerita ini tak tepat: loker kind duduk di satu gerai. Jika cakera gerai itu rosak, lokernya pun hilang. Dan nota di dinding boleh dibaca sesiapa yang boleh baca ConfigMap.
+
+Latihan sebenar (pilihan), pada kluster latihan:
+
+<Interactive name="Mission" id="k8s-k4-l12-rep" steps={[{ id: 'kinds', text: 'Lihat setiap kind dan kumpulan API yang dilayan.', command: 'kubectl api-resources' }, { id: 'explain', text: 'Tanya versi mana Deployment guna.', command: 'kubectl explain deployment' }, { id: 'kyaml', text: 'Cetak YAML sebagai KYAML.', command: 'kubectl create deployment x --image=nginx:1.29-alpine --dry-run=client -o kyaml' }]} success="Anda baca senarai borang kluster itu sendiri." />
+</Card>

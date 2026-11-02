@@ -1,0 +1,63 @@
+---
+id: obs-o3-l05
+world: 3
+title: "Variable dan templat"
+summary: "Anda akan belajar: jadikan satu dashboard melayan setiap kedai dengan satu senarai pilihan."
+minutes: 4
+xp: 20
+interactives: [Choice, CommandBuilder, PromQLPlayground, SortCards, Mission]
+needs: [obs-o3-l04]
+scenario: o2-shop-requests
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Grafana variables", url: "https://grafana.com/docs/grafana/latest/dashboards/variables/" }
+  - { label: "Prometheus template variables", url: "https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil ada dua server kedai, dan tak lama lagi lima. Perlukah satu dashboard untuk setiap kedai?
+
+<Interactive name="Choice" options={[{ label: 'Satu dashboard dengan senarai pilihan kedai', correct: true, why: 'Betul. Baiki panel sekali, semua kedai dapat.' }, { label: 'Lima salinan, satu untuk setiap kedai', why: 'Ubah satu panel, kemudian kena ingat empat lagi. Salinan makin berbeza.' }]} />
+</Card>
+
+<Card id="see-swap" type="see">
+Anda pilih shop-1 dan shop-2. Grafana tukar `$instance` sebelum Prometheus nampak. Tulis apa yang Prometheus terima.
+
+<Interactive name="PromQLPlayground" scenario="o2-shop-requests" initial="sum by (instance) (rate(http_requests_total[5m]))" goal={{ resultCount: 2, labelNames: ['instance'], typed: 'shop-1\\|shop-2' }} hints={['Selepas nama metrik, tambah pemadan dalam kurungan kerinting: instance =~ "shop-1|shop-2".']} solution={'sum by (instance) (rate(http_requests_total{instance=~"shop-1|shop-2"}[5m]))'} success="Dua kedai, dua garis. admin-1 tiada di skrin ini." />
+
+**<Term id="dashboard-variable">Dashboard variable</Term>** ialah senarai pilihan itu. Setiap panel membacanya.
+</Card>
+
+<Card id="try-build" type="try">
+Bina query panel yang ikut senarai pilihan. Ketik kepingan mengikut urutan.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'sum(rate(', means: 'jumlahkan kelajuan sesaat' }, { text: 'http_requests_total', means: 'bagi counter permintaan' }, { text: '{instance=~"$instance"}', means: 'hanya kedai yang dipilih dalam senarai' }, { text: '[$__rate_interval]', means: 'tetingkap Grafana: sentiasa 4 scrape atau lebih' }, { text: '))', means: 'tutup kedua-dua kurungan' }]} decoys={[{ text: '{instance="$instance"}', means: 'padanan tepat: gagal bila dua kedai dipilih' }]} success="Query itu ikut senarai pilihan." />
+
+<Hint>`=~` padankan corak. Dua kedai yang dipilih jadi `shop-1|shop-2`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Dua kedai dipilih. Satu panel tulis `instance="$instance"`, dengan satu `=`. Apa ia tunjuk?
+
+<Interactive name="Choice" options={[{ label: 'Tiada data', correct: true, why: 'Betul. = mahu satu nama tepat, dan tiada kedai bernama "shop-1|shop-2".' }, { label: 'Kedua-dua kedai', why: 'Hanya =~ baca | sebagai "atau".' }, { label: 'shop-1 sahaja', why: '= banding seluruh teks, bukan bahagian pertama.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+<Interactive name="SortCards" buckets={[{ id: 'grafana', label: '[$__rate_interval]' }, { id: 'fixed', label: '[5m]' }]} items={[{ label: 'rate() dalam panel Grafana', bucket: 'grafana', why: 'Grafana sesuaikan tetingkap ikut zum dan selang scrape.' }, { label: 'rate() dalam recording rule', bucket: 'fixed', why: 'Prometheus jalankan rule sendiri. Ia tiada variable Grafana.' }, { label: 'rate() dalam alert rule', bucket: 'fixed', why: 'Alert rule juga berjalan dalam Prometheus: guna tetingkap tetap.' }]} success="Perkataan Grafana kekal dalam Grafana." />
+
+**$__rate_interval** cuma berfungsi dalam Grafana. Rule berjalan dalam Prometheus, jadi ia guna tetingkap tetap.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jadikan satu dashboard melayan setiap kedai dengan variable.
+</Card>
+
+<Card id="deeper" type="deeper">
+Jadikan ia Query variable: jenis Label values, label `instance`, metrik `up`. Hidupkan Multi-value dan Include All. Variable boleh bersambung: pilih `job`, dan senarai `instance` mengecil supaya padan.
+
+<Interactive name="Mission" id="obs-o3-l05-real" steps={[{ id: 'open', text: 'Buka Grafana latihan anda (dari pelajaran lepas), dengan sumber data Prometheus.' }, { id: 'var', text: 'Dashboard settings, Variables: tambah Query variable bernama instance, Label values bagi instance.' }, { id: 'use', text: 'Tukar query panel supaya guna {instance=~"$instance"}. Pilih dua nilai dan lihat ia berubah.' }]} success="Senarai pilihan pertama anda berfungsi!" />
+</Card>

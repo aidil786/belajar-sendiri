@@ -1,0 +1,67 @@
+---
+id: k8s-k2-l06
+world: 2
+title: "Hidup semula atau ganti?"
+summary: "Anda akan belajar: bila container hidup semula dalam pod yang sama, dan bila seluruh pod diganti."
+minutes: 3
+xp: 15
+interactives: [Choice, FoodCourtSim, ManagersBoard, SortCards, KubeReplay]
+needs: [k8s-k2-l05]
+scenario: k2-restart
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Container restarts", url: "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts" }
+  - { label: "kubectl rollout restart", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/" }
+---
+
+<Card id="hook" type="hook">
+Dua dulang ada masalah pagi tadi. Satu kekal namanya, dan lajur RESTARTS tunjuk 1. Satu lagi ada nama baharu. Apa bezanya?
+
+<Interactive name="Choice" options={[{ label: 'Satu container crash. Satu dulang diganti terus.', correct: true, why: 'Crash dibaiki dalam dulang yang sama. Dulang yang hilang dapat pengganti, dengan nama baharu.' }, { label: 'Tiada beza. Nama bertukar secara rawak.', why: 'Pod kekal namanya seumur hidup. Nama baharu bermakna pod baharu.' }, { label: 'Kedua-dua dulang dipadam', why: 'Kalau begitu, kedua-duanya dapat nama baharu. Satu kekal namanya.' }]} />
+</Card>
+
+<Card id="try-crash" type="try">
+Container crash. Tekan "Rosakkan satu container", kemudian jalankan `kubectl get pods`. Perhati nama dan **<Term id="restart-count">RESTARTS</Term>**.
+
+<Interactive name="FoodCourtSim" scenario="k2-restart" faults={['crash']} goal={{ restarts: { selector: 'app=shop', min: 1 }, typed: 'get pods?' }} hints={['Tekan butang Rosakkan satu container', 'Sekarang taip kubectl get pods']} success="Dulang sama, nama sama. Hanya containernya mula semula, jadi RESTARTS naik." />
+
+<Hint>kubelet di gerai itu hidupkan semula container. Pod kekal.</Hint>
+</Card>
+
+<Card id="see-replace" type="see">
+<Interactive name="ManagersBoard" scenario="k2-restart" target="shop" actions={['deletePod']} goal={{ healed: 1 }} success="Dulang baharu, dengan nama baharu, ambil tempatnya." label="Papan mahu 3 dan nampak 3. Padam satu dulang: ia nampak 2 dan buat pod baharu dengan nama baharu." />
+
+Kini seluruh dulang hilang. Padam satu dan perhati. Pengurus buat dulang baharu dengan nama baharu. Kubernetes ganti pod; ia tak baiki pod.
+</Card>
+
+<Card id="try-sort" type="try">
+Hidup semula di tempat, atau dulang baharu? Susun apa yang berlaku.
+
+<Interactive name="SortCards" buckets={[{ id: 'restart', label: 'Nama sama, RESTARTS +1' }, { id: 'replace', label: 'Pod baharu, nama baharu' }]} items={[{ label: 'Aplikasi crash dan keluar', bucket: 'restart', why: 'kubelet mulakan semula container, dalam dulang yang sama.' }, { label: 'Liveness probe asyik gagal', bucket: 'restart', why: 'kubelet hidupkan semula container itu. Pelajaran 8 tunjuk ini.' }, { label: 'Anda jalankan kubectl delete pod', bucket: 'replace', why: 'Dulang sudah tiada. ReplicaSet buat yang baharu.' }, { label: 'Satu gerai tutup terus', bucket: 'replace', why: 'Dulangnya hilang. Dulang baharu muncul di gerai lain.' }]} success="Siap! Crash hidup semula di tempat. Dulang yang hilang diganti." />
+</Card>
+
+<Card id="see-rollout-restart" type="see">
+<Interactive name="KubeReplay" scenario="k2-restart" commands={['kubectl get pods', 'kubectl rollout restart deployment/shop', 'kubectl rollout status deployment/shop --timeout=180s', 'kubectl get pods']} label="Sebelum: 3 pod. Selepas rollout restart: 3 pod dengan nama baharu, dibuat sedikit demi sedikit." />
+
+`kubectl rollout restart` ganti setiap dulang, sedikit demi sedikit. Resepi sama, dulang baharu. Banding nama sebelum dan selepas.
+</Card>
+
+<Card id="check" type="check">
+Anda ubah tetapan yang aplikasi baca hanya semasa mula. Bagaimana semua dulang dapat tetapan baharu, tanpa henti?
+
+<Interactive name="Choice" options={[{ label: '`kubectl rollout restart deployment/shop`', correct: true, why: 'Dulang baharu baca tetapan baharu. Rollout pastikan gerai terus buka.' }, { label: 'Tunggu. kubelet akan hidupkan semula.', why: 'kubelet hanya hidupkan semula container yang crash. Yang sihat terus berjalan.' }, { label: '`kubectl delete deployment shop`', why: 'Itu tutup seluruh kedai. Setiap dulang akan hilang.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan restart container dengan penggantian pod.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap restart tunggu lebih lama: 10 s, 20 s, 40 s, sehingga 5 minit. Selepas 10 minit tanpa crash, masa tunggu bermula semula. Pod baharu juga dapat alamat IP baharu. Sebab itulah Service wujud (Dunia K3).
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, perhati `kubectl get pods -w` semasa rollout restart.
+</Card>

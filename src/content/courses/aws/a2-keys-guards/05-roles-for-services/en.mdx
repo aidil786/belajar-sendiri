@@ -1,0 +1,66 @@
+---
+id: aws-a2-l05
+world: 2
+title: Roles for services
+summary: "You will learn: how a server or service borrows a role, so no key is ever stored on it."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, Transcript, IamJudge]
+needs: [aws-a2-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM roles", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" }
+  - { label: "Use a role for apps on EC2", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html" }
+  - { label: "aws iam attach-role-policy", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/attach-role-policy.html" }
+  - { label: "aws iam list-attached-role-policies", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/list-attached-role-policies.html" }
+---
+
+<Card id="hook" type="hook">
+Kedai Kancil’s web server must read the menu bucket. How should the server get its key?
+
+<Interactive name="Choice" options={[{ label: 'Give the server a role to borrow', correct: true, why: 'It gets short-lived keys that renew by themselves. Nothing to steal from disk.' }, { label: 'Paste an access key into a file on the server', why: 'Anyone who copies the disk gets a key that never expires.' }, { label: 'Use the root user’s login', why: 'Never. Root stays locked away.' }]} />
+</Card>
+
+<Card id="see-how" type="see">
+A role for a service is a **<Term id="service-role">service role</Term>**. Put the steps in order.
+
+<Interactive name="OrderList" items={['Make a role the EC2 service may borrow', 'Give the role a small permissions policy', 'Attach the role to the server', 'The app asks the server for short-lived keys', 'The keys renew by themselves']} label="First step at the top" success="No key on disk. The server borrows, and returns." />
+</Card>
+
+<Card id="see-sort" type="see">
+Every role has two notes. The <Term id="trust-policy">trust policy</Term> says who may borrow it. The permissions policy says what it opens. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'trust', label: 'Trust policy (who may borrow)' }, { id: 'perms', label: 'Permissions policy (what it opens)' }]} items={[{ label: 'Principal: the EC2 service', bucket: 'trust', why: 'EC2 may borrow this badge.' }, { label: 'Action: sts:AssumeRole', bucket: 'trust', why: 'Borrowing a role is the AssumeRole action.' }, { label: 'Action: s3:GetObject', bucket: 'perms', why: 'What the badge lets the server do.' }, { label: 'Resource: the kedai-menu bucket', bucket: 'perms', why: 'Where the badge works.' }]} success="Who may borrow, and what it opens. Two notes, one role." />
+</Card>
+
+<Card id="try-attach" type="try">
+Attach the menu-reader policy to the role `kedai-web`. Build the command.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws iam attach-role-policy', means: 'clip a policy onto a role' }, { text: '--role-name kedai-web', means: 'the web server’s role' }, { text: '--policy-arn arn:aws:iam::111122223333:policy/menu-reader', means: 'the small policy you wrote' }]} decoys={[{ text: '--policy-arn arn:aws:iam::aws:policy/AdministratorAccess', means: 'every right in the account: far too much' }]} success="Attached. It prints nothing when it works." />
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="Transcript" title="bash" label="list-attached-role-policies shows one managed policy, SecurityAudit, on the role SecurityAuditRole." lines={[{ cmd: 'aws iam list-attached-role-policies --role-name SecurityAuditRole' }, { out: '{\n    "AttachedPolicies": [\n        {\n            "PolicyName": "SecurityAudit",\n            "PolicyArn": "arn:aws:iam::aws:policy/SecurityAudit"\n        }\n    ],\n    "IsTruncated": false\n}', color: 'green' }]} />
+
+Ask a role what it holds. This one holds one AWS policy, `SecurityAudit`. Check after every change.
+</Card>
+
+<Card id="predict" type="predict">
+The server, wearing its role, tries to change the menu. Predict.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-web/i-0123456789abcdef0', who: 'kedai-web server', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Denied. The badge reads the menu. It cannot change it." />
+</Card>
+
+<Card id="win" type="win">
+You can now give a server a role instead of a stored key.
+</Card>
+
+<Card id="deeper" type="deeper">
+On EC2, the role rides in an "instance profile". Most AWS SDKs and the CLI find the role’s keys by themselves. Some services make their own service-linked roles.
+
+Real rep: only with a budget alarm set. Make a role, attach a policy, then list it. Delete both when done (`aws iam detach-role-policy`, then `aws iam delete-role`).
+</Card>

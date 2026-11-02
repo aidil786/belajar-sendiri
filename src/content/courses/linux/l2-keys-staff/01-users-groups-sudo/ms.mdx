@@ -1,0 +1,78 @@
+---
+id: linux-l2-l01
+world: 2
+title: Pengguna, kumpulan dan sudo
+summary: "Anda akan belajar: siapa siapa di server, guna kumpulan, dan cara sudo pinjam kunci induk."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-boss]
+scenario: linux-l2-users
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "sudo (Debian 13 man page)", url: "https://manpages.debian.org/trixie/sudo/sudo.8.en.html" }
+  - { label: "useradd (Debian 13 man page)", url: "https://manpages.debian.org/trixie/passwd/useradd.8.en.html" }
+  - { label: "usermod (Debian 13 man page)", url: "https://manpages.debian.org/trixie/passwd/usermod.8.en.html" }
+  - { label: "id (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/id.1.en.html" }
+  - { label: "Debian Reference: user accounts", url: "https://www.debian.org/doc/manuals/debian-reference/ch04.en.html" }
+---
+
+<Card id="hook" type="hook">
+Aina mula kerja di dapur esok. Dia pun perlu guna server. Patutkah dia log masuk sebagai anda?
+
+<Interactive name="Choice" options={[{ label: 'Tak. Dia dapat pengguna sendiri.', correct: true, why: 'Setiap orang ada kunci sendiri. Jadi kedai tahu siapa buat apa.' }, { label: 'Ya. Kongsi kata laluan.', why: 'Kunci yang dikongsi mudah hilang dan disalin. Tiada siapa tahu siapa ubah apa.' }, { label: 'Dia boleh guna root', why: 'root pegang semua kunci. Satu silap boleh rosakkan seluruh kedai.' }]} />
+</Card>
+
+<Card id="see-id" type="see">
+<Interactive name="LinuxSim" scenario="linux-l2-users" intro={['whoami', 'id']} />
+
+Anda ialah <Term id="user">user (pengguna)</Term> `you`, nombor pekerja 1000. Anda ahli dua pasukan, dipanggil **groups** (kumpulan): `you` dan `sudo`.
+</Card>
+
+<Card id="predict-shadow" type="predict">
+`/etc/shadow` simpan setiap kata laluan, dalam bentuk bercelaru. Anda taip `cat /etc/shadow`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'cat: /etc/shadow: Permission denied', correct: true, why: 'Maksudnya: kunci anda tak boleh buka laci itu. Hanya root boleh baca.' }, { label: 'Ia cetak semua kata laluan', why: 'Nanti sesiapa pun boleh baca. Linux kunci laci itu.' }, { label: 'No such file or directory', why: 'Fail itu ada. Anda cuma tiada kuncinya.' }]} />
+</Card>
+
+<Card id="try-sudo" type="try">
+Pasukan `sudo` boleh pinjam kunci induk untuk satu arahan. Cuba: `sudo whoami`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-users" goal={{ lastTyped: '^sudo whoami$' }} hints={['Taip sudo whoami']} solution={['sudo whoami']} success="root! sudo jalankan satu arahan sebagai root, kemudian pulangkan kunci. Tengok nota Hati-hati." />
+
+<Hint>`sudo` diletak di depan arahan.</Hint>
+</Card>
+
+<Card id="sort-who" type="check">
+Kebanyakan kerja tak perlu kunci induk. Yang mana perlu?
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'Anda sahaja' }, { id: 'sudo', label: 'Perlu sudo' }]} items={[{ label: 'Baca menu dalam rumah anda', bucket: 'you', why: 'Bilik anda, kunci anda.' }, { label: 'Tambah pengguna pekerja baru', bucket: 'sudo', why: 'Hanya root ubah siapa bekerja di sini.' }, { label: 'Pasang program untuk semua', bucket: 'sudo', why: 'Folder sistem milik root.' }, { label: 'Buat folder dalam rumah anda', bucket: 'you', why: 'Rumah anda milik anda. Tak perlu sudo.' }]} success="Guna sudo hanya bila kerja itu betul-betul perlukan root." />
+</Card>
+
+<Card id="try-aina" type="try">
+Beri Aina pengguna sendiri dengan rumah: `sudo useradd -m -s /bin/bash aina`. Kemudian masukkan dia ke pasukan dapur: `sudo usermod -aG kitchen aina`.
+
+<Interactive name="LinuxSim" scenario="linux-l2-users" goal={{ userExists: ['aina'], inGroup: { aina: 'kitchen' } }} hints={['Mula-mula: sudo useradd -m -s /bin/bash aina', 'Kemudian: sudo usermod -aG kitchen aina', 'Semak: groups aina']} solution={['sudo useradd -m -s /bin/bash aina', 'sudo usermod -aG kitchen aina']} success="Aina ada kunci sendiri dan sudah masuk pasukan dapur." />
+
+<Hint>`-m` buat folder rumahnya. `-aG` tambah kumpulan.</Hint>
+</Card>
+
+<Card id="check-append" type="check">
+Kenapa `usermod -aG kitchen`, bukan `-G kitchen` sahaja?
+
+<Interactive name="Choice" options={[{ label: '-G sahaja ganti pasukan lain dia. -a menambah.', correct: true, why: 'Lupa -a, dan dia senyap-senyap terkeluar dari kumpulan lain.' }, { label: 'Kedua-duanya sama', why: 'Tak juga. Tanpa -a, -G tetapkan senarai penuh kumpulan tambahannya.' }, { label: '-a maksudnya admin', why: '-a maksudnya append: tambah ke senarai.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bezakan pengguna dan kumpulan, dan guna sudo dengan cermat.
+</Card>
+
+<Card id="deeper" type="deeper">
+`sudo -i` buka shell root: prompt berakhir dengan `#` dan lencana root muncul. Taip `exit` untuk pulangkan kunci. Tanpa sudo, `useradd` kata `command not found`: alat admin ada dalam `/usr/sbin`, di luar PATH anda.
+
+Latihan sebenar (pilihan): di Linux anda sendiri, jalankan `id` dan `groups`. Kemudian `sudo -l` tunjuk apa sudo benarkan.
+</Card>

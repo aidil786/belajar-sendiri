@@ -1,0 +1,70 @@
+---
+id: aws-a4-boss
+world: 4
+title: "Move into the mall"
+summary: "You will learn: to pick AWS services for Kedai Kancil, guard them, guess what bills idle, and write the clean-up list."
+minutes: 6
+xp: 50
+interactives: [Choice, SortCards, IamJudge, SecurityGroupGate, IdleBill, OrderList]
+needs: [aws-a4-m10]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Amazon ECS: AWS Fargate", url: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" }
+  - { label: "Amazon RDS: What is Amazon RDS?", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" }
+  - { label: "Amazon VPC: Delete your VPC", url: "https://docs.aws.amazon.com/vpc/latest/userguide/delete-vpc.html" }
+  - { label: "AWS Cost Explorer", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" }
+---
+
+<Card id="hook" type="hook">
+Boss: Kedai Kancil moves in for real. A web page, an orders API, a database and nightly reports. Pick the parts, guard them, know the bill, and plan the way out. Where do you start?
+
+<Interactive name="Choice" options={[{ label: 'Pick the services, then guard them', correct: true, why: 'Yes. Know what you run before you set the doors.' }, { label: 'Turn everything on, sort it out later', why: 'That is how surprise bills happen. Plan first.' }]} />
+</Card>
+
+<Card id="try-pick" type="try">
+Room 1: which AWS service runs each part?
+
+<Interactive name="SortCards" buckets={[{ id: 'fargate', label: 'ECS on Fargate' }, { id: 'rds', label: 'RDS' }, { id: 'ecr', label: 'ECR' }]} items={[{ label: 'The orders API container', bucket: 'fargate', why: 'A service keeps its tasks running.' }, { label: 'The order database', bucket: 'rds', why: 'Backups and a standby, managed for you.' }, { label: 'The shop’s images, with scans', bucket: 'ecr', why: 'Your private shelf in the mall.' }, { label: 'The nightly report job', bucket: 'fargate', why: 'A one-off task: start, finish, stop billing.' }]} success="Room 1 cleared! Shelf, runner and database picked." />
+</Card>
+
+<Card id="try-key" type="try">
+Room 2: the deploy role pushes to the wrong shelf. Change the pink line so it may push to `kedai-kancil`. Keep it narrow.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-deploy/run-9', who: 'kedai-deploy', action: 'ecr:PutImage', resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil' }} policies={[{ name: 'push-one-shelf', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'ecr:PutImage', Resource: 'arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-test' }] } }]} task={{ type: 'edit', policy: 0, line: 7, want: 'Allow', forbid: ['"\\*"', 'repository/\\*'] }} solution={'"Resource": "arn:aws:ecr:ap-southeast-5:111122223333:repository/kedai-kancil"'} success="Room 2 cleared! One key, one shelf." />
+
+<Hint>Swap `kedai-test` for `kedai-kancil` at the end of the ARN.</Hint>
+</Card>
+
+<Card id="try-door" type="try">
+Room 3: the database door. Only API tasks in `sg-api` may use port 5432. Not the reports job, not your laptop.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-api', 'sg-reports']} visitors={[{ id: 'api', label: 'Orders API task', ip: '10.0.1.30', groups: ['sg-api'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'reports', label: 'Reports job', ip: '10.0.1.40', groups: ['sg-reports'], protocol: 'tcp', port: 5432, want: 'out' }, { id: 'laptop', label: 'Your laptop', ip: '203.0.113.9', protocol: 'tcp', port: 5432, want: 'out' }]} success="Room 3 cleared! Only the API reaches the orders." />
+
+<Hint>One rule: TCP 5432 from `sg-api`.</Hint>
+</Card>
+
+<Card id="check-bill" type="check">
+Room 4: the bill. In production you added a NAT gateway, a load balancer and a secret. What bills while the shop sleeps?
+
+<Interactive name="IdleBill" items={['loadBalancer', 'natGateway', 'rdsRunning', 'secret', 'ecrImages', 'ecsCluster', 'vpc', 'securityGroup']} ordered />
+</Card>
+
+<Card id="try-clean" type="try">
+Room 5: closing day. Put the clean-up in a safe order. Things that use others go first.
+
+<Interactive name="OrderList" items={['Delete the ECS service (tasks stop)', 'Delete the load balancer', 'Delete the NAT gateway', 'Release its Elastic IP', 'Delete the RDS database (final snapshot first)', 'Delete the ECR repository and the secret', 'Delete the empty VPC']} label="First step at the top" success="Room 5 cleared! Users first, roads last." />
+</Card>
+
+<Card id="predict" type="predict">
+Last room: you finished the clean-up tonight. How do you know it worked?
+
+<Interactive name="Choice" options={[{ label: 'Tomorrow and the day after, Cost Explorer stays flat', correct: true, why: 'Bills lag a day. Flat lines mean nothing is left.' }, { label: 'The console looks empty in one Region', why: 'Almost! Check every Region you used, then the bill.' }, { label: 'No email from the budget alarm tonight', why: 'The alarm only rings at your limit. Look at the bill.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now move a shop into the cloud, guard it, and leave cleanly.
+</Card>

@@ -1,0 +1,76 @@
+---
+id: aws-a1-l05
+world: 1
+title: Penggera bajet sebelum apa-apa
+summary: "Anda akan belajar: cara pasang penggera bajet yang hantar emel sebelum bil membesar."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, SortCards, OrderList, SpotLines, CommandBuilder, Choice, SwipeJudge, Mission]
+needs: [aws-a1-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Managing your costs with AWS Budgets", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+  - { label: "Using a budget template", url: "https://docs.aws.amazon.com/cost-management/latest/userguide/budget-templates.html" }
+  - { label: "aws budgets create-budget", url: "https://docs.aws.amazon.com/cli/latest/reference/budgets/create-budget.html" }
+  - { label: "CloudWatch billing alarms", url: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Jumaat', title: 'Server ujian', text: 'Kancil mulakan server untuk cuba satu idea.' }, { when: 'Sabtu', title: 'Terlupa', text: 'Idea itu berjaya. Server terus berjalan.' }, { when: 'Hujung bulan', title: 'Bil tiba', text: 'Satu kejutan. Tiada siapa beri amaran kepada Kancil.' }]} />
+
+Ketik cerita ini. Satu emel pada hari Sabtu boleh selamatkan Kancil. Emel itu ialah penggera bajet.
+</Card>
+
+<Card id="see-budget" type="see">
+**<Term id="budget">Bajet (budget)</Term>** ialah satu garisan pada bil. Bila belanja melepasinya, AWS hantar emel. AWS Budgets ada templat siap guna. Susun apa yang setiap satu buat.
+
+<Interactive name="SortCards" buckets={[{ id: 'zero', label: 'Zero spend budget' }, { id: 'monthly', label: 'Monthly cost budget' }]} items={[{ label: 'Hantar emel sebaik anda belanja melebihi had percuma', bucket: 'zero', why: 'Sebarang belanja sebenar akan mencetuskannya.' }, { label: 'Anda pilih satu jumlah bulanan', bucket: 'monthly', why: 'Anda pilih garisan itu sendiri.' }, { label: 'Beri amaran bila ramalan akan lepasi garisan', bucket: 'monthly', why: 'Ia tengok ke depan, bukan ke belakang sahaja.' }, { label: 'Penggera pertama yang bagus untuk pelajar', bucket: 'zero', why: 'Pelajar biasanya rancang untuk tak belanja langsung.' }]} success="Guna kedua-duanya: zero spend dahulu, garisan bulanan sebagai sandaran." />
+</Card>
+
+<Card id="try-steps" type="try">
+Pasang di konsol. Susun langkah-langkahnya.
+
+<Interactive name="OrderList" items={['Buka Billing and Cost Management', 'Pilih Budgets, kemudian Create budget', 'Pilih Use a template', 'Pilih Zero spend budget', 'Taip emel yang anda baca setiap hari', 'Cipta bajet itu']} label="Langkah pertama di atas" success="Siap dalam dua minit. Kini AWS boleh beri amaran." />
+</Card>
+
+<Card id="see-json" type="see">
+Bajet yang sama boleh disimpan dalam fail. Ketik baris yang kata **bila** AWS hantar emel.
+
+<Interactive name="SpotLines" lines={[{ text: '"Notification": {' }, { text: '  "NotificationType": "ACTUAL",' }, { text: '  "ComparisonOperator": "GREATER_THAN",' }, { text: '  "Threshold": 80,', target: true }, { text: '  "ThresholdType": "PERCENTAGE"' }, { text: '},' }, { text: '"Subscribers": [' }, { text: '  { "SubscriptionType": "EMAIL",' }, { text: '    "Address": "kancil@example.com" }' }, { text: ']' }]} prompt="Ketik baris dengan titik pencetus." success="80 peratus daripada bajet. Kemudian satu emel dihantar." />
+</Card>
+
+<Card id="try-cli" type="try">
+Sekarang bina arahan yang hantar kedua-dua fail kepada AWS.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws budgets create-budget', means: 'buat bajet baru' }, { text: '--account-id 111122223333', means: 'akaun mana untuk diawasi' }, { text: '--budget file://budget.json', means: 'garisan pada bil' }, { text: '--notifications-with-subscribers file://notify.json', means: 'bila, dan kepada siapa, emel dihantar' }]} decoys={[{ text: '--region ap-southeast-5', means: 'satu Region; bajet awasi seluruh akaun' }]} success="Dihantar! Ia tak paparkan apa-apa bila berjaya." />
+
+<Hint>Arahan, kemudian akaun, kemudian dua fail itu.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Emel penggera Kancil sampai. Adakah AWS hentikan server yang terlupa itu?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Emel beri amaran; Kancil mesti padamkannya.', correct: true, why: 'Penggera bajet ialah penggera asap, bukan brek.' }, { label: 'Ya, semua berhenti serta-merta', why: 'Tiada apa yang berhenti. Meter terus berjalan sehingga anda bertindak.' }, { label: 'Ya, AWS padam benda yang paling baru', why: 'AWS tak pernah teka apa yang patut dipadam untuk anda.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Data bajet dikemas kini sehingga tiga kali sehari, jadi emel boleh lewat beberapa jam. Tabiat baik, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pasang penggera sebelum bina apa-apa.', good: true, why: 'Hari pertama, sebelum sumber pertama.' }, { text: 'Tambah penggera selepas bil pertama.', good: false, why: 'Terlambat. Kejutan sudah berlaku.' }, { text: 'Hantar amaran ke emel yang anda betul-betul baca.', good: true, why: 'Penggera yang tak dibaca bukan penggera.' }, { text: 'Percaya penggera akan tangkap semua dalam beberapa minit.', good: false, why: 'Ia boleh lewat berjam-jam. Padam benda bila anda siap.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pasang penggera bajet sebelum bina apa-apa.
+</Card>
+
+<Card id="deeper" type="deeper">
+Pilihan kedua ialah <Term id="billing-alarm">billing alarm</Term> CloudWatch. Hidupkan billing alerts dahulu. Data bil disimpan di US East (N. Virginia), `us-east-1`, jadi buat penggera di situ.
+
+Latihan sebenar (tiada sumber, tiada kos). Log masuk dengan admin anda (pelajaran 6), atau kembali selepas itu:
+
+<Interactive name="Mission" id="aws-a1-l05-rep" steps={[{ id: 'zero', text: 'Cipta Zero spend budget dari templat, dengan emel anda.' }, { id: 'monthly', text: 'Cipta Monthly cost budget dengan jumlah kecil yang anda mampu.' }, { id: 'list', text: 'Senaraikan bajet anda dari terminal (guna id akaun anda sendiri).', command: 'aws budgets describe-budgets --account-id 111122223333' }, { id: 'mail', text: 'Pastikan emel AWS sampai ke peti masuk, bukan spam.' }]} success="Penggera asap anda sudah hidup." />
+</Card>

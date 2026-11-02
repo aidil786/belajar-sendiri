@@ -1,0 +1,67 @@
+---
+id: docker-d2-l09
+world: 2
+title: "Pilih image asas"
+summary: "Anda akan belajar: bagaimana asas alpine, slim, distroless dan hardened ubah saiz dan keselamatan."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, TimelineTap, ShrinkRay, Choice, Transcript, SortCards, Mission]
+needs: [docker-d2-l08]
+scenario: d2-l09
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker docs: Best practices (choose the right base image)", url: "https://docs.docker.com/build/building/best-practices/" }
+  - { label: "Docker docs: Base images", url: "https://docs.docker.com/build/building/base-images/" }
+  - { label: "Docker Hardened Images", url: "https://docs.docker.com/dhi/" }
+  - { label: "Docker Hardened Images: get started", url: "https://docs.docker.com/dhi/get-started/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d2-l09" commands={['docker build -t diary:debian .', 'docker build --build-arg BASE=nginx:1.30-alpine -t diary:alpine .', 'docker images diary']} label="Laman diari yang sama dibina dua kali: atas nginx:latest (Debian) dan atas nginx:1.30-alpine. docker images tunjuk yang Debian lebih dua kali ganda besar." />
+
+Laman sama, resepi sama, dua asas. Satu pek lebih dua kali ganda besar. Asas mana yang anda nak hantar?
+</Card>
+
+<Card id="see-bases" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1.22GB', title: 'node:24', text: 'Debian penuh dengan banyak alat. Senang, tapi berat.' }, { when: '249MB', title: 'node:24-slim', text: 'Debian tanpa barang tambahan. Masih ada shell.' }, { when: '181MB', title: 'node:24-alpine', text: 'Alpine Linux yang kecil. Ada shell. Guna musl, bukan glibc.' }, { when: '159MB', title: 'distroless', text: 'Hanya apa yang aplikasi perlu. Tiada shell, tiada pengurus pakej.' }, { when: 'Hardened', title: 'Docker Hardened Images', text: 'Minimum, bukan root secara asal, sangat sedikit pepijat yang diketahui. Percuma dan sumber terbuka sejak Dis 2025.' }]} />
+
+**<Term id="base-image">Image asas</Term>** ialah baris FROM: pek yang anda mula guna. Ketik setiap satu, dari yang paling besar ke paling kecil.
+</Card>
+
+<Card id="try-shrink" type="try">
+Kecilkan pek makanan API bawah 200MB. Tukar asas dan cuba peringkat build.
+
+<Interactive name="ShrinkRay" target={200} />
+</Card>
+
+<Card id="predict" type="predict">
+Anda hantar atas <Term id="distroless">distroless</Term>. Kemudian anda taip `docker exec -it api sh` untuk tengok-tengok. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Gagal: tiada shell', correct: true, why: 'Distroless langsung tiada sh. Kurang benda untuk rosak, kurang untuk diserang.' }, { label: 'Anda dapat shell macam biasa', why: 'Hanya jika asas itu ada shell. Distroless tiada.' }, { label: 'Docker tambah shell untuk anda', why: 'Docker tak pernah tambah program ke dalam image anda.' }]} />
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="Transcript" title="bash" label="docker run dengan sh pada image distroless gagal: exec sh: executable file not found in $PATH." lines={[{ cmd: 'docker run --rm gcr.io/distroless/static-debian13:nonroot sh' }, { out: 'docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "sh": executable file not found in $PATH', color: 'red' }, { out: "\nRun 'docker run --help' for more information" }]} />
+
+Ralat sebenar: `executable file not found in $PATH`. Maksudnya: tiada `sh` dalam pek ini. Memang itu tujuannya.
+</Card>
+
+<Card id="check-sort" type="check">
+Asas mana yang sesuai?
+
+<Interactive name="SortCards" buckets={[{ id: 'alpine', label: 'alpine' }, { id: 'slim', label: 'slim' }, { id: 'hard', label: 'distroless atau hardened' }]} items={[{ label: 'Kecil, dan saya masih mahu shell untuk tengok-tengok', bucket: 'alpine', why: 'Alpine kecil dan masih ada shell.' }, { label: 'Pustaka yang perlukan glibc', bucket: 'slim', why: 'Slim ialah Debian, jadi glibc jalan macam biasa.' }, { label: 'Produksi, tiada benda lebih untuk diserang', bucket: 'hard', why: 'Tiada shell dan tiada pengurus pakej untuk disalah guna.' }, { label: 'Paling sedikit pepijat keselamatan, secara percuma', bucket: 'hard', why: 'Docker Hardened Images sasarkan hampir sifar.' }]} success="Pilih asas paling kecil yang aplikasi anda boleh hidup dengannya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh pilih asas ikut saiz, alat dan keselamatan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker Hardened Images ada di `dhi.io`. Log masuk dengan akaun Docker percuma anda, kemudian pull, contohnya `dhi.io/python:3.13`. Ia datang dengan SBOM dan provenance yang ditandatangani (Dunia D5). Asas distroless dan hardened sesuai dengan peringkat build.
+
+<Interactive name="Mission" id="d2-l09-rep" steps={[{ id: 'pull', text: 'Pull dua asas yang anda guna.', command: 'docker pull node:24-alpine' }, { id: 'sizes', text: 'Bandingkan saiznya.', command: 'docker images' }, { id: 'switch', text: 'Cuba projek anda atas asas yang lebih kecil. Masih jalan?' }]} success="Anda pilih asas dengan sengaja!" />
+</Card>

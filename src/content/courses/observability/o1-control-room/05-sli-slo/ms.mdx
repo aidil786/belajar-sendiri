@@ -1,0 +1,72 @@
+---
+id: obs-o1-l05
+world: 1
+title: SLI, SLO dan bajet ralat
+summary: "Anda akan belajar: cara tukar 'kedai berjalan' jadi satu nombor, satu sasaran dan satu bajet untuk silap."
+minutes: 5
+xp: 25
+interactives: [Choice, PromQLPlayground, SwipeJudge, Mission]
+needs: [obs-o1-l04]
+scenario: o1-checkout-slo
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Google SRE book: service level objectives", url: "https://sre.google/sre-book/service-level-objectives/" }
+  - { label: "Google SRE book: embracing risk (error budgets)", url: "https://sre.google/sre-book/embracing-risk/" }
+  - { label: "Prometheus: operators", url: "https://prometheus.io/docs/prometheus/latest/querying/operators/" }
+---
+
+<Card id="hook" type="hook">
+Bos anda kata: “Bayaran tak boleh gagal, langsung.” Adakah 100% sasaran yang baik?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. 100% mustahil, dan ia bekukan setiap perubahan.', correct: true, why: 'Ya. Telefon, rangkaian dan bank pun boleh gagal. Sasarkan sedikit lebih rendah, dengan sengaja.' }, { label: 'Ya. Pelanggan layak dapat 100%.', why: 'Mereka layak dapat kejujuran. Wi-Fi mereka sendiri gagal lebih daripada 0.1% masa.' }, { label: 'Sasaran tak penting', why: 'Tanpa sasaran, tiada siapa tahu bila perlu berhenti dan baiki.' }]} />
+</Card>
+
+<Card id="try-sli" type="try">
+Bahagikan bayaran yang berjaya dengan semua bayaran. Peratus itu ialah **<Term id="sli">SLI</Term>** anda.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_good_total" prompt="Tambah / kedai_checkout_total selepas nama itu, kemudian Run." goal={{ typed: '/', resultEquals: [{ labels: {}, value: 0.9995 }] }} hints={['Taip ruang, garis miring, kemudian tekan cip kedai_checkout_total.', 'Kotak patut tulis kedai_checkout_good_total / kedai_checkout_total']} solution="kedai_checkout_good_total / kedai_checkout_total" success="0.9995: 99.95% bayaran berjaya." />
+
+<Hint>`/` bermaksud bahagi.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Sasaran anda, **<Term id="slo">SLO</Term>**, ialah 99.9% bayaran berjaya dalam 30 hari. SLI kata 99.95%. Okey?
+
+<Interactive name="Choice" options={[{ label: 'Ya. 99.95% lebih tinggi daripada 99.9%.', correct: true, why: 'Betul. Anda capai sasaran, dengan ruang lebih.' }, { label: 'Tidak. Ia bukan 100%.', why: 'Sasarannya 99.9%, bukan 100%.' }, { label: 'Tak boleh tahu', why: 'Bandingkan dua nombor itu: 99.95 lebih besar daripada 99.9.' }]} />
+</Card>
+
+<Card id="check-sli" type="check">
+SLI yang baik ialah sesuatu yang pengguna rasa. Leret ke kanan untuk SLI yang baik.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Peratus bayaran yang berjaya', good: true, why: 'Pelanggan rasa setiap bayaran yang gagal.' }, { text: 'Peratus bayaran yang siap bawah 1 saat', good: true, why: 'Kelajuan sebahagian daripada “ia berjalan”.' }, { text: 'Penggunaan CPU server pangkalan data', good: false, why: 'Pengguna tak nampak CPU. Letak di dashboard sahaja.' }, { text: 'Bilangan server yang berjalan', good: false, why: 'Sepuluh server boleh semuanya beri ralat.' }, { text: 'Peratus laman menu yang berjaya dimuat', good: true, why: 'Laman yang dimuat itulah yang pengguna mahu.' }]} />
+</Card>
+
+<Card id="see-budget" type="see">
+**<Term id="error-budget">Bajet ralat</Term>** ialah bakinya: 0.1% boleh gagal. Dalam 30 hari, berapa lama boleh rosak sepenuhnya?
+
+<Interactive name="Choice" options={[{ label: 'Lebih kurang 43 minit', correct: true, why: '30 hari ialah 43,200 minit. 0.1% daripadanya ialah 43.2 minit.' }, { label: 'Lebih kurang 7 jam', why: 'Itu bajet untuk 99%, bukan 99.9%.' }, { label: 'Sifar', why: 'Sifar ialah sasaran 100%. Bajetnya 0.1%.' }]} />
+
+<Hint>30 × 24 × 60 = 43,200 minit.</Hint>
+</Card>
+
+<Card id="try-outage" type="try">
+Gangguan bermula pada 40m. Tunjuk SLI hanya bila ia terlepas SLO.
+
+<Interactive name="PromQLPlayground" scenario="o1-checkout-slo" initial="kedai_checkout_good_total / kedai_checkout_total" at="60m" prompt="Tambah < 0.999 di hujung, kemudian Run. Luncur antara 30m dan 60m." goal={{ at: '60m', typed: '<\\s*0\\.999', resultCount: 1 }} hints={['Taip ruang, kemudian < 0.999 di hujung.', 'Penapis simpan siri hanya bila ia benar.']} solution="kedai_checkout_good_total / kedai_checkout_total < 0.999" success="Pada 60m ia muncul: SLO terlepas." />
+
+<Hint>`<` simpan jawapan hanya bila ia bawah 0.999.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tetapkan SLI, SLO dan bajet ralat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Guna bajet dengan sengaja: versi baru, eksperimen, kerja yang dirancang. Bajet hampir habis? Perlahankan dan baiki kebolehpercayaan dulu. Kebanyakan pasukan guna tetingkap bergerak, seperti 30 hari terakhir. Dunia O3 jadikannya amaran burn rate.
+
+<Interactive name="Mission" id="obs-o1-l05-real" steps={[{ id: 'sli', text: 'Untuk satu aplikasi yang anda kenal, tulis SLI: peristiwa baik ÷ semua peristiwa.' }, { id: 'slo', text: 'Pilih sasaran dan tempoh, seperti 99.5% dalam 30 hari.' }, { id: 'budget', text: 'Kira bajet dalam minit: 43,200 × (100% − sasaran).' }]} success="SLO pertama anda dah atas kertas." />
+</Card>

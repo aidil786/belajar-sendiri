@@ -1,0 +1,86 @@
+---
+id: cicd-c3-l10
+world: 3
+title: "Smoke tests and auto rollback"
+summary: "You will learn: how to taste a deploy right away, and let the pipeline undo a bad one by itself."
+minutes: 4
+xp: 20
+interactives: [ConveyorBelt, SwipeJudge, CommandBuilder, YamlBuilder, Choice]
+needs: [cicd-c3-l09]
+scenario: c3-canary
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl: --fail", url: "https://curl.se/docs/manpage.html#-f" }
+  - { label: "Status check functions: failure()", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions" }
+  - { label: "Cloudflare: rollbacks", url: "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/" }
+  - { label: "Cloudflare: version overrides", url: "https://developers.cloudflare.com/workers/versions-and-deployments/version-overrides/" }
+---
+
+<Card id="hook" type="hook">
+The deploy goes green. The live site shows an error page. Which station will stop this line? Tap one, then run.
+
+<Interactive name="ConveyorBelt" scenario="c3-smoke-weak" task={{ type: 'predict' }} success="Nothing stopped it! The check saw an error page and still passed." />
+
+<Hint>Look closely at the curl line. What happens when it gets an error page?</Hint>
+</Card>
+
+<Card id="see-smoke" type="see">
+A **<Term id="smoke-test">smoke test</Term>** is one quick taste right after a deploy. Not the whole menu, one spoon. Good smoke tests, or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Ask /health and expect 200 OK.', good: true, why: 'Fast, and it proves the new version answers.' }, { text: 'Run all 400 unit tests again.', good: false, why: 'Too slow. CI ran them before the deploy.' }, { text: 'Load the home page and look for its title.', good: true, why: 'A real page, checked in a second.' }, { text: 'Wait for a customer to complain.', good: false, why: 'Then your customer is the smoke test.' }]} />
+</Card>
+
+<Card id="try-curl" type="try">
+Fix the check from the first card. Build a curl that fails on an error page.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'curl', means: 'ask a web address' }, { text: '--fail', means: 'exit with an error on a 400 or 500 page' }, { text: '--silent', means: 'hide the progress meter' }, { text: 'https://shop.example.com/health', means: 'the health page' }]} decoys={[{ text: '--insecure', means: 'skip the certificate check' }]} success="Now an error page turns the step red." />
+
+<Hint>curl, then --fail, then --silent, then the address.</Hint>
+</Card>
+
+<Card id="see-rollback" type="see">
+Add a **<Term id="rollback">rollback</Term>** job: it runs only `if: failure()`. Here the canary's smoke test meets an error. Which station stops the line? Tap, then run.
+
+<Interactive name="ConveyorBelt" scenario="c3-canary" task={{ type: 'predict' }} success="The canary stopped the line. Production was skipped, and rollback ran by itself." />
+
+<Hint>The smoke test lives in the canary job.</Hint>
+</Card>
+
+<Card id="try-yaml" type="try">
+Build it yourself: deploy, taste, and roll back on failure.
+
+<Interactive name="YamlBuilder" workflow="Deploy" goal={{ order: ['push', 'perms', 'deploy', 'ready1', 'ship', 'smoke', 'rollback', 'ready2', 'undo'] }} blocks={[
+  { id: 'push', kind: 'trigger', label: 'On push to main', yaml: 'push:\n  branches: [main]', means: 'Run when main gets new commits.' },
+  { id: 'perms', kind: 'permissions', label: 'Read-only token', yaml: 'contents: read', means: 'The token can only read the code.' },
+  { id: 'deploy', kind: 'job', label: 'Job: deploy (production)', yaml: 'deploy:\n  runs-on: ubuntu-latest\n  environment: production', means: 'Deploy with the production keys.' },
+  { id: 'ready1', kind: 'step', label: 'Get ready (deploy job)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'Copy the code. Install packages.' },
+  { id: 'ship', kind: 'step', label: 'Deploy', yaml: '- run: npx wrangler deploy\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Upload the new version.' },
+  { id: 'smoke', kind: 'step', label: 'Smoke test', yaml: '- run: curl --fail --silent https://shop.example.com/health', means: 'One quick taste. An error page fails the job.' },
+  { id: 'always', kind: 'job', label: 'Job: rollback (always)', yaml: 'rollback:\n  needs: deploy\n  if: always()\n  runs-on: ubuntu-latest\n  environment: production', means: 'Roll back after every deploy.', why: 'always() would undo good releases too.' },
+  { id: 'rollback', kind: 'job', label: 'Job: rollback (only on failure)', yaml: 'rollback:\n  needs: deploy\n  if: failure()\n  runs-on: ubuntu-latest\n  environment: production', means: 'Runs only when the deploy job failed.' },
+  { id: 'ready2', kind: 'step', label: 'Get ready (rollback job)', yaml: '- uses: actions/checkout@v7\n- run: npm ci', means: 'A new runner needs the code and Wrangler.' },
+  { id: 'undo', kind: 'step', label: 'Roll back', yaml: '- run: npx wrangler rollback --message "Smoke test failed"\n  env:\n    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}', means: 'Go back to the version before this one.' }]}
+  success="Your pipeline can now undo a bad deploy by itself." />
+
+<Hint>The deploy job with its three steps. Then the rollback job that runs only on failure.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Next week, the smoke test passes. What does the rollback job do?
+
+<Interactive name="Choice" options={[{ label: 'It is skipped: nothing failed', correct: true, why: 'failure() is false, so the job never starts.' }, { label: 'It rolls back anyway', why: 'Only always() would do that. failure() waits for a failure.' }, { label: 'It fails', why: 'A skipped job is not a failed job.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now catch a bad deploy and undo it automatically.
+</Card>
+
+<Card id="deeper" type="deeper">
+`wrangler rollback` swaps the code, not the data. Databases and other bindings stay as they are. Pair it with expand and contract. Want to taste before any user does? Deploy a version at 0%, then call it with the `Cloudflare-Workers-Version-Overrides` header.
+
+Real rep (optional): give a test Worker a `/health` page and a curl check.
+</Card>

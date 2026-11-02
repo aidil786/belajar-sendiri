@@ -1,0 +1,61 @@
+---
+id: k8s-k1-l02
+world: 1
+title: Satu container senang, 200 susah
+summary: "Anda akan belajar: kenapa aplikasi besar perlukan pengurus untuk container-nya."
+minutes: 3
+xp: 15
+interactives: [TimelineTap, KubeReplay, SortCards, Choice]
+needs: [k8s-k1-l01]
+scenario: k1-first-cluster
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes overview", url: "https://kubernetes.io/docs/concepts/overview/" }
+  - { label: "Cluster architecture", url: "https://kubernetes.io/docs/concepts/architecture/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9:00 malam', title: '200 bekas makanan', text: '200 container jalan di atas 10 mesin. Semua okey.' }, { when: '1:12 pagi', title: 'Satu mesin mati', text: 'Mesin 4 berhenti. 20 container di dalamnya hilang.' }, { when: '1:13 pagi', title: 'Pelanggan perasan', text: 'Pesanan gagal. Tiada siapa berjaga untuk nampak.' }, { when: '8:00 pagi', title: 'Anda bangun', text: 'Anda hidupkan semula 20 container dengan tangan, satu demi satu.' }]} />
+
+Satu container senang dijalankan. Cuba pula 200, sepanjang malam. Tekan setiap waktu malam ini. Apa yang tak kena?
+</Card>
+
+<Card id="see-manager" type="see">
+<Interactive name="KubeReplay" scenario="k1-first-cluster" commands={['kubectl create deployment shop --image=nginx:1.29-alpine --replicas=3', 'sleep 10', 'kubectl get pods']} label="Satu pesanan minta 3 dulang kedai. Sepuluh saat kemudian, 3 dulang berjalan, tersebar di dua gerai." />
+
+**<Term id="orchestrator">Orchestrator (pengurus container)</Term>** ialah pengurus medan selera untuk container. Anda beri satu pesanan: 3 dulang. Ia cari gerai dan sebarkan dulang itu.
+</Card>
+
+<Card id="try-sort" type="try">
+Siapa buat setiap kerja ini? Susun.
+
+<Interactive name="SortCards" buckets={[{ id: 'you', label: 'Anda' }, { id: 'manager', label: 'Pengurus (Kubernetes)' }]} items={[{ label: 'Tentukan berapa salinan yang anda mahu', bucket: 'you', why: 'Anda tulis itu dalam pesanan.' }, { label: 'Pilih image aplikasi', bucket: 'you', why: 'Anda pilih apa yang naik ke atas dulang.' }, { label: 'Pilih mesin untuk setiap salinan', bucket: 'manager', why: 'Ia cari gerai yang ada ruang.' }, { label: 'Ganti salinan yang mati', bucket: 'manager', why: 'Ia nampak kekosongan dan isinya.' }, { label: 'Sebarkan salinan ke banyak mesin', bucket: 'manager', why: 'Jadi satu gerai mati tak bawa semuanya.' }, { label: 'Pastikan setiap salinan hidup pukul 3 pagi', bucket: 'manager', why: 'Ia tak pernah tidur.' }]} success="Betul! Anda tulis pesanan. Pengurus buat semua kerja ke hulu ke hilir." />
+
+<Hint>Anda tentukan apa yang anda mahu. Pengurus jadikan ia nyata.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Kali ini ada pengurus bertugas. Satu gerai tutup pukul 1 pagi. Apa jadi pada dulangnya?
+
+<Interactive name="Choice" options={[{ label: 'Dulang baharu dibuat di gerai lain', correct: true, why: 'Ya. Pengurus bina semula di tempat yang ada ruang.' }, { label: 'Ia hilang sehingga anda bangun', why: 'Itu malam tanpa pengurus.' }, { label: 'Semua gerai tutup juga', why: 'Gerai lain terus menjual. Hanya dulang yang hilang dibina semula.' }]} />
+</Card>
+
+<Card id="check-night" type="check">
+<Interactive name="KubeReplay" scenario="k1-night" commands={['kubectl get nodes', 'sleep 300', 'kubectl get pods']} label="dev-worker NotReady. Lima minit kemudian, dua dulangnya tunjuk Terminating, dan dua dulang baharu berjalan di dev-worker2." />
+
+Inilah malam itu, dengan pengurus. `sleep 300` langkau 5 minit. Dua dulang baharu kini berjalan di gerai lain. Tiada siapa perlu bangun.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan kenapa aplikasi besar perlukan orchestrator.
+</Card>
+
+<Card id="deeper" type="deeper">
+Nama Kubernetes datang daripada bahasa Greek. Maksudnya jurumudi: orang yang kemudikan kapal. K8s ialah singkatannya: ada 8 huruf antara K dan s. Google kongsikannya sebagai sumber terbuka pada 2014.
+
+Latihan sebenar (pilihan): baca “Why you need Kubernetes” di halaman overview di bawah.
+</Card>

@@ -1,0 +1,70 @@
+---
+id: linux-l3-l01
+world: 3
+title: "IP addresses: the shop's number"
+summary: "You will learn: what an IP address is, and how to find your server's."
+minutes: 4
+xp: 20
+interactives: [LinuxSim, SwipeJudge, Choice, SortCards, Mission]
+needs: [linux-l2-boss]
+scenario: linux-l3-ip
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ip-address(8)", url: "https://man7.org/linux/man-pages/man8/ip-address.8.html" }
+  - { label: "RFC 1918: private addresses", url: "https://www.rfc-editor.org/rfc/rfc1918" }
+  - { label: "Debian Reference: network setup", url: "https://www.debian.org/doc/manuals/debian-reference/ch05.en.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ip" intro={['ip -br addr']} network />
+
+Aina needs the shop server's number to call it. `ip -br addr` printed two lines. Which number is it?
+</Card>
+
+<Card id="try-valid" type="try">
+An <Term id="ip-address">IP address</Term> is a computer's phone number. It has four numbers, each 0 to 255, joined by dots. Real address or not?
+
+<Interactive name="SwipeJudge" cards={[{ text: '10.0.0.5', good: true, why: 'Four numbers, all between 0 and 255.' }, { text: '10.0.5', good: false, why: 'Only three numbers. An address needs four.' }, { text: '192.168.1.20', good: true, why: 'Four numbers. Many home routers use 192.168.' }, { text: '300.1.2.3', good: false, why: '300 is too big. Each number stops at 255.' }, { text: '127.0.0.1', good: true, why: 'A real address: the machine you are on.' }]} />
+</Card>
+
+<Card id="see-two" type="see">
+kedai has two lines. `lo` is 127.0.0.1, the **loopback**: the shop's intercom. `eth0` is 10.0.0.5: the line to the street. Which one can Aina's laptop call?
+
+<Interactive name="Choice" options={[{ label: '10.0.0.5', correct: true, why: 'The street line. Other computers can reach it.' }, { label: '127.0.0.1', why: 'That is the intercom. On her laptop, it calls her own laptop.' }, { label: 'Both', why: 'The intercom never leaves the shop.' }]} />
+</Card>
+
+<Card id="try-find" type="try">
+Your turn. Show kedai's addresses with `ip -br addr` (or `hostname -I`).
+
+<Interactive name="LinuxSim" scenario="linux-l3-ip" goal={{ lastTyped: '^(ip (-br )?a|hostname -I)' }} hints={['Type ip -br addr and press Enter.', 'Look at the eth0 line.']} solution={['ip -br addr']} success="eth0 has 10.0.0.5. That is kedai's number on the street." />
+
+<Hint>`-br` means brief: one line per network card.</Hint>
+</Card>
+
+<Card id="see-private" type="see">
+Some numbers only work inside one building. These are <Term id="private-address">private addresses</Term>: 10.x, 192.168.x and 172.16–31.x. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'private', label: 'Private (inside a building)' }, { id: 'public', label: 'Public (our practice internet)' }]} items={[{ label: '10.0.0.5', bucket: 'private', why: 'Starts with 10. Private.' }, { label: '192.168.1.20', bucket: 'private', why: 'Starts with 192.168. Private.' }, { label: '172.16.0.9', bucket: 'private', why: '172.16 to 172.31 is private.' }, { label: '203.0.113.10', bucket: 'public', why: 'kedai.example lives here on our practice internet.' }, { label: '198.51.100.7', bucket: 'public', why: 'pasar.example lives here on our practice internet.' }]} success="Private numbers repeat in every building. Public ones are one of a kind." />
+</Card>
+
+<Card id="predict" type="predict">
+On your laptop you open `http://127.0.0.1`. Whose page could answer?
+
+<Interactive name="Choice" options={[{ label: "Your own laptop's", correct: true, why: 'Loopback always calls the machine you are on.' }, { label: "kedai's", why: '127.0.0.1 never leaves your machine.' }, { label: "The internet's", why: 'The intercom stays inside your machine.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find a server's address and tell private from public.
+</Card>
+
+<Card id="deeper" type="deeper">
+Newer IPv6 addresses look like `2001:db8::5`. Our practice server has none. Numbers like 203.0.113.x are kept for examples, like fake phone numbers in films.
+
+Real rep (optional): find your own computer's number.
+
+<Interactive name="Mission" id="linux-l3-l01-rep" steps={[{ id: 'linux', text: 'Linux or WSL: list your addresses.', command: 'ip -br addr' }, { id: 'mac', text: 'macOS: the Wi-Fi address.', command: 'ipconfig getifaddr en0' }, { id: 'win', text: 'Windows: look for IPv4 Address.', command: 'ipconfig' }, { id: 'private', text: 'Is your number private? It probably is.' }]} success="That is your computer's number at home." />
+</Card>

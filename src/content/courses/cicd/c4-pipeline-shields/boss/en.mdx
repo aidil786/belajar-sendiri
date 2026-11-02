@@ -1,0 +1,86 @@
+---
+id: cicd-c4-boss
+world: 4
+title: Spot the holes
+summary: "You will learn: to find and fix 5 security holes in a real-looking workflow, then prove it still works."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, SpotTheHole, Choice, YamlBuilder, ConveyorBelt, SwipeJudge]
+needs: [cicd-c4-l09]
+scenario: c4-boss
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Secure use reference", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "Script injections", url: "https://docs.github.com/en/actions/concepts/security/script-injections" }
+  - { label: "Workflow syntax: permissions", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Room 1', title: 'Spot', text: 'Find the 5 holes in the copied workflow.' }, { when: 'Room 2', title: 'Fix', text: 'Build the safe version, block by block.' }, { when: 'Room 3', title: 'Prove', text: 'Run it. Green, with only the keys it needs.' }]} />
+
+Mei copied a "PR helper" workflow from a blog. It runs green every day. Before it guards your public shop repo, find and fix its 5 holes.
+</Card>
+
+<Card id="try-spot" type="try">
+Room 1: tap every hole. Each one shows the attack and the fix.
+
+<Interactive name="SpotTheHole" scenario="c4-boss" success="All 5 found! Too many keys, your own PC, the stranger's code, a moving tag, a sneaky title." />
+
+<Hint>Check the trigger, the permissions, runs-on, every uses: line and every run: line.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+The old file ran green every single day. Was it safe?
+
+<Interactive name="Choice" options={[{ label: 'No: green means it ran, not that it is safe', correct: true, why: 'Every hole here runs green. That is what makes them dangerous.' }, { label: 'Yes: GitHub would stop a bad workflow', why: 'GitHub runs any valid file. Safety is your job.' }, { label: 'Yes, because nobody complained', why: 'Leaks are quiet. Nobody complains until it is too late.' }]} />
+</Card>
+
+<Card id="try-build" type="try">
+Room 2: build the safe PR helper. Each decoy is one of the holes.
+
+<Interactive name="YamlBuilder" workflow="PR helper" goal={{ order: ['pr', 'read', 'job', 'checkout', 'pin', 'title', 'test'] }} blocks={[
+  { id: 'prt', kind: 'trigger', label: 'On pull_request_target', yaml: 'pull_request_target:', means: 'Run with your secrets and a write key, even for forks.', why: "It hands your keys to the stranger's code. Use pull_request." },
+  { id: 'pr', kind: 'trigger', label: 'On pull_request', yaml: 'pull_request:', means: 'Fork PRs get no secrets and a read-only key.' },
+  { id: 'read', kind: 'permissions', label: 'Read code only', yaml: 'contents: read', means: 'The key can only read your code.' },
+  { id: 'lots', kind: 'permissions', label: 'Write lots', yaml: 'contents: write\npull-requests: write\npackages: write', means: 'The key can change code, PRs and packages.', why: 'This job only reads and tests. Read is enough.' },
+  { id: 'self', kind: 'job', label: 'Job on your office PC', yaml: 'check:\n  runs-on: self-hosted', means: 'Run on your own machine.', why: "On a public repo, a stranger's PR could run on your machine." },
+  { id: 'job', kind: 'job', label: 'Job on a hosted runner', yaml: 'check:\n  runs-on: ubuntu-latest', means: 'A fresh machine, wiped after the job.' },
+  { id: 'checkout', kind: 'step', label: 'Check out code', yaml: '- uses: actions/checkout@v7\n  with:\n    persist-credentials: false', means: 'Copy the code. Keep the key out of Git config.' },
+  { id: 'tag', kind: 'step', label: 'Size check (tag)', yaml: '- uses: example-org/size-check@v3', means: 'Borrow the size check by its tag.', why: 'A tag can be moved. Pin the full SHA.' },
+  { id: 'pin', kind: 'step', label: 'Size check (pinned)', yaml: '- uses: example-org/size-check@0123456789abcdef0123456789abcdef01234567 # v3.1.0', means: 'Borrow the size check by its full SHA (an example SHA).' },
+  { id: 'inline', kind: 'step', label: 'Print the title (pasted in)', yaml: '- run: echo "Checking ${{ github.event.pull_request.title }}"', means: 'Paste the title into the script.', why: 'A sneaky title becomes a command. Pass it through env.' },
+  { id: 'title', kind: 'step', label: 'Print the title (in env)', yaml: '- run: echo "Checking $TITLE"\n  env:\n    TITLE: ${{ github.event.pull_request.title }}', means: 'The title arrives as plain data.' },
+  { id: 'test', kind: 'step', label: 'Install and test', yaml: '- run: npm ci && npm test', means: 'Install packages, then run the tests.' }]}
+  success="Room 2 cleared! Five holes, five shields." />
+
+<Hint>Safe trigger, read key, hosted runner. Then checkout, the pinned check, the title in env, and the tests.</Hint>
+</Card>
+
+<Card id="try-prove" type="try">
+Room 3: Mei adds a step that labels the PR "tested". Red! Give the job only the key it needs. Then prove it is green.
+
+<Interactive name="ConveyorBelt" scenario="c4-boss-label" task={{ type: 'green' }} fixes={[
+  { label: 'contents: read + pull-requests: write', text: 'permissions:\n  contents: read\n  pull-requests: write', why: 'Read the code, label the PR. Nothing more.' },
+  { label: 'write-all', text: 'permissions: write-all', why: 'Green, but you just reopened hole 1.', correct: false },
+  { label: 'contents: write', text: 'permissions:\n  contents: write', why: 'Labels belong to the PR, not to your code.' }]} success="Room 3 cleared! Green, with one extra key only." />
+
+<Hint>A label lives on the pull request.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Last check. Fixed, or still a hole? Swipe each line.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'on: pull_request', good: true, why: 'Fork PRs get no secrets and a read-only key.' }, { text: 'permissions: write-all', good: false, why: 'Every step gets every key. Use contents: read.' }, { text: 'runs-on: ubuntu-latest', good: true, why: 'A fresh hosted machine for every job.' }, { text: 'uses: example-org/size-check@v3', good: false, why: 'A tag can move. Pin the full SHA.' }, { text: 'TITLE: ${{ github.event.pull_request.title }}', good: true, why: 'Under env:, the title is data, not code.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now find and fix the holes in any workflow.
+</Card>
+
+<Card id="deeper" type="deeper">
+Real rep (optional): run actionlint on your own workflows. Then hunt for the five holes by hand: the trigger, `permissions:`, `runs-on:`, every `uses:` and every `run:`. Fix one hole per pull request, so each change is easy to review.
+</Card>

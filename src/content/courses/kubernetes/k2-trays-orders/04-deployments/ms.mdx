@@ -1,0 +1,69 @@
+---
+id: k8s-k2-l04
+world: 2
+title: "Deployment: arahan tetap"
+summary: "Anda akan belajar: cara Deployment, ReplicaSet dan pod saling berkait."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, OrderList, FoodCourtSim]
+needs: [k8s-k2-l03]
+scenario: k2-deploy
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Deployments", url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" }
+  - { label: "kubectl get", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/" }
+---
+
+<Card id="hook" type="hook">
+ReplicaSet jaga 3 dulang nginx 1.29. Menu bertukar ke 1.30, jadi anda ubah templatnya. Apa jadi pada 3 dulang yang sudah keluar?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa. Ia kekal 1.29.', correct: true, why: 'ReplicaSet hanya jaga bilangan. Ia tak pernah tukar dulang yang sudah keluar.' }, { label: 'Ketiga-tiganya bertukar serentak', why: 'Ia langsung tak sentuh dulang yang sedang berjalan. Hanya dulang baharu dapat templat baharu.' }, { label: 'Ia bertukar satu demi satu', why: 'Bagus kalau boleh! ReplicaSet tak mampu. Deployment mampu.' }]} />
+</Card>
+
+<Card id="see-layers" type="see">
+<Interactive name="KubeReplay" scenario="k2-deploy" commands={['kubectl apply -f shop.yaml', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl get deploy,rs,pods']} label="Apply shop.yaml buat Deployment shop, satu ReplicaSet dan 3 pod. Nama mereka semua bermula dengan shop-." />
+
+**<Term id="deployment">Deployment</Term>** ialah arahan tetap pengurus: "sentiasa 3 dulang hidangan ini". Ia buat ReplicaSet, dan ReplicaSet buat pod. Tiga lapisan, satu fail.
+</Card>
+
+<Card id="try-layers" type="try">
+Siapa buat siapa? Letak yang anda tulis di atas sekali.
+
+<Interactive name="OrderList" items={['Deployment shop: anda tulis ini', 'ReplicaSet shop-747bf9cf8: Deployment buat ini', 'Pod shop-747bf9cf8-…: ReplicaSet buat ini']} label="Yang anda tulis di atas" success="Betul! Anda tulis pesanan. Lapisan di bawah ikut pesanan itu." />
+
+<Hint>Lihat nama. Setiap lapisan tambah satu bahagian pada nama di atasnya.</Hint>
+</Card>
+
+<Card id="try-sim" type="try">
+Giliran anda. Apply `shop.yaml`. Bila 3 dulang sudah sedia, tukar pesanan kepada 4.
+
+<Interactive name="FoodCourtSim" scenario="k2-deploy" board="shop" goal={{ replicas: { name: 'shop', count: 4 }, podsReady: { selector: 'app=shop', count: 4 } }} hints={['Taip kubectl apply -f shop.yaml', 'Kemudian kubectl scale deployment shop --replicas=4']} success="Mahu 4, nampak 4. Pengurus uruskan semua lapisan." />
+
+<Hint>`kubectl apply -f shop.yaml`, kemudian `kubectl scale deployment shop --replicas=4`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Seseorang padam ReplicaSet `shop-747bf9cf8`. Tiga dulangnya hilang sekali. Apa Deployment buat?
+
+<Interactive name="Choice" options={[{ label: 'Buat semula, dengan dulang baharu', correct: true, why: 'Arahan tetap masih kata 3 dulang. Pengurus bina semula lapisan yang hilang.' }, { label: 'Tiada apa. Kedai terus tutup.', why: 'Deployment masih ada, dan ia masih mahu 3.' }, { label: 'Ia padam dirinya juga', why: 'Padam mengalir ke bawah, bukan ke atas. Pesanan di atas kekal.' }]} />
+</Card>
+
+<Card id="check" type="check">
+<Interactive name="KubeReplay" scenario="k2-deploy" commands={['kubectl apply -f shop.yaml', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl delete rs -l app=shop', 'kubectl rollout status deployment/shop --timeout=120s', 'kubectl get rs']} label="ReplicaSet dipadam. Deployment buat ReplicaSet dengan nama yang sama dan 3 pod baharu." />
+
+ReplicaSet kembali dengan nama yang sama. Namanya datang dari templat, jadi templat sama, nama sama. Dulang di dalamnya baharu.
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh terangkan cara Deployment, ReplicaSet dan pod saling berkait.
+</Card>
+
+<Card id="deeper" type="deeper">
+Baca nama pod dari kiri. `shop` ialah Deployment. `747bf9cf8` datang dari templat (label `pod-template-hash`). Bahagian akhir rawak. Untuk tutup kedai terus, padam Deployment, bukan pod-podnya.
+
+Latihan sebenar (pilihan): dalam kluster yang boleh dibuang, jalankan `kubectl get deploy,rs,pods --show-labels`.
+</Card>

@@ -1,0 +1,59 @@
+---
+id: obs-o3-l03
+world: 3
+title: "Amaran pada simptom, bukan punca"
+summary: "Anda akan belajar: panggil orang untuk apa yang pelanggan rasa, bukan untuk setiap mesin yang sibuk."
+minutes: 3
+xp: 15
+interactives: [Choice, SortCards, AlertRuleBuilder, SwipeJudge]
+needs: [obs-o3-l02]
+scenario: o3-symptoms
+tool: prometheus
+toolVersion: "3"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Alerting (practices)", url: "https://prometheus.io/docs/practices/alerting/" }
+  - { label: "Alerting rules", url: "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" }
+---
+
+<Card id="hook" type="hook">
+Pukul 3 pagi. Pager berbunyi: CPU 95%. Anda bangun dan semak. Setiap pesanan berjalan elok. Berbaloikah anda dikejutkan?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Pelanggan tak rasa apa-apa.', correct: true, why: 'Betul. Mesin sibuk bukan masalah selagi pelanggan tak rasa.' }, { label: 'Ya. 95% menakutkan.', why: 'Menakutkan, tapi tak membahayakan di sini. Tidur pun penting.' }]} />
+</Card>
+
+<Card id="see-sort" type="see">
+<Interactive name="SortCards" buckets={[{ id: 'symptom', label: 'Pelanggan rasa' }, { id: 'cause', label: 'Satu sebab yang mungkin' }]} items={[{ label: 'Pesanan gagal', bucket: 'symptom', why: 'Pelanggan nampak ralat.' }, { label: 'Laman ambil 4 saat', bucket: 'symptom', why: 'Pelanggan menunggu.' }, { label: 'CPU 95%', bucket: 'cause', why: 'Satu sebab benda mungkin jadi lambat. Mungkin.' }, { label: 'Satu pod restart', bucket: 'cause', why: 'Kubernetes dah pulihkannya. Pelanggan mungkin tak perasan.' }, { label: 'Cakera 80% penuh', bucket: 'cause', why: 'Risau untuk nanti, bukan sakit sekarang.' }]} success="Simptom ialah kesakitan. Punca ialah tekaan tentang kesakitan." />
+
+**<Term id="symptom-alert">Simptom</Term>** ialah apa yang pelanggan rasa. Punca ialah satu sebab ia mungkin berlaku.
+</Card>
+
+<Card id="try-build" type="try">
+CPU sibuk dari minit 5 hingga 13. Pesanan gagal dari minit 18. Pilih rule yang kejutkan orang hanya untuk yang kedua.
+
+<Interactive name="AlertRuleBuilder" scenario="o3-symptoms" alert="KedaiPain" exprs={[{ label: 'CPU melebihi 90%', expr: 'kedai:cpu_busy:ratio > 0.9', why: 'CPU sibuk pada minit 10, tapi setiap pesanan berjaya.' }, { label: 'Lebih 5% pesanan gagal', expr: 'sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05', threshold: 0.05 }]} fors={['0s', '2m']} labels={[{ labels: { severity: 'page' } }]} annotations={[{ annotations: { summary: '{{ $value | humanizePercentage }} of orders fail' } }]} goal={{ firingAt: ['25m'], quietAt: ['10m'], noFlap: true }} solution={{ expr: 1, for: 1 }} hints={['Yang mana pelanggan rasa? Lihat graf pada minit 25.']} success="Senyap semasa CPU berpeluh. Loceng bila pesanan gagal." />
+
+<Hint>CPU yang sibuk tak rosakkan satu pesanan pun. Pesanan yang gagal memang menyakitkan.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Cakera akan penuh dalam 4 jam. Pelanggan belum rasa apa-apa. Apa paling sesuai?
+
+<Interactive name="Choice" options={[{ label: 'Tiket untuk waktu kerja', correct: true, why: 'Betul. Ia akan menyakitkan tak lama lagi, tapi tak perlu kejutkan sesiapa sekarang.' }, { label: 'Panggil orang sekarang', why: 'Empat jam cukup untuk baiki semasa berjaga.' }, { label: 'Abaikan', why: 'Ia akan jadi kesakitan. Tiket simpan ia dalam senarai.' }]} />
+</Card>
+
+<Card id="check-swipe" type="check">
+Leret ke kanan jika ia patut panggil orang. Leret ke kiri jika tidak.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Lebih 5% checkout gagal selama 2 minit', good: true, why: 'Pelanggan sedang hilang pesanan sekarang.' }, { text: 'CPU melebihi 80%', good: false, why: 'Sibuk bukan rosak. Tunjuk di skrin.' }, { text: 'Masa laman p95 melebihi 2 saat selama 5 minit', good: true, why: 'Laman lambat ialah kesakitan yang pelanggan rasa.' }, { text: 'Satu pod restart sekali', good: false, why: 'Ia dah pulih. Kira restart di dashboard sahaja.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panggil orang untuk kesakitan pelanggan, bukan untuk mesin sibuk.
+</Card>
+
+<Card id="deeper" type="deeper">
+Punca masih penting. Letak CPU, memori dan cakera di skrin, dan dalam runbook. Jadi on-call boleh cari sebabnya dengan cepat. Nasihat Prometheus sendiri: sedikit amaran, setiap satu terikat pada kesakitan yang pengguna rasa.
+</Card>

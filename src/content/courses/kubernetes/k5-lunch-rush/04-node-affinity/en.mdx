@@ -1,0 +1,104 @@
+---
+id: k8s-k5-l04
+world: 5
+title: "Pick a stall: nodeSelector and affinity"
+summary: "You will learn: how to send a tray only to stalls with the right label."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, Choice, SchedulerTetris, FoodCourtSim, SortCards]
+needs: [k8s-k5-l03]
+scenario: k5-pick
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: assigning pods to nodes", url: "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" }
+  - { label: "Kubernetes: well-known labels", url: "https://kubernetes.io/docs/reference/labels-annotations-taints/" }
+  - { label: "kubectl label", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k5-pick" commands={['kubectl apply -f fast.yaml', 'sleep 5', 'kubectl get pod fast']} label="The fast pod is created, but after 5 seconds it is still Pending, 0 of 1 ready." />
+
+The fast tray says Pending. It never starts. What is it waiting for?
+</Card>
+
+<Card id="see-sign" type="see">
+`fast.yaml` carries a sign. A **<Term id="node-selector">nodeSelector</Term>** says: "only stalls with this label."
+
+```yaml
+spec:
+  nodeSelector:
+    disk: ssd
+```
+
+Which stall may take the fast tray?
+
+<Interactive name="Choice" options={[{ label: 'A stall labelled disk=ssd', correct: true, why: 'The sign must match a stall label exactly.' }, { label: 'Any stall with free space', why: 'Free space is not enough. The label must match too.' }, { label: 'The control-plane stall', why: 'It has a lock (a taint), and no disk=ssd label.' }]} />
+</Card>
+
+<Card id="try-tetris" type="try">
+Put every tray on a stall. Read the signs first.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi', labels: { disk: 'ssd' } }, { name: 'stall-b', cpu: '2', memory: '4Gi', labels: { disk: 'hdd' } }]} pods={[{ name: 'fast', cpu: '500m', memory: '512Mi', nodeSelector: { disk: 'ssd' } }, { name: 'tray-1', cpu: '1', memory: '1Gi' }, { name: 'slow-ok', cpu: '500m', memory: '512Mi', nodeSelector: { disk: 'hdd' } }]} success="Every tray sits under a matching sign." />
+
+<Hint>fast needs disk=ssd. slow-ok needs disk=hdd. tray-1 has no sign: any stall works.</Hint>
+</Card>
+
+<Card id="check-error" type="check">
+<Interactive name="KubeReplay" scenario="k5-pick" commands={['kubectl apply -f fast.yaml', 'sleep 5', 'kubectl get events --field-selector reason=FailedScheduling -o jsonpath={.items[0].message}']} label="The FailedScheduling event: 0 of 3 nodes are available. 1 had an untolerated taint, 2 did not match the pod's node affinity or selector." />
+
+Those are the scheduler's real words. In plain words: one stall is locked. Two have the wrong label. No stall says disk=ssd.
+</Card>
+
+<Card id="try-label" type="try">
+Give stall dev-worker2 the sign. The waiting tray should move in.
+
+```bash
+kubectl label nodes dev-worker2 disk=ssd
+```
+
+<Interactive name="FoodCourtSim" scenario="k5-pick-try" goal={{ podsReady: { selector: 'app=fast', count: 1 } }} hints={['Type kubectl label nodes dev-worker2 disk=ssd', 'Wait a few seconds, then kubectl get pod fast -o wide']} success="The fast tray found its stall and is Running." />
+
+<Hint>Copy the command above. Then watch the waiting tray.</Hint>
+</Card>
+
+<Card id="see-affinity" type="see">
+**<Term id="node-affinity">Node affinity</Term>** is a wish list: must-haves (required) and nice-to-haves (preferred). The fast tray needs ssd. It would like the front zone. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'must', label: 'Must-have (required)' }, { id: 'nice', label: 'Nice-to-have (preferred)' }]} items={[{ label: 'disk In [ssd]', bucket: 'must', why: 'No ssd, no stall. That is a must.' }, { label: 'zone In [front]', bucket: 'nice', why: 'Front is better, but not a must. It gets a weight.' }]} success="Right: required filters, preferred only scores." />
+
+In YAML, the two lists look like this:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: disk, operator: In, values: [ssd] }
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 50
+        preference:
+          matchExpressions:
+            - { key: zone, operator: In, values: [front] }
+```
+</Card>
+
+<Card id="predict" type="predict">
+The fast tray runs on dev-worker2. Now you remove the label: `kubectl label nodes dev-worker2 disk-`. What happens to the tray?
+
+<Interactive name="Choice" options={[{ label: 'It keeps running there', correct: true, why: 'IgnoredDuringExecution: signs are read only when a tray is placed.' }, { label: 'It is moved to another stall', why: 'Labels are only checked at placement time.' }, { label: 'It is deleted', why: 'Nothing deletes it. It just would not be placed there again.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now send a tray to the right stall with labels.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get nodes --show-labels` lists every stall's labels. Built-in ones include `kubernetes.io/hostname` and, in clouds, `topology.kubernetes.io/zone`. Pod affinity puts trays near other trays. Anti-affinity keeps them apart.
+
+Real rep (optional): use a throwaway kind cluster. Label a worker, then apply a pod with a nodeSelector.
+</Card>

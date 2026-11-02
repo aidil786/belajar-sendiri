@@ -1,0 +1,83 @@
+---
+id: k8s-k1-l08
+world: 1
+title: Pandu dengan kubectl
+summary: "Anda akan belajar: enam arahan kubectl yang anda akan guna setiap hari."
+minutes: 5
+xp: 25
+interactives: [Choice, KubeReplay, FoodCourtSim, CommandBuilder, SortCards, Mission]
+needs: [k8s-k1-l07]
+scenario: k1-kubectl
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "kubectl quick reference", url: "https://kubernetes.io/docs/reference/kubectl/quick-reference/" }
+  - { label: "Debug pods", url: "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/" }
+  - { label: "kubectl logs", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" }
+  - { label: "kubectl exec", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_exec/" }
+---
+
+<Card id="hook" type="hook">
+Bos kata kedai berperangai pelik. Anda ada satu alat: kubectl. Apa yang anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Tengok: kubectl get pods', correct: true, why: 'Sentiasa tengok dulu. Tengok tak ubah apa-apa.' }, { label: 'Padam semua pod dan berharap', why: 'Jangan padam sebelum tengok. Nanti petunjuk hilang.' }, { label: 'Mulakan semula laptop', why: 'Laptop anda okey. Dulang tinggal dalam kluster.' }]} />
+</Card>
+
+<Card id="see-get" type="see">
+<Interactive name="KubeReplay" scenario="k1-first-pod" commands={['kubectl apply -f tray.yaml', 'kubectl get pods']} label="kubectl apply -f tray.yaml cipta pod/tray. kubectl get pods tunjuk ia Pending, 0/1: masih bersiap." />
+
+**<Term id="kubectl">kubectl</Term>** ialah walkie-talkie anda ke pejabat. `kubectl apply -f tray.yaml` pasang pesanan dalam fail itu. `kubectl get pods` senaraikan dulang anda. Pending maksudnya masih bersiap.
+</Card>
+
+<Card id="try-describe" type="try">
+Dulang nampak pelik? Minta cerita penuhnya. Taip `kubectl describe pod tray`. Baca Events di hujung.
+
+<Interactive name="FoodCourtSim" scenario="k1-kubectl" goal={{ typed: '^(kubectl|k) describe (pods?|po)( |/)tray\\b' }} hints={['Taip kubectl describe pod tray dan tekan Enter.']} success="Scheduled, pulled, created, started. Events ceritakan semuanya." />
+
+<Hint>describe berakhir dengan Events: apa yang berlaku pada dulang ini, ikut turutan.</Hint>
+</Card>
+
+<Card id="predict-logs" type="predict">
+Aplikasi kitchen cetak satu mesej. Arahan mana yang tunjuk mesej itu?
+
+<Interactive name="Choice" options={[{ label: '`kubectl logs kitchen`', correct: true, why: 'Ya. logs tunjuk apa yang aplikasi cetak.' }, { label: '`kubectl describe pod kitchen`', why: 'describe cerita kisah Kubernetes, bukan kata-kata aplikasi.' }, { label: '`kubectl get pod kitchen`', why: 'get tunjuk satu baris status sahaja.' }]} />
+</Card>
+
+<Card id="see-logs" type="see">
+<Interactive name="KubeReplay" scenario="k1-kubectl" commands={['kubectl logs kitchen', 'kubectl exec kitchen -- hostname']} label="kubectl logs kitchen cetak: Kedai Kancil is open. kubectl exec kitchen -- hostname cetak: kitchen." />
+
+`kubectl logs kitchen` tunjuk apa yang aplikasi cetak. `kubectl exec kitchen -- hostname` jalankan satu arahan di dalam dulang.
+</Card>
+
+<Card id="try-exec" type="try">
+Bina arahan yang tanya nama pod kitchen, dari dalam.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'kubectl', means: 'bercakap dengan kluster' }, { text: 'exec', means: 'jalankan arahan di dalam pod' }, { text: 'kitchen', means: 'pod yang mana' }, { text: '--', means: 'bahagian kubectl tamat di sini' }, { text: 'hostname', means: 'arahan untuk dijalankan di dalam' }]} decoys={[{ text: 'logs', means: 'tunjuk apa yang aplikasi cetak' }, { text: 'delete', means: 'buang pod' }]} success="kubectl exec kitchen -- hostname cetak: kitchen." />
+</Card>
+
+<Card id="try-delete" type="try">
+Sekarang kemaskan. Baca bar merah jambu dahulu: kind-dev, default. Kemudian padam dulang dengan `kubectl delete pod tray`.
+
+<Interactive name="FoodCourtSim" scenario="k1-kubectl" goal={{ objectMissing: ['pod/tray'] }} hints={['Taip kubectl delete pod tray dan tekan Enter.']} success="Hilang. Tiada arahan tetap yang buat dulang ini, jadi tiada siapa bawa ia balik." />
+
+<Hint>Hanya tray yang pergi. Pod kitchen kekal.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Arahan mana yang cuma tengok, dan mana yang ubah kluster?
+
+<Interactive name="SortCards" buckets={[{ id: 'look', label: 'Cuma tengok (selamat)' }, { id: 'change', label: 'Ubah sesuatu (berhati-hati)' }]} items={[{ label: '`kubectl get pods`', bucket: 'look', why: 'Satu senarai. Tiada yang berubah.' }, { label: '`kubectl describe pod tray`', bucket: 'look', why: 'Satu cerita. Tiada yang berubah.' }, { label: '`kubectl logs kitchen`', bucket: 'look', why: 'Apa yang aplikasi cetak. Tiada yang berubah.' }, { label: '`kubectl apply -f tray.yaml`', bucket: 'change', why: 'Ia cipta atau ubah objek.' }, { label: '`kubectl delete pod tray`', bucket: 'change', why: 'Ia buang sesuatu. Baca bar merah jambu dahulu.' }]} success="Tengok sesuka hati. Ubah dengan berhati-hati." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh tengok, ubah dan kemaskan dengan kubectl.
+</Card>
+
+<Card id="deeper" type="deeper">
+`kubectl get pods -w` terus memerhati. `kubectl logs -f kitchen` ikut baris baharu. `kubectl exec -it kitchen -- sh` buka shell di dalam. Terminal latihan cuma terangkan yang itu.
+
+<Interactive name="Mission" id="k8s-k1-l08-real" steps={[{ id: 'run', text: 'Di kluster kind anda, letak satu dulang.', command: 'kubectl run tray --image=nginx:1.29-alpine' }, { id: 'get', text: 'Senaraikan dulang anda.', command: 'kubectl get pods' }, { id: 'describe', text: 'Baca ceritanya.', command: 'kubectl describe pod tray' }, { id: 'logs', text: 'Baca apa yang nginx cetak.', command: 'kubectl logs tray' }, { id: 'delete', text: 'Semak context, kemudian kemaskan.', command: 'kubectl delete pod tray' }]} success="Enam arahan, di kluster sebenar!" />
+</Card>

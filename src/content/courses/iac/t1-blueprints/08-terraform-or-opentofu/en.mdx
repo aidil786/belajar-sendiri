@@ -1,0 +1,72 @@
+---
+id: iac-t1-l08
+world: 1
+title: Terraform or OpenTofu?
+summary: "You will learn: how Terraform and OpenTofu are related, and what is the same."
+minutes: 4
+xp: 20
+interactives: [Choice, TimelineTap, TofuSim, SortCards, SwipeJudge, Mission]
+needs: [iac-t1-l07]
+scenario: t1-ready
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu FAQ", url: "https://opentofu.org/faq/" }
+  - { label: "What is Terraform?", url: "https://developer.hashicorp.com/terraform/intro" }
+  - { label: "Terraform licence (BUSL 1.1)", url: "https://github.com/hashicorp/terraform/blob/main/LICENSE" }
+  - { label: "OpenTofu licence (MPL 2.0)", url: "https://github.com/opentofu/opentofu/blob/main/LICENSE" }
+  - { label: "HashiCorp certifications (Terraform Associate)", url: "https://developer.hashicorp.com/certifications/infrastructure-automation" }
+---
+
+<Card id="hook" type="hook">
+A job ad asks for Terraform. You learned OpenTofu. Is that a problem?
+
+<Interactive name="Choice" options={[{ label: 'Hardly. Same language, same basic commands.', correct: true, why: 'Your .tf files and init, plan, apply work in both.' }, { label: 'Yes. You must start again from zero.', why: 'They share one family tree. Most skills carry over.' }, { label: 'Yes. They use different file types.', why: 'Both read .tf files written in HCL.' }]} />
+</Card>
+
+<Card id="see-history" type="see">
+<Interactive name="TimelineTap" events={[{ when: '2014', title: 'Terraform starts', text: 'HashiCorp releases Terraform as open source, under the MPL 2.0 licence.' }, { when: 'Aug 2023', title: 'A new licence', text: 'New Terraform versions move to the BUSL. You can read the code. Some uses, like rival paid services, are not allowed.' }, { when: 'Sep 2023', title: 'OpenTofu is born', text: 'The community copies the last open version. It joins the Linux Foundation as OpenTofu, under MPL 2.0.' }, { when: 'Jan 2024', title: 'OpenTofu 1.6', text: 'The first stable OpenTofu release.' }, { when: '2025', title: 'New homes', text: 'IBM buys HashiCorp. OpenTofu joins the CNCF, the home of Kubernetes.' }]} />
+
+One family tree. **<Term id="opentofu">OpenTofu</Term>** split from <Term id="terraform">Terraform</Term> in 2023. Tap each year.
+</Card>
+
+<Card id="try-command" type="try">
+This laptop has OpenTofu. Type `terraform version`. Then type `tofu version`.
+
+<Interactive name="TofuSim" scenario="t1-ready" goal={{ typed: '^terraform', lastTyped: '^tofu version' }} hints={['Type terraform version first.', 'Then type tofu version.']} success="Same job, different name. OpenTofu also lists the providers this folder uses." />
+
+<Hint>`terraform version`, then `tofu version`.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Both, OpenTofu only, or Terraform only?
+
+<Interactive name="SortCards" buckets={[{ id: 'both', label: 'Both' }, { id: 'tofu', label: 'OpenTofu' }, { id: 'tf', label: 'Terraform' }]} items={[{ label: '.tf files written in HCL', bucket: 'both', why: 'The same language.' }, { label: 'init, plan, apply, destroy', bucket: 'both', why: 'The same loop and the same basic commands.' }, { label: 'Licence: MPL 2.0, open source', bucket: 'tofu', why: 'OpenTofu kept the open licence.' }, { label: 'Licence: BUSL', bucket: 'tf', why: 'Terraform moved to BUSL in 2023.' }, { label: 'State encryption built in', bucket: 'tofu', why: 'An OpenTofu feature: it can encrypt the state file.' }, { label: 'HCP Terraform, HashiCorp\'s hosted service', bucket: 'tf', why: 'A HashiCorp product.' }]} success="Mostly the same. The licence is the big difference." />
+</Card>
+
+<Card id="predict" type="predict">
+Your team's blueprint uses `hashicorp/random`. Can OpenTofu use it?
+
+<Interactive name="Choice" options={[{ label: 'Yes. OpenTofu\'s registry has the same providers.', correct: true, why: 'Remember init: it fetched hashicorp/random from registry.opentofu.org.' }, { label: 'No. HashiCorp providers only work in Terraform.', why: 'Providers are plugins with their own licences. OpenTofu uses them too.' }, { label: 'Only after you rewrite the provider', why: 'No rewrite needed. init finds it.' }]} />
+</Card>
+
+<Card id="check-fair" type="check">
+Fair statement or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'The basics you learn here work in both tools.', good: true, why: 'Same language, same loop.' }, { text: 'The two will stay identical forever.', good: false, why: 'Each adds its own features now. Check the docs of the tool you use.' }, { text: 'Switching an existing project? Follow the official migration guide.', good: true, why: 'State files need care when you switch.' }, { text: 'One tool is for beginners, the other for experts.', good: false, why: 'Both run real production systems.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how Terraform and OpenTofu relate.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real architect can't knock a building down with one word. Here, `tofu destroy` really can. A real register lists rooms. Our state can also hold secrets, in plain text (World T3).
+
+Certificates: HashiCorp offers the Terraform Associate exam. OpenTofu has no official exam; these skills still count.
+
+<Interactive name="Mission" id="iac-t1-l08-rep" steps={[{ id: 'version', text: 'Check your OpenTofu version.', command: 'tofu version' }, { id: 'docs', text: 'Open the OpenTofu docs and find the page for tofu plan.' }, { id: 'exam', text: 'Optional: read what the Terraform Associate exam covers on developer.hashicorp.com.' }]} success="You know both names now." />
+</Card>

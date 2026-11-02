@@ -1,0 +1,96 @@
+---
+// A family's shared Rescue Center (/<lang>/ship-it/rescue/, /<lang>/level-up/rescue/): one section per
+// part, with the same filter box as the Git Rescue Center. A link like #flow-id opens that flow.
+// Parts with no flows yet say so calmly; with no flows at all, the page is just that calm list.
+import Base from '~/layouts/Base.astro';
+import RescueFlow from '~/components/interactives/RescueFlow';
+import { t, type Lang } from '~/i18n';
+import { familyTitle, getFamily, partLabel } from '~/lib/course';
+import { getRescue, lessonLinks } from '~/lib/content';
+import { familyKeys } from '~/lib/catalog';
+import '~/components/interactives/rescue-page.css';
+interface Props {
+  lang: Lang;
+  family: string;
+}
+const { lang, family } = Astro.props;
+const k = familyKeys(family);
+const other = lang === 'en' ? 'ms' : 'en';
+const parts = await getFamily(family);
+const perPart = await Promise.all(
+  parts.map(async (c) => ({ course: c, flows: (await getRescue(c.id)).flows })),
+);
+const flows = perPart.flatMap((p) => p.flows);
+const sections = perPart.map((p) => ({
+  id: p.course.id,
+  title: `${partLabel(lang, p.course)} (${p.course.title[lang]})`,
+  flows: p.flows.map((f) => f.id),
+}));
+const waiting = perPart.filter((p) => p.flows.length === 0);
+const lessons = await lessonLinks(
+  lang,
+  parts.map((c) => c.id),
+);
+---
+
+<Base lang={lang} title={t(lang, k.rescueTitle)} altPath={`/${other}/${family}/rescue/`}>
+  <div class="container rescue-page" data-family-rescue={family}>
+    <p class="crumb">
+      <a href={`/${lang}/${family}/`}>{familyTitle(lang, family)}</a>
+    </p>
+    <h1>{t(lang, k.rescueTitle)}</h1>
+    <p>{t(lang, k.rescueIntro)}</p>
+    {flows.length > 0 && (
+      <RescueFlow
+        client:load
+        lang={lang}
+        flows={flows}
+        lessons={lessons}
+        sections={sections}
+        filterHint={t(lang, k.rescueFilterHint)}
+      />
+    )}
+    {flows.length === 0 && (
+      <p class="rescue-all-soon" role="status">
+        {t(lang, 'rescue.familySoon')}
+      </p>
+    )}
+    {waiting.length > 0 && (
+      <div class="rescue-waiting">
+        {waiting.map((p) => (
+          <section
+            class="rescue-group"
+            aria-labelledby={`soon-${p.course.id}`}
+            data-rescue-soon={p.course.id}
+          >
+            <h2 class="rescue-group-title" id={`soon-${p.course.id}`}>
+              {partLabel(lang, p.course)} ({p.course.title[lang]})
+            </h2>
+            <p class="rescue-none">{t(lang, 'rescue.partSoon')}</p>
+          </section>
+        ))}
+      </div>
+    )}
+    <p class="more">
+      {t(lang, 'rescue.gitTrouble')} <a href={`/${lang}/rescue/`}>{t(lang, 'rescue.gitLink')}</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .crumb {
+    font-size: var(--text-s);
+    margin-bottom: var(--space-2);
+  }
+  .rescue-all-soon {
+    display: inline-block;
+    background: var(--c-staging-soft);
+    color: var(--c-staging-ink);
+    border-radius: var(--radius-m);
+    padding: var(--space-2) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .rescue-waiting {
+    margin-top: var(--space-4);
+  }
+</style>

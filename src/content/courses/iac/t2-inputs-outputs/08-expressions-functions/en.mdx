@@ -1,0 +1,91 @@
+---
+id: iac-t2-l08
+world: 2
+title: Expressions and functions
+summary: "You will learn: to shape values with functions, conditionals and for expressions."
+minutes: 5
+xp: 25
+interactives: [Choice, TofuSim, SortCards, Mission]
+needs: [iac-t2-l07]
+scenario: t2-functions
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OpenTofu: expressions", url: "https://opentofu.org/docs/language/expressions/" }
+  - { label: "OpenTofu: built-in functions", url: "https://opentofu.org/docs/language/functions/" }
+  - { label: "OpenTofu: conditional expressions", url: "https://opentofu.org/docs/language/expressions/conditionals/" }
+  - { label: "OpenTofu: for expressions", url: "https://opentofu.org/docs/language/expressions/for/" }
+---
+
+<Card id="hook" type="hook">
+The sign must shout KEDAI KANCIL in capitals. The variable says "Kedai Kancil". Do you add a second variable in capitals?
+
+<Interactive name="Choice" options={[{ label: 'No. A function turns it into capitals.', correct: true, why: 'upper(var.shop) gives KEDAI KANCIL. One value, many shapes.' }, { label: 'Yes. One variable per spelling.', why: 'Two copies drift apart. Shape one value instead.' }, { label: 'Type it in capitals everywhere', why: 'Then lower case is gone where you need it.' }]} />
+</Card>
+
+<Card id="see-plan" type="see">
+This blueprint only has outputs. Type `tofu plan` and read Changes to Outputs.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ lastTyped: '^tofu plan' }} hints={['Type tofu plan and press Enter.']} success="Each output was worked out: joined, formatted, picked." />
+
+Each `value` is an **<Term id="expression">expression</Term>**: something OpenTofu works out.
+</Card>
+
+<Card id="check-sort" type="check">
+Each **<Term id="function">function</Term>** shapes a value. Text or lists?
+
+<Interactive name="SortCards" buckets={[{ id: 'text', label: 'Shapes text' }, { id: 'list', label: 'Works on lists' }]} items={[{ label: '`upper("kancil")` gives "KANCIL"', bucket: 'text', why: 'Text in, text out.' }, { label: '`lower("KANCIL")` gives "kancil"', bucket: 'text', why: 'Text in, text out.' }, { label: '`format("%s stalls", "3")` gives "3 stalls"', bucket: 'text', why: 'Fills %s into a pattern.' }, { label: '`join(", ", ["nasi", "mee"])` gives "nasi, mee"', bucket: 'list', why: 'A list in, one text out.' }, { label: '`contains(["nasi", "mee"], "mee")` gives true', bucket: 'list', why: 'Looks inside a list.' }]} success="Text helpers and list helpers. There are many more." />
+</Card>
+
+<Card id="try-upper" type="try">
+Make the sign shout. In `main.tf`, change `value = var.shop` to `value = upper(var.shop)`. Then `tofu apply`, `yes`.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ outputEquals: { shop_sign: 'KEDAI KANCIL' } }} hints={['Find output "shop_sign".', 'Change its value to upper(var.shop).', 'Then tofu apply, and yes.']} success="shop_sign = KEDAI KANCIL. Same variable, new shape." />
+
+<Hint>Wrap `var.shop` in `upper( )`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A **<Term id="conditional">conditional</Term>** picks one of two values. With `open = false`, what does `door` say?
+
+```hcl
+output "door" {
+  value = var.open ? "OPEN" : "CLOSED"
+}
+```
+
+<Interactive name="Choice" compact options={[{ label: '"CLOSED"', correct: true, why: 'false picks the value after the colon.' }, { label: '"OPEN"', why: 'OPEN is picked only when var.open is true.' }, { label: 'An error', why: 'false is a fine answer. It picks CLOSED.' }]} />
+</Card>
+
+<Card id="try-closed" type="try">
+Close the shop for the night: `tofu apply -var open=false`, then `yes`.
+
+<Interactive name="TofuSim" scenario="t2-functions" goal={{ outputEquals: { door: 'CLOSED' } }} hints={['Type tofu apply -var open=false', 'Then type yes.']} success="door = CLOSED. One variable flips the answer." />
+
+<Hint>`tofu apply -var open=false`, then `yes`.</Hint>
+</Card>
+
+<Card id="check-for" type="check">
+A `for` expression changes every item. What does this give?
+
+```hcl
+[for s in var.stalls : upper(s)]
+```
+
+<Interactive name="Choice" options={[{ label: '["NASI", "MEE", "ROTI"]', correct: true, why: 'For each stall s, upper(s). A new list.' }, { label: '"NASI, MEE, ROTI"', why: 'Square brackets make a list, not one text. join would make text.' }, { label: '["nasi", "mee", "roti"]', why: 'upper(s) changes each item to capitals.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now shape values with functions, conditionals and for.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a paper blueprint can't fill its own blanks. Ours works things out, loops, and makes many stalls from one drawing.
+
+`tofu console` lets you try expressions one at a time. It is not in this practice terminal; try it on your own computer.
+
+<Interactive name="Mission" id="iac-t2-l08-rep" steps={[{ id: 'folder', text: 'In a practice folder with a .tf file, start the console.', command: 'tofu console' }, { id: 'upper', text: 'Try a function.', command: 'upper("kedai kancil")' }, { id: 'join', text: 'Try a list function.', command: 'join(", ", ["nasi", "mee"])' }, { id: 'exit', text: 'Leave the console.', command: 'exit' }]} success="You tried expressions by hand." />
+</Card>

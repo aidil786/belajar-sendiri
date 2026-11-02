@@ -1,0 +1,63 @@
+---
+id: cicd-c4-l07
+world: 4
+title: Secret dalam log
+summary: "Anda akan belajar: cara GitHub sembunyikan secret dalam log, di mana ia gagal, dan apa perlu buat bila bocor."
+minutes: 3
+xp: 15
+interactives: [Choice, ConveyorBelt, SwipeJudge, SpotLines, OrderList]
+needs: [cicd-c4-l06]
+scenario: c4-mask
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Workflow commands: masking a value", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands" }
+  - { label: "Secure use: using secrets", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+---
+
+<Card id="hook" type="hook">
+Deploy anda gagal. Untuk nyahpepijat, anda cetak token dalam satu langkah. Repo anda awam. Siapa boleh baca log itu?
+
+<Interactive name="Choice" options={[{ label: 'Sesiapa yang boleh lihat repo itu', correct: true, why: 'Repo awam, log awam. GitHub sembunyikan token itu. Biasanya.' }, { label: 'Anda sahaja', why: 'Log repo awam pun awam.' }, { label: 'Tiada siapa: log hilang serta-merta', why: 'Log disimpan untuk masa yang lama.' }]} />
+</Card>
+
+<Card id="see-mask" type="see">
+<Interactive name="ConveyorBelt" scenario="c4-mask" label="Talian deploy. Satu langkah cetak token. Lognya tunjuk Using token ***." />
+
+Jalankannya, kemudian tekan stesen echo untuk baca lognya. GitHub tukar token itu kepada `***`. Ini **<Term id="masking">masking</Term>** (penutupan): pen hitam dalam buku log.
+</Card>
+
+<Card id="see-break" type="see">
+Penutup hanya cari teks secret yang tepat. Ubah teks itu, dan ia terlepas. Tersembunyi, atau bocor?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Satu langkah cetak `$TOKEN` seadanya', good: true, why: 'Teks tepat sepadan, jadi log tunjuk ***.' }, { text: 'Satu langkah cetak `$TOKEN` yang dikod dengan base64', good: false, why: 'Teks yang berubah tak lagi sepadan. Ia bocor.' }, { text: 'Satu medan daripada secret yang simpan JSON', good: false, why: 'Hanya seluruh secret yang dipadankan. Simpan satu nilai untuk setiap secret.' }, { text: 'Token baharu yang dibuat daripada secret', good: false, why: 'Teks baharu, bukan secret itu. Tutup ia sendiri.' }]} />
+</Card>
+
+<Card id="try-mask" type="try">
+Buat nilai rahsia baharu dalam satu langkah? Tutup ia sendiri, sebelum apa-apa mencetaknya.
+
+<Interactive name="SpotLines" lines={[{ text: '- run: |' }, { text: '    B64=$(echo -n "$KEY" | base64 -w0)' }, { text: '    echo "::add-mask::$B64"', target: true }, { text: '    export B64' }, { text: '    npm run upload' }, { text: '  env:' }, { text: '    KEY: ${{ secrets.API_KEY }}' }]} prompt="Tekan baris yang suruh GitHub sembunyikan nilai baharu itu." success="Ya! add-mask tambah teks baharu ke senarai pen hitam." />
+</Card>
+
+<Card id="predict" type="predict">
+Token sebenar muncul dalam log awam, tanpa ditutup. Apa anda buat dulu?
+
+<Interactive name="Choice" options={[{ label: 'Batalkan ia dan buat yang baharu', correct: true, why: 'Anggap ada orang dah salin. Kunci baharu jadikan salinan lama tak berguna.' }, { label: 'Padam log itu', why: 'Buat juga, tapi kemudian. Mungkin ada orang dah salin.' }, { label: 'Jadikan repo itu peribadi', why: 'Salinan yang dah dibuat tetap ada di luar. Tukar dulu.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Bersihkan selepas bocor. Susun langkah ikut urutan.
+
+<Interactive name="OrderList" items={['Batalkan secret yang bocor dan buat yang baharu', 'Simpan nilai baharu sebagai secret repo', 'Padam log run itu', 'Buang baris yang mencetaknya']} label="Langkah pertama di atas" success="Tukar dulu, kemudian bersihkan. Itulah urutannya." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jauhkan secret daripada log, dan bersihkan bila satu terlepas.
+</Card>
+
+<Card id="deeper" type="deeper">
+Serangan tj-actions cetak secret yang dikod dua kali, jadi penutup terlepas. Juga: jangan hantar secret pada baris arahan. Program lain pada runner boleh nampak. Hantar melalui `env:`. Tersekat nanti? Pusat Bantuan ada aliran "secret terpapar dalam log".
+</Card>

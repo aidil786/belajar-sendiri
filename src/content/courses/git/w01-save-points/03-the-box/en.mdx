@@ -1,0 +1,80 @@
+---
+id: git-w01-l03
+world: 1
+title: The Box
+summary: "You will learn: how to save only the files that are ready."
+minutes: 4
+xp: 20
+interactives: [AreasScene, DragToArea, Sim, Choice, TermReplay]
+needs: [git-w01-l02]
+scenario: w01-l03
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "git restore", url: "https://git-scm.com/docs/git-restore" }
+  - { label: "git status", url: "https://git-scm.com/docs/git-status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['working']} effect="wobble" label="Three files wobble on your desk: index.html, style.css and about.html. Only index.html has a green tick." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css', 'about.html'] }]} />
+
+You changed 3 files. Only 1 is ready. How do you save just that one?
+</Card>
+
+<Card id="see-box" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} label="The ticked file, index.html, glows and slides into the amber box. style.css and about.html stay behind." frames={[{ working: [{ name: 'index.html', tick: true, glow: true }, 'style.css', 'about.html'] }, { working: ['style.css', 'about.html'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+Git has a box. It is called the **staging area**. Ready changes go in the box.
+</Card>
+
+<Card id="see-add" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git add index.html" label="The command git add index.html types itself. Then index.html slides into the box." frames={[{ working: [{ name: 'index.html', tick: true }, 'style.css', 'about.html'] }, { working: ['style.css', 'about.html'], staging: [{ name: 'index.html', tick: true }] }]} />
+
+`git add index.html` puts one file in the box.
+</Card>
+
+<Card id="try-drag" type="try">
+<Interactive name="DragToArea" zones={['working', 'staging']} items={[{ name: 'index.html', tick: true, target: 'staging' }, { name: 'style.css', target: 'working' }, { name: 'about.html', target: 'working' }]} success="Yes! Only the ready file is in the box." />
+
+Drag only the **ready** file into the box.
+
+<Hint>Look for the green tick.</Hint>
+</Card>
+
+<Card id="try-type" type="try">
+<Interactive name="Sim" scenario="w01-l03" panels={['areas']} goal={{ staged: ['index.html'], notStaged: ['style.css', 'about.html'] }} hints={['Type git add index.html and press Enter.']} success="The box has index.html. Nothing else." />
+
+Now type the command yourself.
+
+<Hint>Type `git add index.html`, then press Enter.</Hint>
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="AreasScene" zones={['staging', 'repo']} effect="flash" label="A camera flash. A snapshot of the box flies onto the timeline as a new commit. The box is now empty." frames={[{ staging: [{ name: 'index.html', tick: true }], repo: [{ name: 'Add README', kind: 'commit' }] }, { staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }] }]} />
+
+A **commit** takes a photo of the box. Only what is inside gets saved.
+</Card>
+
+<Card id="predict" type="predict">
+You run `git commit` now. Which files are saved?
+
+<Interactive name="Choice" options={[{ label: 'Only `index.html`', correct: true, why: 'Only the box gets saved.' }, { label: 'All three files', why: 'style.css and about.html are not in the box.' }, { label: 'No files', why: 'index.html is in the box, so it gets saved.' }]} reveal={{ effect: 'flash', label: 'Flash. Only index.html goes into the new commit. style.css and about.html stay in the working folder.', frames: [{ working: ['style.css', 'about.html'], staging: ['index.html'], repo: [{ name: 'Add README', kind: 'commit' }] }, { working: ['style.css', 'about.html'], staging: [], repo: [{ name: 'Add README', kind: 'commit' }, { name: 'Add day 1 page', kind: 'commit' }] }] }} />
+</Card>
+
+<Card id="check-status" type="check">
+<Interactive name="TermReplay" scenario="w01-l03" commands={['git add index.html', 'git status']} pulse label="git status after adding index.html." />
+
+In `git status`, green means "in the box". Red means "not yet".
+</Card>
+
+<Card id="win" type="win">
+You can now save only what is ready.
+</Card>
+
+<Card id="deeper" type="deeper">
+`git add -p` saves only *part* of a file. `git restore --staged` takes a file out of the box.
+
+<Interactive name="TermReplay" scenario="w01-l03" commands={['git add index.html', 'git status -s', 'git restore --staged index.html', 'git status -s']} label="Add index.html, then take it out of the box again." />
+</Card>

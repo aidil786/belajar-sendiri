@@ -1,0 +1,67 @@
+---
+id: aws-a3-l07
+world: 3
+title: "S3 buckets and Block Public Access"
+summary: "You will learn: to keep files in S3, and why the master lock stays on."
+minutes: 5
+xp: 25
+interactives: [Choice, Transcript, SpotLines, IamJudge, SwipeJudge]
+needs: [aws-a3-l06]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon S3: What is Amazon S3?", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html" }
+  - { label: "Amazon S3: Blocking public access", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html" }
+  - { label: "Amazon S3: Bucket naming rules", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html" }
+  - { label: "AWS CLI: aws s3 mb", url: "https://docs.aws.amazon.com/cli/latest/reference/s3/mb.html" }
+  - { label: "AWS CLI: aws s3api get-public-access-block", url: "https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html" }
+---
+
+<Card id="hook" type="hook">
+Shoppers should see Kedai Kancil's menu photos. The same storeroom also holds the order list, with phone numbers. Open the whole storeroom to the public?
+
+<Interactive name="Choice" options={[{ label: 'No. Keep it locked, and share only the photos', correct: true, why: 'Yes. One open door shows everything inside.' }, { label: 'Yes, it is quicker', why: 'Quicker for strangers too. The order list would leak.' }, { label: 'Yes, nobody will guess the name', why: 'Names get guessed and scanned. Hiding is not locking.' }]} />
+</Card>
+
+<Card id="see-bucket" type="see">
+An **<Term id="s3-bucket">S3 bucket</Term>** is a storeroom for files. It lives in one Region. Its name must be unique, so pick your own. Watch the official examples.
+
+<Interactive name="Transcript" title="bash" label="aws s3 mb makes the bucket amzn-s3-demo-bucket. aws s3 ls lists two buckets with their dates." lines={[{ cmd: 'aws s3 mb s3://amzn-s3-demo-bucket' }, { out: 'make_bucket: s3://amzn-s3-demo-bucket', color: 'green' }, { cmd: 'aws s3 ls' }, { out: '2013-07-11 17:08:50 amzn-s3-demo-bucket\n2013-07-24 14:55:44 amzn-s3-demo-bucket2' }]} />
+</Card>
+
+<Card id="see-lock" type="see">
+**<Term id="block-public-access">Block Public Access</Term>** is the storeroom's master lock. New buckets get it on by default. Tap every lock that is on.
+
+<Interactive name="SpotLines" prompt="Tap every setting that is on." success="All four are true: nothing in this bucket can go public." lines={[{ text: '$ aws s3api get-public-access-block --bucket amzn-s3-demo-bucket' }, { text: '"PublicAccessBlockConfiguration": {' }, { text: '    "IgnorePublicAcls": true,', target: true }, { text: '    "BlockPublicPolicy": true,', target: true }, { text: '    "BlockPublicAcls": true,', target: true }, { text: '    "RestrictPublicBuckets": true', target: true }, { text: '}' }]} />
+</Card>
+
+<Card id="try-judge" type="try">
+Aina may read the menu bucket. Now she asks for a file in the orders bucket. Will AWS allow it?
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:iam::111122223333:user/aina', who: 'Aina', action: 's3:GetObject', resource: 'arn:aws:s3:::kedai-orders/2026-11-01.csv' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Right. Her key fits the menu storeroom only." />
+</Card>
+
+<Card id="predict" type="predict">
+The master lock is on. Someone adds a bucket policy: "everyone may read". What happens?
+
+<Interactive name="Choice" options={[{ label: 'S3 refuses that policy', correct: true, why: 'BlockPublicPolicy rejects any bucket policy that allows public access.' }, { label: 'The bucket goes public', why: 'Not while the lock is on. That is its whole job.' }, { label: 'Only the photos go public', why: 'The lock looks at the policy, and refuses it whole.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good storeroom habits, or risky? Swipe right for good.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep Block Public Access on for every bucket', good: true, why: 'Share pages through CloudFront instead. Next lesson.' }, { text: 'Put a database password in a bucket to share it', good: false, why: 'Passwords belong in a secrets safe. World A4 shows one.' }, { text: 'Empty and delete test buckets when you finish', good: true, why: 'Stored files cost money every month.' }, { text: 'Turn the lock off to fix an access error', good: false, why: 'That fixes nothing safely. Check the IAM policy first.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep files in S3 with the master lock on.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deleting a bucket: `aws s3 rb s3://amzn-s3-demo-bucket --force` first deletes every file inside. Treat it as final, and check the name twice.
+
+Real rep (optional), on a test account. Make a bucket and upload one file. Check the lock, then empty and delete it.
+</Card>

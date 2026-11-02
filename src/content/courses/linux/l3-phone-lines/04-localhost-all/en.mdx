@@ -1,0 +1,65 @@
+---
+id: linux-l3-l04
+world: 3
+title: "localhost or 0.0.0.0?"
+summary: "You will learn: why an app can work for you but not for anyone else."
+minutes: 3
+xp: 15
+interactives: [LinuxSim, SpotLines, SortCards, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l03]
+scenario: linux-l3-intercom
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "ip(7): addresses", url: "https://man7.org/linux/man-pages/man7/ip.7.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-intercom" intro={['curl -s localhost:3000', 'curl -sS 10.0.0.5:3000; echo $?']} network />
+
+The order app answers you on the server. By the street number, it refuses. Customers can't order. Why?
+</Card>
+
+<Card id="see-ss" type="see">
+`ss -tln` tells you. Tap the line that only answers the intercom.
+
+<Interactive name="SpotLines" lines={[{ text: 'State  Recv-Q Send-Q Local Address:Port Peer Address:Port' }, { text: 'LISTEN 0      128          0.0.0.0:22        0.0.0.0:*' }, { text: 'LISTEN 0      511          0.0.0.0:80        0.0.0.0:*' }, { text: 'LISTEN 0      5          127.0.0.1:3000      0.0.0.0:*', target: true }]} prompt="Tap the line that listens on 127.0.0.1." success="Port 3000 listens on 127.0.0.1: the intercom only." />
+</Card>
+
+<Card id="try-sort" type="try">
+`0.0.0.0` in `ss` means **every line**: the intercom and the street. `127.0.0.1` means the intercom only. Who can call each one?
+
+<Interactive name="SortCards" buckets={[{ id: 'inside', label: 'Only from inside the server' }, { id: 'all', label: 'Anyone who can reach it' }]} items={[{ label: '127.0.0.1:3000', bucket: 'inside', why: 'The intercom. Only programs on kedai can call.' }, { label: '0.0.0.0:80', bucket: 'all', why: 'Every line. Customers can call.' }, { label: '0.0.0.0:22', bucket: 'all', why: 'SSH listens on every line.' }, { label: '127.0.0.1:5432', bucket: 'inside', why: 'A database for this server only. A good safe choice.' }]} success="Intercom only, or every line." />
+</Card>
+
+<Card id="try-prove" type="try">
+Prove it. Call port 3000 by the street number, like a customer would.
+
+<Interactive name="LinuxSim" scenario="linux-l3-intercom" goal={{ lastTyped: '^curl .*10\\.0\\.0\\.5:3000' }} hints={['Type curl -sS 10.0.0.5:3000', 'Then compare with curl -s localhost:3000']} solution={['curl -sS 10.0.0.5:3000']} success="Refused by the street number. The app only listens on the intercom." />
+</Card>
+
+<Card id="predict" type="predict">
+A database is used only by apps on this same server. Where should it listen?
+
+<Interactive name="Choice" options={[{ label: '127.0.0.1', correct: true, why: 'Nobody outside can even knock. Safer.' }, { label: '0.0.0.0', why: 'Then every line can reach it. Only open what customers need.' }, { label: 'It does not matter', why: 'It matters a lot. Fewer open doors, fewer break-ins.' }]} />
+</Card>
+
+<Card id="check" type="check">
+The fix for the order app is in its own settings, not in Linux. Good idea or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Set the app to listen on 0.0.0.0, then check with ss -tln.', good: true, why: 'Then 0.0.0.0:3000 shows, and the street can call.' }, { text: 'Open every port so customers get through.', good: false, why: 'Open only the one port they need.' }, { text: 'Keep it on 127.0.0.1 and put nginx in front.', good: true, why: 'A front counter passes orders inside. You meet nginx in World L4.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now tell an intercom-only app from one that answers every line.
+</Card>
+
+<Card id="deeper" type="deeper">
+Docker has the same idea: `-p 127.0.0.1:8080:80` keeps a container's hatch for this machine only. Many apps read a setting like `HOST=0.0.0.0` or `--bind`. A firewall may still stop callers (lesson 8).
+
+<Interactive name="Mission" id="linux-l3-l04-rep" steps={[{ id: 'one', text: 'On your Linux or WSL: a tiny web server on the intercom only.', command: 'python3 -m http.server --bind 127.0.0.1 8000' }, { id: 'look', text: 'In a second terminal: see 127.0.0.1:8000.', command: 'ss -tln' }, { id: 'stop', text: 'Stop it with Ctrl+C. Run it again with --bind 0.0.0.0 and look again.' }]} success="Same app, different lines." />
+</Card>

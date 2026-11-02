@@ -1,0 +1,68 @@
+---
+id: docker-d6-l04
+world: 6
+title: "The overlay filesystem"
+summary: "You will learn: how many containers share one image, each writing on its own thin top layer."
+minutes: 4
+xp: 20
+interactives: [Choice, KitchenReplay, KitchenSim, Transcript, SwipeJudge, Mission]
+needs: [docker-d6-l03]
+scenario: d6-two-boxes
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "OverlayFS storage driver", url: "https://docs.docker.com/engine/storage/drivers/overlayfs-driver/" }
+  - { label: "containerd image store", url: "https://docs.docker.com/engine/storage/containerd/" }
+  - { label: "docker container diff", url: "https://docs.docker.com/reference/cli/docker/container/diff/" }
+---
+
+<Card id="hook" type="hook">
+Ten lunchboxes start from one alpine meal pack. How much disk do they need?
+
+<Interactive name="Choice" options={[{ label: 'The pack once, plus a thin layer for each box', correct: true, why: 'They all read the same layers. Each box only stores its own changes.' }, { label: 'Ten full copies of the pack', why: 'Nothing is copied. The layers are shared.' }, { label: 'Nothing at all', why: 'Each box writes its changes somewhere: its own thin layer.' }]} />
+</Card>
+
+<Card id="see-stack" type="see">
+<Interactive name="KitchenReplay" scenario="d6-two-boxes" commands={['docker ps', 'docker system df']} label="Two running boxes, box1 and box2, from one alpine image. docker system df shows one image of 12.9MB and two containers using only 8.192kB." />
+
+One image, two boxes, tiny extra disk. The image layers are read-only kek lapis. Each box gets a clear sheet on top. That stack is the **<Term id="overlay-filesystem">overlay filesystem</Term>**.
+</Card>
+
+<Card id="try-note" type="try">
+box1 wrote a note on its sheet. Can box2 read it? Type `docker exec box2 cat /root/note.txt`.
+
+<Interactive name="KitchenSim" scenario="d6-two-boxes" intro={['docker exec box1 sh -c "echo hi > /root/note.txt"']} goal={{ lastTyped: '^docker exec box2 (cat|ls)' }} hints={['Type docker exec box2 cat /root/note.txt']} success="No such file! The note is only on box1's own sheet." />
+
+<Hint>`docker exec box2 cat /root/note.txt` reads the file inside box2.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+box1 edits `/etc/profile`, a file from the image. Where does the change go?
+
+<Interactive name="Choice" options={[{ label: 'A copy goes onto box1’s sheet. The image stays the same.', correct: true, why: 'This is copy-up: the first write copies the file to the top sheet.' }, { label: 'Into the image layer', why: 'Image layers are read-only. Every box would see the change.' }, { label: 'Nowhere. The write fails.', why: 'The box can write. It writes on its own sheet.' }]} />
+</Card>
+
+<Card id="check-diff" type="check">
+<Interactive name="Transcript" title="bash" label="Real output on Docker 29: a box adds a note, deletes /etc/motd and edits /etc/profile. docker diff lists C, A and D lines." lines={[{ cmd: "docker run --name box alpine:3.22 sh -c 'echo hi > /root/note.txt; rm /etc/motd; echo hi >> /etc/profile'" }, { cmd: 'docker diff box' }, { out: 'C /etc\nC /etc/profile\nD /etc/motd\nC /root\nA /root/note.txt' }]} />
+
+`docker diff` reads the top sheet. A = added, C = changed, D = deleted. A delete leaves a hiding sticker, called a **whiteout**. The image still has the file.
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit, or needs work?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Keep database files in a volume, not on the top sheet.', good: true, why: 'Big writes on the sheet are slow, and the sheet goes away with the box.' }, { text: 'Let log files grow forever inside the container.', good: false, why: 'They fill the top sheet. Send logs to stdout instead.' }, { text: 'Change an image by rebuilding it from the recipe.', good: true, why: 'Image layers are read-only. A new recipe makes a new pack.' }, { text: 'Delete a big file in a later Dockerfile line to shrink the image.', good: false, why: 'The file stays in the lower layer. Delete it in the same RUN line.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now explain how containers share one image.
+</Card>
+
+<Card id="deeper" type="deeper">
+In OverlayFS words: image layers are `lowerdir`, the sheet is `upperdir`, and the box sees `merged`. Fresh Docker Engine 29 installs use the containerd image store with its `overlayfs` snapshotter. Upgraded older installs may say `overlay2`. Check with `docker info`.
+
+<Interactive name="Mission" id="d6-l04-diff" steps={[{ id: 'run', text: 'Start a box that just waits.', command: 'docker run -d --name box alpine:3.22 sleep 300' }, { id: 'write', text: 'Write a note on its top sheet.', command: 'docker exec box sh -c "echo hi > /root/note.txt"' }, { id: 'diff', text: 'List what changed.', command: 'docker diff box' }, { id: 'rm', text: 'Clean up. The sheet goes too.', command: 'docker rm -f box' }]} success="You read a container's top sheet." />
+</Card>

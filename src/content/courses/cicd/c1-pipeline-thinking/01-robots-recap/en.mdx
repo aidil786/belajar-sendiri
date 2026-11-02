@@ -1,0 +1,83 @@
+---
+id: cicd-c1-l01
+world: 1
+title: Robots recap
+summary: "You will learn: what you remember from Robots, and which lessons you can skip."
+minutes: 5
+xp: 25
+interactives: [Choice, ConveyorBelt, SortCards, Placement, SwipeJudge, Mission]
+needs: []
+scenario: c1-first-pipeline
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+docs:
+  - { label: "Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions" }
+  - { label: "Workflow syntax", url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax" }
+  - { label: "Continuous integration", url: "https://docs.github.com/en/actions/get-started/continuous-integration" }
+---
+
+<Card id="hook" type="hook">
+Welcome to the central kitchen! Your boss says: “Every change must be tested and shipped by itself.” Where do you start?
+
+<Interactive name="Choice" options={[{ label: 'Draw the stations first, then write YAML', correct: true, why: 'Yes! This world is all about designing the line first.' }, { label: 'Write lots of YAML right away', why: 'YAML is easier once you know what each station must do.' }, { label: 'Test by hand every Friday', why: 'Friday is too late. A robot can test every change.' }]} />
+</Card>
+
+<Card id="see-belt" type="see">
+<Interactive name="ConveyorBelt" scenario="c1-first-pipeline" events={['push-main', 'pr']} />
+
+A **<Term id="pipeline">pipeline</Term>** is a conveyor belt with stations. Every push rides it: get ready, lint, test, build. Press Run and watch it go.
+</Card>
+
+<Card id="try-sort" type="try">
+Quick recap from Robots. Is each line about when, where or what?
+
+<Interactive name="SortCards" buckets={[{ id: 'when', label: 'When it runs' }, { id: 'where', label: 'Where it runs' }, { id: 'what', label: 'What it does' }]} items={[{ label: '`on: push`', bucket: 'when', why: 'on: names the trigger: when the robot wakes up.' }, { label: '`pull_request:`', bucket: 'when', why: 'Another trigger: every pull request.' }, { label: '`runs-on: ubuntu-latest`', bucket: 'where', why: 'It asks for a fresh Linux runner.' }, { label: '`runs-on: windows-latest`', bucket: 'where', why: 'Same key, a Windows runner this time.' }, { label: '`- run: npm test`', bucket: 'what', why: 'A step: a command the runner types.' }, { label: '`- uses: actions/checkout@v7`', bucket: 'what', why: 'A step that borrows a ready-made action.' }]} success="Sorted! When, where, what." />
+
+<Hint>`on:` is when. `runs-on:` is where. Steps are what.</Hint>
+</Card>
+
+<Card id="predict-fork" type="predict">
+A stranger opens a pull request from a fork. Does their run get your secrets?
+
+<Interactive name="Choice" options={[{ label: 'No. Forks get no secrets and a read-only token.', correct: true, why: 'Right. A stranger’s code never sees your locked spice box.' }, { label: 'Yes, all of them', why: 'That would let anyone steal them. GitHub holds secrets back from forks.' }, { label: 'Only if the tests pass', why: 'Passing tests change nothing. Fork runs never get your secrets.' }]} />
+</Card>
+
+<Card id="try-placement" type="try">
+Now the quick test. Each right answer ticks a lesson you can skip. Not sure? Tap “I don't know yet”. There is no timer.
+
+<Interactive name="Placement" questions={[
+  { q: 'Where do workflow files live in a repo?', options: [{ label: '`.github/workflows/`', correct: true }, { label: '`src/robots/`' }, { label: '`.git/hooks/`' }], marks: ['git-w07-l02'] },
+  { q: 'Which trigger runs a workflow for every pull request?', options: [{ label: '`schedule`' }, { label: '`pull_request`', correct: true }, { label: '`workflow_dispatch`' }], marks: ['git-w07-l03'] },
+  { q: 'Your deploy needs an API token. Where does it go?', options: [{ label: 'Straight into the YAML file' }, { label: 'Into the README' }, { label: 'A repository secret', correct: true }], marks: ['git-w07-l05'] },
+  { q: 'Every change that passes goes live, with no button. What is that?', options: [{ label: 'Continuous deployment', correct: true }, { label: 'Continuous delivery' }, { label: 'A code review' }], marks: ['cicd-c1-l02'] },
+  { q: 'Which station order makes sense?', options: [{ label: 'build → deploy → test → lint' }, { label: 'lint → test → build → scan → publish → deploy', correct: true }, { label: 'deploy → scan → lint → test' }], marks: ['cicd-c1-l03'] },
+  { q: 'A test passes, then fails, with no code change. What is it?', options: [{ label: 'A fast test' }, { label: 'A flaky test', correct: true }, { label: 'A unit test' }], marks: ['cicd-c1-l04'] },
+  { q: 'Which kind of test should you have the most of?', options: [{ label: 'Unit tests', correct: true }, { label: 'End-to-end tests' }, { label: 'Tests by hand' }], marks: ['cicd-c1-l05'] },
+  { q: 'Staging passed. What should production get?', options: [{ label: 'A fresh build of the same code' }, { label: 'The exact build that staging tested', correct: true }, { label: 'The files on your laptop' }], marks: ['cicd-c1-l06'] },
+  { q: 'You merge into main every day, but a feature is half done. How do you hide it?', options: [{ label: 'Keep it on a branch for months' }, { label: 'Skip its tests' }, { label: 'Put it behind a feature flag', correct: true }], marks: ['cicd-c1-l07'] },
+  { q: 'Which one is a DORA delivery metric?', options: [{ label: 'Change fail rate', correct: true }, { label: 'Lines of code per day' }, { label: 'Hours in meetings' }], marks: ['cicd-c1-l08'] },
+  { q: 'In GitLab, what is the pipeline file called?', options: [{ label: '`Jenkinsfile`' }, { label: '`.gitlab-ci.yml`', correct: true }, { label: '`azure-pipelines.yml`' }], marks: ['cicd-c1-l09'] },
+  { q: 'A job pushes an image to GHCR with `GITHUB_TOKEN`. Which permission does it need?', options: [{ label: '`packages: write`', correct: true }, { label: '`contents: write`' }, { label: '`pages: write`' }], marks: ['cicd-c2-l03'] },
+  { q: 'Your tests need a real Postgres database in CI. What gives you one?', options: [{ label: 'A secret' }, { label: 'Your own laptop' }, { label: 'A service container', correct: true }], marks: ['cicd-c2-l07'] }
+]} />
+</Card>
+
+<Card id="check-habits" type="check">
+Last recap round. Good habit, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Give each job only the permissions it needs', good: true, why: 'Fewer keys means less to steal.' }, { text: 'Paste an API token straight into the workflow file', good: false, why: 'Anyone who reads the repo can copy it. Use a secret.' }, { text: 'Cache npm downloads between runs', good: true, why: 'The next run gets ready faster.' }, { text: 'Turn off a red check to merge faster', good: false, why: 'The bug is still there. Fix it instead.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now read a workflow and skip what you know already.
+</Card>
+
+<Card id="deeper" type="deeper">
+Missed a few? Robots is Git course [World 7: Robots](/en/git/#world-7). Ticked lessons stay open, so you can still visit them.
+
+Real rep (optional): look at a real run on GitHub.
+
+<Interactive name="Mission" id="cicd-c1-real-run" steps={[{ id: 'open', text: 'Open one of your repos that has a workflow. Your diary repo from the Git course works.' }, { id: 'actions', text: 'Open its Actions tab and pick the newest run.' }, { id: 'stations', text: 'Name each step as a station: get ready, lint, test or build.' }]} success="You read a real belt!" />
+</Card>

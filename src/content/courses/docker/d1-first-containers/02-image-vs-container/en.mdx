@@ -1,0 +1,70 @@
+---
+id: docker-d1-l02
+world: 1
+title: Image vs container
+summary: "You will learn: how one image (a meal pack) fills many containers (lunchboxes)."
+minutes: 3
+xp: 15
+interactives: [Choice, KitchenReplay, SortCards, KitchenSim, Mission]
+needs: [docker-d1-l01]
+scenario: d1-kitchen
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "What is an image?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" }
+  - { label: "What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+  - { label: "docker images", url: "https://docs.docker.com/reference/cli/docker/image/ls/" }
+---
+
+<Card id="hook" type="hook">
+Ali deleted the welcome page inside his lunchbox. Then he filled a fresh lunchbox from the same meal pack. The page is back! Bug or feature?
+
+<Interactive name="Choice" options={[{ label: 'Feature: every lunchbox starts from a fresh copy', correct: true, why: 'The meal pack never changes. Each new box gets the full dish.' }, { label: 'Bug: Docker forgot to save', why: 'Nothing broke. He only changed the first box, not the pack.' }, { label: 'He deleted a different file', why: 'He deleted the right file, but only inside one box.' }]} />
+</Card>
+
+<Card id="see-pack" type="see">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker images', 'docker run -d --name lunch1 nginx:1.30-alpine', 'docker run -d --name lunch2 nginx:1.30-alpine', 'docker ps']} label="docker images lists the nginx meal pack. Two docker run commands fill two lunchboxes from it, lunch1 and lunch2. docker ps shows both running." />
+
+One frozen meal pack fills two lunchboxes. The pack is the **<Term id="image">image</Term>**: a template that never changes. Each <Term id="container">container</Term> is one box made from it.
+</Card>
+
+<Card id="try-sort" type="try">
+Sort each card. Is it about the meal pack or the lunchbox?
+
+<Interactive name="SortCards" buckets={[{ id: 'image', label: 'Meal pack (image)' }, { id: 'container', label: 'Lunchbox (container)' }]} items={[{ label: 'A frozen template that never changes', bucket: 'image', why: 'The image stays the same, no matter what boxes do.' }, { label: 'Can be running, or stopped', bucket: 'container', why: 'Only a box runs. A pack just waits in the freezer.' }, { label: 'You can fill many from one', bucket: 'image', why: 'One pack, as many boxes as you like.' }, { label: 'Has a name like lunch1', bucket: 'container', why: 'Each box gets its own name.' }, { label: 'Lives in a shop freezer, like Docker Hub', bucket: 'image', why: 'Packs are shared through freezers called registries.' }, { label: 'Has its own space for changes', bucket: 'container', why: 'Changes stay inside that one box.' }]} success="Sorted! Packs are templates. Boxes are what runs." />
+</Card>
+
+<Card id="try-sim" type="try">
+Fill two lunchboxes from one pack. Run `docker run alpine:3.22 echo hi` twice. Then type `docker images`.
+
+<Interactive name="KitchenSim" scenario="d1-kitchen" goal={{ count: { containers: 2 }, lastTyped: '^docker (images|image ls)' }} hints={['Type docker run alpine:3.22 echo hi two times.', 'Then type docker images']} success="Two boxes, and still one alpine pack. Packs are reused." />
+
+<Hint>Arrow up brings back your last command.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You delete `index.html` inside lunch1. Then you look inside lunch2. Is `index.html` there?
+
+<Interactive name="Choice" options={[{ label: 'Yes. lunch2 has its own copy.', correct: true, why: 'Each box gets its own space. A change stays inside one box.' }, { label: 'No. Both boxes share their files.', why: 'Boxes never share changes. Each one is sealed.' }, { label: 'No. The pack lost it too.', why: 'The pack is frozen. Nothing inside a box can change it.' }]} />
+</Card>
+
+<Card id="check-proof" type="check">
+<Interactive name="KitchenReplay" scenario="d1-kitchen" commands={['docker run -d --name lunch1 nginx:1.30-alpine', 'docker run -d --name lunch2 nginx:1.30-alpine', 'docker exec lunch1 rm /usr/share/nginx/html/index.html', 'docker exec lunch1 ls /usr/share/nginx/html', 'docker exec lunch2 ls /usr/share/nginx/html']} label="index.html is deleted inside lunch1. lunch1 now lists only 50x.html. lunch2 still lists 50x.html and index.html." />
+
+Proof! The page left lunch1 only. lunch2 still has it. `docker exec` runs a command inside a box. Lesson 6 has more.
+</Card>
+
+<Card id="win" type="win">
+You can now tell a meal pack (image) from a lunchbox (container).
+</Card>
+
+<Card id="deeper" type="deeper">
+A container is its image plus a thin writable layer on top. Every change goes into that layer. Remove the box, and its layer goes too. The image underneath stays untouched.
+
+Real rep (optional):
+
+<Interactive name="Mission" id="docker-d1-l02-rep" steps={[{ id: 'two', text: 'Fill two boxes from one pack.', command: 'docker run alpine:3.22 echo hi' }, { id: 'again', text: 'Run the same command once more.' }, { id: 'boxes', text: 'See both boxes.', command: 'docker ps -a' }, { id: 'pack', text: 'See just one alpine pack.', command: 'docker images' }]} success="One pack, many boxes." />
+</Card>

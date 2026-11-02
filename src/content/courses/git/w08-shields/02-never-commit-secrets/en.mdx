@@ -1,0 +1,72 @@
+---
+id: git-w08-l02
+world: 8
+title: Never commit secrets
+summary: "You will learn: how to keep keys and passwords out of your commits."
+minutes: 4
+xp: 20
+interactives: [TermReplay, AreasScene, SortCards, Sim, Choice, SwipeJudge]
+needs: [git-w08-l01]
+scenario: w08-l02
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "gitignore", url: "https://git-scm.com/docs/gitignore" }
+  - { label: "git add", url: "https://git-scm.com/docs/git-add" }
+  - { label: "Removing sensitive data (prevention tips)", url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TermReplay" scenario="w08-l02" commands={['cat .env', 'git status -s']} label="cat .env shows one line: API_KEY=fake_demo_key_123. Then git status -s lists two new files: .env and app.js." />
+
+Your diary gets a weather widget. It needs a key, kept in `.env`. One careless `git add .`, and the key is in your history.
+</Card>
+
+<Card id="see-secret" type="see">
+<Interactive name="AreasScene" zones={['working', 'staging']} command="git add ." label="git add . sweeps both app.js and .env into the box. .env carries a not-ready warning tag." frames={[{ working: ['app.js', { name: '.env', tag: 'notReady', glow: true }] }, { working: [], staging: ['app.js', { name: '.env', tag: 'notReady' }] }]} />
+
+A **<Term id="secret">secret</Term>** is like a house key. API keys, passwords and tokens are all secrets. `git add .` grabs everything, secrets too.
+</Card>
+
+<Card id="see-ignore" type="see">
+<Interactive name="TermReplay" scenario="w08-l02" commands={['echo ".env" >> .gitignore', 'git status -s']} label="The line .env is added to .gitignore. Now git status -s lists .gitignore and app.js. .env is gone from the list." />
+
+Add one line to your **<Term id="gitignore">.gitignore</Term>**. Now Git acts like `.env` isn't there. Two arrows, `>>`, add a line and keep the old ones.
+</Card>
+
+<Card id="try-sort" type="try">
+Secret, or safe to commit? Sort each one.
+
+<Interactive name="SortCards" buckets={[{ id: 'secret', label: 'Secret: keep out' }, { id: 'safe', label: 'Safe to commit' }]} items={[{ label: 'An API key', bucket: 'secret', why: 'Anyone with it can use the service as you.' }, { label: 'Your database password', bucket: 'secret', why: 'It opens all your data.' }, { label: 'Your private SSH key', bucket: 'secret', why: 'It proves you are you. Never share it.' }, { label: 'index.html', bucket: 'safe', why: 'It is your page. Everyone sees it anyway.' }, { label: '.gitignore', bucket: 'safe', why: 'Commit it, so your team skips the same files.' }, { label: '.env.example with empty values', bucket: 'safe', why: 'It lists the keys you need, with no real values.' }]} success="Sorted! Secrets stay home. Code goes in." />
+</Card>
+
+<Card id="try-sim" type="try">
+Hide `.env` from Git. Then put everything else in the box.
+
+<Interactive name="Sim" scenario="w08-l02" panels={['areas', 'files']} goal={{ fileContains: { '.gitignore': '.env' }, staged: ['.gitignore', 'app.js'], notStaged: ['.env'], noUntracked: true }} hints={['First hide it: echo ".env" >> .gitignore', 'Now git add . is safe. Type git add .', 'Is .env in the box? Take it out: git restore --staged .env']} success="app.js and .gitignore are in the box. .env stayed home." />
+
+<Hint>Type `echo ".env" >> .gitignore`. Then `git add .`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+`.env` is in `.gitignore` now. You type `git add .env` on purpose. What happens?
+
+<Interactive name="Choice" options={[{ label: 'Git stops and says the file is ignored', correct: true, why: 'Git only adds it if you force it with -f. Never do that with secrets.' }, { label: 'Git adds it like any other file', why: 'Git stops and tells you the path is ignored.' }, { label: 'Git deletes .env', why: '.gitignore never deletes anything.' }]} />
+</Card>
+
+<Card id="check-code" type="check">
+Secrets hide in code too, not only in `.env`. Good, or needs work? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: '`const key = process.env.API_KEY;`', good: true, why: 'It reads the key from .env. The code holds no secret.' }, { text: '`const key = "fake_demo_key_123";`', good: false, why: 'The key is typed right into the code. It gets committed.' }, { text: 'Commit .env.example with `API_KEY=` and no value', good: true, why: 'Teammates see which keys they need. No secret inside.' }, { text: '`git add -f .env`', good: false, why: '-f forces an ignored file in. Your key would be committed.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now keep secrets out of your commits.
+</Card>
+
+<Card id="deeper" type="deeper">
+A `.env.example` file lists the key names with empty values, like `API_KEY=`. Teammates copy it to `.env` and add their own keys. Ignore `.env` before your very first commit. Then a careless `git add .` can never grab it.
+
+<Interactive name="TermReplay" scenario="w08-l02" commands={['echo ".env" >> .gitignore', 'cat .gitignore', 'git add .', 'git status']} label="After adding .env to .gitignore, it holds two lines: *.log and .env. git add . puts only .gitignore and app.js in the box." />
+</Card>

@@ -1,0 +1,68 @@
+---
+id: git-w02-l09
+world: 2
+title: Reflog, jaring keselamatan anda
+summary: 'Anda akan belajar: cara cari dan bawa balik commit yang "hilang".'
+minutes: 4
+xp: 25
+interactives: [GraphScene, TermReplay, SpotLines, Sim, Choice]
+needs: [git-w02-l08]
+scenario: w02-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git reflog", url: "https://git-scm.com/docs/git-reflog" }
+  - { label: "git reset", url: "https://git-scm.com/docs/git-reset" }
+  - { label: "Revision names (HEAD@{1})", url: "https://git-scm.com/docs/gitrevisions" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="GraphScene" scenario="w02-l09a" commands={['git reset --hard HEAD~1']} showLost label="main dan HEAD lompat balik satu commit. Add day 3 entry jadi titik putus-putus yang hilang." />
+
+Alamak. Anda taip `git reset --hard HEAD~1`. Catatan day 3 anda lesap. Panik?
+</Card>
+
+<Card id="see-reflog" type="see">
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reflog']} label="git reflog senaraikan setiap pergerakan HEAD, yang terbaru dulu. Baris kedua sebut: commit: Add day 3 entry." />
+
+Jangan panik. Git simpan diari setiap tempat HEAD pernah pergi. Ini dipanggil **<Term id="reflog">reflog</Term>** (diari HEAD). Commit (titik simpan) yang hilang masih tersenarai.
+</Card>
+
+<Card id="try-spot" type="try">
+Cari commit anda yang hilang dalam reflog.
+
+<Interactive name="SpotLines" scenario="w02-l09" commands={['git reflog']} targets="commit: Add day 3 entry" prompt="Tekan baris yang ada Add day 3 entry." success="Jumpa! Namanya HEAD@{1}." />
+
+<Hint>Cari perkataan "Add day 3 entry".</Hint>
+</Card>
+
+<Card id="see-name" type="see">
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reflog -n 2']} label="Dua baris reflog terbaru: HEAD@{0} ialah reset itu, HEAD@{1} ialah commit Add day 3 entry." />
+
+`HEAD@{1}` maksudnya "tempat HEAD berada satu langkah lalu". Anda boleh guna nama itu dalam arahan.
+</Card>
+
+<Card id="try-rescue" type="try">
+Bawa balik commit day 3 itu.
+
+<Interactive name="Sim" scenario="w02-l09" panels={['graph']} showLost goal={{ headAtMessage: '^Add day 3 entry$', headDetached: false, commits: 5 }} hints={['Taip git reflog. Commit yang hilang ialah HEAD@{1}.', 'Kemudian taip git reset --hard HEAD@{1}']} success="Day 3 dah kembali! Titik putus-putus itu jadi penuh semula." />
+
+<Hint>Taip `git reset --hard HEAD@{1}`, kemudian tekan Enter.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Apa yang reflog boleh bawa balik?
+
+<Interactive name="Choice" options={[{ label: 'Commit yang anda buat', correct: true, why: 'Reflog senaraikan setiap commit yang HEAD pernah singgah.' }, { label: 'Perubahan yang tak pernah di-commit', why: 'Malangnya, tidak. Kerja yang belum di-commit dan dipadam oleh --hard dah hilang.' }, { label: 'Fail yang dipadam oleh git clean', why: 'Tidak. Git tak pernah simpan fail yang tak dijejak.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bawa balik commit yang "hilang" dengan reflog.
+</Card>
+
+<Card id="deeper" type="deeper">
+Reflog hanya ada dalam komputer anda. Ia tak pernah di-push. Baris lama akan luput, secara lalai selepas 90 hari. Baris untuk commit yang hilang luput selepas 30 hari. Anda juga boleh reset ke hash dari senarai reflog.
+
+<Interactive name="TermReplay" scenario="w02-l09" commands={['git reset --hard HEAD@{1}', 'git log --oneline']} label="Selepas git reset --hard HEAD@{1}, git log tunjuk Add day 3 entry di atas semula." />
+</Card>

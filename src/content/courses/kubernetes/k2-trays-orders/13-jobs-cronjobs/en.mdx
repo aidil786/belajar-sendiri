@@ -1,0 +1,81 @@
+---
+id: k8s-k2-l13
+world: 2
+title: "Jobs and CronJobs"
+summary: "You will learn: to run a task once with a Job, and on a schedule with a CronJob."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, YamlDoctor, FoodCourtSim, SortCards]
+needs: [k8s-k2-l12]
+scenario: k2-jobs
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: Jobs", url: "https://kubernetes.io/docs/concepts/workloads/controllers/job/" }
+  - { label: "Kubernetes: CronJob", url: "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/" }
+  - { label: "kubectl create job", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_job/" }
+---
+
+<Card id="hook" type="hook">
+After closing, someone counts the plates once, then goes home. You make that counter a Deployment. What happens?
+
+<Interactive name="Choice" options={[{ label: 'It counts again and again, forever', correct: true, why: 'A Deployment restarts anything that stops. A count must stop when it is done.' }, { label: 'It counts once, then rests', why: 'A Deployment never lets a tray rest. It starts it again.' }, { label: 'Nothing starts', why: 'It starts fine. The trouble is that it never stops.' }]} />
+</Card>
+
+<Card id="see-job" type="see">
+<Interactive name="KubeReplay" scenario="k2-jobs" commands={['kubectl apply -f tally.yaml', 'kubectl wait --for=condition=complete job/tally --timeout=60s', 'kubectl get job tally', 'kubectl logs job/tally']} label="The Job tally runs once. Its status is Complete with 1/1 completions. Its log says counting plates, 42 plates." />
+
+A **<Term id="job">Job</Term>** runs a task until it finishes, then stops. STATUS says Complete. COMPLETIONS says 1/1.
+</Card>
+
+<Card id="predict" type="predict">
+The Job's pod finished well. What does `kubectl get pods` show for it?
+
+<Interactive name="Choice" options={[{ label: '`Completed`, READY 0/1', correct: true, why: 'Done and resting. Nothing restarts it, and you can still read its logs.' }, { label: '`CrashLoopBackOff`', why: 'It did not crash. It finished with exit code 0.' }, { label: '`Running`, forever', why: 'A Job pod stops when its task is done.' }]} />
+</Card>
+
+<Card id="try-doctor" type="try">
+A Job may not use `restartPolicy: Always`. Read the real error. Pick one of the values it lists.
+
+<Interactive name="YamlDoctor" file="tally.yaml" manifest={'apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: tally\nspec:\n  template:\n    spec:\n      restartPolicy: Always\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: ["sh", "-c", "echo 42 plates"]\n'} solution={'apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: tally\nspec:\n  template:\n    spec:\n      restartPolicy: Never\n      containers:\n        - name: count\n          image: busybox:1.37\n          command: ["sh", "-c", "echo 42 plates"]\n'} keep={['kind: Job', 'restartPolicy:']} hint="Never or OnFailure. Both let the task end." success="Fixed! The count runs once, then rests." />
+</Card>
+
+<Card id="see-cron" type="see">
+A **<Term id="cronjob">CronJob</Term>** makes a Job on a schedule. Its five fields are minute, hour, day, month and weekday.
+
+```yaml
+spec:
+  schedule: "30 23 * * *"
+```
+
+When does this run?
+
+<Interactive name="Choice" options={[{ label: 'Every day at 23:30', correct: true, why: 'Minute 30, hour 23, any day, any month, any weekday.' }, { label: 'Every 30 minutes', why: 'That would be */30 in the minute field.' }, { label: 'On the 23rd of each month', why: 'The day is the third field. Here it is *, so every day.' }]} />
+</Card>
+
+<Card id="try-sim" type="try">
+Do not wait for tonight. Apply `nightly.yaml`. Then start one count now: `kubectl create job tally-now --from=cronjob/nightly`.
+
+<Interactive name="FoodCourtSim" scenario="k2-jobs" goal={{ podStatus: { selector: 'job-name=tally-now', status: 'Completed' } }} hints={['Type kubectl apply -f nightly.yaml', 'Type kubectl create job tally-now --from=cronjob/nightly']} success="Counted right now, with tonight's recipe. The schedule stays the same." />
+
+<Hint>`--from=cronjob/nightly` copies the CronJob's job template.</Hint>
+</Card>
+
+<Card id="check" type="check">
+Deployment, Job or CronJob? Sort each task.
+
+<Interactive name="SortCards" buckets={[{ id: 'deploy', label: 'Deployment' }, { id: 'job', label: 'Job' }, { id: 'cron', label: 'CronJob' }]} items={[{ label: 'Serve the shop all day', bucket: 'deploy', why: 'It must keep running. Stops get restarted.' }, { label: 'Resize all menu photos once', bucket: 'job', why: 'One task, then done.' }, { label: 'Back up the orders every night', bucket: 'cron', why: 'The same task, on a schedule.' }, { label: 'Send a sales email every Monday', bucket: 'cron', why: 'A weekday in the fifth field does this.' }]} success="Sorted! Always on, once, or on a schedule." />
+</Card>
+
+<Card id="win" type="win">
+You can now run a task once, or on a schedule.
+</Card>
+
+<Card id="deeper" type="deeper">
+A failing Job retries, up to `backoffLimit` times (6 by default). Without `timeZone`, a CronJob follows the cluster's clock, often UTC. A CronJob keeps the last 3 good Jobs and removes older ones.
+
+Real rep (optional): on a throwaway cluster, run `kubectl get cronjobs` and `kubectl get jobs`.
+</Card>

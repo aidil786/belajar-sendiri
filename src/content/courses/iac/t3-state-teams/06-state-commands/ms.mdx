@@ -1,0 +1,71 @@
+---
+id: iac-t3-l06
+world: 3
+title: state list, show dan rm
+summary: "Anda akan belajar: cara lihat isi daftar, dan kenapa rm cuma buat OpenTofu lupa."
+minutes: 4
+xp: 20
+interactives: [Choice, TofuSim, SpotLines, SortCards, Mission]
+needs: [iac-t3-l05]
+scenario: t3-register-big
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "tofu state list", url: "https://opentofu.org/docs/cli/commands/state/list/" }
+  - { label: "tofu state show", url: "https://opentofu.org/docs/cli/commands/state/show/" }
+  - { label: "tofu state rm", url: "https://opentofu.org/docs/cli/commands/state/rm/" }
+  - { label: "OpenTofu: blok removed dan destroy = false", url: "https://opentofu.org/docs/language/resources/behavior/" }
+---
+
+<Card id="hook" type="hook">
+Daftar kini simpan lima benda. Bos tanya: "Kita dapat meja nombor berapa?" Anda tak mahu korek JSON mentah. Apa yang anda guna?
+
+<Interactive name="Choice" options={[{ label: 'tofu state show random_integer.table', correct: true, why: 'Ia paparkan satu benda dari daftar, dengan kemas.' }, { label: 'Buka terraform.tfstate dan ubah', why: 'Baca boleh, tapi ubah dengan tangan boleh rosakkan daftar.' }, { label: 'tofu apply', why: 'Apply bina perubahan. Anda cuma mahu tengok.' }]} />
+</Card>
+
+<Card id="try-look" type="try">
+Mula-mula senaraikan semua: `tofu state list`. Kemudian lihat satu: `tofu state show random_integer.table`.
+
+<Interactive name="TofuSim" scenario="t3-register-big" goal={{ typed: '^tofu state list$', lastTyped: '^tofu state show random_integer\\.table$' }} hints={['Taip tofu state list dan tekan Enter.', 'Kemudian tofu state show random_integer.table']} success="Meja 540. list beri nama, show beri butiran." />
+
+<Hint>Salin satu nama dari senarai ke dalam `tofu state show`.</Hint>
+</Card>
+
+<Card id="check-spot" type="check">
+Ini `tofu state show local_file.sign`. Cari apa yang papan tanda itu tulis.
+
+<Interactive name="SpotLines" prompt="Tekan baris dengan tulisan papan tanda." lines={[{ text: '# local_file.sign:' }, { text: 'resource "local_file" "sign" {' }, { text: '    content              = <<-EOT' }, { text: '        Table 540: clever-kancil', target: true }, { text: '    EOT' }, { text: '    … (checksum dan kebenaran fail)' }, { text: '    filename             = "sign.txt"' }, { text: '    id                   = "6008a7ec863297c276122d2929ff319e2ccf92ac"' }, { text: '}' }]} success="Daftar ingat setiap butiran, malah tulisan pada papan tanda." />
+</Card>
+
+<Card id="predict" type="predict">
+Sekarang `tofu state rm local_file.sign`. Apa jadi pada `sign.txt`?
+
+<Interactive name="Choice" options={[{ label: 'Ia kekal. OpenTofu cuma lupa.', correct: true, why: 'state rm cuma ubah daftar. Benda sebenar tak disentuh.' }, { label: 'Ia dipadam', why: 'Memadam itu destroy. state rm tak pernah sentuh benda sebenar.' }, { label: 'Ia pindah ke folder sandaran', why: 'Daftar dapat salinan sandaran. Papan tanda kekal di tempatnya.' }]} />
+</Card>
+
+<Card id="try-rm" type="try">
+⚠️ Hati-hati: state rm buat OpenTofu lupa benda sebenar. Cuba di sini: `tofu state rm local_file.sign`. Kemudian `tofu plan`.
+
+<Interactive name="TofuSim" scenario="t3-register-big" goal={{ resourceMissing: ['local_file.sign'], filesExist: ['sign.txt'], lastTyped: '^tofu plan' }} hints={['Taip tofu state rm local_file.sign', 'Kemudian tofu plan, dan baca apa yang ia mahu.']} success="Plan mahu bina papan tanda semula. Ia lupa papan itu wujud. Dalam cloud, itu bermakna pendua." />
+
+<Hint>Plan selepas rm tunjuk harga "lupa".</Hint>
+</Card>
+
+<Card id="check" type="check">
+Susun arahan: hanya membaca, atau mengubah daftar?
+
+<Interactive name="SortCards" buckets={[{ id: 'read', label: 'Hanya membaca' }, { id: 'write', label: 'Mengubah daftar' }]} items={[{ label: 'tofu state list', bucket: 'read', why: 'Nama sahaja.' }, { label: 'tofu state show', bucket: 'read', why: 'Satu benda, semua butiran.' }, { label: 'tofu state rm', bucket: 'write', why: 'Buang satu entri. Hati-hati.' }, { label: 'tofu state mv', bucket: 'write', why: 'Tukar nama satu entri.' }, { label: 'tofu output', bucket: 'read', why: 'Baca output dari daftar.' }, { label: 'tofu import', bucket: 'write', why: 'Tambah satu entri.' }]} success="Tengok sebanyak mana pun. Fikir dua kali sebelum menulis." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh baca daftar dan tahu apa sebenarnya state rm buat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Setiap arahan state yang ubah daftar simpan sandaran bertarikh dahulu, seperti `terraform.tfstate.1793491219.backup`. Cara yang boleh disemak untuk melupakan sesuatu ialah blok `removed` dalam kod. OpenTofu 1.13 juga ada `lifecycle { destroy = false }`: lupakan, bukan musnahkan.
+
+<Interactive name="Mission" id="iac-t3-l06-rep" steps={[{ id: 'build', text: 'Dalam folder latihan, bina dua resource local_file.', command: 'tofu init && tofu apply' }, { id: 'list', text: 'Senaraikan daftar.', command: 'tofu state list' }, { id: 'show', text: 'Tunjuk salah satu, guna alamatnya.', command: 'tofu state show local_file.<name>' }, { id: 'forget', text: 'Lupakan satu. Kemudian plan: ia mahu bina semula.', command: 'tofu state rm local_file.<name> && tofu plan' }]} success="Anda tengok isinya, dan nampak maksud melupakan." />
+</Card>

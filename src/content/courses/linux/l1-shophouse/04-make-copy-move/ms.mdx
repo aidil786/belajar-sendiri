@@ -1,0 +1,79 @@
+---
+id: linux-l1-l04
+world: 1
+title: "Buat, salin, alih: mkdir, cp, mv"
+summary: "Anda akan belajar: bina folder, salin fail sebagai sandaran, dan alih atau tukar nama fail."
+minutes: 4
+xp: 20
+interactives: [Choice, LinuxSim, SortCards, Mission]
+needs: [linux-l1-l03]
+scenario: linux-l1-make
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "mkdir (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mkdir.1.en.html" }
+  - { label: "cp (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/cp.1.en.html" }
+  - { label: "mv (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/mv.1.en.html" }
+  - { label: "touch (Debian 13 man page)", url: "https://manpages.debian.org/trixie/coreutils/touch.1.en.html" }
+---
+
+<Card id="hook" type="hook">
+Draf promosi bersepah di lantai. Menu satu-satunya tiada salinan. Kalau teh tarik tertumpah atas `today.txt`, kedai hilang menu. Apa dulu?
+
+<Interactive name="Choice" options={[{ label: 'Buat salinan menu', correct: true, why: 'Sandaran dulu. Lepas itu anda boleh ubah dengan tenang.' }, { label: 'Terus edit menu itu', why: 'Tanpa salinan, satu silap boleh hilangkannya. Sandar dulu.' }, { label: 'Biarkan saja', why: 'Sepah makin teruk. Beberapa arahan boleh kemaskan dalam seminit.' }]} />
+</Card>
+
+<Card id="see-mkdir" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-make" intro={['mkdir boxes', 'ls']} />
+
+`mkdir boxes` bina bilik baru bernama `boxes`. Gambar terus tunjuk bilik itu. **mkdir** maksudnya "make directory" (buat folder).
+</Card>
+
+<Card id="predict-parents" type="predict">
+`store` belum ada bilik `2026`. Anda taip `mkdir store/2026/nov`. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: "mkdir: cannot create directory ‘store/2026/nov’: No such file or directory", correct: true, why: 'Maksudnya: bilik 2026 tiada, jadi nov tiada tempat. mkdir -p bina bilik yang hilang sekali.' }, { label: 'Ia bina 2026 dan nov', why: 'Cuma dengan -p. mkdir biasa bina satu bilik dan perlukan induknya.' }, { label: 'Ia bina fail bernama nov', why: 'mkdir hanya buat folder.' }]} />
+</Card>
+
+<Card id="try-mkdir" type="try">
+Bina rak November, termasuk bilik yang belum ada: `mkdir -p store/2026/nov`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-make" goal={{ dirExists: ['~/kedai/store/2026/nov'] }} hints={['Taip mkdir -p store/2026/nov']} solution={['mkdir -p store/2026/nov']} success="Dua bilik sekali gus: 2026, dan nov di dalamnya." />
+
+<Hint>`-p` maksudnya "buat induknya sekali".</Hint>
+</Card>
+
+<Card id="sort-cp-mv" type="check">
+`cp` buat salinan: fail asal kekal. `mv` alih atau tukar nama: tiada yang tinggal. Yang mana satu?
+
+<Interactive name="SortCards" buckets={[{ id: 'cp', label: 'cp: salin' }, { id: 'mv', label: 'mv: alih atau tukar nama' }]} items={[{ label: 'Sandar today.txt sebelum edit', bucket: 'cp', why: 'Anda mahu dua fail: menu dan sandarannya.' }, { label: 'Tukar nama draft.txt kepada promo.txt', bucket: 'mv', why: 'Tukar nama sama macam alih ke nama baru.' }, { label: 'Letak promo.txt dalam bilik menu', bucket: 'mv', why: 'Ia patut tinggalkan lantai, bukan ada di dua tempat.' }, { label: 'Menu ganti untuk gerai malam', bucket: 'cp', why: 'Kedai simpan menunya sendiri.' }]} success="Dua fail selepas itu: cp. Satu fail: mv." />
+</Card>
+
+<Card id="try-cp-mv" type="try">
+Sandar menu sebagai `menu/today.bak`. Kemudian tukar nama `draft.txt` kepada `promo.txt`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-make" goal={{ fileExists: ['~/kedai/menu/today.bak', '~/kedai/promo.txt'], fileMissing: ['~/kedai/draft.txt'] }} hints={['Salin: cp menu/today.txt menu/today.bak', 'Tukar nama: mv draft.txt promo.txt']} solution={['cp menu/today.txt menu/today.bak', 'mv draft.txt promo.txt']} success="Ada sandaran dalam bilik menu, dan promo dapat nama sebenarnya." />
+
+<Hint>Urutannya sentiasa: dari, kemudian ke.</Hint>
+</Card>
+
+<Card id="check-folder" type="check">
+Anda taip `cp kitchen kitchen-copy`. Server kata `cp: -r not specified; omitting directory 'kitchen'`. Sekarang apa?
+
+<Interactive name="Choice" options={[{ label: 'cp -r kitchen kitchen-copy', correct: true, why: 'Folder ada banyak fail. -r salin folder dan semua isinya.' }, { label: 'mv kitchen kitchen-copy', why: 'Itu tukar nama dapur. Tiada salinan tinggal.' }, { label: 'mkdir kitchen-copy', why: 'Itu buat bilik kosong. Resepi tertinggal.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh bina folder, sandar fail, dan alihkannya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Hati-hati: `cp` dan `mv` ganti fail yang sama nama tanpa bertanya. Di mesin sebenar, `cp -i` dan `mv -i` tanya dulu. `touch notes.txt` buat fail kosong.
+
+Latihan sebenar (pilihan), dalam folder latihan di mesin anda sendiri:
+
+<Interactive name="Mission" id="linux-l1-l04-rep" steps={[{ id: 'make', text: 'Bina kedai latihan.', command: 'mkdir -p practice/menu' }, { id: 'file', text: 'Buat fail menu kosong di dalamnya.', command: 'touch practice/menu/today.txt' }, { id: 'copy', text: 'Sandarkan ia.', command: 'cp practice/menu/today.txt practice/menu/today.bak' }, { id: 'look', text: 'Semak kedua-duanya ada.', command: 'ls practice/menu' }]} success="Folder sebenar, sandaran sebenar!" />
+</Card>

@@ -1,0 +1,72 @@
+---
+id: linux-l3-l10
+world: 3
+title: "The can't-connect ladder"
+summary: "You will learn: a calm, step-by-step way to find why something can't connect."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, OrderList, SortCards, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l09]
+scenario: linux-l3-ladder
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl: exit codes", url: "https://curl.se/libcurl/c/libcurl-errors.html" }
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "systemctl(1)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ladder" intro={['curl -sS empat.kedai.example; echo $?']} network />
+
+Four branch shops. Four broken phone lines. Customers are calling you. Where do you even start?
+</Card>
+
+<Card id="see-ladder" type="see">
+Climb a ladder, one rung at a time. Start at the bottom. Put the rungs in order.
+
+<Interactive name="OrderList" items={['Name: does it turn into a number? (getent, dig)', 'Road: can I reach that number? (ping, traceroute)', 'Door: does the port let me in? (curl -v, firewall)', 'Staff: is a program listening? (ss -tlnp, systemctl)', 'Answer: what does it reply? (status code, logs)']} label="Bottom rung at the top" success="Name, road, door, staff, answer." />
+</Card>
+
+<Card id="try-climb" type="try">
+Climb for the other three shops: `satu`, `dua` and `tiga`. Read each error before you look at the next shop.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ladder" goal={{ typed: '^curl .*satu\\.kedai\\.example', lastTyped: '^curl .*tiga\\.kedai\\.example' }} hints={['curl -sS satu.kedai.example', 'curl -sS --connect-timeout 5 dua.kedai.example', 'curl -sI tiga.kedai.example']} solution={['curl -sS satu.kedai.example', 'curl -sS --connect-timeout 5 dua.kedai.example', 'curl -sI tiga.kedai.example']} success="Four shops, four different rungs. The errors told you which." />
+</Card>
+
+<Card id="check-sort" type="check">
+Which rung broke at each shop?
+
+<Interactive name="SortCards" buckets={[{ id: 'low', label: 'Name or road' }, { id: 'door', label: 'Door or staff' }, { id: 'answer', label: 'Answer' }]} items={[{ label: 'empat: (6) Could not resolve host', bucket: 'low', why: 'No number for the name. Fix DNS or /etc/hosts.' }, { label: 'satu: (7) Failed to connect … after 0 ms', bucket: 'door', why: 'The road is fine. Nobody listens on 80.' }, { label: 'dua: (28) Connection timed out', bucket: 'door', why: 'Silence at the door: a firewall drops it.' }, { label: 'tiga: HTTP/1.1 503 Service Unavailable', bucket: 'answer', why: 'It answered, but the kitchen is unwell. Read its logs.' }]} success="Each error points at one rung." />
+</Card>
+
+<Card id="predict" type="predict">
+`curl localhost` works on your server. From your laptop, the same page times out. Which rung?
+
+<Interactive name="Choice" options={[{ label: 'The door: a firewall, or listening on 127.0.0.1 only', correct: true, why: 'The staff answer inside. Something stops callers from outside.' }, { label: 'The name', why: 'A name problem says Could not resolve host.' }, { label: 'The answer', why: 'You never got any answer from outside.' }]} />
+</Card>
+
+<Card id="try-own" type="try">
+Now your own shop: `curl localhost` fails. Climb the ladder on kedai and fix it.
+
+<Interactive name="LinuxSim" scenario="linux-l3-fixlocal" goal={{ serviceActive: ['nginx'], reachable: { localhost: 200 } }} hints={['curl -sS localhost: an instant no. Nobody at the door?', 'ss -tln: is anything on 80? systemctl status nginx', 'sudo systemctl start nginx']} solution={['sudo ss -tlnp', 'systemctl status nginx', 'sudo systemctl start nginx']} success="The staff are back on 80. curl localhost answers 200 OK." />
+</Card>
+
+<Card id="check-habits" type="check">
+Good habit or not?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Read the exact error before changing anything.', good: true, why: 'It names the rung.' }, { text: 'Restart everything and hope.', good: false, why: 'You learn nothing, and it may come back.' }, { text: 'Test from where the customer is.', good: true, why: 'Inside and outside can differ.' }, { text: 'Change three settings at once.', good: false, why: 'Then you never know which one fixed it.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now climb the can't-connect ladder, one rung at a time.
+</Card>
+
+<Card id="deeper" type="deeper">
+Where the story breaks: a real phone call keeps one line open. The internet cuts every message into small packets. They may even take different roads, and get put back together at the end.
+
+<Interactive name="Mission" id="linux-l3-l10-rep" steps={[{ id: 'name', text: 'Name rung.', command: 'getent hosts example.com' }, { id: 'road', text: 'Road rung.', command: 'ping -c 3 example.com' }, { id: 'door', text: 'Door and answer rungs.', command: 'curl -sv -o /dev/null https://example.com' }]} success="You climbed a real ladder." />
+</Card>

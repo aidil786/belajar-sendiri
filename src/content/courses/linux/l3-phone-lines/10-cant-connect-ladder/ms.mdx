@@ -1,0 +1,72 @@
+---
+id: linux-l3-l10
+world: 3
+title: "Tangga tak dapat sambung"
+summary: "Anda akan belajar: cara tenang, langkah demi langkah, untuk cari kenapa sesuatu tak dapat bersambung."
+minutes: 5
+xp: 25
+interactives: [LinuxSim, OrderList, SortCards, Choice, SwipeJudge, Mission]
+needs: [linux-l3-l09]
+scenario: linux-l3-ladder
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "curl: exit codes", url: "https://curl.se/libcurl/c/libcurl-errors.html" }
+  - { label: "ss(8)", url: "https://man7.org/linux/man-pages/man8/ss.8.html" }
+  - { label: "systemctl(1)", url: "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="LinuxSim" scenario="linux-l3-ladder" intro={['curl -sS empat.kedai.example; echo $?']} network />
+
+Empat kedai cawangan. Empat talian telefon rosak. Pelanggan sedang menelefon anda. Mula dari mana?
+</Card>
+
+<Card id="see-ladder" type="see">
+Panjat tangga, satu anak tangga setiap kali. Mula dari bawah. Susun anak tangga ini.
+
+<Interactive name="OrderList" items={['Nama: adakah ia jadi nombor? (getent, dig)', 'Jalan: boleh sampai ke nombor itu? (ping, traceroute)', 'Pintu: port itu benarkan saya masuk? (curl -v, firewall)', 'Pekerja: ada program yang mendengar? (ss -tlnp, systemctl)', 'Jawapan: apa yang ia balas? (kod status, log)']} label="Anak tangga bawah di atas" success="Nama, jalan, pintu, pekerja, jawapan." />
+</Card>
+
+<Card id="try-climb" type="try">
+Panjat untuk tiga kedai lagi: `satu`, `dua` dan `tiga`. Baca setiap ralat sebelum tengok kedai seterusnya.
+
+<Interactive name="LinuxSim" scenario="linux-l3-ladder" goal={{ typed: '^curl .*satu\\.kedai\\.example', lastTyped: '^curl .*tiga\\.kedai\\.example' }} hints={['curl -sS satu.kedai.example', 'curl -sS --connect-timeout 5 dua.kedai.example', 'curl -sI tiga.kedai.example']} solution={['curl -sS satu.kedai.example', 'curl -sS --connect-timeout 5 dua.kedai.example', 'curl -sI tiga.kedai.example']} success="Empat kedai, empat anak tangga berbeza. Ralat itu yang beritahu." />
+</Card>
+
+<Card id="check-sort" type="check">
+Anak tangga mana yang rosak di setiap kedai?
+
+<Interactive name="SortCards" buckets={[{ id: 'low', label: 'Nama atau jalan' }, { id: 'door', label: 'Pintu atau pekerja' }, { id: 'answer', label: 'Jawapan' }]} items={[{ label: 'empat: (6) Could not resolve host', bucket: 'low', why: 'Tiada nombor untuk nama itu. Baiki DNS atau /etc/hosts.' }, { label: 'satu: (7) Failed to connect … after 0 ms', bucket: 'door', why: 'Jalannya okey. Tiada yang mendengar di 80.' }, { label: 'dua: (28) Connection timed out', bucket: 'door', why: 'Senyap di pintu: firewall membuangnya.' }, { label: 'tiga: HTTP/1.1 503 Service Unavailable', bucket: 'answer', why: 'Ia menjawab, tetapi dapurnya tak sihat. Baca lognya.' }]} success="Setiap ralat tunjuk satu anak tangga." />
+</Card>
+
+<Card id="predict" type="predict">
+`curl localhost` berjaya di server anda. Dari laptop anda, halaman yang sama tamat masa. Anak tangga mana?
+
+<Interactive name="Choice" options={[{ label: 'Pintu: firewall, atau mendengar di 127.0.0.1 sahaja', correct: true, why: 'Pekerja menjawab di dalam. Ada yang halang pemanggil dari luar.' }, { label: 'Nama', why: 'Masalah nama berbunyi Could not resolve host.' }, { label: 'Jawapan', why: 'Anda langsung tak dapat jawapan dari luar.' }]} />
+</Card>
+
+<Card id="try-own" type="try">
+Sekarang kedai anda sendiri: `curl localhost` gagal. Panjat tangga di kedai dan baikinya.
+
+<Interactive name="LinuxSim" scenario="linux-l3-fixlocal" goal={{ serviceActive: ['nginx'], reachable: { localhost: 200 } }} hints={['curl -sS localhost: tidak yang serta-merta. Tiada orang di pintu?', 'ss -tln: ada apa-apa di 80? systemctl status nginx', 'sudo systemctl start nginx']} solution={['sudo ss -tlnp', 'systemctl status nginx', 'sudo systemctl start nginx']} success="Pekerja kembali di 80. curl localhost jawab 200 OK." />
+</Card>
+
+<Card id="check-habits" type="check">
+Tabiat baik atau tidak?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Baca ralat dengan tepat sebelum ubah apa-apa.', good: true, why: 'Ia namakan anak tangga.' }, { text: 'Mulakan semula semua dan berharap.', good: false, why: 'Anda tak belajar apa-apa, dan ia mungkin berulang.' }, { text: 'Uji dari tempat pelanggan berada.', good: true, why: 'Dalam dan luar boleh berbeza.' }, { text: 'Ubah tiga tetapan serentak.', good: false, why: 'Nanti anda tak tahu yang mana satu membaikinya.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh panjat tangga tak dapat sambung, satu anak tangga setiap kali.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di mana cerita ini tak tepat: panggilan telefon sebenar kekalkan satu talian terbuka. Internet potong setiap mesej menjadi paket kecil. Paket itu mungkin ikut jalan berbeza, dan dicantum semula di hujung.
+
+<Interactive name="Mission" id="linux-l3-l10-rep" steps={[{ id: 'name', text: 'Anak tangga nama.', command: 'getent hosts example.com' }, { id: 'road', text: 'Anak tangga jalan.', command: 'ping -c 3 example.com' }, { id: 'door', text: 'Anak tangga pintu dan jawapan.', command: 'curl -sv -o /dev/null https://example.com' }]} success="Anda panjat tangga sebenar." />
+</Card>

@@ -1,0 +1,77 @@
+---
+id: k8s-k1-l12
+world: 1
+title: Label dan selector
+summary: "Anda akan belajar: cara label tandakan pod anda, dan cara selector memilihnya."
+minutes: 4
+xp: 20
+interactives: [Choice, KubeReplay, FoodCourtSim, LabelMatchmaker, SwipeJudge]
+needs: [k8s-k1-l11]
+scenario: k1-labels
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Labels and selectors", url: "https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/" }
+  - { label: "kubectl label", url: "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/" }
+---
+
+<Card id="hook" type="hook">
+Medan selera anda ada 20 dulang: dulang shop dan dulang api. Nombor pesanan shop mesti sampai ke dulang shop sahaja. Macam mana ia cari?
+
+<Interactive name="Choice" options={[{ label: 'Dengan pelekat pada setiap dulang, contohnya app=shop', correct: true, why: 'Ya! Pelekat itu ialah label. Jom tengok.' }, { label: 'Dengan nama dulang', why: 'Nama berubah bila dulang diganti. Pelekat kekal sama.' }, { label: 'Dengan alamat IP', why: 'IP pod pun berubah. Label ialah pemegang yang tetap.' }]} />
+</Card>
+
+<Card id="see-labels" type="see">
+<Interactive name="KubeReplay" scenario="k1-labels" commands={['kubectl get pods --show-labels']} label="Tiga pod dengan label: api-1 ada app=api, shop-1 ada app=shop dan tier=web, shop-2 ada app=shop." />
+
+**<Term id="label">Label (pelekat)</Term>** ialah pelekat: satu kunci dan satu nilai, contohnya `app=shop`. Satu dulang boleh pakai banyak. `--show-labels` tunjuk semuanya.
+</Card>
+
+<Card id="try-select" type="try">
+**<Term id="selector">Selector (pemilih)</Term>** pilih dulang ikut pelekatnya. Tunjuk dulang shop sahaja: `kubectl get pods -l app=shop`.
+
+<Interactive name="FoodCourtSim" scenario="k1-labels" goal={{ typed: '(-l|--selector)[ =]?app=shop\\b' }} hints={['Taip kubectl get pods -l app=shop dan tekan Enter.']} success="shop-1 dan shop-2. api-1 tinggal di luar." />
+
+<Hint>`-l` bermaksud label selector.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Pod mana yang padan dengan `-l app=shop,tier=web`?
+
+<Interactive name="Choice" options={[{ label: 'shop-1 sahaja', correct: true, why: 'Koma bermaksud DAN. Hanya shop-1 pakai kedua-dua pelekat.' }, { label: 'shop-1 dan shop-2', why: 'shop-2 belum ada pelekat tier=web.' }, { label: 'Ketiga-tiganya', why: 'api-1 ada app=api, bukan app=shop.' }]} />
+</Card>
+
+<Card id="try-match" type="try">
+Nombor pesanan shop pilih `app=shop` dan `tier=web`. Lekatkan label supaya kedua-dua dulang shop menjawab, tapi api-1 tidak.
+
+<Interactive name="LabelMatchmaker" pods={[{ name: 'shop-1', labels: { app: 'shop', tier: 'web' } }, { name: 'shop-2', labels: { app: 'shop' } }, { name: 'api-1', labels: { app: 'api' } }]} labels={['tier=web', 'app=shop', 'app=api']} selector={{ app: 'shop', tier: 'web' }} task={{ type: 'select', pods: ['shop-1', 'shop-2'] }} success="Kedua-dua dulang shop menyala. api-1 kekal gelap." />
+
+<Hint>shop-2 kurang satu pelekat.</Hint>
+</Card>
+
+<Card id="try-label" type="try">
+Sekarang buat dengan kubectl: `kubectl label pod shop-2 tier=web`. Kemudian semak dengan `kubectl get pods -l tier=web`.
+
+<Interactive name="FoodCourtSim" scenario="k1-labels" goal={{ labels: { kind: 'Pod', name: 'shop-2', labels: { tier: 'web' } } }} hints={['Taip kubectl label pod shop-2 tier=web dan tekan Enter.']} success="pod/shop-2 labeled. Kini ia pakai tier=web." />
+</Card>
+
+<Card id="check-good" type="check">
+Label yang baik, atau perlu diperbaiki? Leret setiap satu.
+
+<Interactive name="SwipeJudge" cards={[{ text: 'app=shop', good: true, why: 'Pendek dan jelas.' }, { text: 'app=my shop', good: false, why: 'Nilai tak boleh ada ruang. Cuba app=my-shop.' }, { text: 'version=1.4.0', good: true, why: 'Titik boleh ada dalam nilai.' }, { text: 'team=-kitchen', good: false, why: 'Nilai mesti bermula dengan huruf atau nombor.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh lekatkan label pada dulang dan pilihnya dengan selector.
+</Card>
+
+<Card id="deeper" type="deeper">
+Deployment pun guna selector. Templat pod-nya mesti pakai label yang selector minta. Cuba:
+
+<Interactive name="LabelMatchmaker" pods={[]} labels={['app=shop', 'tier=web']} selector={{ app: 'shop' }} templateLabels={{ app: 'web' }} task={{ type: 'template' }} success="Selector dan templat sepadan. Deployment diterima." />
+
+Latihan sebenar (pilihan): `kubectl get pods -l app!=shop` tunjuk setiap dulang tanpa pelekat itu.
+</Card>

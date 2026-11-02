@@ -1,0 +1,75 @@
+---
+id: cicd-c4-l03
+world: 4
+title: Pin actions to a full SHA
+summary: "You will learn: how to pin borrowed actions to a full commit SHA, and let Dependabot keep them fresh."
+minutes: 4
+xp: 20
+interactives: [Choice, SortCards, SpotTheHole, Transcript, OrderList, SwipeJudge, Mission]
+needs: [cicd-c4-l02]
+tool: github-actions
+toolVersion: "2026-10"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Secure use: using third-party actions", url: "https://docs.github.com/en/actions/reference/security/secure-use" }
+  - { label: "Keeping your actions up to date with Dependabot", url: "https://docs.github.com/en/code-security/dependabot/working-with-dependabot/keeping-your-actions-up-to-date-with-dependabot" }
+---
+
+<Card id="hook" type="hook">
+You pinned 12 borrowed actions to full SHAs. Safe! A month later, 3 of them fix security bugs. Your pins still run the old code. Who updates them?
+
+<Interactive name="Choice" options={[{ label: 'A robot that opens a PR for each update', correct: true, why: 'You review it, CI tests it, you merge it.' }, { label: 'You, by hand, every week', why: 'Possible, but slow. People forget.' }, { label: 'Nobody: pins never need updates', why: 'Old versions keep old bugs. Pins need care.' }]} />
+</Card>
+
+<Card id="see-who" type="see">
+GitHub's advice: pin every third-party action to a full commit SHA. Use a tag only if you trust the maker. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'sha', label: 'Pin to a full SHA' }, { id: 'tag', label: 'A tag is OK (a SHA is safer)' }]} items={[{ label: '`example-org/changed-files@v2`', bucket: 'sha', why: 'A third-party maker. Pin it.' }, { label: '`random-dev/helper@main`', bucket: 'sha', why: 'A branch moves with every new commit. Pin it.' }, { label: '`actions/checkout@v7`', bucket: 'tag', why: 'Made by GitHub itself. A tag is fine if you trust the maker.' }, { label: '`actions/setup-node@v7`', bucket: 'tag', why: 'Also made by GitHub. Your organisation may still ask for SHAs.' }]} success="Sorted! Strangers get a SHA pin." />
+</Card>
+
+<Card id="try-spot" type="try">
+Tap every line that a moved tag or branch could poison.
+
+<Interactive name="SpotTheHole" file=".github/workflows/ci.yml" workflow={['name: CI', 'on: pull_request', 'permissions:', '  contents: read', 'jobs:', '  test:', '    runs-on: ubuntu-latest', '    steps:', '      - uses: actions/checkout@v7', '      - uses: example-org/changed-files@0123456789abcdef0123456789abcdef01234567 # v2.0.0 (example SHA)',
+  { text: '      - uses: example-org/lint-action@v4', hole: { kind: 'unpinned', fixCode: '      - uses: example-org/lint-action@89abcdef0123456789abcdef0123456789abcdef # v4.2.0 (example SHA)' } },
+  { text: '      - uses: random-dev/test-report@main', hole: { kind: 'unpinned', fixCode: '      - uses: random-dev/test-report@fedcba9876543210fedcba9876543210fedcba98 # v1.3.0 (example SHA)' } },
+  '      - run: npm ci && npm test']} success="Both found! A tag and a branch. The SHA pin on line 10 is safe." />
+
+<Hint>Look at what comes after each @. Is it 40 characters?</Hint>
+</Card>
+
+<Card id="see-dependabot" type="see">
+<Interactive name="Transcript" title="bash" label="cat shows .github/dependabot.yml: version 2, one update rule for github-actions in directory slash, checked weekly." lines={[{ cmd: 'cat .github/dependabot.yml' }, { out: 'version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: "/"\n    schedule:\n      interval: "weekly"' }]} />
+
+Meet your pin keeper: **<Term id="dependabot" course="git">Dependabot</Term>**. This file asks it to check your actions every week. `directory: "/"` covers every file in `.github/workflows`.
+</Card>
+
+<Card id="try-order" type="try">
+A new version comes out. Put Dependabot's steps in order.
+
+<Interactive name="OrderList" items={['Dependabot sees that v2.1.0 is out', 'It opens a PR: a new SHA and a new `# v2.1.0` comment', 'Your CI runs on that PR', 'You read the release notes, then merge']} label="First step at the top" success="That's the loop. Fresh pins, checked by you." />
+</Card>
+
+<Card id="predict" type="predict">
+A stranger sends a PR. It changes `@0123… # v2.0.0` to `@89ab… # v2.1.0`. How do you know the new SHA is real?
+
+<Interactive name="Choice" options={[{ label: "Check it is that release's commit, in the action's own repo", correct: true, why: 'Not a fork. GitHub says to check this.' }, { label: 'Trust it: the comment says v2.1.0', why: 'A comment is just text. Anyone can type v2.1.0.' }, { label: 'Count the characters', why: 'A bad SHA has 40 characters too.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Good pinning habit, or risky? Swipe each one.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Pin with the version in a comment: `@<sha> # v2.0.0`', good: true, why: 'The SHA is for GitHub. The comment is for humans.' }, { text: 'Merge every Dependabot PR without looking', good: false, why: 'Let CI run, and read what changed.' }, { text: "Copy the SHA from a fork's page", good: false, why: "Copy it from the action's own repo." }, { text: 'Let Dependabot check your actions every week', good: true, why: 'Fresh fixes, still pinned.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now pin actions to a full SHA and keep them fresh.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dependabot alerts skip SHA pins: they only know version numbers. Version updates still work. GitHub is also testing workflow lockfiles (preview). They record the exact commit of every action, even nested ones. Real rep (optional):
+
+<Interactive name="Mission" id="cicd-c4-dependabot" steps={[{ id: 'file', text: 'In your repo, make `.github/dependabot.yml` with the six lines above.' }, { id: 'push', text: 'Commit it and push it to main.', command: 'git add .github/dependabot.yml && git commit -m "Keep actions up to date" && git push' }, { id: 'pin', text: "Pin one third-party action. Copy its full SHA from the action's own release page. Keep the version as a comment." }, { id: 'pr', text: 'When a Dependabot PR comes, let CI run, read the notes, then merge.' }]} success="Your pins now have a keeper." />
+</Card>

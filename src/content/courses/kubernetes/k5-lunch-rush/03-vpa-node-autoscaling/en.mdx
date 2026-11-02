@@ -1,0 +1,69 @@
+---
+id: k8s-k5-l03
+world: 5
+title: VPA and node autoscaling
+summary: "You will learn: when a tray needs a bigger plate, and when the food court needs another stall."
+minutes: 3
+xp: 15
+interactives: [Choice, OrderList, SortCards, SchedulerTetris]
+needs: [k8s-k5-l02]
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Kubernetes: autoscaling workloads", url: "https://kubernetes.io/docs/concepts/workloads/autoscaling/" }
+  - { label: "Kubernetes: node autoscaling", url: "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" }
+  - { label: "Vertical Pod Autoscaler", url: "https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" }
+---
+
+<Card id="hook" type="hook">
+Your database tray keeps running out of memory. You can't just copy a database. More trays won't help. What will?
+
+<Interactive name="Choice" options={[{ label: 'Give that one tray a bigger plate', correct: true, why: 'More memory for the same tray. That is scaling up, not out.' }, { label: 'Add 5 more database trays', why: 'A database is not easy to copy. They would not share one set of data.' }, { label: 'Restart it every hour', why: 'It would just run out again.' }]} />
+</Card>
+
+<Card id="see-vpa" type="see">
+A **<Term id="vpa">VerticalPodAutoscaler</Term>** (VPA) changes the plate size: the tray's requests. It is an add-on, not built in. Put its loop in order.
+
+<Interactive name="OrderList" items={['Watch what the tray really uses', 'Suggest a better request size', 'Give the tray that size']} label="First step at the top" success="Yes. VPA resizes the tray in place when it can. If not, it replaces it." />
+</Card>
+
+<Card id="try-which" type="try">
+Three helpers. Which one fits each problem?
+
+<Interactive name="SortCards" buckets={[{ id: 'hpa', label: 'HPA: more trays' }, { id: 'vpa', label: 'VPA: bigger plate' }, { id: 'node', label: 'Node autoscaler: more stalls' }]} items={[{ label: 'The lunch queue doubles', bucket: 'hpa', why: 'Many customers: copy the tray.' }, { label: 'One database tray keeps running out of memory', bucket: 'vpa', why: 'One tray needs more room, not more copies.' }, { label: 'New trays wait in Pending: no stall has room', bucket: 'node', why: 'The trays are fine. The food court is full.' }, { label: 'Requests are 2 CPU, real use is 0.1 CPU', bucket: 'vpa', why: 'The plate is far too big. Shrink the request.' }]} success="Sorted! Out, up, or a bigger food court." />
+</Card>
+
+<Card id="try-full" type="try">
+Fit the trays onto the stalls. One will not fit anywhere. Trays waiting like that wake a **<Term id="node-autoscaler">node autoscaler</Term>**. It opens a new stall.
+
+<Interactive name="SchedulerTetris" nodes={[{ name: 'stall-a', cpu: '2', memory: '4Gi' }, { name: 'stall-b', cpu: '2', memory: '4Gi' }]} pods={[{ name: 'tray-1', cpu: '1500m', memory: '1Gi' }, { name: 'tray-2', cpu: '1500m', memory: '1Gi' }, { name: 'tray-3', cpu: '1500m', memory: '1Gi' }]} task={{ type: 'placeAll', pending: ['tray-3'] }} success="tray-3 stays Pending. A node autoscaler would add a stall for it." />
+</Card>
+
+<Card id="check-reads" type="check">
+How does a node autoscaler decide to add a stall?
+
+<Interactive name="Choice" options={[{ label: 'From the requests of trays that cannot be scheduled', correct: true, why: 'It plans by requests, not by real use. Honest requests keep the bill honest.' }, { label: 'From a chart of real CPU use', why: 'Real use does not decide it. Requests of Pending trays do.' }, { label: 'From the number of Services', why: 'Services do not need stalls. Trays do.' }]} />
+</Card>
+
+<Card id="check-facts" type="check">
+True or not? Sort each sentence.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'True' }, { id: 'no', label: 'Not true' }]} items={[{ label: 'Cluster Autoscaler and Karpenter are two node autoscalers', bucket: 'yes', why: 'Both are sponsored by the Kubernetes SIG Autoscaling group.' }, { label: 'A node autoscaler talks to your cloud to add machines', bucket: 'yes', why: 'Stalls are real machines. Someone must rent them.' }, { label: 'kind adds nodes by itself when trays wait', bucket: 'no', why: 'kind has the nodes you asked for when you made it.' }, { label: 'VPA comes built into every cluster', bucket: 'no', why: 'It is an add-on. You install it, and it needs metrics-server.' }]} success="All sorted!" />
+</Card>
+
+<Card id="predict" type="predict">
+You turn on an HPA and a VPA, both on CPU, for the same Deployment. What happens?
+
+<Interactive name="Choice" options={[{ label: 'They fight: one adds trays, the other resizes them', correct: true, why: 'The VPA docs warn against it. Use different metrics, or just one of them.' }, { label: 'They work together perfectly', why: 'Both react to the same CPU number. They undo each other.' }, { label: 'Kubernetes refuses to create the second one', why: 'Nothing stops you. That is why you need to know.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now choose: more trays, bigger plates, or more stalls.
+</Card>
+
+<Card id="deeper" type="deeper">
+Since Kubernetes 1.35, you can resize a running pod's CPU and memory in place. VPA's `InPlaceOrRecreate` mode uses this. If a resize can't happen, VPA replaces the pod. For queues and events, look at KEDA, a CNCF project. Karpenter can pick machine sizes itself. Cluster Autoscaler usually grows machine groups you set up.
+</Card>

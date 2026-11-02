@@ -1,0 +1,65 @@
+---
+id: git-w04-l09
+world: 4
+title: Push rejected? Fix it
+summary: "You will learn: why GitHub sometimes refuses your push, and the calm fix."
+minutes: 4
+xp: 20
+interactives: [Courier, SpotLines, Choice, OrderList, Sim]
+needs: [git-w04-l08]
+scenario: w04-l09
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+docs:
+  - { label: "git push", url: "https://git-scm.com/docs/git-push" }
+  - { label: "Dealing with non-fast-forward errors", url: "https://docs.github.com/en/get-started/using-git/dealing-with-non-fast-forward-errors" }
+---
+
+<Card id="hook" type="hook">
+Your teal titles are ready. Tap Push. Watch what comes back.
+
+<Interactive name="Courier" scenario="w04-l09" actions={['push']} />
+</Card>
+
+<Card id="see-why" type="see">
+GitHub has Aisyah's new commit. Yours doesn't build on it. So GitHub says no, to keep her work safe. Tap the line that refuses, and the line with the fix.
+
+<Interactive name="SpotLines" lines={[{ text: 'To https://github.com/you/diary.git' }, { text: ' ! [rejected]        main -> main (fetch first)', target: true }, { text: "error: failed to push some refs to 'https://github.com/you/diary.git'" }, { text: 'hint: Updates were rejected because the remote contains work that you do not' }, { text: 'hint: have locally. This is usually caused by another repository pushing to' }, { text: 'hint: the same ref. If you want to integrate the remote changes, use' }, { text: "hint: 'git pull' before pushing again.", target: true }]} prompt="Tap the refusal and the fix." success="Rejected, and the fix is git pull. Git tells you!" />
+</Card>
+
+<Card id="try-fix" type="try">
+Fix it with the courier. Bring Aisyah's commit down, then push again.
+
+<Interactive name="Courier" scenario="w04-l09" actions={['push', 'fetch', { cmd: 'git pull --rebase', label: 'Pull (rebase)' }, { cmd: 'git pull --no-rebase', label: 'Pull (merge)' }]} goal={{ pushed: ['main'], serverHas: [{ url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'Aisyah' }, { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' }] }} hints={['Pick a pull first. Either one works.', 'Then tap Push again.']} success="Both commits are on GitHub. Nobody lost anything." />
+
+<Hint>Pull first. Push second.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+A friend says, "Just add `--force`!" What happens to Aisyah's commit on GitHub?
+
+<Interactive name="Choice" options={[{ label: 'It disappears from GitHub', correct: true, why: 'Force makes GitHub match your laptop exactly. Her commit is gone. Next lesson shows a safer way.' }, { label: 'Git keeps both commits', why: 'Only a pull keeps both. Force replaces.' }, { label: 'GitHub asks Aisyah first', why: 'GitHub does not ask anyone. That is the danger.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Push rejected? Put the calm fix in order.
+
+<Interactive name="OrderList" items={['Push, and it gets rejected', 'Pull to bring in the new commits', 'Fix conflicts, if Git asks', 'Push again']} label="First step at the top" success="Pull, fix, push. Every time." />
+</Card>
+
+<Card id="try-type" type="try">
+Now in the terminal. Push, read Git's words, fix it, push again.
+
+<Interactive name="Sim" scenario="w04-l09" panels={['graph']} goal={{ typed: '^git push', pushed: ['main'], serverHas: { url: 'https://github.com/you/diary.git', branch: 'main', hasMessage: 'teal' } }} hints={['Pull with a choice: git pull --rebase', 'Then git push']} success="Fixed, calmly. That is a real team skill." />
+
+<Hint>`git pull` alone asks you to choose: add `--rebase` or `--no-rebase`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now fix a rejected push without losing anyone's work.
+</Card>
+
+<Card id="deeper" type="deeper">
+Fetched already, but not pulled? Then Git says "non-fast-forward" instead of "fetch first". Same fix: pull, then push. A push can also be refused by branch rules on GitHub. That is World 5.
+</Card>

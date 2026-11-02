@@ -1,0 +1,83 @@
+---
+id: git-w06-l07
+world: 6
+title: Latihan release dan hotfix
+summary: "Anda akan belajar: langkah tenang untuk lancar release, dan baiki bug live dengan cepat."
+minutes: 5
+xp: 25
+interactives: [AreasScene, TimelineTap, CommandBuilder, OrderList, Sim, Choice, SortCards]
+needs: [git-w06-l06]
+scenario: w06-l07
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git tag", url: "https://git-scm.com/docs/git-tag" }
+  - { label: "git cherry-pick", url: "https://git-scm.com/docs/git-cherry-pick" }
+  - { label: "About releases", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases" }
+  - { label: "Automatically generated release notes", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes" }
+  - { label: "Semantic Versioning", url: "https://semver.org/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="AreasScene" zones={['repo']} zoneLabels={{ repo: 'Live sekarang: 2.4.0' }} effect="wobble" label="Versi live 2.4.0 ada tiga commit. Yang paling baru, Add card payment, bercahaya dan bergoyang." frames={[{ repo: [{ name: 'Add menu page', kind: 'commit' }, { name: 'Add cart', kind: 'commit' }, { name: 'Add card payment', kind: 'commit', glow: true }] }]} />
+
+Jumaat, 5 petang. Versi 2.4.0 dah live. Pelanggan tekan Bayar, dan tiada apa berlaku. Macam mana nak baiki cepat, tanpa panik?
+</Card>
+
+<Card id="see-release" type="see">
+<Interactive name="TimelineTap" events={[{ when: '1', title: 'Beku', text: 'Pilih apa yang masuk. Kerja baru tunggu lain kali.' }, { when: '2', title: 'Uji', text: 'Jalankan semua semakan. Cuba klik seluruh aplikasi.' }, { when: '3', title: 'Changelog', text: 'Tulis apa yang berubah, untuk manusia.' }, { when: '4', title: 'Tag', text: 'Tandakan commit dengan versinya, contohnya v2.4.0.' }, { when: '5', title: 'Terbit', text: 'Deploy. Tambah GitHub Release dengan nota.' }]} />
+
+Mula-mula, bahagian yang tenang. **Release** (keluaran) ialah versi yang anda hantar kepada pengguna. Pasukan yang bagus ikut latihan pendek yang sama setiap kali.
+</Card>
+
+<Card id="try-tag" type="try">
+Bina arahan untuk letak tag pada release ini.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'git', means: 'Bercakap dengan Git' }, { text: 'tag', means: 'beri nama pada satu commit' }, { text: '-a', means: 'tag penuh, dengan nama anda dan tarikh' }, { text: 'v2.4.0', means: 'versinya' }, { text: '-m', means: 'mesej datang selepas ini' }, { text: '"Release 2.4.0"', means: 'mesejnya' }]} decoys={[{ text: '2.4', means: 'SemVer perlukan tiga nombor' }, { text: 'branch', means: 'branch bergerak; tag kekal di tempatnya' }]} success="Siap tag! v2.4.0 akan sentiasa tunjuk ke commit ini." />
+
+<Hint>tag, kemudian -a, kemudian versi. Mesej datang paling akhir.</Hint>
+</Card>
+
+<Card id="see-hotfix" type="see">
+<Interactive name="AreasScene" zones={['working', 'repo']} zoneLabels={{ working: 'hotfix/pay-button', repo: 'main' }} label="Hotfix branch bermula pada v2.4.0. Satu commit, fix: pay button works again, muncul di situ. Kemudian ia meluncur masuk ke main." frames={[{ repo: [{ name: 'v2.4.0', kind: 'commit' }] }, { working: [{ name: 'fix: pay button works again', kind: 'commit' }], repo: [{ name: 'v2.4.0', kind: 'commit' }] }, { repo: [{ name: 'v2.4.0', kind: 'commit' }, { name: 'fix: pay button works again', kind: 'commit' }] }]} />
+
+Sekarang bahagian yang laju. **<Term id="hotfix">Hotfix</Term>** ialah pembaikan kecil dan segera untuk kod live. Buat branch (cabang) dari versi live. Baiki bug itu sahaja.
+</Card>
+
+<Card id="try-order" type="try">
+Susun latihan hotfix ikut turutan.
+
+<Interactive name="OrderList" items={['Semak bug itu dan seteruk mana', 'Buat branch dari versi live', 'Baiki dan tambah ujian', 'Buka PR untuk semakan cepat', 'Merge, tag v2.4.1 dan deploy', 'Catat apa yang silap, tanpa salahkan sesiapa']} label="Langkah pertama di atas" success="Tenang dan laju. Itulah latihan hotfix sebenar!" />
+
+<Hint>Faham bug itu dulu. Belajar daripadanya paling akhir.</Hint>
+</Card>
+
+<Card id="try-commit" type="try">
+Anda dah buat `hotfix/pay-button` dari tag v2.4.0. Pembaikan dalam `pay.js` dah sedia. Commit dengan label `fix:`.
+
+<Interactive name="Sim" scenario="w06-l07" panels={['areas', 'graph']} goal={{ lastMessage: '^fix(\\([a-z-]+\\))?: \\S', lastCommitHas: ['pay.js'], commits: 4 }} hints={['Mula-mula masukkan pembaikan ke dalam kotak: git add pay.js', 'Kemudian commit: git commit -m "fix: make pay button work again"']} success="Dah baiki dan berlabel! Commit ini jadi versi 2.4.1." />
+
+<Hint>Jalankan `git diff` untuk tengok pembaikan. Kemudian `git add pay.js` dan commit.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+2.4.0 dah live. Anda hantar hotfix ini. Apa versi baharunya?
+
+<Interactive name="Choice" compact options={[{ label: '2.4.1', correct: true, why: 'Pembaikan bug naikkan PATCH.' }, { label: '2.5.0', why: 'Tiada ciri baru, jadi MINOR kekal.' }, { label: '3.0.0', why: 'Tiada yang memecahkan, jadi MAJOR kekal.' }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Hotfix sekarang, atau tunggu release seterusnya?
+
+<Interactive name="SortCards" buckets={[{ id: 'now', label: 'Hotfix sekarang' }, { id: 'next', label: 'Release seterusnya' }]} items={[{ label: 'Pelanggan tak boleh bayar', bucket: 'now', why: 'Kedai rugi duit setiap minit.' }, { label: 'Warna hijau satu butang tak tepat', bucket: 'next', why: 'Menjengkelkan, tapi tiada yang rosak.' }, { label: 'Kata laluan pelanggan muncul di skrin', bucket: 'now', why: 'Keselamatan dulu. Baiki segera.' }, { label: 'Tambah menu pencuci mulut baru', bucket: 'next', why: 'Ciri baru tunggu release biasa.' }, { label: 'Aplikasi crash semasa dibuka, untuk semua orang', bucket: 'now', why: 'Tiada siapa boleh guna. Hotfix sekarang.' }]} success="Tersusun! Hotfix untuk kecemasan sebenar." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan release yang tenang dan hotfix yang laju.
+</Card>
+
+<Card id="deeper" type="deeper">
+Dalam Git Flow, merge hotfix ke develop juga. Kalau tidak, bug itu kembali dalam release seterusnya. Pasukan berasaskan trunk baiki main dulu. Kemudian mereka salin pembaikan ke release branch dengan `git cherry-pick`. Di GitHub, Release tambah nota pada tag. GitHub boleh draf nota itu untuk anda.
+</Card>

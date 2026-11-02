@@ -1,0 +1,68 @@
+---
+id: aws-a3-l04
+world: 3
+title: "Security groups and NACLs"
+summary: "You will learn: the two guards, the unit's door and the row's gate, and how to let only the right visitors in."
+minutes: 5
+xp: 25
+interactives: [TimelineTap, SecurityGroupGate, Choice, SpotLines, SortCards]
+needs: [aws-a3-l03]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon VPC: Security groups", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" }
+  - { label: "Amazon VPC: Network ACLs", url: "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html" }
+  - { label: "Amazon VPC: Custom network ACLs (ephemeral ports)", url: "https://docs.aws.amazon.com/vpc/latest/userguide/custom-network-acl.html" }
+  - { label: "AWS CLI: aws ec2 authorize-security-group-ingress", url: "https://docs.aws.amazon.com/cli/latest/reference/ec2/authorize-security-group-ingress.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: '9:00', title: 'Just for a test', text: 'Aina opens SSH, port 22, to the whole internet.' }, { when: '9:05', title: 'Knock knock', text: 'Robots that scan the internet find the open door.' }, { when: '9:30', title: 'Guessing', text: 'They try password after password. All day long.' }]} />
+
+One loose rule, and the whole street knocks. Tap the story. Who should guard the door?
+</Card>
+
+<Card id="see-sg" type="see">
+A **<Term id="security-group">security group</Term>** is the guard at your unit's door. It has allow rules only. Let shoppers in on 443. Let only your laptop use SSH.
+
+<Interactive name="SecurityGroupGate" edit="sg" forbidOpen={[22]} visitors={[{ id: 'shopper', label: 'Shopper', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'laptop', label: 'Your laptop (SSH)', ip: '203.0.113.9', client: 'linux', protocol: 'tcp', port: 22, want: 'in' }, { id: 'stranger', label: 'Stranger (SSH)', ip: '192.0.2.77', protocol: 'tcp', port: 22, want: 'out' }]} />
+
+<Hint>Port 443 from 0.0.0.0/0. Port 22 from 203.0.113.9/32 only.</Hint>
+</Card>
+
+<Card id="see-nacl" type="see">
+A **<Term id="network-acl">network ACL</Term>** is the gate of the whole row. It remembers nothing. A shopper got in on 443. Their reply leaves to port 50000. Who needs a rule for it?
+
+<Interactive name="Choice" options={[{ label: 'The row gate (network ACL), an Out rule', correct: true, why: 'It forgets who came in. So replies need their own Out rule.' }, { label: 'The door guard (security group)', why: 'The door remembers the visit, so replies always leave.' }, { label: 'Nobody, replies are free', why: 'Through the gate, nothing is free. It checks every packet.' }]} />
+</Card>
+
+<Card id="try-nacl" type="try">
+This row has a new custom gate. It denies everything. Let shoppers in on 443, and let their replies out.
+
+<Interactive name="SecurityGroupGate" edit="nacl" nacl="custom" sg={[{ protocol: 'tcp', ports: '443', source: '0.0.0.0/0' }]} visitors={[{ id: 'win', label: 'Shopper on Windows', ip: '198.51.100.20', client: 'windows', protocol: 'tcp', port: 443, want: 'in' }, { id: 'linux', label: 'Shopper on Linux', ip: '203.0.113.50', client: 'linux', protocol: 'tcp', port: 443, want: 'in' }, { id: 'scan', label: 'Port scanner', ip: '192.0.2.66', protocol: 'tcp', port: 3389, want: 'out' }]} />
+
+<Hint>In: TCP 443 from 0.0.0.0/0. Out: TCP 1024-65535 to 0.0.0.0/0.</Hint>
+</Card>
+
+<Card id="check-cli" type="check">
+The CLI adds a door rule too. This is the official example's answer, cut short. Tap the line that says who may come in.
+
+<Interactive name="SpotLines" prompt="Tap the line that says who may come in." success="Only addresses in 203.0.113.0/24 may use port 22." lines={[{ text: '$ aws ec2 authorize-security-group-ingress --group-id sg-1234567890abcdef0 --protocol tcp --port 22 --cidr 203.0.113.0/24' }, { text: '"IsEgress": false,' }, { text: '"IpProtocol": "tcp",' }, { text: '"FromPort": 22,' }, { text: '"ToPort": 22,' }, { text: '"CidrIpv4": "203.0.113.0/24"', target: true }]} />
+</Card>
+
+<Card id="check-sort" type="check">
+Door guard or row gate? Sort each fact.
+
+<Interactive name="SortCards" buckets={[{ id: 'sg', label: 'Security group (the door)' }, { id: 'nacl', label: 'Network ACL (the row gate)' }]} items={[{ label: 'Allow rules only', bucket: 'sg', why: 'You cannot write a Deny in a security group.' }, { label: 'Numbered rules, lowest first', bucket: 'nacl', why: 'The first rule that fits decides.' }, { label: 'Remembers the visit, so replies leave', bucket: 'sg', why: 'That is called stateful.' }, { label: 'Can deny one bad address', bucket: 'nacl', why: 'A Deny rule with a low number blocks it for the whole row.' }]} success="Door: allow-only and remembers. Gate: numbered, forgetful, can deny." />
+</Card>
+
+<Card id="win" type="win">
+You can now set both guards, so only the right visitors get in.
+</Card>
+
+<Card id="deeper" type="deeper">
+The default network ACL allows everything, so most people only tune security groups. A new security group lets nothing in and everything out. Instead of SSH, try Session Manager: it needs no open inbound port at all.
+</Card>

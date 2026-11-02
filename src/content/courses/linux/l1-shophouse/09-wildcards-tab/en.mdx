@@ -1,0 +1,72 @@
+---
+id: linux-l1-l09
+world: 1
+title: Wildcards and tab completion
+summary: "You will learn: to match many files with one pattern, and let Tab finish names for you."
+minutes: 3
+xp: 15
+interactives: [Choice, LinuxSim, SortCards]
+needs: [linux-l1-l08]
+scenario: linux-l1-wild
+tool: linux
+toolVersion: "debian-13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Bash manual: Filename Expansion", url: "https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html" }
+  - { label: "Bash manual: Pattern Matching", url: "https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html" }
+  - { label: "Bash manual: Commands for completion", url: "https://www.gnu.org/software/bash/manual/html_node/Commands-For-Completion.html" }
+---
+
+<Card id="hook" type="hook">
+The inbox has 3 food photos today. Next week it will have 300. They all belong in a `photos` room. Will you type 300 names?
+
+<Interactive name="Choice" options={[{ label: 'No. One pattern can match every .jpg', correct: true, why: 'A star pattern matches all the names for you.' }, { label: 'Yes, one by one', why: 'Your fingers would cry. Let the shell do it.' }, { label: 'Move the whole inbox', why: 'The menus and notes would move too. Pick only the photos.' }]} />
+</Card>
+
+<Card id="see-star" type="see">
+<Interactive name="LinuxSim" scenario="linux-l1-wild" intro={['ls', 'echo *.jpg']} />
+
+`*` is a <Term id="wildcard">wildcard</Term>: it matches any letters. The shell swaps `*.jpg` for every matching name before the command runs. `echo` shows the swap.
+</Card>
+
+<Card id="predict-question" type="predict">
+`?` matches exactly one character. What does `echo menu?.txt` print?
+
+<Interactive name="Choice" options={[{ label: 'menu1.txt menu2.txt', correct: true, why: 'menu10.txt has two characters there, so ? skips it.' }, { label: 'menu1.txt menu10.txt menu2.txt', why: 'That is menu*.txt. One ? means exactly one character.' }, { label: 'menu?.txt', why: 'Only when nothing matches. Two names match here.' }]} />
+</Card>
+
+<Card id="try-move" type="try">
+Make a `photos` room. Then move every photo in with one pattern: `mv *.jpg photos/`.
+
+<Interactive name="LinuxSim" scenario="linux-l1-wild" goal={{ fileExists: ['~/kedai/inbox/photos/nasi.jpg', '~/kedai/inbox/photos/roti.jpg', '~/kedai/inbox/photos/teh.jpg'], fileMissing: ['~/kedai/inbox/nasi.jpg'] }} hints={['First: mkdir photos', 'Then: mv *.jpg photos/']} solution={['mkdir photos', 'mv *.jpg photos/']} success="Three photos moved with one line. The menus stayed put." />
+
+<Hint>Check first with `ls *.jpg`. Same pattern, no risk.</Hint>
+</Card>
+
+<Card id="sort-match" type="check">
+Does `*.jpg` match the name? Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'yes', label: 'Matches *.jpg' }, { id: 'no', label: 'No match' }]} items={[{ label: 'nasi.jpg', bucket: 'yes', why: 'Any letters, then .jpg.' }, { label: 'menu1.txt', bucket: 'no', why: 'It ends in .txt.' }, { label: '.secret.jpg', bucket: 'no', why: 'A name that starts with a dot is hidden. * skips it.' }, { label: 'cake.JPG', bucket: 'no', why: 'JPG and jpg are different letters on Linux.' }]} success="* matches any letters, but not hidden names or other cases." />
+</Card>
+
+<Card id="try-tab" type="try">
+**Tab completion** saves typing. Type `cat no`, then press Tab. The shell finishes the name. Press Enter.
+
+<Interactive name="LinuxSim" scenario="linux-l1-wild" goal={{ lastTyped: '^cat notes\\.md$' }} hints={['Type cat no, then tap the Tab key.', 'The line becomes cat notes.md. Press Enter.']} solution={['cat notes.md']} success="Tab typed the rest for you. No typos possible." />
+
+<Hint>On phones, Tab is in the key row under the terminal.</Hint>
+</Card>
+
+<Card id="win" type="win">
+You can now match many files at once, and let Tab type.
+</Card>
+
+<Card id="deeper" type="deeper">
+Quotes stop the swap: `echo "*.jpg"` prints the star itself. With no match, `ls *.png` says `No such file or directory`.
+
+Real rep (optional): on Linux, type `cat /etc/os-` and press Tab.
+
+Where the story breaks: a real shophouse has walls. Here a room is just a name in a list. Moving a room only renames it.
+</Card>

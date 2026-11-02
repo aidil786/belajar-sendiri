@@ -1,0 +1,73 @@
+---
+id: docker-d5-l01
+world: 5
+title: "The shop freezer: registries"
+summary: "You will learn: how a registry shares your image with anyone, anywhere."
+minutes: 4
+xp: 20
+interactives: [KitchenReplay, SortCards, OrderList, KitchenSim, Choice, Mission]
+needs: [docker-d4-l10]
+scenario: d5-freezer
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Docker Hub repositories", url: "https://docs.docker.com/docker-hub/repos/" }
+  - { label: "docker push", url: "https://docs.docker.com/reference/cli/docker/image/push/" }
+  - { label: "docker pull", url: "https://docs.docker.com/reference/cli/docker/image/pull/" }
+  - { label: "GitHub: the Container registry", url: "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KitchenReplay" scenario="d5-mei-empty" commands={["docker run you/kedai-api:1.0"]} fails={["docker run you/kedai-api:1.0"]} label="On Mei's laptop, docker run you/kedai-api:1.0 finds the image nowhere: pull access denied." />
+
+Your API image works on your laptop. Mei types its name on hers: `pull access denied`. Plain words: no shop freezer has that pack yet.
+</Card>
+
+<Card id="see-freezer" type="see">
+A **<Term id="registry">registry</Term>** is a shop freezer for image packs. You push a pack in. Anyone allowed can pull it out. Which of these are freezers?
+
+<Interactive name="SortCards" buckets={[{ id: 'freezer', label: 'A registry (shop freezer)' }, { id: 'not', label: 'Not a registry' }]} items={[{ label: 'Docker Hub (docker.io)', bucket: 'freezer', why: 'The default freezer. Docker looks here first.' }, { label: 'GitHub Container Registry (ghcr.io)', bucket: 'freezer', why: "GitHub's freezer, right next to your code." }, { label: 'Amazon ECR or Google Artifact Registry', bucket: 'freezer', why: 'Big clouds run their own freezers.' }, { label: 'The image list on your laptop', bucket: 'not', why: 'Only you can use those packs.' }, { label: 'Your Dockerfile', bucket: 'not', why: 'That is the recipe, not the pack.' }]} success="Sorted! Freezers share packs. Your laptop only keeps copies." />
+</Card>
+
+<Card id="see-name" type="see">
+A full image name is an address. Which freezer, whose shelf, which pack, which label? Put the parts in order.
+
+<Interactive name="OrderList" items={['ghcr.io', '/you', '/kedai-api', ':1.0']} label="Left to right" success="ghcr.io/you/kedai-api:1.0: freezer, owner, pack, label." />
+
+No freezer in front? Docker uses Docker Hub.
+</Card>
+
+<Card id="try-push" type="try">
+You are logged in to Docker Hub as `you`. `docker tag` gives the pack your name. `docker push` puts it in the freezer. Try both.
+
+<Interactive name="KitchenSim" scenario="d5-freezer" goal={{ pushed: ['you/kedai-api:1.0'] }} hints={['Docker Hub wants your name in front. Type docker tag kedai-api:1.0 you/kedai-api:1.0', 'Now type docker push you/kedai-api:1.0']} success="Your pack is in the freezer. Mei can pull it now." />
+
+<Hint>First `docker tag kedai-api:1.0 you/kedai-api:1.0`, then `docker push you/kedai-api:1.0`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+You type `docker pull nginx:1.30-alpine`. There is no freezer name. Where does it come from?
+
+<Interactive name="Choice" options={[{ label: 'Docker Hub: `docker.io/library/nginx`', correct: true, why: 'No freezer name means Docker Hub. Official images live under library/.' }, { label: 'GitHub (ghcr.io)', why: 'Only names that start with ghcr.io go there.' }, { label: "Your laptop's own freezer", why: 'A pull always asks a registry. Your laptop only keeps copies.' }]} />
+</Card>
+
+<Card id="check-mei" type="check">
+<Interactive name="KitchenReplay" scenario="d5-mei" commands={["docker pull you/kedai-api:1.0", "docker images"]} label="On Mei's laptop, docker pull you/kedai-api:1.0 downloads the pack. docker images now lists it." />
+
+Back on Mei's laptop, after your push. Her `docker pull` finds your pack. Same image, new kitchen.
+</Card>
+
+<Card id="win" type="win">
+You can now share an image through a registry.
+</Card>
+
+<Card id="deeper" type="deeper">
+Private packs need a login to pull, too. Clouds have freezers too: Amazon ECR, Google Artifact Registry, Azure Container Registry. The commands stay the same: `docker tag`, `docker push`, `docker pull`.
+
+Real rep (optional), with a free Docker Hub account. A new repository can be public, so never push secrets.
+
+<Interactive name="Mission" id="d5-l01-rep" steps={[{ id: 'account', text: 'Make a free Docker Hub account. Note your user name.' }, { id: 'login', text: 'Log in. Paste an access token at the password prompt (next lesson).', command: 'docker login -u YOUR-NAME' }, { id: 'tag', text: 'Give a small image your name.', command: 'docker tag alpine:3.22 YOUR-NAME/first-pack:1.0' }, { id: 'push', text: 'Push it. Then find it on hub.docker.com.', command: 'docker push YOUR-NAME/first-pack:1.0' }]} success="Your first pack is in a real freezer!" />
+</Card>

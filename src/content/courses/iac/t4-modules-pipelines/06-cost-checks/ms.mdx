@@ -1,0 +1,64 @@
+---
+id: iac-t4-l06
+world: 4
+title: Semakan kos
+summary: "Anda akan belajar: cara semakan kos tukar plan kepada perubahan harga dalam pull request."
+minutes: 3
+xp: 15
+interactives: [Choice, PlanReader, SortCards, OrderList, SwipeJudge]
+needs: [iac-t4-l05]
+scenario: t4-grow
+tool: opentofu
+toolVersion: "1.13"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Dokumentasi Infracost", url: "https://www.infracost.io/docs/" }
+  - { label: "Infracost: GitHub Actions", url: "https://www.infracost.io/docs/integrations/github_actions/" }
+  - { label: "tofu plan", url: "https://opentofu.org/docs/cli/commands/plan/" }
+---
+
+<Card id="hook" type="hook">
+Perubahan satu baris: `count = 1` jadi `count = 20`. Plan kata `19 to add`. Dalam diff, ia nampak kecil. Siapa perasan bilnya?
+
+<Interactive name="Choice" options={[{ label: 'Tiada siapa, kecuali ada semakan yang tunjuk harga', correct: true, why: 'Plan tunjuk benda, bukan duit. Semakan kos tambah duitnya.' }, { label: 'OpenTofu beri amaran bil besar', why: 'OpenTofu tak tahu harga apa-apa.' }, { label: 'Cloud enggan membinanya', why: 'Cloud bina apa yang anda minta, dan hantar bil kemudian.' }]} />
+</Card>
+
+<Card id="try-read" type="try">
+Baca plan ini. Setiap `+` ialah benda baharu yang perlu dibayar.
+
+<Interactive name="PlanReader" scenario="t4-grow" commands={['cp .next/main.tf main.tf']} prompt="Tekan apa yang OpenTofu akan buat pada setiap satu." success="Dua gerai baharu, ketuhar lebih besar, satu peti sejuk dibuang." />
+</Card>
+
+<Card id="see-cost" type="see">
+**<Term id="cost-check">Semakan kos</Term>** letak harga pada setiap perubahan dalam plan. Ia tunjuk beza bulanan dalam pull request. Susun perubahan ini.
+
+<Interactive name="SortCards" buckets={[{ id: 'up', label: 'Bil naik' }, { id: 'down', label: 'Bil turun atau sama' }]} items={[{ label: 'Dua gerai baharu (+)', bucket: 'up', why: 'Lebih banyak benda berjalan, lebih banyak bayaran.' }, { label: 'Ketuhar dari kecil ke besar (~)', bucket: 'up', why: 'Saiz lebih besar lebih mahal.' }, { label: 'Peti sejuk lama dibuang (-)', bucket: 'down', why: 'Satu benda kurang untuk dibayar.' }, { label: 'Tukar nama dengan blok moved', bucket: 'down', why: 'Tiada benda sebenar berubah, jadi harga kekal.' }]} success="Itulah kerja semakan kos, baris demi baris." />
+</Card>
+
+<Card id="predict" type="predict">
+Semakan kos kata: lebih kurang RM400 lagi sebulan. Peraturan pasukan: lebih RM100 perlukan kelulusan bos. Apa patut berlaku?
+
+<Interactive name="Choice" options={[{ label: 'Semakan minta satu lagi kelulusan: bos', correct: true, why: 'Kos besar dapat semakan kedua. Yang kecil terus lalu.' }, { label: 'Merge sahaja, anggaran cuma tekaan', why: 'Anggaran tetap satu amaran. Biar seseorang buat keputusan.' }, { label: 'Sekat setiap perubahan yang ada kos', why: 'Nanti tiada apa boleh berkembang. Guna had sebaliknya.' }]} />
+</Card>
+
+<Card id="check-order" type="check">
+Susun semakan pull request mengikut urutan.
+
+<Interactive name="OrderList" items={['tofu fmt -check dan validate', 'tofu plan', 'Semakan polisi dan kos baca plan', 'Manusia semak semuanya', 'Merge, kemudian apply']} label="Yang pertama di atas" success="Robot dahulu, manusia kemudian, bina di hujung sekali." />
+</Card>
+
+<Card id="check" type="check">
+Leret: tabiat wang yang bagus, atau perlu dibaiki?
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Tag setiap resource dengan pemilik, supaya bil boleh dibahagi', good: true, why: 'Jadi setiap pasukan nampak kosnya sendiri.' }, { text: 'Anggap anggaran itu bil sebenar', good: false, why: 'Trafik dan penggunaan ubah bil sebenar. Ia cuma panduan.' }, { text: 'Tetapkan juga penggera bajet dalam akaun cloud', good: true, why: 'Penggera tangkap kos yang tiada plan boleh nampak.' }, { text: 'Matikan semakan kos sebab ia pernah merah sekali', good: false, why: 'Merah maksudnya "tengok". Baiki had atau perubahan itu.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh nampak harga satu plan sebelum sesiapa merge.
+</Card>
+
+<Card id="deeper" type="deeper">
+Infracost ialah alat kos yang terkenal. Ia boleh jadi GitHub App, atau satu langkah dalam CI. Ia baca kod, semak senarai harga awam, dan komen perubahan bulanan. Kos ikut penggunaan, seperti trafik, perlukan anggaran anda sendiri. Kursus AWS (A1) sediakan penggera bajet.
+</Card>

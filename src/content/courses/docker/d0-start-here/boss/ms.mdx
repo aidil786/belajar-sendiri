@@ -1,0 +1,79 @@
+---
+id: docker-d0-boss
+world: 0
+title: Sediakan dapur anda
+summary: "Anda akan belajar: cara sediakan Docker sebenar, jalankan hello-world, dan selesaikan lima teka-teki rangkaian."
+minutes: 6
+xp: 50
+interactives: [TimelineTap, KitchenSim, Mission, Choice, SpotLines]
+needs: [docker-d0-l10]
+scenario: d0-net
+tool: docker
+toolVersion: "29"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: boss
+docs:
+  - { label: "Get Docker", url: "https://docs.docker.com/get-started/introduction/get-docker-desktop/" }
+  - { label: "Install Docker Engine on Ubuntu", url: "https://docs.docker.com/engine/install/ubuntu/" }
+  - { label: "hello-world image", url: "https://hub.docker.com/_/hello-world" }
+  - { label: "MDN: HTTP status codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Tugas 1', title: 'Panaskan badan', text: 'Jalankan hello-world di dapur latihan.' }, { when: 'Tugas 2', title: 'Yang sebenar', text: 'Pasang Docker di komputer sendiri dan jalankan hello-world di sana.' }, { when: 'Tugas 3', title: 'Lima teka-teki', text: 'Kedai dibuka di laptop anda. Selesaikan lima teka-teki rangkaian.' }]} />
+
+Dapur anda dibuka hari ini! Kancil ada tiga tugas untuk anda. Tekan setiap satu, kemudian mula.
+</Card>
+
+<Card id="try-hello" type="try">
+Panaskan badan di dapur latihan. `docker run hello-world` ambil image ujian yang kecil dan jalankannya sekali.
+
+<Interactive name="KitchenSim" scenario="d0-hello" goal={{ imageExists: 'hello-world:latest', lastTyped: '^docker\\s+run\\b.*hello-world', lastExit: 0 }} hints={['Taip docker run hello-world dan tekan Enter.', 'Semak ejaan: hello-world ada sengkang.']} success="Hello from Docker! Dapur latihan anda berfungsi." />
+
+<Hint>`docker run hello-world`</Hint>
+</Card>
+
+<Card id="mission" type="try">
+Sekarang dapur sebenar. Buat setiap langkah di komputer sendiri, kemudian tandakan. Di Linux, letak `sudo` di depan kalau anda langkau langkah post-install.
+
+<Interactive name="Mission" id="docker-d0-kitchen" steps={[{ id: 'install', text: 'Pasang Docker di komputer anda. Pelajaran 4 ada langkah untuk sistem anda.' }, { id: 'version', text: 'Semak kedua-dua bahagian menjawab: Client dan Server.', command: 'docker version' }, { id: 'hello', text: 'Jalankan container sebenar pertama anda. Cari “Hello from Docker!”.', command: 'docker run hello-world' }, { id: 'list', text: 'Tengok bekas yang ia tinggalkan. Exited (0) bermaksud semua okey.', command: 'docker ps -a' }]} success="Dapur sebenar anda dah dibuka!" />
+</Card>
+
+<Card id="p1-port" type="try">
+Teka-teki 1 daripada 5. Kedai dibuka di tingkap 8080 dalam laptop ini. Rasa dengan curl.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '-I', 'localhost:8080', '127.0.0.1', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*(localhost|127\\.0\\.0\\.1):8080', lastExit: 0 }} hints={['Kedai ada dalam laptop ini. Namanya localhost.', 'Taip curl localhost:8080']} success="Kedai Kancil menjawab. Teka-teki 1 selesai!" />
+</Card>
+
+<Card id="p2-refused" type="predict">
+Teka-teki 2 daripada 5. `curl localhost:9090` kata `Couldn't connect to server`. Apa maksudnya?
+
+<Interactive name="Choice" options={[{ label: 'Tiada apa yang mendengar di port 9090', correct: true, why: 'Betul. Bangunannya ada, tapi tingkap itu tertutup.' }, { label: 'Nama localhost tak dikenali', why: 'Masalah nama akan kata Could not resolve host.' }, { label: 'Laman itu tiada', why: 'Laman yang tiada menjawab 404. Di sini langsung tiada jawapan.' }]} />
+</Card>
+
+<Card id="p3-dns" type="try">
+Teka-teki 3 daripada 5. Satu nota kata kedai ada di `http://kedai-kancil:8080`. curl tak jumpa nama itu. Baca buku telefon laptop, kemudian capai kedai dengan nama yang ia kenal.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['cat', 'curl', '/etc/hosts', 'localhost:8080', 'Tab', '↑']} goal={{ typed: '^cat\\s+/etc/hosts', lastTyped: '^curl\\b.*localhost:8080', lastExit: 0 }} hints={['Taip cat /etc/hosts untuk baca buku telefon.', 'localhost ada dalam buku itu. Taip curl localhost:8080']} success="Buku telefon kenal localhost, dan kedai menjawab. Teka-teki 3 selesai!" />
+</Card>
+
+<Card id="p4-code" type="check">
+Teka-teki 4 daripada 5. Seorang pelanggan minta `/sambal.html`. Ini jawapannya. Tekan baris yang beritahu apa yang berlaku.
+
+<Interactive name="SpotLines" lines={[{ text: '$ curl -I localhost:8080/sambal.html' }, { text: 'HTTP/1.1 404 Not Found', target: true }, { text: 'Server: nginx/1.30.6' }, { text: 'Date: Sat, 31 Oct 2026 01:00:27 GMT' }, { text: 'Content-Type: text/html' }, { text: 'Content-Length: 153' }, { text: 'Connection: keep-alive' }]} prompt="Tekan baris status." success="404 Not Found: sambal.html tiada dalam menu. Teka-teki 4 selesai!" />
+</Card>
+
+<Card id="p5-ip" type="try">
+Teka-teki 5 daripada 5. localhost ada nombor: `127.0.0.1`. Capai kedai dengan nombor itu sahaja, tanpa nama.
+
+<Interactive name="KitchenSim" scenario="d0-net" keys={['curl', '127.0.0.1', ':8080', 'Tab', '↑']} goal={{ lastTyped: '^curl\\b.*127\\.0\\.0\\.1:8080', lastExit: 0 }} hints={['Tukar nama localhost kepada nombornya.', 'Taip curl 127.0.0.1:8080']} success="Kedai yang sama, dicapai dengan nombornya. Kelima-lima teka-teki selesai!" />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh sediakan Docker dan selesaikan teka-teki rangkaian harian.
+</Card>
+
+<Card id="deeper" type="deeper">
+Latihan sebenar (pilihan): di komputer anda, jalankan `docker run -d --name shop -p 8080:80 nginx:1.30-alpine`. Kemudian cuba `curl localhost:8080` dan `curl -I localhost:8080/sambal.html`. Kemas dengan `docker rm -f shop`.
+</Card>

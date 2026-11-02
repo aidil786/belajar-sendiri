@@ -1,0 +1,73 @@
+---
+id: aws-a4-l05
+world: 4
+title: "RDS: pangkalan data terurus"
+summary: "Anda akan belajar: apa yang RDS buat untuk anda, cara Multi-AZ selamatkan anda, dan cara simpan pangkalan data di belakang."
+minutes: 4
+xp: 20
+interactives: [TimelineTap, SortCards, Choice, SecurityGroupGate, IdleBill, SpotLines]
+needs: [aws-a4-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Amazon RDS: What is Amazon RDS?", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" }
+  - { label: "Amazon RDS: Multi-AZ deployments", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" }
+  - { label: "Amazon RDS: Backups", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html" }
+  - { label: "Amazon RDS: Stopping a DB instance", url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html" }
+  - { label: "AWS CLI: aws rds stop-db-instance", url: "https://docs.aws.amazon.com/cli/latest/reference/rds/stop-db-instance.html" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="TimelineTap" events={[{ when: 'Isnin', title: 'Buatan sendiri', text: 'Kedai Kancil jalankan Postgres dalam container di satu server.' }, { when: 'Rabu', title: 'Cakera rosak', text: 'Cakera server rosak waktu makan tengah hari.' }, { when: 'Rabu', title: 'Tiada backup', text: 'Tiada siapa sediakan. Pesanan tiga hari hilang.' }]} />
+
+Pangkalan data perlukan backup, tampung dan ganti. Setiap hari. Ketik cerita itu. Boleh orang lain buat kerja yang membosankan?
+</Card>
+
+<Card id="see-rds" type="see">
+**<Term id="rds">RDS</Term>** (pangkalan data terurus) jalankan Postgres, MySQL dan lain-lain. AWS buat kerja membosankan. Ada yang kekal milik anda. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'aws', label: 'RDS buat' }, { id: 'you', label: 'Masih milik anda' }]} items={[{ label: 'Backup automatik harian', bucket: 'aws', why: 'Anda pilih berapa hari disimpan. RDS yang ambil.' }, { label: 'Jadual dan query anda', bucket: 'you', why: 'Data dan reka bentuknya milik anda.' }, { label: 'Tampung enjin dalam waktu penyelenggaraan', bucket: 'aws', why: 'Anda pilih waktunya. RDS pasangkan.' }, { label: 'Siapa boleh sambung', bucket: 'you', why: 'Security group anda yang tentukan. Ketatkan.' }]} success="Kerja rutin milik AWS. Data dan pintu kekal milik anda." />
+</Card>
+
+<Card id="see-standby" type="see">
+**<Term id="multi-az">Multi-AZ</Term>** (salinan siap sedia) simpan salinan di sayap lain. Sayap pangkalan data anda terputus elektrik. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'RDS tukar ke salinan siap sedia di sayap lain', correct: true, why: 'Aplikasi anda kekalkan alamat sama. Ia sambung semula selepas jeda pendek.' }, { label: 'Semua pesanan sejak backup terakhir hilang', why: 'Itu tanpa Multi-AZ. Salinan siap sedia ada data terkini.' }, { label: 'Tiada apa, sayap tak pernah gagal', why: 'Boleh gagal. Sebab itu ganti tinggal di sayap lain.' }]} />
+</Card>
+
+<Card id="try-door" type="try">
+Pangkalan data tinggal di baris peribadi. Hanya kumpulan aplikasi, `sg-app`, boleh guna port 5432. Laptop anda pun tidak.
+
+<Interactive name="SecurityGroupGate" edit="sg" groups={['sg-app']} visitors={[{ id: 'app', label: 'Task Kedai Kancil', ip: '10.0.1.25', groups: ['sg-app'], protocol: 'tcp', port: 5432, want: 'in' }, { id: 'laptop', label: 'Laptop anda', ip: '203.0.113.9', protocol: 'tcp', port: 5432, want: 'out' }, { id: 'stranger', label: 'Orang asing', ip: '192.0.2.77', protocol: 'tcp', port: 5432, want: 'out' }]} success="Hanya aplikasi sampai ke pesanan." />
+
+<Hint>Satu peraturan: TCP 5432 dari `sg-app`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Anda **stop** pangkalan data ujian untuk jimat, dan terlupa sebulan. Apa jadi?
+
+<Interactive name="Choice" options={[{ label: 'Ia mula semula sendiri selepas 7 hari', correct: true, why: 'Kemudian ia caj jam semula. Storan dan backup dicaj walaupun berhenti.' }, { label: 'Ia kekal berhenti dan percuma', why: 'Hampir! Storan masih ada kos. Dan ia bangun selepas 7 hari.' }, { label: 'AWS padam ia', why: 'Tidak. Ia mula semula selepas 7 hari. Padam sendiri jika tak guna.' }]} />
+</Card>
+
+<Card id="check-bill" type="check">
+Berjalan atau berehat, bahagian pangkalan data mana yang makan duit?
+
+<Interactive name="IdleBill" items={['rdsRunning', 'rdsStopped', 'securityGroup', 'privateIp']} ordered />
+</Card>
+
+<Card id="check-cli" type="check">
+CLI pun boleh hentikan pangkalan data. Ini jawapan contoh rasmi. Ketik baris dengan status barunya.
+
+<Interactive name="SpotLines" prompt="Ketik baris dengan status baru." success="stopping, kemudian stopped. Ingat: 7 hari, kemudian ia bangun." lines={[{ text: '$ aws rds stop-db-instance --db-instance-identifier test-instance' }, { text: '{' }, { text: '    "DBInstance": {' }, { text: '        "DBInstanceIdentifier": "test-instance",' }, { text: '        "DBInstanceStatus": "stopping"', target: true }, { text: '    }' }, { text: '}' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh jalankan pangkalan data terurus dengan backup, ganti dan pintu yang ketat.
+</Card>
+
+<Card id="deeper" type="deeper">
+Padam pangkalan data perlu berhati-hati. RDS tawarkan snapshot akhir dahulu, dan deletion protection boleh sekat kesilapan. Snapshot pun ada kos storan, jadi padam yang lama. Untuk berlatih, pilih saiz paling kecil, satu sayap, dan padam pada hari yang sama.
+</Card>

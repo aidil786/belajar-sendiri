@@ -1,0 +1,66 @@
+---
+id: aws-a2-l05
+world: 2
+title: Role untuk servis
+summary: "Anda akan belajar: cara server atau servis pinjam role, supaya tiada kunci disimpan di dalamnya."
+minutes: 4
+xp: 20
+interactives: [Choice, OrderList, SortCards, CommandBuilder, Transcript, IamJudge]
+needs: [aws-a2-l04]
+tool: aws
+toolVersion: "2026-11"
+lastChecked: 2026-11-01
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "IAM roles", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" }
+  - { label: "Use a role for apps on EC2", url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html" }
+  - { label: "aws iam attach-role-policy", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/attach-role-policy.html" }
+  - { label: "aws iam list-attached-role-policies", url: "https://docs.aws.amazon.com/cli/latest/reference/iam/list-attached-role-policies.html" }
+---
+
+<Card id="hook" type="hook">
+Server web Kedai Kancil mesti baca bucket menu. Macam mana server itu patut dapat kuncinya?
+
+<Interactive name="Choice" options={[{ label: 'Beri server satu role untuk dipinjam', correct: true, why: 'Ia dapat kunci jangka pendek yang diperbaharui sendiri. Tiada apa untuk dicuri dari cakera.' }, { label: 'Tampal access key dalam fail di server', why: 'Sesiapa yang salin cakera dapat kunci yang tak pernah luput.' }, { label: 'Guna log masuk pengguna root', why: 'Jangan sekali-kali. Root kekal disimpan.' }]} />
+</Card>
+
+<Card id="see-how" type="see">
+Role untuk servis ialah **<Term id="service-role">service role</Term>**. Susun langkah-langkahnya.
+
+<Interactive name="OrderList" items={['Buat role yang servis EC2 boleh pinjam', 'Beri role itu polisi kebenaran yang kecil', 'Pasang role itu pada server', 'Aplikasi minta kunci jangka pendek dari server', 'Kunci itu diperbaharui sendiri']} label="Langkah pertama di atas" success="Tiada kunci di cakera. Server pinjam, kemudian pulangkan." />
+</Card>
+
+<Card id="see-sort" type="see">
+Setiap role ada dua nota. <Term id="trust-policy">Trust policy</Term> kata siapa boleh pinjam. Polisi kebenaran kata apa yang ia buka. Susun mereka.
+
+<Interactive name="SortCards" buckets={[{ id: 'trust', label: 'Trust policy (siapa boleh pinjam)' }, { id: 'perms', label: 'Polisi kebenaran (apa yang dibuka)' }]} items={[{ label: 'Principal: servis EC2', bucket: 'trust', why: 'EC2 boleh pinjam pas ini.' }, { label: 'Action: sts:AssumeRole', bucket: 'trust', why: 'Pinjam role ialah tindakan AssumeRole.' }, { label: 'Action: s3:GetObject', bucket: 'perms', why: 'Apa yang pas ini benarkan server buat.' }, { label: 'Resource: bucket kedai-menu', bucket: 'perms', why: 'Di mana pas ini berfungsi.' }]} success="Siapa boleh pinjam, dan apa yang dibuka. Dua nota, satu role." />
+</Card>
+
+<Card id="try-attach" type="try">
+Pasang polisi menu-reader pada role `kedai-web`. Bina arahannya.
+
+<Interactive name="CommandBuilder" pieces={[{ text: 'aws iam attach-role-policy', means: 'klip satu polisi pada role' }, { text: '--role-name kedai-web', means: 'role server web' }, { text: '--policy-arn arn:aws:iam::111122223333:policy/menu-reader', means: 'polisi kecil yang anda tulis' }]} decoys={[{ text: '--policy-arn arn:aws:iam::aws:policy/AdministratorAccess', means: 'semua hak dalam akaun: terlalu banyak' }]} success="Sudah dipasang. Ia tak paparkan apa-apa bila berjaya." />
+</Card>
+
+<Card id="see-list" type="see">
+<Interactive name="Transcript" title="bash" label="list-attached-role-policies tunjuk satu managed policy, SecurityAudit, pada role SecurityAuditRole." lines={[{ cmd: 'aws iam list-attached-role-policies --role-name SecurityAuditRole' }, { out: '{\n    "AttachedPolicies": [\n        {\n            "PolicyName": "SecurityAudit",\n            "PolicyArn": "arn:aws:iam::aws:policy/SecurityAudit"\n        }\n    ],\n    "IsTruncated": false\n}', color: 'green' }]} />
+
+Tanya role apa yang ia pegang. Yang ini pegang satu polisi AWS, `SecurityAudit`. Semak selepas setiap perubahan.
+</Card>
+
+<Card id="predict" type="predict">
+Server itu, memakai rolenya, cuba ubah menu. Ramalkan.
+
+<Interactive name="IamJudge" request={{ principal: 'arn:aws:sts::111122223333:assumed-role/kedai-web/i-0123456789abcdef0', who: 'server kedai-web', action: 's3:PutObject', resource: 'arn:aws:s3:::kedai-menu/today.json' }} policies={[{ name: 'menu-reader', kind: 'identity', doc: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::kedai-menu/*' }] } }]} success="Ditolak. Pas itu baca menu. Ia tak boleh ubah." />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh beri server satu role, bukan kunci yang disimpan.
+</Card>
+
+<Card id="deeper" type="deeper">
+Di EC2, role dibawa dalam "instance profile". Kebanyakan AWS SDK dan CLI jumpa kunci role itu sendiri. Ada servis yang buat service-linked role sendiri.
+
+Latihan sebenar: hanya bila penggera bajet sudah dipasang. Buat satu role, pasang polisi, kemudian senaraikan. Padam kedua-duanya bila siap (`aws iam detach-role-policy`, kemudian `aws iam delete-role`).
+</Card>

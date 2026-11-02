@@ -1,0 +1,75 @@
+---
+id: git-w10-l01
+world: 10
+title: Objek dan hash
+summary: "Anda akan belajar: apa yang Git simpan sebenarnya, dan cara setiap bahagian dapat nama."
+minutes: 4
+xp: 20
+interactives: [Choice, TermReplay, ObjectXray, SortCards, Sim]
+needs: [git-w04-l12]
+scenario: w10-objects
+gitVersion: "2.56"
+lastChecked: 2026-10-30
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "git cat-file", url: "https://git-scm.com/docs/git-cat-file" }
+  - { label: "gitglossary (object, blob, tree)", url: "https://git-scm.com/docs/gitglossary" }
+  - { label: "git rev-parse", url: "https://git-scm.com/docs/git-rev-parse" }
+---
+
+<Card id="hook" type="hook">
+Kedai anda ada 3 commit (titik simpan). `style.css` tak pernah berubah. Adakah Git simpan fail itu 3 kali?
+
+<Interactive name="Choice" options={[{ label: 'Tidak. Isi yang sama disimpan sekali', correct: true, why: 'Git namakan isi dengan cap jari. Isi sama, nama sama, satu salinan.' }, { label: 'Ya, satu salinan setiap commit', why: 'Itu membazir ruang. Git kongsi isi yang tak berubah.' }, { label: 'Git simpan salinan terbaru sahaja', why: 'Git simpan setiap versi yang anda commit. Cuma ia tak simpan isi sama dua kali.' }]} />
+</Card>
+
+<Card id="see-commit" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git cat-file -p HEAD']} label="git cat-file -p HEAD cetak commit terbaru: id tree, id parent, pengarang, committer dan mesej Add opening hours." />
+
+Git simpan semuanya sebagai **<Term id="object">objek</Term>** (object). `git cat-file -p HEAD` buka commit terbaru. Ia tunjuk ke satu <Term id="tree">tree</Term> (senarai fail) dan satu parent (commit sebelumnya).
+</Card>
+
+<Card id="try-xray" type="try">
+**<Term id="blob">Blob</Term>** ialah isi satu fail. Buka commit, kemudian tree, kemudian css. Cari blob untuk `css/style.css`.
+
+<Interactive name="ObjectXray" scenario="w10-objects" task={{ type: 'findBlob', path: 'css/style.css' }} success="Jumpa! Blob simpan isi fail. Tree senaraikan fail dan folder." />
+
+<Hint>Klik id pada baris tree. Kemudian id di sebelah css.</Hint>
+</Card>
+
+<Card id="check-sort" type="check">
+Tiga jenis objek. Yang mana simpan setiap benda ini?
+
+<Interactive name="SortCards" buckets={[{ id: 'blob', label: 'blob' }, { id: 'tree', label: 'tree' }, { id: 'commit', label: 'commit' }]} items={[{ label: 'Teks dalam index.html', bucket: 'blob', why: 'Blob ialah isi semata-mata. Nama fail pun tiada.' }, { label: 'Nama-nama dalam folder css', bucket: 'tree', why: 'Tree senaraikan nama. Setiap nama tunjuk ke blob atau tree.' }, { label: 'Pengarang, tarikh dan mesej', bucket: 'commit', why: 'Commit simpan siapa, bila dan kenapa.' }, { label: 'Nama fail style.css', bucket: 'tree', why: 'Nama disimpan dalam tree. Blob cuma ada isi.' }, { label: 'Id commit sebelumnya', bucket: 'commit', why: 'Itu baris parent dalam commit.' }]} success="Tersusun! Blob simpan isi, tree simpan nama, commit simpan cerita." />
+</Card>
+
+<Card id="see-hash" type="see">
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git rev-parse HEAD', 'git log --oneline -1']} label="git rev-parse HEAD cetak id penuh 40 aksara 9e8ddf8fb3a185e7920bc21542abe85b09f07e21. git log --oneline -1 tunjuk id pendek 9e8ddf8 dan Add opening hours." />
+
+Nama setiap objek ialah <Term id="hash">hash</Term> **<Term id="sha-1">SHA-1</Term>**. Ia ada 40 aksara, dibuat daripada isinya. Id pendek cuma permulaannya.
+</Card>
+
+<Card id="predict" type="predict">
+Anda salin `about.html` ke `about-copy.html` dan commit. Berapa blob baru yang Git simpan?
+
+<Interactive name="Choice" options={[{ label: 'Tiada', correct: true, why: 'Isi sama, hash sama. Blob itu dah wujud. Cuma tree yang berubah.' }, { label: 'Satu', why: 'Blob cuma isi. Isi ini dah disimpan.' }, { label: 'Dua', why: 'Kedua-dua fail tiada isi baru. Git guna semula blob itu.' }]} />
+</Card>
+
+<Card id="try-tag" type="try">
+Jenis keempat ialah **objek tag**: label dengan nota. Buka `v1.0` dan tengok ia tunjuk ke mana.
+
+<Interactive name="Sim" scenario="w10-objects" panels={['graph']} goal={{ typed: 'cat-file -p v1\\.0' }} hints={['Taip git cat-file -p v1.0']} success="Tag itu tunjuk ke satu commit. Ia ada nama, pemberi tag dan nota." />
+
+<Hint>Taip `git cat-file -p v1.0`.</Hint>
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh buka objek Git dan namakan keempat-empat jenisnya.
+</Card>
+
+<Card id="deeper" type="deeper">
+Tag beranotasi (`git tag -a`) ialah objek. Tag ringan cuma ref. Git mampatkan setiap objek dan simpan dalam `.git/objects`. `git cat-file -t` cetak jenis objek. `git cat-file -s` cetak saiznya. Git 3.0 merancang id SHA-256 untuk repo baru.
+
+<Interactive name="TermReplay" scenario="w10-objects" commands={['git cat-file -t HEAD', 'git cat-file -t HEAD^{tree}', 'git cat-file -t v1.0']} label="cat-file -t cetak commit untuk HEAD, tree untuk tree HEAD, dan tag untuk v1.0." />
+</Card>

@@ -1,0 +1,78 @@
+---
+id: k8s-k6-l02
+world: 6
+title: "RBAC: roles and bindings"
+summary: "You will learn: how to give a person or a bot a job card for one zone, and nothing more."
+minutes: 5
+xp: 25
+interactives: [Choice, SortCards, KubeReplay, RbacSwitchboard, FoodCourtSim]
+needs: [k8s-k6-l01]
+scenario: k6-rbac-start
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Using RBAC authorization", url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/" }
+  - { label: "Service accounts", url: "https://kubernetes.io/docs/concepts/security/service-accounts/" }
+  - { label: "RBAC good practices", url: "https://kubernetes.io/docs/concepts/security/rbac-good-practices/" }
+---
+
+<Card id="hook" type="hook">
+Your CI bot only updates one thing: the shop Deployment. Today it holds a master key to the whole cluster. Which key should it carry?
+
+<Interactive name="Choice" options={[{ label: 'A key for shop Deployments only', correct: true, why: 'If the bot leaks, the thief gets one small key.' }, { label: 'The master key, just in case', why: 'A leaked master key opens every door.' }, { label: 'No key at all', why: 'Then it cannot deploy. Give exactly what it needs.' }]} />
+
+Exactly what it needs, nothing more. That is **<Term id="least-privilege" course="cicd">least privilege</Term>**.
+</Card>
+
+<Card id="see-who" type="see">
+Kubernetes knows two kinds of "who". People bring their own ID. Robots get a staff badge: a **<Term id="serviceaccount">ServiceAccount</Term>**. Sort them.
+
+<Interactive name="SortCards" buckets={[{ id: 'user', label: 'Person (user)' }, { id: 'sa', label: 'Robot (ServiceAccount)' }]} items={[{ label: 'Mei, the developer', bucket: 'user', why: 'A person, with her own certificate or login.' }, { label: 'You, with kubectl on your laptop', bucket: 'user', why: 'You log in as a person.' }, { label: 'The CI bot that deploys the shop', bucket: 'sa', why: 'A robot. It gets a badge in a namespace.' }, { label: 'An app in a pod that reads the API', bucket: 'sa', why: 'Pods talk to the API with a ServiceAccount.' }]} success="Sorted! Robots wear badges." />
+</Card>
+
+<Card id="see-role" type="see">
+<Interactive name="KubeReplay" scenario="k6-rbac-start" commands={['cat deployer.yaml', 'kubectl apply -f deployer.yaml']} picture={false} label="cat shows a Role called deployer: in the API group apps, on deployments, the verbs get, list and patch. kubectl apply creates it." />
+
+A **<Term id="role">Role</Term>** is a job card. It lists verbs, like `patch`, on things, like `deployments`. It works in one zone only.
+</Card>
+
+<Card id="try-wire" type="try">
+A card does nothing alone. A **<Term id="rolebinding">RoleBinding</Term>** pins it to a badge, in one zone. Wire the CI bot to `deployer`, in shop only.
+
+<Interactive name="RbacSwitchboard" subjects={[{ kind: 'ServiceAccount', name: 'ci-bot', namespace: 'ci' }, { kind: 'User', name: 'mei' }]} roles={[{ kind: 'Role', name: 'deployer', namespace: 'shop', rules: [{ apiGroups: ['apps'], resources: ['deployments'], verbs: ['get', 'list', 'patch'] }] }, { kind: 'ClusterRole', name: 'cluster-admin', rules: [{ apiGroups: ['*'], resources: ['*'], verbs: ['*'] }] }]} questions={[{ as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'shop', expect: true }, { as: 'ServiceAccount:ci:ci-bot', verb: 'patch', resource: 'deployments', namespace: 'default', expect: false }, { as: 'ServiceAccount:ci:ci-bot', verb: 'get', resource: 'secrets', namespace: 'shop', expect: false }]} success="One card, one zone, one bot. Least privilege!" />
+
+<Hint>Who: ci-bot. Role: deployer. Where: shop.</Hint>
+</Card>
+
+<Card id="see-cluster" type="see">
+A Role works in one zone. A ClusterRole works in every zone, and for things with no zone, like nodes. Sort these.
+
+<Interactive name="SortCards" buckets={[{ id: 'role', label: 'Role (one namespace)' }, { id: 'cluster', label: 'ClusterRole (whole cluster)' }]} items={[{ label: 'Patch deployments in the shop zone', bucket: 'role', why: 'One thing, one zone. A Role is enough.' }, { label: 'Read the list of nodes', bucket: 'cluster', why: 'Nodes live in no zone. Only a ClusterRole can name them.' }, { label: 'Read pods in every zone', bucket: 'cluster', why: 'Every zone at once needs a ClusterRole.' }, { label: 'Read config maps in the ci zone', bucket: 'role', why: 'One zone. Keep it small.' }]} success="Sorted! Small zone, small card." />
+</Card>
+
+<Card id="try-sim" type="try">
+Now in the terminal. Apply the job card. Then pin it to `ci-bot` with a RoleBinding.
+
+<Interactive name="FoodCourtSim" scenario="k6-rbac-start" picture={false} goal={{ canI: [{ verb: 'patch', resource: 'deployments', as: 'system:serviceaccount:default:ci-bot', allowed: true }, { verb: 'delete', resource: 'deployments', as: 'system:serviceaccount:default:ci-bot', allowed: false }] }} hints={['Type kubectl apply -f deployer.yaml', 'Then type kubectl create rolebinding ci-bot-deployer --role=deployer --serviceaccount=default:ci-bot']} success="The bot may patch deployments. It may not delete them." />
+
+<Hint>`--serviceaccount` takes zone:name, like `default:ci-bot`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+RBAC has no "deny" rule. The bot has two RoleBindings. One allows deleting pods. One does not. Can it delete pods?
+
+<Interactive name="Choice" options={[{ label: 'Yes: one yes is enough', correct: true, why: 'RBAC only adds rights. To take one away, remove the binding.' }, { label: 'No: the stricter one wins', why: 'There is no stricter one. Nothing in RBAC says no.' }, { label: 'It depends on the order', why: 'Order does not matter. Any yes wins.' }]} />
+</Card>
+
+<Card id="win" type="win">
+You can now give a bot a job card for one zone.
+</Card>
+
+<Card id="deeper" type="deeper">
+A RoleBinding may point at a ClusterRole. Then that card works only in the binding's zone. Built-in ClusterRoles: `view`, `edit`, `admin`, `cluster-admin`. Pods get a short-lived ServiceAccount token. Set `automountServiceAccountToken: false` when the app never calls the API.
+
+<Interactive name="Mission" id="k6-l02-rep" steps={[{ id: 'cluster', text: 'On a throwaway kind cluster, make a badge for a bot.', command: 'kubectl create serviceaccount ci-bot' }, { id: 'role', text: 'Make a job card without a file.', command: 'kubectl create role deployer --verb=get,list,patch --resource=deployments' }, { id: 'bind', text: 'Pin the card to the badge.', command: 'kubectl create rolebinding ci-bot-deployer --role=deployer --serviceaccount=default:ci-bot' }, { id: 'look', text: 'Read the binding back.', command: 'kubectl describe rolebinding ci-bot-deployer' }]} success="Your bot has exactly one job card." />
+</Card>

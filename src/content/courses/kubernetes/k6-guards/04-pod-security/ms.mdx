@@ -1,0 +1,74 @@
+---
+id: k8s-k6-l04
+world: 6
+title: "Pod Security Standards"
+summary: "Anda akan belajar: tiga tahap Pod Security, dan cara satu label hidupkan pengawal sesebuah zon."
+minutes: 4
+xp: 20
+interactives: [KubeReplay, TimelineTap, SortCards, FoodCourtSim, Choice, SwipeJudge]
+needs: [k8s-k6-l03]
+scenario: k6-psa
+tool: kubernetes
+toolVersion: "1.37"
+lastChecked: 2026-10-31
+bmReviewed: false
+kind: lesson
+docs:
+  - { label: "Pod Security Standards", url: "https://kubernetes.io/docs/concepts/security/pod-security-standards/" }
+  - { label: "Pod Security Admission", url: "https://kubernetes.io/docs/concepts/security/pod-security-admission/" }
+  - { label: "Enforce with namespace labels", url: "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/" }
+---
+
+<Card id="hook" type="hook">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['kubectl apply -f plain.yaml']} fails={['kubectl apply -f plain.yaml']} namespace="kedai" label="kubectl apply -f plain.yaml ditolak dalam zon kedai: ia langgar PodSecurity restricted, dengan empat sebab." />
+
+Dulang nginx biasa. Semalam ia berjalan elok. Hari ini zon kedai menolaknya, dengan empat sebab. Maksud mudah: zon ini hanya terima dulang yang berkunci.
+</Card>
+
+<Card id="see-levels" type="see">
+<Interactive name="TimelineTap" events={[{ when: 'Tahap 1', title: 'privileged', text: 'Tiada peraturan langsung. Hanya untuk pod sistem yang anda percaya.' }, { when: 'Tahap 2', title: 'baseline', text: 'Sekat bahaya yang diketahui: mod privileged, rangkaian node, folder node.' }, { when: 'Tahap 3', title: 'restricted', text: 'Kebersihan ketat: bukan root, tiada kuasa tambahan, penapis seccomp hidup.' }]} />
+
+**<Term id="pod-security-standards">Pod Security Standards</Term>** ialah tiga tahap kebersihan untuk dulang. Tekan setiap satu, yang paling longgar dulu.
+</Card>
+
+<Card id="see-label" type="see">
+<Interactive name="KubeReplay" scenario="k6-locks" commands={['cat zone.yaml']} picture={false} label="cat tunjuk zone.yaml: Namespace bernama kedai dengan label pod-security.kubernetes.io/enforce: restricted." />
+
+Satu **label** pada zon hidupkan pengawal. `enforce` tolak pod yang tak lulus. `warn` benarkan masuk, dengan amaran.
+</Card>
+
+<Card id="try-sort" type="try">
+Tahap mana yang pertama menolak setiap dulang?
+
+<Interactive name="SortCards" buckets={[{ id: 'baseline', label: 'Baseline sudah menolaknya' }, { id: 'restricted', label: 'Hanya restricted menolaknya' }]} items={[{ label: '`privileged: true`', bucket: 'baseline', why: 'Kuasa penuh atas node. Baseline kata tidak.' }, { label: '`hostNetwork: true`', bucket: 'baseline', why: 'Kongsi rangkaian node ialah bahaya yang diketahui.' }, { label: 'Volume `hostPath` (folder dari node)', bucket: 'baseline', why: 'Folder node boleh bocor atau rosakkan node.' }, { label: 'Berjalan sebagai root', bucket: 'restricted', why: 'Baseline benarkan root. Restricted tidak.' }, { label: 'Tiada profil seccomp', bucket: 'restricted', why: 'Hanya restricted minta penapis seccomp.' }, { label: 'Capabilities tak dibuang', bucket: 'restricted', why: 'Restricted mahu drop ALL.' }]} success="Siap! Baseline halang bahaya besar. Restricted kunci selebihnya." />
+</Card>
+
+<Card id="try-sim" type="try">
+Hidupkan pengawal untuk zon kedai, pada tahap restricted.
+
+<Interactive name="FoodCourtSim" scenario="k6-psa" namespace="kedai" goal={{ podSecurity: { namespace: 'kedai', level: 'restricted' } }} hints={['Taip kubectl label namespace kedai pod-security.kubernetes.io/enforce=restricted']} success="Zon kedai kini berkawal. Cuba kubectl apply -f plain.yaml sekarang." />
+
+<Hint>Kunci label ialah `pod-security.kubernetes.io/enforce`.</Hint>
+</Card>
+
+<Card id="predict" type="predict">
+Tiga pod root lama sudah berjalan dalam kedai. Anda hidupkan restricted. Apa jadi pada mereka?
+
+<Interactive name="Choice" options={[{ label: 'Ia terus berjalan. Anda dapat amaran.', correct: true, why: 'Pengawal semak pintu, bukan bilik. Pod baharu yang disemak.' }, { label: 'Ia dipadam serta-merta', why: 'Kubernetes tak padam untuk anda. Baiki dan gantikan sendiri.' }, { label: 'Label itu ditolak', why: 'Label disimpan. Kubernetes cuma beri amaran tentang pod lama.' }]} />
+</Card>
+
+<Card id="check" type="check">
+Tabiat baik, atau berisiko? Leret setiap satu.
+
+<Interactive name="SwipeJudge" prose cards={[{ text: 'Hidupkan warn=restricted dulu, kemudian baiki apa yang dilaporkan', good: true, why: 'Lihat kerosakan sebelum kunci pintu.' }, { text: 'Label zon aplikasi anda enforce=privileged', good: false, why: 'Privileged bermakna tiada peraturan langsung.' }, { text: 'Cuba label dengan --dry-run=server dulu', good: true, why: 'Kluster senaraikan pod yang akan gagal. Tiada apa berubah.' }, { text: 'Kunci kube-system pada tahap restricted', good: false, why: 'Pod sistem selalunya perlu lebih kuasa. Letak aplikasi anda dalam zon sendiri.' }]} />
+</Card>
+
+<Card id="win" type="win">
+Kini anda boleh hidupkan tahap Pod Security untuk sesebuah zon.
+</Card>
+
+<Card id="deeper" type="deeper">
+Ada tiga mod: `enforce`, `warn` dan `audit` (tulis ke log audit). Kunci versi dengan `pod-security.kubernetes.io/enforce-version: v1.37`. Untuk Deployment, pengawal cuma beri amaran. Pod ReplicaSet itu ditolak kemudian. Anda akan jumpanya dalam boss.
+
+<Interactive name="Mission" id="k6-l04-rep" steps={[{ id: 'ns', text: 'Dalam kluster buang sahaja, buat satu zon.', command: 'kubectl create namespace guard-test' }, { id: 'dry', text: 'Dry run dulu.', command: 'kubectl label --dry-run=server --overwrite ns guard-test pod-security.kubernetes.io/enforce=restricted' }, { id: 'label', text: 'Sekarang betul-betul.', command: 'kubectl label ns guard-test pod-security.kubernetes.io/enforce=restricted' }, { id: 'try', text: 'Cuba pod biasa. Baca empat sebabnya.', command: 'kubectl run plain -n guard-test --image=nginx:1.29-alpine' }]} success="Zon anda ada pengawal!" />
+</Card>

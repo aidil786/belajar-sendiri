@@ -68,8 +68,10 @@ import { t } from '~/i18n';
         if (seen.has(path) || !/^\/(en|ms)\//.test(path) || !path.endsWith('/')) continue;
         const res = await cache.match(req);
         const html = res ? await res.text() : '';
-        const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? path;
-        seen.set(path, title.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
+        const raw = (/<title>([^<]*)<\/title>/.exec(html)?.[1] ?? path).replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+        // "Glossary · Belajar Sendiri" → "Glossary"; a home page keeps the name plus its language.
+        const short = raw.split(' · ').slice(0, -1).join(' · ');
+        seen.set(path, short || `${raw} (${path.slice(1, 3).toUpperCase()})`);
         if (seen.size >= 200) break;
       }
     }

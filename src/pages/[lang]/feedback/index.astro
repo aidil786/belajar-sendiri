@@ -1,0 +1,151 @@
+---
+// Rate & feedback: three big links to GitHub (a star, a feedback form, a problem form).
+// The site itself stores nothing; GitHub keeps the feedback and filters spam.
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/ui/Icon.astro';
+import { LANGS, t, type Lang } from '~/i18n';
+import { FEEDBACK_FORM, PROBLEM_FORM, REPO_URL, SECURITY_REPORT } from '~/lib/project';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Lang };
+const other = lang === 'en' ? 'ms' : 'en';
+const cards = [
+  { id: 'star', href: REPO_URL, icon: 'star', title: t(lang, 'feedback.star'), text: t(lang, 'feedback.starText') },
+  { id: 'feedback', href: FEEDBACK_FORM, icon: 'message', title: t(lang, 'feedback.give'), text: t(lang, 'feedback.giveText') },
+  { id: 'problem', href: PROBLEM_FORM, icon: 'danger', title: t(lang, 'feedback.problem'), text: t(lang, 'feedback.problemText') },
+];
+---
+
+<Base lang={lang} title={t(lang, 'feedback.title')} description={t(lang, 'feedback.intro')} altPath={`/${other}/feedback/`}>
+  <div class="container fb">
+    <h1>{t(lang, 'feedback.title')}</h1>
+    <p class="fb-intro">{t(lang, 'feedback.intro')}</p>
+
+    <ul class="fb-cards" role="list">
+      {
+        cards.map((c) => (
+          <li>
+            <a class={`fb-card fb-${c.id}`} href={c.href} target="_blank" rel="noopener" data-fb={c.id}>
+              <span class="fb-icon" aria-hidden="true">
+                <Icon name={c.icon} size={26} />
+              </span>
+              <span class="fb-body">
+                <span class="fb-title">{c.title}</span>
+                <span class="fb-text">{c.text}</span>
+              </span>
+              <span class="visually-hidden"> {t(lang, 'feedback.newTab')}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <section class="fb-notes" aria-labelledby="fb-notes-h">
+      <h2 id="fb-notes-h">{t(lang, 'feedback.goodToKnow')}</h2>
+      <ul>
+        <li>{t(lang, 'feedback.account')}</li>
+        <li>{t(lang, 'feedback.public')}</li>
+        <li>{t(lang, 'feedback.nothingStored')}</li>
+        <li>
+          {t(lang, 'feedback.security')}{' '}
+          <a href={SECURITY_REPORT} target="_blank" rel="noopener" data-fb="security">
+            {t(lang, 'feedback.securityLink')}
+            <span class="visually-hidden"> {t(lang, 'feedback.newTab')}</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .fb {
+    padding-block: var(--space-4);
+    max-width: 44rem;
+  }
+  .fb-intro {
+    font-size: var(--text-l);
+  }
+  .fb-cards {
+    list-style: none;
+    margin: var(--space-5) 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+  /* Each choice: a white sticker you can tap, with a round coloured icon. */
+  .fb-card {
+    --fb: var(--candy-sun);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: var(--line);
+    border-radius: var(--radius-l);
+    box-shadow: var(--lift);
+    text-decoration: none;
+    transition:
+      transform 80ms ease-out,
+      box-shadow 80ms ease-out;
+  }
+  .fb-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lift-l);
+  }
+  .fb-card:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--outline);
+  }
+  .fb-feedback {
+    --fb: var(--candy-mint);
+  }
+  .fb-problem {
+    --fb: var(--candy-coral);
+  }
+  .fb-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--fb);
+    color: var(--ink);
+    border: 2px solid var(--outline);
+  }
+  .fb-body {
+    display: grid;
+    gap: 2px;
+  }
+  .fb-title {
+    font-family: var(--font-head);
+    font-weight: var(--weight-head);
+    font-size: var(--text-l);
+  }
+  .fb-text {
+    font-size: var(--text-s);
+    color: var(--color-text-muted);
+  }
+  .fb-notes {
+    background: var(--color-surface);
+    border: 2px solid var(--outline);
+    border-radius: var(--radius-l);
+    box-shadow: var(--lift-s);
+    padding: var(--space-3) var(--space-4);
+  }
+  .fb-notes h2 {
+    font-size: var(--text-l);
+    margin-bottom: var(--space-2);
+  }
+  .fb-notes ul {
+    margin: 0;
+    padding-left: var(--space-5);
+    display: grid;
+    gap: var(--space-2);
+    font-size: var(--text-s);
+  }
+</style>

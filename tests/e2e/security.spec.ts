@@ -57,6 +57,7 @@ const PAGES = [
   '/en/git/',
   '/en/git/save-points/the-box/',
   '/en/settings/',
+  '/en/feedback/',
   '/en/rescue/',
   '/en/level-up/rescue/',
   '/en/ship-it/exam/',

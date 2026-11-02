@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 const SHIP_IT = ['docker', 'cicd', 'kubernetes'].flatMap((c) => [`${c}/`, `${c}/glossary/`, `${c}/commands/`, `${c}/cheatsheet/`]);
 const LEVEL_UP = ['linux', 'iac', 'observability', 'aws'].flatMap((c) => [`${c}/`, `${c}/glossary/`, `${c}/commands/`, `${c}/cheatsheet/`]);
-const PAGES = ['', 'git/', 'glossary/', 'commands/', 'cheatsheet/', 'rescue/', 'review/', 'settings/', 'ship-it/', 'ship-it/rescue/', ...SHIP_IT, 'level-up/', 'level-up/rescue/', ...LEVEL_UP];
+const PAGES = ['', 'git/', 'glossary/', 'commands/', 'cheatsheet/', 'rescue/', 'review/', 'settings/', 'feedback/', 'ship-it/', 'ship-it/rescue/', ...SHIP_IT, 'level-up/', 'level-up/rescue/', ...LEVEL_UP];
 
 test('every internal link on the main pages works', { tag: '@desktop-only' }, async ({ page, request, baseURL }) => {
   test.setTimeout(180_000);

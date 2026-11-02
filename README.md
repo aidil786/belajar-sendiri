@@ -74,6 +74,10 @@ scripts/                   readability, card ids, MDX, and checks against real G
 tests/e2e/                 Playwright + axe (and the security-header test)
 ```
 
+## Feedback
+
+Like it? Give the repo a ⭐. Rate the site and tell us what to fix with the [feedback form](https://github.com/aidil786/belajar-sendiri/issues/new?template=feedback.yml), or [report a problem](https://github.com/aidil786/belajar-sendiri/issues/new?template=problem.yml). The site's **Rate & feedback** page (`/en/feedback/`) links to the same forms. The site itself stores no feedback: it all lives here on GitHub.
+
 ## Contributing
 
 Ideas, typo fixes and new lessons are welcome. Please open an issue first for big changes.

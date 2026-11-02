@@ -2,7 +2,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-const PAGES = ['/en/', '/ms/', '/en/git/', '/en/git/save-points/the-box/', '/ms/git/save-points/the-box/#c=try-type', '/en/settings/', '/en/glossary/', '/en/rescue/', '/en/commands/add/', '/en/git/start-here/git-in-vs-code/#c=try-tour', '/en/git/undo-magic/reset-lab/#c=try-lab', '/ms/git/undo-magic/boss/#c=try-escape', '/en/git/start-here/why-save-versions/', '/en/review/', '/ms/rescue/', '/offline/', '/en/ship-it/', '/ms/ship-it/rescue/', '/en/docker/', '/ms/kubernetes/', '/en/cicd/glossary/', '/en/docker/commands/'];
+const PAGES = ['/en/', '/ms/', '/en/git/', '/en/git/save-points/the-box/', '/ms/git/save-points/the-box/#c=try-type', '/en/settings/', '/en/glossary/', '/en/rescue/', '/en/commands/add/', '/en/git/start-here/git-in-vs-code/#c=try-tour', '/en/git/undo-magic/reset-lab/#c=try-lab', '/ms/git/undo-magic/boss/#c=try-escape', '/en/git/start-here/why-save-versions/', '/en/review/', '/ms/rescue/', '/offline/', '/en/ship-it/', '/ms/ship-it/rescue/', '/en/docker/', '/ms/kubernetes/', '/en/cicd/glossary/', '/en/docker/commands/', '/en/feedback/', '/ms/feedback/'];
 
 for (const theme of ['light', 'dark'] as const) {
   for (const path of PAGES) {

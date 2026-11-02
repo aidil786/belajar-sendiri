@@ -43,6 +43,7 @@ FahamLah is an ADHD-friendly, bilingual (English + Bahasa Melayu) "learn anythin
 
 ## Look, motion, accessibility — §9
 - One card centred, one big "Next" button. Progress bar fixed at top.
+- The look is a "sticker stage": indigo dotted stage, white sticker cards with ink outlines and hard shadows, light paper sheets for text pages. Text on the stage uses `--on-stage`; see `docs/AUTHORING.md` ("Look: the sticker stage").
 - Concept colours: working = blue, staging = amber, repo = green, remote = purple, HEAD = bright pink, conflict/danger = red **plus an icon**.
 - All colours, spacing, radii and fonts come from `src/styles/tokens.css`.
 - Body 18–20 px, ~60-char lines. Light + dark themes.

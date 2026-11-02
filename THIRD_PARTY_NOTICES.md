@@ -7,6 +7,7 @@ The site bundles these fonts (from the `@fontsource-variable` npm packages). The
 | Atkinson Hyperlegible Next | Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next) |
 | Atkinson Hyperlegible Mono | Copyright 2020-2024 The Atkinson Hyperlegible Mono Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next-mono) |
 | Lexend | Copyright 2019 The Lexend Project Authors (https://github.com/googlefonts/lexend) |
+| Bricolage Grotesque | Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage) |
 
 The full license text is in [licenses/OFL-1.1.txt](licenses/OFL-1.1.txt).
 

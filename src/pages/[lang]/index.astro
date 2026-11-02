@@ -44,6 +44,17 @@ const strings = {
 const worldOf = Object.fromEntries(courses.flatMap((c) => flatten(c).map((x) => [x.id, [c.id, x.world.id]])));
 // Per course: its ready lessons (for "3 of 40 lessons done").
 const courseLessons = Object.fromEntries(courses.map((c) => [c.id, ready(c).map((x) => x.id)]));
+// "Pick for me": per course, its worlds in map order, each with its ready lessons (no tests, no missions).
+const picks = Object.fromEntries(
+  courses.map((c) => [
+    c.id,
+    mapOrder(c.worlds).map((w) =>
+      w.lessons
+        .filter((l) => l.status === 'ready' && !l.mission && l.id !== c.placement)
+        .map((l) => [l.id, itemUrl(lang, c.id, { world: w, slug: l.slug })]),
+    ),
+  ]),
+);
 const PREVIEW = 5;
 const previewCourses = courses.filter((c) => ready(c).length > 0);
 const data = {
@@ -55,27 +66,52 @@ const data = {
   worldOf,
   courseLessons,
   preview: PREVIEW,
+  picks,
+  root: ROOT_COURSE,
 };
 const startOf = (c: Course) => ready(c)[0];
 ---
 
-<Base lang={lang} title={t(lang, 'site.name')} altPath={`/${other}/`}>
+<Base lang={lang} title={t(lang, 'site.name')} altPath={`/${other}/`} stage>
   <div class="container home">
     <section class="hero">
       <div class="hero-text">
         <p class="hero-hello" data-hello>{t(lang, 'home.helloAnon')}</p>
-        <h1 class="accent">{t(lang, 'catalog.tagline')}</h1>
+        <h1 class="hero-title">{t(lang, 'catalog.tagline')}</h1>
         <p class="hero-why">{t(lang, 'home.why')}</p>
         <p class="welcome-back" data-welcome hidden role="status">{t(lang, 'streak.welcomeBack')}</p>
       </div>
-      <div class="hero-mascot" aria-hidden="true"><Mascot lang={lang} mood="happy" size={120} /></div>
+      <div class="buddy">
+        <p class="bubble calm-hide">{t(lang, 'home.buddy')}</p>
+        <div class="buddy-kancil" aria-hidden="true"><Mascot lang={lang} mood="happy" size={132} /></div>
+      </div>
     </section>
 
     <div class="cta">
-      <a class="btn btn-big cta-main" href={itemUrl(lang, ROOT_COURSE, first)} data-continue>
-        <span data-cta-label>{t(lang, 'home.start')}</span>
-        <span class="cta-sub" data-cta-sub>{t(lang, 'home.startWhere', { lesson: first.title[lang] })}</span>
+      <a class="btn cta-btn cta-main" href={itemUrl(lang, ROOT_COURSE, first)} data-continue>
+        <span class="cta-text">
+          <span class="cta-label" data-cta-label>{t(lang, 'home.start')}</span>
+          <span class="cta-sub" data-cta-sub>{t(lang, 'home.startWhere', { lesson: first.title[lang] })}</span>
+        </span>
+        <span class="cta-go" aria-hidden="true"><Icon name="arrowRight" size={30} /></span>
       </a>
+      <a class="btn btn-sun cta-btn" href={itemUrl(lang, ROOT_COURSE, first)} data-pick>
+        <span class="cta-icon" aria-hidden="true"><Icon name="compass" size={26} /></span>
+        <span class="cta-text">
+          <span class="cta-label">{t(lang, 'home.pick')}</span>
+          <span class="cta-sub">{t(lang, 'home.pickHint')}</span>
+        </span>
+      </a>
+      <a class="btn btn-sky cta-btn" href={`/${lang}/review/`} data-practice>
+        <span class="cta-icon" aria-hidden="true"><Icon name="review" size={26} /></span>
+        <span class="cta-text">
+          <span class="cta-label">{t(lang, 'home.practice')}</span>
+          <span class="cta-sub">{t(lang, 'home.practiceHint')}</span>
+        </span>
+      </a>
+      <template data-continue-label>{t(lang, 'home.continue')}</template>
+    </div>
+    <p class="cta-more">
       {
         placement && (
           <a class="cta-placement" href={itemUrl(lang, ROOT_COURSE, placement)} data-placement>
@@ -87,10 +123,9 @@ const startOf = (c: Course) => ready(c)[0];
         <Icon name="review" size={20} />
         <span data-review-label></span>
       </a>
-      <template data-continue-label>{t(lang, 'home.continue')}</template>
-    </div>
+    </p>
 
-    <form class="name-ask" data-name-form hidden>
+    <form class="name-ask sticker" data-name-form hidden>
       <label for="learner-name">{t(lang, 'home.nameAsk')}</label>
       <div class="name-row">
         <input id="learner-name" name="name" autocomplete="given-name" maxlength="40" />
@@ -115,7 +150,7 @@ const startOf = (c: Course) => ready(c)[0];
     <section class="catalog" aria-labelledby="catalog-h">
       <h2 id="catalog-h">{t(lang, 'catalog.title')}</h2>
       <div class="catalog-grid pop-in">
-        <article class="course-card" data-course-card={root.id}>
+        <article class="course-card sticker" data-course-card={root.id}>
           <h3 class="course-title">{root.title[lang]}</h3>
           <p>{root.summary[lang]}</p>
           <p class="course-progress" data-course-progress={root.id}>
@@ -129,7 +164,7 @@ const startOf = (c: Course) => ready(c)[0];
 
         {
           families.map((fam) => (
-            <article class="course-card family-card" data-course-card={fam.id}>
+            <article class="course-card family-card sticker" data-course-card={fam.id}>
               <p class="course-sub">{t(lang, fam.keys.subtitle)}</p>
               <h3 class="course-title">{t(lang, fam.keys.title)}</h3>
               <p>{t(lang, fam.keys.summary)}</p>
@@ -238,8 +273,25 @@ const startOf = (c: Course) => ready(c)[0];
     islands.forEach((el, i) => (el.hidden = i < start || i >= start + data.preview));
   };
 
+  // "Pick for me": a random lesson you have not done, from the first world with one left,
+  // in the course you are working on (else the first course, else any course).
+  const pickFor = (p: ReturnType<typeof $progress.get>): string | undefined => {
+    const seen = new Set([...p.completed, ...p.known]);
+    const picks = data.picks as Record<string, [string, string][][]>;
+    const order = [where(p.resume?.lessonId)?.[0], data.root as string, ...Object.keys(picks)];
+    for (const course of order) {
+      for (const world of (course && picks[course]) || []) {
+        const left = world.filter(([id]) => !seen.has(id));
+        if (left.length) return left[Math.floor(Math.random() * left.length)]![1];
+      }
+    }
+    return undefined;
+  };
+
   const render = () => {
     const p = $progress.get();
+    const pick = pickFor(p);
+    if (pick) $<HTMLAnchorElement>('[data-pick]')!.href = pick;
     if (p.name) $('[data-hello]')!.textContent = format(s.hello!, { name: p.name });
     // Continue: the exact card where the learner stopped, in any course.
     if (p.resume && data.titles[p.resume.lessonId]) {
@@ -308,36 +360,90 @@ const startOf = (c: Course) => ready(c)[0];
   .home {
     padding-block: var(--space-5) var(--space-6);
   }
+  /* Hero: a big headline on the stage, Kancil with a speech bubble. */
   .hero {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
     gap: var(--space-4);
-    justify-content: space-between;
   }
   .hero-hello {
-    font-weight: var(--weight-bold);
-    font-size: var(--text-l);
-    margin-bottom: var(--space-1);
+    display: inline-block;
+    margin: 0 0 var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    background: var(--candy-sun);
+    color: var(--ink);
+    border: var(--line);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--lift-s);
+    font-family: var(--font-head);
+    font-weight: var(--weight-head);
+    font-size: var(--text-m);
+    transform: rotate(-2deg);
+  }
+  .hero-title {
+    font-size: clamp(2.3rem, 1.4rem + 4vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    max-width: 18ch;
+    margin: 0 0 var(--space-3);
+    text-wrap: balance;
   }
   .hero-why {
-    color: var(--color-text-muted);
+    color: var(--on-stage-muted);
+    font-size: var(--text-l);
   }
   .welcome-back {
     background: var(--c-repo-soft);
     color: var(--c-repo-ink);
+    border: 2px solid var(--outline);
     border-radius: var(--radius-m);
     padding: var(--space-2) var(--space-4);
     font-weight: var(--weight-bold);
   }
-  .hero-mascot {
-    flex: none;
+  .buddy {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    max-width: 15rem;
   }
-  /* Phones: Kancil stands next to "Hi there!", the title gets the full width. */
-  @media (max-width: 520px) {
+  /* A white speech bubble with a little tail pointing down at Kancil. */
+  .bubble {
+    position: relative;
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: var(--line);
+    border-radius: var(--radius-l);
+    box-shadow: var(--lift-s);
+    font-size: var(--text-s);
+    font-weight: var(--weight-bold);
+    line-height: 1.4;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -12px;
+    width: 18px;
+    height: 18px;
+    background: var(--color-surface);
+    border-right: var(--line);
+    border-bottom: var(--line);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .buddy-kancil {
+    filter: drop-shadow(0 4px 0 var(--outline));
+  }
+  :root[data-calm='true'] .buddy-kancil {
+    filter: none;
+  }
+  /* Phones: Kancil stands next to "Hi there!", the speech bubble rests, and the big buttons
+     stay on the first screen. */
+  @media (max-width: 640px) {
     .hero {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 0 var(--space-3);
     }
     .hero-text {
@@ -346,56 +452,135 @@ const startOf = (c: Course) => ready(c)[0];
     .hero-hello {
       grid-column: 1;
       grid-row: 1;
+      align-self: center;
+      justify-self: start;
     }
-    .hero-mascot {
+    .buddy {
       grid-column: 2;
       grid-row: 1;
     }
-    .hero-mascot :global(svg) {
-      width: 76px;
+    .bubble {
+      display: none;
+    }
+    .buddy-kancil :global(svg) {
+      width: 64px;
       height: auto;
     }
-    .hero :global(h1),
+    .hero-title,
     .hero-why,
     .welcome-back {
       grid-column: 1 / -1;
     }
+    .hero-title {
+      font-size: 2rem;
+      max-width: none;
+      margin-top: var(--space-2);
+    }
+    .hero-why {
+      font-size: var(--text-m);
+      margin-bottom: 0;
+    }
   }
+  /* Three big sticker buttons. "Continue" is the biggest (ADHD rule 10). */
   .cta {
-    margin: var(--space-4) 0 var(--space-5);
+    margin: var(--space-4) 0 var(--space-2);
     display: grid;
+    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .cta-btn {
+    justify-content: flex-start;
     gap: var(--space-3);
-    justify-items: start;
+    min-height: 96px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-l);
+    text-align: left;
+    font-size: var(--text-l);
+    line-height: 1.15;
   }
   .cta-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    min-height: 80px;
-    min-width: min(100%, 24rem);
+    min-height: 112px;
+    padding-inline: var(--space-5);
     font-size: var(--text-xl);
-    border-radius: var(--radius-l);
+    box-shadow: var(--lift-l);
+  }
+  .cta-text {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
   }
   .cta-sub {
+    font-family: var(--font-body);
     font-size: var(--text-s);
     font-weight: var(--weight-normal);
-    opacity: 0.9;
+    line-height: 1.3;
   }
-  .cta-placement {
+  /* Round ink badges, like the arrow on Continue: the icon wears the button's colour. */
+  .cta-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--candy-sun);
+  }
+  [data-practice] .cta-icon {
+    color: var(--candy-sky);
+  }
+  .cta-go {
+    flex: none;
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--candy-mint);
+  }
+  @media (max-width: 860px) {
+    .cta {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cta-main {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 480px) {
+    .cta {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+    .cta-btn {
+      min-height: 76px;
+    }
+    .cta-main {
+      min-height: 96px;
+    }
+  }
+  .cta-more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    max-width: none;
+    margin: var(--space-3) 0 var(--space-5);
     font-size: var(--text-s);
   }
+  .cta-placement,
   .cta-review {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     min-height: var(--tap);
-    font-size: var(--text-s);
     font-weight: var(--weight-bold);
   }
+  .cta-review[hidden] {
+    display: none;
+  }
   .name-ask {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-l);
     padding: var(--space-4);
     margin-bottom: var(--space-5);
   }
@@ -412,7 +597,7 @@ const startOf = (c: Course) => ready(c)[0];
     flex: 1 1 12rem;
     min-height: var(--tap);
     border-radius: var(--radius-s);
-    border: 2px solid var(--color-border-strong);
+    border: 2px solid var(--outline);
     background: var(--color-bg);
     padding: 0 var(--space-3);
   }
@@ -421,36 +606,49 @@ const startOf = (c: Course) => ready(c)[0];
   .worlds {
     margin-top: var(--space-6);
   }
+  /* Today: small stickers, each with its own colour dot. */
   .stats {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
-  /* Each stat has its own colour: a strip on the left and a soft tint. */
   .stats li {
-    --stat: var(--brand-a);
-    background: color-mix(in oklab, var(--stat) 9%, var(--color-surface));
-    border: 1px solid var(--color-border);
-    border-left: 6px solid var(--stat);
+    --stat: var(--candy-mint);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: var(--line);
     border-radius: var(--radius-m);
+    box-shadow: var(--lift-s);
     padding: var(--space-3) var(--space-4);
     font-weight: var(--weight-bold);
   }
+  .stats li::before {
+    content: '';
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--stat);
+    border: 2px solid var(--outline);
+  }
   .stats li[data-stat-lessons] {
-    --stat: var(--brand-c);
+    --stat: var(--candy-grape);
   }
   .stats li[data-stat-xp] {
-    --stat: var(--gold);
+    --stat: var(--candy-sun);
   }
   .stats li[data-stat-streak] {
-    --stat: var(--warm);
+    --stat: var(--candy-coral);
   }
   .rest {
     font-size: var(--text-s);
-    color: var(--color-text-muted);
+    color: var(--on-stage-muted);
     margin-top: var(--space-2);
   }
   .badges-h {
@@ -466,35 +664,35 @@ const startOf = (c: Course) => ready(c)[0];
     gap: var(--space-2);
   }
   .badges :global(.badge) {
-    background: var(--c-staging-soft);
-    color: var(--c-staging-ink);
+    background: var(--candy-sun);
+    color: var(--ink);
+    border: 2px solid var(--outline);
     border-radius: var(--radius-pill);
+    box-shadow: var(--lift-s);
     padding: var(--space-1) var(--space-4);
     font-weight: var(--weight-bold);
   }
   .badges-none {
-    color: var(--color-text-muted);
+    color: var(--on-stage-muted);
     font-size: var(--text-s);
   }
   .catalog-grid {
     display: grid;
-    gap: var(--space-4);
+    gap: var(--space-5);
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
     align-items: start;
   }
+  /* Each course is a sticker with a thick band in its colour. */
   .course-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-top: 6px solid var(--deco-repo);
-    border-radius: var(--radius-l);
+    --band: var(--deco-repo);
+    border-top: 14px solid var(--band);
     padding: var(--space-4);
-    box-shadow: var(--color-shadow);
   }
   .family-card[data-course-card='ship-it'] {
-    border-top-color: var(--deco-remote);
+    --band: var(--deco-remote);
   }
   .family-card[data-course-card='level-up'] {
-    border-top-color: var(--deco-staging);
+    --band: var(--deco-staging);
   }
   .course-title {
     font-size: var(--text-xl);
@@ -545,8 +743,8 @@ const startOf = (c: Course) => ready(c)[0];
     gap: var(--space-3);
     align-items: flex-start;
     background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-left: 5px solid var(--part, var(--color-border));
+    border: 2px solid var(--outline);
+    border-left: 8px solid var(--part, var(--color-border));
     border-radius: var(--radius-m);
     padding: var(--space-2) var(--space-3);
   }
@@ -583,9 +781,12 @@ const startOf = (c: Course) => ready(c)[0];
     flex-wrap: wrap;
     gap: var(--space-2);
   }
+  .worlds-head a {
+    font-weight: var(--weight-bold);
+  }
   .worlds-grid {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-4);
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
   }
 </style>

@@ -1276,13 +1276,24 @@ npm run build              # every lesson renders
 PW_PORT=4400 npm run test:e2e -- tests/e2e/all-lessons.spec.ts --project=desktop  # click through every ready lesson
 ```
 
+## Look: the sticker stage (2026-11-02)
+
+- **Stage and paper.** Every page sits on an indigo **stage** with a soft dot pattern (`body::before`, tokens `--stage-a/b`, `--stage-dot`). Text right on the stage is light (`[data-stage]` sets `--on-stage`; quiet text uses `--on-stage-muted`). Pages that are mostly text (glossary, settings, rescue, exams…) get one big paper **sheet** automatically. Playful pages pass `stage` to `Base.astro` (home, course maps, family overviews; lessons are `bare` and also on the stage) and put their content on stickers.
+- **`.sticker`** (`global.css`): a white card with a thick ink outline (`--line`) and a hard offset shadow (`--lift-s`, `--lift`, `--lift-l`). Anything with text that sits on the stage must be a sticker, or set `color: var(--color-text)` on a light background. Calm mode turns the shadows off and the stage into plain paper.
+- **Buttons** (`.btn`) are chunky stickers that press down. Mint = go (`.btn`), white (`.btn-ghost`), sun (`.btn-sun`), sky (`.btn-sky`), and the underlined `.btn-quiet`.
+- **Headlines** use Bricolage Grotesque (`--font-head`, weight 800, self-hosted); body text stays Atkinson Hyperlegible Next or Lexend.
+- **Focus ring:** sun yellow on the stage, blue on paper (`--focus-ring`; `.sheet` and `.sticker` switch it back to blue).
+- **Top bar:** an ink bar with a level chip (100 XP a level; calm mode hides it). On phones (≤ 640 px) the menus become a tab bar at the bottom, each tab an icon plus a short word (`tab.*` strings).
+- **Maps:** each world is a sticker; its lessons are a quest path of numbered stops. `applyMapMarks` marks stops done / known and the lesson you stopped in ("You are here", `aria-current="step"`).
+- **Lessons:** a floating ink pill on top (map, card count, language), the card as a big sticker with a colour band per card type, an ink controls bar, and on wide screens Kancil's tip for the card type (`buddy.*` strings; calm mode hides it).
+
 ## Colour and motion helpers (2026-11-01)
 
-- **Colours:** the brand is teal → indigo (`--brand-gradient`, `--brand-a/b/c` in `tokens.css`), plus a warm accent (`--warm`), one colour per card type (`--step-*`) and per course (`--course-git`, `--course-docker`, `--course-cicd`, `--course-kubernetes`; Level Up: `--course-linux`, `--course-iac`, `--course-observability`, `--course-aws`). Concept colours (`--c-*`) keep their Git meanings; don't reuse them for decoration.
+- **Colours:** the brand is mint, sky and grape (`--brand-gradient`, `--brand-a/b/c`, `--candy-*` in `tokens.css`), plus a warm accent (`--warm`), one colour per card type (`--step-*`) and per course (`--course-git`, `--course-docker`, `--course-cicd`, `--course-kubernetes`; Level Up: `--course-linux`, `--course-iac`, `--course-observability`, `--course-aws`). Concept colours (`--c-*`) keep their Git meanings; don't reuse them for decoration.
 - **`celebrate(element, pieces?)`** (`src/lib/celebrate.ts`): a confetti burst under a second, for a real win only (a card done, a lesson or drill finished). It does nothing in calm mode or with reduced motion.
 - **`.pop-in`** on a list: its children rise in one after another (transform only, so contrast never dips). Give each child `style="--sibling-index: N"` for browsers without `sibling-index()`.
 - **`.lift`** on a tile link: it rises a little under the pointer.
-- **`h1.accent`**: the short gradient bar under a page title.
+- **`h1.accent`**: the short sun bar under a page title.
 - Page-to-page fades use cross-document view transitions (`global.css`); `Base.astro` skips them in calm mode.
 - Every new animation runs once, stays under ~1 s, and is off in calm mode and with `prefers-reduced-motion`. `tests/e2e/delight.spec.ts` checks this.
 

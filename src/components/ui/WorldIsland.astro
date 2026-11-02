@@ -68,9 +68,10 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     !compact && (
       <details class="island-lessons" open={ready > 0 && world.id <= 2}>
         <summary>{ready === 0 ? t(lang, 'map.lessonPlan', { n: total }) : t(lang, 'map.lessons', { n: total })}</summary>
-        <ol class:list={{ 'all-soon': ready === 0 }}>
-          {world.lessons.map((l) => (
+        <ol class:list={['path', { 'all-soon': ready === 0 }]} role="list">
+          {world.lessons.map((l, i) => (
             <li class:list={['lesson-row', { 'lesson-mission': l.mission }]} data-lesson-row={l.id}>
+              <span class="stop" aria-hidden="true">{i + 1}</span>
               {l.status === 'ready' ? (
                 <a href={itemUrl(lang, courseId, { world, slug: l.slug })}>{l.title[lang]}</a>
               ) : (
@@ -90,6 +91,9 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
                     <span class="tag tag-known" data-known-tag hidden>
                       ✓ {t(lang, 'map.known')}
                     </span>
+                    <span class="tag tag-here" data-here-tag hidden>
+                      {t(lang, 'map.here')}
+                    </span>
                   </>
                 )}
               </span>
@@ -97,6 +101,7 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
           ))}
           {world.boss && world.boss.status !== 'none' && (
             <li class="lesson-row lesson-boss" data-lesson-row={world.boss.id}>
+              <span class="stop" aria-hidden="true">★</span>
               {world.boss.status === 'ready' ? (
                 <a href={itemUrl(lang, courseId, { world, slug: 'boss' })}>
                   {t(lang, 'map.bossLabel', { title: world.boss.title[lang] })}
@@ -108,9 +113,14 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
                 {world.boss.status === 'soon' ? (
                   ready > 0 && <span class="tag tag-soon">{t(lang, 'map.soon')}</span>
                 ) : (
-                  <span class="tag tag-done" data-done-tag hidden>
-                    ✓ {t(lang, 'map.done')}
-                  </span>
+                  <>
+                    <span class="tag tag-done" data-done-tag hidden>
+                      ✓ {t(lang, 'map.done')}
+                    </span>
+                    <span class="tag tag-here" data-here-tag hidden>
+                      {t(lang, 'map.here')}
+                    </span>
+                  </>
                 )}
               </span>
             </li>
@@ -134,16 +144,19 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
 </article>
 
 <style>
+  /* A world is a white sticker with a thick band in its colour. */
   .island {
     --isl: var(--deco-working);
     --isl-soft: var(--c-working-soft);
     --isl-ink: var(--c-working-ink);
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-top: 6px solid var(--isl);
+    color: var(--color-text);
+    border: var(--line);
+    border-top: 12px solid var(--isl);
     border-radius: var(--radius-l);
     padding: var(--space-4);
-    box-shadow: var(--color-shadow);
+    box-shadow: var(--lift);
+    --focus-ring: var(--color-focus);
     scroll-margin-top: calc(var(--topbar-h) + var(--space-4));
   }
   .island[data-color='staging'] {
@@ -180,11 +193,13 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
   .island-icon {
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-m);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
     background: var(--isl-soft);
     color: var(--isl-ink);
+    border: 2px solid var(--outline);
+    box-shadow: var(--lift-s);
     flex: none;
   }
   .island-num {
@@ -202,22 +217,7 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     font-size: var(--text-xl);
     color: var(--deco-staging);
   }
-  .mission-tag {
-    margin-left: auto;
-    flex: none;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
-    border-radius: var(--radius-pill);
-    padding: 0 var(--space-2);
-    background: var(--c-head-soft);
-    color: var(--c-head-ink);
-    border: 1px solid var(--deco-head);
-  }
-  .mission-tag + .island-done,
-  .extra-tag + .island-done {
-    margin-left: var(--space-1);
-  }
-  /* An optional extra pack (K9): a calm label, never a lock. */
+  .mission-tag,
   .extra-tag {
     margin-left: auto;
     flex: none;
@@ -225,17 +225,24 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     font-weight: var(--weight-bold);
     border-radius: var(--radius-pill);
     padding: 0 var(--space-2);
+    background: var(--c-head-soft);
+    color: var(--c-head-ink);
+    border: 2px solid var(--deco-head);
+  }
+  .mission-tag + .island-done,
+  .extra-tag + .island-done {
+    margin-left: var(--space-1);
+  }
+  /* An optional extra pack (K9): a calm label, never a lock. */
+  .extra-tag {
     background: var(--c-remote-soft);
     color: var(--c-remote-ink);
-    border: 1px dashed var(--deco-remote);
+    border: 2px dashed var(--deco-remote);
   }
   .tag-mission {
     background: var(--c-head-soft);
     border-color: var(--deco-head);
     color: var(--c-head-ink);
-  }
-  .all-soon .lesson-row {
-    min-height: calc(var(--tap) * 0.75);
   }
   .island-summary {
     margin-bottom: var(--space-1);
@@ -256,37 +263,93 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     display: flex;
     align-items: center;
   }
-  .island-lessons ol {
-    margin: 0;
-    padding-left: var(--space-5);
+  /* The quest path: round stops on a dotted trail, in order. */
+  .path {
+    --stop: 34px;
+    position: relative;
+    list-style: none;
+    margin: var(--space-1) 0 0;
+    padding: 0;
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
+  }
+  .path::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--stop) / 2 - 2px);
+    top: calc(var(--stop) / 2);
+    bottom: calc(var(--stop) / 2);
+    border-left: 4px dotted var(--isl);
   }
   .lesson-row {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-1) var(--space-2);
     min-height: var(--tap);
+    padding-left: calc(var(--stop) + var(--space-3));
+  }
+  .stop {
+    position: absolute;
+    left: 0;
+    top: calc((var(--tap) - var(--stop)) / 2);
+    display: grid;
+    place-items: center;
+    width: var(--stop);
+    height: var(--stop);
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 3px solid var(--isl);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-head);
+  }
+  .lesson-row[data-state='done'] .stop,
+  .lesson-row[data-state='known'] .stop {
+    background: var(--isl-soft);
+    border-color: var(--outline);
+    color: var(--isl-ink);
+  }
+  .lesson-row[data-state='here'] .stop {
+    background: var(--candy-sun);
+    color: var(--ink);
+    border-color: var(--outline);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--candy-sun) 45%, transparent);
   }
   .lesson-row a {
     font-weight: var(--weight-bold);
+    margin-right: auto;
   }
   .lesson-soon {
     color: var(--color-text-muted);
+    margin-right: auto;
   }
   .lesson-boss {
     font-style: italic;
   }
+  .lesson-boss .stop {
+    font-style: normal;
+    font-size: var(--text-s);
+  }
+  .all-soon .lesson-row {
+    min-height: calc(var(--tap) * 0.75);
+  }
+  .all-soon .stop {
+    --stop: 26px;
+    top: calc((var(--tap) * 0.75 - var(--stop)) / 2);
+    border-style: dashed;
+  }
   .lesson-tags {
     display: inline-flex;
+    flex-wrap: wrap;
     gap: var(--space-1);
   }
   .tag {
     font-size: var(--text-xs);
     border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border-strong);
+    border: 2px solid var(--color-border-strong);
     padding: 0 var(--space-2);
     white-space: nowrap;
   }
@@ -302,6 +365,12 @@ const lessonIds = world.lessons.filter((l) => l.status === 'ready').map((l) => l
     background: var(--c-head-soft);
     border-color: var(--deco-head);
     color: var(--c-head-ink);
+  }
+  .tag-here {
+    background: var(--candy-sun);
+    color: var(--ink);
+    border-color: var(--outline);
+    font-weight: var(--weight-bold);
   }
   .island-go {
     font-weight: var(--weight-bold);

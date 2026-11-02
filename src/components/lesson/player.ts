@@ -107,6 +107,8 @@ export function initPlayer(): void {
     const id = card.dataset.cardId!;
     const type = card.dataset.cardType;
     const isWin = type === 'win';
+    // Kancil's tip in the controls follows the kind of card (lesson.css .buddy-tip).
+    root.dataset.cardType = type ?? '';
 
     // Progress: "card 4 of 8", "2 min left". Moving forward sweeps a light across the bar.
     const pct = ((index + 1) / total) * 100;

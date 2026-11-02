@@ -1,5 +1,10 @@
 /*
  * FahamLah design tokens. Every colour, space, radius, font and duration lives here.
+ *
+ * The look: a "sticker book arcade". A bold indigo page (the stage) with a dot pattern, white
+ * paper cards with thick ink outlines and hard shadows, chunky buttons that press down, a playful
+ * headline font and candy colours. Calm mode turns all of it down (plain light page, no shadows).
+ *
  * Concept colours mean the same Git idea everywhere:
  *   working folder = blue, staging = amber, repository = green,
  *   remote = purple, HEAD = bright pink, conflict/danger = red (+ always an icon).
@@ -8,21 +13,52 @@
 :root {
   color-scheme: light;
 
+  /* Ink: outlines, hard shadows and text on paper. */
+  --ink: #1a1240;
+  --outline: var(--ink);
+  --line-w: 3px;
+  --line: var(--line-w) solid var(--outline);
+  --lift-s: 0 3px 0 var(--outline);
+  --lift: 0 5px 0 var(--outline);
+  --lift-l: 0 8px 0 var(--outline);
+
+  /* The stage: the page behind the cards. Text right on it uses --on-stage (7.6:1). */
+  --stage-a: #3d30e6;
+  --stage-b: #5a2fd0;
+  --stage-dot: rgb(255 255 255 / 0.13);
+  --on-stage: #ffffff;
+  --on-stage-muted: #e2dcff;
+
+  /* The top bar (and the lesson control bar). */
+  --bar-bg: #1a1240;
+  --bar-fg: #ffffff;
+  --bar-muted: #d8d1ff;
+
+  /* Candy colours (fills behind ink text, decoration). Ink text passes AA on each. */
+  --candy-mint: #3ee0b4;
+  --candy-sun: #ffd23f;
+  --candy-sky: #5cc8ff;
+  --candy-coral: #ff7a93;
+  --candy-grape: #8f5bff;
+  --candy-tangerine: #ff914d;
+  --candy-lime: #b5f23d;
+
   /* Surfaces and text (light) */
-  --color-bg: #fbfaf7;
+  --color-bg: #f4f1ff;
   --color-surface: #ffffff;
-  --color-surface-2: #f3f1ec;
-  --color-text: #1b1b1f;
-  --color-text-muted: #4a4a55;
-  --color-border: #d9d6ce;
-  --color-border-strong: #8a8678;
+  --color-surface-2: #ebe5ff;
+  --color-text: #1a1240;
+  --color-text-muted: #4b4375;
+  --color-border: #a99fd6;
+  --color-border-strong: #6a5fa0;
   --color-focus: #1b4fd9;
-  --color-primary-text: #ffffff;
+  --focus-ring: var(--color-focus);
+  --color-primary-text: #1a1240;
   --color-success: #15803d;
   --color-success-soft: #dcfce7;
   --color-kind: #7c4a03; /* "almost!" feedback: warm, never red */
   --color-kind-soft: #fff4dc;
-  --color-shadow: 0 1px 2px rgb(20 20 30 / 0.06), 0 6px 20px rgb(20 20 30 / 0.06);
+  --color-shadow: var(--lift-s);
   --color-flash: #ffffff;
   --color-on-head: #ffffff;
 
@@ -93,9 +129,10 @@
   --gutter: 16px;
 
   /* Radii */
-  --radius-s: 8px;
-  --radius-m: 12px;
-  --radius-l: 20px;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 22px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
 
   /* Type */
@@ -104,6 +141,9 @@
   --font-lexend: 'Lexend Variable', 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Atkinson Hyperlegible Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas,
     monospace;
+  /* Headlines: chunky and playful. Body text stays Atkinson Hyperlegible (or Lexend). */
+  --font-head: 'Bricolage Grotesque Variable', 'Trebuchet MS', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --weight-head: 800;
   --text-xs: 0.875rem;
   --text-s: 1rem;
   --text-m: 1.1875rem; /* 19px body */
@@ -121,32 +161,35 @@
   --dur-slow: 600ms;
   --dur-concept: 1400ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* A small overshoot for things that pop in. */
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1);
 
   /* Layout */
   --card-max: 40rem;
   --topbar-h: 56px;
-  --progress-h: 6px;
+  --tabbar-h: 64px; /* phones: the tab bar at the bottom */
+  --progress-h: 8px;
   --tap: 44px; /* minimum touch target */
 
-  /* Brand: teal → indigo, two calm colours (no rainbow). White text passes AA on every stop. */
-  --color-primary: #0f766e;
-  --color-primary-hover: #115e59;
-  --brand-a: #0f766e;
-  --brand-b: #0e7490;
-  --brand-c: #4338ca;
-  --brand-gradient: linear-gradient(120deg, var(--brand-a) 0%, var(--brand-b) 48%, var(--brand-c) 100%);
-  --brand-glow: rgb(15 118 110 / 0.3);
-  --brand-soft: #e3f4f1;
-  --brand-ink: #115e59;
+  /* Brand: mint for the main action (ink text on it, 10.4:1), sky and grape as partners. */
+  --color-primary: #3ee0b4;
+  --color-primary-hover: #2fd0a4;
+  --brand-a: #3ee0b4;
+  --brand-b: #5cc8ff;
+  --brand-c: #8f5bff;
+  --brand-gradient: linear-gradient(90deg, var(--candy-mint) 0%, var(--candy-sky) 55%, var(--candy-grape) 100%);
+  --brand-glow: transparent;
+  --brand-soft: #e3fbf4;
+  --brand-ink: #0b5a47;
   /* A warm accent for highlights (decoration); text on it uses --warm-ink. */
-  --warm: #f97316;
-  --warm-soft: #ffedd5;
-  --warm-ink: #9a3412;
-  --gold: #f5b301;
-  /* Soft colour glow at the top of each page (decoration only). */
-  --glow-1: rgb(20 184 166 / 0.2);
-  --glow-2: rgb(99 102 241 / 0.16);
-  --glow-3: rgb(251 146 60 / 0.14);
+  --warm: #ff914d;
+  --warm-soft: #ffeedd;
+  --warm-ink: #8a3511;
+  --gold: #ffd23f;
+  /* Kept for older components; the stage replaces the old soft glow. */
+  --glow-1: transparent;
+  --glow-2: transparent;
+  --glow-3: transparent;
   /* Lesson card types: strong (decoration), soft (fill), ink (text on soft). */
   --step-hook: #f97316;
   --step-hook-soft: #ffedd5;
@@ -175,11 +218,11 @@
   --course-observability: #a21caf;
   --course-aws: #a16207;
   /* Celebration confetti */
-  --party-1: #14b8a6;
-  --party-2: #6366f1;
-  --party-3: #f97316;
-  --party-4: #f5b301;
-  --party-5: #ec4899;
+  --party-1: #3ee0b4;
+  --party-2: #8f5bff;
+  --party-3: #ff914d;
+  --party-4: #ffd23f;
+  --party-5: #ff7a93;
   /* Light sweep across the progress bar */
   --shine: rgb(255 255 255 / 0.55);
 }
@@ -188,25 +231,30 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --color-bg: #14161b;
-    --color-surface: #1c1f26;
-    --color-surface-2: #252932;
-    --color-text: #f2f2f5;
-    --color-text-muted: #b9bcc6;
-    --color-border: #3a3f4b;
-    --color-border-strong: #7b8190;
+    /* Night: a deep indigo stage, dark paper, near-black outlines and shadows. */
+    --outline: #05030f;
+    --stage-a: #1b1150;
+    --stage-b: #120c38;
+    --stage-dot: rgb(255 255 255 / 0.07);
+    --on-stage: #ffffff;
+    --on-stage-muted: #cfc6f5;
+    --bar-bg: #0b0726;
+    --color-bg: #1a1446;
+    --color-surface: #221a55;
+    --color-surface-2: #2c2366;
+    --color-text: #f3f0ff;
+    --color-text-muted: #c9c1f0;
+    --color-border: #4a3f8a;
+    --color-border-strong: #9b91d6;
     --color-focus: #8ab4ff;
-    --color-primary: #0f766e;
-    --color-primary-text: #ffffff;
-    --color-primary-hover: #115e59;
-    --brand-glow: rgb(45 212 191 / 0.22);
-    --brand-soft: #0f2e2b;
-    --brand-ink: #99f6e4;
+    --color-primary: #3ee0b4;
+    --color-primary-text: #1a1240;
+    --color-primary-hover: #2fd0a4;
+    --brand-glow: transparent;
+    --brand-soft: #0f3a33;
+    --brand-ink: #9ff5dd;
     --warm-soft: #3a2210;
     --warm-ink: #fed7aa;
-    --glow-1: rgb(45 212 191 / 0.13);
-    --glow-2: rgb(129 140 248 / 0.13);
-    --glow-3: rgb(251 146 60 / 0.08);
     --step-hook-soft: #3a2210;
     --step-hook-ink: #fed7aa;
     --step-see-soft: #0c2a3d;
@@ -221,7 +269,6 @@
     --color-success-soft: #12301e;
     --color-kind: #fcd68a;
     --color-kind-soft: #33270f;
-    --color-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
     --c-working: #60a5fa;
     --c-working-soft: #1e2a44;
     --c-working-ink: #bfdbfe;
@@ -247,25 +294,30 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #14161b;
-  --color-surface: #1c1f26;
-  --color-surface-2: #252932;
-  --color-text: #f2f2f5;
-  --color-text-muted: #b9bcc6;
-  --color-border: #3a3f4b;
-  --color-border-strong: #7b8190;
+  /* Night: a deep indigo stage, dark paper, near-black outlines and shadows. */
+  --outline: #05030f;
+  --stage-a: #1b1150;
+  --stage-b: #120c38;
+  --stage-dot: rgb(255 255 255 / 0.07);
+  --on-stage: #ffffff;
+  --on-stage-muted: #cfc6f5;
+  --bar-bg: #0b0726;
+  --color-bg: #1a1446;
+  --color-surface: #221a55;
+  --color-surface-2: #2c2366;
+  --color-text: #f3f0ff;
+  --color-text-muted: #c9c1f0;
+  --color-border: #4a3f8a;
+  --color-border-strong: #9b91d6;
   --color-focus: #8ab4ff;
-  --color-primary: #0f766e;
-  --color-primary-text: #ffffff;
-  --color-primary-hover: #115e59;
-  --brand-glow: rgb(45 212 191 / 0.22);
-  --brand-soft: #0f2e2b;
-  --brand-ink: #99f6e4;
+  --color-primary: #3ee0b4;
+  --color-primary-text: #1a1240;
+  --color-primary-hover: #2fd0a4;
+  --brand-glow: transparent;
+  --brand-soft: #0f3a33;
+  --brand-ink: #9ff5dd;
   --warm-soft: #3a2210;
   --warm-ink: #fed7aa;
-  --glow-1: rgb(45 212 191 / 0.13);
-  --glow-2: rgb(129 140 248 / 0.13);
-  --glow-3: rgb(251 146 60 / 0.08);
   --step-hook-soft: #3a2210;
   --step-hook-ink: #fed7aa;
   --step-see-soft: #0c2a3d;
@@ -280,7 +332,6 @@
   --color-success-soft: #12301e;
   --color-kind: #fcd68a;
   --color-kind-soft: #33270f;
-  --color-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
   --c-working: #60a5fa;
   --c-working-soft: #1e2a44;
   --c-working-ink: #bfdbfe;
@@ -322,8 +373,18 @@
   --deco-danger: var(--c-danger);
 }
 
-/* Calm mode: softer decoration (never softer text), no motion. */
+/* Calm mode: softer decoration (never softer text), no motion. The stage becomes the plain
+   paper colour (no dots), so text on it switches to normal text colours. No hard shadows. */
 :root[data-calm='true'] {
+  --stage-a: var(--color-bg);
+  --stage-b: var(--color-bg);
+  --stage-dot: transparent;
+  --on-stage: var(--color-text);
+  --on-stage-muted: var(--color-text-muted);
+  --lift-s: none;
+  --lift: none;
+  --lift-l: none;
+  --line-w: 2px;
   --color-shadow: none;
   --deco-working: color-mix(in oklab, var(--c-working) 55%, var(--color-border-strong));
   --deco-staging: color-mix(in oklab, var(--c-staging) 55%, var(--color-border-strong));

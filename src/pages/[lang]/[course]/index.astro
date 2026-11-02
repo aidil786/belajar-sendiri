@@ -26,7 +26,7 @@ const hints = requiresHints(lang, course, all);
 const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status !== 'ready') && w.boss?.status !== 'ready');
 ---
 
-<Base lang={lang} title={isRoot ? `${t(lang, 'map.title')}: ${course.title[lang]}` : heading} altPath={`/${other}/${courseId}/`}>
+<Base lang={lang} title={isRoot ? `${t(lang, 'map.title')}: ${course.title[lang]}` : heading} altPath={`/${other}/${courseId}/`} stage>
   <div class="container map" data-map data-progress-template={t(lang, 'map.progress')}>
     <header class="map-head">
       <div class="map-head-text">
@@ -92,25 +92,30 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
     margin: 0 0 var(--space-1);
     font-size: var(--text-s);
     font-weight: var(--weight-bold);
-    color: var(--color-text-muted);
+    color: var(--on-stage-muted);
   }
   .map-story {
     font-weight: var(--weight-bold);
   }
   .map-hint {
     font-size: var(--text-s);
-    color: var(--color-text-muted);
+    color: var(--on-stage-muted);
   }
   .map-soon {
     display: inline-block;
     background: var(--c-staging-soft);
     color: var(--c-staging-ink);
+    border: 2px solid var(--outline);
     border-radius: var(--radius-m);
     padding: var(--space-2) var(--space-4);
     font-weight: var(--weight-bold);
   }
   .map-mascot {
     flex: none;
+    filter: drop-shadow(0 4px 0 var(--outline));
+  }
+  :root[data-calm='true'] .map-mascot {
+    filter: none;
   }
   @media (max-width: 520px) {
     .map-mascot {
@@ -119,7 +124,7 @@ const nothingReady = course.worlds.every((w) => w.lessons.every((l) => l.status 
   }
   .map-grid {
     display: grid;
-    gap: var(--space-4);
+    gap: var(--space-5);
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
     align-items: start;
   }

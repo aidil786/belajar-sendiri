@@ -13,10 +13,13 @@ interface Props {
   altPath: string;
   /** Lesson pages draw their own slim top bar. */
   bare?: boolean;
+  /** Playful pages (home, maps) sit right on the indigo stage. Others get a paper sheet. */
+  stage?: boolean;
   /** Hidden pages (e.g. test pages) ask search engines not to list them. */
   noindex?: boolean;
 }
-const { lang, title, description, altPath, bare = false, noindex = false } = Astro.props;
+const { lang, title, description, altPath, bare = false, stage = false, noindex = false } = Astro.props;
+const onStage = bare || stage;
 const other = lang === 'en' ? 'ms' : 'en';
 const fullTitle = title === t(lang, 'site.name') ? title : `${title} · ${t(lang, 'site.name')}`;
 const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
@@ -45,8 +48,9 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#14161b" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#1a1240" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0726" media="(prefers-color-scheme: dark)" />
     <!-- Apply saved theme, calm mode and font before first paint. -->
     <script is:inline>
       try {
@@ -86,18 +90,18 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
       )
     }
   </head>
-  <body>
+  <body data-tabbar={bare ? undefined : ''}>
     <a class="skip-link" href="#main">{t(lang, 'nav.skip')}</a>
     {!bare && <TopBar lang={lang} altPath={altPath} />}
     <slot name="top" />
-    <main id="main" tabindex="-1">
+    <main id="main" tabindex="-1" data-stage>
       {!bare && <GentleTools lang={lang} />}
-      <slot />
+      {onStage ? <slot /> : <div class="sheet"><slot /></div>}
       {bare && <GentleTools lang={lang} />}
     </main>
     {
       !bare && (
-        <footer class="site-footer">
+        <footer class="site-footer" data-stage>
           <div class="container">
             <p>{t(lang, 'footer.made')}</p>
             <p class="footer-small">
@@ -115,10 +119,9 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
     outline: none;
   }
   .site-footer {
-    margin-top: var(--space-8);
-    padding-block: var(--space-6);
-    border-top: 1px solid var(--color-border);
-    color: var(--color-text-muted);
+    margin-top: var(--space-6);
+    padding-block: var(--space-5) var(--space-6);
+    color: var(--on-stage-muted);
     font-size: var(--text-s);
   }
   .footer-small {

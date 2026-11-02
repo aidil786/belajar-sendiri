@@ -47,18 +47,24 @@ const isCurrent = (href: string) => here.startsWith(href);
 <header class="topbar">
   <div class="topbar-inner container">
     <a class="brand" href={`/${lang}/`} aria-label={`${t(lang, 'site.name')}, ${t(lang, 'nav.home')}`}>
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"
-        ><rect width="32" height="32" rx="9" class="brand-bg"></rect><path
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"
+        ><rect x="1.5" y="1.5" width="29" height="29" rx="9" class="brand-bg"></rect><path
           d="M9 22V10h9M9 16h7M20 22V10l4 12"
           class="brand-mark"></path></svg
       >
       <span class="brand-name">{t(lang, 'site.name')}</span>
     </a>
+    <span class="xp calm-hide" data-xp data-level-text={t(lang, 'xp.level')} data-sr-text={t(lang, 'xp.chip')} hidden>
+      <span class="xp-level" data-xp-level aria-hidden="true">{t(lang, 'xp.level', { n: 1 })}</span>
+      <span class="xp-bar" aria-hidden="true"><span class="xp-fill" data-xp-fill></span></span>
+      <span class="visually-hidden" data-xp-sr></span>
+    </span>
     <nav aria-label={t(lang, 'nav.main')} class="topnav">
       <details class="menu courses" data-course-menu>
         <summary class="topnav-link">
-          <Icon name="compass" size={20} />
+          <Icon name="compass" size={22} />
           <span class="topnav-label"><span class="visually-hidden">{t(lang, 'nav.course')}: </span><span data-current-course>{place.family && !place.course ? familyTitle(lang, place.family) : shortName(current)}</span></span>
+          <span class="tab-label" aria-hidden="true">{t(lang, 'tab.course')}</span>
         </summary>
         <ul class="menu-list">
           {
@@ -97,10 +103,14 @@ const isCurrent = (href: string) => here.startsWith(href);
         </ul>
       </details>
       <a href={tools.map} class="topnav-link" data-tool-link="map" aria-current={here === tools.map ? 'page' : undefined}>
-        <Icon name="map" size={20} /><span class="topnav-label">{t(lang, 'nav.map')}</span>
+        <Icon name="map" size={22} /><span class="topnav-label">{t(lang, 'nav.map')}</span>
+        <span class="tab-label" aria-hidden="true">{t(lang, 'tab.map')}</span>
       </a>
       <details class="menu tools">
-        <summary class="topnav-link"><Icon name="tools" size={20} /><span class="topnav-label">{t(lang, 'nav.tools')}</span></summary>
+        <summary class="topnav-link">
+          <Icon name="tools" size={22} /><span class="topnav-label">{t(lang, 'nav.tools')}</span>
+          <span class="tab-label" aria-hidden="true">{t(lang, 'tab.tools')}</span>
+        </summary>
         <ul class="menu-list">
           {
             links.map((l) => (
@@ -115,7 +125,8 @@ const isCurrent = (href: string) => here.startsWith(href);
         </ul>
       </details>
       <a href={`/${lang}/settings/`} class="topnav-link" aria-current={here.startsWith(`/${lang}/settings/`) ? 'page' : undefined}>
-        <Icon name="settings" size={20} /><span class="topnav-label">{t(lang, 'nav.settings')}</span>
+        <Icon name="settings" size={22} /><span class="topnav-label">{t(lang, 'nav.settings')}</span>
+        <span class="tab-label" aria-hidden="true">{t(lang, 'tab.settings')}</span>
       </a>
       <LangToggle lang={lang} altPath={altPath} />
     </nav>
@@ -140,6 +151,32 @@ const isCurrent = (href: string) => here.startsWith(href);
       if (label && tools.name) label.textContent = tools.name;
     }
   }
+  // Level chip: 100 XP per level. Calm mode hides it (.calm-hide).
+  const xp = document.querySelector<HTMLElement>('[data-xp]');
+  if (xp) {
+    const fill = xp.querySelector<HTMLElement>('[data-xp-fill]')!;
+    const level = xp.querySelector<HTMLElement>('[data-xp-level]')!;
+    const sr = xp.querySelector<HTMLElement>('[data-xp-sr]')!;
+    const fmt = (text: string, v: Record<string, number>) => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in v ? String(v[k]) : m));
+    const showXp = () => {
+      const p = $progress.get();
+      // Calm mode: no XP anywhere, not even for screen readers.
+      if (p.settings.calm) {
+        xp.hidden = true;
+        sr.textContent = '';
+        return;
+      }
+      const points = Math.max(0, Math.floor(p.xp || 0));
+      const n = 1 + Math.floor(points / 100);
+      const into = points % 100;
+      level.textContent = fmt(xp.dataset.levelText ?? '{n}', { n });
+      sr.textContent = fmt(xp.dataset.srText ?? '', { level: n, xp: points, left: 100 - into });
+      fill.style.inlineSize = `${into}%`;
+      xp.hidden = false;
+    };
+    showXp();
+    $progress.listen(showXp);
+  }
   // Only one menu open at a time; Escape or a click outside closes it.
   const menus = [...document.querySelectorAll<HTMLDetailsElement>('.topnav details.menu')];
   for (const m of menus) {
@@ -162,17 +199,19 @@ const isCurrent = (href: string) => here.startsWith(href);
 </script>
 
 <style>
+  /* An ink bar: the brand, the level chip and the menus. On phones the menus become a tab bar at the bottom. */
   .topbar {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--color-bg);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--bar-bg);
+    color: var(--bar-fg);
+    border-bottom: var(--line);
+    --focus-ring: var(--candy-sun);
   }
   .topbar-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-2);
     min-height: var(--topbar-h);
   }
@@ -180,20 +219,57 @@ const isCurrent = (href: string) => here.startsWith(href);
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    font-weight: var(--weight-bold);
+    font-family: var(--font-head);
+    font-weight: var(--weight-head);
     font-size: var(--text-l);
+    letter-spacing: -0.01em;
     text-decoration: none;
     min-height: var(--tap);
+    margin-right: auto;
   }
   .brand-bg {
-    fill: var(--color-primary);
+    fill: var(--candy-mint);
+    stroke: var(--bar-fg);
+    stroke-width: 2.5;
   }
   .brand-mark {
     fill: none;
-    stroke: var(--color-primary-text);
+    stroke: var(--ink);
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+  /* Level chip: "Level 3" and a little bar to the next level. Never a streak. */
+  .xp {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 34px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--bar-muted);
+    font-family: var(--font-head);
+    font-weight: var(--weight-head);
+    font-size: var(--text-s);
+    white-space: nowrap;
+  }
+  .xp[hidden] {
+    display: none;
+  }
+  .xp-bar {
+    inline-size: 3.5rem;
+    block-size: 10px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in oklab, var(--bar-fg) 22%, transparent);
+    overflow: hidden;
+  }
+  .xp-fill {
+    display: block;
+    block-size: 100%;
+    inline-size: 0;
+    background: var(--candy-sun);
+    border-radius: inherit;
+    transition: inline-size var(--dur-ui) var(--ease-out);
   }
   .topnav {
     display: flex;
@@ -213,34 +289,47 @@ const isCurrent = (href: string) => here.startsWith(href);
     cursor: pointer;
     list-style: none;
     font-size: var(--text-s);
+    font-weight: var(--weight-bold);
   }
   .topnav-link::-webkit-details-marker {
     display: none;
   }
-  .topnav-link:hover {
-    background: var(--color-surface-2);
+  .topnav-link:hover,
+  .menu[open] > .topnav-link {
+    background: color-mix(in oklab, var(--bar-fg) 14%, transparent);
   }
   .topnav-link[aria-current='page'] {
-    font-weight: var(--weight-bold);
     text-decoration: underline;
-    text-underline-offset: 0.3em;
+    text-decoration-thickness: 3px;
+    text-decoration-color: var(--candy-sun);
+    text-underline-offset: 0.35em;
+  }
+  .tab-label {
+    display: none;
+  }
+  .topnav :global(.lang-toggle) {
+    border-color: var(--bar-muted);
   }
   .menu {
     position: relative;
   }
+  /* The open menu is a white sticker. */
   .menu-list {
     position: absolute;
     right: 0;
-    top: calc(100% + 4px);
+    top: calc(100% + 8px);
+    z-index: 2;
     min-width: 14rem;
     max-width: calc(100vw - 2 * var(--space-4));
     list-style: none;
     margin: 0;
     padding: var(--space-2);
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border: var(--line);
     border-radius: var(--radius-m);
-    box-shadow: var(--color-shadow);
+    box-shadow: var(--lift);
+    --focus-ring: var(--color-focus);
   }
   .courses .menu-list {
     right: auto;
@@ -248,17 +337,6 @@ const isCurrent = (href: string) => here.startsWith(href);
     /* Two families of parts: the list scrolls on short screens instead of running off them. */
     max-height: calc(100dvh - var(--topbar-h) - var(--space-5));
     overflow-y: auto;
-  }
-  @media (max-width: 640px) {
-    /* Phones: the course list spans the screen under the bar, so it never sticks out. */
-    .courses .menu-list {
-      position: fixed;
-      top: calc(var(--topbar-h) + 4px);
-      left: var(--space-4);
-      right: var(--space-4);
-      min-width: 0;
-      max-width: none;
-    }
   }
   .menu-sub {
     list-style: none;
@@ -268,7 +346,7 @@ const isCurrent = (href: string) => here.startsWith(href);
     margin-left: var(--space-3);
   }
   .menu-all {
-    border-top: 1px solid var(--color-border);
+    border-top: 2px solid var(--color-border);
     margin-top: var(--space-1);
     padding-top: var(--space-1);
   }
@@ -286,9 +364,10 @@ const isCurrent = (href: string) => here.startsWith(href);
   }
   .menu-list a[aria-current='page'] {
     font-weight: var(--weight-bold);
-    background: var(--color-surface-2);
+    background: var(--brand-soft);
   }
-  @media (max-width: 640px) {
+  @media (max-width: 860px) {
+    /* Middle widths: icons only in the bar (labels stay for screen readers). */
     .topnav-label {
       position: absolute;
       width: 1px;
@@ -297,19 +376,66 @@ const isCurrent = (href: string) => here.startsWith(href);
       clip-path: inset(50%);
       white-space: nowrap;
     }
-    .brand span {
-      font-size: var(--text-m);
-    }
   }
-  @media (max-width: 480px) {
-    /* Room for the course switcher at 360 px: the logo alone keeps its name for screen readers. */
-    .brand-name {
-      position: absolute;
-      width: 1px;
-      height: 1px;
+  @media (max-width: 640px) {
+    /* Phones: a tab bar at the bottom, in thumb reach, with an icon and a short word on each tab. */
+    .topnav {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 2px;
+      min-height: var(--tabbar-h);
+      padding: 4px var(--space-1) calc(4px + env(safe-area-inset-bottom, 0px));
+      background: var(--bar-bg);
+      color: var(--bar-fg);
+      border-top: var(--line);
+    }
+    .topnav > .menu,
+    .topnav > .menu > .topnav-link {
+      position: static;
+    }
+    .topnav-link,
+    .topnav :global(.lang-toggle) {
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-width: 0;
+      min-height: 52px;
+      padding: 2px;
+      border: 0;
+      border-radius: var(--radius-m);
+      font-size: var(--text-xs);
+      line-height: 1.1;
+    }
+    .tab-label {
+      display: block;
+      max-width: 100%;
       overflow: hidden;
-      clip-path: inset(50%);
+      text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .topnav-link[aria-current='page'] {
+      text-decoration: none;
+      background: color-mix(in oklab, var(--candy-mint) 24%, transparent);
+    }
+    /* Menus open upward from the tab bar and span the screen. */
+    .menu-list,
+    .courses .menu-list {
+      position: fixed;
+      top: auto;
+      left: var(--space-3);
+      right: var(--space-3);
+      bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px);
+      min-width: 0;
+      max-width: none;
+      max-height: calc(100dvh - var(--topbar-h) - var(--tabbar-h) - var(--space-5));
+      overflow-y: auto;
+    }
+    .brand {
+      font-size: var(--text-m);
     }
   }
 </style>
